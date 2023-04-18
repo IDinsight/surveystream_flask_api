@@ -1,4 +1,4 @@
-openapi: "3.0.2"
+openapi: 3.0.2
 info:
   title: SurveyStream API
   description: >
@@ -6,29 +6,40 @@ info:
 
     ### Context
 
-    SurveyStream is a survey management software application for IDinsight’s Data on Demand initiative. 
-    SurveyStream is the centralized hub for managing DoD’s survey operations in real time, enabling fast, 
-    cheap, high quality data collection.
+    SurveyStream is a survey management software application for IDinsight’s
+    Data on Demand initiative.  SurveyStream is the centralized hub for managing
+    DoD’s survey operations in real time, enabling fast,  cheap, high quality
+    data collection.
 
 
-    The SurveyStream web application enables DoD supervisors to view survey targets, 
-    view and manage enumerator information, and make assignments between targets and enumerators.
-  version: "1.0"
+    The SurveyStream web application enables DoD supervisors to view survey
+    targets,  view and manage enumerator information, and make assignments
+    between targets and enumerators.
+  version: '1.0'
 servers:
-  - url: https://surveystream.idinsight.io/api
+  - url: 'https://surveystream.idinsight.io/api'
     description: Production server
 components:
   securitySchemes:
     cookieAuth:
-      description: |
+      description: >
         ### Basic Setup
+
         - Cookie-based auth is used for protected endpoints
-        - Upon successful login a session cookie is saved on the user's device and is used to authenticate subsequent requests
+
+        - Upon successful login a session cookie is saved on the user's device
+        and is used to authenticate subsequent requests
+
         - The user will be automatically logged out after 7 days
 
+
         ### CSRF Token
-        - To prevent CSRF attacks, a CSRF token must be included in the `X-CSRF-TOKEN` header for all POST, PUT, and PATCH requests
-        - The token can be obtained from the CSRF-TOKEN cookie set by the `GET /get-csrf` action
+
+        - To prevent CSRF attacks, a CSRF token must be included in the
+        `X-CSRF-TOKEN` header for all POST, PUT, and PATCH requests
+
+        - The token can be obtained from the CSRF-TOKEN cookie set by the `GET
+        /get-csrf` action
       type: apiKey
       in: cookie
       name: session
@@ -93,19 +104,21 @@ paths:
       tags:
         - Misc
       responses:
-        "200":
+        '200':
           description: Healthy
-        "500":
+        '500':
           description: Failed DB connection
   /get-csrf:
     get:
       summary: Set CSRF-TOKEN cookie
-      description: The value of the CSRF-TOKEN cookie must be included in the X-CSRF-Token header for all POST, PUT, and PATCH requests
+      description: >-
+        The value of the CSRF-TOKEN cookie must be included in the X-CSRF-Token
+        header for all POST, PUT, and PATCH requests
       security: []
       tags:
         - User Authentication
       responses:
-        "200":
+        '200':
           description: Success
   /login:
     post:
@@ -136,15 +149,15 @@ paths:
                 - email
                 - password
       responses:
-        "200":
-          description: "Success: logged in"
-        "400":
+        '200':
+          description: 'Success: logged in'
+        '400':
           description: User must not be already logged in
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /logout:
     get:
@@ -153,8 +166,8 @@ paths:
       tags:
         - User Authentication
       responses:
-        "200":
-          description: "Success: logged out"
+        '200':
+          description: 'Success: logged out'
   /register:
     post:
       summary: Create new user
@@ -183,13 +196,13 @@ paths:
                 - email
                 - password
       responses:
-        "200":
-          description: "Success: registered"
-        "401":
+        '200':
+          description: 'Success: registered'
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors | User already exists
   /change-password:
     post:
@@ -225,11 +238,11 @@ paths:
                 - new_password
                 - confirm
       responses:
-        "200":
-          description: "Success: password changed"
-        "403":
+        '200':
+          description: 'Success: password changed'
+        '403':
           description: Wrong password | X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /forgot-password:
     post:
@@ -256,18 +269,20 @@ paths:
               required:
                 - email
       responses:
-        "200":
+        '200':
           description: Request processed
-        "400":
+        '400':
           description: Already logged in - use /change-password
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /welcome-user:
     post:
       summary: Trigger welcome email
-      description: Allows a logged in admin user to trigger a welcome email to a user with a reset password link
+      description: >-
+        Allows a logged in admin user to trigger a welcome email to a user with
+        a reset password link
       tags:
         - User Registration
       parameters:
@@ -289,17 +304,17 @@ paths:
               required:
                 - email
       responses:
-        "200":
+        '200':
           description: Request processed
-        "400":
+        '400':
           description: Already logged in - use /change-password
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Record not found
-        "422":
+        '422':
           description: Form errors
   /reset-password:
     post:
@@ -340,15 +355,15 @@ paths:
                 - new_password
                 - confirm
       responses:
-        "200":
-          description: "Success: password reset"
-        "400":
+        '200':
+          description: 'Success: password reset'
+        '400':
           description: Already logged in - use /change-password
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Invalid link
-        "422":
+        '422':
           description: Form errors
   /profile:
     get:
@@ -357,7 +372,7 @@ paths:
       tags:
         - Profile
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -392,7 +407,7 @@ paths:
       tags:
         - Profile
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -400,7 +415,9 @@ paths:
                 type: object
                 properties:
                   image_url:
-                    description: A presigned url that will give access to the user's profile avatar image for 60 seconds
+                    description: >-
+                      A presigned url that will give access to the user's
+                      profile avatar image for 60 seconds
                     type: string
     put:
       summary: Update avatar
@@ -426,11 +443,11 @@ paths:
               type: string
               format: binary
       responses:
-        "200":
+        '200':
           description: Success
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /profile/avatar/remove:
     post:
@@ -446,13 +463,13 @@ paths:
             type: string
           required: true
       responses:
-        "200":
+        '200':
           description: Success
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
-  /surveys:
+  /surveys?user_uid={user_uid}:
     get:
       summary: Get surveys
       description: Returns information about surveys associated with the logged in user.
@@ -463,9 +480,11 @@ paths:
           name: user_uid
           schema:
             type: integer
-          description: Optional user ID to retrieve surveys for. If not provided, surveys for the logged in user will be returned.
+          description: >-
+            Optional user ID to retrieve surveys for. If not provided, surveys
+            for the logged in user will be returned.
       responses:
-        "200":
+        '200':
           description: Successful response
           content:
             application/json:
@@ -474,7 +493,9 @@ paths:
                 properties:
                   data:
                     type: array
-                    description: An array of surveys belonging to the specified user or all users if no user_uid is provided.
+                    description: >-
+                      An array of surveys belonging to the specified user or all
+                      users if no user_uid is provided.
                     items:
                       type: object
                       properties:
@@ -495,26 +516,34 @@ paths:
                           description: A description of the survey.
                         surveying_method:
                           type: string
-                          description: The method of surveying, e.g. in-person, phone.
+                          description: 'The method of surveying, e.g. in-person, phone.'
                         irb_approval:
                           type: string
-                          description: The status of the IRB approval, e.g. Yes, No, Pending.
+                          description: >-
+                            The status of the IRB approval, e.g. Yes, No,
+                            Pending.
                         planned_start_date:
                           type: string
-                          description: The planned start date of the survey in ISO 8601 format.
+                          description: >-
+                            The planned start date of the survey in ISO 8601
+                            format.
                         planned_end_date:
                           type: string
-                          description: The planned end date of the survey in ISO 8601 format.
+                          description: >-
+                            The planned end date of the survey in ISO 8601
+                            format.
                         state:
                           type: string
-                          description: The state of the survey, e.g. Draft, Active, Past.
+                          description: 'The state of the survey, e.g. Draft, Active, Past.'
                         last_updated_at:
                           type: string
-                          description: The date and time that the survey was last updated in ISO 8601 format.
+                          description: >-
+                            The date and time that the survey was last updated
+                            in ISO 8601 format.
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
-        "404":
+        '404':
           description: No surveys found for the specified user or all users.
           content:
             application/json:
@@ -527,6 +556,189 @@ paths:
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
+  /surveys:
+    post:
+      summary: Create a new survey
+      tags:
+        - Surveys
+      description: Create a new survey with the basic information details. The survey_id must be
+        unique.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_id:
+                  type: string
+                  example: AgriFieldneet
+                  description: The unique identifier for the survey
+                survey_name:
+                  type: string
+                  example: Agrifieldneet Main Survey Form
+                  description: The name of the survey
+                project_name:
+                  type: string
+                  example: AgriFieldneet Survey
+                  description: The name of the project the survey belongs to
+                description:
+                  type: string
+                  example: 'AgriFieldnet survey starting on 1st Jan, 2023'
+                  description: A description of the survey
+                surveying_method:
+                  type: string
+                  example: in-person
+                  description: The method used to survey respondents
+                  enum:
+                    - phone
+                    - in-person
+                irb_approval:
+                  type: string
+                  example: Pending
+                  description: >-
+                    The status of the Institutional Review Board (IRB)
+                    approval
+                  enum:
+                    - 'Yes'
+                    - 'No'
+                    - Pending
+                planned_start_date:
+                  type: string
+                  example: 2023-01-01T00:00:00.000Z
+                  format: date
+                  description: The planned start date for the survey
+                planned_end_date:
+                  type: string
+                  example: 2023-06-30T00:00:00.000Z
+                  format: date
+                  description: The planned end date for the survey
+                config_status:
+                  type: string
+                  example: In Progress - Configuration
+                  description: The status of the survey's configuration
+                  enum:
+                    - In Progress - Configuration
+                    - In Progress - Backend Setup
+                    - Done
+                state:
+                  type: string
+                  example: Draft
+                  description: The current state of the survey
+                  enum:
+                    - Draft
+                    - Active
+                    - Past
+                created_by_user_uid:
+                  type: integer
+                  example: 10669
+                  description: The user ID of the user who created the survey
+              required:
+                - survey_id
+                - survey_name
+                - project_name
+                - surveying_method
+                - irb_approval
+                - planned_start_date
+                - planned_end_date
+                - config_status
+                - state
+                - created_by_user_uid
+      responses:
+        '201':
+          description: The survey was created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: success
+                      survey:
+                        type: object
+                        properties:
+                          survey_uid:
+                            type: integer
+                            example: 19
+                            description: The unique identifier for the survey
+                          survey_id:
+                            type: string
+                            example: AgriFieldneet
+                            description: The unique identifier for the survey
+                          survey_name:
+                            type: string
+                            example: Agrifieldneet Main Survey Form
+                            description: The name of the survey
+                          project_name:
+                            type: string
+                            example: AgriFieldneet Survey
+                            description: The name of the project the survey belongs to
+                          survey_description:
+                            type: string
+                            example: 'AgriFieldnet survey starting on 1st Jan, 2023'
+                            description: A description
+                          surveying_method:
+                            type: string
+                            enum:
+                              - phone
+                              - in-person
+                            example: in-person
+                            irb_approval:
+                              type: string
+                              enum:
+                                - 'Yes'
+                                - 'No'
+                                - Pending
+                              example: Pending
+                            planned_start_date:
+                              type: string
+                              format: date
+                              example: 2023-01-01T00:00:00.000Z
+                            planned_end_date:
+                              type: string
+                              format: date
+                              example: 2023-06-30T00:00:00.000Z
+                            config_status:
+                              type: string
+                              enum:
+                                - In Progress - Configuration
+                                - In Progress - Backend Setup
+                                - Done
+                              example: In Progress - Configuration
+                            state:
+                              type: string
+                              enum:
+                                - Draft
+                                - Active
+                                - Past
+                              example: Draft
+                            survey_uid:
+                              type: integer
+                              example: 19
+                            last_updated_at:
+                              type: string
+                              format: date-time
+                              example: 2023-04-18T00:00:00.000Z
+        '400':
+          description: A survey with the same survey_id already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: Survey already exists
   /forms/{form_uid}:
     get:
       summary: Get forms
@@ -541,7 +753,7 @@ paths:
           required: true
           description: Unique ID of the parent form
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -571,7 +783,9 @@ paths:
                     description: Planned end date of the form in isoformat
                   last_ingested_at:
                     type: string
-                    description: Date when form submissions were last ingested from SurveyCTO in isoformat
+                    description: >-
+                      Date when form submissions were last ingested from
+                      SurveyCTO in isoformat
                   child_forms:
                     type: array
                     description: Child forms associated with the main form
@@ -583,7 +797,9 @@ paths:
                           description: The form's SurveyCTO form ID
                         form_type:
                           type: string
-                          description: The form type (Spotcheck, Backcheck, Bikelog, Audio Audit)
+                          description: >-
+                            The form type (Spotcheck, Backcheck, Bikelog, Audio
+                            Audit)
   /enumerators:
     get:
       summary: Get enumerators
@@ -597,7 +813,7 @@ paths:
             type: integer
           description: Unique ID of the parent form
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -641,23 +857,40 @@ paths:
                       description: The secondary phone number of the enumerator
                     status:
                       type: string
-                      enum: [Active, Temp. inactive, Dropout]
+                      enum:
+                        - Active
+                        - Temp. inactive
+                        - Dropout
                       description: The working status of the enumerator
                     locations:
                       type: array
-                      description: "An array of locations associated with the enumerator. Each array item is an object of the form {`location`_id: _location_id_, `location`_name: _location_name_} in descending order from highest to lowest level location."
+                      description: >-
+                        An array of locations associated with the enumerator.
+                        Each array item is an object of the form {`location`_id:
+                        _location_id_, `location`_name: _location_name_} in
+                        descending order from highest to lowest level location.
                     supervisors:
                       type: array
-                      description: "An array of supervisors associated with the enumerator. Array items are in descending order from highest to lowest level supervisor working under the logged in user."
+                      description: >-
+                        An array of supervisors associated with the enumerator.
+                        Array items are in descending order from highest to
+                        lowest level supervisor working under the logged in
+                        user.
                       items:
                         type: object
                         properties:
                           role_name:
                             type: string
-                            description: The role of the supervisor, .e.g. regional coordinator, cluster coordinator
+                            description: >-
+                              The role of the supervisor, .e.g. regional
+                              coordinator, cluster coordinator
                           level:
                             type: number
-                            description: The level of the supervisor. Counting starts at 0 with the core team and ascends for each successively lower level of the supervisor hierarchy.
+                            description: >-
+                              The level of the supervisor. Counting starts at 0
+                              with the core team and ascends for each
+                              successively lower level of the supervisor
+                              hierarchy.
                           supervisor_name:
                             type: string
                             description: The name of the supervisor
@@ -666,12 +899,16 @@ paths:
                             description: The email of the supervisor
                     forms:
                       type: array
-                      description: An array of form names of the forms in the given survey the enumerator is working on
+                      description: >-
+                        An array of form names of the forms in the given survey
+                        the enumerator is working on
                       items:
                         type: string
                     form_productivity:
                       type: array
-                      description: An array of productivity details for each form the enumerator is working on in the given survey
+                      description: >-
+                        An array of productivity details for each form the
+                        enumerator is working on in the given survey
                       items:
                         type: object
                         properties:
@@ -680,19 +917,27 @@ paths:
                             description: The name of the form
                           total_complete:
                             type: integer
-                            description: The enumerator's total completed targets for the form
+                            description: >-
+                              The enumerator's total completed targets for the
+                              form
                           total_assigned:
                             type: integer
-                            description: The enumerator's total assigned targets for the form
-  /enumerators/{enumerator_uid}:
+                            description: >-
+                              The enumerator's total assigned targets for the
+                              form
+  '/enumerators/{enumerator_uid}':
     patch:
       summary: Update enumerator status
-      description: |
+      description: >
         Set the status of an enumerator to Active, Temp. Inactive, or Dropout 
 
-        The status update is applied to all forms the enumerator is working on in the given form's survey 
 
-        If the status is set to "Dropout" all the enumerator's assignments on the given form's survey will be released
+        The status update is applied to all forms the enumerator is working on
+        in the given form's survey 
+
+
+        If the status is set to "Dropout" all the enumerator's assignments on
+        the given form's survey will be released
       tags:
         - Enumerators
       parameters:
@@ -713,18 +958,21 @@ paths:
                   type: integer
                 status:
                   type: string
-                  enum: [Active, Temp. inactive, Dropout]
+                  enum:
+                    - Active
+                    - Temp. inactive
+                    - Dropout
               required:
                 - form_uid
                 - status
       responses:
-        "200":
+        '200':
           description: Record updated
-        "400":
+        '400':
           description: Record not found
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /targets:
     get:
@@ -739,7 +987,7 @@ paths:
             type: integer
           description: Unique ID of the parent form
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -774,20 +1022,31 @@ paths:
                       description: The longitude of the target
                     custom_fields:
                       type: object
-                      description: Any non-standard fields that should be displayed for the target
+                      description: >-
+                        Any non-standard fields that should be displayed for the
+                        target
                     final_status:
                       type: string
-                      description: Grouping of final_survey_status into pending/done categories. Used to determine if the target is assignable.
-                      enum: [Pending, Done]
+                      description: >-
+                        Grouping of final_survey_status into pending/done
+                        categories. Used to determine if the target is
+                        assignable.
+                      enum:
+                        - Pending
+                        - Done
                     final_survey_status:
                       type: integer
-                      description: The survey status from the target's most recent SurveyCTO submission
+                      description: >-
+                        The survey status from the target's most recent
+                        SurveyCTO submission
                     final_survey_status_label:
                       type: string
                       description: The label corresponding to the final_survey_status code
                     webapp_tag_color:
                       type: string
-                      description: The color that should be used to color the status tag on the web flask_app
+                      description: >-
+                        The color that should be used to color the status tag on
+                        the web flask_app
                     revisit_sections:
                       type: array
                       description: The revisit sections for the target
@@ -796,19 +1055,33 @@ paths:
                         description: Name of the revisit section for the target
                     locations:
                       type: array
-                      description: "An array of locations associated with the target. Each array item is an object of the form {`location`_id: _location_id_, `location`_name: _location_name_} in descending order from highest to lowest level location."
+                      description: >-
+                        An array of locations associated with the target. Each
+                        array item is an object of the form {`location`_id:
+                        _location_id_, `location`_name: _location_name_} in
+                        descending order from highest to lowest level location.
                     supervisors:
                       type: array
-                      description: "An array of supervisors associated with the target. Array items are in descending order from highest to lowest level supervisor working under the logged in user."
+                      description: >-
+                        An array of supervisors associated with the target.
+                        Array items are in descending order from highest to
+                        lowest level supervisor working under the logged in
+                        user.
                       items:
                         type: object
                         properties:
                           role_name:
                             type: string
-                            description: The role of the supervisor, .e.g. regional coordinator, cluster coordinator
+                            description: >-
+                              The role of the supervisor, .e.g. regional
+                              coordinator, cluster coordinator
                           level:
                             type: number
-                            description: The level of the supervisor. Counting starts at 0 with the core team and ascends for each successively lower level of the supervisor hierarchy.
+                            description: >-
+                              The level of the supervisor. Counting starts at 0
+                              with the core team and ascends for each
+                              successively lower level of the supervisor
+                              hierarchy.
                           supervisor_name:
                             type: string
                             description: The name of the supervisor
@@ -828,7 +1101,7 @@ paths:
             type: integer
           description: Unique ID of the parent form
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -840,7 +1113,8 @@ paths:
                     description: >
                       Targets with their assigned surveyors (if any)
 
-                      Corresponds to the main table on the assignments tab of the web app
+                      Corresponds to the main table on the assignments tab of
+                      the web app
                     items:
                       type: object
                       properties:
@@ -882,20 +1156,33 @@ paths:
                           description: The longitude of the target
                         custom_fields:
                           type: object
-                          description: Any non-standard fields that should be displayed for the target
+                          description: >-
+                            Any non-standard fields that should be displayed for
+                            the target
                         final_status:
                           type: string
-                          description: Grouping of final_survey_status into pending/done categories. Used to determine if the target is assignable.
-                          enum: [Pending, Done]
+                          description: >-
+                            Grouping of final_survey_status into pending/done
+                            categories. Used to determine if the target is
+                            assignable.
+                          enum:
+                            - Pending
+                            - Done
                         final_survey_status:
                           type: integer
-                          description: The survey status from the target's most recent SurveyCTO submission
+                          description: >-
+                            The survey status from the target's most recent
+                            SurveyCTO submission
                         final_survey_status_label:
                           type: string
-                          description: The label corresponding to the final_survey_status code
+                          description: >-
+                            The label corresponding to the final_survey_status
+                            code
                         webapp_tag_color:
                           type: string
-                          description: The color that should be used to color the status tag on the web flask_app
+                          description: >-
+                            The color that should be used to color the status
+                            tag on the web flask_app
                         revisit_sections:
                           type: array
                           description: The revisit sections for the target
@@ -904,19 +1191,34 @@ paths:
                             description: Name of the revisit section for the target
                         locations:
                           type: array
-                          description: "An array of locations associated with the target. Each array item is an object of the form {`location`_id: _location_id_, `location`_name: _location_name_} in descending order from highest to lowest level location."
+                          description: >-
+                            An array of locations associated with the target.
+                            Each array item is an object of the form
+                            {`location`_id: _location_id_, `location`_name:
+                            _location_name_} in descending order from highest to
+                            lowest level location.
                         supervisors:
                           type: array
-                          description: "An array of supervisors associated with the target. Array items are in descending order from highest to lowest level supervisor working under the logged in user."
+                          description: >-
+                            An array of supervisors associated with the target.
+                            Array items are in descending order from highest to
+                            lowest level supervisor working under the logged in
+                            user.
                           items:
                             type: object
                             properties:
                               role_name:
                                 type: string
-                                description: The role of the supervisor, .e.g. regional coordinator, cluster coordinator
+                                description: >-
+                                  The role of the supervisor, .e.g. regional
+                                  coordinator, cluster coordinator
                               level:
                                 type: number
-                                description: The level of the supervisor. Counting starts at 0 with the core team and ascends for each successively lower level of the supervisor hierarchy.
+                                description: >-
+                                  The level of the supervisor. Counting starts
+                                  at 0 with the core team and ascends for each
+                                  successively lower level of the supervisor
+                                  hierarchy.
                               supervisor_name:
                                 type: string
                                 description: The name of the supervisor
@@ -925,7 +1227,10 @@ paths:
                                 description: The email of the supervisor
                   surveyors:
                     type: array
-                    description: The assignable surveyors (status is not "Dropout"). Corresponds to the table on the modal screen on the assignments tab of the web flask_app.
+                    description: >-
+                      The assignable surveyors (status is not "Dropout").
+                      Corresponds to the table on the modal screen on the
+                      assignments tab of the web flask_app.
                     items:
                       type: object
                       properties:
@@ -961,11 +1266,19 @@ paths:
                           description: The secondary phone number of the enumerator
                         surveyor_status:
                           type: string
-                          enum: [Active, Temp. inactive, Dropout]
+                          enum:
+                            - Active
+                            - Temp. inactive
+                            - Dropout
                           description: The working status of the enumerator
                         locations:
                           type: array
-                          description: "An array of locations associated with the enumerator. Each array item is an object of the form {`location`_id: _location_id_, `location`_name: _location_name_} in descending order from highest to lowest level location."
+                          description: >-
+                            An array of locations associated with the
+                            enumerator. Each array item is an object of the form
+                            {`location`_id: _location_id_, `location`_name:
+                            _location_name_} in descending order from highest to
+                            lowest level location.
                         total_pending_targets:
                           type: integer
                           description: Total pending targets for the given survey
@@ -974,7 +1287,9 @@ paths:
                           description: Total complete targets for the given survey
                         form_productivity:
                           type: array
-                          description: An array of productivity details for each form the enumerator is working on in the given survey
+                          description: >-
+                            An array of productivity details for each form the
+                            enumerator is working on in the given survey
                           items:
                             type: object
                             properties:
@@ -983,18 +1298,27 @@ paths:
                                 description: The name of the form
                               total_complete:
                                 type: integer
-                                description: The enumerator's total completed targets for the form
+                                description: >-
+                                  The enumerator's total completed targets for
+                                  the form
                               total_pending:
                                 type: integer
-                                description: The enumerator's total pending targets for the form
+                                description: >-
+                                  The enumerator's total pending targets for the
+                                  form
     put:
       summary: Update assignments
-      description: |
+      description: >
         Update the mapping of enumerators to targets
 
-        Each target can have 0 or 1 enumerators assigned to it, so assigning an enumerator to an already-assigned target will overwrite the previous assignment
 
-        To unassign an enumerator from a target, include the target_uid value and pass a null value for the enumerator_uid
+        Each target can have 0 or 1 enumerators assigned to it, so assigning an
+        enumerator to an already-assigned target will overwrite the previous
+        assignment
+
+
+        To unassign an enumerator from a target, include the target_uid value
+        and pass a null value for the enumerator_uid
       tags:
         - Assignments
       parameters:
@@ -1022,16 +1346,18 @@ paths:
                   - target_uid
                   - enumerator_uid
       responses:
-        "200":
+        '200':
           description: Success
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /table-config:
     get:
       summary: Get table configuration
-      description: Return the web flask_app table configuration details for the given parent form
+      description: >-
+        Return the web flask_app table configuration details for the given
+        parent form
       tags:
         - Table Configuration
       parameters:
@@ -1041,7 +1367,7 @@ paths:
             type: integer
           description: Unique ID of the parent form
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -1051,9 +1377,11 @@ paths:
                   assignments_main:
                     type: array
                     description: >
-                      List of column groups and columns with labels and data access keys
+                      List of column groups and columns with labels and data
+                      access keys
 
-                      Corresponds to the main table on the assignments tab of the web app
+                      Corresponds to the main table on the assignments tab of
+                      the web app
                     items:
                       type: object
                       properties:
@@ -1071,13 +1399,17 @@ paths:
                                 description: The label for the column
                               column_key:
                                 type: string
-                                description: The column key that can be used to access the column records in the data response
+                                description: >-
+                                  The column key that can be used to access the
+                                  column records in the data response
                   assignments_surveyors:
                     type: array
                     description: >
-                      List of column groups and columns with labels and data access keys
+                      List of column groups and columns with labels and data
+                      access keys
 
-                      Corresponds to the surveyors modal table on the assignments tab of the web app
+                      Corresponds to the surveyors modal table on the
+                      assignments tab of the web app
                     items:
                       type: object
                       properties:
@@ -1095,13 +1427,17 @@ paths:
                                 description: The label for the column
                               column_key:
                                 type: string
-                                description: The column key that can be used to access the column records in the data response
+                                description: >-
+                                  The column key that can be used to access the
+                                  column records in the data response
                   assignments_review:
                     type: array
                     description: >
-                      List of column groups and columns with labels and data access keys
+                      List of column groups and columns with labels and data
+                      access keys
 
-                      Corresponds to the assignments review modal table on the assignments tab of the web app
+                      Corresponds to the assignments review modal table on the
+                      assignments tab of the web app
                     items:
                       type: object
                       properties:
@@ -1119,13 +1455,17 @@ paths:
                                 description: The label for the column
                               column_key:
                                 type: string
-                                description: The column key that can be used to access the column records in the data response
+                                description: >-
+                                  The column key that can be used to access the
+                                  column records in the data response
                   surveyors:
                     type: array
                     description: >
-                      List of column groups and columns with labels and data access keys
+                      List of column groups and columns with labels and data
+                      access keys
 
-                      Corresponds to the main table on the surveyors tab of the web app
+                      Corresponds to the main table on the surveyors tab of the
+                      web app
                     items:
                       type: object
                       properties:
@@ -1143,13 +1483,17 @@ paths:
                                 description: The label for the column
                               column_key:
                                 type: string
-                                description: The column key that can be used to access the column records in the data response
+                                description: >-
+                                  The column key that can be used to access the
+                                  column records in the data response
                   targets:
                     type: array
                     description: >
-                      List of column groups and columns with labels and data access keys
+                      List of column groups and columns with labels and data
+                      access keys
 
-                      Corresponds to the main table on the targets tab of the web app
+                      Corresponds to the main table on the targets tab of the
+                      web app
                     items:
                       type: object
                       properties:
@@ -1167,4 +1511,6 @@ paths:
                                 description: The label for the column
                               column_key:
                                 type: string
-                                description: The column key that can be used to access the column records in the data response
+                                description: >-
+                                  The column key that can be used to access the
+                                  column records in the data response

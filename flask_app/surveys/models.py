@@ -1,9 +1,13 @@
 from datetime import date
 from flask_app.database import db
+
 class Survey(db.Model):
 
     __tablename__ = "surveys"
-    __table_args__ = {'extend_existing': True, 'schema': 'config_sandbox'}
+    __table_args__ = {
+        'extend_existing': True,
+        'schema': 'config_sandbox',
+    }
 
     survey_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     survey_id = db.Column(db.String(64), unique=True, nullable=False)
@@ -19,12 +23,6 @@ class Survey(db.Model):
     created_by_user_uid = db.Column(db.Integer, db.ForeignKey('users.user_uid'), nullable=False)
     last_updated_at = db.Column(db.TIMESTAMP, nullable=False, default=db.func.current_timestamp())
 
-    # __table_args__ = (
-    #     db.CheckConstraint(surveying_method.in_(['phone', 'in-person']), name='surveying_method_constraint'),
-    #     db.CheckConstraint(irb_approval.in_(['Yes', 'No', 'Pending']), name='irb_approval_constraint'),
-    #     db.CheckConstraint(config_status.in_(['In Progress - Configuration', 'In Progress - Backend Setup', 'Done']), name='config_status_constraint'),
-    #     db.CheckConstraint(state.in_(['Draft', 'Active', 'Past']), name='state_constraint'),
-    # )
     def __init__(self, survey_id, survey_name, project_name, description, surveying_method,
                  planned_start_date, planned_end_date, irb_approval, config_status, state,
                  created_by_user_uid):
@@ -55,3 +53,18 @@ class Survey(db.Model):
             'state': self.state,
             'last_updated_at': str(self.last_updated_at),
         }
+
+    def validate(self):
+        errors = []
+        if self.planned_start_date >= self.planned_end_date:
+            errors.append('Start time must be earlier than end time.')
+        if self.surveying_method not in ('phone', 'in-person'):
+            errors.append('Surveying method must be either "phone" or "in-person".')
+        if self.irb_approval not in ('Yes', 'No', 'Pending'):
+            errors.append('IRB approval must be either "Yes", "No", or "Pending".')
+        if self.config_status not in ('In Progress - Configuration', 'In Progress - Backend Setup', 'Done'):
+            errors.append(
+                'Config status must be either "In Progress - Configuration", "In Progress - Backend Setup", or "Done".')
+        if self.state not in ('Draft', 'Active', 'Past'):
+            errors.append('State must be either "Draft", "Active", or "Past".')
+        return errors

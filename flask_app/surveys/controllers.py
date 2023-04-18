@@ -27,13 +27,16 @@ def get_all_surveys():
 def create_survey():
     data = request.get_json()
     survey = Survey(**data)
+    errors = survey.validate()
+    if errors:
+        return jsonify({'errors': errors}), 400
     try:
         db.session.add(survey)
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
         return jsonify({'error': 'Survey already exists'}), 400
-    return jsonify(survey.to_dict()), 201
+    return jsonify({"success": True, "data": { "message": "success", "survey": survey.to_dict()}}), 201
 
 
 @survey_bp.route('/<survey_id>', methods=['GET'])
