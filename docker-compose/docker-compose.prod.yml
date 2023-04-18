@@ -1,0 +1,35 @@
+version: '2'
+services:
+  api:
+    image: 678681925278.dkr.ecr.ap-south-1.amazonaws.com/dod-surveystream-web-app:backend
+    cpu_shares: 700
+    mem_limit: 2000000000
+    restart: always
+    environment:
+      - CONFIG_MODE=PRODUCTION
+      - REACT_BASE_URL=https://surveystream.idinsight.io
+      - PYTHONUNBUFFERED=0
+      - S3_REGION=ap-south-1
+      - S3_BUCKET_NAME=surveystream-assets
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: dod_surveystream_webapp
+        awslogs-region: ap-south-1
+        awslogs-stream-prefix: dod_surveystream_backend
+  client:
+    image: 678681925278.dkr.ecr.ap-south-1.amazonaws.com/dod-surveystream-web-app:frontend
+    cpu_shares: 700
+    mem_limit: 2000000000
+    depends_on:
+      - api
+    ports:
+      - "443:80"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: dod_surveystream_webapp
+        awslogs-region: ap-south-1
+        awslogs-stream-prefix: dod_surveystream_frontend
+    links: 
+      - "api:api"

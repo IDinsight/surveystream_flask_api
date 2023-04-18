@@ -1,0 +1,17 @@
+version: '2.1'
+services:
+    api:
+        image:  ${BACKEND_NAME}:${VERSION}
+        restart: always
+        environment:
+            - CONFIG_MODE=REMOTE_DEV
+            - REACT_BASE_URL=http://localhost:3000
+            - PYTHONUNBUFFERED=0
+            - S3_REGION=ap-south-1
+            - ADMIN_ACCOUNT=077878936716
+        volumes:
+            - ../flask_app:/usr/src/dod_surveystream_backend/flask_app
+        ports:
+            - "${BACKEND_PORT}:${BACKEND_PORT}"
+        extra_hosts:
+            - "host.docker.internal:host-gateway"

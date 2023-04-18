@@ -1,0 +1,35 @@
+version: '2'
+services:
+  api:
+    image: ${PROD_NEW_ACCOUNT}.dkr.ecr.ap-south-1.amazonaws.com/web-ecr-repository:backend
+    cpu_shares: 700
+    mem_limit: 2000000000
+    restart: always
+    environment:
+      - CONFIG_MODE=PROD_NEW
+      - REACT_BASE_URL=https://surveystream.idinsight.io
+      - PYTHONUNBUFFERED=0
+      - S3_REGION=ap-south-1
+      - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: dod_surveystream_webapp
+        awslogs-region: ap-south-1
+        awslogs-stream-prefix: dod_surveystream_backend
+  client:
+    image: ${PROD_NEW_ACCOUNT}.dkr.ecr.ap-south-1.amazonaws.com/web-ecr-repository:frontend
+    cpu_shares: 700
+    mem_limit: 2000000000
+    depends_on:
+      - api
+    ports:
+      - "443:80"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: dod_surveystream_webapp
+        awslogs-region: ap-south-1
+        awslogs-stream-prefix: dod_surveystream_frontend
+    links: 
+      - "api:api"
