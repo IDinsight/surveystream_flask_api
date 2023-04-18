@@ -1,8 +1,9 @@
 from datetime import date
 from flask_app.database import db
 class Survey(db.Model):
-    __tablename__ = "config_sandbox.surveys"
-    __table_args__ = {'schema': 'config_sandbox'}
+
+    __tablename__ = "surveys"
+    __table_args__ = {'extend_existing': True, 'schema': 'config_sandbox'}
 
     survey_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     survey_id = db.Column(db.String(64), unique=True, nullable=False)
@@ -18,12 +19,12 @@ class Survey(db.Model):
     created_by_user_uid = db.Column(db.Integer, db.ForeignKey('users.user_uid'), nullable=False)
     last_updated_at = db.Column(db.TIMESTAMP, nullable=False, default=db.func.current_timestamp())
 
-    __table_args__ = (
-        db.CheckConstraint(surveying_method.in_(['phone', 'in-person']), name='surveying_method_constraint'),
-        db.CheckConstraint(irb_approval.in_(['Yes', 'No', 'Pending']), name='irb_approval_constraint'),
-        db.CheckConstraint(config_status.in_(['In Progress - Configuration', 'In Progress - Backend Setup', 'Done']), name='config_status_constraint'),
-        db.CheckConstraint(state.in_(['Draft', 'Active', 'Past']), name='state_constraint'),
-    )
+    # __table_args__ = (
+    #     db.CheckConstraint(surveying_method.in_(['phone', 'in-person']), name='surveying_method_constraint'),
+    #     db.CheckConstraint(irb_approval.in_(['Yes', 'No', 'Pending']), name='irb_approval_constraint'),
+    #     db.CheckConstraint(config_status.in_(['In Progress - Configuration', 'In Progress - Backend Setup', 'Done']), name='config_status_constraint'),
+    #     db.CheckConstraint(state.in_(['Draft', 'Active', 'Past']), name='state_constraint'),
+    # )
     def __init__(self, survey_id, survey_name, project_name, description, surveying_method,
                  planned_start_date, planned_end_date, irb_approval, config_status, state,
                  created_by_user_uid):
@@ -39,3 +40,18 @@ class Survey(db.Model):
         self.state = state
         self.created_by_user_uid = created_by_user_uid
         self.last_updated_at = date.today()
+
+    def to_dict(self):
+        return {
+            'survey_uid': self.survey_uid,
+            'survey_id': self.survey_id,
+            'survey_name': self.survey_name,
+            'project_name': self.project_name,
+            'survey_description': self.description,
+            'surveying_method': self.surveying_method,
+            'irb_approval': self.irb_approval,
+            'planned_start_date': str(self.planned_start_date),
+            'planned_end_date': str(self.planned_end_date),
+            'state': self.state,
+            'last_updated_at': str(self.last_updated_at),
+        }

@@ -6,9 +6,22 @@ from .routes import survey_bp
 
 @survey_bp.route('', methods=['GET'])
 def get_all_surveys():
-    surveys = Survey.query.all()
-    return jsonify([survey.to_dict() for survey in surveys])
+    #/surveys will return all surveys
+    #/surveys?user_uid=1 will return surveys created by user with user_uid=1
 
+    user_uid = request.args.get('user_uid')
+    if user_uid:
+        surveys = Survey.query.filter_by(created_by_user_uid=user_uid).all()
+    else:
+        surveys = Survey.query.all()
+
+    if not surveys:
+        return jsonify({'success': False, 'error': 'No surveys found'}), 404
+
+    data = [survey.to_dict() for survey in surveys]
+    response = {'success': True, 'data': data}
+
+    return jsonify(response), 200
 
 @survey_bp.route('', methods=['POST'])
 def create_survey():
