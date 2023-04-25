@@ -10,3 +10,4 @@ README.md
 .DS_Store
 Makefile
 docker-compose/
+.github/
