@@ -85,7 +85,7 @@ S3_REGION = os.getenv(
     "S3_REGION"
 )  # Can we get rid of this if all the AWS roles and resources are in the same region?
 
-if CONFIG_MODE in ["REMOTE_DEV", "STAGING", "PROD_NEW"]:
+if CONFIG_MODE in ["REMOTE_DEV", "STAGING", "PROD_NEW", "TEST_E2E"]:
     S3_BUCKET_NAME = get_aws_secret("web-assets-bucket-name", S3_REGION)
 else:
     S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
@@ -96,7 +96,7 @@ else:
 ##############################################################################
 
 if CONFIG_MODE not in ["PRODUCTION", "PROD_NEW"]:
-    dod_app.config['REDOC'] = {'spec_route': '/api/docs'}
+    dod_app.config["REDOC"] = {"spec_route": "/api/docs"}
     redoc = Redoc(dod_app, "openapi/surveystream.yml")
 
 ##############################################################################
@@ -105,8 +105,7 @@ if CONFIG_MODE not in ["PRODUCTION", "PROD_NEW"]:
 
 
 def setup():
-
-    if CONFIG_MODE in ["REMOTE_DEV", "STAGING", "PROD_NEW"]:
+    if CONFIG_MODE in ["REMOTE_DEV", "STAGING", "PROD_NEW", "TEST_E2E"]:
         dod_app.config["SECRET_KEY"] = json.loads(
             get_aws_secret("flask-secret-key", S3_REGION)
         )[
@@ -123,7 +122,6 @@ def setup():
     }
 
     if CONFIG_MODE == "PRODUCTION":
-
         db_secret = json.loads(get_aws_secret("dod-airflow-dod-data-db", S3_REGION))
 
         PG_ENDPOINT = db_secret["host"]
@@ -137,7 +135,6 @@ def setup():
         )
 
     elif CONFIG_MODE in ["STAGING", "PROD_NEW"]:
-
         db_secret = json.loads(get_aws_secret("data-db-connection-details", S3_REGION))
 
         PG_ENDPOINT = db_secret["host"]
@@ -151,7 +148,6 @@ def setup():
         )
 
     elif CONFIG_MODE == "REMOTE_DEV":
-
         db_secret = json.loads(get_aws_secret("data-db-connection-details", S3_REGION))
 
         PG_ENDPOINT = "host.docker.internal"
@@ -159,6 +155,17 @@ def setup():
         PG_DATABASE = db_secret["dbname"]
         PG_USERNAME = db_secret["username"]
         PG_PASSWORD = db_secret["password"]
+
+        DB_URI = get_postgres_uri(
+            PG_ENDPOINT, PG_PORT, PG_DATABASE, PG_USERNAME, PG_PASSWORD
+        )
+
+    elif CONFIG_MODE == "TEST_E2E":
+        PG_ENDPOINT = "postgres"
+        PG_PORT = 5433
+        PG_DATABASE = "dod"
+        PG_USERNAME = "test_user"
+        PG_PASSWORD = "dod"
 
         DB_URI = get_postgres_uri(
             PG_ENDPOINT, PG_PORT, PG_DATABASE, PG_USERNAME, PG_PASSWORD
@@ -175,7 +182,7 @@ def setup():
     dod_app.config["MAIL_USE_TLS"] = True
     dod_app.config["MAIL_DEFAULT_SENDER"] = "surveystream@idinsight.org"
 
-    if CONFIG_MODE in ["REMOTE_DEV", "STAGING", "PROD_NEW"]:
+    if CONFIG_MODE in ["REMOTE_DEV", "STAGING", "PROD_NEW", "TEST_E2E"]:
         dod_app.config["MAIL_PASSWORD"] = get_aws_secret(
             "sendgrid-api-key", S3_REGION, is_global_secret=True
         )
@@ -197,8 +204,8 @@ mail = Mail(dod_app)
 
 s3 = boto3_client("s3", S3_REGION)
 
-def get_s3_presigned_url(filekey):
 
+def get_s3_presigned_url(filekey):
     return s3.generate_presigned_url(
         "get_object", Params={"Bucket": S3_BUCKET_NAME, "Key": filekey}, ExpiresIn=60
     )
@@ -213,9 +220,11 @@ def get_s3_presigned_url(filekey):
 def unauthorized(e):
     return jsonify(message=str(e)), 401
 
+
 @dod_app.errorhandler(403)
 def forbidden(e):
     return jsonify(message=str(e)), 403
+
 
 @dod_app.errorhandler(404)
 def page_not_found(e):
@@ -234,22 +243,29 @@ def internal_server_error(e):
 login_manager = LoginManager()
 login_manager.init_app(dod_app)
 
+
 def logged_in_active_user_required(f):
     """
-        Login required middlerware
-        Checks additional active user logic. Otherwise pass flow to built-in login_required (Flask-Login) decorator
+    Login required middlerware
+    Checks additional active user logic. Otherwise pass flow to built-in login_required (Flask-Login) decorator
     """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "_user_id" in session:
             user_uid = session.get("_user_id")
 
             if user_uid is not None:
-                user = db.session.query(User).filter(User.user_uid == user_uid ).one_or_none()
+                user = (
+                    db.session.query(User)
+                    .filter(User.user_uid == user_uid)
+                    .one_or_none()
+                )
                 if user.is_active() is False:
                     return jsonify(message="INACTIVE_USER"), 403
 
         return login_required(f)(*args, **kwargs)
+
     return decorated_function
 
 
@@ -580,7 +596,6 @@ def update_profile():
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
-
         current_user.email = form.new_email.data
         db.session.commit()
 
@@ -622,7 +637,6 @@ def update_profile_avatar():
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate_on_submit():
-
         f = form.image.data
         user_provided_filename = secure_filename(f.filename)
         extension = os.path.splitext(user_provided_filename)[1]
@@ -653,7 +667,6 @@ def remove_profile_avatar():
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
-
         s3.delete_object(Bucket=S3_BUCKET_NAME, Key=current_user.avatar_s3_filekey)
 
         current_user.avatar_s3_filekey = None
@@ -686,7 +699,6 @@ def view_surveys():
 
     nested_results = []
     for survey, parent_form in result:
-
         # Find the index of the given survey in our nested_results list
         survey_index = next(
             (
@@ -711,7 +723,6 @@ def view_surveys():
 
         # We did a left join so we have to check that this survey has parent forms before appending
         if parent_form is not None:
-
             # Find the index of the given parent_form in our nested_results list
             parent_form_index = next(
                 (
@@ -772,7 +783,6 @@ def view_form(form_uid):
 
     nested_results = {}
     for parent_form, child_form, survey in parent_form_result:
-
         # The first time through the loop we need to populate the parent form information
         if not nested_results:
             nested_results = {
@@ -797,7 +807,6 @@ def view_form(form_uid):
             )
 
     for admin_form, survey in admin_form_result:
-
         nested_results["child_forms"].append(
             {
                 "form_type": admin_form.form_type,
@@ -878,7 +887,6 @@ def update_enumerator_status(enumerator_uid):
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
-
         surveyor_form = (
             db.session.query(SurveyorForm)
             .filter(
@@ -889,7 +897,6 @@ def update_enumerator_status(enumerator_uid):
         )
 
         if surveyor_form:
-
             survey_query = build_survey_query(form.form_uid.data)
 
             forms_in_survey_query = db.session.query(ParentForm.form_uid).filter(
@@ -914,7 +921,6 @@ def update_enumerator_status(enumerator_uid):
             # assignments for the surveyor
 
             if form.status.data == "Dropout":
-
                 survey_query = build_survey_query(form.form_uid.data)
 
                 # Add this query so as to capture who is deleting the Assignment
@@ -1122,9 +1128,7 @@ def update_assignments():
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
-
         for assignment in form.assignments.data:
-
             if assignment["enumerator_uid"] is not None:
                 # do upsert
                 statement = (
@@ -1146,7 +1150,6 @@ def update_assignments():
                 db.session.execute(statement)
                 db.session.commit()
             else:
-
                 db.session.query(SurveyorAssignment).filter(
                     SurveyorAssignment.target_uid == assignment["target_uid"]
                 ).update(
@@ -1179,21 +1182,24 @@ def view_table_config():
     """
     Returns the table definitions for the web flask_app tables
     """
+
     def is_excluded_supervisor(row, user_level):
         """
         Check if the table config row should be excluded because the supervisor is not at a child supervisor level for the logged in user
         """
         is_excluded_supervisor = False
-        
+
         try:
-            if row.column_key.split(".")[0] == "supervisors" and int(row.column_key.split(".")[1].split("_")[1]) <= user_level:
+            if (
+                row.column_key.split(".")[0] == "supervisors"
+                and int(row.column_key.split(".")[1].split("_")[1]) <= user_level
+            ):
                 is_excluded_supervisor = True
 
         except:
             pass
 
         return is_excluded_supervisor
-
 
     user_uid = current_user.user_uid
     form_uid = request.args.get("form_uid")
@@ -1217,17 +1223,19 @@ def view_table_config():
     }
 
     for row in result:
-
         if is_excluded_supervisor(row, user_level):
             pass
-        
+
         else:
             if row.group_label is None:
                 table_config[row.webapp_table_name].append(
                     {
                         "group_label": None,
                         "columns": [
-                            {"column_key": row.column_key, "column_label": row.column_label}
+                            {
+                                "column_key": row.column_key,
+                                "column_label": row.column_label,
+                            }
                         ],
                     }
                 )

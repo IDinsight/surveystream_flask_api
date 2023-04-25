@@ -17,7 +17,7 @@ services:
     image:  ${BACKEND_NAME}:${VERSION}
     restart: always
     environment:
-        - CONFIG_MODE=REMOTE_DEV
+        - CONFIG_MODE=TEST_E2E
         - REACT_BASE_URL=http://localhost:3000
         - PYTHONUNBUFFERED=0
         - S3_REGION=ap-south-1
