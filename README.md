@@ -31,9 +31,19 @@ With the backend running locally, navigate to localhost:5001/docs
 
 ## Testing the database connection
 
-Navigate your browser to:
-localhost:5001/api/docs
-
-### Testing the backend
-
 localhost:5001/api/healthcheck
+
+## Instructions for running end-to-end tests
+
+### Build the images
+
+The end-to-end tests require an image for the Flask app and an image for the test runner. These can be created with the following make commands:
+
+Flask app: `make image`
+Test runner: `make image-test-e2e`
+
+### Run the tests
+
+Once the images are built, the end-to-end tests can be run with the following command:
+
+`make run-test-e2e`
