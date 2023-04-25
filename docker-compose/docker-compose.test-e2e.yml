@@ -1,0 +1,39 @@
+version: '2.1'
+services:
+  postgres:
+    image: postgres:12 
+    restart: always
+    environment:
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=dod
+      - POSTGRES_DB=dod
+    volumes:
+      - ../tests/e2e/data/launch_local_db/data:/docker-entrypoint-initdb.d/data
+    ports:
+      - "5433:5433"
+    command:
+      -p 5433
+  api:
+    image:  ${BACKEND_NAME}:${VERSION}
+    restart: always
+    environment:
+        - CONFIG_MODE=REMOTE_DEV
+        - REACT_BASE_URL=http://localhost:3000
+        - PYTHONUNBUFFERED=0
+        - S3_REGION=ap-south-1
+        - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
+    ports:
+        - "${BACKEND_PORT}:${BACKEND_PORT}"
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
+  test:
+    image: ${TEST_RUNNER_NAME}:${VERSION}
+    environment:
+      - API_HOST=http://host.docker.internal
+      - API_PORT=${BACKEND_PORT}
+    depends_on:
+      - api
+      - postgres
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: dockerize -wait tcp://api:${BACKEND_PORT} -wait tcp://postgres:5433 -timeout 15m -wait-retry-interval 10s bash -c "pytest -o log_cli=True --show-capture=stdout -vv"
