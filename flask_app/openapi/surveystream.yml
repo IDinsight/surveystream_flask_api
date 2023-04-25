@@ -81,6 +81,9 @@ x-tagGroups:
     tags:
       - Surveys
       - Forms
+  - name: Module Selection
+    tags:
+      - Module Selection
   - name: Enumerators
     tags:
       - Enumerators
@@ -739,6 +742,225 @@ paths:
                   error:
                     type: string
                     example: Survey already exists
+  /modules:
+    get:
+      tags:
+        - Module Selection
+      summary: Get all modules
+      description: Get a list of all modules
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                description: Indicates if the request was successful
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    module_id:
+                      type: integer
+                      format: int64
+                      description: ID of the module
+                    name:
+                      type: string
+                      description: Name of the module
+                    optional:
+                      type: boolean
+                      description: Indicates if the module is optional
+        '404':
+          description: Not Found
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: Error message
+                example: No modules found.
+  /module_status:
+    post:
+      tags:
+        - Module Selection
+      summary: Add selected modules for a particular survey
+      description: Add selected modules for a particular survey, with a default config_status of `not started`.
+      requestBody:
+        description: JSON object containing survey ID and list of module IDs
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_id:
+                  type: integer
+                  description: ID of the survey to add module status for
+                modules:
+                  type: array
+                  description: List of module IDs
+                  example: [ 1,2,3 ]
+      responses:
+        '200':
+          description: Module added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates if the request was successful
+                    example: true
+                  message:
+                    type: string
+                    description: Module status added successfully
+                    example: { }
+        '400':
+          description: Invalid request body or missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates if the request was successful
+                    example: false
+                  message:
+                    type: string
+                    description: Error message
+                    example: "Both survey_id and modules are required."
+  /modules/{module_id}/status/{survey_uid}:
+    put:
+      tags:
+        - Module Selection
+      summary: Update status of a module for a specific survey
+      parameters:
+        - in: path
+          name: module_id
+          schema:
+            type: integer
+          required: true
+          description: The ID of the module to update the status for
+        - in: path
+          name: survey_uid
+          schema:
+            type: integer
+          required: true
+          description: The ID of the survey to update the status for
+        - in: body
+          name: status
+          description: The new status to set for the module
+          schema:
+            type: object
+            properties:
+              config_status:
+                type: string
+                enum: [ Done, In Progress, Not Started, Error ]
+          required: true
+      responses:
+        '200':
+          description: Successfully updated module status for survey
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    example:
+                      survey_uid: 1
+                      module_id: 2
+                      config_status: Done
+        '400':
+          description: Bad request. Either module_id or survey_uid or status missing in the request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Both module_id and survey_uid and status are required.
+        '404':
+          description: The requested module or survey was not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: The requested module or survey was not found
+  /module_status/{survey_uid}:
+    get:
+      tags:
+        - Module Selection
+      summary: Get module status for a survey
+      description: |
+        Returns the completion status of all modules for a given survey.
+        - `survey_uid`: ID of the survey for which to retrieve module status.
+        **Note**: If the survey ID is not found, a 404 error will be returned.
+      parameters:
+        - name: survey_uid
+          in: path
+          description: ID of the survey
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Returns the completion status of all modules for a given survey.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of modules and their completion status for the given survey
+                    items:
+                      type: object
+                      properties:
+                        module_id:
+                          type: integer
+                          description: ID of the module
+                        survey_uid:
+                          type: integer
+                          description: ID of the survey
+                        config_status:
+                          type: string
+                          description: Completion status of the module for the given survey
+                          enum: [ 'Done', 'In Progress', 'Not Started', 'Error' ]
+        '404':
+          description: The specified survey ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  message:
+                    type: string
+                    description: Error message indicating that the specified survey ID was not found.
   /forms/{form_uid}:
     get:
       summary: Get forms
