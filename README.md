@@ -40,10 +40,13 @@ localhost:5001/api/healthcheck
 The end-to-end tests require an image for the Flask app and an image for the test runner. These can be created with the following make commands:
 
 Flask app: `make image`
+
 Test runner: `make image-test-e2e`
 
 ### Run the tests
 
-Once the images are built, the end-to-end tests can be run with the following command:
+Once the images are built, the end-to-end tests can be run with the following commands:
+
+`make login`
 
 `make run-test-e2e`
