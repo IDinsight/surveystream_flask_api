@@ -14,18 +14,25 @@ ARG HOME_DIR=/usr/src/${NAME}
 # rely on dependencies) is practical for development and testing
 # but not suitable for production
 RUN apt-get update
-RUN apt-get -y install python3-dev postgresql postgresql-contrib python3-psycopg2 libpq-dev gcc g++
+RUN apt-get -y install python3-dev postgresql postgresql-contrib python3-psycopg2 libpq-dev gcc g++ jq
 
-COPY /requirements.txt /requirements.txt
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir awscli
+
+
+COPY requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 
 RUN useradd -ms /bin/bash -d ${HOME_DIR} container_user
 RUN chown -R container_user: ${HOME_DIR}
 
 WORKDIR ${HOME_DIR}
-COPY /flask_app ${HOME_DIR}/flask_app
+COPY app ${HOME_DIR}/app
 
-VOLUME ${HOME_DIR}/flask_app
+COPY scripts/entrypoint.sh /entrypoint.sh
+COPY scripts/bootstrap.sh /bootstrap.sh
+
+VOLUME ${HOME_DIR}/app
 
 ENV PORT ${PORT}
 ENV PYTHONPATH "${PYTHONPATH}:${HOME_DIR}"
@@ -33,4 +40,4 @@ EXPOSE ${PORT}
 
 USER container_user
 
-CMD ["gunicorn", "--chdir", "flask_app", "--timeout", "1000", "app:dod_app", "-b", "0.0.0.0:5001", "-k", "gevent"]
+ENTRYPOINT ["/bootstrap.sh", "/entrypoint.sh"]
