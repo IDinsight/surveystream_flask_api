@@ -1,0 +1,70 @@
+form_uid,webapp_table_name,group_label,column_label,column_key,column_order
+4,assignments_review,,Status,last_attempt_survey_status_label,5
+4,assignments_review,,HH ID Long,target_id,4
+4,assignments_review,,Block Name,custom_fields.block_name,3
+4,assignments_review,,Previously Assigned To,prev_assigned_to,2
+4,assignments_review,,Assigned To,assigned_enumerator_name,1
+4,assignments_surveyors,Total,Complete,total_complete_targets,9
+4,assignments_surveyors,Total,Pending,total_pending_targets,8
+4,assignments_surveyors,Main Form,Complete,form_productivity.agrifieldnet_main_form.total_complete,7
+4,assignments_surveyors,Main Form,Pending,form_productivity.agrifieldnet_main_form.total_pending,6
+4,assignments_surveyors,,Surveyor Status,surveyor_status,5
+4,assignments_surveyors,,Block,home_block,4
+4,assignments_surveyors,,Working District,locations.location_name_2,3
+4,assignments_surveyors,,Working State,locations.location_name_1,2
+4,assignments_surveyors,,Surveyor Name,enumerator_name,1
+4,assignments_main,,Revisit Sections,revisit_sections,10
+4,assignments_main,,Status,last_attempt_survey_status_label,9
+4,assignments_main,,HH Type,custom_fields.hh_type,8
+4,assignments_main,,Unique ID,target_id,7
+4,assignments_main,,Block Name,custom_fields.block_name,6
+4,assignments_main,,PS,locations.location_name_4,5
+4,assignments_main,,Block,locations.location_name_3,4
+4,assignments_main,,District,locations.location_name_2,3
+4,assignments_main,,State,locations.location_name_1,2
+4,assignments_main,,Surveyor Name,assigned_enumerator_name,1
+4,targets,Survey Status,Revisit Sections,revisit_sections,24
+4,targets,Survey Status,Status,last_attempt_survey_status_label,23
+4,targets,Respondent Details,Additional Family Members,custom_fields.hh_member,22
+4,targets,Respondent Details,Secondary Number,respondent_phone_secondary,21
+4,targets,Respondent Details,Primary Number,respondent_phone_primary,20
+4,targets,Respondent Details,Age,custom_fields.respondent_age,19
+4,targets,Respondent Details,Name,respondent_names,18
+4,targets,Target Details,HH Type,custom_fields.hh_type,17
+4,targets,Target Details,GPS,gps_latitude,16
+4,targets,Target Details,Address,address,15
+4,targets,Target Details,Unique ID,target_id,14
+4,targets,Target Details,Short ID,custom_fields.hhid_short,13
+4,targets,PS,ID,locations.location_id_4,12
+4,targets,PS,Name,locations.location_name_4,11
+4,targets,AC,ID,locations.location_id_3,10
+4,targets,AC,Name,locations.location_name_3,9
+4,targets,District,ID,locations.location_id_2,8
+4,targets,District,Name,locations.location_name_2,7
+4,targets,State,ID,locations.location_id_1,6
+4,targets,State,Name,locations.location_name_1,5
+4,targets,Cluster Coordinator,Email,supervisors.level_2.supervisor_email,4
+4,targets,Cluster Coordinator,Name,supervisors.level_2.supervisor_name,3
+4,targets,Regional Coordinator,Email,supervisors.level_1.supervisor_email,2
+4,targets,Regional Coordinator,Name,supervisors.level_1.supervisor_name,1
+4,surveyors,Main Form,Complete,form_productivity.agrifieldnet_main_form.total_complete,21
+4,surveyors,Main Form,Assigned,form_productivity.agrifieldnet_main_form.total_assigned,20
+4,surveyors,,Active Forms,forms,19
+4,surveyors,Phone Numbers,Secondary,phone_secondary,18
+4,surveyors,Phone Numbers,Primary,phone_primary,17
+4,surveyors,Personal Details,Gender,gender,16
+4,surveyors,Personal Details,Language,language,15
+4,surveyors,Personal Details,Email,email,14
+4,surveyors,Working Geography,District,locations.location_name_2,13
+4,surveyors,Working Geography,State,locations.location_name_1,12
+4,surveyors,Home Geography,Address,home_address,11
+4,surveyors,Home Geography,Block,home_block,10
+4,surveyors,Home Geography,District,home_district,9
+4,surveyors,Home Geography,State,home_state,8
+4,surveyors,Cluster Coordinator,Email,supervisors.level_2.supervisor_email,7
+4,surveyors,Cluster Coordinator,Name,supervisors.level_2.supervisor_name,6
+4,surveyors,Regional Coordinator,Email,supervisors.level_1.supervisor_email,5
+4,surveyors,Regional Coordinator,Name,supervisors.level_1.supervisor_name,4
+4,surveyors,,Status,status,3
+4,surveyors,,Surveyor ID,enumerator_id,2
+4,surveyors,,Name,name,1

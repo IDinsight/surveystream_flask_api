@@ -35,6 +35,14 @@ localhost:5001/api/healthcheck
 
 ## Instructions for running end-to-end tests
 
+### Update configuration values for the tests
+
+The tests can be configured by updating the values found in `tests/e2e/config.yml`:
+
+`email` (string) - The email address to set for the test user. Updating this value will let you customize where emails will be sent for the relevant tests (`forgot-password`, `welcome-user`, etc). You will need to manually check receipt of the emails.
+
+`run_slow_tests` (bool) - Whether to run test cases that have been marked as "slow". Setting this value to True will run the whole test suite which takes roughly an hour. 
+
 ### Build the images
 
 The end-to-end tests require an image for the Flask app and an image for the test runner. These can be created with the following make commands:
@@ -44,6 +52,7 @@ Test runner: `make image-test-e2e`
 
 ### Run the tests
 
-Once the images are built, the end-to-end tests can be run with the following command:
+Once the images are built, the end-to-end tests can be run with the following commands:
 
+`make login`
 `make run-test-e2e`
