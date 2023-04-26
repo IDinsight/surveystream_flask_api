@@ -33,4 +33,4 @@ EXPOSE ${PORT}
 
 USER container_user
 
-CMD ["gunicorn", "--chdir", "flask_app", "--timeout", "1000", "app:dod_app", "-b", "0.0.0.0:5001"]
+CMD ["gunicorn", "--chdir", "flask_app", "--timeout", "1000", "app:dod_app", "-b", "0.0.0.0:5001", "-k", "gevent"]
