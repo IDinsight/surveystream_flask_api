@@ -78,6 +78,9 @@ def test_assignments_response(base_url, client, login_test_user):
 
 
 def test_surveyor_status_update(base_url, client, login_test_user):
+    """
+    Check updating a surveyor's status and confirm that only allowed statuses work
+    """
     form_uid = 4
     enumerator_uid = 1311
     statuses_to_check = [
@@ -120,6 +123,9 @@ def test_surveyor_status_update(base_url, client, login_test_user):
 
 @pytest.mark.slow
 def test_assignments_update(base_url, client, login_test_user):
+    """
+    Check that assigning, reassigning, and deleting assignments works as expected
+    """
     form_uid = 4
     target_uids = [
         5297,
@@ -293,6 +299,9 @@ def test_assignments_update(base_url, client, login_test_user):
 
 @pytest.mark.slow
 def test_surveyor_dropout_assignments_release(base_url, client, login_test_user):
+    """
+    Check that marking a surveyor as dropout releases their assignments
+    """
     form_uid = 4
     target_uids = [
         5297,

@@ -1,5 +1,7 @@
 def test_healthcheck(base_url, client):
-    # Check healthcheck endpoint response
+    """
+    Check healthcheck endpoint response
+    """
 
     response = client.get(f"{base_url}/api/healthcheck")
 
