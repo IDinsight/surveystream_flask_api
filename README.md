@@ -48,6 +48,7 @@ The tests can be configured by updating the values found in `tests/e2e/config.ym
 The end-to-end tests require an image for the Flask app and an image for the test runner. These can be created with the following make commands:
 
 Flask app: `make image`
+
 Test runner: `make image-test-e2e`
 
 ### Run the tests
@@ -55,4 +56,5 @@ Test runner: `make image-test-e2e`
 Once the images are built, the end-to-end tests can be run with the following commands:
 
 `make login`
+
 `make run-test-e2e`
