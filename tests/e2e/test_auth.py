@@ -2,7 +2,6 @@ from utils import (
     login,
     try_logout,
     set_user_active_status,
-    get_surveys,
     register_user,
     welcome_user,
     forgot_password,
@@ -12,8 +11,10 @@ from utils import (
 def test_login_active_logged_out_user_correct_password(
     base_url, test_user_credentials, client
 ):
-    # Known user; correct PASSWORD; active; currently logged out
-    # Expected behavior: 200 success
+    """
+    Known user; correct PASSWORD; active; currently logged out
+    Expected behavior: 200 success
+    """
 
     set_user_active_status(test_user_credentials["email"], active=True)
 
@@ -29,8 +30,10 @@ def test_login_active_logged_out_user_correct_password(
 def test_login_active_logged_in_user_correct_password(
     base_url, test_user_credentials, client
 ):
-    # Known user; correct PASSWORD; active; currently logged in
-    # Expected behavior: 200 success
+    """
+    Known user; correct PASSWORD; active; currently logged in
+    Expected behavior: 200 success
+    """
 
     set_user_active_status(test_user_credentials["email"], active=True)
 
@@ -53,8 +56,10 @@ def test_login_active_logged_in_user_correct_password(
 def test_login_inactive_logged_out_user_correct_password(
     base_url, test_user_credentials, client
 ):
-    # Known user; correct PASSWORD; inactive; currently logged out
-    # Expected behavior: 403 unauthorized
+    """
+    Known user; correct PASSWORD; inactive; currently logged out
+    Expected behavior: 403 unauthorized
+    """
 
     set_user_active_status(test_user_credentials["email"], active=False)
 
@@ -71,8 +76,10 @@ def test_login_inactive_logged_out_user_correct_password(
 def test_login_inactive_logged_in_user_correct_password(
     base_url, test_user_credentials, client
 ):
-    # Known user; correct PASSWORD; inactive; currently logged in
-    # Expected behavior: 401 unauthorized
+    """
+    Known user; correct PASSWORD; inactive; currently logged in
+    Expected behavior: 401 unauthorized
+    """
 
     response = login(
         client,
@@ -97,8 +104,10 @@ def test_login_inactive_logged_in_user_correct_password(
 def test_login_active_logged_out_user_incorrect_password(
     base_url, test_user_credentials, client
 ):
-    # Known user; incorrect PASSWORD; active; currently logged out
-    # Expected behavior: 401 unauthorized
+    """
+    Known user; incorrect PASSWORD; active; currently logged out
+    Expected behavior: 401 unauthorized
+    """
 
     set_user_active_status(test_user_credentials["email"], active=True)
 
@@ -115,9 +124,11 @@ def test_login_active_logged_out_user_incorrect_password(
 def test_login_active_logged_in_user_incorrect_password(
     base_url, test_user_credentials, client
 ):
-    # Known user; incorrect PASSWORD; active; currently logged in
-    # Expected behavior: 401 unauthorized
-    # Note: but we aren't actually logging the user out in this case so we need to test if they can still access protected endpoints
+    """
+    Known user; incorrect PASSWORD; active; currently logged in
+    Expected behavior: 401 unauthorized
+    Note: but we aren't actually logging the user out in this case so we need to test if they can still access protected endpoints
+    """
 
     set_user_active_status(test_user_credentials["email"], active=True)
 
@@ -138,15 +149,19 @@ def test_login_active_logged_in_user_incorrect_password(
 
 
 def test_login_unknown_user(base_url, client):
-    # Unknown user
-    # Expected behavior: 401 unauthorized
+    """
+    Unknown user
+    Expected behavior: 401 unauthorized
+    """
 
     response = login(client, base_url, "someuser", "somepassword")
     assert response.status_code == 401
 
 
 def test_protected_endpoint_logged_out_user(base_url, client):
-    # Verify protected endpoints don't work if user is not logged in
+    """
+    Verify protected endpoints don't work if user is not logged in
+    """
 
     response = client.get(f"{base_url}/api/surveys_list")
     assert response.status_code == 401
@@ -155,7 +170,9 @@ def test_protected_endpoint_logged_out_user(base_url, client):
 def test_protected_endpoint_inactive_logged_in_user(
     base_url, test_user_credentials, client
 ):
-    # Verify logged in inactive user cannot access protected endpoints
+    """
+    Verify logged in inactive user cannot access protected endpoints
+    """
 
     response = login(
         client,
@@ -175,7 +192,7 @@ def test_protected_endpoint_inactive_logged_in_user(
 def test_register_new_user_with_non_registration_user(
     base_url, test_user_credentials, client
 ):
-    # Verify register endpoint doesn't work for non-registration user
+    """Verify register endpoint doesn't work for non-registration user"""
 
     login(
         client,
@@ -190,7 +207,9 @@ def test_register_new_user_with_non_registration_user(
 def test_register_new_user_with_registration_user(
     base_url, registration_user_credentials, client
 ):
-    # Verify register endpoint creates an active user
+    """
+    Verify register endpoint creates an active user
+    """
 
     new_user_email = "pytestuser@asdf.com"
     new_user_password = "asdfasdf"
@@ -212,7 +231,9 @@ def test_register_new_user_with_registration_user(
 def test_welcome_user_with_non_registration_user(
     base_url, test_user_credentials, client
 ):
-    # Verify welcome endpoint doesn't work for non-registration user
+    """
+    Verify welcome endpoint doesn't work for non-registration user
+    """
 
     login(
         client,
@@ -227,8 +248,10 @@ def test_welcome_user_with_non_registration_user(
 def test_welcome_user_with_registration_user(
     base_url, test_user_credentials, registration_user_credentials, client
 ):
-    # Verify welcome endpoint sends an email
-    # Expecting 200 but need to manually verify if email is received
+    """
+    Verify welcome endpoint sends an email
+    Expecting 200 but need to manually verify if email is received
+    """
 
     login(
         client,
@@ -241,9 +264,10 @@ def test_welcome_user_with_registration_user(
 
 
 def test_forgot_password_email(base_url, test_user_credentials, client):
-    # Test 13
-    # Checking whether email is being sent. Will use the forgot password endpoint
-    # Expecting 200 but need to manually verify if email is received
+    """
+    Checking whether email is being sent. Will use the forgot password endpoint
+    Expecting 200 but need to manually verify if email is received
+    """
 
     response = forgot_password(client, base_url, test_user_credentials["email"])
     assert response.status_code == 200

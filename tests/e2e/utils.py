@@ -19,6 +19,9 @@ def get_csrf_header(ses, app_url):
 
 
 def login(ses, app_url, email, password):
+    """
+    Log a user into the app
+    """
     login_url = f"{app_url}/api/login"
     request_body = {"email": email, "password": password}
     csrf_header = get_csrf_header(ses, app_url)
@@ -27,6 +30,9 @@ def login(ses, app_url, email, password):
 
 
 def try_logout(client, app_url):
+    """
+    Try logging out a user and capture errors if they aren't logged in
+    """
     try:
         logout(client, app_url)
         client.cookies.clear()
@@ -35,19 +41,19 @@ def try_logout(client, app_url):
 
 
 def logout(ses, app_url):
+    """
+    Log a user out of the app
+    """
     logout_url = f"{app_url}/api/logout"
     csrf_header = get_csrf_header(ses, app_url)
     response = ses.post(logout_url, headers=csrf_header)
     return response
 
 
-def get_surveys(ses, app_url):
-    endpoint_url = f"{app_url}/api/surveys"
-    response = ses.get(endpoint_url)
-    return response
-
-
 def upload_avatar(ses, app_url):
+    """
+    Upload a profile image using the API endpoint
+    """
     endpoint_url = f"{app_url}/api/profile/avatar"
     filename = "avatar.png"
     filepath = "data/images/airflow.png"
@@ -62,6 +68,9 @@ def upload_avatar(ses, app_url):
 
 
 def remove_avatar(ses, app_url):
+    """
+    Remove a profile image using the API endpoint
+    """
     endpoint_url = f"{app_url}/api/profile/avatar/remove"
     csrf_header = get_csrf_header(ses, app_url)
     response = ses.post(endpoint_url, headers=csrf_header)
@@ -69,12 +78,18 @@ def remove_avatar(ses, app_url):
 
 
 def get_avatar(ses, app_url):
+    """
+    Get a profile image using the API endpoint
+    """
     endpoint_url = f"{app_url}/api/profile/avatar"
     response = ses.get(endpoint_url)
     return response
 
 
 def register_user(ses, app_url, username, password):
+    """
+    Register a new user using the API endpoint
+    """
     endpoint_url = f"{app_url}/api/register"
     request_body = {"email": username, "password": password}
     csrf_header = get_csrf_header(ses, app_url)
@@ -82,33 +97,10 @@ def register_user(ses, app_url, username, password):
     return response
 
 
-def set_test_user_details(user_uid, email, pw_hash):
-    conn = get_local_db_conn()
-    cur = conn.cursor()
-
-    cur.execute(
-        "UPDATE users SET email=%s, password_secure=%s WHERE user_uid=%s",
-        (email, pw_hash, user_uid),
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
-
-
-def set_registration_user_details(email, pw_hash):
-    conn = get_local_db_conn()
-    cur = conn.cursor()
-
-    cur.execute(
-        "INSERT INTO users (email, password_secure) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-        (email, pw_hash),
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
-
-
 def set_user_active_status(email, active):
+    """
+    Set a user's active status directly in the database. Needed to set up certain tests.
+    """
     conn = get_local_db_conn()
     cur = conn.cursor()
     if active is True or active is False:
@@ -126,58 +118,10 @@ def set_user_active_status(email, active):
     conn.close()
 
 
-def delete_user(email):
-    conn = get_local_db_conn()
-    cur = conn.cursor()
-
-    cur.execute("DELETE FROM users WHERE email=%s", (email,))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-
-def get_user_secret(user):
-    return json.loads(get_aws_secret(f"dod-surveystream-{user}", "ap-south-1"))
-
-
-def get_aws_secret(secret_name, region_name):
-    """
-    Function to get secrets from the aws secrets manager
-
-    """
-
-    # Create a Secrets Manager client
-    session = boto3.session.Session()
-    client = session.client(service_name="secretsmanager", region_name=region_name)
-    secret = None
-    # Retrieve secret
-    try:
-        secret_value_response = client.get_secret_value(SecretId=secret_name)
-
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "DecryptionFailureException":
-            raise e
-        elif e.response["Error"]["Code"] == "InternalServiceErrorException":
-            raise e
-        elif e.response["Error"]["Code"] == "InvalidParameterException":
-            raise e
-        elif e.response["Error"]["Code"] == "InvalidRequestException":
-            raise e
-        elif e.response["Error"]["Code"] == "ResourceNotFoundException":
-            raise e
-        else:
-            raise e
-    else:
-        # Decrypt secret using the associated KMS CMK
-        if "SecretString" in secret_value_response:
-            secret = secret_value_response["SecretString"]
-        else:
-            secret = base64.b64decode(secret_value_response["SecretBinary"])
-
-    return secret
-
-
 def get_local_db_conn():
+    """
+    Get a connection for the local database
+    """
     PG_ENDPOINT = "host.docker.internal"
     PG_DATABASE = "dod"
     PG_USERNAME = "test_user"
@@ -196,6 +140,9 @@ def get_local_db_conn():
 
 
 def forgot_password(ses, app_url, email):
+    """
+    Trigger a forgot password email using the API endpoint
+    """
     endpoint_url = f"{app_url}/api/forgot-password"
     request_body = {"email": email}
     csrf_header = get_csrf_header(ses, app_url)
@@ -204,6 +151,9 @@ def forgot_password(ses, app_url, email):
 
 
 def welcome_user(ses, app_url, email):
+    """
+    Trigger a welcome user email using the API endpoint
+    """
     endpoint_url = f"{app_url}/api/welcome-user"
     request_body = {"email": email}
     csrf_header = get_csrf_header(ses, app_url)
@@ -212,6 +162,9 @@ def welcome_user(ses, app_url, email):
 
 
 def change_password(ses, app_url, old_password, new_password, confirm_new_password):
+    """
+    Change a logged in user's password using the API endpoint
+    """
     endpoint_url = f"{app_url}/api/change-password"
     request_body = {
         "cur_password": old_password,
@@ -224,6 +177,9 @@ def change_password(ses, app_url, old_password, new_password, confirm_new_passwo
 
 
 def update_profile(ses, app_url, new_email):
+    """
+    Update a user's email using the API endpoint
+    """
     endpoint_url = f"{app_url}/api/profile"
     request_body = {"new_email": new_email}
     csrf_header = get_csrf_header(ses, app_url)
@@ -232,6 +188,9 @@ def update_profile(ses, app_url, new_email):
 
 
 def delete_assignments(form_uid):
+    """
+    Delete all assignments directly in the database. Required as setup for certain tests.
+    """
     conn = get_local_db_conn()
     cur = conn.cursor()
 
@@ -246,6 +205,9 @@ def delete_assignments(form_uid):
 
 
 def assign_targets(ses, app_url, assignments_payload):
+    """
+    Assign targets to enumerators using the API endpoint
+    """
     endpoint_url = f"{app_url}/api/assignments"
     request_body = assignments_payload
     csrf_header = get_csrf_header(ses, app_url)
@@ -254,6 +216,9 @@ def assign_targets(ses, app_url, assignments_payload):
 
 
 def update_surveyor_status(ses, app_url, enumerator_uid, form_uid, status):
+    """
+    Update a surveyor's status using the API endpoint
+    """
     endpoint_url = f"{app_url}/api/enumerators/{enumerator_uid}"
     request_body = {"form_uid": form_uid, "status": status}
     csrf_header = get_csrf_header(ses, app_url)
@@ -262,6 +227,9 @@ def update_surveyor_status(ses, app_url, enumerator_uid, form_uid, status):
 
 
 def reset_surveyor_status(enumerator_uid, form_uid, status):
+    """
+    Set a surveyor's status directly in the database. Required as setup for certain tests.
+    """
     conn = get_local_db_conn()
     cur = conn.cursor()
 
@@ -276,6 +244,9 @@ def reset_surveyor_status(enumerator_uid, form_uid, status):
 
 
 def load_reference_data(filename_stub):
+    """
+    Load a reference json file
+    """
     with open(f"data/prepared_json_responses/{filename_stub}") as json_file:
         reference_data = json.load(json_file)
 

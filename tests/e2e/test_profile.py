@@ -13,7 +13,9 @@ from utils import (
 
 
 def test_change_password(base_url, test_user_credentials, client, login_test_user):
-    # Check the change-password endpoint
+    """
+    Check the change-password endpoint
+    """
 
     new_password = "newpassword"
 
@@ -39,7 +41,9 @@ def test_change_password(base_url, test_user_credentials, client, login_test_use
 def test_change_password_mismatch(
     base_url, test_user_credentials, client, login_test_user
 ):
-    # Check the change-password endpoint
+    """
+    Check the change-password endpoint for a mismatched password
+    """
 
     new_password = "newpassword"
     mismatch_password = "newpassword_mismatch"
@@ -55,7 +59,9 @@ def test_change_password_mismatch(
 
 
 def test_change_password_wrong_current_password(base_url, client, login_test_user):
-    # Check the change-password endpoint
+    """
+    Check the change-password endpoint for a wrong current password
+    """
 
     wrong_current_password = "wrongpassword"
     new_password = "newpassword"
@@ -67,7 +73,9 @@ def test_change_password_wrong_current_password(base_url, client, login_test_use
 
 
 def test_avatar_workflow(base_url, client, login_test_user):
-    # Check the methods for uploading, reading, and deleting the profile avatar
+    """
+    Check the methods for uploading, reading, and deleting the profile avatar
+    """
 
     response = upload_avatar(client, base_url)
     assert response.status_code == 200
@@ -88,7 +96,9 @@ def test_avatar_workflow(base_url, client, login_test_user):
 
 
 def test_profile_response(base_url, client, login_test_user, test_user_credentials):
-    # Check profile endpoint response
+    """
+    Check profile endpoint response
+    """
 
     response = client.get(f"{base_url}/api/profile")
     assert response.status_code == 200
@@ -102,6 +112,9 @@ def test_profile_response(base_url, client, login_test_user, test_user_credentia
 
 
 def test_profile_update(base_url, client, login_test_user):
+    """
+    Check updating the user's email
+    """
     new_email = "new_email@email.com"
 
     response = update_profile(client, base_url, new_email)
