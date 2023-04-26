@@ -57,4 +57,4 @@ Once the images are built, the end-to-end tests can be run with the following co
 
 `make login`
 
-`make run-test-e2e`
+`make -i run-test-e2e` (note the `-i` flag will ensure the container cleanup happens even if some of the tests fail)
