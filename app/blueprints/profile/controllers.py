@@ -1,4 +1,4 @@
-from . import profile_blueprint
+from . import profile_bp
 import os
 from app.utils import logged_in_active_user_required
 from werkzeug.utils import secure_filename
@@ -13,14 +13,9 @@ from app.models.form_models import (
 import boto3
 
 
-##############################################################################
-# USER PROFILE
-##############################################################################
-
-
-@profile_blueprint.route("/api/profile", methods=["GET"])
+@profile_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-def view_profile():
+def get_profile():
     """
     Returns the profile of the logged in user
     """
@@ -38,7 +33,7 @@ def view_profile():
     return jsonify(final_result)
 
 
-@profile_blueprint.route("/api/profile", methods=["PATCH"])
+@profile_bp.route("", methods=["PATCH"])
 @logged_in_active_user_required
 def update_profile():
     """
@@ -52,7 +47,6 @@ def update_profile():
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
-
         current_user.email = form.new_email.data
         db.session.commit()
 
@@ -62,9 +56,9 @@ def update_profile():
         return jsonify(message=form.errors), 422
 
 
-@profile_blueprint.route("/api/profile/avatar", methods=["GET"])
+@profile_bp.route("/avatar", methods=["GET"])
 @logged_in_active_user_required
-def view_profile_avatar():
+def get_profile_avatar():
     """
     Returns a presigned url for the profile avatar image of the logged in user
     """
@@ -88,7 +82,7 @@ def view_profile_avatar():
     return jsonify(final_result)
 
 
-@profile_blueprint.route("/api/profile/avatar", methods=["PUT"])
+@profile_bp.route("/avatar", methods=["PUT"])
 @logged_in_active_user_required
 def update_profile_avatar():
     """
@@ -102,7 +96,6 @@ def update_profile_avatar():
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate_on_submit():
-
         f = form.image.data
         user_provided_filename = secure_filename(f.filename)
         extension = os.path.splitext(user_provided_filename)[1]
@@ -121,7 +114,7 @@ def update_profile_avatar():
         return jsonify(message=form.errors), 422
 
 
-@profile_blueprint.route("/api/profile/avatar/remove", methods=["POST"])
+@profile_bp.route("/avatar/remove", methods=["POST"])
 @logged_in_active_user_required
 def remove_profile_avatar():
     """
@@ -135,7 +128,6 @@ def remove_profile_avatar():
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
-
         boto3.client("s3", current_app.config["AWS_REGION"]).delete_object(
             Bucket=current_app.config["S3_BUCKET_NAME"],
             Key=current_user.avatar_s3_filekey,

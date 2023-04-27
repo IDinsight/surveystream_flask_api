@@ -1,5 +1,3 @@
-from flask import Blueprint
-
-assignments_blueprint = Blueprint("assignments", __name__)
+from .routes import assignments_bp
 
 from . import controllers

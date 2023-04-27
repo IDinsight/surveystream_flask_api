@@ -1,17 +1,12 @@
-from . import docs_blueprint
+from . import docs_bp
 from app.utils import logged_in_active_user_required
 from flask import render_template
 import yaml
 
 
-##############################################################################
-# API DOCS
-##############################################################################
-
-
-@docs_blueprint.route("/api/docs", methods=["GET"])
+@docs_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-def docs():
+def view_docs():
     """
     Serve the API spec
     """

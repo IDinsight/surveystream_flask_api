@@ -1,5 +1,3 @@
-from flask import Blueprint
-
-targets_blueprint = Blueprint("targets", __name__)
+from .routes import targets_bp
 
 from . import controllers

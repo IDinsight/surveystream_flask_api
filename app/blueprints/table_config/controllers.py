@@ -1,4 +1,4 @@
-from . import misc_blueprint
+from . import table_config_bp
 from app.utils import logged_in_active_user_required
 from flask import jsonify, request
 from flask_login import current_user
@@ -10,31 +10,9 @@ from app.queries.helper_queries import (
 from app.models.data_models import TableConfig
 
 
-##############################################################################
-# INTERNAL ENDPOINTS
-##############################################################################
-
-
-@misc_blueprint.route("/api/healthcheck", methods=["GET"])
-def healthcheck():
-    """
-    Check if app can connect to DB
-    """
-    try:
-        db.session.execute("SELECT 1;")
-        return jsonify(message="Healthy"), 200
-    except:
-        return jsonify(message="Failed DB connection"), 500
-
-
-##############################################################################
-# TABLE DEFINITIONS
-##############################################################################
-
-
-@misc_blueprint.route("/api/table-config", methods=["GET"])
+@table_config_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-def view_table_config():
+def get_table_config():
     """
     Returns the table definitions for the web app tables
     """
@@ -79,7 +57,6 @@ def view_table_config():
     }
 
     for row in result:
-
         if is_excluded_supervisor(row, user_level):
             pass
 

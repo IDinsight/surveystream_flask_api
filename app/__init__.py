@@ -7,6 +7,7 @@ for different environments based on the value of the CONFIG_TYPE environment var
 import os
 from flask_mail import Mail
 import logging.config
+import wtforms_json
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, jsonify
 from flask_login import LoginManager
@@ -20,6 +21,7 @@ from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 db = SQLAlchemy()
 mail = Mail()
 login_manager = LoginManager()
+wtforms_json.init()
 
 
 ### Application Factory ###
@@ -70,26 +72,31 @@ def create_app():
 
 ### Helper Functions ###
 def register_blueprints(app):
-    from app.blueprints.assignments import assignments_blueprint
-    from app.blueprints.auth import auth_blueprint
-    from app.blueprints.docs import docs_blueprint
-    from app.blueprints.enumerators import enumerators_blueprint
-    from app.blueprints.misc import misc_blueprint
-    from app.blueprints.profile import profile_blueprint
-    from app.blueprints.survey_forms import survey_forms_blueprint
-    from app.blueprints.targets import targets_blueprint
-    from app.blueprints.surveys import surveys_blueprint
+    from app.blueprints.assignments import assignments_bp
+    from app.blueprints.auth import auth_bp
+    from app.blueprints.user_management import user_management_bp
+    from app.blueprints.docs import docs_bp
+    from app.blueprints.enumerators import enumerators_bp
+    from app.blueprints.healthcheck import healthcheck_bp
+    from app.blueprints.table_config import table_config_bp
+    from app.blueprints.profile import profile_bp
+    from app.blueprints.surveys_list import surveys_list_bp
+    from app.blueprints.forms import forms_bp
+    from app.blueprints.targets import targets_bp
+    from app.blueprints.surveys import surveys_bp
 
-    app.register_blueprint(assignments_blueprint)
-    app.register_blueprint(auth_blueprint)
-    app.register_blueprint(docs_blueprint)
-    app.register_blueprint(enumerators_blueprint)
-    app.register_blueprint(misc_blueprint)
-    app.register_blueprint(profile_blueprint)
-    app.register_blueprint(survey_forms_blueprint)
-    app.register_blueprint(targets_blueprint)
-
-    app.register_blueprint(surveys_blueprint)
+    app.register_blueprint(assignments_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(user_management_bp)
+    app.register_blueprint(docs_bp)
+    app.register_blueprint(enumerators_bp)
+    app.register_blueprint(healthcheck_bp)
+    app.register_blueprint(table_config_bp)
+    app.register_blueprint(profile_bp)
+    app.register_blueprint(surveys_list_bp)
+    app.register_blueprint(forms_bp)
+    app.register_blueprint(targets_bp)
+    app.register_blueprint(surveys_bp)
 
 
 def register_error_handlers(app):

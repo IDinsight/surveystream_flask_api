@@ -12,7 +12,7 @@ from utils import (
 def test_surveys_list_response(base_url, client, login_test_user):
     # Check surveys endpoint response
 
-    response = client.get(f"{base_url}/api/surveys_list")
+    response = client.get(f"{base_url}/api/surveys-list")
     assert response.status_code == 200
 
     checkdiff = jsondiff.diff(load_reference_data("surveys_list.json"), response.json())

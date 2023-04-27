@@ -1,5 +1,3 @@
-from flask import Blueprint
-
-profile_blueprint = Blueprint("profile", __name__)
+from .routes import profile_bp
 
 from . import controllers

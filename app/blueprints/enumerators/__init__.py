@@ -1,5 +1,3 @@
-from flask import Blueprint
-
-enumerators_blueprint = Blueprint("enumerators", __name__)
+from .routes import enumerators_bp
 
 from . import controllers

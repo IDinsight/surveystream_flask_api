@@ -1,18 +1,13 @@
-from . import targets_blueprint
+from . import targets_bp
 from app.utils import logged_in_active_user_required
 from flask import jsonify, request
 from flask_login import current_user
 from app.queries.method_level_queries import build_get_targets_query
 
 
-##############################################################################
-# TARGETS
-##############################################################################
-
-
-@targets_blueprint.route("/api/targets", methods=["GET"])
+@targets_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-def view_targets():
+def get_targets():
     """
     Returns list of targets for a user
     """

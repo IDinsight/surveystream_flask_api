@@ -1,4 +1,4 @@
-from . import assignments_blueprint
+from . import assignments_bp
 from app.utils import concat_names, safe_get_dict_value, logged_in_active_user_required
 from flask import jsonify, request
 from flask_login import current_user
@@ -12,7 +12,7 @@ from app.models.data_models import SurveyorAssignment
 from app.models.form_models import UpdateSurveyorAssignmentsForm
 
 
-@assignments_blueprint.route("/api/assignments", methods=["GET"])
+@assignments_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 def view_assignments():
     """
@@ -116,7 +116,7 @@ def view_assignments():
     return jsonify(final_result)
 
 
-@assignments_blueprint.route("/api/assignments", methods=["PUT"])
+@assignments_bp.route("", methods=["PUT"])
 @logged_in_active_user_required
 def update_assignments():
     """
@@ -130,9 +130,7 @@ def update_assignments():
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
-
         for assignment in form.assignments.data:
-
             if assignment["enumerator_uid"] is not None:
                 # do upsert
                 statement = (
@@ -154,7 +152,6 @@ def update_assignments():
                 db.session.execute(statement)
                 db.session.commit()
             else:
-
                 db.session.query(SurveyorAssignment).filter(
                     SurveyorAssignment.target_uid == assignment["target_uid"]
                 ).update(

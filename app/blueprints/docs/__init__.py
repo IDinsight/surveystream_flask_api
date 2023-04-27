@@ -1,5 +1,3 @@
-from flask import Blueprint
-
-docs_blueprint = Blueprint("docs", __name__)
+from .routes import docs_bp
 
 from . import views

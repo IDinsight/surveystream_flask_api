@@ -2,9 +2,6 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import IntegerField, PasswordField, StringField, FieldList, FormField
 from wtforms.validators import DataRequired, EqualTo
-import wtforms_json
-
-wtforms_json.init()
 
 
 class LoginForm(FlaskForm):

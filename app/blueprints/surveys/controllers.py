@@ -1,11 +1,11 @@
-from flask import Blueprint, jsonify, request
+from flask import jsonify, request
 from sqlalchemy.exc import IntegrityError
 from app import db
 from .models import Survey
-from .routes import surveys_blueprint
+from .routes import surveys_bp
 
 
-@surveys_blueprint.route("", methods=["GET"])
+@surveys_bp.route("", methods=["GET"])
 def get_all_surveys():
     # /surveys will return all surveys
     # /surveys?user_uid=1 will return surveys created by user with user_uid=1
@@ -25,7 +25,7 @@ def get_all_surveys():
     return jsonify(response), 200
 
 
-@surveys_blueprint.route("", methods=["POST"])
+@surveys_bp.route("", methods=["POST"])
 def create_survey():
     data = request.get_json()
     survey = Survey(**data)
@@ -49,7 +49,7 @@ def create_survey():
     )
 
 
-@surveys_blueprint.route("/<survey_id>", methods=["GET"])
+@surveys_bp.route("/<survey_id>", methods=["GET"])
 def get_survey(survey_id):
     survey = Survey.query.filter_by(survey_id=survey_id).first()
     if survey is None:
@@ -57,7 +57,7 @@ def get_survey(survey_id):
     return jsonify(survey.to_dict())
 
 
-@surveys_blueprint.route("/<survey_id>", methods=["PUT"])
+@surveys_bp.route("/<survey_id>", methods=["PUT"])
 def update_survey(survey_id):
     survey = Survey.query.filter_by(survey_id=survey_id).first()
     if survey is None:
@@ -68,7 +68,7 @@ def update_survey(survey_id):
     return jsonify(survey.to_dict())
 
 
-@surveys_blueprint.route("/<survey_id>", methods=["DELETE"])
+@surveys_bp.route("/<survey_id>", methods=["DELETE"])
 def delete_survey(survey_id):
     survey = Survey.query.filter_by(survey_id=survey_id).first()
     if survey is None:

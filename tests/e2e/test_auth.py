@@ -163,7 +163,7 @@ def test_protected_endpoint_logged_out_user(base_url, client):
     Verify protected endpoints don't work if user is not logged in
     """
 
-    response = client.get(f"{base_url}/api/surveys_list")
+    response = client.get(f"{base_url}/api/surveys-list")
     assert response.status_code == 401
 
 
@@ -184,7 +184,7 @@ def test_protected_endpoint_inactive_logged_in_user(
 
     set_user_active_status(test_user_credentials["email"], active=False)
 
-    response = client.get(f"{base_url}/api/surveys_list")
+    response = client.get(f"{base_url}/api/surveys-list")
 
     assert response.status_code == 403
 

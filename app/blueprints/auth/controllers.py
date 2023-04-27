@@ -1,4 +1,4 @@
-from . import auth_blueprint
+from . import auth_bp
 from datetime import timedelta
 from app.utils import logged_in_active_user_required
 from flask import jsonify, request, current_app, make_response
@@ -11,8 +11,6 @@ from app.models.data_models import ResetPasswordToken, User
 from app.models.form_models import (
     ChangePasswordForm,
     ForgotPasswordForm,
-    RegisterForm,
-    WelcomeUserForm,
     LoginForm,
     ResetPasswordForm,
 )
@@ -23,7 +21,7 @@ from app.models.form_models import (
 ##############################################################################
 
 
-@auth_blueprint.route("/api/get-csrf", methods=["GET"])
+@auth_bp.route("/get-csrf", methods=["GET"])
 def set_xsrf_cookie():
     """
     Sets CSRF-TOKEN cookie
@@ -33,38 +31,7 @@ def set_xsrf_cookie():
     return response
 
 
-@auth_blueprint.route("/api/register", methods=["POST"])
-@logged_in_active_user_required
-def register():
-    """
-    Endpoint to register users
-    Requires JSON body with following keys:
-    - email
-    - password
-    Requires X-CSRF-Token in header, obtained from cookie set by /get-csrf
-    """
-
-    form = RegisterForm.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    if form.validate():
-        if current_user.email == "registration_user":
-            user_with_email = User.query.filter_by(email=form.email.data).first()
-            if not user_with_email:
-                User(form.email.data, form.password.data)
-                return jsonify(message="Success: registered"), 200
-            else:
-                return jsonify(message="User already exists with email"), 422
-        else:
-            return jsonify(message="Unauthorized"), 401
-    else:
-        return jsonify(message=form.errors), 422
-
-
-@auth_blueprint.route("/api/login", methods=["POST"])
+@auth_bp.route("/login", methods=["POST"])
 def login():
     """
     Endpoint to login
@@ -101,7 +68,7 @@ def login():
         return jsonify(message=form.errors), 422
 
 
-@auth_blueprint.route("/api/logout", methods=["GET"])
+@auth_bp.route("/logout", methods=["GET"])
 @logged_in_active_user_required
 def logout():
     logout_user()
@@ -113,7 +80,7 @@ def logout():
 ##############################################################################
 
 
-@auth_blueprint.route("/api/change-password", methods=["POST"])
+@auth_bp.route("/change-password", methods=["POST"])
 @logged_in_active_user_required
 def change_password():
     """
@@ -142,7 +109,7 @@ def change_password():
         return jsonify(message=form.errors), 422
 
 
-@auth_blueprint.route("/api/forgot-password", methods=["POST"])
+@auth_bp.route("/forgot-password", methods=["POST"])
 def forgot_password():
     """
     Endpoint to request reset password link by email
@@ -190,61 +157,7 @@ def forgot_password():
         return jsonify(message=form.errors), 422
 
 
-@auth_blueprint.route("/api/welcome-user", methods=["POST"])
-@logged_in_active_user_required
-def welcome_user():
-    """
-    Endpoint to send welcome email with password reset to new user
-
-    Requires JSON body with following keys:
-    - email
-
-    Requires X-CSRF-Token in header, obtained from cookie set by /get-csrf
-    """
-
-    form = WelcomeUserForm.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    if form.validate():
-        if current_user.email == "registration_user":
-            user = User.query.filter_by(email=form.email.data).first()
-
-            if user:
-                email_token = genword(length=32, charset="ascii_62")
-                rpt = ResetPasswordToken(user.user_uid, email_token)
-
-                # Add this rpt, delete all other rpts for this user
-                ResetPasswordToken.query.filter_by(user_uid=user.user_uid).delete()
-                db.session.add(rpt)
-                db.session.commit()
-
-                rp_message = Message(
-                    subject="Welcome to SurveyStream - Password Reset Required",
-                    html="Welcome to SurveyStream! Your login email is %s. Please reset your password by clicking <a href='%s/reset-password/%s/%s'>here</a>.<br><br>The link will expire in 24 hours."
-                    % (
-                        user.email,
-                        current_app.config["REACT_BASE_URL"],
-                        rpt.reset_uid,
-                        email_token,
-                    ),
-                    recipients=[user.email],
-                )
-                mail.send(rp_message)
-                return jsonify(message="Request processed"), 200
-            else:
-                return jsonify(message="Record not found"), 404
-
-        else:
-            return jsonify(message="Unauthorized"), 401
-
-    else:
-        return jsonify(message=form.errors), 422
-
-
-@auth_blueprint.route("/api/reset-password", methods=["POST"])
+@auth_bp.route("/reset-password", methods=["POST"])
 def reset_password():
     """
     Endpoint to reset password

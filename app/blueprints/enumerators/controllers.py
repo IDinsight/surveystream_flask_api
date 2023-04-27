@@ -1,4 +1,4 @@
-from . import enumerators_blueprint
+from . import enumerators_bp
 from app.utils import concat_names, logged_in_active_user_required
 from flask import jsonify, request
 from flask_login import current_user
@@ -16,14 +16,9 @@ from app.models.form_models import UpdateSurveyorFormStatusForm
 from sqlalchemy import or_
 
 
-##############################################################################
-# ENUMERATORS
-##############################################################################
-
-
-@enumerators_blueprint.route("/api/enumerators", methods=["GET"])
+@enumerators_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-def view_enumerators():
+def get_enumerators():
     """
     Returns list of enumerators for a user
     """
@@ -73,7 +68,7 @@ def view_enumerators():
     return jsonify(final_result)
 
 
-@enumerators_blueprint.route("/api/enumerators/<enumerator_uid>", methods=["PATCH"])
+@enumerators_bp.route("/<enumerator_uid>", methods=["PATCH"])
 @logged_in_active_user_required
 def update_enumerator_status(enumerator_uid):
     """
@@ -87,7 +82,6 @@ def update_enumerator_status(enumerator_uid):
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
-
         surveyor_form = (
             db.session.query(SurveyorForm)
             .filter(
@@ -98,7 +92,6 @@ def update_enumerator_status(enumerator_uid):
         )
 
         if surveyor_form:
-
             survey_query = build_survey_query(form.form_uid.data)
 
             forms_in_survey_query = db.session.query(ParentForm.form_uid).filter(
@@ -123,7 +116,6 @@ def update_enumerator_status(enumerator_uid):
             # assignments for the surveyor
 
             if form.status.data == "Dropout":
-
                 survey_query = build_survey_query(form.form_uid.data)
 
                 # Add this query so as to capture who is deleting the Assignment
