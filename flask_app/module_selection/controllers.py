@@ -22,7 +22,7 @@ def add_module_status():
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if not validator.validate():
-        return jsonify({'success': False, 'errors': validator.errors}), 400
+        return jsonify({'success': False, 'errors': validator.errors}), 422
 
     survey_uid = validator.survey_uid.data
     modules = validator.modules.data
