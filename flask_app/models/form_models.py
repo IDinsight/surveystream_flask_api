@@ -1,6 +1,13 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms import IntegerField, PasswordField, StringField, FieldList, FormField
+from wtforms import (
+    IntegerField,
+    PasswordField,
+    StringField,
+    FieldList,
+    FormField,
+    BooleanField,
+)
 from wtforms.validators import DataRequired, EqualTo
 
 
@@ -75,3 +82,18 @@ class UploadUserAvatarForm(FlaskForm):
 
 class RemoveUserAvatarForm(FlaskForm):
     pass
+
+
+class ModuleQuestionnaireForm(FlaskForm):
+    survey_uid = IntegerField(validators=[DataRequired()])
+
+    target_assignment_criteria = FieldList(StringField(validators=[]), validators=[])
+    supervisor_assignment_criteria = FieldList(
+        StringField(validators=[]), validators=[]
+    )
+
+    supervisor_hierarchy_exists = BooleanField()
+    reassignment_required = BooleanField()
+    assignment_process = StringField()
+    supervisor_enumerator_relation = StringField()
+    language_lacation_mapping = BooleanField()

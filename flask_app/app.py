@@ -69,11 +69,12 @@ from flask_app.models.form_models import (
 from sqlalchemy import or_
 from flask_redoc import Redoc
 from surveys import survey_bp
+from module_questionnaire import module_questionnaire_bp
 
 dod_app = Flask(__name__)
 
 dod_app.register_blueprint(survey_bp)
-
+dod_app.register_blueprint(module_questionnaire_bp)
 
 ##############################################################################
 # SET GLOBALS
@@ -96,7 +97,7 @@ else:
 ##############################################################################
 
 if CONFIG_MODE not in ["PRODUCTION", "PROD_NEW"]:
-    dod_app.config['REDOC'] = {'spec_route': '/api/docs'}
+    dod_app.config["REDOC"] = {"spec_route": "/api/docs"}
     redoc = Redoc(dod_app, "openapi/surveystream.yml")
 
 ##############################################################################
@@ -197,6 +198,7 @@ mail = Mail(dod_app)
 
 s3 = boto3_client("s3", S3_REGION)
 
+
 def get_s3_presigned_url(filekey):
 
     return s3.generate_presigned_url(
@@ -213,9 +215,11 @@ def get_s3_presigned_url(filekey):
 def unauthorized(e):
     return jsonify(message=str(e)), 401
 
+
 @dod_app.errorhandler(403)
 def forbidden(e):
     return jsonify(message=str(e)), 403
+
 
 @dod_app.errorhandler(404)
 def page_not_found(e):
@@ -234,22 +238,29 @@ def internal_server_error(e):
 login_manager = LoginManager()
 login_manager.init_app(dod_app)
 
+
 def logged_in_active_user_required(f):
     """
-        Login required middlerware
-        Checks additional active user logic. Otherwise pass flow to built-in login_required (Flask-Login) decorator
+    Login required middlerware
+    Checks additional active user logic. Otherwise pass flow to built-in login_required (Flask-Login) decorator
     """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "_user_id" in session:
             user_uid = session.get("_user_id")
 
             if user_uid is not None:
-                user = db.session.query(User).filter(User.user_uid == user_uid ).one_or_none()
+                user = (
+                    db.session.query(User)
+                    .filter(User.user_uid == user_uid)
+                    .one_or_none()
+                )
                 if user.is_active() is False:
                     return jsonify(message="INACTIVE_USER"), 403
 
         return login_required(f)(*args, **kwargs)
+
     return decorated_function
 
 
@@ -1179,21 +1190,24 @@ def view_table_config():
     """
     Returns the table definitions for the web flask_app tables
     """
+
     def is_excluded_supervisor(row, user_level):
         """
         Check if the table config row should be excluded because the supervisor is not at a child supervisor level for the logged in user
         """
         is_excluded_supervisor = False
-        
+
         try:
-            if row.column_key.split(".")[0] == "supervisors" and int(row.column_key.split(".")[1].split("_")[1]) <= user_level:
+            if (
+                row.column_key.split(".")[0] == "supervisors"
+                and int(row.column_key.split(".")[1].split("_")[1]) <= user_level
+            ):
                 is_excluded_supervisor = True
 
         except:
             pass
 
         return is_excluded_supervisor
-
 
     user_uid = current_user.user_uid
     form_uid = request.args.get("form_uid")
@@ -1220,14 +1234,17 @@ def view_table_config():
 
         if is_excluded_supervisor(row, user_level):
             pass
-        
+
         else:
             if row.group_label is None:
                 table_config[row.webapp_table_name].append(
                     {
                         "group_label": None,
                         "columns": [
-                            {"column_key": row.column_key, "column_label": row.column_label}
+                            {
+                                "column_key": row.column_key,
+                                "column_label": row.column_label,
+                            }
                         ],
                     }
                 )
