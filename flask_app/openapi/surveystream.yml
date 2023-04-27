@@ -781,7 +781,7 @@ paths:
                 type: string
                 description: Error message
                 example: No modules found.
-  /module_status:
+  /module-status:
     post:
       tags:
         - Module Selection
@@ -904,7 +904,7 @@ paths:
                   message:
                     type: string
                     example: The requested module or survey was not found
-  /module_status/{survey_uid}:
+  /module-status/{survey_uid}:
     get:
       tags:
         - Module Selection

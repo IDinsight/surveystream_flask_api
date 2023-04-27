@@ -1,6 +1,9 @@
-from flask import Blueprint, jsonify, request
+from flask import jsonify, request
 from .models import db, Module, ModuleStatus
 from .routes import module_selection_bp
+from .validators import UpdateModuleStatusValidator, AddModuleStatusValidator
+import json
+
 
 @module_selection_bp.route('/modules', methods=['GET'])
 def list_modules():
@@ -9,13 +12,20 @@ def list_modules():
         return jsonify({'success': False, 'message': 'No modules found.'}), 404
     return jsonify({'success': True, 'data': [module.to_dict() for module in modules]}), 200
 
-@module_selection_bp.route('/module_status', methods=['POST'])
+@module_selection_bp.route('/module-status', methods=['POST'])
 def add_module_status():
-    survey_uid = request.json.get('survey_uid')
-    modules = request.json.get('modules')
+    validator = AddModuleStatusValidator.from_json(request.get_json())
 
-    if not survey_uid or not modules:
-        return jsonify({'success': False, 'message': 'Both survey_id and modules are required.'}), 400
+    if "X-CSRF-Token" in request.headers:
+        validator.csrf_token.data = request.headers.get("X-CSRF-Token")
+    else:
+        return jsonify(message="X-CSRF-Token required in header"), 403
+
+    if not validator.validate():
+        return jsonify({'success': False, 'errors': validator.errors}), 400
+
+    survey_uid = validator.survey_uid.data
+    modules = validator.modules.data
 
     for module_id in modules:
         module = Module.query.get(module_id)
@@ -30,23 +40,28 @@ def add_module_status():
     db.session.commit()
     return jsonify({'success': True, 'message': 'Module status added successfully.'}), 200
 
-@module_selection_bp.route('/module_status/<int:survey_id>', methods=['GET'])
-def get_module_status(survey_id):
-    module_status = ModuleStatus.query.filter_by(survey_uid=survey_id).all()
+@module_selection_bp.route('/module-status/<int:survey_uid>', methods=['GET'])
+def get_module_status(survey_uid):
+    module_status = ModuleStatus.query.filter_by(survey_uid=survey_uid).all()
     return jsonify({'success': True, 'data': [status.to_dict() for status in module_status]}), 200
 
 @module_selection_bp.route('/modules/<int:module_id>/status/<int:survey_uid>', methods=['PUT'])
 def update_module_status(module_id, survey_uid):
-    status = ModuleStatus.query.filter_by(module_id=module_id, survey_uid=survey_uid).first()
+    module_status = ModuleStatus.query.filter_by(module_id=module_id, survey_uid=survey_uid).first()
+    validator = UpdateModuleStatusValidator.from_json(request.get_json())
 
-    if status is None:
-        return jsonify({'success': False, 'error': 'Module status not found.'}), 404
+    if "X-CSRF-Token" in request.headers:
+        validator.csrf_token.data = request.headers.get("X-CSRF-Token")
+    else:
+        return jsonify(message="X-CSRF-Token required in header"), 403
 
-    data = request.get_json()
-    status.config_status = data.get('config_status', status.config_status)
+    if not validator.validate(module_status):
+        return jsonify({'success': False, 'message': validator.errors}), 422
+
+    module_status.config_status = validator.config_status.data
 
     db.session.commit()
 
-    return jsonify({'success': True, 'data': status.to_dict()}), 200
+    return jsonify({'success': True, 'data': module_status.to_dict()}), 200
 
 
