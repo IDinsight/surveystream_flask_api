@@ -1,0 +1,13 @@
+.idea/
+.vscode/
+.git/
+.venv/
+__pycache__/
+.pytest_cache/
+.gitignore
+Dockerfile*
+README.md
+.DS_Store
+Makefile
+docker-compose/
+.github/
