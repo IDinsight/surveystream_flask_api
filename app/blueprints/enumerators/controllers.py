@@ -12,7 +12,7 @@ from app.models.data_models import (
     TargetStatus,
     SurveyorForm,
 )
-from app.models.form_models import UpdateSurveyorFormStatusForm
+from .validators import UpdateSurveyorFormStatusValidator
 from sqlalchemy import or_
 
 
@@ -68,13 +68,13 @@ def get_enumerators():
     return jsonify(final_result)
 
 
-@enumerators_bp.route("/<enumerator_uid>", methods=["PATCH"])
+@enumerators_bp.route("/<int:enumerator_uid>", methods=["PATCH"])
 @logged_in_active_user_required
 def update_enumerator_status(enumerator_uid):
     """
     Updates the status of an enumerator
     """
-    form = UpdateSurveyorFormStatusForm.from_json(request.get_json())
+    form = UpdateSurveyorFormStatusValidator.from_json(request.get_json())
 
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")

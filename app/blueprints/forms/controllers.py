@@ -12,7 +12,7 @@ from app.models.data_models import (
 )
 
 
-@forms_bp.route("/<form_uid>", methods=["GET"])
+@forms_bp.route("/<int:form_uid>", methods=["GET"])
 @logged_in_active_user_required
 def get_form(form_uid):
     """

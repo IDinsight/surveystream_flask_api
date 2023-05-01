@@ -6,9 +6,9 @@ from flask_mail import Message
 from passlib.pwd import genword
 from app import db, mail
 from app.models.data_models import ResetPasswordToken, User
-from app.models.form_models import (
-    RegisterForm,
-    WelcomeUserForm,
+from .validators import (
+    RegisterValidator,
+    WelcomeUserValidator,
 )
 
 
@@ -23,7 +23,7 @@ def register():
     Requires X-CSRF-Token in header, obtained from cookie set by /get-csrf
     """
 
-    form = RegisterForm.from_json(request.get_json())
+    form = RegisterValidator.from_json(request.get_json())
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")
     else:
@@ -55,7 +55,7 @@ def welcome_user():
     Requires X-CSRF-Token in header, obtained from cookie set by /get-csrf
     """
 
-    form = WelcomeUserForm.from_json(request.get_json())
+    form = WelcomeUserValidator.from_json(request.get_json())
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")
     else:

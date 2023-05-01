@@ -128,3 +128,13 @@ def test_profile_update(base_url, client, login_test_user):
     )
 
     assert checkdiff == {"email": new_email}
+
+
+def test_profile_update_invalid_email(base_url, client, login_test_user):
+    """
+    Check updating the user's email
+    """
+    new_email = "new_email"
+
+    response = update_profile(client, base_url, new_email)
+    assert response.status_code == 422

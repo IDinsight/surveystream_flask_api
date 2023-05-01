@@ -8,11 +8,11 @@ from flask_mail import Message
 from passlib.pwd import genword
 from app import db, mail
 from app.models.data_models import ResetPasswordToken, User
-from app.models.form_models import (
-    ChangePasswordForm,
-    ForgotPasswordForm,
-    LoginForm,
-    ResetPasswordForm,
+from .validators import (
+    ChangePasswordValidator,
+    ForgotPasswordValidator,
+    LoginValidator,
+    ResetPasswordValidator,
 )
 
 
@@ -43,7 +43,7 @@ def login():
     Requires X-CSRF-Token in header, obtained from cookie set by /get-csrf
     """
 
-    form = LoginForm.from_json(request.get_json())
+    form = LoginValidator.from_json(request.get_json())
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")
     else:
@@ -93,7 +93,7 @@ def change_password():
 
     Requires X-CSRF-Token in header, obtained from cookie set by /get-csrf
     """
-    form = ChangePasswordForm.from_json(request.get_json())
+    form = ChangePasswordValidator.from_json(request.get_json())
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")
     else:
@@ -123,7 +123,7 @@ def forgot_password():
     if current_user.is_authenticated:
         return jsonify(message="Already logged in - use /change-password"), 400
 
-    form = ForgotPasswordForm.from_json(request.get_json())
+    form = ForgotPasswordValidator.from_json(request.get_json())
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")
     else:
@@ -174,7 +174,7 @@ def reset_password():
     if current_user.is_authenticated:
         return jsonify(message="Already logged in - use /change-password"), 400
 
-    form = ResetPasswordForm.from_json(request.get_json())
+    form = ResetPasswordValidator.from_json(request.get_json())
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")
     else:

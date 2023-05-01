@@ -5,10 +5,10 @@ from werkzeug.utils import secure_filename
 from flask import jsonify, request, current_app
 from flask_login import current_user
 from app import db
-from app.models.form_models import (
-    UpdateUserProfileForm,
-    UploadUserAvatarForm,
-    RemoveUserAvatarForm,
+from .validators import (
+    UpdateUserProfileValidator,
+    UploadUserAvatarValidator,
+    RemoveUserAvatarValidator,
 )
 import boto3
 
@@ -39,7 +39,7 @@ def update_profile():
     """
     Updates the profile of the logged in user
     """
-    form = UpdateUserProfileForm.from_json(request.get_json())
+    form = UpdateUserProfileValidator.from_json(request.get_json())
 
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")
@@ -88,7 +88,7 @@ def update_profile_avatar():
     """
     Updates the profile avatar image of the logged in user
     """
-    form = UploadUserAvatarForm()
+    form = UploadUserAvatarValidator()
 
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")
@@ -120,7 +120,7 @@ def remove_profile_avatar():
     """
     Removes the profile avatar image of the logged in user
     """
-    form = RemoveUserAvatarForm()
+    form = RemoveUserAvatarValidator()
 
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")

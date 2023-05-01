@@ -9,7 +9,7 @@ from app.queries.method_level_queries import (
     build_get_assignment_surveyors_query,
 )
 from app.models.data_models import SurveyorAssignment
-from app.models.form_models import UpdateSurveyorAssignmentsForm
+from .validators import UpdateSurveyorAssignmentsValidator
 
 
 @assignments_bp.route("", methods=["GET"])
@@ -122,7 +122,7 @@ def update_assignments():
     """
     Updates assignment mapping
     """
-    form = UpdateSurveyorAssignmentsForm.from_json(request.get_json())
+    form = UpdateSurveyorAssignmentsValidator.from_json(request.get_json())
 
     if "X-CSRF-Token" in request.headers:
         form.csrf_token.data = request.headers.get("X-CSRF-Token")

@@ -14,5 +14,5 @@ def view_docs():
     with open(filename) as file:
         spec_file = yaml.safe_load(file)
     return render_template(
-        "docs.html", spec_file=spec_file, title="SurveyStream API ReDoc"
+        "docs/index.html", spec_file=spec_file, title="SurveyStream API ReDoc"
     )
