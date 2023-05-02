@@ -1526,8 +1526,6 @@ paths:
       summary: Get module questionnaire responses for a survey
       description: |
         Returns the module questionnaire responses for a given survey.
-        - `survey_uid`: ID of the survey for which to retrieve module questionnaire.
-        **Note**: If the survey is not found, a 404 error will be returned.
       parameters:
         - name: survey_uid
           in: path
