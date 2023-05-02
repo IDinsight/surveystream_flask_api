@@ -74,29 +74,33 @@ def create_app():
 def register_blueprints(app):
     from app.blueprints.assignments import assignments_bp
     from app.blueprints.auth import auth_bp
-    from app.blueprints.user_management import user_management_bp
     from app.blueprints.docs import docs_bp
     from app.blueprints.enumerators import enumerators_bp
-    from app.blueprints.healthcheck import healthcheck_bp
-    from app.blueprints.table_config import table_config_bp
-    from app.blueprints.profile import profile_bp
-    from app.blueprints.surveys_list import surveys_list_bp
     from app.blueprints.forms import forms_bp
-    from app.blueprints.targets import targets_bp
+    from app.blueprints.healthcheck import healthcheck_bp
+    from app.blueprints.module_questionnaire import module_questionnaire_bp
+    from app.blueprints.module_selection import module_selection_bp
+    from app.blueprints.profile import profile_bp
     from app.blueprints.surveys import surveys_bp
+    from app.blueprints.surveys_list import surveys_list_bp
+    from app.blueprints.table_config import table_config_bp
+    from app.blueprints.targets import targets_bp
+    from app.blueprints.user_management import user_management_bp
 
     app.register_blueprint(assignments_bp)
     app.register_blueprint(auth_bp)
-    app.register_blueprint(user_management_bp)
     app.register_blueprint(docs_bp)
     app.register_blueprint(enumerators_bp)
-    app.register_blueprint(healthcheck_bp)
-    app.register_blueprint(table_config_bp)
-    app.register_blueprint(profile_bp)
-    app.register_blueprint(surveys_list_bp)
     app.register_blueprint(forms_bp)
-    app.register_blueprint(targets_bp)
+    app.register_blueprint(healthcheck_bp)
+    app.register_blueprint(module_questionnaire_bp)
+    app.register_blueprint(module_selection_bp)
+    app.register_blueprint(profile_bp)
     app.register_blueprint(surveys_bp)
+    app.register_blueprint(surveys_list_bp)
+    app.register_blueprint(table_config_bp)
+    app.register_blueprint(targets_bp)
+    app.register_blueprint(user_management_bp)
 
 
 def register_error_handlers(app):
