@@ -4,6 +4,7 @@ $(eval BACKEND_NAME=dod_surveystream_backend)
 $(eval BACKEND_PORT=5001)
 $(eval FRONTEND_NAME=dod_surveystream_frontend)
 $(eval VERSION=0.1)
+$(eval TEST_RUNNER_NAME=surveystream_test_runner)
 $(eval PROD_NEW_ACCOUNT=923242859002)
 $(eval STAGING_ACCOUNT=210688620213)
 $(eval ADMIN_ACCOUNT=077878936716)
@@ -27,15 +28,17 @@ db-tunnel:
 
 container-up:
 	# Start a local version of the web app that uses the DoD dev database
-	BACKEND_NAME=${BACKEND_NAME} \
+	@BACKEND_NAME=${BACKEND_NAME} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	VERSION=${VERSION} \
+	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
 	docker-compose -f docker-compose/docker-compose.remote-dev-db.yml -f docker-compose/docker-compose.override.yml up -d
 
 container-down:
 	@BACKEND_NAME=${BACKEND_NAME} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	VERSION=${VERSION} \
+	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
 	docker-compose -f docker-compose/docker-compose.remote-dev-db.yml -f docker-compose/docker-compose.override.yml down
 
 image-stg:
@@ -174,3 +177,21 @@ container-down-prod:
 	--project-name dod-surveystream-web-app \
 	--cluster-config dod-surveystream-web-app-config \
 	service down
+
+image-test-e2e:
+	@docker build -f Dockerfile.test-runner --rm --build-arg NAME=$(TEST_RUNNER_NAME) -t $(TEST_RUNNER_NAME):$(VERSION) .
+
+run-test-e2e:
+	@TEST_RUNNER_NAME=${TEST_RUNNER_NAME} \
+	BACKEND_NAME=${BACKEND_NAME} \
+	VERSION=${VERSION} \
+	BACKEND_PORT=${BACKEND_PORT} \
+	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
+	docker-compose -f docker-compose/docker-compose.test-e2e.yml -f docker-compose/docker-compose.override-test-e2e.yml run --rm test ;
+	
+	@TEST_RUNNER_NAME=${TEST_RUNNER_NAME} \
+	BACKEND_NAME=${BACKEND_NAME} \
+	VERSION=${VERSION} \
+	BACKEND_PORT=${BACKEND_PORT} \
+	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
+	docker-compose -f docker-compose/docker-compose.test-e2e.yml -f docker-compose/docker-compose.override-test-e2e.yml rm -fsv
