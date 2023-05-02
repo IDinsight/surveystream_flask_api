@@ -21,7 +21,6 @@ in order to avoid saving any PII locally.
 
 
 def main():
-
     """
     Main function to download tables
 
@@ -49,7 +48,6 @@ def main():
     )
 
     for table_item in tables_to_download["tables"]:
-
         filename = table_item["table_name"]
         inner_sql = (
             table_item["query"]
@@ -66,7 +64,6 @@ def main():
 
 
 def get_dev_db_conn():
-
     """
     Get the connection to the remote dev db
 
@@ -81,7 +78,6 @@ def get_dev_db_conn():
     local_port = 5432
 
     try:
-
         conn = pg.connect(
             host="localhost",
             port=local_port,
@@ -95,7 +91,6 @@ def get_dev_db_conn():
 
 
 def get_aws_secret(secret_name, region_name):
-
     """
     Function to get secrets from the aws secrets manager
 
@@ -107,7 +102,6 @@ def get_aws_secret(secret_name, region_name):
     secret = None
     # Retrieve secret
     try:
-
         secret_value_response = client.get_secret_value(SecretId=secret_name)
 
     except ClientError as e:
@@ -154,7 +148,6 @@ def get_uids(cur, download_ids):
 
 
 def read_config():
-
     """
     Read in the yaml file with configuration for each table to download
 
