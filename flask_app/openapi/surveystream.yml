@@ -68,6 +68,8 @@ tags:
     description: Endpoints related to the configuration of tables on the web flask_app
   - name: Misc
     description: Endpoints related to miscellaneous functionalities
+  - name: Module Questionnaire
+    description: Endpoints related to module questionnaire
 x-tagGroups:
   - name: User Management
     tags:
@@ -99,6 +101,9 @@ x-tagGroups:
   - name: Misc
     tags:
       - Misc
+  - name: Module Questionnaire
+    tags:
+      - Module Questionnaire
 paths:
   /healthcheck:
     get:
@@ -1736,3 +1741,123 @@ paths:
                                 description: >-
                                   The column key that can be used to access the
                                   column records in the data response
+  '/module-questionnaire/{survey_uid}':
+    get:
+      tags:
+        - Module Questionnaire
+      summary: Get module questionnaire responses for a survey
+      description: |
+        Returns the module questionnaire responses for a given survey.
+      parameters:
+        - name: survey_uid
+          in: path
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Returns the saved responses for module questionnaire section for a given survey.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of modules and their completion status for the given survey
+                    items:
+                      type: object
+                      properties:
+                        survey_uid:
+                          type: integer
+                          description: The unique ID of the survey.
+                        target_assignment_criteria:
+                          type: array
+                          description: Array of selected criteria for target to enumerator assignments
+                          example: ['Location', 'Gender']
+                        supervisor_assignment_criteria:
+                          type: array
+                          description: Array of selected criteria for supervisor to enumerator assignments
+                          example: ['Location', 'Gender']
+                        supervisor_hierarchy_exists:
+                          type: boolean
+                          description: Whether there is a hierarchy of supervisors
+                        reassignment_required:
+                          type: boolean
+                          description: Whether there will be reassignments during the survey
+                        assignment_process:
+                          type: string
+                          description: 'Process used to perform the assignments of targets to enumerators e.g. Random or Manual'
+                        supervisor_enumerator_relation:
+                          type: string
+                          description: 'Mapping of supervisors to enumerators e.g. 1:many, 1:1 etc.'
+                        language_lacation_mapping:
+                          type: boolean
+                          description: Whether languages can be mapped via locations
+
+        '404':
+          description: The specified survey ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  message:
+                    type: string
+                    description: Error message indicating that the specified survey ID was not found.
+    put:
+      tags:
+        - Module Questionnaire
+      summary: Save module questionnaire responses for a survey
+      description: |
+        Saves the module questionnaire responses for a given survey to the database.
+        - `survey_uid`: ID of the survey
+      requestBody:
+        description: JSON object containing survey ID and list of module IDs
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: integer
+                  description: The unique ID of the survey.
+                target_assignment_criteria:
+                  type: array
+                  description: Array of selected criteria for target to enumerator assignments
+                  example: ['Location', 'Gender']
+                supervisor_assignment_criteria:
+                  type: array
+                  description: Array of selected criteria for supervisor to enumerator assignments
+                  example: ['Location', 'Gender']
+                supervisor_hierarchy_exists:
+                  type: boolean
+                  description: Whether there is a hierarchy of supervisors
+                reassignment_required:
+                  type: boolean
+                  description: Whether there will be reassignments during the survey
+                assignment_process:
+                  type: string
+                  description: 'Process used to perform the assignments of targets to enumerators e.g. Random or Manual'
+                supervisor_enumerator_relation:
+                  type: string
+                  description: 'Mapping of supervisors to enumerators e.g. 1:many, 1:1 etc.'
+                language_lacation_mapping:
+                  type: boolean
+                  description: Whether languages can be mapped via locations
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: X-CSRF-Token required in header
+        '422':
+          description: Form errors

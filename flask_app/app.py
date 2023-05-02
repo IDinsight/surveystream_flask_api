@@ -69,14 +69,14 @@ from flask_app.models.form_models import (
 from sqlalchemy import or_
 from flask_redoc import Redoc
 from surveys import survey_bp
+from module_questionnaire import module_questionnaire_bp
 from module_selection import module_selection_bp
 
 dod_app = Flask(__name__)
 
 dod_app.register_blueprint(survey_bp)
+dod_app.register_blueprint(module_questionnaire_bp)
 dod_app.register_blueprint(module_selection_bp)
-
-
 
 ##############################################################################
 # SET GLOBALS
@@ -206,7 +206,6 @@ mail = Mail(dod_app)
 ##############################################################################
 
 s3 = boto3_client("s3", S3_REGION)
-
 
 def get_s3_presigned_url(filekey):
     return s3.generate_presigned_url(
