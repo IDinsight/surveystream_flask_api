@@ -70,11 +70,13 @@ from sqlalchemy import or_
 from flask_redoc import Redoc
 from surveys import survey_bp
 from module_questionnaire import module_questionnaire_bp
+from module_selection import module_selection_bp
 
 dod_app = Flask(__name__)
 
 dod_app.register_blueprint(survey_bp)
 dod_app.register_blueprint(module_questionnaire_bp)
+dod_app.register_blueprint(module_selection_bp)
 
 ##############################################################################
 # SET GLOBALS
