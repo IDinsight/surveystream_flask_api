@@ -21,7 +21,6 @@ in order to avoid saving any PII locally.
 
 
 def main():
-
     """
     Main function to download tables
 
@@ -30,16 +29,25 @@ def main():
     conn = get_dev_db_conn()
     cur = conn.cursor()
 
-    surveys = [3]  # agrifieldnet
-    forms = [4]  # agrifieldnet_main_form
+    download_ids = [
+        {
+            "survey_id": "agrifieldnet",
+            "scto_parent_form_ids": ["agrifieldnet_main_form"],
+        }
+    ]
+
+    download_uids = get_uids(cur, download_ids)
 
     tables_to_download = read_config()
 
-    surveys_tuple_as_str = "(" + ", ".join(str(item) for item in surveys) + ")"
-    forms_tuple_as_str = "(" + ", ".join(str(item) for item in forms) + ")"
+    surveys_tuple_as_str = (
+        "(" + ", ".join(str(item) for item in download_uids["survey_uids"]) + ")"
+    )
+    forms_tuple_as_str = (
+        "(" + ", ".join(str(item) for item in download_uids["form_uids"]) + ")"
+    )
 
     for table_item in tables_to_download["tables"]:
-
         filename = table_item["table_name"]
         inner_sql = (
             table_item["query"]
@@ -56,7 +64,6 @@ def main():
 
 
 def get_dev_db_conn():
-
     """
     Get the connection to the remote dev db
 
@@ -71,7 +78,6 @@ def get_dev_db_conn():
     local_port = 5432
 
     try:
-
         conn = pg.connect(
             host="localhost",
             port=local_port,
@@ -85,7 +91,6 @@ def get_dev_db_conn():
 
 
 def get_aws_secret(secret_name, region_name):
-
     """
     Function to get secrets from the aws secrets manager
 
@@ -97,7 +102,6 @@ def get_aws_secret(secret_name, region_name):
     secret = None
     # Retrieve secret
     try:
-
         secret_value_response = client.get_secret_value(SecretId=secret_name)
 
     except ClientError as e:
@@ -123,8 +127,24 @@ def get_aws_secret(secret_name, region_name):
     return secret
 
 
-def read_config():
+def get_uids(cur, download_ids):
+    download_uids = {"survey_uids": [], "form_uids": []}
+    for survey in download_ids:
+        for surveycto_form_id in survey["scto_parent_form_ids"]:
+            cur.execute(
+                "SELECT a.survey_uid, b.form_uid FROM surveys a INNER JOIN parent_forms b on a.survey_uid=b.survey_uid WHERE a.survey_id=%s AND b.scto_form_id=%s",
+                (survey["survey_id"], surveycto_form_id),
+            )
 
+            for row in cur.fetchall():
+                if row[0] not in download_uids["survey_uids"]:
+                    download_uids["survey_uids"].append(row[0])
+                download_uids["form_uids"].append(row[1])
+
+    return download_uids
+
+
+def read_config():
     """
     Read in the yaml file with configuration for each table to download
 
