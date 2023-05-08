@@ -128,6 +128,9 @@ def get_aws_secret(secret_name, region_name):
 
 
 def get_uids(cur, download_ids):
+    """
+    Get the survey and form uids from the user-provided semantic id's
+    """
     download_uids = {"survey_uids": [], "form_uids": []}
     for survey in download_ids:
         for surveycto_form_id in survey["scto_parent_form_ids"]:

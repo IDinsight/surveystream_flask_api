@@ -35,7 +35,7 @@ Include any notes about things that need to happen before this PR is merged, e.g
 This checklist is a useful reminder of small things that can easily be forgotten.
 Put an `x` in all the items that apply and remove any items that are not relevant to this PR.
 
-- [ ] My code follows the style guidelines of this project
+- [ ] My code follows the style guidelines and [standard practices](https://idinsight.atlassian.net/wiki/spaces/DOD/pages/2199912628/Flask+Development+Standards) for this project
 - [ ] I have reviewed my own code to ensure good quality
 - [ ] I have tested the functionality of my code to ensure it works as intended
 - [ ] I have resolved merge conflicts
