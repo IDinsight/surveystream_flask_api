@@ -15,7 +15,7 @@ login:
 	@aws sso login --profile surveystream_dev
 
 image:
-	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) -t $(BACKEND_NAME):$(VERSION) .
+	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --platform=linux/amd64 -t $(BACKEND_NAME):$(VERSION) .
 
 db-tunnel:
 	# Open a connection to the remote db via the bastion host
