@@ -55,8 +55,9 @@ export DB_USER=$(get_secret_value "data-db-connection-details" "username" "json"
 export DB_PASS=$(get_secret_value "data-db-connection-details" "password" "json" "$AWS_REGION")
 export DB_NAME=$(get_secret_value "data-db-connection-details" "dbname" "json" "$AWS_REGION")
 
-# Sendgrid API key
-export SMTP_PASSWORD=$(get_global_secret_value "sendgrid-api-key" "" "text" "$AWS_REGION")
+# Sendgrid API credentials
+export MAIL_PASSWORD=$(get_global_secret_value "sendgrid-api-key" "" "text" "$AWS_REGION")
+export MAIL_USERNAME="apikey"
 
 # S3 web assets bucket
 export S3_BUCKET_NAME=$(get_secret_value "web-assets-bucket-name" "" "text" "$AWS_REGION")

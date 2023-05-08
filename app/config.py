@@ -37,10 +37,10 @@ class Config:
     # Mail settings
     MAIL_SERVER = "smtp.sendgrid.net"
     MAIL_PORT = 587
-    MAIL_USERNAME = "apikey"
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_USE_TLS = True
     MAIL_DEFAULT_SENDER = "surveystream@idinsight.org"
-    MAIL_PASSWORD = os.getenv("SMTP_PASSWORD")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
     MAIL_SUPPRESS_SEND = False
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
