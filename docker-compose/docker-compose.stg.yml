@@ -15,6 +15,6 @@ services:
     logging:
       driver: awslogs
       options:
-        awslogs-group: dod_surveystream_webapp_backend
+        awslogs-group: dod_surveystream_webapp_callisto
         awslogs-region: ap-south-1
         awslogs-stream-prefix: dod_surveystream_backend
