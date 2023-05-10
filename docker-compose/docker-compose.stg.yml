@@ -1,17 +1,16 @@
 version: '2'
 services:
   api:
-    image: ${STAGING_ACCOUNT}.dkr.ecr.ap-south-1.amazonaws.com/web2-ecr-repository:backend
+    image: ${STAGING_ACCOUNT}.dkr.ecr.ap-south-1.amazonaws.com/web-callisto-ecr-repository:backend
     cpu_shares: 300
     mem_limit: 500m
     restart: always
     ports:
       - "5001:5001"
     environment:
-      - CONFIG_MODE=STAGING
-      - REACT_BASE_URL=https://callisto.stg.surveystream.idinsight.io
+      - CONFIG_TYPE=config.StagingConfig
       - PYTHONUNBUFFERED=0
-      - S3_REGION=ap-south-1
+      - AWS_REGION=ap-south-1
       - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
     logging:
       driver: awslogs

@@ -43,19 +43,19 @@ container-down:
 
 image-stg:
 	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --platform=linux/amd64 -t $(BACKEND_NAME):$(VERSION) . 
-	@docker tag $(BACKEND_NAME):$(VERSION) $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web2-ecr-repository:backend
+	@docker tag $(BACKEND_NAME):$(VERSION) $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web-callisto-ecr-repository:backend
 	@aws ecr get-login-password \
     --region ap-south-1 \
 	--profile surveystream_staging | \
 	docker login \
     --username AWS \
     --password-stdin $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com
-	@docker push $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web2-ecr-repository:backend
+	@docker push $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web-callisto-ecr-repository:backend
 
 
 container-up-stg:
 	# Configure ecs-cli options
-	@ecs-cli configure --cluster web2-cluster \
+	@ecs-cli configure --cluster web-callisto-cluster \
 	--default-launch-type EC2 \
 	--region ap-south-1 \
 	--config-name dod-surveystream-web-app-backend-config
@@ -66,7 +66,7 @@ container-up-stg:
 	--aws-profile surveystream_staging \
 	--project-name api \
 	--cluster-config dod-surveystream-web-app-backend-config \
-	--task-role-arn arn:aws:iam::$(STAGING_ACCOUNT):role/web2-task-role \
+	--task-role-arn arn:aws:iam::$(STAGING_ACCOUNT):role/web-callisto-task-role \
 	service up \
 	--create-log-groups \
 	--deployment-min-healthy-percent 0
@@ -77,7 +77,7 @@ container-down-stg:
 	--region ap-south-1 \
 	--project-name api \
 	--cluster-config dod-surveystream-web-app-backend-config \
-	--cluster web2-cluster \
+	--cluster web-callisto-cluster \
 	service down --timeout 10
 
 image-prod-new:
