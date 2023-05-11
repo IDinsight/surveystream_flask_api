@@ -27,11 +27,13 @@ To stop the app:
 
 ## Accessing the endpoint documentation
 
-With the backend running locally, navigate to localhost:5001/docs
+The API documentation can be accessed at `/api/docs`. In staging and production environments, this endpoint requires the user to be logged in. 
+
+When running the backend locally, the docs can be accessed without logging in at `localhost:5001/api/docs`.
 
 ## Testing the database connection
 
-localhost:5001/api/healthcheck
+`localhost:5001/api/healthcheck`
 
 ## Instructions for running end-to-end tests
 
