@@ -47,6 +47,8 @@ class Config:
 
     REACT_BASE_URL = "http://localhost:3000"
 
+    PROTECT_DOCS_ENDPOINT = True
+
     LOGGING_CONFIG = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -80,6 +82,8 @@ class DevelopmentConfig(Config):
         5432,
         Config.DB_NAME,
     )
+
+    PROTECT_DOCS_ENDPOINT = False
 
 
 class ProfilerConfig(Config):
