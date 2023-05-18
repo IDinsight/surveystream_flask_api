@@ -60,7 +60,7 @@ export MAIL_PASSWORD=$(get_global_secret_value "sendgrid-api-key" "" "text" "$AW
 export MAIL_USERNAME="apikey"
 
 # S3 web assets bucket
-export S3_BUCKET_NAME=$(get_secret_value "web-assets-bucket-name" "" "text" "$AWS_REGION")
+export S3_BUCKET_NAME=$(get_secret_value "web-callisto-assets-bucket-name" "" "text" "$AWS_REGION")
 
 # Flask secret key
 export SECRET_KEY=$(get_secret_value "flask-secret-key" "SECRET_KEY" "json" "$AWS_REGION")
