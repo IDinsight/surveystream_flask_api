@@ -5,8 +5,10 @@ from flask_login import current_user
 from app import db
 from app.models.data_models import (
     Survey,
-    ParentForm,
     UserHierarchy,
+)
+from app.blueprints.forms.models import (
+    ParentForm
 )
 
 

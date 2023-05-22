@@ -6,11 +6,13 @@ from app import db
 from app.queries.helper_queries import build_survey_query
 from app.queries.method_level_queries import build_get_enumerators_query
 from app.models.data_models import (
-    ParentForm,
     SurveyorAssignment,
     Target,
     TargetStatus,
     SurveyorForm,
+)
+from app.blueprints.forms.models import (
+    ParentForm
 )
 from .validators import UpdateSurveyorFormStatusValidator
 from sqlalchemy import or_

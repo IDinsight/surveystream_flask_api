@@ -4,7 +4,10 @@ from functools import wraps
 from app.queries.helper_queries import build_user_level_query
 from app import db
 from app.models.data_models import User
-
+import boto3
+import base64
+from botocore.exceptions import ClientError
+import os
 
 def concat_names(name_tuple):
     """
@@ -84,3 +87,71 @@ def logged_in_active_user_required(f):
         return login_required(f)(*args, **kwargs)
 
     return decorated_function
+
+
+def get_aws_secret(secret_name, region_name, is_global_secret=False):
+
+    """
+    Function to get secrets from the aws secrets manager
+    """
+
+    client = get_secret_client(is_global_secret, region_name)
+
+    try:
+        secret_value_response = client.get_secret_value(SecretId=secret_name)
+    except ClientError as e:
+        raise e
+    else:
+        if "SecretString" in secret_value_response:
+            secret = secret_value_response["SecretString"]
+        else:
+            secret = base64.b64decode(secret_value_response["SecretBinary"])
+
+    return secret
+
+
+def get_secret_client(is_global_secret, region_name):
+
+    """
+    Function to get secrets client
+    """
+
+    if is_global_secret:
+
+        ADMIN_ACCOUNT = os.getenv("ADMIN_ACCOUNT")
+
+        admin_global_secrets_role_arn = (
+            f"arn:aws:iam::{ADMIN_ACCOUNT}:role/web-assume-task-role"
+        )
+        sts_response = get_sts_assume_role_response(admin_global_secrets_role_arn)
+
+        client = boto3.client(
+            service_name="secretsmanager",
+            region_name=region_name,
+            aws_access_key_id=sts_response["Credentials"]["AccessKeyId"],
+            aws_secret_access_key=sts_response["Credentials"]["SecretAccessKey"],
+            aws_session_token=sts_response["Credentials"]["SessionToken"],
+        )
+
+    else:
+        client = boto3.client(service_name="secretsmanager", region_name=region_name)
+
+    return client
+
+
+def get_sts_assume_role_response(admin_global_secrets_role_arn):
+
+    """
+    Function to return details for an AWS role to be assumed
+    """
+
+    # Create session using your current creds
+    boto_sts = boto3.client("sts")
+
+    # Request to assume the role like this, the ARN is the Role's ARN from
+    # the other account you wish to assume. Not your current ARN.
+    sts_response = boto_sts.assume_role(
+        RoleArn=admin_global_secrets_role_arn, RoleSessionName="new_session"
+    )
+
+    return sts_response
