@@ -87,8 +87,8 @@ class ParentForm(db.Model):
 class SCTOQuestions(db.Model):
     """
     SQLAlchemy data model for storing scto questions
-    This table contains information about the varibl
-    within the survey, which are the main forms posed to respondents
+    This table contains information about the variables 
+    defined in the SurveyCTO form
     """
 
     __tablename__ = "scto_questionnaire_questions"
@@ -135,4 +135,111 @@ class SCTOQuestions(db.Model):
             "variable_type": self.variable_type,
             "question_no": self.question_no,
             "choice_name": self.choice_name
+        }
+    
+
+class SCTOQuestionLabels(db.Model):
+    """
+    SQLAlchemy data model for storing scto questions labels in 
+    all defined languages. This table contains information about 
+    the variables defined in the SurveyCTO form
+    """
+
+    __tablename__ = "scto_questionnaire_question_labels"
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(
+            "survey_questionnaire_id",
+            "variable_name",
+            "language",
+        ),
+        {}
+    )
+
+    survey_questionnaire_id = db.Column(db.String(), nullable=False)
+    survey_id = db.Column(db.String(), nullable=False)
+    questionnaire_id = db.Column(db.String(), nullable=False)
+    variable_name = db.Column(db.String())
+    language = db.Column(db.String())
+    label = db.Column(db.String())
+
+    def __init__(
+        self,
+        survey_questionnaire_id,
+        survey_id,
+        questionnaire_id,
+        variable_name,
+        language,
+        label,
+    ):
+        self.survey_questionnaire_id = survey_questionnaire_id
+        self.survey_id = survey_id
+        self.questionnaire_id = questionnaire_id
+        self.variable_name = variable_name
+        self.language = language
+        self.label = label
+
+    def to_dict(self):
+        return {
+            "survey_questionnaire_id": self.survey_questionnaire_id,
+            "survey_id": self.survey_id,
+            "questionnaire_id": self.questionnaire_id,
+            "variable_name": self.variable_name,
+            "language": self.language,
+            "label": self.label
+        }
+    
+class SCTOChoiceLabels(db.Model):
+    """
+    SQLAlchemy data model for storing scto choice labels in 
+    all defined languages. This table contains information about 
+    the variables defined in the SurveyCTO form
+    """
+
+    __tablename__ = "scto_questionnaire_choice_labels"
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(
+            "survey_questionnaire_id",
+            "choice_name",
+            "choice_value",
+            "language",
+        ),
+        {}
+    )
+    survey_questionnaire_id = db.Column(db.String(), nullable=False)
+    survey_id = db.Column(db.String(), nullable=False)
+    questionnaire_id = db.Column(db.String(), nullable=False)
+    choice_name = db.Column(db.String())
+    choice_value = db.Column(db.String())
+    language = db.Column(db.String())
+    label = db.Column(db.String())
+
+    def __init__(
+        self,
+        survey_questionnaire_id,
+        survey_id,
+        questionnaire_id,
+        choice_name,
+        choice_value,
+        language,
+        label,
+    ):
+        self.survey_questionnaire_id = survey_questionnaire_id
+        self.survey_id = survey_id
+        self.questionnaire_id = questionnaire_id
+        self.choice_name = choice_name
+        self.choice_value = choice_value
+        self.language = language
+        self.label = label
+
+    def to_dict(self):
+        return {
+            "survey_questionnaire_id": self.survey_questionnaire_id,
+            "survey_id": self.survey_id,
+            "questionnaire_id": self.questionnaire_id,
+            "choice_name": self.choice_name,
+            "choice_value": self.choice_value,
+            "language": self.language,
+            "label": self.label
         }
