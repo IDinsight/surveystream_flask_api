@@ -16,6 +16,7 @@ from app.config import Config
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from flask_cors import CORS
 
 
 db = SQLAlchemy()
@@ -27,6 +28,10 @@ wtforms_json.init()
 ### Application Factory ###
 def create_app():
     app = Flask(__name__)
+
+    #initialize cors for localhost and idinsight.io subdomains
+    origins = ['http://localhost:*', 'https://*.idinsight.io']
+    CORS(app, origins=origins, supports_credentials=True)
 
     # Configure the flask app instance
     CONFIG_TYPE = os.getenv("CONFIG_TYPE", default="app.config.DevelopmentConfig")
