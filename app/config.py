@@ -113,16 +113,6 @@ class ProfilerConfig(Config):
     )
 
 
-class E2eTestConfig(Config):
-    SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
-        "test_user",
-        "dod",
-        "postgres",
-        5433,
-        "dod",
-    )
-
-
 class UnitTestConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
