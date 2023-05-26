@@ -12,7 +12,7 @@ $(eval DEV_ACCOUNT=453207568606)
 
 
 login:
-	export AWS_PROFILE=surveystream_dev
+	@export AWS_PROFILE=surveystream_dev
 	@aws sso login --profile surveystream_dev
 
 image:
@@ -167,25 +167,7 @@ container-down-prod:
 	--cluster-config dod-surveystream-web-app-config \
 	service down
 
-image-test-e2e:
-	@docker build -f Dockerfile.test-runner --rm --build-arg NAME=$(TEST_RUNNER_NAME) -t $(TEST_RUNNER_NAME):$(VERSION) .
-
-run-test-e2e:
-	@TEST_RUNNER_NAME=${TEST_RUNNER_NAME} \
-	BACKEND_NAME=${BACKEND_NAME} \
-	VERSION=${VERSION} \
-	BACKEND_PORT=${BACKEND_PORT} \
-	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.test-e2e.yml -f docker-compose/docker-compose.override-test-e2e.yml run --rm test ;
-	
-	@TEST_RUNNER_NAME=${TEST_RUNNER_NAME} \
-	BACKEND_NAME=${BACKEND_NAME} \
-	VERSION=${VERSION} \
-	BACKEND_PORT=${BACKEND_PORT} \
-	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.test-e2e.yml -f docker-compose/docker-compose.override-test-e2e.yml rm -fsv
-
-run-test-unit:
+run-unit-tests:
 	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \

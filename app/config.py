@@ -132,8 +132,6 @@ class UnitTestConfig(Config):
         "dod",
     )
 
-    SECRET_KEY = "test"
-
 
 class StagingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (

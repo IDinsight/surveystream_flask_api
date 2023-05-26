@@ -24,8 +24,9 @@ services:
       - postgres
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    entrypoint: ["/bin/sh","-c"]
+    entrypoint: ["/bin/bash","-c"]
     command:
     - |
-       "/bootstrap.sh"
-       dockerize -wait tcp://postgres:5433 -timeout 15m -wait-retry-interval 10s bash -c "pytest -o log_cli=True --show-capture=stdout -vv"
+       . /bootstrap.sh
+       dockerize -wait tcp://postgres:5433 -timeout 15m -wait-retry-interval 10s 
+       pytest -o log_cli=True --show-capture=stdout -vv

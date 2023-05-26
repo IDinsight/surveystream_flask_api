@@ -1,8 +1,8 @@
-def test_healthcheck(base_url, client):
+def test_healthcheck(client):
     """
     Check healthcheck endpoint response
     """
 
-    response = client.get(f"{base_url}/api/healthcheck")
+    response = client.get("/api/healthcheck")
 
     assert response.status_code == 200

@@ -4,6 +4,32 @@ from app import db
 from passlib.hash import pbkdf2_sha256
 import yaml
 from werkzeug.http import parse_cookie
+from pathlib import Path
+
+
+def pytest_configure(config):
+    """
+    Register custom markers
+    """
+    config.addinivalue_line("markers", "slow: mark test as slow to run")
+
+
+def pytest_collection_modifyitems(config, items):
+    """
+    Check for tests to skip
+    """
+
+    filepath = Path(__file__).resolve().parent / "config.yml"
+    with open(filepath) as file:
+        settings = yaml.safe_load(file)
+
+    if settings["run_slow_tests"]:
+        # do not skip slow tests
+        return
+    skip_slow = pytest.mark.skip(reason="need run_slow_tests=True in config.yml to run")
+    for item in items:
+        if "slow" in item.keywords:
+            item.add_marker(skip_slow)
 
 
 @pytest.fixture()
@@ -31,7 +57,8 @@ def test_user_credentials():
     """
     Create credentials for the test user
     """
-    with open("tests/config.yml") as file:
+    filepath = Path(__file__).resolve().parent / "config.yml"
+    with open(filepath) as file:
         settings = yaml.safe_load(file)
 
     users = {
@@ -64,9 +91,9 @@ def registration_user_credentials():
 
 
 @pytest.fixture()
-def login_test_user(test_user_credentials, client):
+def csrf_token(client):
     """
-    Log in the test user as a setup step for certain tests
+    Get a CSRF token for non-GET requests
     """
 
     # Get a CSRF token
@@ -77,6 +104,15 @@ def login_test_user(test_user_credentials, client):
     assert cookie is not None
     cookie_attrs = parse_cookie(cookie)
     csrf_token = cookie_attrs["CSRF-TOKEN"]
+
+    yield csrf_token
+
+
+@pytest.fixture()
+def login_test_user(test_user_credentials, client, csrf_token):
+    """
+    Log in the test user as a setup step for certain tests
+    """
 
     # Log in the test user using the CSRF token
     response = client.post(
@@ -90,7 +126,7 @@ def login_test_user(test_user_credentials, client):
     )
     assert response.status_code == 200
 
-    yield csrf_token
+    yield
 
 
 @pytest.fixture(autouse=True)
