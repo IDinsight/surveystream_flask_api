@@ -1,0 +1,2548 @@
+target_uid,completed_flag,refusal_flag,num_attempts,last_attempt_survey_status,last_attempt_survey_status_label,revisit_sections,target_assignable,webapp_tag_color
+5313,f,f,0,,Not Attempted,,t,
+5288,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5314,t,f,1,1,Fully complete,,f,green
+5315,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5316,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+5289,t,f,2,1,Fully complete,,f,green
+5317,t,f,2,1,Fully complete,,f,green
+5318,t,f,2,1,Fully complete,,f,green
+5319,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5320,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5321,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5322,f,f,0,,Not Attempted,,t,
+5323,f,f,0,,Not Attempted,,t,
+5324,t,f,1,1,Fully complete,,f,green
+5325,t,f,1,1,Fully complete,,f,green
+5326,t,f,1,1,Fully complete,,f,green
+5327,f,f,0,,Not Attempted,,t,
+5328,f,f,0,,Not Attempted,,t,
+5329,f,f,0,,Not Attempted,,t,
+5330,f,f,0,,Not Attempted,,t,
+5331,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5332,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5333,t,f,1,1,Fully complete,,f,green
+5334,t,f,1,1,Fully complete,,f,green
+5335,t,f,1,1,Fully complete,,f,green
+5336,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5337,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5338,f,f,0,,Not Attempted,,t,
+5339,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+5340,f,f,1,7,Not found - no revisit,,f,red
+5341,t,f,1,1,Fully complete,,f,green
+5290,f,f,0,,Not Attempted,,t,
+5342,t,f,1,1,Fully complete,,f,green
+5343,t,f,1,1,Fully complete,,f,green
+5344,f,f,0,,Not Attempted,,t,
+5291,f,f,0,,Not Attempted,,t,
+5345,t,f,1,1,Fully complete,,f,green
+5346,t,f,1,1,Fully complete,,f,green
+5292,f,f,0,,Not Attempted,,t,
+5347,f,f,1,9,Ineligible household,,f,cyan
+5348,t,f,3,1,Fully complete,,f,green
+5349,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5350,f,f,0,,Not Attempted,,t,
+5351,f,f,0,,Not Attempted,,t,
+5352,f,f,2,9,Ineligible household,,f,cyan
+5353,t,f,2,1,Fully complete,,f,green
+5354,t,f,2,1,Fully complete,,f,green
+5355,f,f,0,,Not Attempted,,t,
+5356,t,f,1,1,Fully complete,,f,green
+5357,t,f,1,1,Fully complete,,f,green
+5358,f,f,1,9,Ineligible household,,f,cyan
+5359,f,f,0,,Not Attempted,,t,
+5360,f,f,1,9,Ineligible household,,f,cyan
+5361,t,f,2,1,Fully complete,,f,green
+5293,f,f,1,9,Ineligible household,,f,cyan
+5362,f,f,0,,Not Attempted,,t,
+5363,f,f,0,,Not Attempted,,t,
+5364,f,f,0,,Not Attempted,,t,
+5365,f,f,0,,Not Attempted,,t,
+5294,f,f,1,9,Ineligible household,,f,cyan
+5366,t,f,3,1,Fully complete,,f,green
+5367,t,f,1,1,Fully complete,,f,green
+5368,f,f,1,3,Partially complete - no revisit,,f,green
+5369,f,f,0,,Not Attempted,,t,
+5370,t,f,1,1,Fully complete,,f,green
+5371,f,f,0,,Not Attempted,,t,
+5372,t,f,2,1,Fully complete,,f,green
+5373,f,f,0,,Not Attempted,,t,
+5374,f,f,0,,Not Attempted,,t,
+5375,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5376,f,t,1,5,Refusal,,f,red
+5377,f,f,0,,Not Attempted,,t,
+5378,f,f,0,,Not Attempted,,t,
+5379,f,f,0,,Not Attempted,,t,
+5380,f,f,0,,Not Attempted,,t,
+5381,f,f,0,,Not Attempted,,t,
+5382,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+5383,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5384,f,f,0,,Not Attempted,,t,
+5385,f,f,0,,Not Attempted,,t,
+5295,f,f,0,,Not Attempted,,t,
+5386,t,f,1,1,Fully complete,,f,green
+5387,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5296,t,f,2,1,Fully complete,,f,green
+5388,f,f,0,,Not Attempted,,t,
+5389,t,f,1,1,Fully complete,,f,green
+5390,f,f,0,,Not Attempted,,t,
+5391,f,f,0,,Not Attempted,,t,
+5297,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5392,f,f,2,9,Ineligible household,,f,cyan
+5393,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5394,f,f,1,9,Ineligible household,,f,cyan
+5298,f,f,0,,Not Attempted,,t,
+5395,f,f,0,,Not Attempted,,t,
+5396,f,f,0,,Not Attempted,,t,
+5397,f,f,0,,Not Attempted,,t,
+5398,f,f,0,,Not Attempted,,t,
+5399,t,f,2,1,Fully complete,,f,green
+5400,t,f,2,1,Fully complete,,f,green
+5401,t,f,1,1,Fully complete,,f,green
+5402,f,f,0,,Not Attempted,,t,
+5403,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5404,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5405,f,f,1,9,Ineligible household,,f,cyan
+5406,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5407,t,f,1,1,Fully complete,,f,green
+5408,f,f,0,,Not Attempted,,t,
+5409,t,f,1,1,Fully complete,,f,green
+5410,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5411,f,f,0,,Not Attempted,,t,
+5412,f,f,0,,Not Attempted,,t,
+5413,f,f,0,,Not Attempted,,t,
+5414,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5415,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5416,f,t,1,5,Refusal,,f,red
+5299,f,f,0,,Not Attempted,,t,
+5417,t,f,2,4,Appointment,,f,blue
+5418,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5419,t,f,1,1,Fully complete,,f,green
+5420,t,f,2,1,Fully complete,,f,green
+5421,t,f,2,1,Fully complete,,f,green
+5300,f,f,0,,Not Attempted,,t,
+5422,t,f,2,1,Fully complete,,f,green
+5423,f,f,1,9,Ineligible household,,f,cyan
+5301,f,f,0,,Not Attempted,,t,
+5424,t,f,1,1,Fully complete,,f,green
+5425,t,f,1,1,Fully complete,,f,green
+5426,t,f,1,1,Fully complete,,f,green
+5302,f,f,0,,Not Attempted,,t,
+5427,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5428,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5429,t,f,1,1,Fully complete,,f,green
+5430,f,f,0,,Not Attempted,,t,
+5431,f,f,1,3,Partially complete - no revisit,,f,green
+5432,f,f,0,,Not Attempted,,t,
+5303,f,f,0,,Not Attempted,,t,
+5304,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5305,t,f,1,1,Fully complete,,f,green
+5306,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5307,t,f,1,1,Fully complete,,f,green
+5308,f,f,0,,Not Attempted,,t,
+5309,f,f,0,,Not Attempted,,t,
+5310,f,f,0,,Not Attempted,,t,
+5311,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5312,f,f,1,9,Ineligible household,,f,cyan
+5451,f,f,0,,Not Attempted,,t,
+5433,f,t,1,5,Refusal,,f,red
+5452,t,f,1,1,Fully complete,,f,green
+5453,f,t,1,5,Refusal,,f,red
+5434,t,f,1,1,Fully complete,,f,green
+5454,f,f,0,,Not Attempted,,t,
+5455,t,f,1,1,Fully complete,,f,green
+5456,f,f,0,,Not Attempted,,t,
+5457,t,f,1,1,Fully complete,,f,green
+5458,f,f,0,,Not Attempted,,t,
+5459,f,f,0,,Not Attempted,,t,
+5460,f,f,0,,Not Attempted,,t,
+5461,t,f,1,1,Fully complete,,f,green
+5462,t,f,1,1,Fully complete,,f,green
+5463,t,f,1,1,Fully complete,,f,green
+5464,t,f,1,1,Fully complete,,f,green
+5465,t,f,2,1,Fully complete,,f,green
+5466,f,f,0,,Not Attempted,,t,
+5467,f,t,1,5,Refusal,,f,red
+5468,t,f,1,1,Fully complete,,f,green
+5469,t,f,1,1,Fully complete,,f,green
+5470,f,f,1,3,Partially complete - no revisit,,f,green
+5471,f,f,1,9,Ineligible household,,f,cyan
+5472,f,f,1,3,Partially complete - no revisit,,f,green
+5473,t,f,1,1,Fully complete,,f,green
+5474,t,f,1,1,Fully complete,,f,green
+5475,t,f,2,1,Fully complete,,f,green
+5476,f,f,1,7,Not found - no revisit,,f,red
+5435,f,f,1,7,Not found - no revisit,,f,red
+5477,t,f,1,1,Fully complete,,f,green
+5478,t,f,1,1,Fully complete,,f,green
+5479,f,f,1,2,Partially complete - revisit,"{Plot,1,Survey,"""","""","""","""","""",Plot,1,Mapping,"""","""","""","""",""""}",t,gold
+5480,t,f,1,1,Fully complete,,f,green
+5436,t,f,1,1,Fully complete,,f,green
+5481,t,f,1,1,Fully complete,,f,green
+5482,t,f,1,1,Fully complete,,f,green
+5483,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5484,f,f,0,,Not Attempted,,t,
+5485,t,f,1,1,Fully complete,,f,green
+5486,t,f,2,1,Fully complete,,f,green
+5487,f,f,1,3,Partially complete - no revisit,,f,green
+5488,f,f,1,3,Partially complete - no revisit,,f,green
+5489,t,f,2,1,Fully complete,,f,green
+5490,t,f,1,1,Fully complete,,f,green
+5491,t,f,1,1,Fully complete,,f,green
+5492,t,f,2,1,Fully complete,,f,green
+5493,f,f,1,3,Partially complete - no revisit,,f,green
+5494,t,f,1,1,Fully complete,,f,green
+5495,t,f,2,1,Fully complete,,f,green
+5496,f,f,0,,Not Attempted,,t,
+5497,t,f,2,1,Fully complete,,f,green
+5498,t,f,1,1,Fully complete,,f,green
+5437,t,f,1,1,Fully complete,,f,green
+5499,t,f,2,1,Fully complete,,f,green
+5500,t,f,1,1,Fully complete,,f,green
+5438,t,f,1,1,Fully complete,,f,green
+5501,f,f,1,9,Ineligible household,,f,cyan
+5502,f,f,1,2,Partially complete - revisit,"{"""","""","""","""","""","""",Plot,1,Mapping,"""","""","""","""",""""}",t,gold
+5503,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5504,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5505,t,f,1,1,Fully complete,,f,green
+5506,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5507,t,f,1,1,Fully complete,,f,green
+5508,t,f,2,1,Fully complete,,f,green
+5509,t,f,1,1,Fully complete,,f,green
+5510,t,f,1,1,Fully complete,,f,green
+5511,t,f,1,1,Fully complete,,f,green
+5512,t,f,1,1,Fully complete,,f,green
+5513,t,f,2,1,Fully complete,,f,green
+5514,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+5515,t,f,2,1,Fully complete,,f,green
+5516,f,t,2,5,Refusal,,f,red
+5517,t,f,1,1,Fully complete,,f,green
+5518,t,f,1,1,Fully complete,,f,green
+5519,t,f,1,1,Fully complete,,f,green
+5520,t,f,1,1,Fully complete,,f,green
+5439,t,f,1,1,Fully complete,,f,green
+5521,f,f,1,9,Ineligible household,,f,cyan
+5440,t,f,2,1,Fully complete,,f,green
+5522,t,f,1,1,Fully complete,,f,green
+5523,f,f,1,7,Not found - no revisit,,f,red
+5524,f,f,1,9,Ineligible household,,f,cyan
+5525,f,f,0,,Not Attempted,,t,
+5526,t,f,1,1,Fully complete,,f,green
+5527,f,f,0,,Not Attempted,,t,
+5528,t,f,1,1,Fully complete,,f,green
+5529,f,f,1,3,Partially complete - no revisit,,f,green
+5530,f,f,0,,Not Attempted,,t,
+5531,f,f,0,,Not Attempted,,t,
+5532,t,f,1,1,Fully complete,,f,green
+5533,t,f,1,1,Fully complete,,f,green
+5534,t,f,1,1,Fully complete,,f,green
+5535,f,f,1,2,Partially complete - revisit,"{"""","""","""","""","""","""","""","""","""",Plot,4,Mapping,Plot,5,Mapping,""""}",t,gold
+5536,t,f,1,1,Fully complete,,f,green
+5537,f,f,1,9,Ineligible household,,f,cyan
+5538,f,f,2,9,Ineligible household,,f,cyan
+5539,f,f,1,3,Partially complete - no revisit,,f,green
+5540,t,f,1,1,Fully complete,,f,green
+5541,t,f,1,1,Fully complete,,f,green
+5542,f,f,1,7,Not found - no revisit,,f,red
+5543,t,f,1,1,Fully complete,,f,green
+5544,t,f,1,1,Fully complete,,f,green
+5545,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5441,t,f,2,1,Fully complete,,f,green
+5546,t,f,1,1,Fully complete,,f,green
+5547,f,f,0,,Not Attempted,,t,
+5442,t,f,1,1,Fully complete,,f,green
+5548,f,f,1,9,Ineligible household,,f,cyan
+5443,t,f,2,1,Fully complete,,f,green
+5549,t,f,1,1,Fully complete,,f,green
+5444,t,f,3,1,Fully complete,,f,green
+5445,t,f,2,1,Fully complete,,f,green
+5446,t,f,1,1,Fully complete,,f,green
+5447,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5448,t,f,1,1,Fully complete,,f,green
+5449,t,f,1,1,Fully complete,,f,green
+5450,t,f,2,1,Fully complete,,f,green
+5566,t,f,2,1,Fully complete,,f,green
+5550,t,f,1,1,Fully complete,,f,green
+5567,f,f,1,2,Partially complete - revisit,"{"""","""","""","""","""","""",Plot,1,Mapping,"""","""","""","""",""""}",t,gold
+5568,t,f,1,1,Fully complete,,f,green
+5569,f,f,2,9,Ineligible household,,f,cyan
+5570,f,f,2,9,Ineligible household,,f,cyan
+5571,f,f,1,3,Partially complete - no revisit,,f,green
+5572,t,f,1,1,Fully complete,,f,green
+5573,t,f,1,1,Fully complete,,f,green
+5574,f,t,2,5,Refusal,,f,red
+5575,t,f,1,1,Fully complete,,f,green
+5576,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5577,f,f,0,,Not Attempted,,t,
+5578,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+5579,f,f,0,,Not Attempted,,t,
+5580,f,t,1,5,Refusal,,f,red
+5581,t,f,2,1,Fully complete,,f,green
+5582,t,f,1,1,Fully complete,,f,green
+5583,f,f,1,2,Partially complete - revisit,"{"""","""","""","""","""","""",Plot,1,Mapping,"""",Plot,3,Mapping,"""","""",""""}",t,gold
+5584,t,f,2,1,Fully complete,,f,green
+5585,f,t,2,5,Refusal,,f,red
+5551,t,f,1,1,Fully complete,,f,green
+5586,t,f,1,1,Fully complete,,f,green
+5587,t,f,1,1,Fully complete,,f,green
+5588,t,f,1,1,Fully complete,,f,green
+5589,t,f,1,1,Fully complete,,f,green
+5590,t,f,3,1,Fully complete,,f,green
+5591,f,f,1,2,Partially complete - revisit,"{"""","""","""","""","""","""",Plot,1,Mapping,Plot,2,Mapping,"""","""","""",""""}",t,gold
+5592,f,f,0,,Not Attempted,,t,
+5593,f,f,0,,Not Attempted,,t,
+5594,f,t,1,5,Refusal,,f,red
+5595,f,f,1,7,Not found - no revisit,,f,red
+5596,f,t,2,5,Refusal,,f,red
+5597,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5598,t,f,1,1,Fully complete,,f,green
+5599,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5600,f,f,1,9,Ineligible household,,f,cyan
+5601,t,f,1,1,Fully complete,,f,green
+5602,f,f,0,,Not Attempted,,t,
+5603,t,f,1,1,Fully complete,,f,green
+5604,f,t,1,5,Refusal,,f,red
+5605,t,f,2,1,Fully complete,,f,green
+5606,t,f,1,1,Fully complete,,f,green
+5607,t,f,1,1,Fully complete,,f,green
+5608,t,f,1,1,Fully complete,,f,green
+5609,f,t,2,5,Refusal,,f,red
+5552,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5610,t,f,1,1,Fully complete,,f,green
+5611,t,f,3,1,Fully complete,,f,green
+5612,t,f,1,1,Fully complete,,f,green
+5613,t,f,1,1,Fully complete,,f,green
+5614,t,f,1,1,Fully complete,,f,green
+5615,t,f,1,1,Fully complete,,f,green
+5616,t,f,1,1,Fully complete,,f,green
+5617,t,f,1,1,Fully complete,,f,green
+5618,f,t,2,5,Refusal,,f,red
+5619,t,f,3,1,Fully complete,,f,green
+5620,f,t,1,5,Refusal,,f,red
+5621,t,f,3,1,Fully complete,,f,green
+5622,t,f,1,1,Fully complete,,f,green
+5623,t,f,1,1,Fully complete,,f,green
+5624,f,t,1,5,Refusal,,f,red
+5625,f,f,0,,Not Attempted,,t,
+5626,t,f,1,1,Fully complete,,f,green
+5627,t,f,2,1,Fully complete,,f,green
+5628,t,f,1,1,Fully complete,,f,green
+5629,t,f,1,1,Fully complete,,f,green
+5630,t,f,1,1,Fully complete,,f,green
+5631,t,f,1,1,Fully complete,,f,green
+5632,f,f,0,,Not Attempted,,t,
+5633,t,f,1,1,Fully complete,,f,green
+5553,f,f,0,,Not Attempted,,t,
+5634,f,f,0,,Not Attempted,,t,
+5635,t,f,1,1,Fully complete,,f,green
+5636,f,f,0,,Not Attempted,,t,
+5637,f,f,0,,Not Attempted,,t,
+5638,f,f,0,,Not Attempted,,t,
+5639,f,f,0,,Not Attempted,,t,
+5640,f,f,0,,Not Attempted,,t,
+5641,t,f,1,1,Fully complete,,f,green
+5642,t,f,1,1,Fully complete,,f,green
+5643,t,f,1,1,Fully complete,,f,green
+5644,t,f,1,1,Fully complete,,f,green
+5645,f,f,1,9,Ineligible household,,f,cyan
+5646,f,f,0,,Not Attempted,,t,
+5554,f,f,0,,Not Attempted,,t,
+5555,f,f,0,,Not Attempted,,t,
+5556,t,f,1,1,Fully complete,,f,green
+5557,t,f,1,1,Fully complete,,f,green
+5558,f,f,2,9,Ineligible household,,f,cyan
+5559,t,f,1,1,Fully complete,,f,green
+5560,t,f,2,1,Fully complete,,f,green
+5561,t,f,1,1,Fully complete,,f,green
+5562,f,f,0,,Not Attempted,,t,
+5563,t,f,2,1,Fully complete,,f,green
+5564,t,f,2,1,Fully complete,,f,green
+5565,t,f,1,1,Fully complete,,f,green
+5669,t,f,1,1,Fully complete,,f,green
+5670,t,f,2,1,Fully complete,,f,green
+5647,t,f,1,1,Fully complete,,f,green
+5671,t,f,1,1,Fully complete,,f,green
+5672,t,f,2,1,Fully complete,,f,green
+5673,t,f,1,1,Fully complete,,f,green
+5674,f,t,1,5,Refusal,,f,red
+5675,t,f,2,1,Fully complete,,f,green
+5648,f,f,0,,Not Attempted,,t,
+5676,t,f,1,1,Fully complete,,f,green
+5677,t,f,1,1,Fully complete,,f,green
+5678,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+5679,t,f,1,1,Fully complete,,f,green
+5649,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5680,t,f,1,1,Fully complete,,f,green
+5681,t,f,1,1,Fully complete,,f,green
+5682,t,f,2,1,Fully complete,,f,green
+5683,t,f,1,1,Fully complete,,f,green
+5684,t,f,1,1,Fully complete,,f,green
+5685,t,f,1,1,Fully complete,,f,green
+5686,t,f,2,1,Fully complete,,f,green
+5687,t,f,3,1,Fully complete,,f,green
+5688,t,f,1,1,Fully complete,,f,green
+5689,t,f,1,1,Fully complete,,f,green
+5690,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5691,f,t,2,9,Ineligible household,,f,cyan
+5692,f,f,1,9,Ineligible household,,f,cyan
+5693,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5694,t,f,1,1,Fully complete,,f,green
+5695,t,f,1,1,Fully complete,,f,green
+5650,t,f,1,1,Fully complete,,f,green
+5696,t,f,1,1,Fully complete,,f,green
+5697,t,f,1,1,Fully complete,,f,green
+5698,f,f,0,,Not Attempted,,t,
+5699,t,f,2,1,Fully complete,,f,green
+5700,t,f,1,1,Fully complete,,f,green
+5701,t,f,2,1,Fully complete,,f,green
+5702,t,f,1,1,Fully complete,,f,green
+5703,t,f,1,1,Fully complete,,f,green
+5704,t,f,1,1,Fully complete,,f,green
+5705,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+5706,t,f,1,1,Fully complete,,f,green
+5707,t,f,1,1,Fully complete,,f,green
+5708,t,f,2,1,Fully complete,,f,green
+5709,t,f,2,1,Fully complete,,f,green
+5710,t,f,1,1,Fully complete,,f,green
+5711,t,f,2,1,Fully complete,,f,green
+5712,t,f,2,1,Fully complete,,f,green
+5713,t,f,1,1,Fully complete,,f,green
+5714,t,f,1,1,Fully complete,,f,green
+5715,f,f,3,2,Partially complete - revisit,"{"""","""","""","""","""","""","""","""",Plot,3,Mapping,Plot,4,Mapping,"""",""""}",f,gold
+5651,t,f,1,1,Fully complete,,f,green
+5716,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5717,f,f,0,,Not Attempted,,t,
+5652,t,f,1,1,Fully complete,,f,green
+5718,t,f,2,1,Fully complete,,f,green
+5719,t,f,2,1,Fully complete,,f,green
+5720,t,f,1,1,Fully complete,,f,green
+5721,t,f,1,1,Fully complete,,f,green
+5653,t,f,1,1,Fully complete,,f,green
+5722,t,f,1,1,Fully complete,,f,green
+5723,t,f,3,1,Fully complete,,f,green
+5724,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5725,t,f,2,1,Fully complete,,f,green
+5726,t,f,3,1,Fully complete,,f,green
+5727,t,f,1,1,Fully complete,,f,green
+5728,f,f,1,9,Ineligible household,,f,cyan
+5729,t,f,1,1,Fully complete,,f,green
+5730,t,f,2,1,Fully complete,,f,green
+5731,t,f,1,1,Fully complete,,f,green
+5732,t,f,2,1,Fully complete,,f,green
+5733,f,f,1,3,Partially complete - no revisit,,f,green
+5734,t,f,1,1,Fully complete,,f,green
+5735,f,f,1,3,Partially complete - no revisit,,f,green
+5736,f,f,2,3,Partially complete - no revisit,,f,green
+5737,f,f,1,3,Partially complete - no revisit,,f,green
+5738,f,t,2,5,Refusal,,f,red
+5739,f,t,1,5,Refusal,,f,red
+5740,t,f,1,1,Fully complete,,f,green
+5741,f,f,1,9,Ineligible household,,f,cyan
+5742,t,f,1,1,Fully complete,,f,green
+5743,t,f,1,1,Fully complete,,f,green
+5744,t,f,1,1,Fully complete,,f,green
+5654,t,f,2,1,Fully complete,,f,green
+5745,t,f,2,1,Fully complete,,f,green
+5746,t,f,2,1,Fully complete,,f,green
+5747,t,f,1,1,Fully complete,,f,green
+5655,t,f,2,1,Fully complete,,f,green
+5748,t,f,1,1,Fully complete,,f,green
+5749,t,f,1,1,Fully complete,,f,green
+5750,t,f,1,1,Fully complete,,f,green
+5656,f,t,3,5,Refusal,,f,red
+5751,t,f,2,1,Fully complete,,f,green
+5752,t,f,2,1,Fully complete,,f,green
+5753,t,f,1,1,Fully complete,,f,green
+5754,t,f,1,1,Fully complete,,f,green
+5755,t,f,2,1,Fully complete,,f,green
+5756,t,f,1,1,Fully complete,,f,green
+5757,t,f,4,1,Fully complete,,f,green
+5758,t,f,3,1,Fully complete,,f,green
+5759,t,f,1,1,Fully complete,,f,green
+5760,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+5761,t,f,2,1,Fully complete,,f,green
+5762,t,f,1,1,Fully complete,,f,green
+5763,t,f,1,1,Fully complete,,f,green
+5764,t,f,1,1,Fully complete,,f,green
+5765,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+5766,t,f,1,1,Fully complete,,f,green
+5767,t,f,1,1,Fully complete,,f,green
+5657,t,f,2,1,Fully complete,,f,green
+5658,t,f,1,1,Fully complete,,f,green
+5659,t,f,2,1,Fully complete,,f,green
+5660,t,f,1,1,Fully complete,,f,green
+5661,t,f,1,1,Fully complete,,f,green
+5662,f,f,1,9,Ineligible household,,f,cyan
+5663,t,f,1,1,Fully complete,,f,green
+5664,t,f,2,1,Fully complete,,f,green
+5665,t,f,2,1,Fully complete,,f,green
+5666,t,f,2,1,Fully complete,,f,green
+5667,t,f,1,1,Fully complete,,f,green
+5668,t,f,3,1,Fully complete,,f,green
+5795,t,f,1,1,Fully complete,,f,green
+5796,t,f,1,1,Fully complete,,f,green
+5797,t,f,1,1,Fully complete,,f,green
+5768,t,f,1,1,Fully complete,,f,green
+5798,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5799,f,t,1,5,Refusal,,f,red
+5800,t,f,1,1,Fully complete,,f,green
+5769,t,f,1,1,Fully complete,,f,green
+5801,t,f,1,1,Fully complete,,f,green
+5802,t,f,1,1,Fully complete,,f,green
+5803,t,f,1,1,Fully complete,,f,green
+5804,t,f,1,1,Fully complete,,f,green
+5805,t,f,1,1,Fully complete,,f,green
+5806,t,f,1,1,Fully complete,,f,green
+5807,t,f,1,1,Fully complete,,f,green
+5808,t,f,1,1,Fully complete,,f,green
+5809,t,f,1,1,Fully complete,,f,green
+5810,t,f,1,1,Fully complete,,f,green
+5811,f,t,1,5,Refusal,,f,red
+5812,t,f,1,1,Fully complete,,f,green
+5813,t,f,1,1,Fully complete,,f,green
+5814,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5815,t,f,1,1,Fully complete,,f,green
+5816,t,f,2,1,Fully complete,,f,green
+5817,t,f,1,1,Fully complete,,f,green
+5818,t,f,2,1,Fully complete,,f,green
+5819,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+5820,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5821,t,f,1,1,Fully complete,,f,green
+5822,t,f,2,1,Fully complete,,f,green
+5823,t,f,2,1,Fully complete,,f,green
+5770,t,f,2,1,Fully complete,,f,green
+5824,t,f,1,1,Fully complete,,f,green
+5825,t,f,2,1,Fully complete,,f,green
+5826,t,f,1,1,Fully complete,,f,green
+5827,t,f,1,1,Fully complete,,f,green
+5828,t,f,1,1,Fully complete,,f,green
+5829,t,f,2,1,Fully complete,,f,green
+5830,t,f,1,1,Fully complete,,f,green
+5831,t,f,2,1,Fully complete,,f,green
+5832,t,f,2,1,Fully complete,,f,green
+5833,f,f,2,9,Ineligible household,,f,cyan
+5834,t,f,1,1,Fully complete,,f,green
+5835,t,f,2,1,Fully complete,,f,green
+5836,f,t,1,5,Refusal,,f,red
+5837,t,f,1,1,Fully complete,,f,green
+5838,f,f,2,9,Ineligible household,,f,cyan
+5839,t,f,1,1,Fully complete,,f,green
+5840,t,f,1,1,Fully complete,,f,green
+5841,t,f,1,1,Fully complete,,f,green
+5842,t,f,1,1,Fully complete,,f,green
+5843,f,t,2,5,Refusal,,f,red
+5844,t,f,1,1,Fully complete,,f,green
+5845,t,f,1,1,Fully complete,,f,green
+5846,t,f,1,1,Fully complete,,f,green
+5847,t,f,1,1,Fully complete,,f,green
+5848,t,f,1,1,Fully complete,,f,green
+5771,t,f,1,1,Fully complete,,f,green
+5849,t,t,2,1,Fully complete,,f,green
+5850,t,f,1,1,Fully complete,,f,green
+5772,f,f,1,9,Ineligible household,,f,cyan
+5851,t,f,2,1,Fully complete,,f,green
+5852,t,f,1,1,Fully complete,,f,green
+5853,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5773,t,f,1,1,Fully complete,,f,green
+5854,t,f,1,1,Fully complete,,f,green
+5855,t,f,1,1,Fully complete,,f,green
+5856,t,f,1,1,Fully complete,,f,green
+5857,t,f,1,1,Fully complete,,f,green
+5858,f,f,1,9,Ineligible household,,f,cyan
+5859,t,f,1,1,Fully complete,,f,green
+5860,t,f,1,1,Fully complete,,f,green
+5861,t,f,2,1,Fully complete,,f,green
+5862,t,f,2,1,Fully complete,,f,green
+5863,t,f,1,1,Fully complete,,f,green
+5864,t,f,1,1,Fully complete,,f,green
+5865,f,t,1,5,Refusal,,f,red
+5774,t,f,1,1,Fully complete,,f,green
+5775,t,f,1,1,Fully complete,,f,green
+5776,t,f,1,1,Fully complete,,f,green
+5777,t,f,1,1,Fully complete,,f,green
+5778,f,f,0,,Not Attempted,,t,
+5779,f,t,3,5,Refusal,,f,red
+5780,f,f,1,9,Ineligible household,,f,cyan
+5781,t,f,2,1,Fully complete,,f,green
+5782,t,f,1,1,Fully complete,,f,green
+5783,t,f,1,1,Fully complete,,f,green
+5784,t,f,1,1,Fully complete,,f,green
+5785,t,f,1,1,Fully complete,,f,green
+5786,t,f,1,1,Fully complete,,f,green
+5787,t,f,1,1,Fully complete,,f,green
+5788,t,f,1,1,Fully complete,,f,green
+5789,t,f,2,1,Fully complete,,f,green
+5790,t,f,1,1,Fully complete,,f,green
+5791,t,f,2,1,Fully complete,,f,green
+5792,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5793,t,f,2,1,Fully complete,,f,green
+5794,t,f,2,1,Fully complete,,f,green
+5894,f,t,2,5,Refusal,,f,red
+5895,t,f,2,1,Fully complete,,f,green
+5896,t,f,1,1,Fully complete,,f,green
+5897,t,f,1,1,Fully complete,,f,green
+5898,t,f,1,1,Fully complete,,f,green
+5899,t,f,1,1,Fully complete,,f,green
+5866,t,f,2,1,Fully complete,,f,green
+5900,t,f,2,1,Fully complete,,f,green
+5901,f,f,2,7,Not found - no revisit,,f,red
+5902,t,f,1,1,Fully complete,,f,green
+5867,t,f,1,1,Fully complete,,f,green
+5903,f,t,2,5,Refusal,,f,red
+5904,t,f,1,1,Fully complete,,f,green
+5905,t,f,1,1,Fully complete,,f,green
+5868,f,f,1,3,Partially complete - no revisit,,f,green
+5906,t,f,1,1,Fully complete,,f,green
+5907,t,f,1,1,Fully complete,,f,green
+5908,t,f,1,1,Fully complete,,f,green
+5909,t,f,1,1,Fully complete,,f,green
+5869,t,f,2,1,Fully complete,,f,green
+5910,t,f,1,1,Fully complete,,f,green
+5911,t,f,1,1,Fully complete,,f,green
+5912,t,f,1,1,Fully complete,,f,green
+5913,t,f,1,1,Fully complete,,f,green
+5914,t,f,1,1,Fully complete,,f,green
+5915,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5916,t,f,1,1,Fully complete,,f,green
+5917,t,f,2,1,Fully complete,,f,green
+5918,t,f,1,1,Fully complete,,f,green
+5919,f,f,1,9,Ineligible household,,f,cyan
+5920,f,f,1,9,Ineligible household,,f,cyan
+5921,t,f,3,1,Fully complete,,f,green
+5922,t,f,1,1,Fully complete,,f,green
+5923,t,f,1,1,Fully complete,,f,green
+5924,f,f,0,,Not Attempted,,t,
+5925,f,f,0,,Not Attempted,,t,
+5926,f,f,0,,Not Attempted,,t,
+5927,f,f,0,,Not Attempted,,t,
+5870,t,f,1,1,Fully complete,,f,green
+5928,t,f,1,1,Fully complete,,f,green
+5929,t,f,2,1,Fully complete,,f,green
+5930,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5931,t,f,1,1,Fully complete,,f,green
+5871,t,f,1,1,Fully complete,,f,green
+5932,t,f,1,1,Fully complete,,f,green
+5933,f,f,0,,Not Attempted,,t,
+5934,f,f,0,,Not Attempted,,t,
+5872,t,f,1,1,Fully complete,,f,green
+5935,t,f,2,1,Fully complete,,f,green
+5873,t,f,1,1,Fully complete,,f,green
+5936,t,f,1,1,Fully complete,,f,green
+5937,t,f,1,1,Fully complete,,f,green
+5938,t,f,1,1,Fully complete,,f,green
+5939,t,f,1,1,Fully complete,,f,green
+5940,f,f,0,,Not Attempted,,t,
+5941,f,f,0,,Not Attempted,,t,
+5942,f,f,0,,Not Attempted,,t,
+5943,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+5944,f,t,1,5,Refusal,,f,red
+5945,t,f,1,1,Fully complete,,f,green
+5946,f,f,1,7,Not found - no revisit,,f,red
+5947,f,f,0,,Not Attempted,,t,
+5948,f,f,0,,Not Attempted,,t,
+5949,f,f,0,,Not Attempted,,t,
+5950,f,f,1,9,Ineligible household,,f,cyan
+5951,t,f,1,1,Fully complete,,f,green
+5952,t,f,1,1,Fully complete,,f,green
+5953,t,f,1,1,Fully complete,,f,green
+5954,t,f,3,1,Fully complete,,f,green
+5955,f,f,0,,Not Attempted,,t,
+5956,f,f,1,9,Ineligible household,,f,cyan
+5957,f,f,1,9,Ineligible household,,f,cyan
+5958,t,f,1,1,Fully complete,,f,green
+5874,t,f,1,1,Fully complete,,f,green
+5959,t,f,1,1,Fully complete,,f,green
+5960,t,f,1,1,Fully complete,,f,green
+5961,t,f,1,1,Fully complete,,f,green
+5875,f,f,0,,Not Attempted,,t,
+5876,t,f,1,1,Fully complete,,f,green
+5877,f,f,0,,Not Attempted,,t,
+5878,t,f,1,1,Fully complete,,f,green
+5879,f,f,1,9,Ineligible household,,f,cyan
+5880,t,f,1,1,Fully complete,,f,green
+5881,t,f,1,1,Fully complete,,f,green
+5882,t,f,1,1,Fully complete,,f,green
+5883,f,f,1,7,Not found - no revisit,,f,red
+5884,t,f,1,1,Fully complete,,f,green
+5885,f,t,1,5,Refusal,,f,red
+5886,t,f,1,1,Fully complete,,f,green
+5887,t,f,1,1,Fully complete,,f,green
+5888,t,f,1,1,Fully complete,,f,green
+5889,f,f,1,9,Ineligible household,,f,cyan
+5890,t,f,3,1,Fully complete,,f,green
+5891,t,f,2,1,Fully complete,,f,green
+5892,t,f,1,1,Fully complete,,f,green
+5893,t,f,1,1,Fully complete,,f,green
+5989,t,f,1,1,Fully complete,,f,green
+5990,t,f,1,1,Fully complete,,f,green
+5991,t,f,2,1,Fully complete,,f,green
+5962,t,f,1,1,Fully complete,,f,green
+5992,t,f,1,1,Fully complete,,f,green
+5993,t,f,2,1,Fully complete,,f,green
+5994,t,f,1,1,Fully complete,,f,green
+5995,t,f,1,1,Fully complete,,f,green
+5963,t,f,1,1,Fully complete,,f,green
+5996,t,f,1,1,Fully complete,,f,green
+5997,t,f,1,1,Fully complete,,f,green
+5998,t,f,1,1,Fully complete,,f,green
+5964,t,f,1,1,Fully complete,,f,green
+5999,t,f,1,1,Fully complete,,f,green
+5965,t,f,4,1,Fully complete,,f,green
+6000,t,f,1,1,Fully complete,,f,green
+6001,t,f,1,1,Fully complete,,f,green
+6002,t,f,2,1,Fully complete,,f,green
+5966,t,f,1,1,Fully complete,,f,green
+6003,t,f,1,1,Fully complete,,f,green
+6004,t,f,2,1,Fully complete,,f,green
+6005,t,f,1,1,Fully complete,,f,green
+6006,f,f,3,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,gold
+6007,t,f,2,1,Fully complete,,f,green
+6008,f,f,1,7,Not found - no revisit,,f,red
+6009,t,f,3,1,Fully complete,,f,green
+6010,t,f,1,1,Fully complete,,f,green
+6011,t,f,1,1,Fully complete,,f,green
+6012,t,f,3,1,Fully complete,,f,green
+6013,t,f,3,1,Fully complete,,f,green
+6014,t,f,1,1,Fully complete,,f,green
+6015,t,f,1,1,Fully complete,,f,green
+6016,t,f,1,1,Fully complete,,f,green
+6017,t,f,3,4,Appointment,,f,blue
+6018,t,f,1,1,Fully complete,,f,green
+6019,t,f,1,1,Fully complete,,f,green
+6020,t,f,2,1,Fully complete,,f,green
+6021,t,f,1,1,Fully complete,,f,green
+6022,t,f,2,1,Fully complete,,f,green
+6023,t,f,1,1,Fully complete,,f,green
+5967,t,f,1,1,Fully complete,,f,green
+6024,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6025,t,f,1,1,Fully complete,,f,green
+5968,t,f,1,1,Fully complete,,f,green
+6026,t,f,1,1,Fully complete,,f,green
+6027,t,f,1,1,Fully complete,,f,green
+5969,t,f,1,1,Fully complete,,f,green
+6028,t,t,2,1,Fully complete,,f,green
+6029,f,f,0,,Not Attempted,,t,
+6030,f,t,2,5,Refusal,,f,red
+5970,f,f,0,,Not Attempted,,t,
+6031,t,f,1,1,Fully complete,,f,green
+6032,t,f,1,1,Fully complete,,f,green
+6033,t,f,1,1,Fully complete,,f,green
+6034,t,f,1,1,Fully complete,,f,green
+6035,t,f,1,1,Fully complete,,f,green
+6036,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+6037,t,f,1,1,Fully complete,,f,green
+6038,t,f,2,1,Fully complete,,f,green
+6039,f,t,1,5,Refusal,,f,red
+6040,t,f,1,1,Fully complete,,f,green
+6041,t,f,1,1,Fully complete,,f,green
+6042,f,f,0,,Not Attempted,,t,
+6043,t,f,1,1,Fully complete,,f,green
+6044,t,f,2,1,Fully complete,,f,green
+6045,t,f,1,1,Fully complete,,f,green
+6046,t,f,2,1,Fully complete,,f,green
+6047,f,t,1,5,Refusal,,f,red
+6048,t,f,1,1,Fully complete,,f,green
+6049,t,f,1,1,Fully complete,,f,green
+6050,t,f,2,1,Fully complete,,f,green
+6051,t,f,2,1,Fully complete,,f,green
+6052,f,f,1,9,Ineligible household,,f,cyan
+6053,f,t,2,5,Refusal,,f,red
+6054,t,f,2,1,Fully complete,,f,green
+6055,t,f,1,1,Fully complete,,f,green
+6056,f,f,1,2,Partially complete - revisit,"{"""","""","""","""","""","""","""",Plot,2,Mapping,"""","""","""",""""}",t,gold
+5971,t,f,1,1,Fully complete,,f,green
+6057,f,f,0,,Not Attempted,,t,
+6058,t,f,1,1,Fully complete,,f,green
+6059,t,f,1,1,Fully complete,,f,green
+6060,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6061,t,f,1,1,Fully complete,,f,green
+5972,f,f,0,,Not Attempted,,t,
+6062,t,f,1,1,Fully complete,,f,green
+6063,t,f,1,1,Fully complete,,f,green
+6064,t,f,1,1,Fully complete,,f,green
+6065,t,f,1,1,Fully complete,,f,green
+5973,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6066,t,f,3,1,Fully complete,,f,green
+6067,f,f,1,9,Ineligible household,,f,cyan
+6068,t,f,2,1,Fully complete,,f,green
+6069,t,f,1,1,Fully complete,,f,green
+5974,t,f,1,1,Fully complete,,f,green
+5975,t,f,1,1,Fully complete,,f,green
+5976,f,f,1,9,Ineligible household,,f,cyan
+5977,t,f,3,1,Fully complete,,f,green
+5978,t,f,1,1,Fully complete,,f,green
+5979,t,f,1,1,Fully complete,,f,green
+5980,t,f,1,1,Fully complete,,f,green
+5981,t,f,1,1,Fully complete,,f,green
+5982,t,f,1,1,Fully complete,,f,green
+5983,t,f,1,1,Fully complete,,f,green
+5984,t,f,2,1,Fully complete,,f,green
+5985,t,f,1,1,Fully complete,,f,green
+5986,t,f,1,1,Fully complete,,f,green
+5987,t,f,1,1,Fully complete,,f,green
+5988,t,f,1,1,Fully complete,,f,green
+6092,f,f,0,,Not Attempted,,t,
+6093,t,f,1,1,Fully complete,,f,green
+6094,f,f,0,,Not Attempted,,t,
+6095,t,f,1,1,Fully complete,,f,green
+6070,t,f,2,1,Fully complete,,f,green
+6096,t,f,1,1,Fully complete,,f,green
+6097,t,f,1,1,Fully complete,,f,green
+6098,t,f,1,1,Fully complete,,f,green
+6071,t,f,1,1,Fully complete,,f,green
+6099,t,f,2,1,Fully complete,,f,green
+6100,t,f,1,1,Fully complete,,f,green
+6101,t,f,1,1,Fully complete,,f,green
+6102,t,f,2,1,Fully complete,,f,green
+6072,t,f,1,1,Fully complete,,f,green
+6103,t,f,2,1,Fully complete,,f,green
+6104,f,f,0,,Not Attempted,,t,
+6105,t,f,2,1,Fully complete,,f,green
+6106,t,f,1,1,Fully complete,,f,green
+6107,t,f,1,1,Fully complete,,f,green
+6108,t,f,1,1,Fully complete,,f,green
+6109,t,f,2,1,Fully complete,,f,green
+6110,f,f,0,,Not Attempted,,t,
+6111,f,f,0,,Not Attempted,,t,
+6112,f,f,0,,Not Attempted,,t,
+6113,t,f,1,1,Fully complete,,f,green
+6114,t,f,1,1,Fully complete,,f,green
+6115,t,f,2,1,Fully complete,,f,green
+6116,t,f,1,1,Fully complete,,f,green
+6117,t,f,1,1,Fully complete,,f,green
+6118,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6119,f,f,1,9,Ineligible household,,f,cyan
+6073,t,f,1,1,Fully complete,,f,green
+6120,f,f,0,,Not Attempted,,t,
+6121,f,f,0,,Not Attempted,,t,
+6074,f,f,1,3,Partially complete - no revisit,,f,green
+6122,t,f,1,1,Fully complete,,f,green
+6123,t,f,1,1,Fully complete,,f,green
+6124,t,f,1,1,Fully complete,,f,green
+6075,t,f,1,1,Fully complete,,f,green
+6125,f,f,0,,Not Attempted,,t,
+6126,t,f,1,1,Fully complete,,f,green
+6127,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6128,t,f,1,1,Fully complete,,f,green
+6129,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6130,t,f,2,1,Fully complete,,f,green
+6131,t,f,1,1,Fully complete,,f,green
+6132,f,t,3,5,Refusal,,f,red
+6133,t,f,1,1,Fully complete,,f,green
+6134,t,f,1,1,Fully complete,,f,green
+6135,t,f,2,1,Fully complete,,f,green
+6136,f,f,1,9,Ineligible household,,f,cyan
+6137,t,f,1,1,Fully complete,,f,green
+6138,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6139,t,f,1,1,Fully complete,,f,green
+6140,f,f,0,,Not Attempted,,t,
+6141,t,f,1,1,Fully complete,,f,green
+6142,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6143,t,f,1,1,Fully complete,,f,green
+6076,t,f,1,1,Fully complete,,f,green
+6077,f,f,0,,Not Attempted,,t,
+6078,f,f,0,,Not Attempted,,t,
+6079,f,f,1,3,Partially complete - no revisit,,f,green
+6080,f,f,1,9,Ineligible household,,f,cyan
+6081,t,f,1,1,Fully complete,,f,green
+6082,f,t,1,5,Refusal,,f,red
+6083,f,f,1,3,Partially complete - no revisit,,f,green
+6084,t,f,1,1,Fully complete,,f,green
+6085,f,t,1,5,Refusal,,f,red
+6086,t,f,1,1,Fully complete,,f,green
+6087,f,t,1,5,Refusal,,f,red
+6088,f,t,1,5,Refusal,,f,red
+6089,t,f,1,1,Fully complete,,f,green
+6090,t,f,1,1,Fully complete,,f,green
+6091,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6167,t,f,1,1,Fully complete,,f,green
+6168,t,f,1,1,Fully complete,,f,green
+6169,t,f,2,1,Fully complete,,f,green
+6144,f,f,0,,Not Attempted,,t,
+6170,t,f,2,1,Fully complete,,f,green
+6171,t,f,1,1,Fully complete,,f,green
+6172,t,f,1,1,Fully complete,,f,green
+6173,f,f,0,,Not Attempted,,t,
+6145,f,f,0,,Not Attempted,,t,
+6174,f,f,0,,Not Attempted,,t,
+6175,f,f,0,,Not Attempted,,t,
+6146,f,f,0,,Not Attempted,,t,
+6176,t,f,3,1,Fully complete,,f,green
+6177,t,f,1,1,Fully complete,,f,green
+6178,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6179,t,f,2,1,Fully complete,,f,green
+6147,f,f,0,,Not Attempted,,t,
+6180,t,f,1,1,Fully complete,,f,green
+6181,f,f,0,,Not Attempted,,t,
+6182,f,f,1,9,Ineligible household,,f,cyan
+6183,t,f,1,1,Fully complete,,f,green
+6184,t,f,1,1,Fully complete,,f,green
+6185,t,f,1,1,Fully complete,,f,green
+6186,t,f,1,1,Fully complete,,f,green
+6187,t,f,1,1,Fully complete,,f,green
+6188,f,f,0,,Not Attempted,,t,
+6189,t,f,1,1,Fully complete,,f,green
+6190,t,f,1,1,Fully complete,,f,green
+6191,t,f,1,1,Fully complete,,f,green
+6192,t,f,1,1,Fully complete,,f,green
+6193,t,f,1,1,Fully complete,,f,green
+6194,t,f,1,1,Fully complete,,f,green
+6195,t,f,1,1,Fully complete,,f,green
+6196,t,f,1,1,Fully complete,,f,green
+6197,t,f,1,1,Fully complete,,f,green
+6198,t,f,1,1,Fully complete,,f,green
+6199,t,f,1,1,Fully complete,,f,green
+6148,t,f,1,1,Fully complete,,f,green
+6200,t,f,1,1,Fully complete,,f,green
+6201,t,f,1,1,Fully complete,,f,green
+6202,t,f,1,1,Fully complete,,f,green
+6149,t,f,1,1,Fully complete,,f,green
+6203,t,f,2,1,Fully complete,,f,green
+6204,t,f,1,1,Fully complete,,f,green
+6205,t,f,1,1,Fully complete,,f,green
+6206,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6207,f,f,0,,Not Attempted,,t,
+6208,t,f,1,1,Fully complete,,f,green
+6209,t,f,2,1,Fully complete,,f,green
+6210,t,f,1,1,Fully complete,,f,green
+6211,f,f,0,,Not Attempted,,t,
+6212,f,f,1,9,Ineligible household,,f,cyan
+6213,t,f,1,1,Fully complete,,f,green
+6214,f,t,2,5,Refusal,,f,red
+6215,t,f,1,1,Fully complete,,f,green
+6216,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6217,t,f,1,1,Fully complete,,f,green
+6218,t,f,2,1,Fully complete,,f,green
+6219,t,f,1,1,Fully complete,,f,green
+6220,f,f,0,,Not Attempted,,t,
+6221,f,f,0,,Not Attempted,,t,
+6222,f,f,0,,Not Attempted,,t,
+6223,t,f,2,1,Fully complete,,f,green
+6224,t,f,1,1,Fully complete,,f,green
+6225,t,f,1,1,Fully complete,,f,green
+6150,t,f,1,1,Fully complete,,f,green
+6226,t,f,1,1,Fully complete,,f,green
+6227,t,f,1,1,Fully complete,,f,green
+6228,t,f,1,1,Fully complete,,f,green
+6229,t,f,1,1,Fully complete,,f,green
+6151,f,f,1,9,Ineligible household,,f,cyan
+6230,t,f,2,1,Fully complete,,f,green
+6231,t,f,1,1,Fully complete,,f,green
+6232,t,f,1,1,Fully complete,,f,green
+6152,t,f,1,1,Fully complete,,f,green
+6233,t,f,1,1,Fully complete,,f,green
+6234,t,f,1,1,Fully complete,,f,green
+6235,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+6236,t,f,2,1,Fully complete,,f,green
+6237,t,f,1,1,Fully complete,,f,green
+6238,t,f,1,1,Fully complete,,f,green
+6239,f,f,2,9,Ineligible household,,f,cyan
+6240,t,f,1,1,Fully complete,,f,green
+6241,t,f,1,1,Fully complete,,f,green
+6242,t,f,1,1,Fully complete,,f,green
+6153,t,f,1,1,Fully complete,,f,green
+6154,f,f,1,9,Ineligible household,,f,cyan
+6155,f,f,0,,Not Attempted,,t,
+6156,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6157,t,f,1,1,Fully complete,,f,green
+6158,t,f,1,1,Fully complete,,f,green
+6159,t,f,1,1,Fully complete,,f,green
+6160,t,f,2,1,Fully complete,,f,green
+6161,f,t,2,5,Refusal,,f,red
+6162,t,f,2,1,Fully complete,,f,green
+6163,t,f,2,1,Fully complete,,f,green
+6164,t,f,1,1,Fully complete,,f,green
+6165,t,f,1,1,Fully complete,,f,green
+6166,t,f,1,1,Fully complete,,f,green
+6263,t,f,1,1,Fully complete,,f,green
+6264,t,f,1,1,Fully complete,,f,green
+6265,f,t,1,5,Refusal,,f,red
+6243,t,f,1,1,Fully complete,,f,green
+6266,t,f,1,1,Fully complete,,f,green
+6267,t,f,1,1,Fully complete,,f,green
+6268,t,f,1,1,Fully complete,,f,green
+6269,t,f,2,1,Fully complete,,f,green
+6244,t,f,1,1,Fully complete,,f,green
+6270,t,f,1,1,Fully complete,,f,green
+6271,f,f,0,,Not Attempted,,t,
+6272,t,f,1,1,Fully complete,,f,green
+6273,f,f,0,,Not Attempted,,t,
+6245,t,f,1,1,Fully complete,,f,green
+6274,t,f,2,1,Fully complete,,f,green
+6275,t,f,1,1,Fully complete,,f,green
+6276,t,f,1,1,Fully complete,,f,green
+6277,t,f,1,1,Fully complete,,f,green
+6278,t,f,1,1,Fully complete,,f,green
+6279,t,f,1,1,Fully complete,,f,green
+6280,t,f,1,1,Fully complete,,f,green
+6281,t,f,1,1,Fully complete,,f,green
+6282,t,f,1,1,Fully complete,,f,green
+6283,f,f,2,3,Partially complete - no revisit,,f,green
+6284,t,f,1,1,Fully complete,,f,green
+6285,t,f,2,1,Fully complete,,f,green
+6286,t,f,2,1,Fully complete,,f,green
+6287,t,f,1,1,Fully complete,,f,green
+7288,t,f,1,1,Fully complete,,f,green
+7289,t,f,2,1,Fully complete,,f,green
+7290,t,f,3,1,Fully complete,,f,green
+7291,t,f,1,1,Fully complete,,f,green
+7292,t,f,1,1,Fully complete,,f,green
+7293,f,f,0,,Not Attempted,,t,
+7294,f,f,0,,Not Attempted,,t,
+6246,t,f,1,1,Fully complete,,f,green
+7295,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7296,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7297,t,f,1,1,Fully complete,,f,green
+7298,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+6247,t,f,1,1,Fully complete,,f,green
+7299,t,f,1,1,Fully complete,,f,green
+7300,t,f,1,1,Fully complete,,f,green
+7301,t,f,1,1,Fully complete,,f,green
+6248,t,f,1,1,Fully complete,,f,green
+7302,t,f,1,1,Fully complete,,f,green
+6249,t,f,1,1,Fully complete,,f,green
+7303,t,f,1,1,Fully complete,,f,green
+7304,f,f,1,9,Ineligible household,,f,cyan
+7305,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7306,f,t,1,5,Refusal,,f,red
+7307,t,f,3,1,Fully complete,,f,green
+7308,t,f,1,1,Fully complete,,f,green
+7309,t,f,1,1,Fully complete,,f,green
+7310,t,f,1,1,Fully complete,,f,green
+7311,f,f,1,9,Ineligible household,,f,cyan
+7312,t,f,1,1,Fully complete,,f,green
+7313,t,f,1,1,Fully complete,,f,green
+7314,t,f,1,1,Fully complete,,f,green
+7315,f,f,1,9,Ineligible household,,f,cyan
+7316,t,f,1,1,Fully complete,,f,green
+7317,t,f,1,1,Fully complete,,f,green
+7318,f,f,2,9,Ineligible household,,f,cyan
+7319,f,f,2,3,Partially complete - no revisit,,f,green
+7320,t,f,1,1,Fully complete,,f,green
+7321,t,f,1,1,Fully complete,,f,green
+6250,t,f,2,1,Fully complete,,f,green
+7322,f,f,0,,Not Attempted,,t,
+7323,t,f,1,1,Fully complete,,f,green
+6251,t,f,2,1,Fully complete,,f,green
+7324,t,f,1,1,Fully complete,,f,green
+7325,f,f,1,9,Ineligible household,,f,cyan
+7326,t,f,2,1,Fully complete,,f,green
+7327,t,f,2,1,Fully complete,,f,green
+7328,t,f,2,1,Fully complete,,f,green
+7329,t,f,2,1,Fully complete,,f,green
+7330,t,f,1,1,Fully complete,,f,green
+7331,t,f,1,1,Fully complete,,f,green
+7332,t,f,1,1,Fully complete,,f,green
+7333,t,f,2,1,Fully complete,,f,green
+7334,t,f,1,1,Fully complete,,f,green
+7335,t,f,1,1,Fully complete,,f,green
+6252,t,f,2,1,Fully complete,,f,green
+6253,t,f,1,1,Fully complete,,f,green
+6254,t,f,1,1,Fully complete,,f,green
+6255,t,f,1,1,Fully complete,,f,green
+6256,t,f,1,1,Fully complete,,f,green
+6257,f,f,4,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+6258,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+6259,t,f,2,1,Fully complete,,f,green
+6260,f,f,3,3,Partially complete - no revisit,,f,green
+6261,t,f,1,1,Fully complete,,f,green
+6262,t,f,1,1,Fully complete,,f,green
+7351,t,f,1,1,Fully complete,,f,green
+7352,f,f,2,9,Ineligible household,,f,cyan
+7353,t,f,1,1,Fully complete,,f,green
+7354,t,f,2,1,Fully complete,,f,green
+7336,t,f,1,1,Fully complete,,f,green
+7355,t,f,1,1,Fully complete,,f,green
+7356,t,f,1,1,Fully complete,,f,green
+7357,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7358,t,f,1,1,Fully complete,,f,green
+7359,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+7337,f,f,1,9,Ineligible household,,f,cyan
+7360,f,f,0,,Not Attempted,,t,
+7338,t,f,2,1,Fully complete,,f,green
+7361,t,f,1,1,Fully complete,,f,green
+7362,t,f,1,1,Fully complete,,f,green
+7363,t,f,1,1,Fully complete,,f,green
+7364,f,f,0,,Not Attempted,,t,
+7365,f,f,0,,Not Attempted,,t,
+7366,f,f,0,,Not Attempted,,t,
+7367,f,f,2,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+7368,t,f,1,1,Fully complete,,f,green
+7369,t,f,1,1,Fully complete,,f,green
+7370,f,f,0,,Not Attempted,,t,
+7371,f,f,0,,Not Attempted,,t,
+7372,f,f,0,,Not Attempted,,t,
+7373,t,f,1,1,Fully complete,,f,green
+7374,t,f,1,1,Fully complete,,f,green
+7375,t,f,1,1,Fully complete,,f,green
+7376,t,f,1,1,Fully complete,,f,green
+7377,f,f,0,,Not Attempted,,t,
+7339,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7378,f,f,1,3,Partially complete - no revisit,,f,green
+7379,f,t,1,5,Refusal,,f,red
+7380,t,f,2,1,Fully complete,,f,green
+7381,t,f,1,1,Fully complete,,f,green
+7382,t,f,1,1,Fully complete,,f,green
+7383,t,f,2,1,Fully complete,,f,green
+7384,t,f,1,1,Fully complete,,f,green
+7385,f,f,0,,Not Attempted,,t,
+7386,t,f,2,1,Fully complete,,f,green
+7387,t,f,2,1,Fully complete,,f,green
+7388,f,t,1,5,Refusal,,f,red
+7389,f,f,0,,Not Attempted,,t,
+7390,t,f,1,1,Fully complete,,f,green
+7391,f,f,0,,Not Attempted,,t,
+7392,f,f,0,,Not Attempted,,t,
+7393,f,f,0,,Not Attempted,,t,
+7394,t,f,1,1,Fully complete,,f,green
+7395,f,f,0,,Not Attempted,,t,
+7396,t,f,1,1,Fully complete,,f,green
+7340,f,f,1,9,Ineligible household,,f,cyan
+7341,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7342,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7343,t,f,2,1,Fully complete,,f,green
+7344,t,f,2,1,Fully complete,,f,green
+7345,t,f,2,1,Fully complete,,f,green
+7346,f,f,1,3,Partially complete - no revisit,,f,green
+7347,t,f,2,1,Fully complete,,f,green
+7348,f,f,0,,Not Attempted,,t,
+7349,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+7350,f,f,0,,Not Attempted,,t,
+7425,t,f,1,1,Fully complete,,f,green
+7426,t,f,1,1,Fully complete,,f,green
+7427,t,f,1,1,Fully complete,,f,green
+7428,t,f,2,1,Fully complete,,f,green
+7397,f,t,1,5,Refusal,,f,red
+7429,t,f,1,1,Fully complete,,f,green
+7430,t,f,1,1,Fully complete,,f,green
+7431,f,f,2,2,Partially complete - revisit,"{"""","""","""",Plot,4,Survey,"""","""","""","""","""","""","""",""""}",t,gold
+7432,t,f,2,1,Fully complete,,f,green
+7398,t,f,1,1,Fully complete,,f,green
+7433,f,t,1,5,Refusal,,f,red
+7434,f,t,1,5,Refusal,,f,red
+7399,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7435,t,f,2,1,Fully complete,,f,green
+7436,f,f,0,,Not Attempted,,t,
+7437,t,f,2,1,Fully complete,,f,green
+7438,t,f,1,1,Fully complete,,f,green
+7439,t,f,1,1,Fully complete,,f,green
+7440,t,f,1,1,Fully complete,,f,green
+7441,f,f,0,,Not Attempted,,t,
+7442,t,f,1,1,Fully complete,,f,green
+7443,t,f,1,1,Fully complete,,f,green
+7444,f,f,0,,Not Attempted,,t,
+7445,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7446,f,t,1,5,Refusal,,f,red
+7447,t,f,1,1,Fully complete,,f,green
+7448,t,f,1,1,Fully complete,,f,green
+7449,t,f,1,1,Fully complete,,f,green
+7450,t,f,1,1,Fully complete,,f,green
+7451,t,f,1,1,Fully complete,,f,green
+7452,t,f,1,1,Fully complete,,f,green
+7453,t,f,3,1,Fully complete,,f,green
+7454,t,f,1,1,Fully complete,,f,green
+7455,t,f,1,1,Fully complete,,f,green
+7456,t,f,3,1,Fully complete,,f,green
+7457,t,f,1,1,Fully complete,,f,green
+7458,t,f,2,1,Fully complete,,f,green
+7459,t,f,2,1,Fully complete,,f,green
+7460,t,f,1,1,Fully complete,,f,green
+7461,t,f,2,1,Fully complete,,f,green
+7462,t,f,1,1,Fully complete,,f,green
+7400,f,t,1,5,Refusal,,f,red
+7463,f,t,1,5,Refusal,,f,red
+7464,t,f,1,1,Fully complete,,f,green
+7465,f,f,0,,Not Attempted,,t,
+7466,t,f,1,1,Fully complete,,f,green
+7467,f,t,1,5,Refusal,,f,red
+7468,f,f,1,3,Partially complete - no revisit,,f,green
+7469,f,f,0,,Not Attempted,,t,
+7470,t,f,2,1,Fully complete,,f,green
+7471,t,f,1,1,Fully complete,,f,green
+7472,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7473,t,f,2,1,Fully complete,,f,green
+7474,t,f,1,1,Fully complete,,f,green
+7475,t,f,1,1,Fully complete,,f,green
+7476,t,f,3,1,Fully complete,,f,green
+7477,t,f,1,1,Fully complete,,f,green
+7478,t,f,2,1,Fully complete,,f,green
+7479,t,f,1,1,Fully complete,,f,green
+7480,t,f,1,1,Fully complete,,f,green
+7481,f,f,1,9,Ineligible household,,f,cyan
+7482,t,f,1,1,Fully complete,,f,green
+7483,t,f,1,1,Fully complete,,f,green
+7484,t,f,1,1,Fully complete,,f,green
+7485,t,f,1,1,Fully complete,,f,green
+7401,t,f,2,1,Fully complete,,f,green
+7486,t,f,1,1,Fully complete,,f,green
+7487,t,f,1,1,Fully complete,,f,green
+7488,t,f,2,1,Fully complete,,f,green
+7402,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7489,t,f,1,1,Fully complete,,f,green
+7490,f,t,1,5,Refusal,,f,red
+7491,f,t,1,5,Refusal,,f,red
+7492,f,t,1,5,Refusal,,f,red
+7493,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7494,f,f,0,,Not Attempted,,t,
+7495,f,f,6,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+7496,t,f,2,1,Fully complete,,f,green
+7497,t,f,2,1,Fully complete,,f,green
+7498,t,f,2,1,Fully complete,,f,green
+7499,t,f,1,1,Fully complete,,f,green
+7500,t,f,2,1,Fully complete,,f,green
+7501,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7502,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7503,t,f,1,1,Fully complete,,f,green
+7504,f,f,0,,Not Attempted,,t,
+7505,t,f,1,1,Fully complete,,f,green
+7506,t,f,2,1,Fully complete,,f,green
+7507,t,f,4,1,Fully complete,,f,green
+7508,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+7509,t,f,1,1,Fully complete,,f,green
+7510,t,f,3,1,Fully complete,,f,green
+7511,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7512,t,f,1,1,Fully complete,,f,green
+7403,t,f,1,1,Fully complete,,f,green
+7513,t,f,1,1,Fully complete,,f,green
+7514,t,f,1,1,Fully complete,,f,green
+7515,t,f,1,1,Fully complete,,f,green
+7404,t,f,1,1,Fully complete,,f,green
+7516,t,f,1,1,Fully complete,,f,green
+7405,t,f,1,1,Fully complete,,f,green
+7517,f,f,0,,Not Attempted,,t,
+7518,f,f,0,,Not Attempted,,t,
+7406,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7519,t,f,1,1,Fully complete,,f,green
+7520,t,f,1,1,Fully complete,,f,green
+7521,t,f,1,1,Fully complete,,f,green
+7522,f,f,0,,Not Attempted,,t,
+7523,t,f,1,1,Fully complete,,f,green
+7524,t,f,1,1,Fully complete,,f,green
+7525,t,f,2,1,Fully complete,,f,green
+7526,f,f,2,9,Ineligible household,,f,cyan
+7527,t,f,2,1,Fully complete,,f,green
+7528,t,f,2,1,Fully complete,,f,green
+7529,t,f,1,1,Fully complete,,f,green
+7530,t,f,1,1,Fully complete,,f,green
+7531,t,f,3,1,Fully complete,,f,green
+7532,t,f,2,1,Fully complete,,f,green
+7533,t,f,1,1,Fully complete,,f,green
+7534,t,f,1,1,Fully complete,,f,green
+7535,t,f,1,1,Fully complete,,f,green
+7536,t,f,3,1,Fully complete,,f,green
+7407,t,f,2,1,Fully complete,,f,green
+7537,t,f,2,1,Fully complete,,f,green
+7538,t,f,1,1,Fully complete,,f,green
+7408,f,f,0,,Not Attempted,,t,
+7539,f,f,0,,Not Attempted,,t,
+7540,f,f,0,,Not Attempted,,t,
+7541,f,f,0,,Not Attempted,,t,
+7409,f,f,1,3,Partially complete - no revisit,,f,green
+7410,t,t,2,1,Fully complete,,f,green
+7411,t,f,2,1,Fully complete,,f,green
+7412,f,f,0,,Not Attempted,,t,
+7413,t,f,1,1,Fully complete,,f,green
+7414,t,f,3,1,Fully complete,,f,green
+7415,t,f,1,1,Fully complete,,f,green
+7416,t,f,1,1,Fully complete,,f,green
+7417,t,f,1,1,Fully complete,,f,green
+7418,t,f,2,1,Fully complete,,f,green
+7419,t,f,3,1,Fully complete,,f,green
+7420,f,f,1,3,Partially complete - no revisit,,f,green
+7421,t,f,1,1,Fully complete,,f,green
+7422,t,f,1,1,Fully complete,,f,green
+7423,t,f,1,1,Fully complete,,f,green
+7424,t,f,3,1,Fully complete,,f,green
+7564,t,f,1,1,Fully complete,,f,green
+7565,t,f,1,1,Fully complete,,f,green
+7566,t,f,1,1,Fully complete,,f,green
+7542,t,f,1,1,Fully complete,,f,green
+7567,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7543,t,f,1,1,Fully complete,,f,green
+7568,t,f,1,1,Fully complete,,f,green
+7569,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7570,f,f,1,7,Not found - no revisit,,f,red
+7571,t,f,1,1,Fully complete,,f,green
+7572,f,f,1,3,Partially complete - no revisit,,f,green
+7573,t,f,1,1,Fully complete,,f,green
+7574,t,f,1,1,Fully complete,,f,green
+7575,t,f,1,1,Fully complete,,f,green
+7576,t,f,1,1,Fully complete,,f,green
+7577,t,f,1,1,Fully complete,,f,green
+7578,t,f,1,1,Fully complete,,f,green
+7579,t,f,1,1,Fully complete,,f,green
+7580,t,f,2,1,Fully complete,,f,green
+7581,f,f,1,2,Partially complete - revisit,"{"""","""","""","""","""","""","""","""",Plot,3,Mapping,"""","""",""""}",t,gold
+7582,t,f,2,1,Fully complete,,f,green
+7583,f,f,2,9,Ineligible household,,f,cyan
+7584,f,t,1,5,Refusal,,f,red
+7585,t,f,1,1,Fully complete,,f,green
+7586,f,f,0,,Not Attempted,,t,
+7587,f,f,0,,Not Attempted,,t,
+7588,t,f,1,1,Fully complete,,f,green
+7589,f,f,2,2,Partially complete - revisit,"{"""","""","""","""","""","""",Plot,1,Mapping,Plot,2,Mapping,"""","""","""",""""}",t,gold
+7590,f,t,1,5,Refusal,,f,red
+7591,t,f,1,1,Fully complete,,f,green
+7544,t,f,1,1,Fully complete,,f,green
+7592,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7593,t,f,1,1,Fully complete,,f,green
+7594,t,f,3,1,Fully complete,,f,green
+7595,t,f,2,1,Fully complete,,f,green
+7545,t,f,2,1,Fully complete,,f,green
+7596,t,f,1,1,Fully complete,,f,green
+7597,t,f,4,1,Fully complete,,f,green
+7598,t,f,2,1,Fully complete,,f,green
+7599,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7600,f,t,1,5,Refusal,,f,red
+7601,t,f,1,1,Fully complete,,f,green
+7602,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7603,t,f,1,1,Fully complete,,f,green
+7604,f,t,1,5,Refusal,,f,red
+7605,t,f,1,1,Fully complete,,f,green
+7606,f,f,1,2,Partially complete - revisit,"{"""",Plot,2,Survey,Plot,3,Survey,Plot,4,Survey,Plot,5,Survey,"""",Plot,1,Mapping,Plot,2,Mapping,Plot,3,Mapping,Plot,4,Mapping,Plot,5,Mapping,""""}",t,gold
+7607,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+7608,t,f,1,1,Fully complete,,f,green
+7609,t,f,1,1,Fully complete,,f,green
+7610,t,f,1,1,Fully complete,,f,green
+7611,f,f,1,2,Partially complete - revisit,"{Plot,1,Survey,"""","""","""","""","""",Plot,1,Mapping,"""","""","""","""",""""}",t,gold
+7612,t,f,1,1,Fully complete,,f,green
+7613,t,f,1,1,Fully complete,,f,green
+7614,t,f,1,1,Fully complete,,f,green
+7615,t,f,1,1,Fully complete,,f,green
+7546,t,f,1,1,Fully complete,,f,green
+7616,t,f,1,1,Fully complete,,f,green
+7617,f,f,1,2,Partially complete - revisit,"{"""","""","""","""","""","""",Plot,1,Mapping,"""","""","""","""",""""}",t,gold
+7618,t,f,1,1,Fully complete,,f,green
+7547,t,f,1,1,Fully complete,,f,green
+7619,t,f,1,1,Fully complete,,f,green
+7620,f,t,2,5,Refusal,,f,red
+7621,t,f,1,1,Fully complete,,f,green
+7622,t,f,1,1,Fully complete,,f,green
+7623,f,f,0,,Not Attempted,,t,
+7624,t,f,1,1,Fully complete,,f,green
+7625,t,f,1,1,Fully complete,,f,green
+7626,f,f,0,,Not Attempted,,t,
+7627,t,f,1,1,Fully complete,,f,green
+7628,t,f,1,1,Fully complete,,f,green
+7629,t,f,1,1,Fully complete,,f,green
+7630,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+7631,f,t,2,5,Refusal,,f,red
+7632,t,f,2,1,Fully complete,,f,green
+7633,t,f,1,1,Fully complete,,f,green
+7634,t,f,1,1,Fully complete,,f,green
+7635,f,t,3,5,Refusal,,f,red
+7636,t,f,1,1,Fully complete,,f,green
+7637,t,f,1,1,Fully complete,,f,green
+7638,t,f,1,1,Fully complete,,f,green
+7639,f,f,1,7,Not found - no revisit,,f,red
+7640,t,f,1,1,Fully complete,,f,green
+7641,f,t,1,5,Refusal,,f,red
+7548,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7642,t,f,1,1,Fully complete,,f,green
+7643,t,f,1,1,Fully complete,,f,green
+7549,t,f,1,1,Fully complete,,f,green
+7644,t,f,3,1,Fully complete,,f,green
+7645,t,f,3,1,Fully complete,,f,green
+7646,t,f,1,1,Fully complete,,f,green
+7647,f,t,1,5,Refusal,,f,red
+7648,t,f,1,1,Fully complete,,f,green
+7649,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7650,t,f,2,1,Fully complete,,f,green
+7651,t,f,1,1,Fully complete,,f,green
+7652,t,f,1,1,Fully complete,,f,green
+7653,t,f,3,1,Fully complete,,f,green
+7654,t,f,1,1,Fully complete,,f,green
+7655,t,f,1,1,Fully complete,,f,green
+7656,t,f,1,1,Fully complete,,f,green
+7657,f,f,1,3,Partially complete - no revisit,,f,green
+7658,t,f,1,1,Fully complete,,f,green
+7659,t,f,1,1,Fully complete,,f,green
+7660,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7661,f,t,1,5,Refusal,,f,red
+7662,f,t,1,5,Refusal,,f,red
+7663,t,f,1,1,Fully complete,,f,green
+7664,t,f,1,1,Fully complete,,f,green
+7665,t,f,1,1,Fully complete,,f,green
+7666,t,f,1,1,Fully complete,,f,green
+7550,t,f,1,1,Fully complete,,f,green
+7667,t,f,1,1,Fully complete,,f,green
+7668,f,f,1,3,Partially complete - no revisit,,f,green
+7669,t,f,1,1,Fully complete,,f,green
+7670,t,f,1,1,Fully complete,,f,green
+7671,f,t,1,5,Refusal,,f,red
+7672,t,f,1,1,Fully complete,,f,green
+7673,t,f,1,1,Fully complete,,f,green
+7674,t,f,2,1,Fully complete,,f,green
+7675,t,f,2,1,Fully complete,,f,green
+7676,t,f,1,1,Fully complete,,f,green
+7677,f,f,0,,Not Attempted,,t,
+7678,t,f,1,1,Fully complete,,f,green
+7679,t,f,1,1,Fully complete,,f,green
+7680,t,f,1,1,Fully complete,,f,green
+7681,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7682,t,f,1,1,Fully complete,,f,green
+7683,t,f,1,1,Fully complete,,f,green
+7684,t,f,1,1,Fully complete,,f,green
+7551,t,f,2,1,Fully complete,,f,green
+7685,f,t,1,5,Refusal,,f,red
+7686,f,t,1,5,Refusal,,f,red
+7687,t,f,1,1,Fully complete,,f,green
+7688,t,f,2,1,Fully complete,,f,green
+7552,f,t,1,5,Refusal,,f,red
+7553,t,f,1,1,Fully complete,,f,green
+7554,t,f,2,1,Fully complete,,f,green
+7555,f,f,0,,Not Attempted,,t,
+7556,t,f,1,1,Fully complete,,f,green
+7557,f,f,0,,Not Attempted,,t,
+7558,f,f,0,,Not Attempted,,t,
+7559,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+7560,t,f,2,1,Fully complete,,f,green
+7561,f,t,1,5,Refusal,,f,red
+7562,t,f,1,1,Fully complete,,f,green
+7563,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7717,t,f,1,1,Fully complete,,f,green
+7718,f,t,2,5,Refusal,,f,red
+7719,t,f,1,1,Fully complete,,f,green
+7720,t,f,1,1,Fully complete,,f,green
+7689,t,f,1,1,Fully complete,,f,green
+7721,f,f,0,,Not Attempted,,t,
+7722,t,f,1,1,Fully complete,,f,green
+7723,t,f,1,1,Fully complete,,f,green
+7724,t,f,1,1,Fully complete,,f,green
+7690,f,f,0,,Not Attempted,,t,
+7725,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7726,t,f,1,1,Fully complete,,f,green
+7727,t,f,1,1,Fully complete,,f,green
+7691,t,f,1,1,Fully complete,,f,green
+7728,t,f,2,1,Fully complete,,f,green
+7729,f,f,1,2,Partially complete - revisit,"{"""",Plot,2,Survey,Plot,3,Survey,"""","""","""",Plot,1,Mapping,Plot,2,Mapping,Plot,3,Mapping,"""","""",""""}",t,gold
+7730,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7731,t,f,1,1,Fully complete,,f,green
+7732,t,f,1,1,Fully complete,,f,green
+7733,t,f,1,1,Fully complete,,f,green
+7734,t,f,1,1,Fully complete,,f,green
+7735,t,f,1,1,Fully complete,,f,green
+7736,t,f,1,1,Fully complete,,f,green
+7737,t,f,1,1,Fully complete,,f,green
+7738,t,f,1,1,Fully complete,,f,green
+7739,t,f,1,1,Fully complete,,f,green
+7740,t,f,1,1,Fully complete,,f,green
+7741,t,f,1,1,Fully complete,,f,green
+7742,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7692,t,f,1,1,Fully complete,,f,green
+7743,f,t,2,5,Refusal,,f,red
+7744,t,f,1,1,Fully complete,,f,green
+7693,f,f,1,3,Partially complete - no revisit,,f,green
+7745,t,f,1,1,Fully complete,,f,green
+7746,t,f,1,1,Fully complete,,f,green
+7747,t,f,1,1,Fully complete,,f,green
+7748,t,f,1,1,Fully complete,,f,green
+7749,t,f,1,1,Fully complete,,f,green
+7750,t,f,1,1,Fully complete,,f,green
+7751,t,f,1,1,Fully complete,,f,green
+7752,t,f,1,1,Fully complete,,f,green
+7753,f,t,1,5,Refusal,,f,red
+7754,t,f,2,1,Fully complete,,f,green
+7755,t,f,2,1,Fully complete,,f,green
+7756,f,f,1,9,Ineligible household,,f,cyan
+7757,t,f,1,1,Fully complete,,f,green
+7758,t,f,1,1,Fully complete,,f,green
+7759,t,f,1,1,Fully complete,,f,green
+7760,t,f,1,1,Fully complete,,f,green
+7761,t,f,1,1,Fully complete,,f,green
+7762,t,f,1,1,Fully complete,,f,green
+7763,t,f,1,1,Fully complete,,f,green
+7764,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7694,f,t,1,5,Refusal,,f,red
+7765,t,f,1,1,Fully complete,,f,green
+7766,f,t,2,5,Refusal,,f,red
+7767,f,t,1,5,Refusal,,f,red
+7695,f,t,1,5,Refusal,,f,red
+7768,f,t,1,5,Refusal,,f,red
+7769,t,f,1,1,Fully complete,,f,green
+7770,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7771,t,f,2,1,Fully complete,,f,green
+7696,f,f,0,,Not Attempted,,t,
+7772,t,f,1,1,Fully complete,,f,green
+7773,t,f,1,1,Fully complete,,f,green
+7774,f,t,1,5,Refusal,,f,red
+7775,t,f,1,1,Fully complete,,f,green
+7697,f,f,0,,Not Attempted,,t,
+7776,t,f,1,1,Fully complete,,f,green
+7777,t,f,1,1,Fully complete,,f,green
+7778,t,f,1,1,Fully complete,,f,green
+7779,t,f,1,1,Fully complete,,f,green
+7780,t,f,1,1,Fully complete,,f,green
+7781,t,f,1,1,Fully complete,,f,green
+7782,t,f,1,1,Fully complete,,f,green
+7783,t,f,1,1,Fully complete,,f,green
+7784,t,f,1,1,Fully complete,,f,green
+7785,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7786,t,f,1,1,Fully complete,,f,green
+7787,t,f,1,1,Fully complete,,f,green
+7788,t,f,2,1,Fully complete,,f,green
+7789,t,f,1,1,Fully complete,,f,green
+7790,t,f,1,1,Fully complete,,f,green
+7791,t,f,1,1,Fully complete,,f,green
+7792,f,f,0,,Not Attempted,,t,
+7698,f,f,0,,Not Attempted,,t,
+7793,f,t,1,5,Refusal,,f,red
+7794,t,f,1,1,Fully complete,,f,green
+7795,t,f,1,1,Fully complete,,f,green
+7796,t,f,1,1,Fully complete,,f,green
+7797,t,f,1,1,Fully complete,,f,green
+7798,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7799,f,f,0,,Not Attempted,,t,
+7800,f,t,1,5,Refusal,,f,red
+7801,f,t,1,5,Refusal,,f,red
+7802,t,f,1,1,Fully complete,,f,green
+7803,t,f,1,1,Fully complete,,f,green
+7804,t,f,1,1,Fully complete,,f,green
+7805,t,f,1,1,Fully complete,,f,green
+7806,t,f,1,1,Fully complete,,f,green
+7807,t,f,1,1,Fully complete,,f,green
+7808,t,f,1,1,Fully complete,,f,green
+7809,t,f,1,1,Fully complete,,f,green
+7810,t,f,1,1,Fully complete,,f,green
+7811,t,f,2,1,Fully complete,,f,green
+7812,f,t,1,5,Refusal,,f,red
+7813,f,f,0,,Not Attempted,,t,
+7814,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7815,t,f,1,1,Fully complete,,f,green
+7699,t,t,3,1,Fully complete,,f,green
+7816,t,f,2,1,Fully complete,,f,green
+7817,t,f,1,1,Fully complete,,f,green
+7818,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7819,f,f,0,,Not Attempted,,t,
+7700,f,f,0,,Not Attempted,,t,
+7820,t,f,2,1,Fully complete,,f,green
+7821,f,t,2,5,Refusal,,f,red
+7822,f,f,0,,Not Attempted,,t,
+7701,f,f,0,,Not Attempted,,t,
+7823,t,f,1,1,Fully complete,,f,green
+7824,t,f,1,1,Fully complete,,f,green
+7825,t,f,1,1,Fully complete,,f,green
+7826,t,f,1,1,Fully complete,,f,green
+7827,t,f,1,1,Fully complete,,f,green
+7828,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7829,t,f,1,1,Fully complete,,f,green
+7830,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7702,t,f,1,1,Fully complete,,f,green
+7703,f,t,1,5,Refusal,,f,red
+7704,t,f,1,1,Fully complete,,f,green
+7705,t,f,2,1,Fully complete,,f,green
+7706,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+7707,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7708,t,f,1,1,Fully complete,,f,green
+7709,t,f,1,1,Fully complete,,f,green
+7710,t,f,1,1,Fully complete,,f,green
+7711,t,f,1,1,Fully complete,,f,green
+7712,t,f,1,1,Fully complete,,f,green
+7713,t,f,1,1,Fully complete,,f,green
+7714,t,f,1,1,Fully complete,,f,green
+7715,t,f,1,1,Fully complete,,f,green
+7716,t,f,1,1,Fully complete,,f,green
+7854,t,f,1,1,Fully complete,,f,green
+7855,f,f,1,9,Ineligible household,,f,cyan
+7831,t,f,1,1,Fully complete,,f,green
+7856,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7857,t,f,1,1,Fully complete,,f,green
+7858,t,f,1,1,Fully complete,,f,green
+7859,t,f,1,1,Fully complete,,f,green
+7860,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7861,t,f,1,1,Fully complete,,f,green
+7862,t,f,1,1,Fully complete,,f,green
+7863,t,f,2,1,Fully complete,,f,green
+7864,t,f,1,1,Fully complete,,f,green
+7865,t,f,4,1,Fully complete,,f,green
+7866,t,f,2,1,Fully complete,,f,green
+7867,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7868,f,f,1,9,Ineligible household,,f,cyan
+7869,t,f,1,1,Fully complete,,f,green
+7870,f,f,1,9,Ineligible household,,f,cyan
+7871,f,f,1,9,Ineligible household,,f,cyan
+7872,f,f,2,3,Partially complete - no revisit,,f,green
+7873,t,f,1,1,Fully complete,,f,green
+7874,t,f,1,1,Fully complete,,f,green
+7875,t,f,2,1,Fully complete,,f,green
+7876,t,f,6,1,Fully complete,,f,green
+7877,t,f,1,1,Fully complete,,f,green
+7878,f,f,2,2,Partially complete - revisit,"{"""","""","""","""","""","""","""",Plot,2,Mapping,Plot,3,Mapping,"""","""",""""}",t,gold
+7879,t,f,1,1,Fully complete,,f,green
+7880,t,f,1,1,Fully complete,,f,green
+7881,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7832,t,f,1,1,Fully complete,,f,green
+7882,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+7883,t,f,1,1,Fully complete,,f,green
+7833,t,f,2,1,Fully complete,,f,green
+7884,f,f,2,9,Ineligible household,,f,cyan
+7885,t,f,1,1,Fully complete,,f,green
+7886,t,f,1,1,Fully complete,,f,green
+7887,t,f,1,1,Fully complete,,f,green
+7834,t,f,1,1,Fully complete,,f,green
+7888,t,f,1,1,Fully complete,,f,green
+7889,t,f,1,1,Fully complete,,f,green
+7890,t,f,1,1,Fully complete,,f,green
+7891,t,f,1,1,Fully complete,,f,green
+7892,f,t,1,5,Refusal,,f,red
+7893,f,f,1,7,Not found - no revisit,,f,red
+7894,t,f,1,1,Fully complete,,f,green
+7895,t,f,3,1,Fully complete,,f,green
+7896,t,t,5,5,Refusal,,f,red
+7897,t,f,2,1,Fully complete,,f,green
+7898,t,f,1,1,Fully complete,,f,green
+7899,t,f,1,1,Fully complete,,f,green
+7900,t,f,3,1,Fully complete,,f,green
+7901,t,f,1,1,Fully complete,,f,green
+7902,f,t,1,5,Refusal,,f,red
+7903,t,f,1,1,Fully complete,,f,green
+7904,f,t,3,5,Refusal,,f,red
+7905,f,t,2,5,Refusal,,f,red
+7906,t,f,1,1,Fully complete,,f,green
+7835,t,f,1,1,Fully complete,,f,green
+7907,t,f,1,1,Fully complete,,f,green
+7908,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7836,t,f,2,1,Fully complete,,f,green
+7909,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7910,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+7911,t,f,1,1,Fully complete,,f,green
+7912,f,t,2,5,Refusal,,f,red
+7837,t,f,4,1,Fully complete,,f,green
+7913,t,f,1,1,Fully complete,,f,green
+7914,t,f,1,1,Fully complete,,f,green
+7915,t,f,1,1,Fully complete,,f,green
+7916,f,t,1,5,Refusal,,f,red
+7838,t,f,2,1,Fully complete,,f,green
+7917,t,f,1,1,Fully complete,,f,green
+7918,t,f,1,1,Fully complete,,f,green
+7839,t,f,1,1,Fully complete,,f,green
+7919,t,f,1,1,Fully complete,,f,green
+7920,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7921,t,f,1,1,Fully complete,,f,green
+7922,t,f,1,1,Fully complete,,f,green
+7923,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7924,t,f,2,1,Fully complete,,f,green
+7925,t,f,1,1,Fully complete,,f,green
+7926,t,f,1,1,Fully complete,,f,green
+7927,t,f,1,1,Fully complete,,f,green
+7928,f,f,1,3,Partially complete - no revisit,,f,green
+7929,t,f,1,1,Fully complete,,f,green
+7930,f,f,0,,Not Attempted,,t,
+7840,t,f,1,1,Fully complete,,f,green
+7931,t,f,1,1,Fully complete,,f,green
+7932,t,f,2,1,Fully complete,,f,green
+7933,t,f,1,1,Fully complete,,f,green
+7934,t,f,2,1,Fully complete,,f,green
+7841,t,f,2,1,Fully complete,,f,green
+7935,t,f,2,1,Fully complete,,f,green
+7842,t,f,2,1,Fully complete,,f,green
+7936,t,f,2,1,Fully complete,,f,green
+7937,t,f,1,1,Fully complete,,f,green
+7938,f,f,1,9,Ineligible household,,f,cyan
+7939,f,f,0,,Not Attempted,,t,
+7940,t,f,1,1,Fully complete,,f,green
+7941,t,f,1,1,Fully complete,,f,green
+7942,t,f,2,1,Fully complete,,f,green
+7944,f,f,4,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+7945,t,f,2,1,Fully complete,,f,green
+7946,t,f,2,1,Fully complete,,f,green
+7947,f,t,1,5,Refusal,,f,red
+7949,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7950,t,f,2,1,Fully complete,,f,green
+7952,t,f,1,1,Fully complete,,f,green
+7953,f,f,1,3,Partially complete - no revisit,,f,green
+7955,f,t,1,5,Refusal,,f,red
+7957,t,f,1,1,Fully complete,,f,green
+7958,t,f,1,1,Fully complete,,f,green
+7959,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7843,t,f,2,1,Fully complete,,f,green
+7960,t,f,1,1,Fully complete,,f,green
+7961,t,f,1,1,Fully complete,,f,green
+7844,t,f,2,1,Fully complete,,f,green
+7962,t,f,1,1,Fully complete,,f,green
+7964,t,f,1,1,Fully complete,,f,green
+7966,t,f,1,1,Fully complete,,f,green
+7845,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7967,t,f,1,1,Fully complete,,f,green
+7969,t,f,2,1,Fully complete,,f,green
+7971,t,f,1,1,Fully complete,,f,green
+7972,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7974,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7976,t,f,1,1,Fully complete,,f,green
+7978,t,f,1,1,Fully complete,,f,green
+7979,t,f,1,1,Fully complete,,f,green
+7981,f,f,1,9,Ineligible household,,f,cyan
+7983,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7984,t,f,1,1,Fully complete,,f,green
+7986,t,f,1,1,Fully complete,,f,green
+7988,t,f,1,1,Fully complete,,f,green
+7990,t,f,1,1,Fully complete,,f,green
+7992,t,f,1,1,Fully complete,,f,green
+7846,t,f,6,1,Fully complete,,f,green
+7847,t,f,2,1,Fully complete,,f,green
+7848,t,f,2,1,Fully complete,,f,green
+7849,t,f,1,1,Fully complete,,f,green
+7850,t,f,1,1,Fully complete,,f,green
+7851,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7852,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7853,t,f,1,1,Fully complete,,f,green
+8016,f,f,3,9,Ineligible household,,f,cyan
+8017,f,f,1,9,Ineligible household,,f,cyan
+8019,f,f,1,9,Ineligible household,,f,cyan
+7994,t,f,1,1,Fully complete,,f,green
+8020,t,f,1,1,Fully complete,,f,green
+8022,f,f,1,9,Ineligible household,,f,cyan
+8024,f,f,1,9,Ineligible household,,f,cyan
+8026,t,f,1,1,Fully complete,,f,green
+8028,f,f,4,9,Ineligible household,,f,cyan
+8029,t,f,1,1,Fully complete,,f,green
+8031,t,f,1,1,Fully complete,,f,green
+8033,t,f,3,1,Fully complete,,f,green
+8035,f,f,1,9,Ineligible household,,f,cyan
+8036,f,t,1,5,Refusal,,f,red
+8038,f,f,1,3,Partially complete - no revisit,,f,green
+8040,t,f,1,1,Fully complete,,f,green
+8042,t,f,1,1,Fully complete,,f,green
+8043,f,f,1,9,Ineligible household,,f,cyan
+8045,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+8047,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+8049,t,f,1,1,Fully complete,,f,green
+8050,t,f,1,1,Fully complete,,f,green
+8052,t,f,1,1,Fully complete,,f,green
+8054,t,f,1,1,Fully complete,,f,green
+8058,t,f,1,1,Fully complete,,f,green
+8060,t,f,1,1,Fully complete,,f,green
+8062,t,f,1,1,Fully complete,,f,green
+7996,t,f,1,1,Fully complete,,f,green
+8063,t,f,1,1,Fully complete,,f,green
+8065,t,f,2,1,Fully complete,,f,green
+8067,t,f,1,1,Fully complete,,f,green
+8069,f,f,1,9,Ineligible household,,f,cyan
+8070,t,f,1,1,Fully complete,,f,green
+8072,f,f,1,3,Partially complete - no revisit,,f,green
+8074,t,f,3,1,Fully complete,,f,green
+8076,t,f,1,1,Fully complete,,f,green
+8077,t,f,2,1,Fully complete,,f,green
+8078,t,f,1,1,Fully complete,,f,green
+8080,f,f,1,9,Ineligible household,,f,cyan
+8081,t,f,1,1,Fully complete,,f,green
+8083,t,f,2,1,Fully complete,,f,green
+8085,t,f,2,1,Fully complete,,f,green
+8087,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+8088,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+7997,t,f,1,1,Fully complete,,f,green
+7999,f,f,1,9,Ineligible household,,f,cyan
+8001,t,f,1,1,Fully complete,,f,green
+8002,t,f,2,1,Fully complete,,f,green
+8004,t,f,1,1,Fully complete,,f,green
+8006,t,f,4,1,Fully complete,,f,green
+8007,t,f,2,1,Fully complete,,f,green
+8009,t,f,2,1,Fully complete,,f,green
+8011,t,f,1,1,Fully complete,,f,green
+8012,t,f,1,1,Fully complete,,f,green
+8014,t,f,1,1,Fully complete,,f,green
+8121,f,f,1,9,Ineligible household,,f,cyan
+8123,t,f,1,1,Fully complete,,f,green
+8125,f,f,1,9,Ineligible household,,f,cyan
+8126,t,f,1,1,Fully complete,,f,green
+8091,t,f,1,1,Fully complete,,f,green
+8128,f,f,1,3,Partially complete - no revisit,,f,green
+8130,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+8093,f,f,2,9,Ineligible household,,f,cyan
+8132,t,f,1,1,Fully complete,,f,green
+8133,t,f,1,1,Fully complete,,f,green
+8135,t,f,1,1,Fully complete,,f,green
+8137,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+8139,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+8140,f,f,0,,Not Attempted,,t,
+8141,t,f,2,1,Fully complete,,f,green
+8142,t,f,1,1,Fully complete,,f,green
+8144,f,f,2,9,Ineligible household,,f,cyan
+8146,t,f,1,1,Fully complete,,f,green
+8147,t,f,1,1,Fully complete,,f,green
+8149,t,f,2,1,Fully complete,,f,green
+8150,t,f,1,1,Fully complete,,f,green
+8151,t,f,1,1,Fully complete,,f,green
+8153,t,f,1,1,Fully complete,,f,green
+8154,t,f,1,1,Fully complete,,f,green
+8156,f,f,1,9,Ineligible household,,f,cyan
+8095,t,f,1,1,Fully complete,,f,green
+8158,t,f,1,1,Fully complete,,f,green
+8160,t,f,1,1,Fully complete,,f,green
+8161,t,f,1,1,Fully complete,,f,green
+8163,t,f,3,1,Fully complete,,f,green
+8165,f,f,1,3,Partially complete - no revisit,,f,green
+8167,t,f,1,1,Fully complete,,f,green
+8168,t,f,3,1,Fully complete,,f,green
+8170,t,f,1,1,Fully complete,,f,green
+8172,t,f,2,1,Fully complete,,f,green
+8173,t,f,1,1,Fully complete,,f,green
+8175,t,f,1,1,Fully complete,,f,green
+8177,f,f,1,9,Ineligible household,,f,cyan
+8178,t,f,1,1,Fully complete,,f,green
+8181,t,f,1,1,Fully complete,,f,green
+8183,t,f,1,1,Fully complete,,f,green
+8185,t,f,1,1,Fully complete,,f,green
+8186,t,f,1,1,Fully complete,,f,green
+8188,t,f,1,1,Fully complete,,f,green
+8190,t,f,2,1,Fully complete,,f,green
+8192,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+8194,f,f,1,3,Partially complete - no revisit,,f,green
+8195,f,f,1,9,Ineligible household,,f,cyan
+8197,f,f,1,9,Ineligible household,,f,cyan
+8199,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+8201,t,f,2,1,Fully complete,,f,green
+8203,t,f,1,1,Fully complete,,f,green
+8204,t,f,1,1,Fully complete,,f,green
+8206,f,f,1,9,Ineligible household,,f,cyan
+8208,f,f,1,3,Partially complete - no revisit,,f,green
+8210,f,f,1,3,Partially complete - no revisit,,f,green
+8096,t,f,1,1,Fully complete,,f,green
+8211,t,f,1,1,Fully complete,,f,green
+8280,t,f,2,1,Fully complete,,f,green
+8097,f,f,1,9,Ineligible household,,f,cyan
+8282,t,f,2,1,Fully complete,,f,green
+8284,t,f,1,1,Fully complete,,f,green
+8286,t,f,2,1,Fully complete,,f,green
+8288,t,f,2,1,Fully complete,,f,green
+8290,f,f,1,9,Ineligible household,,f,cyan
+8098,t,f,1,1,Fully complete,,f,green
+8100,t,f,1,1,Fully complete,,f,green
+8101,t,f,1,1,Fully complete,,f,green
+8103,t,f,1,1,Fully complete,,f,green
+8105,t,f,1,1,Fully complete,,f,green
+8106,f,f,0,,Not Attempted,,t,
+8108,f,f,0,,Not Attempted,,t,
+8110,t,f,1,1,Fully complete,,f,green
+8111,t,f,1,1,Fully complete,,f,green
+8113,f,t,2,5,Refusal,,f,red
+8115,t,f,1,1,Fully complete,,f,green
+8117,f,f,2,3,Partially complete - no revisit,,f,green
+8118,f,f,1,3,Partially complete - no revisit,,f,green
+8314,f,f,1,9,Ineligible household,,f,cyan
+8316,f,f,1,9,Ineligible household,,f,cyan
+8292,t,f,1,1,Fully complete,,f,green
+8318,f,f,1,9,Ineligible household,,f,cyan
+8319,t,f,2,1,Fully complete,,f,green
+8321,f,f,1,9,Ineligible household,,f,cyan
+8323,t,f,2,1,Fully complete,,f,green
+8325,t,f,1,1,Fully complete,,f,green
+8326,f,f,2,9,Ineligible household,,f,cyan
+8293,f,f,1,2,Partially complete - revisit,"{"""","""","""","""","""","""",Plot,1,Mapping,Plot,2,Mapping,Plot,3,Mapping,Plot,4,Mapping,"""",""""}",t,gold
+8295,t,f,1,1,Fully complete,,f,green
+8297,f,f,5,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+8299,f,f,5,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+8301,t,f,1,1,Fully complete,,f,green
+8302,f,f,2,9,Ineligible household,,f,cyan
+8304,f,f,1,9,Ineligible household,,f,cyan
+8306,t,f,1,1,Fully complete,,f,green
+8307,t,f,1,1,Fully complete,,f,green
+8309,t,f,2,1,Fully complete,,f,green
+8311,t,f,2,1,Fully complete,,f,green
+8312,t,f,1,1,Fully complete,,f,green
+8374,t,f,1,1,Fully complete,,f,green
+8378,t,f,1,1,Fully complete,,f,green
+8328,f,t,2,5,Refusal,,f,red
+8380,t,f,3,1,Fully complete,,f,green
+8382,t,f,2,1,Fully complete,,f,green
+8384,t,f,2,1,Fully complete,,f,green
+8385,t,f,2,1,Fully complete,,f,green
+8387,t,f,1,1,Fully complete,,f,green
+8389,f,f,2,9,Ineligible household,,f,cyan
+8391,f,f,0,,Not Attempted,,t,
+8393,t,f,1,1,Fully complete,,f,green
+8394,t,f,1,1,Fully complete,,f,green
+8396,t,f,1,1,Fully complete,,f,green
+8398,t,f,1,1,Fully complete,,f,green
+8399,f,t,1,5,Refusal,,f,red
+8401,f,f,1,9,Ineligible household,,f,cyan
+8403,f,f,2,9,Ineligible household,,f,cyan
+8405,t,f,1,1,Fully complete,,f,green
+8407,f,f,1,9,Ineligible household,,f,cyan
+8408,t,f,2,1,Fully complete,,f,green
+8410,f,f,1,9,Ineligible household,,f,cyan
+8412,f,f,2,9,Ineligible household,,f,cyan
+8414,f,f,1,9,Ineligible household,,f,cyan
+8415,t,f,1,1,Fully complete,,f,green
+8417,t,f,2,1,Fully complete,,f,green
+8419,t,f,2,1,Fully complete,,f,green
+8421,f,f,1,9,Ineligible household,,f,cyan
+8422,t,f,2,1,Fully complete,,f,green
+8330,f,f,1,9,Ineligible household,,f,cyan
+8424,f,t,2,5,Refusal,,f,red
+8332,t,f,1,1,Fully complete,,f,green
+8426,t,f,1,1,Fully complete,,f,green
+8428,f,f,1,9,Ineligible household,,f,cyan
+8430,t,f,1,1,Fully complete,,f,green
+8431,t,f,2,1,Fully complete,,f,green
+8433,t,f,1,1,Fully complete,,f,green
+8435,t,f,1,1,Fully complete,,f,green
+8437,t,f,1,1,Fully complete,,f,green
+8439,t,f,1,1,Fully complete,,f,green
+8440,t,f,1,1,Fully complete,,f,green
+8442,f,t,3,5,Refusal,,f,red
+8444,t,f,1,1,Fully complete,,f,green
+8446,t,f,1,1,Fully complete,,f,green
+8447,t,f,2,1,Fully complete,,f,green
+8449,f,f,1,3,Partially complete - no revisit,,f,green
+8451,t,f,1,1,Fully complete,,f,green
+8453,t,f,1,1,Fully complete,,f,green
+8454,t,f,1,1,Fully complete,,f,green
+8459,t,f,1,1,Fully complete,,f,green
+8333,t,f,1,1,Fully complete,,f,green
+8335,f,f,2,2,Partially complete - revisit,"{"""","""","""","""","""","""","""",Plot,2,Mapping,"""","""","""",""""}",t,gold
+8337,t,f,1,1,Fully complete,,f,green
+8338,f,f,1,9,Ineligible household,,f,cyan
+8340,t,f,1,1,Fully complete,,f,green
+8342,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+8344,t,f,1,1,Fully complete,,f,green
+8346,f,f,1,9,Ineligible household,,f,cyan
+8348,t,f,1,1,Fully complete,,f,green
+8349,t,f,1,1,Fully complete,,f,green
+8351,t,f,1,1,Fully complete,,f,green
+8353,t,f,1,1,Fully complete,,f,green
+8355,t,f,1,1,Fully complete,,f,green
+8356,t,f,1,1,Fully complete,,f,green
+8358,f,t,1,5,Refusal,,f,red
+8360,f,t,1,5,Refusal,,f,red
+8362,t,f,1,1,Fully complete,,f,green
+8363,t,f,1,1,Fully complete,,f,green
+8365,t,f,1,1,Fully complete,,f,green
+8367,t,f,2,1,Fully complete,,f,green
+8369,t,f,1,1,Fully complete,,f,green
+8370,f,f,1,7,Not found - no revisit,,f,red
+8372,f,t,1,5,Refusal,,f,red
+8491,t,f,2,1,Fully complete,,f,green
+8493,f,f,3,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",f,blue
+8495,t,f,2,1,Fully complete,,f,green
+8461,t,f,2,1,Fully complete,,f,green
+8497,t,f,1,1,Fully complete,,f,green
+8498,t,f,3,1,Fully complete,,f,green
+8463,t,f,1,1,Fully complete,,f,green
+8500,f,f,1,9,Ineligible household,,f,cyan
+8502,t,f,1,1,Fully complete,,f,green
+8465,t,f,1,1,Fully complete,,f,green
+8504,f,t,1,5,Refusal,,f,red
+8505,t,t,2,5,Refusal,,f,red
+8507,t,f,1,1,Fully complete,,f,green
+8509,t,f,1,1,Fully complete,,f,green
+8511,f,f,1,9,Ineligible household,,f,cyan
+8513,f,f,1,3,Partially complete - no revisit,,f,green
+8514,f,t,1,5,Refusal,,f,red
+8516,t,f,1,1,Fully complete,,f,green
+8518,t,f,1,1,Fully complete,,f,green
+8520,t,f,1,1,Fully complete,,f,green
+8521,t,f,2,1,Fully complete,,f,green
+8523,t,f,3,1,Fully complete,,f,green
+8525,f,t,3,5,Refusal,,f,red
+8527,f,f,1,3,Partially complete - no revisit,,f,green
+8528,t,t,2,1,Fully complete,,f,green
+8530,t,f,1,1,Fully complete,,f,green
+8532,t,f,1,1,Fully complete,,f,green
+8534,t,f,1,1,Fully complete,,f,green
+8467,t,f,2,1,Fully complete,,f,green
+8536,t,f,1,1,Fully complete,,f,green
+8538,t,f,2,1,Fully complete,,f,green
+8539,t,f,1,1,Fully complete,,f,green
+8541,t,f,1,1,Fully complete,,f,green
+8543,t,f,1,1,Fully complete,,f,green
+8545,t,f,1,1,Fully complete,,f,green
+8547,t,f,1,1,Fully complete,,f,green
+8548,t,f,1,1,Fully complete,,f,green
+8550,f,f,0,,Not Attempted,,t,
+8551,t,f,1,1,Fully complete,,f,green
+8553,t,f,1,1,Fully complete,,f,green
+8555,f,t,1,5,Refusal,,f,red
+8556,t,f,1,1,Fully complete,,f,green
+8558,f,t,2,5,Refusal,,f,red
+8560,t,f,1,1,Fully complete,,f,green
+8562,t,f,1,1,Fully complete,,f,green
+8563,f,f,1,3,Partially complete - no revisit,,f,green
+8469,t,f,1,1,Fully complete,,f,green
+8565,f,t,1,5,Refusal,,f,red
+8470,t,f,2,1,Fully complete,,f,green
+8567,t,f,2,1,Fully complete,,f,green
+8569,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+8571,t,f,1,1,Fully complete,,f,green
+8572,t,f,1,1,Fully complete,,f,green
+8574,t,f,1,1,Fully complete,,f,green
+8472,t,f,2,1,Fully complete,,f,green
+8474,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+8476,t,f,1,1,Fully complete,,f,green
+8478,f,t,1,5,Refusal,,f,red
+8479,t,f,1,1,Fully complete,,f,green
+8481,t,f,2,1,Fully complete,,f,green
+8483,t,f,2,6,Not found - revisit,,f,gold
+8485,f,t,1,5,Refusal,,f,red
+8486,t,f,1,1,Fully complete,,f,green
+8488,t,f,1,1,Fully complete,,f,green
+8490,t,f,1,1,Fully complete,,f,green
+8609,t,f,1,1,Fully complete,,f,green
+8576,t,f,1,1,Fully complete,,f,green
+8611,t,f,2,1,Fully complete,,f,green
+8613,f,f,1,9,Ineligible household,,f,cyan
+8615,t,f,2,1,Fully complete,,f,green
+8578,t,f,1,1,Fully complete,,f,green
+9288,t,f,2,1,Fully complete,,f,green
+9289,t,f,1,1,Fully complete,,f,green
+9290,t,f,1,1,Fully complete,,f,green
+9291,t,f,1,1,Fully complete,,f,green
+9292,t,f,1,1,Fully complete,,f,green
+9293,t,f,2,1,Fully complete,,f,green
+9294,t,f,1,1,Fully complete,,f,green
+9295,t,f,1,1,Fully complete,,f,green
+9296,f,f,1,9,Ineligible household,,f,cyan
+9297,t,f,1,1,Fully complete,,f,green
+9298,t,f,1,1,Fully complete,,f,green
+9299,t,f,3,1,Fully complete,,f,green
+9300,t,f,2,1,Fully complete,,f,green
+9301,t,f,3,1,Fully complete,,f,green
+9302,t,f,1,1,Fully complete,,f,green
+9303,f,f,1,3,Partially complete - no revisit,,f,green
+9304,t,f,1,1,Fully complete,,f,green
+8579,f,f,3,3,Partially complete - no revisit,,f,green
+9305,f,f,1,3,Partially complete - no revisit,,f,green
+8581,t,t,2,1,Fully complete,,f,green
+9306,t,f,1,1,Fully complete,,f,green
+9307,t,f,1,1,Fully complete,,f,green
+9308,t,f,2,1,Fully complete,,f,green
+9309,t,f,1,1,Fully complete,,f,green
+9310,t,f,1,1,Fully complete,,f,green
+9311,t,f,1,1,Fully complete,,f,green
+9312,t,f,1,1,Fully complete,,f,green
+9313,t,f,1,1,Fully complete,,f,green
+9314,t,f,2,1,Fully complete,,f,green
+9315,f,f,1,3,Partially complete - no revisit,,f,green
+9316,t,f,1,1,Fully complete,,f,green
+9317,f,f,1,9,Ineligible household,,f,cyan
+9318,t,f,1,1,Fully complete,,f,green
+9319,t,f,1,1,Fully complete,,f,green
+9320,t,f,1,1,Fully complete,,f,green
+8583,t,f,1,1,Fully complete,,f,green
+8585,t,f,1,1,Fully complete,,f,green
+8589,t,f,1,1,Fully complete,,f,green
+8591,t,f,1,1,Fully complete,,f,green
+8592,t,f,2,1,Fully complete,,f,green
+8594,t,f,2,1,Fully complete,,f,green
+8595,t,f,1,1,Fully complete,,f,green
+8597,t,f,2,1,Fully complete,,f,green
+8599,t,f,1,1,Fully complete,,f,green
+8601,t,f,1,1,Fully complete,,f,green
+8602,f,t,1,5,Refusal,,f,red
+8604,t,f,2,1,Fully complete,,f,green
+8606,f,t,3,5,Refusal,,f,red
+8608,f,t,3,5,Refusal,,f,red
+9342,f,f,1,9,Ineligible household,,f,cyan
+9321,f,f,0,,Not Attempted,,t,
+9343,t,f,1,1,Fully complete,,f,green
+9344,f,f,1,3,Partially complete - no revisit,,f,green
+9322,f,f,0,,Not Attempted,,t,
+9345,t,f,2,1,Fully complete,,f,green
+9346,f,f,1,3,Partially complete - no revisit,,f,green
+9347,f,f,0,,Not Attempted,,t,
+9348,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+9349,f,t,1,5,Refusal,,f,red
+9350,t,f,1,1,Fully complete,,f,green
+9351,t,f,1,1,Fully complete,,f,green
+9352,t,f,1,1,Fully complete,,f,green
+9353,f,f,0,,Not Attempted,,t,
+9354,t,f,1,1,Fully complete,,f,green
+9355,t,f,1,1,Fully complete,,f,green
+9356,t,f,1,1,Fully complete,,f,green
+9357,f,f,0,,Not Attempted,,t,
+9358,t,f,1,1,Fully complete,,f,green
+9323,t,f,1,1,Fully complete,,f,green
+9359,t,f,2,1,Fully complete,,f,green
+9360,t,f,1,1,Fully complete,,f,green
+9324,t,f,1,1,Fully complete,,f,green
+9361,t,f,1,1,Fully complete,,f,green
+9362,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+9363,t,f,1,1,Fully complete,,f,green
+9364,f,f,0,,Not Attempted,,t,
+9365,t,f,2,1,Fully complete,,f,green
+9366,f,f,0,,Not Attempted,,t,
+9367,f,f,0,,Not Attempted,,t,
+9368,f,f,0,,Not Attempted,,t,
+9369,f,t,2,3,Partially complete - no revisit,,f,green
+9370,f,f,0,,Not Attempted,,t,
+9371,f,f,1,3,Partially complete - no revisit,,f,green
+9372,f,f,0,,Not Attempted,,t,
+9373,t,f,1,1,Fully complete,,f,green
+9374,t,f,1,1,Fully complete,,f,green
+9375,t,f,1,1,Fully complete,,f,green
+9376,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+9377,t,f,1,1,Fully complete,,f,green
+9378,t,f,1,1,Fully complete,,f,green
+9379,t,f,1,1,Fully complete,,f,green
+9380,t,f,1,1,Fully complete,,f,green
+9381,f,f,1,3,Partially complete - no revisit,,f,green
+9382,t,f,1,1,Fully complete,,f,green
+9325,t,f,1,1,Fully complete,,f,green
+9383,f,f,0,,Not Attempted,,t,
+9384,f,f,0,,Not Attempted,,t,
+9385,f,f,0,,Not Attempted,,t,
+9386,f,f,0,,Not Attempted,,t,
+9326,t,f,1,1,Fully complete,,f,green
+9387,f,f,0,,Not Attempted,,t,
+9327,f,f,0,,Not Attempted,,t,
+9388,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+9389,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+9390,t,f,1,1,Fully complete,,f,green
+9391,t,f,1,1,Fully complete,,f,green
+9392,t,f,2,1,Fully complete,,f,green
+9393,f,t,1,5,Refusal,,f,red
+9394,t,f,1,1,Fully complete,,f,green
+9328,f,f,1,9,Ineligible household,,f,cyan
+9329,f,f,1,3,Partially complete - no revisit,,f,green
+9330,t,f,1,1,Fully complete,,f,green
+9331,t,f,1,1,Fully complete,,f,green
+9332,f,f,1,3,Partially complete - no revisit,,f,green
+9333,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+9334,f,f,1,3,Partially complete - no revisit,,f,green
+9335,f,f,1,7,Not found - no revisit,,f,red
+9336,t,f,1,1,Fully complete,,f,green
+9337,f,f,1,3,Partially complete - no revisit,,f,green
+9338,f,f,0,,Not Attempted,,t,
+9339,f,f,1,9,Ineligible household,,f,cyan
+9340,t,f,1,1,Fully complete,,f,green
+9341,t,f,1,1,Fully complete,,f,green
+9419,t,f,1,1,Fully complete,,f,green
+9420,f,f,1,9,Ineligible household,,f,cyan
+9421,f,f,1,9,Ineligible household,,f,cyan
+9422,t,f,1,1,Fully complete,,f,green
+9395,t,f,2,1,Fully complete,,f,green
+9423,t,f,1,1,Fully complete,,f,green
+9424,t,f,1,1,Fully complete,,f,green
+9396,t,f,1,1,Fully complete,,f,green
+9425,t,f,1,1,Fully complete,,f,green
+9426,t,f,2,1,Fully complete,,f,green
+9397,t,f,1,1,Fully complete,,f,green
+9427,t,f,1,1,Fully complete,,f,green
+9428,f,f,1,7,Not found - no revisit,,f,red
+9429,t,f,1,1,Fully complete,,f,green
+9430,t,f,1,1,Fully complete,,f,green
+9431,t,f,2,1,Fully complete,,f,green
+9432,t,f,1,1,Fully complete,,f,green
+9433,t,f,1,1,Fully complete,,f,green
+9434,f,t,1,5,Refusal,,f,red
+9435,f,f,1,9,Ineligible household,,f,cyan
+9436,t,f,2,1,Fully complete,,f,green
+9437,t,f,1,1,Fully complete,,f,green
+9438,t,f,1,1,Fully complete,,f,green
+9439,t,f,2,1,Fully complete,,f,green
+9440,t,f,2,1,Fully complete,,f,green
+9441,t,f,2,1,Fully complete,,f,green
+9398,t,f,3,1,Fully complete,,f,green
+9442,t,f,2,1,Fully complete,,f,green
+9443,t,f,1,1,Fully complete,,f,green
+9444,t,f,1,1,Fully complete,,f,green
+9445,t,f,1,1,Fully complete,,f,green
+9446,t,f,1,1,Fully complete,,f,green
+9447,t,f,1,1,Fully complete,,f,green
+9448,f,t,2,5,Refusal,,f,red
+9449,t,f,2,1,Fully complete,,f,green
+9450,t,f,2,1,Fully complete,,f,green
+9451,t,f,1,1,Fully complete,,f,green
+9452,f,f,1,7,Not found - no revisit,,f,red
+9453,f,f,1,9,Ineligible household,,f,cyan
+9454,t,f,2,1,Fully complete,,f,green
+9455,t,f,1,1,Fully complete,,f,green
+9456,t,f,1,1,Fully complete,,f,green
+9457,t,f,1,1,Fully complete,,f,green
+9458,t,f,1,1,Fully complete,,f,green
+9459,t,f,3,1,Fully complete,,f,green
+9460,t,f,2,1,Fully complete,,f,green
+9399,t,f,3,1,Fully complete,,f,green
+9461,t,f,1,1,Fully complete,,f,green
+9462,t,f,1,1,Fully complete,,f,green
+9463,t,f,1,1,Fully complete,,f,green
+9464,t,f,2,1,Fully complete,,f,green
+9465,f,t,1,5,Refusal,,f,red
+9466,f,t,1,5,Refusal,,f,red
+9467,f,t,2,5,Refusal,,f,red
+9468,t,f,1,1,Fully complete,,f,green
+9469,f,f,1,9,Ineligible household,,f,cyan
+9470,t,f,2,1,Fully complete,,f,green
+9471,f,t,2,5,Refusal,,f,red
+9472,t,f,1,1,Fully complete,,f,green
+9473,t,f,1,1,Fully complete,,f,green
+9474,t,f,1,1,Fully complete,,f,green
+9475,f,f,0,,Not Attempted,,t,
+9476,f,f,1,9,Ineligible household,,f,cyan
+9477,t,f,1,1,Fully complete,,f,green
+9478,t,f,1,1,Fully complete,,f,green
+9479,t,f,1,1,Fully complete,,f,green
+9480,t,f,1,1,Fully complete,,f,green
+9400,t,f,1,1,Fully complete,,f,green
+9481,t,f,1,1,Fully complete,,f,green
+9482,t,f,1,1,Fully complete,,f,green
+9401,t,f,1,1,Fully complete,,f,green
+9483,t,f,1,1,Fully complete,,f,green
+9402,t,f,1,1,Fully complete,,f,green
+9484,t,f,1,1,Fully complete,,f,green
+9485,t,f,1,1,Fully complete,,f,green
+9486,t,f,1,1,Fully complete,,f,green
+9487,t,f,2,1,Fully complete,,f,green
+9488,t,f,1,1,Fully complete,,f,green
+9489,t,f,1,1,Fully complete,,f,green
+9490,t,f,1,1,Fully complete,,f,green
+9491,t,f,1,1,Fully complete,,f,green
+9492,t,f,1,1,Fully complete,,f,green
+9493,t,f,1,1,Fully complete,,f,green
+9494,t,f,1,1,Fully complete,,f,green
+9495,f,t,1,5,Refusal,,f,red
+9496,f,t,3,5,Refusal,,f,red
+9497,t,f,2,1,Fully complete,,f,green
+9403,t,f,1,1,Fully complete,,f,green
+9498,t,f,2,1,Fully complete,,f,green
+9499,f,t,1,5,Refusal,,f,red
+9404,f,f,1,7,Not found - no revisit,,f,red
+9500,t,f,1,1,Fully complete,,f,green
+9405,t,f,1,1,Fully complete,,f,green
+9501,t,f,1,1,Fully complete,,f,green
+9502,t,f,2,1,Fully complete,,f,green
+9503,t,f,1,1,Fully complete,,f,green
+9504,f,f,1,3,Partially complete - no revisit,,f,green
+9505,t,f,1,1,Fully complete,,f,green
+9506,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+9507,f,t,3,5,Refusal,,f,red
+9508,f,f,1,9,Ineligible household,,f,cyan
+9509,t,f,1,1,Fully complete,,f,green
+9510,f,t,1,5,Refusal,,f,red
+9406,t,f,2,1,Fully complete,,f,green
+9511,t,f,1,1,Fully complete,,f,green
+9512,f,f,1,9,Ineligible household,,f,cyan
+9513,f,f,1,9,Ineligible household,,f,cyan
+9407,t,f,1,1,Fully complete,,f,green
+9514,f,t,1,5,Refusal,,f,red
+9515,t,f,1,1,Fully complete,,f,green
+9408,f,f,2,3,Partially complete - no revisit,,f,green
+9516,f,f,1,9,Ineligible household,,f,cyan
+9517,t,f,1,1,Fully complete,,f,green
+9409,t,f,1,1,Fully complete,,f,green
+9410,t,f,2,1,Fully complete,,f,green
+9411,t,f,1,1,Fully complete,,f,green
+9412,t,f,4,1,Fully complete,,f,green
+9413,t,f,1,1,Fully complete,,f,green
+9414,t,f,2,1,Fully complete,,f,green
+9415,t,f,1,1,Fully complete,,f,green
+9416,t,f,1,1,Fully complete,,f,green
+9417,t,f,1,1,Fully complete,,f,green
+9418,f,f,1,7,Not found - no revisit,,f,red
+9540,t,f,1,1,Fully complete,,f,green
+9541,f,t,1,5,Refusal,,f,red
+9542,f,f,0,,Not Attempted,,t,
+9518,t,f,1,1,Fully complete,,f,green
+9543,t,f,1,1,Fully complete,,f,green
+9519,t,f,1,1,Fully complete,,f,green
+9544,f,f,0,,Not Attempted,,t,
+9545,t,f,1,1,Fully complete,,f,green
+9546,t,f,1,1,Fully complete,,f,green
+9547,t,f,1,1,Fully complete,,f,green
+9548,t,f,1,1,Fully complete,,f,green
+9549,t,f,1,1,Fully complete,,f,green
+9550,t,f,1,1,Fully complete,,f,green
+9551,t,f,1,1,Fully complete,,f,green
+9552,t,f,1,1,Fully complete,,f,green
+9553,f,f,0,,Not Attempted,,t,
+9554,t,f,1,1,Fully complete,,f,green
+9555,t,f,1,1,Fully complete,,f,green
+9556,t,f,1,1,Fully complete,,f,green
+9557,t,f,1,1,Fully complete,,f,green
+9558,t,f,1,1,Fully complete,,f,green
+9559,f,f,0,,Not Attempted,,t,
+9560,f,f,0,,Not Attempted,,t,
+9561,t,f,1,1,Fully complete,,f,green
+9562,f,f,0,,Not Attempted,,t,
+9563,t,f,2,1,Fully complete,,f,green
+9564,t,f,1,1,Fully complete,,f,green
+9565,t,f,1,1,Fully complete,,f,green
+9566,t,f,1,1,Fully complete,,f,green
+9567,t,f,1,1,Fully complete,,f,green
+9520,f,f,0,,Not Attempted,,t,
+9568,t,f,1,1,Fully complete,,f,green
+9569,t,f,1,1,Fully complete,,f,green
+9570,t,f,1,1,Fully complete,,f,green
+9571,t,f,1,1,Fully complete,,f,green
+9572,t,f,1,1,Fully complete,,f,green
+9573,t,f,1,1,Fully complete,,f,green
+9574,t,f,1,1,Fully complete,,f,green
+9575,t,f,1,1,Fully complete,,f,green
+9576,t,f,1,1,Fully complete,,f,green
+9577,t,f,1,1,Fully complete,,f,green
+9578,t,f,1,1,Fully complete,,f,green
+9579,t,f,1,1,Fully complete,,f,green
+9580,f,f,0,,Not Attempted,,t,
+9581,t,f,1,1,Fully complete,,f,green
+9582,t,f,1,1,Fully complete,,f,green
+9583,t,f,1,1,Fully complete,,f,green
+9584,f,f,0,,Not Attempted,,t,
+9585,f,f,0,,Not Attempted,,t,
+9586,f,f,0,,Not Attempted,,t,
+9587,f,f,0,,Not Attempted,,t,
+9521,t,f,1,1,Fully complete,,f,green
+9588,t,f,1,1,Fully complete,,f,green
+9589,t,f,1,1,Fully complete,,f,green
+9590,t,f,1,1,Fully complete,,f,green
+9522,t,f,1,1,Fully complete,,f,green
+9591,t,f,1,1,Fully complete,,f,green
+9592,t,f,1,1,Fully complete,,f,green
+9593,t,f,1,1,Fully complete,,f,green
+9594,t,f,1,1,Fully complete,,f,green
+9595,t,f,1,1,Fully complete,,f,green
+9596,f,f,0,,Not Attempted,,t,
+9597,t,f,1,1,Fully complete,,f,green
+9598,t,f,1,1,Fully complete,,f,green
+9599,f,f,1,7,Not found - no revisit,,f,red
+9600,t,f,1,1,Fully complete,,f,green
+9601,t,f,1,1,Fully complete,,f,green
+9602,t,f,1,1,Fully complete,,f,green
+9603,t,f,1,1,Fully complete,,f,green
+9604,f,f,1,9,Ineligible household,,f,cyan
+9605,t,f,1,1,Fully complete,,f,green
+9606,t,f,1,1,Fully complete,,f,green
+9607,t,f,2,1,Fully complete,,f,green
+9608,t,f,1,1,Fully complete,,f,green
+9609,t,f,1,1,Fully complete,,f,green
+9610,t,f,1,1,Fully complete,,f,green
+9611,f,f,0,,Not Attempted,,t,
+9523,t,f,1,1,Fully complete,,f,green
+9612,t,f,1,1,Fully complete,,f,green
+9613,t,f,1,1,Fully complete,,f,green
+9524,t,f,1,1,Fully complete,,f,green
+9614,f,f,0,,Not Attempted,,t,
+9525,t,f,1,1,Fully complete,,f,green
+9615,t,f,1,1,Fully complete,,f,green
+9616,t,f,1,1,Fully complete,,f,green
+9617,t,f,1,1,Fully complete,,f,green
+9618,t,f,1,1,Fully complete,,f,green
+9619,t,f,1,1,Fully complete,,f,green
+9620,t,f,1,1,Fully complete,,f,green
+9621,t,f,1,1,Fully complete,,f,green
+9622,t,f,1,1,Fully complete,,f,green
+9623,f,f,0,,Not Attempted,,t,
+9624,t,f,1,1,Fully complete,,f,green
+9625,t,f,1,1,Fully complete,,f,green
+9626,t,f,1,1,Fully complete,,f,green
+9627,f,f,1,9,Ineligible household,,f,cyan
+9628,t,f,1,1,Fully complete,,f,green
+9629,f,f,0,,Not Attempted,,t,
+9630,t,f,2,1,Fully complete,,f,green
+9631,t,f,1,1,Fully complete,,f,green
+9632,t,f,1,1,Fully complete,,f,green
+9633,f,f,0,,Not Attempted,,t,
+9634,t,f,1,1,Fully complete,,f,green
+9635,t,f,1,1,Fully complete,,f,green
+9636,t,f,1,1,Fully complete,,f,green
+9526,t,f,1,1,Fully complete,,f,green
+9637,t,f,1,1,Fully complete,,f,green
+9527,t,f,1,1,Fully complete,,f,green
+9638,f,f,1,9,Ineligible household,,f,cyan
+9639,t,f,1,1,Fully complete,,f,green
+9640,t,f,1,1,Fully complete,,f,green
+9641,t,f,1,1,Fully complete,,f,green
+9642,t,f,1,1,Fully complete,,f,green
+9643,t,f,1,1,Fully complete,,f,green
+9644,t,f,1,1,Fully complete,,f,green
+9645,t,f,1,1,Fully complete,,f,green
+9646,t,f,2,1,Fully complete,,f,green
+9647,t,f,1,1,Fully complete,,f,green
+9648,t,f,1,1,Fully complete,,f,green
+9649,t,f,1,1,Fully complete,,f,green
+9650,f,f,0,,Not Attempted,,t,
+9651,f,f,0,,Not Attempted,,t,
+9652,f,f,0,,Not Attempted,,t,
+9653,t,f,2,1,Fully complete,,f,green
+9654,t,f,1,1,Fully complete,,f,green
+9655,t,f,1,1,Fully complete,,f,green
+9656,t,f,1,1,Fully complete,,f,green
+9657,t,f,1,1,Fully complete,,f,green
+9658,f,f,0,,Not Attempted,,t,
+9659,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+9660,t,f,1,1,Fully complete,,f,green
+9528,f,f,0,,Not Attempted,,t,
+9661,f,f,0,,Not Attempted,,t,
+9662,t,f,2,1,Fully complete,,f,green
+9663,t,f,1,1,Fully complete,,f,green
+9529,f,f,0,,Not Attempted,,t,
+9664,t,f,1,1,Fully complete,,f,green
+9665,t,f,1,1,Fully complete,,f,green
+9666,t,f,1,1,Fully complete,,f,green
+9667,t,f,1,1,Fully complete,,f,green
+9530,f,f,0,,Not Attempted,,t,
+9531,f,f,0,,Not Attempted,,t,
+9532,t,f,1,1,Fully complete,,f,green
+9533,t,f,1,1,Fully complete,,f,green
+9534,t,f,1,1,Fully complete,,f,green
+9535,t,f,2,1,Fully complete,,f,green
+9536,t,f,1,1,Fully complete,,f,green
+9537,f,f,0,,Not Attempted,,t,
+9538,t,f,1,1,Fully complete,,f,green
+9539,t,f,1,1,Fully complete,,f,green
+9691,t,f,1,1,Fully complete,,f,green
+9692,t,f,3,1,Fully complete,,f,green
+9693,t,f,1,1,Fully complete,,f,green
+9668,t,f,1,1,Fully complete,,f,green
+9694,t,f,1,1,Fully complete,,f,green
+9695,t,f,1,1,Fully complete,,f,green
+9696,t,f,1,1,Fully complete,,f,green
+9669,t,f,1,1,Fully complete,,f,green
+9697,t,f,1,1,Fully complete,,f,green
+9698,t,f,1,1,Fully complete,,f,green
+9699,t,f,1,1,Fully complete,,f,green
+9700,t,f,1,1,Fully complete,,f,green
+9670,t,f,1,1,Fully complete,,f,green
+9701,f,f,0,,Not Attempted,,t,
+9702,f,f,0,,Not Attempted,,t,
+9703,f,f,0,,Not Attempted,,t,
+9671,t,f,1,1,Fully complete,,f,green
+9704,t,f,1,1,Fully complete,,f,green
+9705,t,f,1,1,Fully complete,,f,green
+9706,t,f,1,1,Fully complete,,f,green
+9707,f,f,0,,Not Attempted,,t,
+9708,f,f,0,,Not Attempted,,t,
+9709,f,f,0,,Not Attempted,,t,
+9710,t,f,1,1,Fully complete,,f,green
+9711,f,f,0,,Not Attempted,,t,
+9712,t,f,1,1,Fully complete,,f,green
+9713,t,f,1,1,Fully complete,,f,green
+9714,f,f,0,,Not Attempted,,t,
+9715,f,f,0,,Not Attempted,,t,
+9716,f,f,0,,Not Attempted,,t,
+9717,t,f,1,1,Fully complete,,f,green
+9718,t,f,1,1,Fully complete,,f,green
+9719,f,f,1,9,Ineligible household,,f,cyan
+9720,f,f,1,9,Ineligible household,,f,cyan
+9672,f,f,0,,Not Attempted,,t,
+9721,f,f,1,2,Partially complete - revisit,"{"""","""","""","""","""","""","""","""","""",Plot,4,Mapping,"""",""""}",t,gold
+9722,t,f,1,1,Fully complete,,f,green
+9723,f,f,0,,Not Attempted,,t,
+9724,f,f,0,,Not Attempted,,t,
+9673,f,f,0,,Not Attempted,,t,
+9725,t,f,1,1,Fully complete,,f,green
+9726,t,f,1,1,Fully complete,,f,green
+9727,f,f,0,,Not Attempted,,t,
+9728,t,f,1,1,Fully complete,,f,green
+9729,f,t,2,5,Refusal,,f,red
+9730,t,f,2,1,Fully complete,,f,green
+9731,t,f,1,1,Fully complete,,f,green
+9732,t,f,1,1,Fully complete,,f,green
+9733,f,f,1,7,Not found - no revisit,,f,red
+9734,t,f,1,1,Fully complete,,f,green
+9735,t,f,1,1,Fully complete,,f,green
+9736,t,f,1,1,Fully complete,,f,green
+9737,t,f,1,1,Fully complete,,f,green
+9738,t,f,1,1,Fully complete,,f,green
+9739,f,f,1,7,Not found - no revisit,,f,red
+9740,t,f,2,1,Fully complete,,f,green
+9741,t,f,1,1,Fully complete,,f,green
+9742,t,f,3,1,Fully complete,,f,green
+9743,f,f,0,,Not Attempted,,t,
+9744,f,f,0,,Not Attempted,,t,
+9674,t,f,1,1,Fully complete,,f,green
+9745,f,f,1,7,Not found - no revisit,,f,red
+9746,f,f,1,7,Not found - no revisit,,f,red
+9675,t,f,1,1,Fully complete,,f,green
+9747,f,f,0,,Not Attempted,,t,
+9748,f,f,0,,Not Attempted,,t,
+9749,t,f,1,1,Fully complete,,f,green
+9750,f,f,0,,Not Attempted,,t,
+9676,t,f,1,1,Fully complete,,f,green
+9751,f,f,0,,Not Attempted,,t,
+9752,f,f,1,9,Ineligible household,,f,cyan
+9753,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+9754,t,f,1,1,Fully complete,,f,green
+9755,f,t,1,5,Refusal,,f,red
+9756,t,f,1,1,Fully complete,,f,green
+9757,t,f,1,1,Fully complete,,f,green
+9758,f,f,0,,Not Attempted,,t,
+9759,f,f,0,,Not Attempted,,t,
+9760,f,f,0,,Not Attempted,,t,
+9761,f,f,0,,Not Attempted,,t,
+9762,t,f,1,1,Fully complete,,f,green
+9763,f,f,0,,Not Attempted,,t,
+9764,f,f,0,,Not Attempted,,t,
+9765,f,f,0,,Not Attempted,,t,
+9766,f,f,0,,Not Attempted,,t,
+9767,f,f,0,,Not Attempted,,t,
+9768,f,f,0,,Not Attempted,,t,
+9769,f,f,0,,Not Attempted,,t,
+9770,t,f,2,1,Fully complete,,f,green
+9771,t,f,3,1,Fully complete,,f,green
+9772,f,t,2,5,Refusal,,f,red
+9773,f,f,1,9,Ineligible household,,f,cyan
+9677,t,f,1,1,Fully complete,,f,green
+9774,t,f,2,1,Fully complete,,f,green
+9775,f,f,1,7,Not found - no revisit,,f,red
+9776,f,f,1,7,Not found - no revisit,,f,red
+9678,t,f,1,1,Fully complete,,f,green
+9777,f,f,0,,Not Attempted,,t,
+9778,f,f,0,,Not Attempted,,t,
+9779,f,f,0,,Not Attempted,,t,
+9679,t,f,1,1,Fully complete,,f,green
+9780,f,f,1,7,Not found - no revisit,,f,red
+9781,f,t,1,5,Refusal,,f,red
+9782,t,f,2,1,Fully complete,,f,green
+9783,f,f,2,9,Ineligible household,,f,cyan
+9784,t,f,1,1,Fully complete,,f,green
+9785,t,f,1,1,Fully complete,,f,green
+9786,t,f,1,1,Fully complete,,f,green
+9787,t,f,1,1,Fully complete,,f,green
+9788,t,f,1,1,Fully complete,,f,green
+9789,t,f,1,1,Fully complete,,f,green
+9790,t,f,1,1,Fully complete,,f,green
+9791,f,f,0,,Not Attempted,,t,
+9792,t,f,1,1,Fully complete,,f,green
+9793,t,f,1,1,Fully complete,,f,green
+9794,t,f,1,1,Fully complete,,f,green
+9795,t,f,1,1,Fully complete,,f,green
+9796,t,f,1,1,Fully complete,,f,green
+9797,f,f,0,,Not Attempted,,t,
+9798,t,f,1,1,Fully complete,,f,green
+9799,t,f,1,1,Fully complete,,f,green
+9800,f,f,0,,Not Attempted,,t,
+9801,f,f,0,,Not Attempted,,t,
+9802,f,f,1,9,Ineligible household,,f,cyan
+9803,t,f,1,1,Fully complete,,f,green
+9804,t,f,2,1,Fully complete,,f,green
+9680,f,f,0,,Not Attempted,,t,
+9805,t,f,1,1,Fully complete,,f,green
+9806,f,f,0,,Not Attempted,,t,
+9807,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+9808,f,f,0,,Not Attempted,,t,
+9809,f,f,0,,Not Attempted,,t,
+9810,f,f,0,,Not Attempted,,t,
+9811,f,f,0,,Not Attempted,,t,
+9812,t,f,1,1,Fully complete,,f,green
+9813,t,f,1,1,Fully complete,,f,green
+9814,t,f,1,1,Fully complete,,f,green
+9815,f,f,2,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold
+9816,f,f,2,3,Partially complete - no revisit,,f,green
+9817,f,f,3,3,Partially complete - no revisit,,f,green
+9818,t,f,2,1,Fully complete,,f,green
+9819,t,f,1,1,Fully complete,,f,green
+9820,f,f,1,7,Not found - no revisit,,f,red
+9821,t,f,1,1,Fully complete,,f,green
+9822,t,f,1,1,Fully complete,,f,green
+9823,t,f,1,1,Fully complete,,f,green
+9824,t,f,1,1,Fully complete,,f,green
+9825,t,f,3,1,Fully complete,,f,green
+9826,t,f,1,1,Fully complete,,f,green
+9827,t,f,1,1,Fully complete,,f,green
+9828,f,f,0,,Not Attempted,,t,
+9829,t,f,1,1,Fully complete,,f,green
+9830,t,f,3,1,Fully complete,,f,green
+9831,f,f,2,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+9681,f,f,1,4,Appointment,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,blue
+9832,t,f,1,1,Fully complete,,f,green
+9833,t,f,2,1,Fully complete,,f,green
+9834,t,f,1,1,Fully complete,,f,green
+9682,t,f,1,1,Fully complete,,f,green
+9683,f,f,0,,Not Attempted,,t,
+9684,t,f,1,1,Fully complete,,f,green
+9685,t,f,1,1,Fully complete,,f,green
+9686,t,f,1,1,Fully complete,,f,green
+9687,f,f,0,,Not Attempted,,t,
+9688,t,f,1,1,Fully complete,,f,green
+9689,t,f,2,1,Fully complete,,f,green
+9690,f,f,1,6,Not found - revisit,"{"""","""","""","""","""","""","""","""","""","""","""",""""}",t,gold

@@ -83,7 +83,7 @@ def test_avatar_workflow(base_url, client, login_test_user):
     response = get_avatar(client, base_url)
 
     assert re.match(
-        r"^https://dod-surveystream-[a-z]*-web-app-assets\.s3.amazonaws\.com/images/avatars/.*",
+        r"^https://dod-surveystream-.*-assets\.s3.amazonaws\.com/images/avatars/.*",
         response.json()["image_url"],
     )
 

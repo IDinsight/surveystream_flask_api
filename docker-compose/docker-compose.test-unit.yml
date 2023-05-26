@@ -1,0 +1,31 @@
+version: '2.1'
+services:
+  postgres:
+    image: postgres:12 
+    restart: always
+    environment:
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=dod
+      - POSTGRES_DB=dod
+    volumes:
+      - ../tests/unit/data/launch_local_db/data:/docker-entrypoint-initdb.d/data
+    ports:
+      - "5433:5433"
+    command:
+      -p 5433
+  api:
+    image: ${BACKEND_NAME}:${VERSION}
+    environment:
+      - CONFIG_TYPE=app.config.UnitTestConfig
+      - PYTHONUNBUFFERED=0
+      - AWS_REGION=ap-south-1
+      - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
+    depends_on:
+      - postgres
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    entrypoint: ["/bin/sh","-c"]
+    command:
+    - |
+       "/bootstrap.sh"
+       dockerize -wait tcp://postgres:5433 -timeout 15m -wait-retry-interval 10s bash -c "pytest -o log_cli=True --show-capture=stdout -vv"

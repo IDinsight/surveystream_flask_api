@@ -17,7 +17,7 @@ services:
     image: ${BACKEND_NAME}:${VERSION}
     restart: always
     environment:
-      - CONFIG_TYPE=app.config.TestConfig
+      - CONFIG_TYPE=app.config.E2eTestConfig
       - PYTHONUNBUFFERED=0
       - AWS_REGION=ap-south-1
       - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}

@@ -115,7 +115,8 @@ def setup_database(test_user_credentials, registration_user_credentials):
     conn = get_local_db_conn()
 
     with conn.cursor() as cur:
-        cur.execute(open("data/launch_local_db/build_db.sql", "r").read())
+        cur.execute(open("db/3-web-app-schema.sql", "r").read())
+        cur.execute(open("data/launch_local_db/load_data.sql", "r").read())
 
         # Set the credentials for the desired test user
         cur.execute(
