@@ -113,8 +113,7 @@ class ProfilerConfig(Config):
     )
 
 
-class TestConfig(Config):
-
+class E2eTestConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
         "dod",
@@ -124,8 +123,19 @@ class TestConfig(Config):
     )
 
 
-class StagingConfig(Config):
+class UnitTestConfig(Config):
+    SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
+        "test_user",
+        "dod",
+        "postgres",
+        5433,
+        "dod",
+    )
 
+    SECRET_KEY = "test"
+
+
+class StagingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         Config.DB_USER,
         Config.DB_PASS,
@@ -144,7 +154,6 @@ class StagingConfig(Config):
 
 
 class ProductionConfig(Config):
-
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         Config.DB_USER,
         Config.DB_PASS,

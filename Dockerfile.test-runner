@@ -28,6 +28,7 @@ RUN chown -R container_user: ${HOME_DIR}
 
 WORKDIR ${HOME_DIR}
 COPY tests/e2e ${HOME_DIR}
+COPY db ${HOME_DIR}/db
 
 ENV PYTHONPATH "${PYTHONPATH}:${HOME_DIR}"
 

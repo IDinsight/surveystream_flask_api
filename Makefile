@@ -16,7 +16,7 @@ login:
 	@aws sso login --profile surveystream_dev
 
 image:
-	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --no-cache --platform=linux/amd64 -t $(BACKEND_NAME):$(VERSION) .
+	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --platform=linux/amd64 -t $(BACKEND_NAME):$(VERSION) .
 
 db-tunnel:
 	# Open a connection to the remote db via the bastion host
@@ -184,3 +184,16 @@ run-test-e2e:
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
 	docker-compose -f docker-compose/docker-compose.test-e2e.yml -f docker-compose/docker-compose.override-test-e2e.yml rm -fsv
+
+run-test-unit:
+	@BACKEND_NAME=${BACKEND_NAME} \
+	VERSION=${VERSION} \
+	BACKEND_PORT=${BACKEND_PORT} \
+	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
+	docker-compose -f docker-compose/docker-compose.test-unit.yml -f docker-compose/docker-compose.override-test-unit.yml run --rm api ;
+	
+	@BACKEND_NAME=${BACKEND_NAME} \
+	VERSION=${VERSION} \
+	BACKEND_PORT=${BACKEND_PORT} \
+	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
+	docker-compose -f docker-compose/docker-compose.test-unit.yml -f docker-compose/docker-compose.override-test-unit.yml rm -fsv
