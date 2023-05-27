@@ -16,6 +16,7 @@ sso_account_id = 453207568606
 sso_role_name = AdministratorAccess
 region = ap-south-1```
 
+
 - Verify that you *do not* have an entry for `surveystream_dev` in your AWS credentials file (`~/.aws/credentials`). This is needed to make sure the local endpoints container looks for your temporary SSO-based credentials that are stored in `~/.aws/sso/`.
 - From the `root` directory, run `make login` to log into AWS SSO. You will be prompted to log in via a browser window that opens automatically.
 - Open a second terminal window and `cd` into the repository root directory. Run `make db-tunnel` to open the connection to the remote db via the bastion host.
