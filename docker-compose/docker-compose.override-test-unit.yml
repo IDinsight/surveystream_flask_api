@@ -19,12 +19,12 @@ services:
           - /var/run:/var/run
           # Mount the shared configuration directory, used by the AWS CLI and AWS SDKs
           # On Windows, this directory can be found at "%UserProfile%\.aws"
-          - $HOME/.aws/:/home/.aws/
-        environment:
+        #   - $HOME/.aws/:/home/.aws/
+        # environment:
           # define the home folder; credentials will be read from $HOME/.aws
-          HOME: "/home"
+        #   HOME: "/home"
           # You can change which AWS CLI Profile is used
-          AWS_PROFILE: ""
+        #   AWS_PROFILE: ""
         networks:
             credentials_network:
                 # This special IP address is recognized by the AWS SDKs and AWS CLI 
