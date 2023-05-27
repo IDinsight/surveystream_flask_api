@@ -1,3 +1,6 @@
+[![Coverage Status](https://coveralls.io/repos/github/IDinsight/dod_surveystream_flask_api/badge.svg?t=BhAQ0K)](https://coveralls.io/github/IDinsight/dod_surveystream_flask_api)
+![Unit Tests](https://github.com/IDinsight/dod_surveystream_flask_api/actions/workflows/unittest.yml/badge.svg)
+
 # DOD SurveyStream Back End
 
 ## Instructions for running locally
@@ -53,8 +56,12 @@ The unit tests get packaged with the main application image. Before running the 
 
 ### Run the tests
 
-Once the images are built, the end-to-end tests can be run with the following commands:
+Once the images are built, the unit tests can be run with the following commands:
 
 `make login`
 
 `make -i run-unit-tests` (note the `-i` flag will ensure the container cleanup happens even if some of the tests fail)
+
+### Running the tests on CI/CD
+
+The unit tests will run on GitHub Actions on any `push` or `pull request` actions.

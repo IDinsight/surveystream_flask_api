@@ -1,10 +1,10 @@
 # Create GitHub Action to run unit tests inside a Docker container
-name: Unit Tests
+name: Run Unit Tests
 
 on: [push, pull_request]
 
 jobs:
-  unittest:
+  UnitTest:
     runs-on: ubuntu-latest
     
     permissions:
