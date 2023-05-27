@@ -24,7 +24,7 @@ services:
           # define the home folder; credentials will be read from $HOME/.aws
           HOME: "/home"
           # You can change which AWS CLI Profile is used
-        #   AWS_PROFILE: "surveystream_dev"
+          AWS_PROFILE: "default"
         networks:
             credentials_network:
                 # This special IP address is recognized by the AWS SDKs and AWS CLI 
