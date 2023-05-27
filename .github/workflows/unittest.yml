@@ -26,7 +26,7 @@ jobs:
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::$DEV_ACCOUNT:role/github-actions-role-flask-unittest
+          role-to-assume: arn:aws:iam::453207568606:role/github-actions-role-flask-unittest
           role-session-name: testingrolesession
           aws-region: ${{ env.AWS_REGION }}
           
