@@ -33,6 +33,5 @@ services:
        dockerize -wait tcp://postgres:5433 -timeout 15m -wait-retry-interval 10s 
        coverage run -m pytest tests
        coverage lcov -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
-      #  coverage lcov coverage.lcov
        
       
