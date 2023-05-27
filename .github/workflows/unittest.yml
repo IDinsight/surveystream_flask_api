@@ -29,6 +29,11 @@ jobs:
           role-to-assume: arn:aws:iam::453207568606:role/github-actions-role-flask-unittest
           role-session-name: testingrolesession
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure output directory
+        run: |
+          mkdir -p /tmp/coverage
+          chmod 777 /tmp/coverage
           
       - name: Run unit tests
         run: docker-compose -f docker-compose/docker-compose.test-unit.yml -f docker-compose/docker-compose.override-test-unit.yml run --rm api ;
