@@ -1,7 +1,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/IDinsight/dod_surveystream_flask_api/badge.svg?t=BhAQ0K)](https://coveralls.io/github/IDinsight/dod_surveystream_flask_api)
 ![Unit Tests](https://github.com/IDinsight/dod_surveystream_flask_api/actions/workflows/unittest.yml/badge.svg)
 
-# DOD SurveyStream Back End
+# DOD SurveyStream Flask API
 
 ## Instructions for running locally
 
@@ -64,4 +64,4 @@ Once the images are built, the unit tests can be run with the following commands
 
 ### Running the tests on CI/CD
 
-The unit tests will run on GitHub Actions on any `push` or `pull request` actions.
+The unit tests will run on GitHub Actions on any `push` or `pull request` actions.g
