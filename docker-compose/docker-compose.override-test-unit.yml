@@ -25,6 +25,9 @@ services:
         #   HOME: "/home"
           # You can change which AWS CLI Profile is used
         #   AWS_PROFILE: ""
+        environment:
+          AWS_DEFAULT_REGION: "ap-south-1"
+          AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: "/role/github-actions-role-flask-unittest"
         networks:
             credentials_network:
                 # This special IP address is recognized by the AWS SDKs and AWS CLI 
