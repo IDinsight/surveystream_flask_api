@@ -19,13 +19,10 @@ services:
           - /var/run:/var/run
           # Mount the shared configuration directory, used by the AWS CLI and AWS SDKs
           # On Windows, this directory can be found at "%UserProfile%\.aws"
-        #   - $HOME/.aws/:/home/.aws/
-        # environment:
-          # define the home folder; credentials will be read from $HOME/.aws
-        #   HOME: "/home"
-          # You can change which AWS CLI Profile is used
-        #   AWS_PROFILE: ""
+          - $HOME/.aws/:/home/.aws/
         environment:
+            HOME: "/home"
+            AWS_PROFILE: "surveystream_dev"
             AWS_DEFAULT_REGION: "ap-south-1"
             AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
             AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
