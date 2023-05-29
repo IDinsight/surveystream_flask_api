@@ -3,6 +3,7 @@ from app.utils import logged_in_active_user_required
 from flask_login import current_user
 from sqlalchemy import insert, cast, Integer
 from sqlalchemy.sql import case
+from sqlalchemy.exc import IntegrityError
 from app import db
 from .models import Role
 from .routes import roles_bp
@@ -90,19 +91,23 @@ def update_survey_roles():
             if existing_role.role_uid not in [
                 role.get("role_uid") for role in payload_validator.roles.data
             ]:
-                # Update the role record so its deletion gets captured by the table logging triggers
-                Role.query.filter(Role.role_uid == existing_role.role_uid).update(
-                    {
-                        Role.user_uid: user_uid,
-                        Role.to_delete: 1,
-                    },
-                    synchronize_session=False,
-                )
+                try:
+                    # Update the role record so its deletion gets captured by the table logging triggers
+                    Role.query.filter(Role.role_uid == existing_role.role_uid).update(
+                        {
+                            Role.user_uid: user_uid,
+                            Role.to_delete: 1,
+                        },
+                        synchronize_session=False,
+                    )
 
-                # Delete the role record
-                Role.query.filter(Role.role_uid == existing_role.role_uid).delete()
+                    # Delete the role record
+                    Role.query.filter(Role.role_uid == existing_role.role_uid).delete()
 
-                db.session.commit()
+                    db.session.commit()
+                except IntegrityError as e:
+                    db.session.rollback()
+                    return jsonify(message=str(e)), 500
 
         # Get the roles that need to be updated
         roles_to_update = [
@@ -111,30 +116,36 @@ def update_survey_roles():
             if role["role_uid"] is not None
         ]
         if len(roles_to_update) > 0:
-            Role.query.filter(
-                Role.role_uid.in_([role["role_uid"] for role in roles_to_update])
-            ).update(
-                {
-                    Role.role_name: case(
-                        {
-                            role["role_uid"]: role["role_name"]
-                            for role in roles_to_update
-                        },
-                        value=Role.role_uid,
-                    ),
-                    Role.reporting_role_uid: case(
-                        {
-                            role["role_uid"]: cast(role["reporting_role_uid"], Integer)
-                            for role in roles_to_update
-                        },
-                        value=Role.role_uid,
-                    ),
-                    Role.user_uid: user_uid,
-                },
-                synchronize_session=False,
-            )
+            try:
+                Role.query.filter(
+                    Role.role_uid.in_([role["role_uid"] for role in roles_to_update])
+                ).update(
+                    {
+                        Role.role_name: case(
+                            {
+                                role["role_uid"]: role["role_name"]
+                                for role in roles_to_update
+                            },
+                            value=Role.role_uid,
+                        ),
+                        Role.reporting_role_uid: case(
+                            {
+                                role["role_uid"]: cast(
+                                    role["reporting_role_uid"], Integer
+                                )
+                                for role in roles_to_update
+                            },
+                            value=Role.role_uid,
+                        ),
+                        Role.user_uid: user_uid,
+                    },
+                    synchronize_session=False,
+                )
 
-            db.session.commit()
+                db.session.commit()
+            except IntegrityError as e:
+                db.session.rollback()
+                return jsonify(message=str(e)), 500
 
         # Get the roles that need to be created
         roles_to_insert = [

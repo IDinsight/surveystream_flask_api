@@ -66,4 +66,4 @@ Once the images are built, the unit tests can be run with the following commands
 
 ### Running the tests on CI/CD
 
-The unit tests will run on GitHub Actions on any `push` or `pull request` actions.g
+The unit tests will run on GitHub Actions on any `push` or `pull request` actions.

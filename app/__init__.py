@@ -106,18 +106,19 @@ def register_blueprints(app):
 
 
 def register_error_handlers(app):
-    @app.errorhandler(401)
     def unauthorized(e):
         return jsonify(message=str(e)), 401
 
-    @app.errorhandler(403)
     def forbidden(e):
         return jsonify(message=str(e)), 403
 
-    @app.errorhandler(404)
     def page_not_found(e):
         return jsonify(message=str(e)), 404
 
-    @app.errorhandler(500)
     def internal_server_error(e):
         return jsonify(message=str(e)), 500
+
+    app.register_error_handler(401, unauthorized)
+    app.register_error_handler(403, forbidden)
+    app.register_error_handler(404, page_not_found)
+    app.register_error_handler(500, internal_server_error)
