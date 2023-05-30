@@ -1,86 +1,100 @@
 import jsondiff
 import pytest
+from app import db
 from utils import (
     delete_assignments,
-    assign_targets,
-    update_surveyor_status,
     reset_surveyor_status,
     load_reference_data,
 )
 
 
-def test_surveys_list_response(base_url, client, login_test_user):
-    # Check surveys endpoint response
+def test_surveys_list_response(client, login_test_user):
+    """
+    Check surveys endpoint response
+    """
 
-    response = client.get(f"{base_url}/api/surveys-list")
+    response = client.get("/api/surveys-list")
     assert response.status_code == 200
 
-    checkdiff = jsondiff.diff(load_reference_data("surveys_list.json"), response.json())
+    checkdiff = jsondiff.diff(load_reference_data("surveys_list.json"), response.json)
 
     assert checkdiff == {}
 
 
-def test_forms_response(base_url, client, login_test_user):
-    # Check forms endpoint response
+def test_forms_response(client, login_test_user):
+    """
+    Check forms endpoint response
+    """
 
-    response = client.get(f"{base_url}/api/forms/4")
+    response = client.get("/api/forms/4")
     assert response.status_code == 200
 
-    checkdiff = jsondiff.diff(load_reference_data("forms.json"), response.json())
+    checkdiff = jsondiff.diff(load_reference_data("forms.json"), response.json)
 
     assert checkdiff == {}
 
 
-def test_table_config_response(base_url, client, login_test_user):
-    # Check table-config endpoint response
+def test_table_config_response(client, login_test_user):
+    """
+    Check table-config endpoint response
+    """
 
-    response = client.get(f"{base_url}/api/table-config?form_uid=4")
+    response = client.get("/api/table-config", query_string={"form_uid": 4})
     assert response.status_code == 200
 
-    checkdiff = jsondiff.diff(load_reference_data("table-config.json"), response.json())
-
-    assert checkdiff == {}
-
-
-@pytest.mark.slow
-def test_targets_response(base_url, client, login_test_user):
-    # Check targets endpoint response
-
-    response = client.get(f"{base_url}/api/targets?form_uid=4")
-    assert response.status_code == 200
-
-    checkdiff = jsondiff.diff(load_reference_data("targets.json"), response.json())
-
-    assert checkdiff == {}
-
-
-def test_enumerators_response(base_url, client, login_test_user):
-    # Check enumerators endpoint response
-
-    response = client.get(f"{base_url}/api/enumerators?form_uid=4")
-    assert response.status_code == 200
-
-    checkdiff = jsondiff.diff(load_reference_data("enumerators.json"), response.json())
+    checkdiff = jsondiff.diff(load_reference_data("table-config.json"), response.json)
 
     assert checkdiff == {}
 
 
 @pytest.mark.slow
-def test_assignments_response(base_url, client, login_test_user):
-    # Check assignments endpoint response
+def test_targets_response(client, login_test_user):
+    """
+    Check targets endpoint response
+    """
 
-    response = client.get(f"{base_url}/api/assignments?form_uid=4")
+    response = client.get("/api/targets", query_string={"form_uid": 4})
     assert response.status_code == 200
 
-    checkdiff = jsondiff.diff(load_reference_data("assignments.json"), response.json())
+    checkdiff = jsondiff.diff(load_reference_data("targets.json"), response.json)
 
     assert checkdiff == {}
 
 
-def test_surveyor_status_update(base_url, client, login_test_user):
+@pytest.mark.slow
+def test_enumerators_response(client, login_test_user):
+    """
+    Check enumerators endpoint response
+    """
+
+    response = client.get("/api/enumerators", query_string={"form_uid": 4})
+    assert response.status_code == 200
+
+    checkdiff = jsondiff.diff(load_reference_data("enumerators.json"), response.json)
+
+    assert checkdiff == {}
+
+
+@pytest.mark.slow
+def test_assignments_response(client, login_test_user):
+    """
+    Check assignments endpoint response
+    """
+
+    response = client.get("/api/assignments", query_string={"form_uid": 4})
+    assert response.status_code == 200
+
+    checkdiff = jsondiff.diff(load_reference_data("assignments.json"), response.json)
+
+    assert checkdiff == {}
+
+
+@pytest.mark.slow
+def test_surveyor_status_update(app, client, login_test_user, csrf_token):
     """
     Check updating a surveyor's status and confirm that only allowed statuses work
     """
+
     form_uid = 4
     enumerator_uid = 1311
     statuses_to_check = [
@@ -103,29 +117,32 @@ def test_surveyor_status_update(base_url, client, login_test_user):
     ]
 
     for item in statuses_to_check:
-        reset_surveyor_status(enumerator_uid, form_uid, "Active")
+        reset_surveyor_status(app, db, enumerator_uid, form_uid, "Active")
 
-        response = update_surveyor_status(
-            client, base_url, enumerator_uid, form_uid, item["status"]
+        response = client.patch(
+            f"/api/enumerators/{enumerator_uid}",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"form_uid": form_uid, "status": item["status"]},
         )
 
         assert response.status_code == item["expected_status_code"]
 
         if item["expected_diff"] is not None:
-            response = client.get(f"{base_url}/api/enumerators?form_uid=4")
+            response = client.get("/api/enumerators", query_string={"form_uid": 4})
             assert response.status_code == 200
 
             checkdiff = jsondiff.diff(
-                load_reference_data("enumerators.json"), response.json()
+                load_reference_data("enumerators.json"), response.json
             )
             assert checkdiff == item["expected_diff"]
 
 
 @pytest.mark.slow
-def test_assignments_update(base_url, client, login_test_user):
+def test_assignments_update(app, client, login_test_user, csrf_token):
     """
     Check that assigning, reassigning, and deleting assignments works as expected
     """
+
     form_uid = 4
     target_uids = [
         5297,
@@ -136,11 +153,10 @@ def test_assignments_update(base_url, client, login_test_user):
 
     enumerator_uids = [1311, 1343]
 
-    endpoint_url = f"{base_url}/api/assignments?form_uid=4"
     reference_data = load_reference_data("assignments.json")
 
-    # Clear all the assignments for a form
-    delete_assignments(form_uid)
+    # Clear all the assignments for a form in the database
+    delete_assignments(app, db, form_uid)
 
     # Test assignment
 
@@ -150,12 +166,21 @@ def test_assignments_update(base_url, client, login_test_user):
             for target_uid in target_uids
         ]
     }
-    response = assign_targets(client, base_url, assignments_payload)
+
+    response = client.put(
+        "/api/assignments",
+        query_string={"form_uid": form_uid},
+        headers={"X-CSRF-Token": csrf_token},
+        json=assignments_payload,
+    )
     assert response.status_code == 200
 
-    response = client.get(endpoint_url)
+    response = client.get(
+        "/api/assignments",
+        query_string={"form_uid": form_uid},
+    )
 
-    checkdiff = jsondiff.diff(reference_data, response.json())
+    checkdiff = jsondiff.diff(reference_data, response.json)
 
     expected_diff = {
         "assignments": {
@@ -219,11 +244,19 @@ def test_assignments_update(base_url, client, login_test_user):
             for target_uid in target_uids
         ]
     }
-    response = assign_targets(client, base_url, assignments_payload)
+    response = client.put(
+        "/api/assignments",
+        query_string={"form_uid": form_uid},
+        headers={"X-CSRF-Token": csrf_token},
+        json=assignments_payload,
+    )
 
-    response = client.get(endpoint_url)
+    response = client.get(
+        "/api/assignments",
+        query_string={"form_uid": form_uid},
+    )
 
-    checkdiff = jsondiff.diff(reference_data, response.json())
+    checkdiff = jsondiff.diff(reference_data, response.json)
 
     expected_diff = {
         "assignments": {
@@ -281,27 +314,30 @@ def test_assignments_update(base_url, client, login_test_user):
 
     # Test unassignment
 
-    assignments_payload = {
-        "assignments": [
-            {"target_uid": target_uid, "enumerator_uid": None}
-            for target_uid in target_uids
-        ]
-    }
-    response = assign_targets(client, base_url, assignments_payload)
+    response = client.put(
+        "/api/assignments",
+        query_string={"form_uid": form_uid},
+        headers={"X-CSRF-Token": csrf_token},
+        json=assignments_payload,
+    )
 
-    response = client.get(endpoint_url)
+    response = client.get(
+        "/api/assignments",
+        query_string={"form_uid": form_uid},
+    )
     assert response.status_code == 200
 
-    checkdiff = jsondiff.diff(reference_data, response.json())
+    checkdiff = jsondiff.diff(reference_data, response.json)
 
     assert checkdiff == {}
 
 
 @pytest.mark.slow
-def test_surveyor_dropout_assignments_release(base_url, client, login_test_user):
+def test_surveyor_dropout_assignments_release(app, client, login_test_user, csrf_token):
     """
     Check that marking a surveyor as dropout releases their assignments
     """
+
     form_uid = 4
     target_uids = [
         5297,
@@ -313,10 +349,9 @@ def test_surveyor_dropout_assignments_release(base_url, client, login_test_user)
     enumerator_uid = 1311
 
     reference_data = load_reference_data("assignments.json")
-    endpoint_url = f"{base_url}/api/assignments?form_uid=4"
 
     # Clear all the assignments for a form in the database
-    delete_assignments(form_uid)
+    delete_assignments(app, db, form_uid)
 
     assignments_payload = {
         "assignments": [
@@ -324,12 +359,21 @@ def test_surveyor_dropout_assignments_release(base_url, client, login_test_user)
             for target_uid in target_uids
         ]
     }
-    response = assign_targets(client, base_url, assignments_payload)
+    response = client.put(
+        "/api/assignments",
+        query_string={"form_uid": form_uid},
+        headers={"X-CSRF-Token": csrf_token},
+        json=assignments_payload,
+    )
+
     assert response.status_code == 200
 
-    response = client.get(endpoint_url)
+    response = client.get(
+        "/api/assignments",
+        query_string={"form_uid": form_uid},
+    )
 
-    checkdiff = jsondiff.diff(reference_data, response.json())
+    checkdiff = jsondiff.diff(reference_data, response.json)
 
     expected_diff = {
         "assignments": {
@@ -385,11 +429,18 @@ def test_surveyor_dropout_assignments_release(base_url, client, login_test_user)
 
     assert checkdiff == expected_diff
 
-    update_surveyor_status(client, base_url, enumerator_uid, form_uid, "Dropout")
+    response = client.patch(
+        f"/api/enumerators/{enumerator_uid}",
+        headers={"X-CSRF-Token": csrf_token},
+        json={"form_uid": form_uid, "status": "Dropout"},
+    )
 
-    response = client.get(endpoint_url)
+    response = client.get(
+        "/api/assignments",
+        query_string={"form_uid": form_uid},
+    )
 
-    checkdiff = jsondiff.diff(reference_data, response.json(), marshal=True)
+    checkdiff = jsondiff.diff(reference_data, response.json, marshal=True)
 
     assert checkdiff == {
         "assignments": {

@@ -3,7 +3,7 @@ import pytest
 
 
 @pytest.fixture()
-def create_roles(client, login_test_user):
+def create_roles(client, login_test_user, csrf_token):
     """
     Insert new roles as a setup step for the roles tests
     """
@@ -28,7 +28,7 @@ def create_roles(client, login_test_user):
         query_string={"survey_uid": 3},
         json=payload,
         content_type="application/json",
-        headers={"X-CSRF-Token": login_test_user},
+        headers={"X-CSRF-Token": csrf_token},
     )
     assert response.status_code == 200
 
@@ -65,7 +65,7 @@ def test_insert_roles(client, login_test_user, create_roles):
     assert checkdiff == {}
 
 
-def test_update_roles(client, login_test_user, create_roles):
+def test_update_roles(client, login_test_user, create_roles, csrf_token):
     """
     Test that existing roles can be updated
     """
@@ -91,7 +91,7 @@ def test_update_roles(client, login_test_user, create_roles):
         query_string={"survey_uid": 3},
         json=payload,
         content_type="application/json",
-        headers={"X-CSRF-Token": login_test_user},
+        headers={"X-CSRF-Token": csrf_token},
     )
     assert response.status_code == 200
 
@@ -120,7 +120,7 @@ def test_update_roles(client, login_test_user, create_roles):
 
 
 def test_update_roles_deferrable_constraint_violation(
-    client, login_test_user, create_roles
+    client, login_test_user, create_roles, csrf_token
 ):
     """
     Test that updating roles with a temporary unique constraint violation succeeds
@@ -147,7 +147,7 @@ def test_update_roles_deferrable_constraint_violation(
         query_string={"survey_uid": 3},
         json=payload,
         content_type="application/json",
-        headers={"X-CSRF-Token": login_test_user},
+        headers={"X-CSRF-Token": csrf_token},
     )
     assert response.status_code == 200
 
@@ -176,7 +176,9 @@ def test_update_roles_deferrable_constraint_violation(
     assert checkdiff == {}
 
 
-def test_update_roles_constraint_violation(client, login_test_user, create_roles):
+def test_update_roles_constraint_violation(
+    client, login_test_user, create_roles, csrf_token
+):
     """
     Test that updating roles with a temporary unique constraint violation succeeds
     """
@@ -202,12 +204,12 @@ def test_update_roles_constraint_violation(client, login_test_user, create_roles
         query_string={"survey_uid": 3},
         json=payload,
         content_type="application/json",
-        headers={"X-CSRF-Token": login_test_user},
+        headers={"X-CSRF-Token": csrf_token},
     )
     assert response.status_code == 500
 
 
-def test_delete_role(client, login_test_user, create_roles):
+def test_delete_role(client, login_test_user, create_roles, csrf_token):
     """
     Test that a role can be deleted
     """
@@ -228,7 +230,7 @@ def test_delete_role(client, login_test_user, create_roles):
         query_string={"survey_uid": 3},
         json=payload,
         content_type="application/json",
-        headers={"X-CSRF-Token": login_test_user},
+        headers={"X-CSRF-Token": csrf_token},
     )
     assert response.status_code == 200
 
@@ -251,7 +253,7 @@ def test_delete_role(client, login_test_user, create_roles):
     assert checkdiff == {}
 
 
-def test_delete_reporting_role(client, login_test_user, create_roles):
+def test_delete_reporting_role(client, login_test_user, create_roles, csrf_token):
     """
     Test that a role cannot be deleted if it is being referenced by another role
     """
@@ -272,6 +274,6 @@ def test_delete_reporting_role(client, login_test_user, create_roles):
         query_string={"survey_uid": 3},
         json=payload,
         content_type="application/json",
-        headers={"X-CSRF-Token": login_test_user},
+        headers={"X-CSRF-Token": csrf_token},
     )
     assert response.status_code == 500
