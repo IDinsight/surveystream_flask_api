@@ -130,7 +130,6 @@ def test_avatar_workflow(client, login_test_user, csrf_token):
     assert response.json["image_url"] is None
 
 
-<<<<<<< HEAD
 def test_avatar_incorrect_file_extension(client, login_test_user, csrf_token):
     """
     Try uploading an incorrect file extension
@@ -153,8 +152,6 @@ def test_avatar_incorrect_file_extension(client, login_test_user, csrf_token):
     assert response.status_code == 422
 
 
-=======
->>>>>>> dev
 def test_profile_response(client, login_test_user, test_user_credentials):
     """
     Check profile endpoint response
