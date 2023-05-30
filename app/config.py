@@ -47,6 +47,8 @@ class Config:
 
     REACT_BASE_URL = "http://localhost:3000"
 
+    PROTECT_DOCS_ENDPOINT = True
+
     LOGGING_CONFIG = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -81,6 +83,8 @@ class DevelopmentConfig(Config):
         Config.DB_NAME,
     )
 
+    PROTECT_DOCS_ENDPOINT = False
+
 
 class ProfilerConfig(Config):
     SQLALCHEMY_ECHO = True
@@ -109,8 +113,7 @@ class ProfilerConfig(Config):
     )
 
 
-class TestConfig(Config):
-
+class UnitTestConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
         "dod",
@@ -121,7 +124,6 @@ class TestConfig(Config):
 
 
 class StagingConfig(Config):
-
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         Config.DB_USER,
         Config.DB_PASS,
@@ -130,17 +132,16 @@ class StagingConfig(Config):
         Config.DB_NAME,
     )
 
-    REACT_BASE_URL = "https://stg.surveystream.idinsight.io"
+    REACT_BASE_URL = "https://callisto.stg.surveystream.idinsight.io"
 
     SENTRY_CONFIG = {
         "dsn": "https://c320e08cbf204069afb2cc62ee498018@o564222.ingest.sentry.io/4505070237319168",
         "traces_sample_rate": "1.0",
-        "environment": "staging",
+        "environment": "staging-callisto",
     }
 
 
 class ProductionConfig(Config):
-
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         Config.DB_USER,
         Config.DB_PASS,

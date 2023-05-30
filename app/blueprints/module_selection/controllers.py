@@ -11,6 +11,7 @@ def list_modules():
         return jsonify({'success': False, 'message': 'No modules found.'}), 404
     return jsonify({'success': True, 'data': [module.to_dict() for module in modules]}), 200
 
+
 @module_selection_bp.route('/module-status', methods=['POST'])
 def add_module_status():
     validator = AddModuleStatusValidator.from_json(request.get_json())
@@ -39,10 +40,12 @@ def add_module_status():
     db.session.commit()
     return jsonify({'success': True, 'message': 'Module status added successfully.'}), 200
 
+
 @module_selection_bp.route('/module-status/<int:survey_uid>', methods=['GET'])
 def get_module_status(survey_uid):
     module_status = ModuleStatus.query.filter_by(survey_uid=survey_uid).all()
     return jsonify({'success': True, 'data': [status.to_dict() for status in module_status]}), 200
+
 
 @module_selection_bp.route('/modules/<int:module_id>/status/<int:survey_uid>', methods=['PUT'])
 def update_module_status(module_id, survey_uid):
