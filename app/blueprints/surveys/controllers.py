@@ -16,9 +16,6 @@ def get_all_surveys():
     else:
         surveys = Survey.query.all()
 
-    if not surveys:
-        return jsonify({"success": False, "error": "No surveys found"}), 404
-
     data = [survey.to_dict() for survey in surveys]
     response = {"success": True, "data": data}
 
