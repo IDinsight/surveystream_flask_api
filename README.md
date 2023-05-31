@@ -1,4 +1,7 @@
-# DOD SurveyStream Back End
+[![Coverage Status](https://coveralls.io/repos/github/IDinsight/dod_surveystream_flask_api/badge.svg?t=BhAQ0K)](https://coveralls.io/github/IDinsight/dod_surveystream_flask_api)
+![Unit Tests](https://github.com/IDinsight/dod_surveystream_flask_api/actions/workflows/unittest.yml/badge.svg)
+
+# DOD SurveyStream Flask API
 
 ## Instructions for running locally
 
@@ -6,12 +9,14 @@
 
 - [First time setup] Set up your AWS config file (`~/.aws/config`) to work with the dev environment and AWS SSO. Make sure your config file contains the following entry:
 
-`[profile surveystream_dev]
+```
+[profile surveystream_dev]
 sso_start_url = https://idinsight.awsapps.com/start
 sso_region = ap-south-1
 sso_account_id = 453207568606
 sso_role_name = AdministratorAccess
-region = ap-south-1`
+region = ap-south-1
+```
 
 - Verify that you *do not* have an entry for `surveystream_dev` in your AWS credentials file (`~/.aws/credentials`). This is needed to make sure the local endpoints container looks for your temporary SSO-based credentials that are stored in `~/.aws/sso/`.
 - From the `root` directory, run `make login` to log into AWS SSO. You will be prompted to log in via a browser window that opens automatically.
@@ -35,28 +40,30 @@ When running the backend locally, the docs can be accessed without logging in at
 
 `localhost:5001/api/healthcheck`
 
-## Instructions for running end-to-end tests
+## Instructions for running unit tests
 
 ### Update configuration values for the tests
 
-The tests can be configured by updating the values found in `tests/e2e/config.yml`:
+The tests can be configured by updating the values found in `tests/unit/config.yml`:
 
 `email` (string) - The email address to set for the test user. Updating this value will let you customize where emails will be sent for the relevant tests (`forgot-password`, `welcome-user`, etc). You will need to manually check receipt of the emails.
 
-`run_slow_tests` (bool) - Whether to run test cases that have been marked as "slow". Setting this value to True will run the whole test suite which takes roughly an hour. 
+`run_slow_tests` (bool) - Whether to run test cases that have been marked as "slow". Setting this value to True will run the whole test suite which can take over an hour. 
 
-### Build the images
+### Build the image
 
-The end-to-end tests require an image for the Flask app and an image for the test runner. These can be created with the following make commands:
+The unit tests get packaged with the main application image. Before running the tests, make sure the image is updated:
 
-Flask app: `make image`
-
-Test runner: `make image-test-e2e`
+`make image`
 
 ### Run the tests
 
-Once the images are built, the end-to-end tests can be run with the following commands:
+Once the images are built, the unit tests can be run with the following commands:
 
 `make login`
 
-`make -i run-test-e2e` (note the `-i` flag will ensure the container cleanup happens even if some of the tests fail)
+`make -i run-unit-tests` (note the `-i` flag will ensure the container cleanup happens even if some of the tests fail)
+
+### Running the tests on CI/CD
+
+The unit tests will run on GitHub Actions on any `push` or `pull request` actions.

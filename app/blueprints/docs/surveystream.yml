@@ -70,6 +70,8 @@ tags:
     description: Endpoints related to miscellaneous functionalities
   - name: Module Questionnaire
     description: Endpoints related to module questionnaire
+  - name: Roles
+    description: Endpoints related to user roles
 x-tagGroups:
   - name: User Management
     tags:
@@ -104,6 +106,9 @@ x-tagGroups:
   - name: Module Questionnaire
     tags:
       - Module Questionnaire
+  - name: Roles
+    tags:
+      - Roles
 paths:
   /healthcheck:
     get:
@@ -653,7 +658,7 @@ paths:
                 - state
                 - created_by_user_uid
       responses:
-        '201':
+        '200':
           description: The survey was created successfully
           content:
             application/json:
@@ -698,42 +703,39 @@ paths:
                               - phone
                               - in-person
                             example: in-person
-                            irb_approval:
-                              type: string
-                              enum:
-                                - 'Yes'
-                                - 'No'
-                                - Pending
-                              example: Pending
-                            planned_start_date:
-                              type: string
-                              format: date
-                              example: 2023-01-01T00:00:00.000Z
-                            planned_end_date:
-                              type: string
-                              format: date
-                              example: 2023-06-30T00:00:00.000Z
-                            config_status:
-                              type: string
-                              enum:
-                                - In Progress - Configuration
-                                - In Progress - Backend Setup
-                                - Done
-                              example: In Progress - Configuration
-                            state:
-                              type: string
-                              enum:
-                                - Draft
-                                - Active
-                                - Past
-                              example: Draft
-                            survey_uid:
-                              type: integer
-                              example: 19
-                            last_updated_at:
-                              type: string
-                              format: date-time
-                              example: 2023-04-18T00:00:00.000Z
+                          irb_approval:
+                            type: string
+                            enum:
+                              - 'Yes'
+                              - 'No'
+                              - Pending
+                            example: Pending
+                          planned_start_date:
+                            type: string
+                            format: date
+                            example: 2023-01-01T00:00:00.000Z
+                          planned_end_date:
+                            type: string
+                            format: date
+                            example: 2023-06-30T00:00:00.000Z
+                          config_status:
+                            type: string
+                            enum:
+                              - In Progress - Configuration
+                              - In Progress - Backend Setup
+                              - Done
+                            example: In Progress - Configuration
+                          state:
+                            type: string
+                            enum:
+                              - Draft
+                              - Active
+                              - Past
+                            example: Draft
+                          last_updated_at:
+                            type: string
+                            format: date-time
+                            example: 2023-04-18T00:00:00.000Z
         '400':
           description: A survey with the same survey_id already exists
           content:
@@ -756,36 +758,40 @@ paths:
       responses:
         '200':
           description: OK
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-                description: Indicates if the request was successful
-              data:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    module_id:
-                      type: integer
-                      format: int64
-                      description: ID of the module
-                    name:
-                      type: string
-                      description: Name of the module
-                    optional:
-                      type: boolean
-                      description: Indicates if the module is optional
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates if the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        module_id:
+                          type: integer
+                          format: int64
+                          description: ID of the module
+                        name:
+                          type: string
+                          description: Name of the module
+                        optional:
+                          type: boolean
+                          description: Indicates if the module is optional
         '404':
           description: Not Found
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-                description: Error message
-                example: No modules found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+                    example: No modules found.
   /module-status:
     post:
       tags:
@@ -856,16 +862,16 @@ paths:
             type: integer
           required: true
           description: The ID of the survey to update the status for
-        - in: body
-          name: status
-          description: The new status to set for the module
-          schema:
-            type: object
-            properties:
-              config_status:
-                type: string
-                enum: [ Done, In Progress, Not Started, Error ]
-          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config_status:
+                  type: string
+                  enum: [ Done, In Progress, Not Started, Error ]
       responses:
         '200':
           description: Successfully updated module status for survey
@@ -1854,6 +1860,87 @@ paths:
                 language_lacation_mapping:
                   type: boolean
                   description: Whether languages can be mapped via locations
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: X-CSRF-Token required in header
+        '422':
+          description: Form errors
+  '/roles':
+    get:
+      tags:
+        - Roles
+      summary: Get user roles for a survey
+      description: |
+        Returns the user roles for a given survey.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Returns the user roles for a given survey.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of roles for the given survey
+                    items:
+                      type: object
+                      properties:
+                        role_uid:
+                          type: integer
+                          description: The unique ID of the role.
+                        role_name:
+                          type: string
+                          description: The name of the role.
+                        reporting_role_uid:
+                          type: integer
+                          description: The unique role ID of role that supervises the given role.
+                        survey_uid:
+                          type: integer
+                          description: The unique ID of the given survey.
+    put:
+      tags:
+        - Roles
+      summary: Save the user roles for a survey
+      description: |
+        Saves the user roles for a given survey to the database. If a role_uid is provided, the role will be updated. If role_uid is `None`, a new role will be created. Existing roles in the database that are not in the payload (by `role_uid`) will be deleted.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: JSON object containing the desired roles for the survey.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role_uid:
+                  type: integer
+                  description: The unique ID of the role. If equal to None, a new role will be created. 
+                role_name:
+                  type: string
+                  description: The name of the role. 
+                reporting_role_uid:
+                  type: integer
+                  description: The unique role ID of role that supervises the given role.
       responses:
         '200':
           description: Success

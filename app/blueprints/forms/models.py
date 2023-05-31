@@ -22,16 +22,11 @@ class ParentForm(db.Model):
         db.UniqueConstraint(
             "survey_uid", "form_name", name="_parent_forms_survey_uid_form_name_uc"
         ),
-        {
-            "schema": "config_sandbox"
-        }
+        {"schema": "config_sandbox"},
     )
 
-    form_uid = db.Column(db.Integer, primary_key=True)
-
-    survey_uid = db.Column(
-        db.Integer, db.ForeignKey(Survey.survey_uid)
-    )
+    form_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    survey_uid = db.Column(db.Integer, db.ForeignKey(Survey.survey_uid))
     scto_form_id = db.Column(db.String(), nullable=False)
     form_name = db.Column(db.String(), nullable=False)
     tz_name = db.Column(db.String())
@@ -54,7 +49,7 @@ class ParentForm(db.Model):
         server_access_role_granted,
         server_access_allowed,
         scto_variable_mapping,
-        last_ingested_at
+        last_ingested_at,
     ):
         self.form_uid = form_uid
         self.survey_uid = survey_uid
@@ -82,12 +77,12 @@ class ParentForm(db.Model):
             "scto_variable_mapping": self.scto_variable_mapping,
             "last_ingested_at": self.last_ingested_at,
         }
-    
+
 
 class SCTOQuestions(db.Model):
     """
     SQLAlchemy data model for storing scto questions
-    This table contains information about the variables 
+    This table contains information about the variables
     defined in the SurveyCTO form
     """
 
@@ -98,7 +93,7 @@ class SCTOQuestions(db.Model):
             "survey_questionnaire_id",
             "variable_name",
         ),
-        {}
+        {},
     )
     survey_questionnaire_id = db.Column(db.String(), nullable=False)
     survey_id = db.Column(db.String(), nullable=False)
@@ -116,7 +111,7 @@ class SCTOQuestions(db.Model):
         variable_name,
         variable_type,
         question_no,
-        choice_name
+        choice_name,
     ):
         self.survey_questionnaire_id = survey_questionnaire_id
         self.survey_id = survey_id
@@ -134,14 +129,14 @@ class SCTOQuestions(db.Model):
             "variable_name": self.variable_name,
             "variable_type": self.variable_type,
             "question_no": self.question_no,
-            "choice_name": self.choice_name
+            "choice_name": self.choice_name,
         }
-    
+
 
 class SCTOQuestionLabels(db.Model):
     """
-    SQLAlchemy data model for storing scto questions labels in 
-    all defined languages. This table contains information about 
+    SQLAlchemy data model for storing scto questions labels in
+    all defined languages. This table contains information about
     the variables defined in the SurveyCTO form
     """
 
@@ -153,7 +148,7 @@ class SCTOQuestionLabels(db.Model):
             "variable_name",
             "language",
         ),
-        {}
+        {},
     )
 
     survey_questionnaire_id = db.Column(db.String(), nullable=False)
@@ -186,13 +181,14 @@ class SCTOQuestionLabels(db.Model):
             "questionnaire_id": self.questionnaire_id,
             "variable_name": self.variable_name,
             "language": self.language,
-            "label": self.label
+            "label": self.label,
         }
-    
+
+
 class SCTOChoiceLabels(db.Model):
     """
-    SQLAlchemy data model for storing scto choice labels in 
-    all defined languages. This table contains information about 
+    SQLAlchemy data model for storing scto choice labels in
+    all defined languages. This table contains information about
     the variables defined in the SurveyCTO form
     """
 
@@ -205,7 +201,7 @@ class SCTOChoiceLabels(db.Model):
             "choice_value",
             "language",
         ),
-        {}
+        {},
     )
     survey_questionnaire_id = db.Column(db.String(), nullable=False)
     survey_id = db.Column(db.String(), nullable=False)
@@ -241,5 +237,5 @@ class SCTOChoiceLabels(db.Model):
             "choice_name": self.choice_name,
             "choice_value": self.choice_value,
             "language": self.language,
-            "label": self.label
+            "label": self.label,
         }
