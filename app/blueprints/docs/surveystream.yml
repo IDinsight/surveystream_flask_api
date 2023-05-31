@@ -680,18 +680,18 @@ paths:
                           survey_uid:
                             type: integer
                             example: 19
-                            description: The unique identifier for the survey
+                            description: The database-assigned unique identifier for the survey
                           survey_id:
                             type: string
-                            example: AgriFieldneet
+                            example: AgriFieldnet
                             description: The unique identifier for the survey
                           survey_name:
                             type: string
-                            example: Agrifieldneet Main Survey Form
+                            example: Agrifieldnet Main Survey Form
                             description: The name of the survey
                           project_name:
                             type: string
-                            example: AgriFieldneet Survey
+                            example: AgriFieldnet Survey
                             description: The name of the project the survey belongs to
                           survey_description:
                             type: string
@@ -748,7 +748,7 @@ paths:
                     example: false
                   error:
                     type: string
-                    example: Survey already exists
+                    example: survey_id already exists
   /modules:
     get:
       tags:

@@ -17,7 +17,7 @@ CREATE TABLE config_sandbox.surveys (
 	survey_id VARCHAR UNIQUE,
 	survey_name VARCHAR UNIQUE,
 	project_name VARCHAR,
-	description VARCHAR,
+	survey_description VARCHAR,
 	surveying_method VARCHAR NOT NULL CHECK (surveying_method IN ('phone', 'in-person')),
 	planned_start_date DATE NOT NULL,
     planned_end_date DATE NOT NULL,
