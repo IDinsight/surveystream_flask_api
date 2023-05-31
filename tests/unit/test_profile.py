@@ -140,6 +140,7 @@ def test_profile_response(client, login_test_user, test_user_credentials):
 
     reference_data = load_reference_data("profile.json")
     reference_data["email"] = test_user_credentials["email"]
+    reference_data["user_uid"] = test_user_credentials["user_uid"]
 
     checkdiff = jsondiff.diff(reference_data, response.json)
 

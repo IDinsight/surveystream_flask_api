@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from app import db
 from .models import Survey
 from .routes import surveys_bp
-from ...utils import logged_in_active_user_required
+from app.utils import logged_in_active_user_required
 
 
 @surveys_bp.route("", methods=["GET"])
@@ -30,7 +30,6 @@ def create_survey():
     data = request.get_json()
     survey = Survey(**data)
 
-
     if "X-CSRF-Token" in request.headers:
         csrf_token = request.headers.get("X-CSRF-Token")
     else:
@@ -56,7 +55,7 @@ def create_survey():
     )
 
 
-@surveys_bp.route("/<survey_id>", methods=["GET"])
+@surveys_bp.route("/<int:survey_id>", methods=["GET"])
 @logged_in_active_user_required
 def get_survey(survey_id):
     survey = Survey.query.filter_by(survey_id=survey_id).first()
@@ -65,7 +64,7 @@ def get_survey(survey_id):
     return jsonify(survey.to_dict())
 
 
-@surveys_bp.route("/<survey_id>", methods=["PUT"])
+@surveys_bp.route("/<int:survey_id>", methods=["PUT"])
 @logged_in_active_user_required
 def update_survey(survey_id):
     survey = Survey.query.filter_by(survey_id=survey_id).first()
@@ -77,7 +76,7 @@ def update_survey(survey_id):
     return jsonify(survey.to_dict())
 
 
-@surveys_bp.route("/<survey_id>", methods=["DELETE"])
+@surveys_bp.route("/<int:survey_id>", methods=["DELETE"])
 @logged_in_active_user_required
 def delete_survey(survey_id):
     survey = Survey.query.filter_by(survey_id=survey_id).first()
