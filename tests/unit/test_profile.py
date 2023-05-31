@@ -130,6 +130,28 @@ def test_avatar_workflow(client, login_test_user, csrf_token):
     assert response.json["image_url"] is None
 
 
+def test_avatar_incorrect_file_extension(client, login_test_user, csrf_token):
+    """
+    Try uploading an incorrect file extension
+    """
+
+    filepath = Path(__file__).resolve().parent / "data/images/airflow.png"
+
+    request_body = {"image": (open(filepath, "rb"), "avatar.bmp")}
+
+    response = client.put(
+        "/api/profile/avatar",
+        data=request_body,
+        headers={
+            "X-CSRF-Token": csrf_token,
+            "Content-Disposition": 'form-data; name="file"; filename="avatar.png"',
+            "Content-Type": "multipart/form-data",
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_profile_response(client, login_test_user, test_user_credentials):
     """
     Check profile endpoint response

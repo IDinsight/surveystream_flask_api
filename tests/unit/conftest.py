@@ -135,10 +135,13 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
     Set up the schema and data in the database on a per-test basis
     """
 
+    filepath = Path(__file__).resolve().parent.parent
     with app.app_context():
-        db.session.execute(open("tests/db/3-web-app-schema.sql", "r").read())
-        db.session.execute(open("tests/db/1-config-schema.sql", "r").read())
-        db.session.execute(open("tests/data/launch_local_db/load_data.sql", "r").read())
+        db.session.execute(open(f"{filepath}/db/3-web-app-schema.sql", "r").read())
+        db.session.execute(open(f"{filepath}/db/1-config-schema.sql", "r").read())
+        db.session.execute(
+            open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
+        )
 
         # Set the credentials for the desired test user
         db.session.execute(

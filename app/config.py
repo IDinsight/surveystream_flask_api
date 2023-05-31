@@ -122,6 +122,9 @@ class UnitTestConfig(Config):
         "dod",
     )
 
+    TESTING = True
+    DEBUG = True
+
 
 class StagingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
