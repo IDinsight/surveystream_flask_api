@@ -1,4 +1,7 @@
-# DOD SurveyStream Back End
+[![Coverage Status](https://coveralls.io/repos/github/IDinsight/dod_surveystream_flask_api/badge.svg?t=BhAQ0K)](https://coveralls.io/github/IDinsight/dod_surveystream_flask_api)
+![Unit Tests](https://github.com/IDinsight/dod_surveystream_flask_api/actions/workflows/unittest.yml/badge.svg)
+
+# DOD SurveyStream Flask API
 
 ## Instructions for running locally
 
@@ -6,12 +9,14 @@
 
 - [First time setup] Set up your AWS config file (`~/.aws/config`) to work with the dev environment and AWS SSO. Make sure your config file contains the following entry:
 
-`[profile surveystream_dev]
+```
+[profile surveystream_dev]
 sso_start_url = https://idinsight.awsapps.com/start
 sso_region = ap-south-1
 sso_account_id = 453207568606
 sso_role_name = AdministratorAccess
-region = ap-south-1`
+region = ap-south-1
+```
 
 - Verify that you *do not* have an entry for `surveystream_dev` in your AWS credentials file (`~/.aws/credentials`). This is needed to make sure the local endpoints container looks for your temporary SSO-based credentials that are stored in `~/.aws/sso/`.
 - From the `root` directory, run `make login` to log into AWS SSO. You will be prompted to log in via a browser window that opens automatically.
@@ -53,8 +58,12 @@ The unit tests get packaged with the main application image. Before running the 
 
 ### Run the tests
 
-Once the images are built, the end-to-end tests can be run with the following commands:
+Once the images are built, the unit tests can be run with the following commands:
 
 `make login`
 
 `make -i run-unit-tests` (note the `-i` flag will ensure the container cleanup happens even if some of the tests fail)
+
+### Running the tests on CI/CD
+
+The unit tests will run on GitHub Actions on any `push` or `pull request` actions.

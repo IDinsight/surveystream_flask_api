@@ -21,10 +21,12 @@ services:
           # On Windows, this directory can be found at "%UserProfile%\.aws"
           - $HOME/.aws/:/home/.aws/
         environment:
-          # define the home folder; credentials will be read from $HOME/.aws
-          HOME: "/home"
-          # You can change which AWS CLI Profile is used
-          AWS_PROFILE: "surveystream_dev"
+            HOME: "/home"
+            AWS_PROFILE: "surveystream_dev"
+            AWS_DEFAULT_REGION: "ap-south-1"
+            AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+            AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+            AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
         networks:
             credentials_network:
                 # This special IP address is recognized by the AWS SDKs and AWS CLI 

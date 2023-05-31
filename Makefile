@@ -2,9 +2,7 @@ SHELL = /bin/sh
 
 $(eval BACKEND_NAME=dod_surveystream_backend)
 $(eval BACKEND_PORT=5001)
-$(eval FRONTEND_NAME=dod_surveystream_frontend)
 $(eval VERSION=0.1)
-$(eval TEST_RUNNER_NAME=surveystream_test_runner)
 $(eval PROD_NEW_ACCOUNT=923242859002)
 $(eval STAGING_ACCOUNT=210688620213)
 $(eval ADMIN_ACCOUNT=077878936716)

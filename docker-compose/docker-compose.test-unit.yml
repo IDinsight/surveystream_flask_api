@@ -20,6 +20,8 @@ services:
       - PYTHONUNBUFFERED=0
       - AWS_REGION=ap-south-1
       - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
+    volumes:
+      - /tmp/coverage:/usr/src/${BACKEND_NAME}/tests/output
     depends_on:
       - postgres
     extra_hosts:
@@ -29,4 +31,7 @@ services:
     - |
        . /bootstrap.sh
        dockerize -wait tcp://postgres:5433 -timeout 15m -wait-retry-interval 10s 
-       pytest -o log_cli=True --show-capture=stdout -vv
+       coverage run -m pytest tests
+       coverage lcov --include="/usr/src/${BACKEND_NAME}/app/*" -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
+       
+      
