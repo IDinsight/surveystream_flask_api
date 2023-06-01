@@ -21,6 +21,7 @@ def get_profile():
     """
 
     final_result = {
+        "user_uid": current_user.user_uid,
         "first_name": current_user.first_name,
         "middle_name": current_user.middle_name,
         "last_name": current_user.last_name,

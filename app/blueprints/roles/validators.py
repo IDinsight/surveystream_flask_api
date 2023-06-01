@@ -6,14 +6,8 @@ from wtforms.validators import DataRequired
 class SurveyRolesQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
-    
+
     survey_uid = IntegerField(validators=[DataRequired()])
-
-    def validate(self):
-        if not super().validate():
-            return False
-
-        return True
 
 
 class SurveyRoleValidator(FlaskForm):
@@ -23,7 +17,6 @@ class SurveyRoleValidator(FlaskForm):
     role_uid = IntegerField()
     role_name = StringField(validators=[DataRequired()])
     reporting_role_uid = IntegerField()
-
 
 
 class SurveyRolesPayloadValidator(FlaskForm):
