@@ -22,7 +22,7 @@ class ParentForm(db.Model):
     server_access_role_granted = db.Column(db.Boolean())
     server_access_allowed = db.Column(db.Boolean())
     scto_variable_mapping = db.Column(JSONB)
-    last_ingested_at = db.Column(db.DateTime())
+    last_ingested_at = db.Column(db.DateTime(), nullable=True)
 
     def __init__(
         self,

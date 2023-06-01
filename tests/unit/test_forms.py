@@ -22,7 +22,7 @@ def create_form(client, login_test_user, csrf_token, test_user_credentials):
     }
 
     response = client.post(
-        "/api/surveys",
+        "/api/forms",
         query_string={"user_uid": 3},
         json=payload,
         content_type="application/json",
@@ -40,7 +40,7 @@ def test_create_form(client, login_test_user, create_survey, test_user_credentia
 
     # Test the survey was inserted correctly
     response = client.get(
-        "/api/surveys", query_string={"user_uid": test_user_credentials["user_uid"]}
+        "/api/forms", query_string={"user_uid": test_user_credentials["user_uid"]}
     )
     assert response.status_code == 200
 
