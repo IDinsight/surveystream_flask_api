@@ -1,13 +1,13 @@
 from flask import jsonify, session
 from flask_login import login_required
 from functools import wraps
-from app.queries.helper_queries import build_user_level_query
 from app import db
 from app.models.data_models import User
 import boto3
 import base64
 from botocore.exceptions import ClientError
 import os
+
 
 def concat_names(name_tuple):
     """
@@ -35,22 +35,6 @@ def safe_isoformat(value):
         return value.isoformat()
     else:
         return ""
-
-
-def get_core_user_status(user_uid, survey_query):
-    """
-    Return a boolean indicating whether the given user
-    is a core team user on the given survey
-    """
-
-    result = build_user_level_query(user_uid, survey_query).first()
-
-    level = result.level
-
-    if level == 0:
-        return True
-    else:
-        return False
 
 
 def safe_get_dict_value(dict, key):
@@ -90,7 +74,6 @@ def logged_in_active_user_required(f):
 
 
 def get_aws_secret(secret_name, region_name, is_global_secret=False):
-
     """
     Function to get secrets from the aws secrets manager
     """
@@ -111,13 +94,11 @@ def get_aws_secret(secret_name, region_name, is_global_secret=False):
 
 
 def get_secret_client(is_global_secret, region_name):
-
     """
     Function to get secrets client
     """
 
     if is_global_secret:
-
         ADMIN_ACCOUNT = os.getenv("ADMIN_ACCOUNT")
 
         admin_global_secrets_role_arn = (
@@ -140,7 +121,6 @@ def get_secret_client(is_global_secret, region_name):
 
 
 def get_sts_assume_role_response(admin_global_secrets_role_arn):
-
     """
     Function to return details for an AWS role to be assumed
     """

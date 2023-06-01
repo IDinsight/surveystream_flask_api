@@ -1,5 +1,5 @@
 from . import surveys_list_bp
-from app.utils import safe_isoformat, logged_in_active_user_required
+from app.utils.utils import safe_isoformat, logged_in_active_user_required
 from flask import jsonify
 from flask_login import current_user
 from app import db
@@ -7,9 +7,7 @@ from app.models.data_models import (
     Survey,
     UserHierarchy,
 )
-from app.blueprints.forms.models import (
-    ParentForm
-)
+from app.blueprints.forms.models import ParentForm
 
 
 @surveys_list_bp.route("", methods=["GET"])

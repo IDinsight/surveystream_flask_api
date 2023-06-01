@@ -1,5 +1,5 @@
 from flask import jsonify, request
-from app.utils import logged_in_active_user_required
+from app.utils.utils import logged_in_active_user_required
 from flask_login import current_user
 from sqlalchemy import insert, cast, Integer
 from sqlalchemy.sql import case

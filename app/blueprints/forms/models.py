@@ -1,6 +1,5 @@
 from app import db
 from sqlalchemy.dialects.postgresql import JSONB
-
 from app.blueprints.surveys.models import Survey
 
 
@@ -12,18 +11,6 @@ class ParentForm(db.Model):
     """
 
     __tablename__ = "parent_forms"
-
-    __table_args__ = (
-        db.UniqueConstraint(
-            "survey_uid",
-            "scto_form_id",
-            name="_parent_forms_survey_uid_scto_form_id_uc",
-        ),
-        db.UniqueConstraint(
-            "survey_uid", "form_name", name="_parent_forms_survey_uid_form_name_uc"
-        ),
-        {"schema": "config_sandbox"},
-    )
 
     form_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     survey_uid = db.Column(db.Integer, db.ForeignKey(Survey.survey_uid))
@@ -78,6 +65,50 @@ class ParentForm(db.Model):
             "last_ingested_at": self.last_ingested_at,
         }
 
+    __table_args__ = (
+        db.UniqueConstraint(
+            "survey_uid",
+            "scto_form_id",
+            name="_parent_forms_survey_uid_scto_form_id_uc",
+        ),
+        db.UniqueConstraint(
+            "survey_uid", "form_name", name="_parent_forms_survey_uid_form_name_uc"
+        ),
+        {
+            "schema": "config_sandbox",
+            "extend_existing": True,
+        },
+    )
+
+
+# create a class for the postgreSQL timezones
+class Timezones(db.Model):
+    """
+    SQLAlchemy data model for storing PostgreSQL timezones
+    """
+
+    __tablename__ = "timezones"
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(
+            "name",
+        ),
+        {
+            "schema": "config_sandbox",
+            "extend_existing": True,
+        },
+    )
+
+    name = db.Column(db.String(), nullable=False)
+
+    def __init__(self, name):
+        self.name = name
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+        }
+
 
 class SCTOQuestions(db.Model):
     """
@@ -93,7 +124,10 @@ class SCTOQuestions(db.Model):
             "survey_questionnaire_id",
             "variable_name",
         ),
-        {},
+        {
+            "schema": "config_sandbox",
+            "extend_existing": True,
+        },
     )
     survey_questionnaire_id = db.Column(db.String(), nullable=False)
     survey_id = db.Column(db.String(), nullable=False)
@@ -148,7 +182,10 @@ class SCTOQuestionLabels(db.Model):
             "variable_name",
             "language",
         ),
-        {},
+        {
+            "schema": "config_sandbox",
+            "extend_existing": True,
+        },
     )
 
     survey_questionnaire_id = db.Column(db.String(), nullable=False)
@@ -201,7 +238,10 @@ class SCTOChoiceLabels(db.Model):
             "choice_value",
             "language",
         ),
-        {},
+        {
+            "schema": "config_sandbox",
+            "extend_existing": True,
+        },
     )
     survey_questionnaire_id = db.Column(db.String(), nullable=False)
     survey_id = db.Column(db.String(), nullable=False)

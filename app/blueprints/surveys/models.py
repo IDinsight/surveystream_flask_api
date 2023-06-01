@@ -13,7 +13,7 @@ class Survey(db.Model):
     survey_id = db.Column(db.String(64), unique=True, nullable=False)
     survey_name = db.Column(db.String(256), unique=True, nullable=False)
     project_name = db.Column(db.String(256), nullable=True)
-    description = db.Column(db.String(1024), nullable=True)
+    survey_description = db.Column(db.String(1024), nullable=True)
     surveying_method = db.Column(db.String(16), nullable=False)
     planned_start_date = db.Column(db.Date, nullable=False)
     planned_end_date = db.Column(db.Date, nullable=False)
@@ -32,7 +32,7 @@ class Survey(db.Model):
         survey_id,
         survey_name,
         project_name,
-        description,
+        survey_description,
         surveying_method,
         planned_start_date,
         planned_end_date,
@@ -44,7 +44,7 @@ class Survey(db.Model):
         self.survey_id = survey_id
         self.survey_name = survey_name
         self.project_name = project_name
-        self.description = description
+        self.survey_description = survey_description
         self.surveying_method = surveying_method
         self.planned_start_date = planned_start_date
         self.planned_end_date = planned_end_date
@@ -60,7 +60,7 @@ class Survey(db.Model):
             "survey_id": self.survey_id,
             "survey_name": self.survey_name,
             "project_name": self.project_name,
-            "survey_description": self.description,
+            "survey_description": self.survey_description,
             "surveying_method": self.surveying_method,
             "irb_approval": self.irb_approval,
             "planned_start_date": str(self.planned_start_date),

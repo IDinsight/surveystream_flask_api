@@ -18,7 +18,7 @@ from app.queries.helper_queries import (
     build_surveyor_assigned_and_complete_targets_subquery,
     build_surveyor_pending_and_complete_targets_subquery,
 )
-from app.utils import get_core_user_status
+from app.utils.db_utils import get_core_user_status
 
 
 def build_get_enumerators_query(user_uid, form_uid):

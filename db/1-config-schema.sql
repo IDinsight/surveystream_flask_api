@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS config_sandbox.modules CASCADE;
 DROP TABLE IF EXISTS config_sandbox.module_status CASCADE;
 DROP TABLE IF EXISTS config_sandbox.module_questionnaire CASCADE;
 DROP TABLE IF EXISTS config_sandbox.roles CASCADE;
+DROP TABLE IF EXISTS config_sandbox.parent_forms CASCADE;
 
 /*
 Table name: surveys
@@ -17,7 +18,7 @@ CREATE TABLE config_sandbox.surveys (
 	survey_id VARCHAR UNIQUE,
 	survey_name VARCHAR UNIQUE,
 	project_name VARCHAR,
-	description VARCHAR,
+	survey_description VARCHAR,
 	surveying_method VARCHAR NOT NULL CHECK (surveying_method IN ('phone', 'in-person')),
 	planned_start_date DATE NOT NULL,
     planned_end_date DATE NOT NULL,
@@ -79,4 +80,22 @@ CREATE TABLE config_sandbox.roles (
 	user_uid INTEGER DEFAULT -1,
     to_delete INTEGER NOT NULL DEFAULT 0,
 	CONSTRAINT _survey_uid_role_name_uc UNIQUE (survey_uid, role_name) DEFERRABLE
+);
+
+
+CREATE TABLE config_sandbox.parent_forms
+(
+    form_uid SERIAL PRIMARY KEY,
+	survey_uid INTEGER REFERENCES config_sandbox.surveys(survey_uid) NOT NULL,
+    scto_form_id VARCHAR NOT NULL,
+    form_name VARCHAR NOT NULL,
+    tz_name VARCHAR,
+    scto_server_name VARCHAR,
+    encryption_key_shared boolean DEFAULT false,
+    server_access_role_granted boolean DEFAULT false,
+    server_access_allowed boolean DEFAULT false,
+    scto_variable_mapping jsonb,
+    last_ingested_at timestamp without time zone,
+    CONSTRAINT _parent_forms_survey_uid_form_name_uc UNIQUE (survey_uid, form_name),
+    CONSTRAINT _parent_forms_survey_uid_scto_form_id_uc UNIQUE (survey_uid, scto_form_id)
 );
