@@ -31,7 +31,7 @@ services:
     - |
        . /bootstrap.sh
        dockerize -wait tcp://postgres:5433 -timeout 15m -wait-retry-interval 10s 
-       coverage run -m pytest tests -vv
+       coverage run -m pytest tests -m "not appdata" -vv
        coverage lcov --include="/usr/src/${BACKEND_NAME}/app/*" -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
        
       

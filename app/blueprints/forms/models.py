@@ -12,6 +12,21 @@ class ParentForm(db.Model):
 
     __tablename__ = "parent_forms"
 
+    __table_args__ = (
+        db.UniqueConstraint(
+            "survey_uid",
+            "scto_form_id",
+            name="_parent_forms_survey_uid_scto_form_id_uc",
+        ),
+        db.UniqueConstraint(
+            "survey_uid", "form_name", name="_parent_forms_survey_uid_form_name_uc"
+        ),
+        {
+            "schema": "config_sandbox",
+            "extend_existing": True,
+        },
+    )
+
     form_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     survey_uid = db.Column(db.Integer, db.ForeignKey(Survey.survey_uid))
     scto_form_id = db.Column(db.String(), nullable=False)
@@ -26,7 +41,6 @@ class ParentForm(db.Model):
 
     def __init__(
         self,
-        form_uid,
         survey_uid,
         scto_form_id,
         form_name,
@@ -36,9 +50,7 @@ class ParentForm(db.Model):
         server_access_role_granted,
         server_access_allowed,
         scto_variable_mapping,
-        last_ingested_at,
     ):
-        self.form_uid = form_uid
         self.survey_uid = survey_uid
         self.scto_form_id = scto_form_id
         self.form_name = form_name
@@ -48,7 +60,6 @@ class ParentForm(db.Model):
         self.server_access_role_granted = server_access_role_granted
         self.server_access_allowed = server_access_allowed
         self.scto_variable_mapping = scto_variable_mapping
-        self.last_ingested_at = last_ingested_at
 
     def to_dict(self):
         return {
@@ -65,63 +76,20 @@ class ParentForm(db.Model):
             "last_ingested_at": self.last_ingested_at,
         }
 
-    __table_args__ = (
-        db.UniqueConstraint(
-            "survey_uid",
-            "scto_form_id",
-            name="_parent_forms_survey_uid_scto_form_id_uc",
-        ),
-        db.UniqueConstraint(
-            "survey_uid", "form_name", name="_parent_forms_survey_uid_form_name_uc"
-        ),
-        {
-            "schema": "config_sandbox",
-            "extend_existing": True,
-        },
-    )
 
-
-# create a class for the postgreSQL timezones
-class Timezones(db.Model):
-    """
-    SQLAlchemy data model for storing PostgreSQL timezones
-    """
-
-    __tablename__ = "timezones"
-
-    __table_args__ = (
-        db.PrimaryKeyConstraint(
-            "name",
-        ),
-        {
-            "schema": "config_sandbox",
-            "extend_existing": True,
-        },
-    )
-
-    name = db.Column(db.String(), nullable=False)
-
-    def __init__(self, name):
-        self.name = name
-
-    def to_dict(self):
-        return {
-            "name": self.name,
-        }
-
-
-class SCTOQuestions(db.Model):
+class SCTOQuestion(db.Model):
     """
     SQLAlchemy data model for storing scto questions
     This table contains information about the variables
     defined in the SurveyCTO form
     """
 
-    __tablename__ = "scto_questionnaire_questions"
+    __tablename__ = "scto_form_questions"
 
     __table_args__ = (
         db.PrimaryKeyConstraint(
-            "survey_questionnaire_id",
+            "form_uid",
+            "scto_form_id",
             "variable_name",
         ),
         {
@@ -129,27 +97,27 @@ class SCTOQuestions(db.Model):
             "extend_existing": True,
         },
     )
-    survey_questionnaire_id = db.Column(db.String(), nullable=False)
-    survey_id = db.Column(db.String(), nullable=False)
-    questionnaire_id = db.Column(db.String(), nullable=False)
-    variable_name = db.Column(db.String())
+    form_uid = db.Column(db.String(), nullable=False)
+    scto_form_id = db.Column(db.String(), nullable=False)
+    survey_uid = db.Column(db.String(), nullable=False)
+    variable_name = db.Column(db.String(), nullable=False)
     variable_type = db.Column(db.String())
     question_no = db.Column(db.String())
     choice_name = db.Column(db.String())
 
     def __init__(
         self,
-        survey_questionnaire_id,
-        survey_id,
-        questionnaire_id,
+        form_uid,
+        scto_form_id,
+        survey_uid,
         variable_name,
         variable_type,
         question_no,
         choice_name,
     ):
-        self.survey_questionnaire_id = survey_questionnaire_id
-        self.survey_id = survey_id
-        self.questionnaire_id = questionnaire_id
+        self.form_uid = form_uid
+        self.scto_form_id = scto_form_id
+        self.survey_uid = survey_uid
         self.variable_name = variable_name
         self.variable_type = variable_type
         self.question_no = question_no
@@ -157,9 +125,9 @@ class SCTOQuestions(db.Model):
 
     def to_dict(self):
         return {
-            "survey_questionnaire_id": self.survey_questionnaire_id,
-            "survey_id": self.survey_id,
-            "questionnaire_id": self.questionnaire_id,
+            "scto_form_id": self.scto_form_id,
+            "survey_uid": self.survey_uid,
+            "form_uid": self.form_uid,
             "variable_name": self.variable_name,
             "variable_type": self.variable_type,
             "question_no": self.question_no,

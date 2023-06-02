@@ -3,6 +3,13 @@ from wtforms import BooleanField, IntegerField, StringField
 from wtforms.validators import DataRequired
 
 
+class GetParentFormQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField(validators=[DataRequired()])
+
+
 class CreateParentFormValidator(FlaskForm):
     survey_uid = IntegerField(validators=[DataRequired()])
     scto_form_id = StringField(validators=[DataRequired()])
@@ -16,7 +23,6 @@ class CreateParentFormValidator(FlaskForm):
 
 
 class UpdateParentFormValidator(FlaskForm):
-    form_uid = IntegerField(validators=[DataRequired()])
     scto_form_id = StringField(validators=[DataRequired()])
     form_name = StringField(validators=[DataRequired()])
     tz_name = StringField()

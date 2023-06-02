@@ -1,4 +1,4 @@
-from flask import jsonify, session
+from flask import jsonify, session, current_app
 from flask_login import login_required
 from functools import wraps
 from app import db
@@ -99,7 +99,7 @@ def get_secret_client(is_global_secret, region_name):
     """
 
     if is_global_secret:
-        ADMIN_ACCOUNT = os.getenv("ADMIN_ACCOUNT")
+        ADMIN_ACCOUNT = current_app.config["ADMIN_ACCOUNT"]
 
         admin_global_secrets_role_arn = (
             f"arn:aws:iam::{ADMIN_ACCOUNT}:role/web-assume-task-role"

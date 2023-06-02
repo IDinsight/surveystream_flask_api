@@ -83,7 +83,6 @@ def register_blueprints(app):
     from app.blueprints.profile import profile_bp
     from app.blueprints.roles import roles_bp
     from app.blueprints.surveys import surveys_bp
-    from app.blueprints.surveys_list import surveys_list_bp
     from app.blueprints.table_config import table_config_bp
     from app.blueprints.targets import targets_bp
     from app.blueprints.user_management import user_management_bp
@@ -99,7 +98,6 @@ def register_blueprints(app):
     app.register_blueprint(profile_bp)
     app.register_blueprint(roles_bp)
     app.register_blueprint(surveys_bp)
-    app.register_blueprint(surveys_list_bp)
     app.register_blueprint(table_config_bp)
     app.register_blueprint(targets_bp)
     app.register_blueprint(user_management_bp)

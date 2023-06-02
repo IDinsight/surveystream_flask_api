@@ -595,7 +595,7 @@ paths:
                   type: string
                   example: AgriFieldneet Survey
                   description: The name of the project the survey belongs to
-                description:
+                survey_description:
                   type: string
                   example: 'AgriFieldnet survey starting on 1st Jan, 2023'
                   description: A description of the survey
@@ -975,7 +975,7 @@ paths:
   /forms/{form_uid}:
     get:
       summary: Get forms
-      description: Return the information for the requested parent form
+      description: Return the information for the requested parent form. If path parameter is not provided, return all forms for the logged in user.
       tags:
         - Forms
       parameters:
@@ -985,6 +985,12 @@ paths:
             type: integer
           required: true
           description: Unique ID of the parent form
+        - in: query
+          name: survey_uid
+          schema:
+            type: integer
+          required: false
+          description: Unique ID of the survey to return forms for. Cannot be used in conjuction with the `form_uid` path parameter.
       responses:
         '200':
           description: OK
@@ -993,12 +999,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  survey_id:
+                  survey_uid:
                     type: string
-                    description: The ID of the survey
-                  survey_name:
-                    type: string
-                    description: The name of the survey
+                    description: The unique ID of the survey
                   form_uid:
                     type: integer
                     description: The unique ID of the form
@@ -1008,31 +1011,225 @@ paths:
                   scto_form_id:
                     type: string
                     description: The form's SurveyCTO form ID
-                  planned_start_date:
+                  tz_name:
                     type: string
-                    description: Planned start date of the form in isoformat
-                  planned_end_date:
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
                     type: string
-                    description: Planned end date of the form in isoformat
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  scto_variable_mapping:
+                    type: object
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO variables for the form
                   last_ingested_at:
                     type: string
                     description: >-
                       Date when form submissions were last ingested from
                       SurveyCTO in isoformat
-                  child_forms:
-                    type: array
-                    description: Child forms associated with the main form
-                    items:
-                      type: object
-                      properties:
-                        scto_form_id:
-                          type: string
-                          description: The form's SurveyCTO form ID
-                        form_type:
-                          type: string
-                          description: >-
-                            The form type (Spotcheck, Backcheck, Bikelog, Audio
-                            Audit)
+  /forms:
+    post:
+      summary: Create a new form
+      tags:
+        - Forms
+      description: Create a new form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: string
+                  description: The unique identifier for the survey
+                form_name:
+                  type: string
+                  description: The name of the form to display as a label on the web app
+                scto_form_id:
+                  type: string
+                  description: The form's SurveyCTO form ID
+                tz_name:
+                  type: string
+                  description: The timezone in which data collection will happen for the form
+                scto_server_name:
+                  type: string
+                  description: The SurveyCTO server name for the form
+                encryption_key_shared:
+                  type: boolean
+                  description:
+                    Whether the encryption key for the form has been shared with the SurveyStream team
+                server_access_role_granted:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                server_access_allowed:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                scto_variable_mapping:
+                  type: object
+                  description:
+                    The mapping of SurveyStream variables to SurveyCTO variables for the form
+              required:
+                - survey_uid
+                - scto_form_id
+                - form_name
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  survey_uid:
+                    type: string
+                    description: The unique ID of the survey
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  form_name:
+                    type: string
+                    description: The name of the form
+                  scto_form_id:
+                    type: string
+                    description: The form's SurveyCTO form ID
+                  tz_name:
+                    type: string
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
+                    type: string
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  scto_variable_mapping:
+                    type: object
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO variables for the form
+                  last_ingested_at:
+                    type: string
+                    description: >-
+                      Date when form submissions were last ingested from
+                      SurveyCTO in isoformat
+    put:
+      summary: Update an existing form
+      tags:
+        - Forms
+      description: Update an existing form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The unique identifier for the form
+                survey_uid:
+                  type: string
+                  description: The unique identifier for the survey
+                form_name:
+                  type: string
+                  description: The name of the form to display as a label on the web app
+                scto_form_id:
+                  type: string
+                  description: The form's SurveyCTO form ID
+                tz_name:
+                  type: string
+                  description: The timezone in which data collection will happen for the form
+                scto_server_name:
+                  type: string
+                  description: The SurveyCTO server name for the form
+                encryption_key_shared:
+                  type: boolean
+                  description:
+                    Whether the encryption key for the form has been shared with the SurveyStream team
+                server_access_role_granted:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                server_access_allowed:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                scto_variable_mapping:
+                  type: object
+                  description:
+                    The mapping of SurveyStream variables to SurveyCTO variables for the form
+              required:
+                - survey_uid
+                - scto_form_id
+                - form_name
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  survey_uid:
+                    type: string
+                    description: The unique ID of the survey
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  form_name:
+                    type: string
+                    description: The name of the form
+                  scto_form_id:
+                    type: string
+                    description: The form's SurveyCTO form ID
+                  tz_name:
+                    type: string
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
+                    type: string
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  scto_variable_mapping:
+                    type: object
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO variables for the form
+                  last_ingested_at:
+                    type: string
+                    description: >-
+                      Date when form submissions were last ingested from
+                      SurveyCTO in isoformat
   /enumerators:
     get:
       summary: Get enumerators
@@ -1158,7 +1355,7 @@ paths:
                             description: >-
                               The enumerator's total assigned targets for the
                               form
-  '/enumerators/{enumerator_uid}':
+  /enumerators/{enumerator_uid}:
     patch:
       summary: Update enumerator status
       description: >

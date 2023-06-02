@@ -8,7 +8,7 @@ from .validators import (
     CreateSurveyValidator,
     UpdateSurveyValidator,
 )
-from app.utils import logged_in_active_user_required
+from app.utils.utils import logged_in_active_user_required
 
 
 @surveys_bp.route("", methods=["GET"])

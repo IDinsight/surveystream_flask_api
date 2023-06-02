@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS config_sandbox.module_status CASCADE;
 DROP TABLE IF EXISTS config_sandbox.module_questionnaire CASCADE;
 DROP TABLE IF EXISTS config_sandbox.roles CASCADE;
 DROP TABLE IF EXISTS config_sandbox.parent_forms CASCADE;
+DROP TABLE IF EXISTS config_sandbox.scto_form_questions CASCADE;
 
 /*
 Table name: surveys
@@ -98,4 +99,17 @@ CREATE TABLE config_sandbox.parent_forms
     last_ingested_at timestamp without time zone,
     CONSTRAINT _parent_forms_survey_uid_form_name_uc UNIQUE (survey_uid, form_name),
     CONSTRAINT _parent_forms_survey_uid_scto_form_id_uc UNIQUE (survey_uid, scto_form_id)
+);
+
+
+CREATE TABLE config_sandbox.scto_form_questions
+(
+    form_uid INTEGER REFERENCES config_sandbox.parent_forms(form_uid) NOT NULL,
+	survey_uid INTEGER REFERENCES config_sandbox.surveys(survey_uid) NOT NULL,
+    scto_form_id VARCHAR NOT NULL,
+	variable_name VARCHAR NOT NULL,
+	variable_type VARCHAR,
+	question_no VARCHAR,
+	choice_name VARCHAR,
+    PRIMARY KEY (form_uid, scto_form_id, variable_name)
 );
