@@ -1,6 +1,5 @@
 import jsondiff
 import pytest
-import re
 from utils import load_reference_data
 
 
@@ -208,44 +207,104 @@ class TestForms:
 
         assert response.status_code == 404
 
-    def test_get_timezones(self, client, login_test_user):
+    def test_delete_survey_cascade_to_form(
+        self, client, login_test_user, create_form, csrf_token
+    ):
         """
-        Test that the timezones can be fetched
+        Test that deleting the survey deletes the form
         """
 
-        response = client.get("/api/forms/timezones")
-        assert response.status_code == 200
+        response = client.delete(
+            "/api/surveys/1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 204
 
         # Check the response
-        assert "success" in response.json
-        assert response.json["success"] is True
-        assert "data" in response.json
-        assert isinstance(response.json["data"], list)
-        assert len(response.json["data"]) > 0
-        assert "Asia/Kolkata" in response.json["data"]
+        response = client.get("/api/forms/1")
 
-    def test_scto_variables(self, client, login_test_user, csrf_token, create_form):
+        assert response.status_code == 404
+
+    def test_scto_form_definition(
+        self, client, login_test_user, csrf_token, create_form
+    ):
         """
-        Test ingest the scto variables from SCTO and fetching them from the database
+        Test ingest the scto form definition from SCTO and fetching them from the database
         """
 
-        expected_response = load_reference_data("scto-variables.json")
+        expected_response = load_reference_data("scto-questions.json")
 
         # Ingest the SCTO variables from SCTO into the database
-        response = client.post(
-            "/api/forms/1/scto-variables",
+        response = client.put(
+            "/api/forms/1/scto-form-definition/refresh",
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        # Get the SCTO varaibles from the database
+        # Get the SCTO questions from the database
         response = client.get(
-            "/api/forms/1/scto-variables",
+            "/api/forms/1/scto-form-definition/scto-questions",
         )
         assert response.status_code == 200
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_refresh_scto_form_definition(
+        self, client, login_test_user, csrf_token, create_form
+    ):
+        """
+        Test that refreshing the scto form definition from SCTO gives the same result
+        """
+
+        expected_response = load_reference_data("scto-questions-refresh.json")
+
+        # Ingest the SCTO variables from SCTO into the database
+        response = client.put(
+            "/api/forms/1/scto-form-definition/refresh",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Ingest the SCTO variables from SCTO into the database
+        response = client.put(
+            "/api/forms/1/scto-form-definition/refresh",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Get the SCTO questions from the database
+        response = client.get(
+            "/api/forms/1/scto-form-definition/scto-questions",
+        )
+        assert response.status_code == 200
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_delete_parent_form_cascade_to_scto_form_definition(
+        self, client, login_test_user, csrf_token, create_form
+    ):
+        """
+        Test that deleting the parent form deletes the scto form definition
+        """
+
+        # Ingest the SCTO variables from SCTO into the database
+        response = client.put(
+            "/api/forms/1/scto-form-definition/refresh",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Delete the parent form
+        response = client.delete(
+            "/api/forms/1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 204
+
+        # Get the SCTO questions from the database
+        response = client.get(
+            "/api/forms/1/scto-form-definition/scto-questions",
+        )
+        assert response.status_code == 404
