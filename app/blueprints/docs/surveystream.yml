@@ -1305,11 +1305,13 @@ paths:
                     type: string
                     description: Error message indicating that the form could not be created.
   /forms/{form_uid}/scto-form-definition/refresh:
-    put:
+    post:
       summary: Refresh the SurveyCTO form definition
       tags:
         - Forms
-      description: Refresh the SurveyCTO form definition from the SurveyCTO server and store it in the database
+      description: >-
+        Refresh the SurveyCTO form definition from the SurveyCTO server and store it in the database. 
+        The old form definition will be deleted and a new one created, which will increment the `question_uid` and `list_uid`.
       parameters:
         - in: path
           name: form_uid

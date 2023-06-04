@@ -175,7 +175,7 @@ def delete_form(form_uid):
     return "", 204
 
 
-@forms_bp.route("/<int:form_uid>/scto-form-definition/refresh", methods=["PUT"])
+@forms_bp.route("/<int:form_uid>/scto-form-definition/refresh", methods=["POST"])
 @logged_in_active_user_required
 def ingest_scto_variables(form_uid):
     """

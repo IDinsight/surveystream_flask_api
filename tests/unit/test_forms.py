@@ -235,7 +235,7 @@ class TestForms:
         expected_response = load_reference_data("scto-questions.json")
 
         # Ingest the SCTO variables from SCTO into the database
-        response = client.put(
+        response = client.post(
             "/api/forms/1/scto-form-definition/refresh",
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -260,14 +260,14 @@ class TestForms:
         expected_response = load_reference_data("scto-questions-refresh.json")
 
         # Ingest the SCTO variables from SCTO into the database
-        response = client.put(
+        response = client.post(
             "/api/forms/1/scto-form-definition/refresh",
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
 
         # Ingest the SCTO variables from SCTO into the database
-        response = client.put(
+        response = client.post(
             "/api/forms/1/scto-form-definition/refresh",
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -290,7 +290,7 @@ class TestForms:
         """
 
         # Ingest the SCTO variables from SCTO into the database
-        response = client.put(
+        response = client.post(
             "/api/forms/1/scto-form-definition/refresh",
             headers={"X-CSRF-Token": csrf_token},
         )
