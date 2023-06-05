@@ -245,6 +245,7 @@ class TestForms:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 201
 
         # Test the SCTO question mapping was inserted correctly
