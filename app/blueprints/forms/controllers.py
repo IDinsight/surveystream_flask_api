@@ -7,6 +7,7 @@ from app.utils.utils import logged_in_active_user_required, get_aws_secret
 from . import forms_bp
 from .models import (
     ParentForm,
+    SCTOQuestionMapping,
     SCTOChoiceLabel,
     SCTOQuestionLabel,
     SCTOQuestion,
@@ -16,6 +17,8 @@ from .validators import (
     CreateParentFormValidator,
     UpdateParentFormValidator,
     GetParentFormQueryParamValidator,
+    CreateSCTOQuestionMappingValidator,
+    UpdateSCTOQuestionMappingValidator,
 )
 from sqlalchemy.exc import IntegrityError
 
@@ -148,7 +151,6 @@ def update_parent_form(form_uid):
                 ParentForm.encryption_key_shared: payload_validator.encryption_key_shared.data,
                 ParentForm.server_access_role_granted: payload_validator.server_access_role_granted.data,
                 ParentForm.server_access_allowed: payload_validator.server_access_allowed.data,
-                ParentForm.scto_variable_mapping: payload_validator.scto_variable_mapping.data,
             },
             synchronize_session="fetch",
         )
@@ -175,11 +177,117 @@ def delete_form(form_uid):
     return "", 204
 
 
+@forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["POST"])
+@logged_in_active_user_required
+def create_scto_question_mapping(form_uid):
+    """
+    Create a SurveyCTO question mapping for a parent form
+    """
+    payload = request.get_json()
+
+    # Import the request body payload validator
+    payload_validator = CreateSCTOQuestionMappingValidator.from_json(payload)
+
+    # Check if the logged in user has access to the survey
+
+    # Add the CSRF token to be checked by the validator
+    if "X-CSRF-Token" in request.headers:
+        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
+    else:
+        return jsonify(message="X-CSRF-Token required in header"), 403
+
+    # Validate the request body payload
+    if payload_validator.validate():
+        scto_question_mapping = SCTOQuestionMapping(**payload)
+        try:
+            db.session.add(scto_question_mapping)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return (
+                jsonify({"error": "A question mapping already exists for this form"}),
+                400,
+            )
+        return (
+            jsonify(
+                {
+                    "success": True,
+                }
+            ),
+            201,
+        )
+
+    else:
+        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+
+
+@forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["PUT"])
+@logged_in_active_user_required
+def update_scto_question_mapping(form_uid):
+    """
+    Update the SCTO question mapping for a parent form
+    """
+    payload = request.get_json()
+
+    # Import the request body payload validator
+    payload_validator = UpdateSCTOQuestionMappingValidator.from_json(payload)
+
+    # Add the CSRF token to be checked by the validator
+    if "X-CSRF-Token" in request.headers:
+        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
+    else:
+        return jsonify(message="X-CSRF-Token required in header"), 403
+
+    # Validate the request body payload
+    if payload_validator.validate():
+        if SCTOQuestionMapping.query.filter_by(form_uid=form_uid).first() is None:
+            return jsonify({"error": "Question mapping for form not found"}), 404
+
+        try:
+            SCTOQuestionMapping.query.filter_by(form_uid=form_uid).update(
+                {
+                    SCTOQuestionMapping.survey_status: payload_validator.survey_status.data,
+                    SCTOQuestionMapping.revisit_section: payload_validator.revisit_section.data,
+                    SCTOQuestionMapping.target_id: payload_validator.target_id.data,
+                    SCTOQuestionMapping.enumerator_id: payload_validator.enumerator_id.data,
+                    SCTOQuestionMapping.locations: payload["locations"],
+                },
+                synchronize_session="fetch",
+            )
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 500
+
+        return jsonify({"success": True}), 200
+
+    else:
+        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+
+
+@forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["GET"])
+@logged_in_active_user_required
+def get_scto_question_mapping(form_uid):
+    """
+    Get the SCTO question mapping for a parent form
+    """
+
+    scto_question_mapping = SCTOQuestionMapping.query.filter_by(
+        form_uid=form_uid
+    ).first()
+    if scto_question_mapping is None:
+        return jsonify({"error": "Question mapping for form not found"}), 404
+
+    response = {"success": True, "data": scto_question_mapping.to_dict()}
+
+    return jsonify(response), 200
+
+
 @forms_bp.route("/<int:form_uid>/scto-form-definition/refresh", methods=["POST"])
 @logged_in_active_user_required
-def ingest_scto_variables(form_uid):
+def ingest_scto_form_definition(form_uid):
     """
-    Ingest form variables from the SurveyCTO server
+    Ingest form definition from the SurveyCTO server
     """
 
     parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
@@ -354,7 +462,7 @@ def ingest_scto_variables(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition/scto-questions", methods=["GET"])
 @logged_in_active_user_required
-def get_scto_variables(form_uid):
+def get_scto_questions(form_uid):
     """
     Get SurveyCTO form definition questions from the database table
     """

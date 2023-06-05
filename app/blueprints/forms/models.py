@@ -41,7 +41,6 @@ class ParentForm(db.Model):
     encryption_key_shared = db.Column(db.Boolean())
     server_access_role_granted = db.Column(db.Boolean())
     server_access_allowed = db.Column(db.Boolean())
-    scto_variable_mapping = db.Column(JSONB)
     last_ingested_at = db.Column(db.DateTime(), nullable=True)
     surveys = db.relationship(
         Survey, backref=backref("parent_forms", passive_deletes=True)
@@ -57,7 +56,6 @@ class ParentForm(db.Model):
         encryption_key_shared,
         server_access_role_granted,
         server_access_allowed,
-        scto_variable_mapping,
     ):
         self.survey_uid = survey_uid
         self.scto_form_id = scto_form_id
@@ -67,7 +65,6 @@ class ParentForm(db.Model):
         self.encryption_key_shared = encryption_key_shared
         self.server_access_role_granted = server_access_role_granted
         self.server_access_allowed = server_access_allowed
-        self.scto_variable_mapping = scto_variable_mapping
 
     def to_dict(self):
         return {
@@ -80,8 +77,66 @@ class ParentForm(db.Model):
             "encryption_key_shared": self.encryption_key_shared,
             "server_access_role_granted": self.server_access_role_granted,
             "server_access_allowed": self.server_access_allowed,
-            "scto_variable_mapping": self.scto_variable_mapping,
             "last_ingested_at": self.last_ingested_at,
+        }
+
+
+class SCTOQuestionMapping(db.Model):
+    """
+    SQLAlchemy data model for SurveyCTO Question Mapping
+    This table contains information about the questions
+    in the SurveyCTO form that correspond to required fields
+    for various functionalities of the SurveyStream application
+    """
+
+    __tablename__ = "scto_question_mapping"
+
+    __table_args__ = (
+        {
+            "schema": "config_sandbox",
+            "extend_existing": True,
+        },
+    )
+
+    form_uid = db.Column(
+        db.Integer(),
+        db.ForeignKey(ParentForm.form_uid, ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    survey_status = db.Column(db.String(), nullable=False)
+    revisit_section = db.Column(db.String(), nullable=False)
+    target_id = db.Column(db.String(), nullable=False)
+    enumerator_id = db.Column(db.String(), nullable=False)
+    locations = db.Column(JSONB)
+    forms = db.relationship(
+        ParentForm, backref=backref("scto_question_mapping", passive_deletes=True)
+    )
+
+    def __init__(
+        self,
+        form_uid,
+        survey_status,
+        revisit_section,
+        target_id,
+        enumerator_id,
+        locations,
+    ):
+        self.form_uid = form_uid
+        self.survey_status = survey_status
+        self.revisit_section = revisit_section
+        self.target_id = target_id
+        self.enumerator_id = enumerator_id
+        self.locations = locations
+
+    def to_dict(self):
+        return {
+            "form_uid": self.form_uid,
+            "survey_status": self.survey_status,
+            "revisit_section": self.revisit_section,
+            "target_id": self.target_id,
+            "enumerator_id": self.enumerator_id,
+            "locations": self.locations,
         }
 
 

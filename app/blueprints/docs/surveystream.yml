@@ -972,6 +972,114 @@ paths:
                   message:
                     type: string
                     description: Error message indicating that the specified survey ID was not found.
+  /forms:
+    post:
+      summary: Create a new form
+      tags:
+        - Forms
+      description: Create a new form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: string
+                  description: The unique identifier for the survey
+                form_name:
+                  type: string
+                  description: The name of the form to display as a label on the web app
+                scto_form_id:
+                  type: string
+                  description: The form's SurveyCTO form ID
+                tz_name:
+                  type: string
+                  description: The timezone in which data collection will happen for the form
+                scto_server_name:
+                  type: string
+                  description: The SurveyCTO server name for the form
+                encryption_key_shared:
+                  type: boolean
+                  description:
+                    Whether the encryption key for the form has been shared with the SurveyStream team
+                server_access_role_granted:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                server_access_allowed:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                scto_variable_mapping:
+                  type: object
+                  description:
+                    The mapping of SurveyStream variables to SurveyCTO variables for the form
+              required:
+                - survey_uid
+                - scto_form_id
+                - form_name
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  survey_uid:
+                    type: string
+                    description: The unique ID of the survey
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  form_name:
+                    type: string
+                    description: The name of the form
+                  scto_form_id:
+                    type: string
+                    description: The form's SurveyCTO form ID
+                  tz_name:
+                    type: string
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
+                    type: string
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  scto_variable_mapping:
+                    type: object
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO variables for the form
+                  last_ingested_at:
+                    type: string
+                    description: >-
+                      Date when form submissions were last ingested from
+                      SurveyCTO in isoformat
+        '400':
+          description: A form with the same survey_uid and scto_form_id already exists, or a form with the same survey_uid and form_name already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the form could not be created.
   /forms/{form_uid}:
     get:
       summary: Get forms
@@ -1196,54 +1304,21 @@ paths:
                   error:
                     type: string
                     description: Error message indicating that the specified form ID was not found.
-  /forms:
-    post:
-      summary: Create a new form
+  /forms/{form_uid}/scto-question-mapping:
+    get:
+      summary: Get SurveyCTO question mapping for a form
+      description: >-
+        Return the SurveyCTO question mapping information for the requested form. 
+        The SurveyCTO question mapping information is used to map SurveyStream variables to SurveyCTO questions.
       tags:
         - Forms
-      description: Create a new form
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                survey_uid:
-                  type: string
-                  description: The unique identifier for the survey
-                form_name:
-                  type: string
-                  description: The name of the form to display as a label on the web app
-                scto_form_id:
-                  type: string
-                  description: The form's SurveyCTO form ID
-                tz_name:
-                  type: string
-                  description: The timezone in which data collection will happen for the form
-                scto_server_name:
-                  type: string
-                  description: The SurveyCTO server name for the form
-                encryption_key_shared:
-                  type: boolean
-                  description:
-                    Whether the encryption key for the form has been shared with the SurveyStream team
-                server_access_role_granted:
-                  type: boolean
-                  description:
-                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
-                server_access_allowed:
-                  type: boolean
-                  description:
-                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
-                scto_variable_mapping:
-                  type: object
-                  description:
-                    The mapping of SurveyStream variables to SurveyCTO variables for the form
-              required:
-                - survey_uid
-                - scto_form_id
-                - form_name
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
       responses:
         '200':
           description: OK
@@ -1252,47 +1327,27 @@ paths:
               schema:
                 type: object
                 properties:
-                  survey_uid:
-                    type: string
-                    description: The unique ID of the survey
                   form_uid:
                     type: integer
                     description: The unique ID of the form
-                  form_name:
+                  survey_status:
                     type: string
-                    description: The name of the form
-                  scto_form_id:
+                    description: The status of the survey
+                  revisit_section:
                     type: string
-                    description: The form's SurveyCTO form ID
-                  tz_name:
+                    description: The form's revisit section
+                  enumerator_id:
                     type: string
-                    description: The timezone in which data collection will happen for the form
-                  scto_server_name:
+                    description: The form's enumerator ID
+                  target_id:
                     type: string
-                    description: The SurveyCTO server name for the form
-                  encryption_key_shared:
-                    type: boolean
-                    description:
-                      Whether the encryption key for the form has been shared with the SurveyStream team
-                  server_access_role_granted:
-                    type: boolean
-                    description:
-                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
-                  server_access_allowed:
-                    type: boolean
-                    description:
-                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
-                  scto_variable_mapping:
+                    description: The form's target ID
+                  locations:
                     type: object
                     description:
-                      The mapping of SurveyStream variables to SurveyCTO variables for the form
-                  last_ingested_at:
-                    type: string
-                    description: >-
-                      Date when form submissions were last ingested from
-                      SurveyCTO in isoformat
-        '400':
-          description: A form with the same survey_uid and scto_form_id already exists, or a form with the same survey_uid and form_name already exists.
+                      The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+        '404':
+          description: The specified form ID was not found.
           content:
             application/json:
               schema:
@@ -1303,7 +1358,91 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: Error message indicating that the form could not be created.
+                    description: Error message indicating that the specified form ID was not found.
+    put:
+      summary: Update an existing SurveyCTO question mapping
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Update an existing SurveyCTO question mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The unique ID of the form
+                survey_status:
+                  type: string
+                  description: The status of the survey
+                revisit_section:
+                  type: string
+                  description: The form's revisit section
+                enumerator_id:
+                  type: string
+                  description: The form's enumerator ID
+                target_id:
+                  type: string
+                  description: The form's target ID
+                locations:
+                  type: object
+                  description:
+                    The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+              required:
+                - form_uid
+                - survey_status
+                - revisit_section
+                - enumerator_id
+                - target_id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  survey_status:
+                    type: string
+                    description: The status of the survey
+                  revisit_section:
+                    type: string
+                    description: The form's revisit section
+                  enumerator_id:
+                    type: string
+                    description: The form's enumerator ID
+                  target_id:
+                    type: string
+                    description: The form's target ID
+                  locations:
+                    type: object
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
   /forms/{form_uid}/scto-form-definition/refresh:
     post:
       summary: Refresh the SurveyCTO form definition

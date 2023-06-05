@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, IntegerField, StringField
+from wtforms import BooleanField, IntegerField, StringField, FormField
 from wtforms.validators import DataRequired
 
 
@@ -19,7 +19,6 @@ class CreateParentFormValidator(FlaskForm):
     encryption_key_shared = BooleanField()
     server_access_role_granted = BooleanField()
     server_access_allowed = BooleanField()
-    scto_variable_mapping = StringField()
 
 
 class UpdateParentFormValidator(FlaskForm):
@@ -30,20 +29,26 @@ class UpdateParentFormValidator(FlaskForm):
     encryption_key_shared = BooleanField()
     server_access_role_granted = BooleanField()
     server_access_allowed = BooleanField()
-    scto_variable_mapping = StringField()
 
 
-class ParentFormVarableMapping(FlaskForm):
-    def validate(self):
-        if not super().validate():
-            return False
+class LocationQuestionMappingValidator(FlaskForm):
+    class Meta:
+        csrf = False
 
-        if "target_id" not in self.scto_variable_mapping.data.keys():
-            self.errors["target_id"] = "Target ID mapping is required"
-            return False
 
-        if "enumerator_id" not in self.scto_variable_mapping.data.keys():
-            self.errors["enumerator_id"] = "Enumerator ID mapping is required"
-            return False
+class CreateSCTOQuestionMappingValidator(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
+    survey_status = StringField(validators=[DataRequired()])
+    revisit_section = StringField(validators=[DataRequired()])
+    target_id = StringField(validators=[DataRequired()])
+    enumerator_id = StringField(validators=[DataRequired()])
+    locations = FormField(LocationQuestionMappingValidator)
 
-        return True
+
+class UpdateSCTOQuestionMappingValidator(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
+    survey_status = StringField(validators=[DataRequired()])
+    revisit_section = StringField(validators=[DataRequired()])
+    target_id = StringField(validators=[DataRequired()])
+    enumerator_id = StringField(validators=[DataRequired()])
+    locations = FormField(LocationQuestionMappingValidator)
