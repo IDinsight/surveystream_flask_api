@@ -10,7 +10,6 @@ class TestTimezones:
 
         response = client.get("/api/timezones")
         assert response.status_code == 200
-
         # Check the response
         assert "success" in response.json
         assert response.json["success"] is True

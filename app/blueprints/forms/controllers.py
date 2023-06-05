@@ -183,6 +183,11 @@ def create_scto_question_mapping(form_uid):
     """
     Create a SurveyCTO question mapping for a parent form
     """
+
+    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    if parent_form is None:
+        return jsonify({"error": "Form not found"}), 404
+
     payload = request.get_json()
 
     # Import the request body payload validator
@@ -281,6 +286,23 @@ def get_scto_question_mapping(form_uid):
     response = {"success": True, "data": scto_question_mapping.to_dict()}
 
     return jsonify(response), 200
+
+
+@forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["DELETE"])
+@logged_in_active_user_required
+def delete_scto_question_mapping(form_uid):
+    """
+    Delete the question mapping for a parent form
+    """
+    scto_question_mapping = SCTOQuestionMapping.query.filter_by(
+        form_uid=form_uid
+    ).first()
+    if scto_question_mapping is None:
+        return jsonify({"error": "Question mapping not found for form"}), 404
+
+    db.session.delete(scto_question_mapping)
+    db.session.commit()
+    return "", 204
 
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition/refresh", methods=["POST"])
@@ -460,11 +482,29 @@ def ingest_scto_form_definition(form_uid):
     return jsonify(response), 200
 
 
+@forms_bp.route("/<int:form_uid>/scto-form-definition", methods=["DELETE"])
+@logged_in_active_user_required
+def delete_scto_form_definition(form_uid):
+    """
+    Delete the SuveyCTO form definition for a parent form
+    """
+    scto_questions = SCTOQuestion.query.filter_by(form_uid=form_uid).first()
+    if scto_questions is None:
+        return jsonify({"error": "SurveyCTO form definition not found for form"}), 404
+
+    SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).delete()
+    SCTOChoiceList.query.filter(SCTOChoiceList.form_uid == form_uid).delete()
+
+    db.session.commit()
+    return "", 204
+
+
 @forms_bp.route("/<int:form_uid>/scto-form-definition/scto-questions", methods=["GET"])
 @logged_in_active_user_required
 def get_scto_questions(form_uid):
     """
     Get SurveyCTO form definition questions from the database table
+    We are filtering these based on the question types that are supported for question mapping by SurveyStream
     """
 
     parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()

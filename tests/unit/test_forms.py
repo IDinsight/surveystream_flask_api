@@ -374,6 +374,46 @@ class TestForms:
         response = client.get("/api/forms/1/scto-question-mapping")
         assert response.status_code == 404
 
+    def test_delete_scto_question_mapping(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Test that a question mapping can be deleted
+        """
+
+        # Insert the question mapping
+        payload = {
+            "form_uid": 1,
+            "survey_status": "test_survey_status",
+            "revisit_section": "test_revisit_section",
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/1/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        # Delete the question mapping
+
+        response = client.delete(
+            "/api/forms/1/scto-question-mapping",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 204
+
+        # Check the response
+        response = client.get("/api/forms/1/scto-question-mapping")
+
+        assert response.status_code == 404
+
     def test_scto_form_definition(
         self, client, login_test_user, csrf_token, create_form
     ):
@@ -456,4 +496,31 @@ class TestForms:
         response = client.get(
             "/api/forms/1/scto-form-definition/scto-questions",
         )
+        assert response.status_code == 404
+
+    def test_delete_scto_form_definition(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Test that a form definition can be deleted
+        """
+
+        # Ingest the SCTO variables from SCTO into the database
+        response = client.post(
+            "/api/forms/1/scto-form-definition/refresh",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Delete the form definition
+
+        response = client.delete(
+            "/api/forms/1/scto-form-definition",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 204
+
+        # Check the response
+        response = client.get("/api/forms/1/scto-question-mapping/scto-questions")
+
         assert response.status_code == 404
