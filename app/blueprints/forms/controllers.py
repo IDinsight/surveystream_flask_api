@@ -474,7 +474,7 @@ def get_scto_questions(form_uid):
         return jsonify({"error": "Parent form not found"}), 404
 
     scto_questions = (
-        SCTOQuestion.query.filter_by(form_uid=form_uid)
+        SCTOQuestion.query.filter_by(form_uid=form_uid, is_repeat_group=False)
         .filter(
             SCTOQuestion.question_type.notin_(
                 [
@@ -486,7 +486,10 @@ def get_scto_questions(form_uid):
                     "image",
                     "audio",
                     "video",
+                    "file",
                     "text audit",
+                    "audio audit" "sensor_statistic",
+                    "sensor_stream",
                 ]
             )
         )
