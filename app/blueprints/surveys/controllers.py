@@ -2,6 +2,7 @@ from flask import jsonify, request
 from sqlalchemy.exc import IntegrityError
 from app import db
 from .models import Survey
+from app.blueprints.module_selection.models import ModuleStatus, Module
 from .routes import surveys_bp
 from .validators import (
     GetSurveyQueryParamValidator,
@@ -79,7 +80,80 @@ def create_survey():
         return jsonify({"success": False, "errors": payload_validator.errors}), 422
 
 
-@surveys_bp.route("/<int:survey_uid>", methods=["GET"])
+@surveys_bp.route("/<int:survey_uid>/config-status", methods=["GET"])
+@logged_in_active_user_required
+def get_survey_config_status(survey_uid):
+
+    config_status = db.session.query(
+        Module.module_id,
+        Module.name,
+        ModuleStatus.config_status,
+        Module.optional,
+        Survey.config_status.label("overall_status")
+    ).join(
+        Module,
+        ModuleStatus.module_id == Module.module_id,
+    ).join(
+        Survey,
+        ModuleStatus.survey_uid == Survey.survey_uid,
+    ).filter(
+        ModuleStatus.survey_uid == survey_uid
+    )
+
+    if config_status is None:
+        # Check if survey exists and throw error if not
+        survey = Survey.query.filter_by(survey_uid=survey_uid).first()
+        if survey is None:
+            return jsonify({"error": "Survey not found"}), 404
+        
+        # If survey exists add default values in Module Status table
+        module_list = Module.query.filter_by(optional=False).all()
+        config_status = []
+        for module in module_list:
+            default_config_status = ModuleStatus(
+                survey_uid=survey_uid,
+                module_id=module.module_id,
+                config_status='Not Started'
+            )
+            db.session.add(default_config_status)
+
+            config_status.append(
+                {
+                    "module_id": module.module_id,
+                    "name": module.name, 
+                    "config_status": 'Not Started', 
+                    "optional": False, 
+                    "overall_status": 'In Progress - Configuration'
+                }
+            )
+
+    response = {}
+    for status in config_status:
+        overall_status = status["overall_status"]
+        if status.optional is False:
+            if status.name in ["Basic information", "Module selection"]:
+                response[status.name] = {"status": status.config_status}
+            else:
+                response["Survey information"].append(
+                    {
+                        status.name: {
+                            "status":status.config_status
+                        }
+                    }
+                ) 
+        else:
+            response["Module configuration"].append(
+                {
+                    "module_id": status.module_id,
+                    "name": status.name,
+                    "status": status.config_status
+                }
+            )
+    response["overall_status"] = overall_status
+    return jsonify(response)
+
+
+@surveys_bp.route("/<int:survey_uid>/basic-information", methods=["GET"])
 @logged_in_active_user_required
 def get_survey(survey_uid):
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
@@ -88,7 +162,7 @@ def get_survey(survey_uid):
     return jsonify(survey.to_dict())
 
 
-@surveys_bp.route("/<int:survey_uid>", methods=["PUT"])
+@surveys_bp.route("/<int:survey_uid>/basic-information", methods=["PUT"])
 @logged_in_active_user_required
 def update_survey(survey_uid):
     payload = request.get_json()
