@@ -19,5 +19,3 @@ COPY surveyor_assignments (target_uid,enumerator_uid,user_uid,to_delete) FROM '/
 COPY webapp_columns (form_uid,webapp_table_name,group_label,column_label,column_key,column_order) FROM '/docker-entrypoint-initdb.d/data/webapp_columns.csv' DELIMITER ',' CSV HEADER;
 
 SELECT setval('users_user_uid_seq', MAX(user_uid)) FROM users;
-
-COPY config_sandbox.surveys (survey_uid,survey_id,survey_name,surveying_method,planned_start_date,planned_end_date,irb_approval) FROM '/docker-entrypoint-initdb.d/data/config_sandbox.surveys.csv' DELIMITER ',' CSV HEADER;
