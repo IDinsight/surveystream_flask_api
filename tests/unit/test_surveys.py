@@ -104,14 +104,14 @@ class TestSurveys:
         }
 
         response = client.put(
-            "/api/surveys/1",
+            "/api/surveys/1/basic-information",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
 
-        response = client.get("/api/surveys/1")
+        response = client.get("/api/surveys/1/basic-information")
         assert response.status_code == 200
 
         expected_response = {

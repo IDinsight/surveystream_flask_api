@@ -11,7 +11,6 @@ from .validators import (
 )
 from app.utils.utils import logged_in_active_user_required
 
-
 @surveys_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 def get_all_surveys():
@@ -62,6 +61,17 @@ def create_survey():
         survey = Survey(**payload)
         try:
             db.session.add(survey)
+
+            # Also populate Module Status table with default values
+            module_list = Module.query.filter_by(optional=False).all()
+            for module in module_list:
+                default_config_status = ModuleStatus(
+                    survey_uid=survey.survey_uid,
+                    module_id=module.module_id,
+                    config_status="In Progress" if module.name == "Basic information" else "Not Started"
+                )
+                db.session.add(default_config_status)
+
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
@@ -98,35 +108,14 @@ def get_survey_config_status(survey_uid):
         ModuleStatus.survey_uid == Survey.survey_uid,
     ).filter(
         ModuleStatus.survey_uid == survey_uid
-    )
+    ).all()
 
-    if config_status is None:
+    if not config_status:
         # Check if survey exists and throw error if not
         survey = Survey.query.filter_by(survey_uid=survey_uid).first()
         if survey is None:
             return jsonify({"error": "Survey not found"}), 404
         
-        # If survey exists add default values in Module Status table
-        module_list = Module.query.filter_by(optional=False).all()
-        config_status = []
-        for module in module_list:
-            default_config_status = ModuleStatus(
-                survey_uid=survey_uid,
-                module_id=module.module_id,
-                config_status='Not Started'
-            )
-            db.session.add(default_config_status)
-
-            config_status.append(
-                {
-                    "module_id": module.module_id,
-                    "name": module.name, 
-                    "config_status": 'Not Started', 
-                    "optional": False, 
-                    "overall_status": 'In Progress - Configuration'
-                }
-            )
-
     response = {}
     for status in config_status:
         overall_status = status["overall_status"]
@@ -134,14 +123,17 @@ def get_survey_config_status(survey_uid):
             if status.name in ["Basic information", "Module selection"]:
                 response[status.name] = {"status": status.config_status}
             else:
+                if "Survey information" not in list(response.keys()):
+                    response["Survey information"] = []
                 response["Survey information"].append(
                     {
-                        status.name: {
-                            "status":status.config_status
-                        }
+                        "name": status.name,
+                        "status": status.config_status
                     }
                 ) 
         else:
+            if "Module configuration" not in list(response.keys()):
+                response["Module configuration"] = []
             response["Module configuration"].append(
                 {
                     "module_id": status.module_id,
