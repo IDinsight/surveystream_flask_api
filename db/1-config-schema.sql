@@ -6,6 +6,8 @@ DROP TABLE IF EXISTS config_sandbox.modules CASCADE;
 DROP TABLE IF EXISTS config_sandbox.module_status CASCADE;
 DROP TABLE IF EXISTS config_sandbox.module_questionnaire CASCADE;
 DROP TABLE IF EXISTS config_sandbox.roles CASCADE;
+DROP TABLE IF EXISTS config_sandbox.parent_forms CASCADE;
+DROP TABLE IF EXISTS config_sandbox.scto_form_questions CASCADE;
 
 /*
 Table name: surveys
@@ -80,3 +82,69 @@ CREATE TABLE config_sandbox.roles (
     to_delete INTEGER NOT NULL DEFAULT 0,
 	CONSTRAINT _survey_uid_role_name_uc UNIQUE (survey_uid, role_name) DEFERRABLE
 );
+
+
+CREATE TABLE config_sandbox.parent_forms
+(
+    form_uid SERIAL PRIMARY KEY,
+	survey_uid INTEGER NOT NULL REFERENCES config_sandbox.surveys(survey_uid) ON DELETE CASCADE,
+    scto_form_id VARCHAR NOT NULL,
+    form_name VARCHAR NOT NULL,
+    tz_name VARCHAR,
+    scto_server_name VARCHAR,
+    encryption_key_shared boolean DEFAULT false,
+    server_access_role_granted boolean DEFAULT false,
+    server_access_allowed boolean DEFAULT false,
+    last_ingested_at timestamp without time zone,
+    CONSTRAINT _parent_forms_survey_uid_form_name_uc UNIQUE (survey_uid, form_name),
+    CONSTRAINT _parent_forms_survey_uid_scto_form_id_uc UNIQUE (survey_uid, scto_form_id)
+);
+
+CREATE TABLE config_sandbox.scto_question_mapping
+(
+	form_uid INTEGER NOT NULL PRIMARY KEY REFERENCES config_sandbox.parent_forms(form_uid) ON DELETE CASCADE,
+	survey_status VARCHAR NOT NULL,
+	revisit_section VARCHAR NOT NULL,
+	enumerator_id VARCHAR NOT NULL,
+	target_id VARCHAR NOT NULL,
+	locations jsonb
+);
+
+CREATE TABLE config_sandbox.scto_form_choice_lists
+(
+	list_uid SERIAL PRIMARY KEY,
+	form_uid INTEGER NOT NULL REFERENCES config_sandbox.parent_forms(form_uid) ON DELETE CASCADE,
+	list_name VARCHAR NOT NULL,
+	CONSTRAINT _scto_form_choice_lists_form_uid_list_name_uc UNIQUE (form_uid, list_name)
+);
+
+CREATE TABLE config_sandbox.scto_form_choice_labels
+(
+    list_uid INTEGER NOT NULL REFERENCES config_sandbox.scto_form_choice_lists(list_uid) ON DELETE CASCADE,
+	choice_value VARCHAR NOT NULL,
+	language VARCHAR NOT NULL,
+	label VARCHAR,
+	PRIMARY KEY (list_uid, choice_value, language)
+);
+
+CREATE TABLE config_sandbox.scto_form_questions
+(
+	question_uid SERIAL PRIMARY KEY,
+    form_uid INTEGER NOT NULL REFERENCES config_sandbox.parent_forms(form_uid) ON DELETE CASCADE,
+	question_name VARCHAR NOT NULL,
+	question_type VARCHAR NOT NULL,
+	list_uid INTEGER REFERENCES config_sandbox.scto_form_choice_lists(list_uid),
+	is_repeat_group boolean NOT NULL,
+	CONSTRAINT _scto_form_questions_form_uid_question_name_question_type_uc UNIQUE (form_uid, question_name, question_type)
+);
+
+CREATE TABLE config_sandbox.scto_form_question_labels
+(
+    question_uid INTEGER NOT NULL REFERENCES config_sandbox.scto_form_questions(question_uid) ON DELETE CASCADE,
+	language VARCHAR NOT NULL,
+	label VARCHAR,
+    PRIMARY KEY (question_uid, language)
+);
+
+
+

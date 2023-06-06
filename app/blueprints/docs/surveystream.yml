@@ -595,7 +595,7 @@ paths:
                   type: string
                   example: AgriFieldneet Survey
                   description: The name of the project the survey belongs to
-                description:
+                survey_description:
                   type: string
                   example: 'AgriFieldnet survey starting on 1st Jan, 2023'
                   description: A description of the survey
@@ -972,19 +972,50 @@ paths:
                   message:
                     type: string
                     description: Error message indicating that the specified survey ID was not found.
-  /forms/{form_uid}:
-    get:
-      summary: Get forms
-      description: Return the information for the requested parent form
+  /forms:
+    post:
+      summary: Create a new form
       tags:
         - Forms
-      parameters:
-        - in: path
-          name: form_uid
-          schema:
-            type: integer
-          required: true
-          description: Unique ID of the parent form
+      description: Create a new form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: string
+                  description: The unique identifier for the survey
+                form_name:
+                  type: string
+                  description: The name of the form to display as a label on the web app
+                scto_form_id:
+                  type: string
+                  description: The form's SurveyCTO form ID
+                tz_name:
+                  type: string
+                  description: The timezone in which data collection will happen for the form
+                scto_server_name:
+                  type: string
+                  description: The SurveyCTO server name for the form
+                encryption_key_shared:
+                  type: boolean
+                  description:
+                    Whether the encryption key for the form has been shared with the SurveyStream team
+                server_access_role_granted:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                server_access_allowed:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+              required:
+                - survey_uid
+                - scto_form_id
+                - form_name
       responses:
         '200':
           description: OK
@@ -993,12 +1024,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  survey_id:
+                  survey_uid:
                     type: string
-                    description: The ID of the survey
-                  survey_name:
-                    type: string
-                    description: The name of the survey
+                    description: The unique ID of the survey
                   form_uid:
                     type: integer
                     description: The unique ID of the form
@@ -1008,35 +1036,628 @@ paths:
                   scto_form_id:
                     type: string
                     description: The form's SurveyCTO form ID
-                  planned_start_date:
+                  tz_name:
                     type: string
-                    description: Planned start date of the form in isoformat
-                  planned_end_date:
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
                     type: string
-                    description: Planned end date of the form in isoformat
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                   last_ingested_at:
                     type: string
                     description: >-
                       Date when form submissions were last ingested from
                       SurveyCTO in isoformat
-                  child_forms:
+        '400':
+          description: A form with the same survey_uid and scto_form_id already exists, or a form with the same survey_uid and form_name already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the form could not be created.
+  /forms/{form_uid}:
+    get:
+      summary: Get forms
+      description: Return the information for the requested form. If path parameter is not provided, return all forms for the logged in user.
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+        - in: query
+          name: survey_uid
+          schema:
+            type: integer
+          required: false
+          description: Unique ID of the survey to return forms for. Cannot be used in conjuction with the `form_uid` path parameter.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  survey_uid:
+                    type: string
+                    description: The unique ID of the survey
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  form_name:
+                    type: string
+                    description: The name of the form
+                  scto_form_id:
+                    type: string
+                    description: The form's SurveyCTO form ID
+                  tz_name:
+                    type: string
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
+                    type: string
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  last_ingested_at:
+                    type: string
+                    description: >-
+                      Date when form submissions were last ingested from
+                      SurveyCTO in isoformat
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    put:
+      summary: Update an existing form
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Update an existing form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The unique identifier for the form
+                survey_uid:
+                  type: string
+                  description: The unique identifier for the survey
+                form_name:
+                  type: string
+                  description: The name of the form to display as a label on the web app
+                scto_form_id:
+                  type: string
+                  description: The form's SurveyCTO form ID
+                tz_name:
+                  type: string
+                  description: The timezone in which data collection will happen for the form
+                scto_server_name:
+                  type: string
+                  description: The SurveyCTO server name for the form
+                encryption_key_shared:
+                  type: boolean
+                  description:
+                    Whether the encryption key for the form has been shared with the SurveyStream team
+                server_access_role_granted:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                server_access_allowed:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+              required:
+                - survey_uid
+                - scto_form_id
+                - form_name
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  survey_uid:
+                    type: string
+                    description: The unique ID of the survey
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  form_name:
+                    type: string
+                    description: The name of the form
+                  scto_form_id:
+                    type: string
+                    description: The form's SurveyCTO form ID
+                  tz_name:
+                    type: string
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
+                    type: string
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  last_ingested_at:
+                    type: string
+                    description: >-
+                      Date when form submissions were last ingested from
+                      SurveyCTO in isoformat
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    delete:
+      summary: Delete a form
+      tags:
+        - Forms
+      description: Delete a form
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+  /forms/{form_uid}/scto-question-mapping:
+    get:
+      summary: Get SurveyCTO question mapping for a form
+      description: >-
+        Return the SurveyCTO question mapping information for the requested form. 
+        The SurveyCTO question mapping information is used to map SurveyStream variables to SurveyCTO questions.
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  survey_status:
+                    type: string
+                    description: The status of the survey
+                  revisit_section:
+                    type: string
+                    description: The form's revisit section
+                  enumerator_id:
+                    type: string
+                    description: The form's enumerator ID
+                  target_id:
+                    type: string
+                    description: The form's target ID
+                  locations:
+                    type: object
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    post:
+      summary: Create a SurveyCTO question mapping
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Create a SurveyCTO question mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The unique ID of the form
+                survey_status:
+                  type: string
+                  description: The status of the survey
+                revisit_section:
+                  type: string
+                  description: The form's revisit section
+                enumerator_id:
+                  type: string
+                  description: The form's enumerator ID
+                target_id:
+                  type: string
+                  description: The form's target ID
+                locations:
+                  type: object
+                  description:
+                    The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+              required:
+                - form_uid
+                - survey_status
+                - revisit_section
+                - enumerator_id
+                - target_id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "success":
+                    type: boolean
+                    description: Indicates whether the request was successful
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    put:
+      summary: Update an existing SurveyCTO question mapping
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Update an existing SurveyCTO question mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The unique ID of the form
+                survey_status:
+                  type: string
+                  description: The status of the survey
+                revisit_section:
+                  type: string
+                  description: The form's revisit section
+                enumerator_id:
+                  type: string
+                  description: The form's enumerator ID
+                target_id:
+                  type: string
+                  description: The form's target ID
+                locations:
+                  type: object
+                  description:
+                    The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+              required:
+                - form_uid
+                - survey_status
+                - revisit_section
+                - enumerator_id
+                - target_id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  survey_status:
+                    type: string
+                    description: The status of the survey
+                  revisit_section:
+                    type: string
+                    description: The form's revisit section
+                  enumerator_id:
+                    type: string
+                    description: The form's enumerator ID
+                  target_id:
+                    type: string
+                    description: The form's target ID
+                  locations:
+                    type: object
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    delete:
+      summary: Delete an existing SurveyCTO question mapping
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Delete an existing SurveyCTO question mapping
+      responses:
+        '204':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "success":
+                    type: boolean
+                    description: Indicates whether the request was successful
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+  /forms/{form_uid}/scto-form-definition/refresh:
+    post:
+      summary: Refresh the SurveyCTO form definition
+      tags:
+        - Forms
+      description: >-
+        Refresh the SurveyCTO form definition from the SurveyCTO server and store it in the database. 
+        The old form definition will be deleted and a new one created, which will increment the `question_uid` and `list_uid`.
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+  /forms/{form_uid}/scto-form-definition/scto-questions:
+    get:
+      summary: Get the SurveyCTO questions for a form
+      tags:
+        - Forms
+      description: Get the SurveyCTO questions for a form
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
                     type: array
-                    description: Child forms associated with the main form
                     items:
                       type: object
                       properties:
-                        scto_form_id:
+                        question_uid:
+                          type: integer
+                          description: ID of the question
+                        form_uid:
+                          type: integer
+                          description: ID of the form
+                        question_name:
                           type: string
-                          description: The form's SurveyCTO form ID
-                        form_type:
+                          description: Name of the question
+                        question_type:
                           type: string
-                          description: >-
-                            The form type (Spotcheck, Backcheck, Bikelog, Audio
-                            Audit)
+                          description: Type of the question
+                        list_uid:
+                          type: integer
+                          description: ID of the choice list
+                        is_repeat_group:
+                          type: boolean
+                          description: Indicates if the question is a repeat group
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    delete:
+      summary: Delete an existing SurveyCTO form definition
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Delete an existing SurveyCTO form definition
+      responses:
+        '204':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "success":
+                    type: boolean
+                    description: Indicates whether the request was successful
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
   /enumerators:
     get:
       summary: Get enumerators
-      description: Return the logged in user's enumerators for the given parent form
+      description: Return the logged in user's enumerators for the given form
       tags:
         - Enumerators
       parameters:
@@ -1044,7 +1665,7 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: Unique ID of the parent form
+          description: Unique ID of the form
       responses:
         '200':
           description: OK
@@ -1158,7 +1779,7 @@ paths:
                             description: >-
                               The enumerator's total assigned targets for the
                               form
-  '/enumerators/{enumerator_uid}':
+  /enumerators/{enumerator_uid}:
     patch:
       summary: Update enumerator status
       description: >
@@ -1210,7 +1831,7 @@ paths:
   /targets:
     get:
       summary: Get targets
-      description: Return the logged in user's targets for the given parent form
+      description: Return the logged in user's targets for the given form
       tags:
         - Targets
       parameters:
@@ -1218,7 +1839,7 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: Unique ID of the parent form
+          description: Unique ID of the form
       responses:
         '200':
           description: OK
@@ -1324,7 +1945,7 @@ paths:
   /assignments:
     get:
       summary: Get assignments
-      description: Return the logged in user's assignment details for the given parent form
+      description: Return the logged in user's assignment details for the given form
       tags:
         - Assignments
       parameters:
@@ -1332,7 +1953,7 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: Unique ID of the parent form
+          description: Unique ID of the form
       responses:
         '200':
           description: OK
@@ -1590,7 +2211,7 @@ paths:
       summary: Get table configuration
       description: >-
         Return the web flask_app table configuration details for the given
-        parent form
+        form
       tags:
         - Table Configuration
       parameters:
@@ -1598,7 +2219,7 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: Unique ID of the parent form
+          description: Unique ID of the form
       responses:
         '200':
           description: OK

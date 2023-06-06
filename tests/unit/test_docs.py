@@ -1,18 +1,22 @@
-def test_redoc_response(client, login_test_user):
-    """
-    Test docs
-    """
-
-    response = client.get("/api/docs")
-
-    assert response.status_code == 200
+import pytest
 
 
-def test_redoc_protected_endpoint(client):
-    """
-    Test docs page is protected
-    """
+@pytest.mark.docs
+class TestDocs:
+    def test_redoc_response(self, client, login_test_user):
+        """
+        Test docs
+        """
 
-    response = client.get("/api/docs")
+        response = client.get("/api/docs")
 
-    assert response.status_code == 401
+        assert response.status_code == 200
+
+    def test_redoc_protected_endpoint(self, client):
+        """
+        Test docs page is protected
+        """
+
+        response = client.get("/api/docs")
+
+        assert response.status_code == 401

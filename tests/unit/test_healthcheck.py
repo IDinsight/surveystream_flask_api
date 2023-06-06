@@ -1,3 +1,7 @@
+import pytest
+
+
+@pytest.mark.healthcheck
 def test_healthcheck(client):
     """
     Check healthcheck endpoint response

@@ -16,6 +16,9 @@ class Config:
     # AWS region
     AWS_REGION = os.getenv("AWS_REGION")
 
+    # Admin account for global secrets
+    ADMIN_ACCOUNT = os.getenv("ADMIN_ACCOUNT")
+
     # Flask secret key
     SECRET_KEY = os.getenv("SECRET_KEY")
 

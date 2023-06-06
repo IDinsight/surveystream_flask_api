@@ -1,17 +1,17 @@
 from . import enumerators_bp
-from app.utils import concat_names, logged_in_active_user_required
+from app.utils.utils import concat_names, logged_in_active_user_required
 from flask import jsonify, request
 from flask_login import current_user
 from app import db
 from app.queries.helper_queries import build_survey_query
 from app.queries.method_level_queries import build_get_enumerators_query
 from app.models.data_models import (
-    ParentForm,
     SurveyorAssignment,
     Target,
     TargetStatus,
     SurveyorForm,
 )
+from app.blueprints.forms.models import ParentForm
 from .validators import UpdateSurveyorFormStatusValidator
 from sqlalchemy import or_
 

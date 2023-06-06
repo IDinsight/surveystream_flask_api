@@ -1,6 +1,6 @@
 from . import profile_bp
 import os
-from app.utils import logged_in_active_user_required
+from app.utils.utils import logged_in_active_user_required
 from werkzeug.utils import secure_filename
 from flask import jsonify, request, current_app
 from flask_login import current_user
