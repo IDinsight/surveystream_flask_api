@@ -21,3 +21,4 @@ COPY webapp_columns (form_uid,webapp_table_name,group_label,column_label,column_
 SELECT setval('users_user_uid_seq', MAX(user_uid)) FROM users;
 
 COPY config_sandbox.surveys (survey_uid,survey_id,survey_name,surveying_method,planned_start_date,planned_end_date,irb_approval) FROM '/docker-entrypoint-initdb.d/data/config_sandbox.surveys.csv' DELIMITER ',' CSV HEADER;
+COPY config_sandbox.modules (module_id,name,optional) FROM '/docker-entrypoint-initdb.d/data/config_sandbox.modules.csv' DELIMITER ',' CSV HEADER;

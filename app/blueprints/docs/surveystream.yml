@@ -749,6 +749,152 @@ paths:
                   error:
                     type: string
                     example: survey_id already exists
+  /surveys/<survey_uid>/basic-information:
+    get:
+      summary: Get basic information for a specific survey
+      description: Returns basic information about a specific survey
+      tags:
+        - Surveys
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: dict
+                    description: Basic information related to a specific survey
+                    items:
+                      type: object
+                      properties:
+                        survey_uid:
+                          type: integer
+                          description: The unique ID of the survey.
+                        survey_id:
+                          type: string
+                          description: The ID of the survey.
+                        survey_name:
+                          type: string
+                          description: The name of the survey.
+                        project_name:
+                          type: string
+                          description: The name of the project that the survey belongs to.
+                        survey_description:
+                          type: string
+                          description: A description of the survey.
+                        surveying_method:
+                          type: string
+                          description: 'The method of surveying, e.g. in-person, phone.'
+                        irb_approval:
+                          type: string
+                          description: >-
+                            The status of the IRB approval, e.g. Yes, No,
+                            Pending.
+                        planned_start_date:
+                          type: string
+                          description: >-
+                            The planned start date of the survey in ISO 8601
+                            format.
+                        planned_end_date:
+                          type: string
+                          description: >-
+                            The planned end date of the survey in ISO 8601
+                            format.
+                        state:
+                          type: string
+                          description: 'The state of the survey, e.g. Draft, Active, Past.'
+                        last_updated_at:
+                          type: string
+                          description: >-
+                            The date and time that the survey was last updated
+                            in ISO 8601 format.
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful.
+        '404':
+          description: No surveys found for the specified user or all users.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A message indicating that no surveys were found.
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful.
+  /surveys/<survey_uid>/config-status:
+    get:
+      summary: Get configuration status for each module for a specific survey
+      description: Returns module configuration status for a specific survey
+      tags:
+        - Surveys
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: dict
+                    description: Configuration status for a specific survey
+                    items:
+                      type: object
+                      properties:
+                        Basic information:
+                          type: dict
+                          description: Status of basic information module of the survey
+                          items:
+                            type: dict
+                            properties:
+                              status:
+                                type: string
+                                description: Configration Status (Not started/ In progress/ Done)
+                        Survey information:
+                          type: array
+                          description: Status of modules in the survey information section of the survey
+                          items:
+                            type: dict
+                            properties:
+                              name:
+                                type: string
+                                description: Name of the module like SurveyCTO information, Field supervisor roles etc.
+                              status:
+                                type: string
+                                description: Configration Status (Not started/ In progress/ Done)
+                          Module selection:
+                            type: dict
+                            description: Status of module selection for the survey
+                            items:
+                              type: dict
+                              properties:
+                                status:
+                                  type: string
+                                  description: Configration Status (Not started/ In progress/ Done)
+                          overall_status:
+                            type: string
+                            description: Overall Status (In progress - Configuration/ In Progress - Backend Setup/ Done)
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful.
+        '404':
+          description: No surveys found for the specified user or all users.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A message indicating that no surveys were found.
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful.
   /modules:
     get:
       tags:

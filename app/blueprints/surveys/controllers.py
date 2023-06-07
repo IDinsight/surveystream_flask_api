@@ -116,33 +116,35 @@ def get_survey_config_status(survey_uid):
         if survey is None:
             return jsonify({"error": "Survey not found"}), 404
         
-    response = {}
+    data = {}
     for status in config_status:
         overall_status = status["overall_status"]
         if status.optional is False:
             if status.name in ["Basic information", "Module selection"]:
-                response[status.name] = {"status": status.config_status}
+                data[status.name] = {"status": status.config_status}
             else:
-                if "Survey information" not in list(response.keys()):
-                    response["Survey information"] = []
-                response["Survey information"].append(
+                if "Survey information" not in list(data.keys()):
+                    data["Survey information"] = []
+                data["Survey information"].append(
                     {
                         "name": status.name,
                         "status": status.config_status
                     }
                 ) 
         else:
-            if "Module configuration" not in list(response.keys()):
-                response["Module configuration"] = []
-            response["Module configuration"].append(
+            if "Module configuration" not in list(data.keys()):
+                data["Module configuration"] = []
+            data["Module configuration"].append(
                 {
                     "module_id": status.module_id,
                     "name": status.name,
                     "status": status.config_status
                 }
             )
-    response["overall_status"] = overall_status
-    return jsonify(response)
+    data["overall_status"] = overall_status
+
+    response = {"success": True, "data": data}
+    return jsonify(response), 200
 
 
 @surveys_bp.route("/<int:survey_uid>/basic-information", methods=["GET"])
@@ -203,6 +205,11 @@ def delete_survey(survey_uid):
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     if survey is None:
         return jsonify({"error": "Survey not found"}), 404
+    config_status = ModuleStatus.query.filter_by(survey_uid=survey_uid).all()
+    
+    for status in config_status:
+        db.session.delete(status)
+        
     db.session.delete(survey)
     db.session.commit()
     return "", 204
