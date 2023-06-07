@@ -2,10 +2,41 @@ import jsondiff
 import pytest
 
 
-@pytest.mark.surveys
+@pytest.mark.roles
 class TestRoles:
     @pytest.fixture()
-    def create_roles(self, client, login_test_user, csrf_token):
+    def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
+        """
+        Insert new survey as a setup step for the survey tests
+        """
+
+        payload = {
+            "survey_id": "test_survey",
+            "survey_name": "Test Survey",
+            "survey_description": "A test survey",
+            "project_name": "Test Project",
+            "surveying_method": "in-person",
+            "irb_approval": "Yes",
+            "planned_start_date": "2021-01-01",
+            "planned_end_date": "2021-12-31",
+            "state": "Draft",
+            "config_status": "In Progress - Configuration",
+            "created_by_user_uid": test_user_credentials["user_uid"],
+        }
+
+        response = client.post(
+            "/api/surveys",
+            query_string={"user_uid": 3},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        yield
+
+    @pytest.fixture()
+    def create_roles(self, client, login_test_user, csrf_token, create_survey):
         """
         Insert new roles as a setup step for the roles tests
         """
@@ -27,7 +58,7 @@ class TestRoles:
 
         response = client.put(
             "/api/roles",
-            query_string={"survey_uid": 3},
+            query_string={"survey_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -43,20 +74,20 @@ class TestRoles:
         """
 
         # Test the roles were inserted correctly
-        response = client.get("/api/roles", query_string={"survey_uid": 3})
+        response = client.get("/api/roles", query_string={"survey_uid": 1})
         expected_response = {
             "data": [
                 {
                     "role_uid": 1,
                     "role_name": "Core User",
                     "reporting_role_uid": None,
-                    "survey_uid": 3,
+                    "survey_uid": 1,
                 },
                 {
                     "role_uid": 2,
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": 1,
-                    "survey_uid": 3,
+                    "survey_uid": 1,
                 },
             ],
             "success": True,
@@ -88,14 +119,14 @@ class TestRoles:
 
         response = client.put(
             "/api/roles",
-            query_string={"survey_uid": 3},
+            query_string={"survey_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
 
-        response = client.get("/api/roles", query_string={"survey_uid": 3})
+        response = client.get("/api/roles", query_string={"survey_uid": 1})
 
         expected_response = {
             "data": [
@@ -103,13 +134,13 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core User",
                     "reporting_role_uid": None,
-                    "survey_uid": 3,
+                    "survey_uid": 1,
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
-                    "survey_uid": 3,
+                    "survey_uid": 1,
                 },
             ],
             "success": True,
@@ -143,7 +174,7 @@ class TestRoles:
 
         response = client.put(
             "/api/roles",
-            query_string={"survey_uid": 3},
+            query_string={"survey_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -151,7 +182,7 @@ class TestRoles:
         assert response.status_code == 200
 
         # Check the response
-        response = client.get("/api/roles", query_string={"survey_uid": 3})
+        response = client.get("/api/roles", query_string={"survey_uid": 1})
 
         expected_response = {
             "data": [
@@ -159,13 +190,13 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": None,
-                    "survey_uid": 3,
+                    "survey_uid": 1,
                 },
                 {
                     "role_uid": 2,
                     "role_name": "Core User",
                     "reporting_role_uid": 1,
-                    "survey_uid": 3,
+                    "survey_uid": 1,
                 },
             ],
             "success": True,
@@ -199,7 +230,7 @@ class TestRoles:
 
         response = client.put(
             "/api/roles",
-            query_string={"survey_uid": 3},
+            query_string={"survey_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -224,7 +255,7 @@ class TestRoles:
 
         response = client.put(
             "/api/roles",
-            query_string={"survey_uid": 3},
+            query_string={"survey_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -232,7 +263,7 @@ class TestRoles:
         assert response.status_code == 200
 
         # Check the response
-        response = client.get("/api/roles", query_string={"survey_uid": 3})
+        response = client.get("/api/roles", query_string={"survey_uid": 1})
 
         expected_response = {
             "data": [
@@ -240,7 +271,7 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core User",
                     "reporting_role_uid": None,
-                    "survey_uid": 3,
+                    "survey_uid": 1,
                 },
             ],
             "success": True,
@@ -269,7 +300,7 @@ class TestRoles:
 
         response = client.put(
             "/api/roles",
-            query_string={"survey_uid": 3},
+            query_string={"survey_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},

@@ -16,9 +16,13 @@ from .models import (
 from .validators import (
     CreateParentFormValidator,
     UpdateParentFormValidator,
+    DeleteParentFormValidator,
     GetParentFormQueryParamValidator,
     CreateSCTOQuestionMappingValidator,
     UpdateSCTOQuestionMappingValidator,
+    DeleteSCTOQuestionMappingValidator,
+    IngestSCTOFormDefinitionValidator,
+    DeleteSCTOFormDefinitionValidator,
 )
 from sqlalchemy.exc import IntegrityError
 
@@ -168,13 +172,28 @@ def delete_form(form_uid):
     """
     Delete a parent form
     """
-    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
-    if parent_form is None:
-        return jsonify({"error": "Form not found"}), 404
 
-    db.session.delete(parent_form)
-    db.session.commit()
-    return "", 204
+    # Import the request body payload validator
+    csrf_validator = DeleteParentFormValidator.from_json({})
+
+    # Check if the logged in user has access to the survey
+
+    # Add the CSRF token to be checked by the validator
+    if "X-CSRF-Token" in request.headers:
+        csrf_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
+    else:
+        return jsonify(message="X-CSRF-Token required in header"), 403
+
+    if csrf_validator.validate():
+        parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
+        if parent_form is None:
+            return jsonify({"error": "Form not found"}), 404
+
+        db.session.delete(parent_form)
+        db.session.commit()
+        return "", 204
+    else:
+        return jsonify({"success": False, "errors": csrf_validator.errors}), 422
 
 
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["POST"])
@@ -183,10 +202,6 @@ def create_scto_question_mapping(form_uid):
     """
     Create a SurveyCTO question mapping for a parent form
     """
-
-    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
-    if parent_form is None:
-        return jsonify({"error": "Form not found"}), 404
 
     payload = request.get_json()
 
@@ -203,6 +218,9 @@ def create_scto_question_mapping(form_uid):
 
     # Validate the request body payload
     if payload_validator.validate():
+        parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
+        if parent_form is None:
+            return jsonify({"error": "Form not found"}), 404
         scto_question_mapping = SCTOQuestionMapping(**payload)
         try:
             db.session.add(scto_question_mapping)
@@ -294,15 +312,30 @@ def delete_scto_question_mapping(form_uid):
     """
     Delete the question mapping for a parent form
     """
-    scto_question_mapping = SCTOQuestionMapping.query.filter_by(
-        form_uid=form_uid
-    ).first()
-    if scto_question_mapping is None:
-        return jsonify({"error": "Question mapping not found for form"}), 404
 
-    db.session.delete(scto_question_mapping)
-    db.session.commit()
-    return "", 204
+    # Import the request body payload validator
+    csrf_validator = DeleteSCTOQuestionMappingValidator.from_json({})
+
+    # Check if the logged in user has access to the survey
+
+    # Add the CSRF token to be checked by the validator
+    if "X-CSRF-Token" in request.headers:
+        csrf_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
+    else:
+        return jsonify(message="X-CSRF-Token required in header"), 403
+
+    if csrf_validator.validate():
+        scto_question_mapping = SCTOQuestionMapping.query.filter_by(
+            form_uid=form_uid
+        ).first()
+        if scto_question_mapping is None:
+            return jsonify({"error": "Question mapping not found for form"}), 404
+
+        db.session.delete(scto_question_mapping)
+        db.session.commit()
+        return "", 204
+    else:
+        return jsonify({"success": False, "errors": csrf_validator.errors}), 422
 
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition/refresh", methods=["POST"])
@@ -312,174 +345,185 @@ def ingest_scto_form_definition(form_uid):
     Ingest form definition from the SurveyCTO server
     """
 
-    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    csrf_validator = IngestSCTOFormDefinitionValidator.from_json({})
+    if "X-CSRF-Token" in request.headers:
+        csrf_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
+    else:
+        return jsonify(message="X-CSRF-Token required in header"), 403
 
-    # Verify the form exists
-    if parent_form is None:
-        return jsonify({"error": f"Form with form_uid={form_uid} not found"}), 404
+    if csrf_validator.validate():
+        parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
 
-    if parent_form.scto_server_name is None:
-        return (
-            jsonify({"error": "SurveyCTO server name not provided for the form"}),
-            404,
+        # Verify the form exists
+        if parent_form is None:
+            return jsonify({"error": f"Form with form_uid={form_uid} not found"}), 404
+
+        if parent_form.scto_server_name is None:
+            return (
+                jsonify({"error": "SurveyCTO server name not provided for the form"}),
+                404,
+            )
+
+        # Get the SurveyCTO credentials
+        try:
+            scto_credential_response = get_aws_secret(
+                "{scto_server_name}-surveycto-server".format(
+                    scto_server_name=parent_form.scto_server_name
+                ),
+                current_app.config["AWS_REGION"],
+                is_global_secret=True,
+            )
+
+            scto_credentials = json.loads(scto_credential_response)
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+        # Initialize the SurveyCTO object
+        scto = pysurveycto.SurveyCTOObject(
+            parent_form.scto_server_name,
+            scto_credentials["username"],
+            scto_credentials["password"],
         )
 
-    # Get the SurveyCTO credentials
-    try:
-        scto_credential_response = get_aws_secret(
-            "{scto_server_name}-surveycto-server".format(
-                scto_server_name=parent_form.scto_server_name
-            ),
-            current_app.config["AWS_REGION"],
-            is_global_secret=True,
-        )
+        # Get the form definition
+        try:
+            scto_form_definition = scto.get_form_definition(parent_form.scto_form_id)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
-        scto_credentials = json.loads(scto_credential_response)
+        # Delete the current SCTO form definition from the database
+        # Deletes will cascade to the child tables
+        SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).delete()
+        SCTOChoiceList.query.filter(SCTOChoiceList.form_uid == form_uid).delete()
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        # Get the list of columns for the `survey` and `choices` tabs of the form definition
+        survey_tab_columns = scto_form_definition["fieldsRowsAndColumns"][0]
+        choices_tab_columns = scto_form_definition["choicesRowsAndColumns"][0]
+        unique_list_names = []
+        try:
+            # Process the lists and choices from teh `choices` tab of the form definition
+            for row in scto_form_definition["choicesRowsAndColumns"][1:]:
+                choices_dict = dict(zip(choices_tab_columns, row))
+                if choices_dict["list_name"].strip() != "":
+                    if choices_dict["list_name"] not in unique_list_names:
+                        # Add the choice list to the database
+                        scto_choice_list = SCTOChoiceList(
+                            form_uid=form_uid,
+                            list_name=choices_dict["list_name"],
+                        )
+                        db.session.add(scto_choice_list)
+                        db.session.flush()
 
-    # Initialize the SurveyCTO object
-    scto = pysurveycto.SurveyCTOObject(
-        parent_form.scto_server_name,
-        scto_credentials["username"],
-        scto_credentials["password"],
-    )
+                        unique_list_names.append(choices_dict["list_name"])
 
-    # Get the form definition
-    try:
-        scto_form_definition = scto.get_form_definition(parent_form.scto_form_id)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+                    choice_labels = [
+                        col
+                        for col in choices_tab_columns
+                        if col.split(":")[0].lower() == "label"
+                    ]
 
-    # Delete the current SCTO form definition from the database
-    # Deletes will cascade to the child tables
-    SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).delete()
-    SCTOChoiceList.query.filter(SCTOChoiceList.form_uid == form_uid).delete()
+                    for choice_label in choice_labels:
+                        # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
+                        language = "default"
+                        if len(choice_label.split(":")) > 1:
+                            language = choice_label.split(":")[1]
 
-    # Get the list of columns for the `survey` and `choices` tabs of the form definition
-    survey_tab_columns = scto_form_definition["fieldsRowsAndColumns"][0]
-    choices_tab_columns = scto_form_definition["choicesRowsAndColumns"][0]
-    unique_list_names = []
-    try:
-        # Process the lists and choices from teh `choices` tab of the form definition
-        for row in scto_form_definition["choicesRowsAndColumns"][1:]:
-            choices_dict = dict(zip(choices_tab_columns, row))
-            if choices_dict["list_name"].strip() != "":
-                if choices_dict["list_name"] not in unique_list_names:
-                    # Add the choice list to the database
-                    scto_choice_list = SCTOChoiceList(
+                        # Add the choice label to the database
+                        scto_choice_label = SCTOChoiceLabel(
+                            list_uid=scto_choice_list.list_uid,
+                            choice_value=choices_dict["value"],
+                            label=choices_dict[choice_label],
+                            language=language,
+                        )
+                        db.session.add(scto_choice_label)
+
+            # Loop through the rows of the `survey` tab of the form definition
+            for row in scto_form_definition["fieldsRowsAndColumns"][1:]:
+                questions_dict = dict(zip(survey_tab_columns, row))
+                if questions_dict["name"].strip() != "":
+                    # There can be nested repeat groups, so we need to keep track of the depth in order to determine if a question is part of a repeat group
+                    repeat_group_depth = 0
+                    # Handle the questions
+                    list_uid = None
+                    list_name = None
+                    is_repeat_group = False
+
+                    # Get the choice name for select questions
+                    # This will be used to link to the choice options table
+                    if questions_dict["type"].strip().lower().split(" ")[0] in [
+                        "select_one",
+                        "select_multiple",
+                    ]:
+                        list_name = questions_dict["type"].strip().split(" ")[1]
+                        list_uid = (
+                            SCTOChoiceList.query.filter_by(
+                                form_uid=form_uid, list_name=list_name
+                            )
+                            .first()
+                            .list_uid
+                        )
+
+                    # Check if a repeat group is starting
+                    if questions_dict["type"].strip().lower() == "begin repeat":
+                        repeat_group_depth += 1
+
+                    if repeat_group_depth > 0:
+                        is_repeat_group = True
+
+                    # Add the question to the database
+                    scto_question = SCTOQuestion(
                         form_uid=form_uid,
-                        list_name=choices_dict["list_name"],
+                        question_name=questions_dict["name"],
+                        question_type=questions_dict["type"].strip().lower(),
+                        list_uid=list_uid,
+                        is_repeat_group=is_repeat_group,
                     )
-                    db.session.add(scto_choice_list)
+                    db.session.add(scto_question)
                     db.session.flush()
 
-                    unique_list_names.append(choices_dict["list_name"])
+                    # Check if a repeat group is ending
+                    if questions_dict["type"].strip().lower() == "end repeat":
+                        repeat_group_depth -= 1
 
-                choice_labels = [
-                    col
-                    for col in choices_tab_columns
-                    if col.split(":")[0].lower() == "label"
-                ]
+                    # Handle the question labels
+                    question_labels = [
+                        col
+                        for col in survey_tab_columns
+                        if col.split(":")[0].lower() == "label"
+                    ]
 
-                for choice_label in choice_labels:
-                    # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
-                    language = "default"
-                    if len(choice_label.split(":")) > 1:
-                        language = choice_label.split(":")[1]
+                    for question_label in question_labels:
+                        # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
+                        language = "default"
+                        if len(question_label.split(":")) > 1:
+                            language = question_label.split(":")[1]
 
-                    # Add the choice label to the database
-                    scto_choice_label = SCTOChoiceLabel(
-                        list_uid=scto_choice_list.list_uid,
-                        choice_value=choices_dict["value"],
-                        label=choices_dict[choice_label],
-                        language=language,
-                    )
-                    db.session.add(scto_choice_label)
-
-        # Loop through the rows of the `survey` tab of the form definition
-        for row in scto_form_definition["fieldsRowsAndColumns"][1:]:
-            questions_dict = dict(zip(survey_tab_columns, row))
-            if questions_dict["name"].strip() != "":
-                # There can be nested repeat groups, so we need to keep track of the depth in order to determine if a question is part of a repeat group
-                repeat_group_depth = 0
-                # Handle the questions
-                list_uid = None
-                list_name = None
-                is_repeat_group = False
-
-                # Get the choice name for select questions
-                # This will be used to link to the choice options table
-                if questions_dict["type"].strip().lower().split(" ")[0] in [
-                    "select_one",
-                    "select_multiple",
-                ]:
-                    list_name = questions_dict["type"].strip().split(" ")[1]
-                    list_uid = (
-                        SCTOChoiceList.query.filter_by(
-                            form_uid=form_uid, list_name=list_name
+                        # Add the question label to the database
+                        scto_question_label = SCTOQuestionLabel(
+                            question_uid=scto_question.question_uid,
+                            label=questions_dict[question_label],
+                            language=language,
                         )
-                        .first()
-                        .list_uid
-                    )
+                        db.session.add(scto_question_label)
 
-                # Check if a repeat group is starting
-                if questions_dict["type"].strip().lower() == "begin repeat":
-                    repeat_group_depth += 1
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return (
+                jsonify(
+                    {"error": "SurveyCTO form definition contains duplicate entities"}
+                ),
+                500,
+            )
 
-                if repeat_group_depth > 0:
-                    is_repeat_group = True
+        response = {
+            "success": True,
+        }
 
-                # Add the question to the database
-                scto_question = SCTOQuestion(
-                    form_uid=form_uid,
-                    question_name=questions_dict["name"],
-                    question_type=questions_dict["type"].strip().lower(),
-                    list_uid=list_uid,
-                    is_repeat_group=is_repeat_group,
-                )
-                db.session.add(scto_question)
-                db.session.flush()
-
-                # Check if a repeat group is ending
-                if questions_dict["type"].strip().lower() == "end repeat":
-                    repeat_group_depth -= 1
-
-                # Handle the question labels
-                question_labels = [
-                    col
-                    for col in survey_tab_columns
-                    if col.split(":")[0].lower() == "label"
-                ]
-
-                for question_label in question_labels:
-                    # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
-                    language = "default"
-                    if len(question_label.split(":")) > 1:
-                        language = question_label.split(":")[1]
-
-                    # Add the question label to the database
-                    scto_question_label = SCTOQuestionLabel(
-                        question_uid=scto_question.question_uid,
-                        label=questions_dict[question_label],
-                        language=language,
-                    )
-                    db.session.add(scto_question_label)
-
-        db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
-        return (
-            jsonify({"error": "SurveyCTO form definition contains duplicate entities"}),
-            500,
-        )
-
-    response = {
-        "success": True,
-    }
-
-    return jsonify(response), 200
+        return jsonify(response), 200
+    else:
+        return jsonify({"success": False, "errors": csrf_validator.errors}), 422
 
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition", methods=["DELETE"])
@@ -488,15 +532,28 @@ def delete_scto_form_definition(form_uid):
     """
     Delete the SuveyCTO form definition for a parent form
     """
-    scto_questions = SCTOQuestion.query.filter_by(form_uid=form_uid).first()
-    if scto_questions is None:
-        return jsonify({"error": "SurveyCTO form definition not found for form"}), 404
 
-    SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).delete()
-    SCTOChoiceList.query.filter(SCTOChoiceList.form_uid == form_uid).delete()
+    csrf_validator = DeleteSCTOFormDefinitionValidator.from_json({})
+    if "X-CSRF-Token" in request.headers:
+        csrf_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
+    else:
+        return jsonify(message="X-CSRF-Token required in header"), 403
 
-    db.session.commit()
-    return "", 204
+    if csrf_validator.validate():
+        scto_questions = SCTOQuestion.query.filter_by(form_uid=form_uid).first()
+        if scto_questions is None:
+            return (
+                jsonify({"error": "SurveyCTO form definition not found for form"}),
+                404,
+            )
+
+        SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).delete()
+        SCTOChoiceList.query.filter(SCTOChoiceList.form_uid == form_uid).delete()
+
+        db.session.commit()
+        return "", 204
+    else:
+        return jsonify({"success": False, "errors": csrf_validator.errors}), 422
 
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition/scto-questions", methods=["GET"])
