@@ -2569,3 +2569,32 @@ paths:
           description: X-CSRF-Token required in header
         '422':
           description: Form errors
+  /timezones:
+    get:
+      summary: Get the list of postgres timezones
+      tags:
+        - Misc
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    description: List of postgres timezones
+                    items:
+                      type: object
+                      description: Postgres timezone object
+                      properties:
+                        name:
+                          type: string
+                          description: Postgres timezone name
+                        abbrev:
+                          type: string
+                          description: Postgres timezone abbreviation
+                        utc_offset:
+                          type: string
+                          description: Postgres timezone UTC offset
