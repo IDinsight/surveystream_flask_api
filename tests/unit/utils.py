@@ -26,9 +26,9 @@ def logout(client):
         "/api/logout",
     )
     assert response.status_code == 200
-    client.delete_cookie(key="session", server_name="localhost")
-    client.delete_cookie(key="remember_token", server_name="localhost")
-    client.delete_cookie(key="CSRF-TOKEN", server_name="localhost")
+    client.delete_cookie("session")
+    client.delete_cookie("remember_token")
+    client.delete_cookie("CSRF-TOKEN")
 
     return
 
