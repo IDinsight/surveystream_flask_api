@@ -2,6 +2,7 @@ from flask import jsonify, request
 from sqlalchemy.exc import IntegrityError
 from app import db
 from .models import Survey
+from app.blueprints.module_selection.models import ModuleStatus, Module
 from .routes import surveys_bp
 from .validators import (
     GetSurveyQueryParamValidator,
@@ -9,7 +10,6 @@ from .validators import (
     UpdateSurveyValidator,
 )
 from app.utils.utils import logged_in_active_user_required
-
 
 @surveys_bp.route("", methods=["GET"])
 @logged_in_active_user_required
@@ -61,6 +61,17 @@ def create_survey():
         survey = Survey(**payload)
         try:
             db.session.add(survey)
+
+            # Also populate Module Status table with default values
+            module_list = Module.query.filter_by(optional=False).all()
+            for module in module_list:
+                default_config_status = ModuleStatus(
+                    survey_uid=survey.survey_uid,
+                    module_id=module.module_id,
+                    config_status="In Progress" if module.name == "Basic information" else "Not Started"
+                )
+                db.session.add(default_config_status)
+
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
@@ -79,7 +90,65 @@ def create_survey():
         return jsonify({"success": False, "errors": payload_validator.errors}), 422
 
 
-@surveys_bp.route("/<int:survey_uid>", methods=["GET"])
+@surveys_bp.route("/<int:survey_uid>/config-status", methods=["GET"])
+@logged_in_active_user_required
+def get_survey_config_status(survey_uid):
+    """
+    Get the configuration status for each module for a given survey
+    """
+    # Check if survey exists and throw error if not
+    survey = Survey.query.filter_by(survey_uid=survey_uid).first()
+    if survey is None:
+        return jsonify({"error": "Survey not found"}), 404
+    
+    config_status = db.session.query(
+        Module.module_id,
+        Module.name,
+        ModuleStatus.config_status,
+        Module.optional,
+        Survey.config_status.label("overall_status")
+    ).join(
+        Module,
+        ModuleStatus.module_id == Module.module_id,
+    ).join(
+        Survey,
+        ModuleStatus.survey_uid == Survey.survey_uid,
+    ).filter(
+        ModuleStatus.survey_uid == survey_uid
+    ).all()
+        
+    data = {}
+    for status in config_status:
+        overall_status = status["overall_status"]
+        if status.optional is False:
+            if status.name in ["Basic information", "Module selection"]:
+                data[status.name] = {"status": status.config_status}
+            else:
+                if "Survey information" not in list(data.keys()):
+                    data["Survey information"] = []
+                data["Survey information"].append(
+                    {
+                        "name": status.name,
+                        "status": status.config_status
+                    }
+                ) 
+        else:
+            if "Module configuration" not in list(data.keys()):
+                data["Module configuration"] = []
+            data["Module configuration"].append(
+                {
+                    "module_id": status.module_id,
+                    "name": status.name,
+                    "status": status.config_status
+                }
+            )
+    data["overall_status"] = overall_status
+
+    response = {"success": True, "data": data}
+    return jsonify(response), 200
+
+
+@surveys_bp.route("/<int:survey_uid>/basic-information", methods=["GET"])
 @logged_in_active_user_required
 def get_survey(survey_uid):
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
@@ -88,7 +157,7 @@ def get_survey(survey_uid):
     return jsonify(survey.to_dict())
 
 
-@surveys_bp.route("/<int:survey_uid>", methods=["PUT"])
+@surveys_bp.route("/<int:survey_uid>/basic-information", methods=["PUT"])
 @logged_in_active_user_required
 def update_survey(survey_uid):
     payload = request.get_json()
@@ -137,6 +206,9 @@ def delete_survey(survey_uid):
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     if survey is None:
         return jsonify({"error": "Survey not found"}), 404
+    
+    ModuleStatus.query.filter(ModuleStatus.survey_uid == survey_uid).delete()
     db.session.delete(survey)
+
     db.session.commit()
     return "", 204

@@ -104,14 +104,14 @@ class TestSurveys:
         }
 
         response = client.put(
-            "/api/surveys/1",
+            "/api/surveys/1/basic-information",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
 
-        response = client.get("/api/surveys/1")
+        response = client.get("/api/surveys/1/basic-information")
         assert response.status_code == 200
 
         expected_response = {
@@ -161,3 +161,35 @@ class TestSurveys:
         )
 
         assert response.status_code == 404
+
+    def test_get_config_status(
+        self, client, login_test_user, create_survey, csrf_token, test_user_credentials
+    ):
+        """
+        Test that module config status for the survey can be retreived
+        """
+
+        response = client.get(
+            "/api/surveys/1/config-status",
+            query_string={"user_uid": test_user_credentials["user_uid"]},
+        )
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "Basic information": {"status": "In Progress"},
+                "Module selection": {"status": "Not Started"},
+                "Survey information": [
+                    {"name": "SurveyCTO information","status": "Not Started"},
+                    {"name": "Field supervisor roles","status": "Not Started"},
+                    {"name": "Survey locations","status": "Not Started"},
+                    {"name": "SurveyStream users","status": "Not Started"},
+                    {"name": "Enumerators","status": "Not Started"},
+                    {"name": "Targets","status": "Not Started"}
+                ],
+                "overall_status": "In Progress - Configuration"
+            },
+            "success": True,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
