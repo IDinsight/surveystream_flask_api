@@ -93,7 +93,14 @@ def create_survey():
 @surveys_bp.route("/<int:survey_uid>/config-status", methods=["GET"])
 @logged_in_active_user_required
 def get_survey_config_status(survey_uid):
-
+    """
+    Get the configuration status for each module for a given survey
+    """
+    # Check if survey exists and throw error if not
+    survey = Survey.query.filter_by(survey_uid=survey_uid).first()
+    if survey is None:
+        return jsonify({"error": "Survey not found"}), 404
+    
     config_status = db.session.query(
         Module.module_id,
         Module.name,
@@ -109,12 +116,6 @@ def get_survey_config_status(survey_uid):
     ).filter(
         ModuleStatus.survey_uid == survey_uid
     ).all()
-
-    if not config_status:
-        # Check if survey exists and throw error if not
-        survey = Survey.query.filter_by(survey_uid=survey_uid).first()
-        if survey is None:
-            return jsonify({"error": "Survey not found"}), 404
         
     data = {}
     for status in config_status:
@@ -205,11 +206,9 @@ def delete_survey(survey_uid):
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     if survey is None:
         return jsonify({"error": "Survey not found"}), 404
-    config_status = ModuleStatus.query.filter_by(survey_uid=survey_uid).all()
     
-    for status in config_status:
-        db.session.delete(status)
-        
+    ModuleStatus.query.filter(ModuleStatus.survey_uid == survey_uid).delete()
     db.session.delete(survey)
+
     db.session.commit()
     return "", 204

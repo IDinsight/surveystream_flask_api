@@ -171,7 +171,6 @@ class TestSurveys:
 
         response = client.get(
             "/api/surveys/1/config-status",
-            headers={"X-CSRF-Token": csrf_token},
             query_string={"user_uid": test_user_credentials["user_uid"]},
         )
         assert response.status_code == 200
