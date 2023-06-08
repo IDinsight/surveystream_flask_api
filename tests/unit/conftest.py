@@ -7,13 +7,6 @@ from werkzeug.http import parse_cookie
 from pathlib import Path
 
 
-def pytest_configure(config):
-    """
-    Register custom markers
-    """
-    config.addinivalue_line("markers", "slow: mark test as slow to run")
-
-
 def pytest_collection_modifyitems(config, items):
     """
     Check for tests to skip
