@@ -100,6 +100,16 @@ CREATE TABLE config_sandbox.parent_forms
     CONSTRAINT _parent_forms_survey_uid_scto_form_id_uc UNIQUE (survey_uid, scto_form_id)
 );
 
+CREATE TABLE config_sandbox.scto_form_settings
+(
+	form_uid INTEGER NOT NULL PRIMARY KEY REFERENCES config_sandbox.parent_forms(form_uid) ON DELETE CASCADE,
+	form_title VARCHAR,
+	version VARCHAR NOT NULL,
+	public_key VARCHAR,
+	submission_url VARCHAR,
+	default_language VARCHAR
+);
+
 CREATE TABLE config_sandbox.scto_question_mapping
 (
 	form_uid INTEGER NOT NULL PRIMARY KEY REFERENCES config_sandbox.parent_forms(form_uid) ON DELETE CASCADE,

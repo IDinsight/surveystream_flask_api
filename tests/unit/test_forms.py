@@ -433,7 +433,7 @@ class TestForms:
 
         # Get the SCTO questions from the database
         response = client.get(
-            "/api/forms/1/scto-form-definition/scto-questions",
+            "/api/forms/1/scto-form-definition",
         )
         assert response.status_code == 200
 
@@ -465,7 +465,7 @@ class TestForms:
 
         # Get the SCTO questions from the database
         response = client.get(
-            "/api/forms/1/scto-form-definition/scto-questions",
+            "/api/forms/1/scto-form-definition",
         )
         assert response.status_code == 200
 
@@ -495,7 +495,7 @@ class TestForms:
 
         # Get the SCTO questions from the database
         response = client.get(
-            "/api/forms/1/scto-form-definition/scto-questions",
+            "/api/forms/1/scto-form-definition",
         )
         assert response.status_code == 404
 
@@ -522,6 +522,6 @@ class TestForms:
         assert response.status_code == 204
 
         # Check the response
-        response = client.get("/api/forms/1/scto-question-mapping/scto-questions")
+        response = client.get("/api/forms/1/scto-form-definition")
 
         assert response.status_code == 404

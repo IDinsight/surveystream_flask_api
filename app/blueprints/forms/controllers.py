@@ -7,6 +7,7 @@ from app.utils.utils import logged_in_active_user_required, get_aws_secret
 from . import forms_bp
 from .models import (
     ParentForm,
+    SCTOFormSettings,
     SCTOQuestionMapping,
     SCTOChoiceLabel,
     SCTOQuestionLabel,
@@ -389,19 +390,40 @@ def ingest_scto_form_definition(form_uid):
         # Get the form definition
         try:
             scto_form_definition = scto.get_form_definition(parent_form.scto_form_id)
+            scto_form_version = scto.get_deployed_form_version(parent_form.scto_form_id)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
         # Delete the current SCTO form definition from the database
         # Deletes will cascade to the child tables
+        SCTOFormSettings.query.filter(SCTOFormSettings.form_uid == form_uid).delete()
         SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).delete()
         SCTOChoiceList.query.filter(SCTOChoiceList.form_uid == form_uid).delete()
 
         # Get the list of columns for the `survey` and `choices` tabs of the form definition
         survey_tab_columns = scto_form_definition["fieldsRowsAndColumns"][0]
         choices_tab_columns = scto_form_definition["choicesRowsAndColumns"][0]
+        settings_tab_columns = scto_form_definition["settingsRowsAndColumns"][0]
         unique_list_names = []
         try:
+            # Process the settings tab of the form definition
+            settings_dict = dict(
+                zip(
+                    settings_tab_columns,
+                    scto_form_definition["settingsRowsAndColumns"][1:][0],
+                )
+            )
+            scto_settings = SCTOFormSettings(
+                form_uid=form_uid,
+                form_title=settings_dict["form_title"],
+                version=scto_form_version,
+                public_key=settings_dict["public_key"],
+                submission_url=settings_dict["submission_url"],
+                default_language=settings_dict["default_language"],
+            )
+
+            db.session.add(scto_settings)
+
             # Process the lists and choices from teh `choices` tab of the form definition
             for row in scto_form_definition["choicesRowsAndColumns"][1:]:
                 choices_dict = dict(zip(choices_tab_columns, row))
@@ -547,6 +569,7 @@ def delete_scto_form_definition(form_uid):
                 404,
             )
 
+        SCTOFormSettings.query.filter(SCTOFormSettings.form_uid == form_uid).delete()
         SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).delete()
         SCTOChoiceList.query.filter(SCTOChoiceList.form_uid == form_uid).delete()
 
@@ -556,9 +579,9 @@ def delete_scto_form_definition(form_uid):
         return jsonify({"success": False, "errors": csrf_validator.errors}), 422
 
 
-@forms_bp.route("/<int:form_uid>/scto-form-definition/scto-questions", methods=["GET"])
+@forms_bp.route("/<int:form_uid>/scto-form-definition", methods=["GET"])
 @logged_in_active_user_required
-def get_scto_questions(form_uid):
+def get_scto_form_definition(form_uid):
     """
     Get SurveyCTO form definition questions from the database table
     We are filtering these based on the question types that are supported for question mapping by SurveyStream
@@ -593,10 +616,15 @@ def get_scto_questions(form_uid):
         .all()
     )
 
-    # Return the list of variables for the dropdowns
+    scto_form_settings = SCTOFormSettings.query.filter_by(form_uid=form_uid).first()
+
+    # Form definition (partial)
     response = {
         "success": True,
-        "data": [scto_question.to_dict() for scto_question in scto_questions],
+        "data": {
+            "questions": [scto_question.to_dict() for scto_question in scto_questions],
+            "settings": scto_form_settings.to_dict() if scto_form_settings else None,
+        },
     }
 
     return jsonify(response), 200

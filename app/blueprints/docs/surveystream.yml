@@ -764,7 +764,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    type: dict
+                    type: object
                     description: Basic information related to a specific survey
                     items:
                       type: object
@@ -841,16 +841,16 @@ paths:
                 type: object
                 properties:
                   data:
-                    type: dict
+                    type: object
                     description: Configuration status for a specific survey
                     items:
                       type: object
                       properties:
                         Basic information:
-                          type: dict
+                          type: object
                           description: Status of basic information module of the survey
                           items:
-                            type: dict
+                            type: object
                             properties:
                               status:
                                 type: string
@@ -859,7 +859,7 @@ paths:
                           type: array
                           description: Status of modules in the survey information section of the survey
                           items:
-                            type: dict
+                            type: object
                             properties:
                               name:
                                 type: string
@@ -867,18 +867,18 @@ paths:
                               status:
                                 type: string
                                 description: Configration Status (Not started/ In progress/ Done)
-                          Module selection:
-                            type: dict
-                            description: Status of module selection for the survey
-                            items:
-                              type: dict
-                              properties:
-                                status:
-                                  type: string
-                                  description: Configration Status (Not started/ In progress/ Done)
-                          overall_status:
-                            type: string
-                            description: Overall Status (In progress - Configuration/ In Progress - Backend Setup/ Done)
+                        Module selection:
+                          type: object
+                          description: Status of module selection for the survey
+                          items:
+                            type: object
+                            properties:
+                              status:
+                                type: string
+                                description: Configration Status (Not started/ In progress/ Done)
+                        overall_status:
+                          type: string
+                          description: Overall Status (In progress - Configuration/ In Progress - Backend Setup/ Done)
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
@@ -1704,12 +1704,12 @@ paths:
                   error:
                     type: string
                     description: Error message indicating that the specified form ID was not found.
-  /forms/{form_uid}/scto-form-definition/scto-questions:
+  /forms/{form_uid}/scto-form-definition:
     get:
-      summary: Get the SurveyCTO questions for a form
+      summary: Get the SurveyCTO form definition for a form
       tags:
         - Forms
-      description: Get the SurveyCTO questions for a form
+      description: Get the SurveyCTO form definition for a form
       parameters:
         - in: path
           name: form_uid
@@ -1729,28 +1729,56 @@ paths:
                     type: boolean
                     description: Indicates whether the request was successful
                   data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        question_uid:
-                          type: integer
-                          description: ID of the question
-                        form_uid:
-                          type: integer
-                          description: ID of the form
-                        question_name:
-                          type: string
-                          description: Name of the question
-                        question_type:
-                          type: string
-                          description: Type of the question
-                        list_uid:
-                          type: integer
-                          description: ID of the choice list
-                        is_repeat_group:
-                          type: boolean
-                          description: Indicates if the question is a repeat group
+                    type: object
+                    description: The SurveyCTO form definition for the form
+                    properties:
+                      questions:
+                        description: >-
+                          The SurveyCTO form questions from the `Survey` tab
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            question_uid:
+                              type: integer
+                              description: ID of the question
+                            form_uid:
+                              type: integer
+                              description: ID of the form
+                            question_name:
+                              type: string
+                              description: Name of the question
+                            question_type:
+                              type: string
+                              description: Type of the question
+                            list_uid:
+                              type: integer
+                              description: ID of the choice list
+                            is_repeat_group:
+                              type: boolean
+                              description: Indicates if the question is a repeat group
+                      settings:
+                        type: object
+                        description: The SurveyCTO form settings from the `Settings` tab
+                        properties:
+                          form_uid:
+                            type: integer
+                            description: ID of the form
+                          form_title:
+                            type: string
+                            description: Name of the form
+                          version:
+                            type: string
+                            description: Version of the form
+                          submission_url:
+                            type: string
+                            description: URL to submit the form to
+                          public_key:
+                            type: string
+                            description: The form's public key
+                          default_language:
+                            type: string
+                            description: The form's default language
         '404':
           description: The specified form ID was not found.
           content:

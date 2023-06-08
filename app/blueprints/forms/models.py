@@ -81,6 +81,63 @@ class ParentForm(db.Model):
         }
 
 
+class SCTOFormSettings(db.Model):
+    """
+    SQLAlchemy data model for SurveyCTO Form Settings
+    This table contains top-level metadata about the form
+    """
+
+    __tablename__ = "scto_form_settings"
+
+    __table_args__ = (
+        {
+            "schema": "config_sandbox",
+            "extend_existing": True,
+        },
+    )
+
+    form_uid = db.Column(
+        db.Integer(),
+        db.ForeignKey(ParentForm.form_uid, ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    form_title = db.Column(db.String())
+    version = db.Column(db.String(), nullable=False)
+    public_key = db.Column(db.String())
+    submission_url = db.Column(db.String())
+    default_language = db.Column(db.String())
+    forms = db.relationship(
+        ParentForm, backref=backref("scto_form_settings", passive_deletes=True)
+    )
+
+    def __init__(
+        self,
+        form_uid,
+        form_title,
+        version,
+        public_key,
+        submission_url,
+        default_language,
+    ):
+        self.form_uid = form_uid
+        self.form_title = form_title
+        self.version = version
+        self.public_key = public_key
+        self.submission_url = submission_url
+        self.default_language = default_language
+
+    def to_dict(self):
+        return {
+            "form_uid": self.form_uid,
+            "form_title": self.form_title,
+            "version": self.version,
+            "public_key": self.public_key,
+            "submission_url": self.submission_url,
+            "default_language": self.default_language,
+        }
+
+
 class SCTOQuestionMapping(db.Model):
     """
     SQLAlchemy data model for SurveyCTO Question Mapping
