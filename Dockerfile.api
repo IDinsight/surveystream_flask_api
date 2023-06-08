@@ -1,7 +1,7 @@
 # DESCRIPTION: Dockerfile for dod_surveystream_backend
 # BUILD: make image
 
-FROM python:3.9.6-slim-buster
+FROM python:3.9.6-slim-bullseye
 LABEL maintainer="IDinsight"
 LABEL org.opencontainers.image.source="https://github.com/IDinsight/dod_surveystream_backend"
 
