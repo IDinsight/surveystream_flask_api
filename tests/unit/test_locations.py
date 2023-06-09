@@ -306,3 +306,28 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 500
+    
+    def test_delete_survey(
+        self, client, login_test_user, create_geo_levels, csrf_token
+    ):
+        """
+        Test that deleting a survey cascades to deleting the geo level data
+        """
+
+        # Try to delete a geo level that is being referenced by another geo level
+        response = client.delete(
+            "/api/surveys/1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 204
+ 
+        # Check the response
+        response = client.get("/api/locations/geo-levels", query_string={"survey_uid": 1})
+
+        expected_response = {
+            "data": [],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}

@@ -1,5 +1,6 @@
 from app import db
 from app.blueprints.surveys.models import Survey
+from sqlalchemy.orm import backref
 
 
 class GeoLevel(db.Model):
@@ -10,11 +11,18 @@ class GeoLevel(db.Model):
     __tablename__ = "geo_levels"
 
     geo_level_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
-    survey_uid = db.Column(db.Integer, db.ForeignKey(Survey.survey_uid))
+    survey_uid = db.Column(
+        db.Integer,
+        db.ForeignKey(Survey.survey_uid, ondelete="CASCADE"),
+        nullable=False,
+    )
     geo_level_name = db.Column(db.String(), nullable=False)
     parent_geo_level_uid = db.Column(db.Integer(), db.ForeignKey(geo_level_uid))
     user_uid = db.Column(db.Integer(), default=-1)
     to_delete = db.Column(db.Integer(), default=0, nullable=False)
+    surveys = db.relationship(
+        Survey, backref=backref("geo_levels_parent_forms", passive_deletes=True)
+    )
 
     __table_args__ = (
         db.UniqueConstraint("survey_uid", "geo_level_name", name="_survey_uid_geo_level_name_uc", deferrable=True),
@@ -26,14 +34,12 @@ class GeoLevel(db.Model):
 
     def __init__(
         self,
-        geo_level_uid,
         survey_uid,
         geo_level_name,
         parent_geo_level_uid,
         user_uid,
         to_delete
     ):
-        self.geo_level_uid = geo_level_uid
         self.survey_uid = survey_uid
         self.geo_level_name = geo_level_name
         self.parent_geo_level_uid = parent_geo_level_uid

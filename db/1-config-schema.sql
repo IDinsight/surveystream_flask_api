@@ -90,7 +90,7 @@ Description: This table contains the responses for geo levels section for each s
 
 CREATE TABLE config_sandbox.geo_levels (
 	geo_level_uid SERIAL PRIMARY KEY,
-	survey_uid INTEGER REFERENCES config_sandbox.surveys(survey_uid) NOT NULL,
+	survey_uid INTEGER NOT NULL REFERENCES config_sandbox.surveys(survey_uid) ON DELETE CASCADE,
 	geo_level_name VARCHAR NOT NULL,
 	parent_geo_level_uid INTEGER REFERENCES config_sandbox.geo_levels(geo_level_uid),
 	user_uid INTEGER DEFAULT -1,
