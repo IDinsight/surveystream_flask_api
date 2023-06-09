@@ -72,6 +72,8 @@ tags:
     description: Endpoints related to module questionnaire
   - name: Roles
     description: Endpoints related to user roles
+  - name: Locations
+    description: Endpoints related to locations
 x-tagGroups:
   - name: User Management
     tags:
@@ -109,6 +111,9 @@ x-tagGroups:
   - name: Roles
     tags:
       - Roles
+  - name: Locations
+    tags:
+      - Locations
 paths:
   /healthcheck:
     get:
@@ -2744,3 +2749,84 @@ paths:
                         utc_offset:
                           type: string
                           description: Postgres timezone UTC offset
+  '/locations/geo-levels':
+    get:
+      tags:
+        - Locations
+      summary: Get geo levels for a survey
+      description: |
+        Returns the geo levels for a given survey.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Returns the geo levels for a given survey.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of geo levels for the given survey
+                    items:
+                      type: object
+                      properties:
+                        geo_level_uid:
+                          type: integer
+                          description: The unique ID of the geo level.
+                        geo_level_name:
+                          type: string
+                          description: The name of the geo level.
+                        parent_geo_level_uid:
+                          type: integer
+                          description: The unique ID of geo level that is the parent of the given geo level.
+                        survey_uid:
+                          type: integer
+                          description: The unique ID of the given survey.
+    put:
+      tags:
+        - Locations
+      summary: Save the geo levels for a survey
+      description: |
+        Saves the geo levels for a given survey to the database. If a geo_level_uid is provided, the geo level will be updated. If geo_level_uid is `None`, a new geo level will be created. Existing geo levels in the database that are not in the payload (by `geo_level_uid`) will be deleted.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: JSON object containing the desired geo levels for the survey.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                geo_level_uid:
+                  type: integer
+                  description: The unique ID of the geo level. If equal to None, a new geo level will be created.
+                geo_level_name:
+                  type: string
+                  description: The name of the geo level.
+                parent_geo_level_uid:
+                  type: integer
+                  description: The unique ID of geo level that is the parent of the given geo level.
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: X-CSRF-Token required in header
+        '422':
+          description: Form errors
