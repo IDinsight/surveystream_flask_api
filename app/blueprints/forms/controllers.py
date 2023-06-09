@@ -618,13 +618,20 @@ def get_scto_form_definition(form_uid):
 
     scto_form_settings = SCTOFormSettings.query.filter_by(form_uid=form_uid).first()
 
-    # Form definition (partial)
-    response = {
-        "success": True,
-        "data": {
-            "questions": [scto_question.to_dict() for scto_question in scto_questions],
-            "settings": scto_form_settings.to_dict() if scto_form_settings else None,
-        },
-    }
+    if scto_form_settings is None:
+        response = {"success": True, "data": None}
+        return jsonify(response), 200
 
-    return jsonify(response), 200
+    else:
+        # Form definition (partial)
+        response = {
+            "success": True,
+            "data": {
+                "questions": [
+                    scto_question.to_dict() for scto_question in scto_questions
+                ],
+                "settings": scto_form_settings.to_dict(),
+            },
+        }
+
+        return jsonify(response), 200

@@ -524,4 +524,5 @@ class TestForms:
         # Check the response
         response = client.get("/api/forms/1/scto-form-definition")
 
-        assert response.status_code == 404
+        assert response.status_code == 200
+        assert response.json == {"data": None, "success": True}
