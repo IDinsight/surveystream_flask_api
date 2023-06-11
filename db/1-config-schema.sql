@@ -98,7 +98,15 @@ CREATE TABLE config_sandbox.geo_levels (
 	CONSTRAINT _survey_uid_geo_level_name_uc UNIQUE (survey_uid, geo_level_name) DEFERRABLE
 );
 
-
+CREATE TABLE config_sandbox.locations (
+	location_uid SERIAL PRIMARY KEY,
+	survey_uid INTEGER NOT NULL REFERENCES config_sandbox.surveys(survey_uid) ON DELETE CASCADE,
+	geo_level_uid INTEGER NOT NULL REFERENCES config_sandbox.geo_levels(geo_level_uid) ON DELETE CASCADE,
+	location_id VARCHAR NOT NULL,
+	location_name VARCHAR NOT NULL,
+	parent_location_uid INTEGER REFERENCES config_sandbox.locations(location_uid),
+	CONSTRAINT _survey_uid_geo_level_uid_location_name_uc UNIQUE (survey_uid, location_id)
+);
 
 CREATE TABLE config_sandbox.parent_forms
 (
