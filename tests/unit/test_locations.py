@@ -438,7 +438,6 @@ class TestLocations:
 
         # Try to upload the locations csv
         payload = {
-            "survey_uid": 1,
             "geo_level_mapping": [
                 {
                     "geo_level_uid": 1,
@@ -500,4 +499,3 @@ class TestLocations:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
-        # assert len(response.json["data"]["records"]) == 10704

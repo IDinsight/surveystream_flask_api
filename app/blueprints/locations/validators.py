@@ -33,6 +33,12 @@ class GeoLevelMappingValidator(FlaskForm):
 
 
 class LocationsFileUploadValidator(FlaskForm):
-    survey_uid = IntegerField(validators=[DataRequired()])
     geo_level_mapping = FieldList(FormField(GeoLevelMappingValidator))
     file = StringField(validators=[DataRequired()])
+
+
+class LocationsQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField(validators=[DataRequired()])

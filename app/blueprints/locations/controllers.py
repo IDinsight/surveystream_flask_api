@@ -14,6 +14,7 @@ from .validators import (
     SurveyGeoLevelsQueryParamValidator,
     SurveyGeoLevelsPayloadValidator,
     LocationsFileUploadValidator,
+    LocationsQueryParamValidator,
 )
 
 
@@ -256,6 +257,22 @@ def upload_locations():
     to the database
     """
 
+    # Validate the query parameter
+    query_param_validator = LocationsQueryParamValidator.from_json(request.args)
+    if not query_param_validator.validate():
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": query_param_validator.errors,
+                }
+            ),
+            400,
+        )
+
+    survey_uid = request.args.get("survey_uid")
+
     payload_validator = LocationsFileUploadValidator.from_json(request.get_json())
 
     # Add the CSRF token to be checked by the validator
@@ -275,9 +292,6 @@ def upload_locations():
             ),
             422,
         )
-
-    # Get the survey uid from the payload
-    survey_uid = payload_validator.survey_uid.data
 
     # Get the geo level mapping from the payload
     geo_level_mapping = payload_validator.geo_level_mapping.data
