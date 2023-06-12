@@ -2,9 +2,7 @@ SHELL = /bin/sh
 
 $(eval BACKEND_NAME=dod_surveystream_backend)
 $(eval BACKEND_PORT=5001)
-$(eval FRONTEND_NAME=dod_surveystream_frontend)
 $(eval VERSION=0.1)
-$(eval TEST_RUNNER_NAME=surveystream_test_runner)
 $(eval PROD_NEW_ACCOUNT=923242859002)
 $(eval STAGING_ACCOUNT=210688620213)
 $(eval ADMIN_ACCOUNT=077878936716)
@@ -12,6 +10,7 @@ $(eval DEV_ACCOUNT=453207568606)
 
 
 login:
+	@export AWS_PROFILE=surveystream_dev
 	@aws sso login --profile surveystream_dev
 
 image:
@@ -43,43 +42,31 @@ container-down:
 
 image-stg:
 	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --platform=linux/amd64 -t $(BACKEND_NAME):$(VERSION) . 
-	@docker tag $(BACKEND_NAME):$(VERSION) $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web-ecr-repository:backend
+	@docker tag $(BACKEND_NAME):$(VERSION) $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web-callisto-ecr-repository:backend
 	@aws ecr get-login-password \
     --region ap-south-1 \
 	--profile surveystream_staging | \
 	docker login \
     --username AWS \
     --password-stdin $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com
-	@docker push $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web-ecr-repository:backend
+	@docker push $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web-callisto-ecr-repository:backend
 
-	@docker build -f Dockerfile.client --rm --platform=linux/amd64 -t $(FRONTEND_NAME):$(VERSION) . 
-	@docker tag $(FRONTEND_NAME):$(VERSION) $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web-ecr-repository:frontend
-	@aws ecr get-login-password \
-    --region ap-south-1 \
-	--profile surveystream_staging | \
-	docker login \
-    --username AWS \
-    --password-stdin $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com
-	@docker push $(STAGING_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web-ecr-repository:frontend
 
 container-up-stg:
 	# Configure ecs-cli options
-	@ecs-cli configure --cluster web-cluster \
+	@ecs-cli configure --cluster web-callisto-cluster \
 	--default-launch-type EC2 \
 	--region ap-south-1 \
-	--config-name dod-surveystream-web-app-config
+	--config-name dod-surveystream-web-app-backend-config
 
 	@STAGING_ACCOUNT=${STAGING_ACCOUNT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
 	ecs-cli compose -f docker-compose/docker-compose.stg.yml \
 	--aws-profile surveystream_staging \
-	--project-name dod-surveystream-web-app \
-	--cluster-config dod-surveystream-web-app-config \
-	--task-role-arn arn:aws:iam::$(STAGING_ACCOUNT):role/web-task-role \
+	--project-name api \
+	--cluster-config dod-surveystream-web-app-backend-config \
+	--task-role-arn arn:aws:iam::$(STAGING_ACCOUNT):role/web-callisto-task-role \
 	service up \
-	--target-group-arn arn:aws:elasticloadbalancing:ap-south-1:$(STAGING_ACCOUNT):targetgroup/surveystream-lb-tg-443/d64f6682a67a61e8 \
-	--container-name client \
-	--container-port 80 \
 	--create-log-groups \
 	--deployment-min-healthy-percent 0
 
@@ -87,9 +74,9 @@ container-down-stg:
 	@ecs-cli compose -f docker-compose/docker-compose.stg.yml \
 	--aws-profile surveystream_staging \
 	--region ap-south-1 \
-	--project-name dod-surveystream-web-app \
-	--cluster-config dod-surveystream-web-app-config \
-	--cluster web-cluster \
+	--project-name api \
+	--cluster-config dod-surveystream-web-app-backend-config \
+	--cluster web-callisto-cluster \
 	service down --timeout 10
 
 image-prod-new:
@@ -178,20 +165,15 @@ container-down-prod:
 	--cluster-config dod-surveystream-web-app-config \
 	service down
 
-image-test-e2e:
-	@docker build -f Dockerfile.test-runner --rm --build-arg NAME=$(TEST_RUNNER_NAME) -t $(TEST_RUNNER_NAME):$(VERSION) .
-
-run-test-e2e:
-	@TEST_RUNNER_NAME=${TEST_RUNNER_NAME} \
-	BACKEND_NAME=${BACKEND_NAME} \
+run-unit-tests:
+	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.test-e2e.yml -f docker-compose/docker-compose.override-test-e2e.yml run --rm test ;
+	docker-compose -f docker-compose/docker-compose.test-unit.yml -f docker-compose/docker-compose.override-test-unit.yml run --rm api ;
 	
-	@TEST_RUNNER_NAME=${TEST_RUNNER_NAME} \
-	BACKEND_NAME=${BACKEND_NAME} \
+	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.test-e2e.yml -f docker-compose/docker-compose.override-test-e2e.yml rm -fsv
+	docker-compose -f docker-compose/docker-compose.test-unit.yml -f docker-compose/docker-compose.override-test-unit.yml rm -fsv

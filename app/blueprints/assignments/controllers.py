@@ -1,5 +1,9 @@
 from . import assignments_bp
-from app.utils import concat_names, safe_get_dict_value, logged_in_active_user_required
+from app.utils.utils import (
+    concat_names,
+    safe_get_dict_value,
+    logged_in_active_user_required,
+)
 from flask import jsonify, request
 from flask_login import current_user
 from app import db

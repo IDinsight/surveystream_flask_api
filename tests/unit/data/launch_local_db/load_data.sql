@@ -1,0 +1,23 @@
+COPY users (user_uid,email,password_secure,first_name,middle_name,last_name,home_state,home_district,phone_primary,phone_secondary,avatar_s3_filekey,active) FROM '/docker-entrypoint-initdb.d/data/users.csv' DELIMITER ',' CSV HEADER;
+COPY sampling_frames (sampling_frame_uid,sampling_frame_name,description) FROM '/docker-entrypoint-initdb.d/data/sampling_frames.csv' DELIMITER ',' CSV HEADER;
+COPY sampling_frame_geo_levels (geo_level_uid,sampling_frame_uid,geo_level_name,level) FROM '/docker-entrypoint-initdb.d/data/sampling_frame_geo_levels.csv' DELIMITER ',' CSV HEADER;
+COPY locations (location_uid,sampling_frame_uid,geo_level_uid,location_id,location_name) FROM '/docker-entrypoint-initdb.d/data/locations.csv' DELIMITER ',' CSV HEADER;
+COPY location_hierarchy (location_uid,parent_location_uid) FROM '/docker-entrypoint-initdb.d/data/location_hierarchy.csv' DELIMITER ',' CSV HEADER;
+COPY surveys (survey_uid,survey_id,survey_name,sampling_frame_uid,prime_geo_level_uid,active) FROM '/docker-entrypoint-initdb.d/data/surveys.csv' DELIMITER ',' CSV HEADER;
+COPY parent_forms (form_uid,scto_form_id,form_name,surveying_method,planned_start_date,planned_end_date,last_ingested_at,tz_name,survey_uid) FROM '/docker-entrypoint-initdb.d/data/parent_forms.csv' DELIMITER ',' CSV HEADER;
+COPY admin_forms (form_uid,scto_form_id,form_name,form_type,planned_start_date,planned_end_date,last_ingested_at,tz_name,survey_uid) FROM '/docker-entrypoint-initdb.d/data/admin_forms.csv' DELIMITER ',' CSV HEADER;
+COPY child_forms (form_uid,scto_form_id,form_type,parent_form_uid) FROM '/docker-entrypoint-initdb.d/data/child_forms.csv' DELIMITER ',' CSV HEADER;
+COPY roles (role_uid,survey_uid,role_name,level) FROM '/docker-entrypoint-initdb.d/data/roles.csv' DELIMITER ',' CSV HEADER;
+COPY user_hierarchy (survey_uid,role_uid,user_uid,parent_user_uid) FROM '/docker-entrypoint-initdb.d/data/user_hierarchy.csv' DELIMITER ',' CSV HEADER;
+COPY location_user_mapping (survey_uid,user_uid,location_uid) FROM '/docker-entrypoint-initdb.d/data/location_user_mapping.csv' DELIMITER ',' CSV HEADER;
+COPY enumerators (enumerator_uid,enumerator_id,first_name,middle_name,last_name,gender,language,phone_primary,phone_secondary,email,home_address) FROM '/docker-entrypoint-initdb.d/data/enumerators.csv' DELIMITER ',' CSV HEADER;
+COPY surveyor_forms (enumerator_uid,form_uid,status,user_uid) FROM '/docker-entrypoint-initdb.d/data/surveyor_forms.csv' DELIMITER ',' CSV HEADER;
+COPY location_surveyor_mapping (form_uid,enumerator_uid,location_uid) FROM '/docker-entrypoint-initdb.d/data/location_surveyor_mapping.csv' DELIMITER ',' CSV HEADER;
+COPY targets (target_uid,target_id,form_uid,respondent_names,respondent_phone_primary,respondent_phone_secondary,address,gps_latitude,gps_longitude,prime_location_uid,geo_level_n_location_uid,active,custom_fields) FROM '/docker-entrypoint-initdb.d/data/targets.csv' DELIMITER ',' CSV HEADER;
+COPY target_status (target_uid,completed_flag,refusal_flag,num_attempts,last_attempt_survey_status,last_attempt_survey_status_label,revisit_sections,target_assignable,webapp_tag_color) FROM '/docker-entrypoint-initdb.d/data/target_status.csv' DELIMITER ',' CSV HEADER;
+COPY surveyor_assignments (target_uid,enumerator_uid,user_uid,to_delete) FROM '/docker-entrypoint-initdb.d/data/surveyor_assignments.csv' DELIMITER ',' CSV HEADER;
+COPY webapp_columns (form_uid,webapp_table_name,group_label,column_label,column_key,column_order) FROM '/docker-entrypoint-initdb.d/data/webapp_columns.csv' DELIMITER ',' CSV HEADER;
+
+SELECT setval('users_user_uid_seq', MAX(user_uid)) FROM users;
+
+COPY config_sandbox.modules (module_id,name,optional) FROM '/docker-entrypoint-initdb.d/data/config_sandbox.modules.csv' DELIMITER ',' CSV HEADER;

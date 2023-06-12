@@ -1,6 +1,6 @@
 from . import auth_bp
 from datetime import timedelta
-from app.utils import logged_in_active_user_required
+from app.utils.utils import logged_in_active_user_required
 from flask import jsonify, request, current_app, make_response
 from flask_wtf.csrf import generate_csrf
 from flask_login import current_user, login_user, logout_user

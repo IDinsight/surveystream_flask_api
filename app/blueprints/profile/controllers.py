@@ -1,6 +1,6 @@
 from . import profile_bp
 import os
-from app.utils import logged_in_active_user_required
+from app.utils.utils import logged_in_active_user_required
 from werkzeug.utils import secure_filename
 from flask import jsonify, request, current_app
 from flask_login import current_user
@@ -21,6 +21,7 @@ def get_profile():
     """
 
     final_result = {
+        "user_uid": current_user.user_uid,
         "first_name": current_user.first_name,
         "middle_name": current_user.middle_name,
         "last_name": current_user.last_name,

@@ -1,6 +1,5 @@
 from app import db
 from app.models.data_models import (
-    ParentForm,
     UserHierarchy,
     LocationHierarchy,
     Location,
@@ -13,6 +12,9 @@ from app.models.data_models import (
     SurveyorAssignment,
     TargetStatus,
     Target,
+)
+from app.blueprints.forms.models import (
+    ParentForm
 )
 from sqlalchemy.sql.functions import func, max
 from sqlalchemy import cast, or_

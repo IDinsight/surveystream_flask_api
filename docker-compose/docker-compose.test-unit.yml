@@ -1,0 +1,37 @@
+version: '2.1'
+services:
+  postgres:
+    image: postgres:15.3 
+    restart: always
+    environment:
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=dod
+      - POSTGRES_DB=dod
+    volumes:
+      - ../tests/unit/data/launch_local_db/data:/docker-entrypoint-initdb.d/data
+    ports:
+      - "5433:5433"
+    command:
+      -p 5433
+  api:
+    image: ${BACKEND_NAME}:${VERSION}
+    environment:
+      - CONFIG_TYPE=app.config.UnitTestConfig
+      - PYTHONUNBUFFERED=0
+      - AWS_REGION=ap-south-1
+      - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
+    volumes:
+      - /tmp/coverage:/usr/src/${BACKEND_NAME}/tests/output
+    depends_on:
+      - postgres
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    entrypoint: ["/bin/bash","-c"]
+    command:
+    - |
+       . /bootstrap.sh
+       dockerize -wait tcp://postgres:5433 -timeout 15m -wait-retry-interval 10s 
+       coverage run -m pytest tests -m locations -vv
+       coverage lcov --include="/usr/src/${BACKEND_NAME}/app/*" -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
+       
+      

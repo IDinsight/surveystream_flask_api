@@ -227,38 +227,6 @@ class AdminForm(db.Model):
         ),
     )
 
-
-class ParentForm(db.Model):
-    """
-    SQLAlchemy data model for Parent Form
-    This table contains information about the parent forms
-    within the survey, which are the main forms posed to respondents
-    """
-
-    __tablename__ = "parent_forms"
-
-    form_uid = db.Column(db.Integer(), primary_key=True)
-    scto_form_id = db.Column(db.String(), nullable=False)
-    form_name = db.Column(db.String(), nullable=False)
-    surveying_method = db.Column(db.String(), nullable=False)
-    planned_start_date = db.Column(db.Date())
-    planned_end_date = db.Column(db.Date())
-    last_ingested_at = db.Column(db.DateTime(timezone=False))
-    tz_name = db.Column(db.String())
-    survey_uid = db.Column(db.Integer, db.ForeignKey("surveys.survey_uid"))
-
-    __table_args__ = (
-        db.UniqueConstraint(
-            "survey_uid",
-            "scto_form_id",
-            name="_parent_forms_survey_uid_scto_form_id_uc",
-        ),
-        db.UniqueConstraint(
-            "survey_uid", "form_name", name="_parent_forms_survey_uid_form_name_uc"
-        ),
-    )
-
-
 class ChildForm(db.Model):
     """
     SQLAlchemy data model for Child Form
