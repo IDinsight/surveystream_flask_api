@@ -142,7 +142,7 @@ def get_survey_config_status(survey_uid):
                     "status": status.config_status
                 }
             )
-    data["overall_status"] = overall_status
+        data["overall_status"] = overall_status
 
     response = {"success": True, "data": data}
     return jsonify(response), 200
