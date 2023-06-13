@@ -2926,7 +2926,11 @@ paths:
                     properties:
                       ordered_columns:
                         type: array
-                        description: List of columns to display in the table in the correct order
+                        description: |
+                          List of columns to display in the table in the correct order. 
+                          These will be of the form [<geo level 1 name> ID, <geo level 1 name> Name, <geo level 2 name> ID, <geo level 2 name> Name, ...]. 
+                          For example, ["State ID", "State Name", "District ID", "District Name", "Block ID", "Block Name"].
+                          The order of geo levels will be descending from the top level geo level to the lowest level geo level.
                       records:
                         type: array
                         description: |
