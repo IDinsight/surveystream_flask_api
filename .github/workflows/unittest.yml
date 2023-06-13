@@ -1,16 +1,24 @@
 # Create GitHub Action to run unit tests inside a Docker container
 name: Run Unit Tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - dev
+      - staging
+      - production
+  pull_request:
+    branches:
+      - "*"
 
 jobs:
   UnitTest:
     runs-on: ubuntu-latest
-    
+
     permissions:
       id-token: write
       contents: read
-    
+
     steps:
       - uses: actions/checkout@v2
 
@@ -34,10 +42,10 @@ jobs:
         run: |
           mkdir -p /tmp/coverage
           chmod 777 /tmp/coverage
-          
+
       - name: Run unit tests
         run: docker-compose -f docker-compose/docker-compose.test-unit.yml -f docker-compose/docker-compose.override-test-unit.yml run --rm api ;
-      
+
       - name: Send coverage report to Coveralls
         uses: coverallsapp/github-action@v2
         with:
