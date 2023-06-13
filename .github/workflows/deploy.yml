@@ -2,10 +2,10 @@
 name: Deploy API
 
 on:
-  workflow_run:
-    workflows: [Run Unit Tests]
-    types:
-      - completed
+  # workflow_run:
+  #   workflows: [Run Unit Tests]
+  #   types:
+  #     - completed
   push:
     branch:
       - DODSS-861-Blue-Green-Backend
