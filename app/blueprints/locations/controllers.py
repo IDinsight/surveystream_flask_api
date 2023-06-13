@@ -322,7 +322,7 @@ def upload_locations():
                 geo_level_mapping_count += 1
         if geo_level_mapping_count != 1:
             mapping_errors.append(
-                f"Each geo level defined in the geo level hierarchy should appear exactly once in the geo level column mapping. Geo level '{geo_level.geo_level_name}' appears {geo_level_mapping_count} time(s) in the geo level mapping."
+                f"Each geo level defined in the geo level hierarchy should appear exactly once in the geo level column mapping. Geo level '{geo_level.geo_level_name}' appears {geo_level_mapping_count} times in the geo level mapping."
             )
 
     # Each geo level in the mapping should be one of the geo levels for the survey
@@ -420,14 +420,14 @@ def upload_locations():
     for column_name in expected_columns:
         if file_columns.count(column_name) != 1:
             file_errors.append(
-                f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} time(s) in the uploaded file. It should appear exactly once."
+                f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} times in the uploaded file. It should appear exactly once."
             )
 
     # Each column in the csv file should be mapped exactly once
     for column_name in file_columns:
         if expected_columns.count(column_name) != 1:
             file_errors.append(
-                f"Column name '{column_name}' in the csv file appears {expected_columns.count(column_name)} time(s) in the geo level column mapping. It should appear exactly once."
+                f"Column name '{column_name}' in the csv file appears {expected_columns.count(column_name)} times in the geo level column mapping. It should appear exactly once."
             )
 
     # The file should contain no blank fields
