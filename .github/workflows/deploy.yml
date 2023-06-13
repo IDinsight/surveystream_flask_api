@@ -11,7 +11,7 @@ on:
 jobs:
   Deploy-Staging:
     name: Deploy Callisto Staging
-      runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
       permissions:
         id-token: write
