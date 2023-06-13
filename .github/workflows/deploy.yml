@@ -2,6 +2,8 @@
 name: Deploy API
 
 on:
+  workflow_success:
+    workflow: Run Unit Tests
   push:
     branch:
       - DODSS-861-Blue-Green-Backend
