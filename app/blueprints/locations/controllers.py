@@ -6,9 +6,9 @@ from sqlalchemy.sql import case
 from sqlalchemy.exc import IntegrityError
 import pandas as pd
 import numpy as np
-from csv import DictReader
 import base64
 import io
+from csv import DictReader
 from app import db
 from .models import GeoLevel, Location
 from .routes import locations_bp
@@ -17,6 +17,11 @@ from .validators import (
     SurveyGeoLevelsPayloadValidator,
     LocationsFileUploadValidator,
     LocationsQueryParamValidator,
+)
+from .utils import (
+    run_location_mapping_validations,
+    build_locations_df,
+    run_locations_file_validations,
 )
 
 
@@ -111,7 +116,7 @@ def update_survey_geo_levels():
                     top_level_geo_level_count += 1
             if top_level_geo_level_count != 1:
                 errors_list.append(
-                    f"The hierarchy should have exactly one top level geo level (ie, a geo level with no parent). The current hierarchy has {top_level_geo_level_count} geo levels with no parent."
+                    f"The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has {top_level_geo_level_count} location types with no parent."
                 )
 
             # Each parent geo level should be one of the geo levels in the payload
@@ -122,14 +127,14 @@ def update_survey_geo_levels():
                     and geo_level["parent_geo_level_uid"] not in geo_level_uids
                 ):
                     errors_list.append(
-                        f"Geo level '{geo_level['geo_level_name']}' references a parent geo level with geo_level_uid={geo_level['parent_geo_level_uid']} that is not found in the hierarchy."
+                        f"Location type '{geo_level['geo_level_name']}' references a parent location type with location type unique id '{geo_level['parent_geo_level_uid']}' that is not found in the hierarchy."
                     )
 
             # A geo level should not be its own parent
             for geo_level in geo_levels:
                 if geo_level["parent_geo_level_uid"] == geo_level["geo_level_uid"]:
                     errors_list.append(
-                        f"Geo level '{geo_level['geo_level_name']}' is referenced as its own parent. Self-referencing is not allowed."
+                        f"Location type '{geo_level['geo_level_name']}' is referenced as its own parent. Self-referencing is not allowed."
                     )
 
             # Each geo level should be referenced as a parent exactly once
@@ -145,7 +150,7 @@ def update_survey_geo_levels():
                         parent_reference_count += 1
                 if parent_reference_count != 1:
                     errors_list.append(
-                        f"Each geo level should be referenced as a parent geo level exactly once. Geo level '{geo_level['geo_level_name']}' is referenced as a parent {parent_reference_count} times."
+                        f"Each location type should be referenced as a parent location type exactly once. Location type '{geo_level['geo_level_name']}' is referenced as a parent {parent_reference_count} times."
                     )
 
             if len(errors_list) > 0:
@@ -311,42 +316,8 @@ def upload_locations():
             if geo_level.parent_geo_level_uid == ordered_geo_levels[i].geo_level_uid:
                 ordered_geo_levels.append(geo_level)
 
-    # Validate the geo level mapping
-    mapping_errors = []
-
-    # Each geo level should appear in the mapping exactly once
-    for geo_level in geo_levels:
-        geo_level_mapping_count = 0
-        for mapping in geo_level_mapping:
-            if geo_level.geo_level_uid == mapping["geo_level_uid"]:
-                geo_level_mapping_count += 1
-        if geo_level_mapping_count != 1:
-            mapping_errors.append(
-                f"Each geo level defined in the geo level hierarchy should appear exactly once in the geo level column mapping. Geo level '{geo_level.geo_level_name}' appears {geo_level_mapping_count} times in the geo level mapping."
-            )
-
-    # Each geo level in the mapping should be one of the geo levels for the survey
-    for mapping in geo_level_mapping:
-        if mapping["geo_level_uid"] not in [
-            geo_level.geo_level_uid for geo_level in geo_levels
-        ]:
-            mapping_errors.append(
-                f"Geo level '{mapping['geo_level_uid']}' in the geo level column mapping is not one of the geo levels for the survey."
-            )
-
-    # Mapped column names should be unique
-    column_names = []
-    for mapping in geo_level_mapping:
-        if mapping["location_id_column"] in column_names:
-            mapping_errors.append(
-                f"Column name '{mapping['location_id_column']}' appears more than once in the geo level column mapping. Column names should be unique."
-            )
-        if mapping["location_name_column"] in column_names:
-            mapping_errors.append(
-                f"Column name '{mapping['location_name_column']}' appears more than once in the geo level column mapping. Column names should be unique."
-            )
-        column_names.append(mapping["location_id_column"])
-        column_names.append(mapping["location_name_column"])
+    # Run validations on the geo level column mapping
+    mapping_errors = run_location_mapping_validations(geo_levels, geo_level_mapping)
 
     if len(mapping_errors) > 0:
         return (
@@ -361,6 +332,7 @@ def upload_locations():
             ),
             422,
         )
+
     # Create a lookup object for the geo level mapping
     geo_level_mapping_lookup = {
         mapping["geo_level_uid"]: mapping for mapping in geo_level_mapping
@@ -376,108 +348,38 @@ def upload_locations():
             geo_level_mapping_lookup[geo_level.geo_level_uid]["location_name_column"]
         )
 
-    # Read the csv content into a dataframe
-    locations_df = pd.read_csv(
-        io.StringIO(base64.b64decode(payload_validator.file.data).decode("utf-8")),
-        dtype=str,
-        keep_default_na=False,
-    )
+    # Check if any columns are able to be read in - if not the first row is probably empty
+    # If so do not proceed as it will cause errors
 
-    # Override the column names in case there are duplicate column names
-    # This is needed because pandas will append a .1 to the duplicate column name
-    # Get column names from csv file using DictReader
     col_names = DictReader(
         io.StringIO(base64.b64decode(payload_validator.file.data).decode("utf-8"))
     ).fieldnames
-    locations_df.columns = col_names
 
-    # Strip white space from all columns
-    for index in range(locations_df.shape[1]):
-        locations_df.iloc[:, index] = locations_df.iloc[:, index].astype(str)
-        locations_df.iloc[:, index] = locations_df.iloc[:, index].str.strip()
-
-    # Replace empty strings with NaN
-    locations_df = locations_df.replace("", np.nan)
-
-    # Shift the index by 1 so that the row numbers start at 1
-    locations_df.index += 1
-
-    # Rename the index column to row_number
-    locations_df.index.name = "row_number"
-
-    # Validate the csv file
-
-    file_errors = []
-
-    # Check if any columns were able to be read in - if not the first row is probably empty
     if len(col_names) == 0:
-        file_errors.append(
-            "Column names were not found in the file. Make sure the first row of the file contains column names."
-        )
-
-    # Each mapped column should appear in the csv file exactly once
-    file_columns = locations_df.columns.to_list()
-    for column_name in expected_columns:
-        if file_columns.count(column_name) != 1:
-            file_errors.append(
-                f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} times in the uploaded file. It should appear exactly once."
-            )
-
-    # Each column in the csv file should be mapped exactly once
-    for column_name in file_columns:
-        if expected_columns.count(column_name) != 1:
-            file_errors.append(
-                f"Column name '{column_name}' in the csv file appears {expected_columns.count(column_name)} times in the geo level column mapping. It should appear exactly once."
-            )
-
-    # The file should contain no blank fields
-    blank_fields = [
-        f"'column': {locations_df.columns[j]}, 'row': {i + 1}"
-        for i, j in zip(*np.where(pd.isnull(locations_df)))
-    ]
-    if len(blank_fields) > 0:
-        blank_fields_formatted = "\n".join(item for item in blank_fields)
-        file_errors.append(
-            f"The file contains {len(blank_fields)} blank fields. Blank fields are not allowed. Blank fields are found in the following columns and rows:\n{blank_fields_formatted}"
-        )
-
-    # The file should have no duplicate rows
-    duplicates_df = locations_df[locations_df.duplicated(keep=False)]
-    if len(duplicates_df) > 0:
-        file_errors.append(
-            f"The file has {len(duplicates_df)} duplicate rows. Duplicate rows are not allowed. The following rows are duplicates:\n{duplicates_df.to_string()}"
-        )
-
-    # A location cannot be assigned to multiple parents
-    for geo_level in reversed(ordered_geo_levels):
-        if geo_level.parent_geo_level_uid is not None:
-            geo_level_id_column_name = geo_level_mapping_lookup[
-                geo_level.geo_level_uid
-            ]["location_id_column"]
-            parent_geo_level_id_column_name = geo_level_mapping_lookup[
-                geo_level.parent_geo_level_uid
-            ]["location_id_column"]
-            # If we deduplicate on the parent location id column and the location id column, the number of rows should be the same as just deduplicating on the location id column
-            # If this check fails we know that the location id column has locations that are mapped to more than one parent
-            if len(
-                locations_df[
-                    locations_df.duplicated(
-                        subset=[
-                            parent_geo_level_id_column_name,
-                            geo_level_id_column_name,
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file": [
+                            "Column names were not found in the file. Make sure the first row of the file contains column names."
                         ],
-                    )
-                ]
-            ) != len(
-                locations_df[
-                    locations_df.duplicated(
-                        subset=[geo_level_id_column_name],
-                    )
-                ]
-            ):
-                file_errors.append(
-                    f"Geo level {geo_level.geo_level_name} has location id's that are mapped to more than one parent location in column {parent_geo_level_id_column_name}. A location (defined by the location id column) cannot be assigned to multiple parents. Make sure to use a unique location id for each location. The following rows have location id's that are mapped to more than one parent location:\n{locations_df[locations_df.drop_duplicates(subset=[parent_geo_level_id_column_name, geo_level_id_column_name]).duplicated(subset=[geo_level_id_column_name], keep=False).reindex(locations_df.index, fill_value=False)].to_string()}"
-                )
+                        "geo_level_mapping": [],
+                    },
+                }
+            ),
+            422,
+        )
+
+    # Build the locations dataframe
+
+    locations_df = build_locations_df(payload_validator.file.data, col_names)
+
+    # Validate the data in the dataframe
+
+    file_errors = run_locations_file_validations(
+        locations_df, expected_columns, ordered_geo_levels, geo_level_mapping_lookup
+    )
 
     if len(file_errors) > 0:
         return (
