@@ -2,10 +2,10 @@
 name: Deploy API
 
 on:
-  # workflow_run:
-  #   workflows: [Run Unit Tests]
-  #   types:
-  #     - completed
+  workflow_run:
+    workflows: [Run Unit Tests]
+    types:
+      - completed
   push:
     branch:
       - DODSS-861-Blue-Green-Backend
@@ -14,7 +14,7 @@ jobs:
   Deploy-Staging:
     name: Deploy Callisto Staging
     runs-on: ubuntu-latest
-    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     permissions:
       id-token: write
