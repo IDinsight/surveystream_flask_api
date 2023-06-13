@@ -1,5 +1,5 @@
 # Create GitHub Action to run unit tests inside a Docker container
-name: Run Unit Tests
+name: Run Unit Tests and Deploy
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
       - dev
       - staging
       - production
-      - DODSS-861-Blue-Green-Backend
 
   pull_request:
     branches:
