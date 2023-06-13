@@ -13,12 +13,11 @@ jobs:
     name: Deploy Callisto Staging
     runs-on: ubuntu-latest
 
-      permissions:
-        id-token: write
-        contents: read
-    
-    steps:
+    permissions:
+      id-token: write
+      contents: read
 
+    steps:
       - uses: actions/checkout@v3
       - name: Load .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -63,4 +62,3 @@ jobs:
           service: backend
           cluster: web-callisto-cluster
           wait-for-service-stability: true
-
