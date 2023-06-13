@@ -2995,4 +2995,6 @@ paths:
         '422':
           description: |
             Form errors
-            When `validate_hierarchy` is set to true, any validation errors will be returned as an array under the `errors` key in the response.
+            Validation errors for the geo level mapping will be returned as an array under the `geo_level_mapping` key in the `errors` key of the response.
+            Validation errors for the file will be returned as an array under the `file` key in the `errors` key of the response.
+            Note that the file validation will only be run if the geo level mapping is valid.

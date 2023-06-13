@@ -355,6 +355,7 @@ def upload_locations():
                     "success": False,
                     "errors": {
                         "geo_level_mapping": mapping_errors,
+                        "file": [],
                     },
                 }
             ),
@@ -485,6 +486,7 @@ def upload_locations():
                     "success": False,
                     "errors": {
                         "file": file_errors,
+                        "geo_level_mapping": [],
                     },
                 }
             ),
