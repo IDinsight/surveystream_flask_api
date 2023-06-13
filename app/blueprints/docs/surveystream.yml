@@ -2731,16 +2731,31 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                  - roles
               properties:
-                role_uid:
-                  type: integer
-                  description: The unique ID of the role. If equal to None, a new role will be created. 
-                role_name:
-                  type: string
-                  description: The name of the role. 
-                reporting_role_uid:
-                  type: integer
-                  description: The unique role ID of role that supervises the given role.
+                roles:
+                  type: array
+                  description: Full list of roles for the given survey
+                  items:
+                    type: object
+                    required:
+                      - role_uid
+                      - role_name
+                      - reporting_role_uid
+                    properties:
+                      role_uid:
+                        type: integer
+                        nullable: true
+                        description: The unique ID of the role. If equal to None, a new role will be created. 
+                      role_name:
+                        type: string
+                        nullable: false
+                        description: The name of the role. 
+                      reporting_role_uid:
+                        type: integer
+                        nullable: true
+                        description: The unique role ID of role that supervises the given role.
       responses:
         '200':
           description: Success
@@ -2841,20 +2856,139 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                  - geo_levels
               properties:
-                geo_level_uid:
-                  type: integer
-                  description: The unique ID of the geo level. If equal to None, a new geo level will be created.
-                geo_level_name:
-                  type: string
-                  description: The name of the geo level.
-                parent_geo_level_uid:
-                  type: integer
-                  description: The unique ID of geo level that is the parent of the given geo level.
+                geo_levels:
+                  type: array
+                  description: Full list of geo levels for the given survey
+                  items:
+                    type: object
+                    properties:
+                      geo_level_uid:
+                        type: integer
+                        nullable: true
+                        description: The unique ID of the geo level. If equal to None, a new geo level will be created.
+                      geo_level_name:
+                        type: string
+                        nullable: false
+                        description: The name of the geo level.
+                      parent_geo_level_uid:
+                        type: integer
+                        nullable: true
+                        description: The unique ID of geo level that is the parent of the given geo level.
+                validate_hierarchy:
+                  type: boolean
+                  description: |
+                    Whether to validate the hierarchy of the geo levels. Set this as true when updating the parent_geo_level_uid fields of the geo levels.
+                    The following validations will be performed:
+                    - Exactly one geo level should be at the top of the hierarchy (parent_geo_level_uid is null)
+                    - Each parent_geo_level_uid should refer to a geo level in the payload
+                    - Each geo level should be referenced as a parent exactly once
+
+
       responses:
         '200':
           description: Success
         '403':
           description: X-CSRF-Token required in header
         '422':
-          description: Form errors
+          description: |
+            Form errors
+            When `validate_hierarchy` is set to true, any validation errors will be returned as an array under the `errors` key in the response.
+  '/locations':
+    get:
+      tags:
+        - Locations
+      summary: Get locations for a survey
+      description: |
+        Returns the locations for a given survey.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Returns the locations for a given survey.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: object
+                    properties:
+                      ordered_columns:
+                        type: array
+                        description: List of columns to display in the table in the correct order
+                      records:
+                        type: array
+                        description: |
+                          List of location objects for the given survey. Each location object contains keys corresponding to the columns in the `ordered_columns` array.
+                          The columns are determined by the geo levels for the given survey, so columns will vary from survey to survey.
+    post:
+      tags:
+        - Locations
+      summary: Upload a locations CSV file for a survey
+      description: |
+        Upload a locations CSV file for a given survey to the database. A column mapping is required in the payload to map the columns in the CSV file to the geo levels for the given survey.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: JSON object containing locations file content and geo level column mapping.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                geo_level_mapping:
+                  type: array
+                  description: An array of objects mapping the columns in the CSV file to the geo levels for the given survey.
+                  items:
+                    type: object
+                    properties:
+                      geo_level_uid:
+                        type: integer
+                        nullable: false
+                        description: The unique ID of the geo level.
+                      location_id_column:
+                        type: string
+                        nullable: false
+                        description: The name of the column in the CSV file that contains the location id for the given geo level.
+                      location_name_column:
+                        type: integer
+                        nullable: false
+                        description: The name of the column in the CSV file that contains the location name for the given geo level.
+                    required:
+                      - geo_level_uid
+                      - location_id_column
+                      - location_name_column
+                file:
+                  type: string
+                  description: Base64 encoded CSV file content
+              required:
+                - geo_level_mapping
+                - file
+
+
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: X-CSRF-Token required in header
+        '422':
+          description: |
+            Form errors
+            When `validate_hierarchy` is set to true, any validation errors will be returned as an array under the `errors` key in the response.
