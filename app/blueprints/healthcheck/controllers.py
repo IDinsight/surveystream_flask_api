@@ -10,6 +10,6 @@ def healthcheck():
     """
     try:
         db.session.execute("SELECT 1;")
-        return jsonify(message="Healthy testing"), 200
+        return jsonify(message="Healthy"), 200
     except:
         return jsonify(message="Failed DB connection"), 500
