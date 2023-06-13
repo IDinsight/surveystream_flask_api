@@ -12,6 +12,7 @@ services:
       - PYTHONUNBUFFERED=0
       - AWS_REGION=ap-south-1
       - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
+    command: api
     logging:
       driver: awslogs
       options:
