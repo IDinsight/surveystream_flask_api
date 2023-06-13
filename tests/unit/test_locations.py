@@ -602,8 +602,8 @@ class TestLocations:
         assert response.status_code == 422
         assert "geo_level_mapping" in response.json["errors"]
         assert response.json["errors"]["geo_level_mapping"] == [
-            "Each geo level defined in the geo level hierarchy should appear exactly once in the geo level column mapping. Geo level 'District' appears 2 time(s) in the geo level mapping.",
-            "Each geo level defined in the geo level hierarchy should appear exactly once in the geo level column mapping. Geo level 'PSU' appears 0 time(s) in the geo level mapping.",
+            "Each geo level defined in the geo level hierarchy should appear exactly once in the geo level column mapping. Geo level 'District' appears 2 times in the geo level mapping.",
+            "Each geo level defined in the geo level hierarchy should appear exactly once in the geo level column mapping. Geo level 'PSU' appears 0 times in the geo level mapping.",
             "Geo level '4' in the geo level column mapping is not one of the geo levels for the survey.",
             "Column name 'district_id' appears more than once in the geo level column mapping. Column names should be unique.",
             "Column name 'district_name' appears more than once in the geo level column mapping. Column names should be unique.",
@@ -658,8 +658,8 @@ class TestLocations:
         assert response.status_code == 422
         assert "file" in response.json["errors"]
         assert response.json["errors"]["file"] == [
-            "Column name 'district_id' from the column mapping appears 2 time(s) in the uploaded file. It should appear exactly once.",
-            "Column name 'extra_column' in the csv file appears 0 time(s) in the geo level column mapping. It should appear exactly once.",
+            "Column name 'district_id' from the column mapping appears 2 times in the uploaded file. It should appear exactly once.",
+            "Column name 'extra_column' in the csv file appears 0 times in the geo level column mapping. It should appear exactly once.",
             "The file contains 3 blank fields. Blank fields are not allowed. Blank fields are found in the following columns and rows:\n'column': psu_name, 'row': 2\n'column': mandal_id, 'row': 4\n'column': psu_id, 'row': 9",
             "The file has 2 duplicate rows. Duplicate rows are not allowed. The following rows are duplicates:\n           district_id district_name mandal_id     mandal_name psu_name    psu_id district_id extra_column\nrow_number                                                                                                \n7                    1      ADILABAD      1101  ADILABAD RURAL   RAMPUR  17101147           1         asdf\n8                    1      ADILABAD      1101  ADILABAD RURAL   RAMPUR  17101147           1         asdf",
             "Geo level PSU has location id's that are mapped to more than one parent location in column mandal_id. A location (defined by the location id column) cannot be assigned to multiple parents. Make sure to use a unique location id for each location. The following rows have location id's that are mapped to more than one parent location:\n           district_id district_name mandal_id     mandal_name psu_name    psu_id district_id extra_column\nrow_number                                                                                                \n1                    1      ADILABAD      1101  ADILABAD RURAL   ANKOLI  17101102           1         asdf\n11                   1      ADILABAD      1102  ADILABAD URBAN   ANKOLI  17101102           1         asdf",
