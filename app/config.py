@@ -146,6 +146,9 @@ class StagingConfig(Config):
         "environment": "staging-callisto",
     }
 
+    SESSION_COOKIE_HTTPONLY = False
+    REMEMBER_COOKIE_HTTPONLY = False
+
 
 class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
@@ -163,3 +166,6 @@ class ProductionConfig(Config):
         "traces_sample_rate": "1.0",
         "environment": "production",
     }
+
+    SESSION_COOKIE_HTTPONLY = False
+    REMEMBER_COOKIE_HTTPONLY = False
