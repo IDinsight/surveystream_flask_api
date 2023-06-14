@@ -54,7 +54,7 @@ jobs:
           file: /tmp/coverage/coverage.lcov
 
   Deploy-Staging:
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/staging' )
+    if: github.event_name == 'push' &&  github.ref == 'refs/heads/staging'
     name: Deploy Callisto Staging
     runs-on: ubuntu-latest
     needs: UnitTest
