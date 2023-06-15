@@ -64,8 +64,8 @@ CREATE TABLE config_sandbox.module_questionnaire (
 	supervisor_hierarchy_exists BOOLEAN,
 	reassignment_required BOOLEAN,
 	assignment_process VARCHAR CHECK (assignment_process IN ('Manual','Random')),
-	supervisor_enumerator_relation VARCHAR,
-	language_lacation_mapping BOOLEAN
+	supervisor_surveyor_relation VARCHAR,
+	language_location_mapping BOOLEAN
 );
 
 /*
