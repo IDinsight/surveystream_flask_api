@@ -518,6 +518,20 @@ def get_locations():
             .all()
         )
 
+        if locations is None or len(locations) == 0:
+            return (
+                jsonify(
+                    {
+                        "success": True,
+                        "data": {
+                            "records": [],
+                            "ordered_columns": expected_columns,
+                        },
+                    }
+                ),
+                200,
+            )
+
         df = pd.DataFrame(
             [
                 {

@@ -806,3 +806,15 @@ class TestLocations:
         assert response.json["errors"]["file"] == [
             "Column names were not found in the file. Make sure the first row of the file contains column names."
         ]
+
+    def test_get_locations_null_result(
+        self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
+    ):
+        """
+        Test that the locations csv can be uploaded
+        """
+
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        assert response.status_code == 200
