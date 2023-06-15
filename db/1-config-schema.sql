@@ -105,7 +105,7 @@ CREATE TABLE config_sandbox.locations (
 	location_id VARCHAR NOT NULL,
 	location_name VARCHAR NOT NULL,
 	parent_location_uid INTEGER REFERENCES config_sandbox.locations(location_uid),
-	CONSTRAINT _survey_uid_geo_level_uid_location_name_uc UNIQUE (survey_uid, location_id)
+	CONSTRAINT _survey_uid_geo_level_uid_location_id_uc UNIQUE (survey_uid, geo_level_uid, location_id)
 );
 
 CREATE TABLE config_sandbox.parent_forms

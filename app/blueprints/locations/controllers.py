@@ -22,6 +22,7 @@ from .utils import (
     run_location_mapping_validations,
     build_locations_df,
     run_locations_file_validations,
+    run_geo_level_hierarchy_validations,
 )
 
 
@@ -105,57 +106,13 @@ def update_survey_geo_levels():
     if payload_validator.validate():
         # If validate_hierarchy is true, validate the hierarchy of the geo levels
         if payload.get("validate_hierarchy"):
-            errors_list = []
-
             geo_levels = payload_validator.geo_levels.data
 
-            # Exactly one geo level should have no parent
-            top_level_geo_level_count = 0
-            for geo_level in geo_levels:
-                if geo_level["parent_geo_level_uid"] is None:
-                    top_level_geo_level_count += 1
-            if top_level_geo_level_count != 1:
-                errors_list.append(
-                    f"The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has {top_level_geo_level_count} location types with no parent."
-                )
+            geo_level_hierarchy_errors = run_geo_level_hierarchy_validations(geo_levels)
 
-            # Each parent geo level should be one of the geo levels in the payload
-            geo_level_uids = [geo_level["geo_level_uid"] for geo_level in geo_levels]
-            for geo_level in geo_levels:
-                if (
-                    geo_level["parent_geo_level_uid"] is not None
-                    and geo_level["parent_geo_level_uid"] not in geo_level_uids
-                ):
-                    errors_list.append(
-                        f"Location type '{geo_level['geo_level_name']}' references a parent location type with location type unique id '{geo_level['parent_geo_level_uid']}' that is not found in the hierarchy."
-                    )
-
-            # A geo level should not be its own parent
-            for geo_level in geo_levels:
-                if geo_level["parent_geo_level_uid"] == geo_level["geo_level_uid"]:
-                    errors_list.append(
-                        f"Location type '{geo_level['geo_level_name']}' is referenced as its own parent. Self-referencing is not allowed."
-                    )
-
-            # Each geo level should be referenced as a parent exactly once
-            parent_geo_level_uids = [
-                geo_level["parent_geo_level_uid"]
-                for geo_level in geo_levels
-                if geo_level["parent_geo_level_uid"] is not None
-            ]
-            for geo_level in geo_levels:
-                parent_reference_count = 0
-                for parent_geo_level_uid in parent_geo_level_uids:
-                    if geo_level["geo_level_uid"] == parent_geo_level_uid:
-                        parent_reference_count += 1
-                if parent_reference_count != 1:
-                    errors_list.append(
-                        f"Each location type should be referenced as a parent location type exactly once. Location type '{geo_level['geo_level_name']}' is referenced as a parent {parent_reference_count} times."
-                    )
-
-            if len(errors_list) > 0:
+            if len(geo_level_hierarchy_errors) > 0:
                 return (
-                    jsonify({"success": False, "errors": errors_list}),
+                    jsonify({"success": False, "errors": geo_level_hierarchy_errors}),
                     422,
                 )
 
@@ -300,11 +257,28 @@ def upload_locations():
             422,
         )
 
-    # Get the geo level mapping from the payload
-    geo_level_mapping = payload_validator.geo_level_mapping.data
-
     # Get the geo levels for the survey
     geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+    # Validate the geo level hierarchy
+    geo_level_hierarchy_errors = run_geo_level_hierarchy_validations(
+        [geo_level.to_dict() for geo_level in geo_levels]
+    )
+
+    if len(geo_level_hierarchy_errors) > 0:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "geo_level_hierarchy": geo_level_hierarchy_errors,
+                        "file": [],
+                        "geo_level_mapping": [],
+                    },
+                }
+            ),
+            422,
+        )
 
     # Create an ordered list of geo levels based on the geo level hierarchy
     # IMPORTANT: This assumes that the geo level hierarchy has been validated
@@ -317,6 +291,8 @@ def upload_locations():
                 ordered_geo_levels.append(geo_level)
 
     # Run validations on the geo level column mapping
+    geo_level_mapping = payload_validator.geo_level_mapping.data
+
     mapping_errors = run_location_mapping_validations(geo_levels, geo_level_mapping)
 
     if len(mapping_errors) > 0:
@@ -444,7 +420,7 @@ def upload_locations():
 
             db.session.add(location)
 
-            if i % 1000 == 0:
+            if i % 1000 == 0 and i > 0:
                 db.session.flush()
 
         # We need to flush the session to get the location_uids
@@ -488,6 +464,21 @@ def get_locations():
 
     # Get the geo levels for the survey
     geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+    # If there are no geo levels, return an empty response
+    if geo_levels is None or len(geo_levels) == 0:
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": {
+                        "records": [],
+                        "ordered_columns": [],
+                    },
+                }
+            ),
+            200,
+        )
 
     # Create an ordered list of geo levels based on the geo level hierarchy
     # IMPORTANT: This assumes that the geo level hierarchy has been validated

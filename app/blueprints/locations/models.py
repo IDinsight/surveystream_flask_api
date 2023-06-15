@@ -81,9 +81,9 @@ class Location(db.Model):
     __table_args__ = (
         db.UniqueConstraint(
             "survey_uid",
+            "geo_level_uid",
             "location_id",
-            name="_survey_uid_location_id_uc",
-            deferrable=True,
+            name="_survey_uid_geo_level_uid_location_id_uc",
         ),
         {"extend_existing": True, "schema": "config_sandbox"},
     )
