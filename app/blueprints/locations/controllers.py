@@ -446,7 +446,7 @@ def upload_locations():
                 }
             )
 
-            if i % 1000 == 0:
+            if i > 0 and i % 1000 == 0:
                 db.session.execute(insert(Location).values(location_records_to_insert))
                 db.session.flush()
                 location_records_to_insert.clear()

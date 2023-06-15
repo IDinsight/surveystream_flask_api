@@ -475,7 +475,7 @@ class TestLocations:
 
         filepath = (
             Path(__file__).resolve().parent
-            / f"data/file_uploads/sample_locations_medium.csv"
+            / f"data/file_uploads/sample_locations_small.csv"
         )
 
         # Read the locations.csv file and convert it to base64
