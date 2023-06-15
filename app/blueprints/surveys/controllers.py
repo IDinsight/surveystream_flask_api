@@ -161,9 +161,9 @@ def get_survey_config_status(survey_uid):
     locations = GeoLevel.query.filter_by(survey_uid=survey_uid).first()
 
     if survey is not None:
-        data["Basic information"] = "In Progress"
+        data["Basic information"]["status"] = "In Progress"
     if optional_module_flag:
-        data["Module selection"] = "In Progress"
+        data["Module selection"]["status"] = "In Progress"
     
     for item in data["Survey information"]:
         if item["name"] == "SurveyCTO information":
