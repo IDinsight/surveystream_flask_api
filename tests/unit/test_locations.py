@@ -475,7 +475,7 @@ class TestLocations:
 
         filepath = (
             Path(__file__).resolve().parent
-            / f"data/file_uploads/sample_locations_small.csv"
+            / f"data/file_uploads/sample_locations_medium.csv"
         )
 
         # Read the locations.csv file and convert it to base64
@@ -512,6 +512,7 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+
         assert response.status_code == 200
 
         df = pd.read_csv(filepath, dtype=str)
