@@ -2,6 +2,8 @@ from flask import jsonify, request
 from sqlalchemy.exc import IntegrityError
 from app import db
 from .models import Survey
+from app.blueprints.roles.models import Role
+from app.blueprints.locations.models import GeoLevel
 from app.blueprints.module_selection.models import ModuleStatus, Module
 from .routes import surveys_bp
 from .validators import (
@@ -125,6 +127,7 @@ def get_survey_config_status(survey_uid):
     )
 
     data = {}
+    optional_module_flag = False
     for status in config_status:
         data["overall_status"] = status["overall_status"]
         if status.optional is False:
@@ -137,6 +140,7 @@ def get_survey_config_status(survey_uid):
                     {"name": status.name, "status": status.config_status}
                 )
         else:
+            optional_module_flag = True
             if "Module configuration" not in list(data.keys()):
                 data["Module configuration"] = []
             data["Module configuration"].append(
@@ -147,6 +151,31 @@ def get_survey_config_status(survey_uid):
                 }
             )
 
+    # Temp: Update module status based on whether data is present in the corresponding backend 
+    # table because we aren't updating the module status table from each module currently
+    from app.blueprints.forms.models import ParentForm
+
+    survey = Survey.query.filter_by(survey_uid=survey_uid).first()
+    scto_information = ParentForm.query.filter_by(survey_uid=survey_uid).first()
+    roles = Role.query.filter_by(survey_uid=survey_uid).first()
+    locations = GeoLevel.query.filter_by(survey_uid=survey_uid).first()
+
+    if survey is not None:
+        data["Basic information"] = "In Progress"
+    if optional_module_flag:
+        data["Module selection"] = "In Progress"
+    
+    for item in data["Survey information"]:
+        if item["name"] == "SurveyCTO information":
+            if scto_information is not None:
+                item["status"] = "In Progress"
+        elif item["name"] == "Field supervisor roles":
+            if roles is not None:
+                item["status"] = "In Progress"
+        elif item["name"] == "Survey locations":
+            if locations is not None:
+                item["status"] = "In Progress"
+    
     response = {"success": True, "data": data}
     return jsonify(response), 200
 
