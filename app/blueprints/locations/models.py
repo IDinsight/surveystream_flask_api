@@ -85,6 +85,11 @@ class Location(db.Model):
             name="_survey_uid_location_id_uc",
             deferrable=True,
         ),
+        db.Index(
+            "ix_locations_survey_uid_geo_level_uid",
+            "survey_uid",
+            "geo_level_uid",
+        ),
         {"extend_existing": True, "schema": "config_sandbox"},
     )
 

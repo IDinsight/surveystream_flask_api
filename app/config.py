@@ -89,31 +89,17 @@ class DevelopmentConfig(Config):
     PROTECT_DOCS_ENDPOINT = False
 
 
-class ProfilerConfig(Config):
-    SQLALCHEMY_ECHO = True
-    LOGGING_CONFIG = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {"default": {"format": "%(message)s"}},
-        "handlers": {
-            "file": {
-                "class": "logging.FileHandler",
-                "level": "INFO",
-                "formatter": "default",
-                "filename": "/usr/src/dod_surveystream_backend/app.log",
-                "mode": "w",
-            },
-        },
-        "root": {"handlers": ["file"], "level": "INFO"},
-    }
-
+class ProfilingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
-        Config.DB_USER,
-        Config.DB_PASS,
-        Config.DB_HOST,
-        5432,
-        Config.DB_NAME,
+        "test_user",
+        "dod",
+        "postgres",
+        5433,
+        "dod",
     )
+
+    TESTING = True
+    DEBUG = True
 
 
 class UnitTestConfig(Config):
