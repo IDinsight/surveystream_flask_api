@@ -425,13 +425,14 @@ class TestLocations:
         )
         assert response.status_code == 200
 
-        # Try to update the existing geo levels
+        # Case 1:
+        # Multiple child nodes
         payload = {
             "geo_levels": [
                 {
                     "geo_level_uid": 1,
                     "geo_level_name": "State",
-                    "parent_geo_level_uid": 1,
+                    "parent_geo_level_uid": None,
                 },
                 {
                     "geo_level_uid": 2,
@@ -441,7 +442,7 @@ class TestLocations:
                 {
                     "geo_level_uid": 3,
                     "geo_level_name": "Mandal",
-                    "parent_geo_level_uid": 5,
+                    "parent_geo_level_uid": 1,
                 },
             ],
             "validate_hierarchy": True,
@@ -459,16 +460,11 @@ class TestLocations:
 
         # Check the response
         assert response.json["errors"] == [
-            "The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has 0 location types with no parent.",
-            "Location type 'Mandal' references a parent location type with location type unique id '5' that is not found in the hierarchy.",
-            "Location type 'State' is referenced as its own parent. Self-referencing is not allowed.",
-            "Location type 'State' is referenced as a parent by 2 other location types. Each location type should be referenced as a parent by at most one other location type.",
-            "The location type hierarchy should have exactly one location type that is at the bottom level of the hierarchy (not referenced as a parent by another location type). The current hierarchy has 2 location types that are not referenced as a parent by another location type:\nDistrict, Mandal",
+            "Each location type should have at most one child location type. Location type 'State' has 2 child location types:\nDistrict, Mandal"
         ]
 
-        # Try to update the existing geo levels
-        # We need to check for the case where there are no bottom level location types
-        # This needs its own test because the previous case was looking for more than one bottom level location type
+        # Case 2:
+        # No root node
         payload = {
             "geo_levels": [
                 {
@@ -502,8 +498,160 @@ class TestLocations:
 
         # Check the response
         assert response.json["errors"] == [
-            "The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has 0 location types with no parent.",
-            "The location type hierarchy should have exactly one location type that is at the bottom level of the hierarchy (not referenced as a parent by another location type). The current hierarchy has 0 location types that are at the bottom level of the hierarchy.",
+            "The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has 0 location types with no parent."
+        ]
+
+        # Case 3:
+        # Multiple root nodes
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": 1,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": 2,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": 3,
+                    "geo_level_name": "Mandal",
+                    "parent_geo_level_uid": 2,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        # Check the response
+        assert response.json["errors"] == [
+            "The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has 2 location types with no parent:\nState, District"
+        ]
+
+        # Case 4:
+        # Check for a disconnected hierarchy
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": 1,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": 2,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 3,
+                },
+                {
+                    "geo_level_uid": 3,
+                    "geo_level_name": "Mandal",
+                    "parent_geo_level_uid": 2,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        assert response.json["errors"] == [
+            "All location types in the hierarchy should be able to be connected back to the top level location type via a chain of parent location type references. The current hierarchy has 2 location types that cannot be connected:\nDistrict, Mandal"
+        ]
+
+        # Case 5:
+        # Check for a disconnected hierarchy
+        # Caused by self-reference and non-existent parent
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": 1,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": 2,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 2,
+                },
+                {
+                    "geo_level_uid": 3,
+                    "geo_level_name": "Mandal",
+                    "parent_geo_level_uid": 5,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        assert response.json["errors"] == [
+            "All location types in the hierarchy should be able to be connected back to the top level location type via a chain of parent location type references. The current hierarchy has 2 location types that cannot be connected:\nDistrict, Mandal",
+            "Location type 'District' is referenced as its own parent. Self-referencing is not allowed.",
+            "Location type 'Mandal' references a parent location type with unique id '5' that is not found in the hierarchy.",
+        ]
+
+        # Case 6:
+        # Duplicate uid's and names
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": 1,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": 1,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 2,
+                },
+                {
+                    "geo_level_uid": 3,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 5,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        assert response.json["errors"] == [
+            "Each location type unique id defined in the location type hierarchy should appear exactly once in the hierarchy. Location type with geo_level_uid='1' appears 2 times in the hierarchy.",
+            "Each location type name defined in the location type hierarchy should appear exactly once in the hierarchy. Location type with geo_level_name='District' appears 2 times in the hierarchy.",
         ]
 
     def test_geo_levels_validate_hierarchy_valid_hierarchy(
