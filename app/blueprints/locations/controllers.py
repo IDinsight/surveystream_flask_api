@@ -487,6 +487,24 @@ def get_locations():
             200,
         )
 
+    # Validate the geo level hierarchy
+    geo_level_hierarchy_errors = run_geo_level_hierarchy_validations(
+        [geo_level.to_dict() for geo_level in geo_levels]
+    )
+
+    if len(geo_level_hierarchy_errors) > 0:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "geo_level_hierarchy": "The locations could not be returned because the location type hierarchy for this survey is invalid. Please navigate to the location type hierarchy page to view and address the specific errors.",
+                    },
+                }
+            ),
+            500,
+        )
+
     # Create an ordered list of geo levels based on the geo level hierarchy
     # IMPORTANT: This assumes that the geo level hierarchy has been validated
     ordered_geo_levels = [
