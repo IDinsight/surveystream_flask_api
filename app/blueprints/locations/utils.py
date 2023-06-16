@@ -4,6 +4,74 @@ import pandas as pd
 import numpy as np
 
 
+def run_geo_level_hierarchy_validations(geo_levels):
+    """
+    Function to run validations on the geo level hierarchy and return a list of errors
+
+    :param geo_levels: List of geo levels for the survey
+    """
+    errors_list = []
+
+    # Exactly one geo level should have no parent
+    top_level_geo_level_count = 0
+    for geo_level in geo_levels:
+        if geo_level["parent_geo_level_uid"] is None:
+            top_level_geo_level_count += 1
+    if top_level_geo_level_count != 1:
+        errors_list.append(
+            f"The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has {top_level_geo_level_count} location types with no parent."
+        )
+
+    # Each parent geo level should be one of the geo levels in the hierarchy
+    geo_level_uids = [geo_level["geo_level_uid"] for geo_level in geo_levels]
+    for geo_level in geo_levels:
+        if (
+            geo_level["parent_geo_level_uid"] is not None
+            and geo_level["parent_geo_level_uid"] not in geo_level_uids
+        ):
+            errors_list.append(
+                f"Location type '{geo_level['geo_level_name']}' references a parent location type with location type unique id '{geo_level['parent_geo_level_uid']}' that is not found in the hierarchy."
+            )
+
+    # A geo level should not be its own parent
+    for geo_level in geo_levels:
+        if geo_level["parent_geo_level_uid"] == geo_level["geo_level_uid"]:
+            errors_list.append(
+                f"Location type '{geo_level['geo_level_name']}' is referenced as its own parent. Self-referencing is not allowed."
+            )
+
+    # 1. Geo levels should not be referenced as a parent by more than one other geo level
+    # 2. There should be exactly 1 geo level at the bottom of the hierarchy (not referenced as a parent by another geo level)
+    parent_geo_level_uids = [
+        geo_level["parent_geo_level_uid"]
+        for geo_level in geo_levels
+        if geo_level["parent_geo_level_uid"] is not None
+    ]
+    unreferenced_geo_levels = []
+    for geo_level in geo_levels:
+        parent_reference_count = 0
+        for parent_geo_level_uid in parent_geo_level_uids:
+            if geo_level["geo_level_uid"] == parent_geo_level_uid:
+                parent_reference_count += 1
+        if parent_reference_count == 0:
+            unreferenced_geo_levels.append(geo_level)
+        elif parent_reference_count > 1:
+            errors_list.append(
+                f"Location type '{geo_level['geo_level_name']}' is referenced as a parent by {parent_reference_count} other location types. Each location type should be referenced as a parent by at most one other location type."
+            )
+
+    if len(unreferenced_geo_levels) == 0:
+        errors_list.append(
+            f"The location type hierarchy should have exactly one location type that is at the bottom level of the hierarchy (not referenced as a parent by another location type). The current hierarchy has 0 location types that are at the bottom level of the hierarchy."
+        )
+    elif len(unreferenced_geo_levels) > 1:
+        errors_list.append(
+            f"The location type hierarchy should have exactly one location type that is at the bottom level of the hierarchy (not referenced as a parent by another location type). The current hierarchy has {len(unreferenced_geo_levels)} location types that are not referenced as a parent by another location type:\n{', '.join([geo_level['geo_level_name'] for geo_level in unreferenced_geo_levels])}"
+        )
+
+    return errors_list
+
+
 def run_location_mapping_validations(geo_levels, geo_level_mapping):
     """
     Function to run validations on the location type column mapping and return a list of errors
@@ -51,16 +119,16 @@ def run_location_mapping_validations(geo_levels, geo_level_mapping):
     return mapping_errors
 
 
-def build_locations_df(base64_file_content, col_names):
+def build_locations_df(csv_string, col_names):
     """
-    Function to create and format the locations dataframe from the base64-encoded csv file content
+    Function to create and format the locations dataframe from the decoded csv file string
 
     :param base64_file_content: Base64-encoded csv file content from the request payload
     """
 
     # Read the csv content into a dataframe
     locations_df = pd.read_csv(
-        io.StringIO(base64.b64decode(base64_file_content).decode("utf-8")),
+        io.StringIO(csv_string),
         dtype=str,
         keep_default_na=False,
     )
@@ -73,7 +141,6 @@ def build_locations_df(base64_file_content, col_names):
 
     # Strip white space from all columns
     for index in range(locations_df.shape[1]):
-        locations_df.iloc[:, index] = locations_df.iloc[:, index].astype(str)
         locations_df.iloc[:, index] = locations_df.iloc[:, index].str.strip()
 
     # Replace empty strings with NaN
@@ -135,7 +202,11 @@ def run_locations_file_validations(
             f"The file has {len(duplicates_df)} duplicate rows. Duplicate rows are not allowed. The following rows are duplicates:\n{duplicates_df.to_string()}"
         )
 
-    # A location cannot be assigned to multiple parents
+    # A location (defined by location_id) cannot be assigned to multiple parents
+    # Note that this is a check on duplicate location id's
+    # Because of the wide structure of the sheet, a location id can appear multiple times in the same column
+    # This check makes sure that all duplicate instances of a location id are legitimate duplicates
+    # Note that the previous check is also required to catch the case where the lowest level location id is duplicated within the same parent
     for geo_level in reversed(ordered_geo_levels):
         if geo_level.parent_geo_level_uid is not None:
             geo_level_id_column_name = geo_level_mapping_lookup[

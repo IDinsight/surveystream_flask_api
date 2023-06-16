@@ -389,7 +389,7 @@ class TestLocations:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_geo_levels_validate_hierarchy(
+    def test_geo_levels_validate_hierarchy_invalid_hierarchy(
         self, client, login_test_user, create_survey, csrf_token
     ):
         """
@@ -454,6 +454,7 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+
         assert response.status_code == 422
 
         # Check the response
@@ -461,10 +462,117 @@ class TestLocations:
             "The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has 0 location types with no parent.",
             "Location type 'Mandal' references a parent location type with location type unique id '5' that is not found in the hierarchy.",
             "Location type 'State' is referenced as its own parent. Self-referencing is not allowed.",
-            "Each location type should be referenced as a parent location type exactly once. Location type 'State' is referenced as a parent 2 times.",
-            "Each location type should be referenced as a parent location type exactly once. Location type 'District' is referenced as a parent 0 times.",
-            "Each location type should be referenced as a parent location type exactly once. Location type 'Mandal' is referenced as a parent 0 times.",
+            "Location type 'State' is referenced as a parent by 2 other location types. Each location type should be referenced as a parent by at most one other location type.",
+            "The location type hierarchy should have exactly one location type that is at the bottom level of the hierarchy (not referenced as a parent by another location type). The current hierarchy has 2 location types that are not referenced as a parent by another location type:\nDistrict, Mandal",
         ]
+
+        # Try to update the existing geo levels
+        # We need to check for the case where there are no bottom level location types
+        # This needs its own test because the previous case was looking for more than one bottom level location type
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": 1,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": 3,
+                },
+                {
+                    "geo_level_uid": 2,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 1,
+                },
+                {
+                    "geo_level_uid": 3,
+                    "geo_level_name": "Mandal",
+                    "parent_geo_level_uid": 2,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        # Check the response
+        assert response.json["errors"] == [
+            "The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has 0 location types with no parent.",
+            "The location type hierarchy should have exactly one location type that is at the bottom level of the hierarchy (not referenced as a parent by another location type). The current hierarchy has 0 location types that are at the bottom level of the hierarchy.",
+        ]
+
+    def test_geo_levels_validate_hierarchy_valid_hierarchy(
+        self, client, login_test_user, create_survey, csrf_token
+    ):
+        """
+        Test that existing geo levels can be updated
+        """
+
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "Mandal",
+                    "parent_geo_level_uid": None,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Try to update the existing geo levels
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": 1,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": 2,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 1,
+                },
+                {
+                    "geo_level_uid": 3,
+                    "geo_level_name": "Mandal",
+                    "parent_geo_level_uid": 2,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
 
     def test_upload_locations_csv(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
@@ -512,6 +620,7 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+
         assert response.status_code == 200
 
         df = pd.read_csv(filepath, dtype=str)
@@ -688,7 +797,7 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
+
         assert response.status_code == 422
         assert "geo_level_mapping" in response.json["errors"]
         assert response.json["errors"]["geo_level_mapping"] == [
@@ -806,3 +915,58 @@ class TestLocations:
         assert response.json["errors"]["file"] == [
             "Column names were not found in the file. Make sure the first row of the file contains column names."
         ]
+
+    def test_get_locations_null_result(
+        self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
+    ):
+        """
+        Test that the locations csv can be uploaded
+        """
+
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": [],
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_get_locations_null_result_no_geo_levels(
+        self, client, login_test_user, csrf_token
+    ):
+        """
+        Test that the locations csv can be uploaded
+        """
+
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [],
+                "records": [],
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
