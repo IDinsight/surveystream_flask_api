@@ -422,6 +422,7 @@ def upload_locations():
                 }
             )
 
+            # Insert the records in batches of 1000
             if i > 0 and i % 1000 == 0:
                 db.session.execute(insert(Location).values(location_records_to_insert))
                 db.session.flush()
@@ -429,8 +430,9 @@ def upload_locations():
 
         # We need to flush the session to get the location_uids
         # These will be used to set the parent_location_uids for the next geo level
-        db.session.execute(insert(Location).values(location_records_to_insert))
-        db.session.flush()
+        if len(location_records_to_insert) > 0:
+            db.session.execute(insert(Location).values(location_records_to_insert))
+            db.session.flush()
 
     try:
         db.session.commit()

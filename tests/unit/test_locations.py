@@ -797,7 +797,7 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
+
         assert response.status_code == 422
         assert "geo_level_mapping" in response.json["errors"]
         assert response.json["errors"]["geo_level_mapping"] == [
