@@ -2931,11 +2931,18 @@ paths:
                           These will be of the form [<geo level 1 name> ID, <geo level 1 name> Name, <geo level 2 name> ID, <geo level 2 name> Name, ...]. 
                           For example, ["State ID", "State Name", "District ID", "District Name", "Block ID", "Block Name"].
                           The order of geo levels will be descending from the top level geo level to the lowest level geo level.
+                          Will be empty if no geo levels have been configured for the given survey.
                       records:
                         type: array
                         description: |
                           List of location objects for the given survey. Each location object contains keys corresponding to the columns in the `ordered_columns` array.
                           The columns are determined by the geo levels for the given survey, so columns will vary from survey to survey.
+                          Will be empty of no geo levels or no locations have been configured for the given survey.
+        '500':
+          description: |
+            Error message indicating that the locations could not be retrieved.
+            If the location type hierarchy is invalid, the `errors` key will contain a `geo_level_hierarchy` key with an error message string.
+ 
     post:
       tags:
         - Locations
@@ -2997,4 +3004,5 @@ paths:
             Form errors
             Validation errors for the geo level mapping will be returned as an array under the `geo_level_mapping` key in the `errors` key of the response.
             Validation errors for the file will be returned as an array under the `file` key in the `errors` key of the response.
+            Validation errors for the location type hierarchy will be returned as an array under the `geo_level_hierarchy` key in the `errors` key of the response.
             Note that the file validation will only be run if the geo level mapping is valid.
