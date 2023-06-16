@@ -5,8 +5,10 @@ from sqlalchemy import insert, cast, Integer
 from sqlalchemy.sql import case
 from sqlalchemy.exc import IntegrityError
 import pandas as pd
+import numpy as np
 import base64
 import io
+from csv import DictReader
 from app import db
 from .models import GeoLevel, Location
 from .routes import locations_bp
@@ -15,6 +17,11 @@ from .validators import (
     SurveyGeoLevelsPayloadValidator,
     LocationsFileUploadValidator,
     LocationsQueryParamValidator,
+)
+from .utils import (
+    run_location_mapping_validations,
+    build_locations_df,
+    run_locations_file_validations,
 )
 
 
@@ -109,7 +116,7 @@ def update_survey_geo_levels():
                     top_level_geo_level_count += 1
             if top_level_geo_level_count != 1:
                 errors_list.append(
-                    f"Exactly one geo level in the hierarchy should have no parent geo level. The current hierarchy has {top_level_geo_level_count} geo levels with no parent."
+                    f"The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has {top_level_geo_level_count} location types with no parent."
                 )
 
             # Each parent geo level should be one of the geo levels in the payload
@@ -120,14 +127,14 @@ def update_survey_geo_levels():
                     and geo_level["parent_geo_level_uid"] not in geo_level_uids
                 ):
                     errors_list.append(
-                        f"Geo level {geo_level['geo_level_name']} references a parent geo level with geo_level_uid={geo_level['parent_geo_level_uid']} that is not found in the hierarchy."
+                        f"Location type '{geo_level['geo_level_name']}' references a parent location type with location type unique id '{geo_level['parent_geo_level_uid']}' that is not found in the hierarchy."
                     )
 
             # A geo level should not be its own parent
             for geo_level in geo_levels:
                 if geo_level["parent_geo_level_uid"] == geo_level["geo_level_uid"]:
                     errors_list.append(
-                        f"Geo level {geo_level['geo_level_name']} is referenced as its own parent."
+                        f"Location type '{geo_level['geo_level_name']}' is referenced as its own parent. Self-referencing is not allowed."
                     )
 
             # Each geo level should be referenced as a parent exactly once
@@ -143,7 +150,7 @@ def update_survey_geo_levels():
                         parent_reference_count += 1
                 if parent_reference_count != 1:
                     errors_list.append(
-                        f"Each geo level should be referenced as a parent geo level exactly once. Geo level {geo_level['geo_level_name']} is referenced as a parent {parent_reference_count} times."
+                        f"Each location type should be referenced as a parent location type exactly once. Location type '{geo_level['geo_level_name']}' is referenced as a parent {parent_reference_count} times."
                     )
 
             if len(errors_list) > 0:
@@ -295,9 +302,6 @@ def upload_locations():
 
     # Get the geo level mapping from the payload
     geo_level_mapping = payload_validator.geo_level_mapping.data
-    geo_level_mapping_lookup = {
-        mapping["geo_level_uid"]: mapping for mapping in geo_level_mapping
-    }
 
     # Get the geo levels for the survey
     geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
@@ -312,6 +316,28 @@ def upload_locations():
             if geo_level.parent_geo_level_uid == ordered_geo_levels[i].geo_level_uid:
                 ordered_geo_levels.append(geo_level)
 
+    # Run validations on the geo level column mapping
+    mapping_errors = run_location_mapping_validations(geo_levels, geo_level_mapping)
+
+    if len(mapping_errors) > 0:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "geo_level_mapping": mapping_errors,
+                        "file": [],
+                    },
+                }
+            ),
+            422,
+        )
+
+    # Create a lookup object for the geo level mapping
+    geo_level_mapping_lookup = {
+        mapping["geo_level_uid"]: mapping for mapping in geo_level_mapping
+    }
+
     # Get the expected columns from the mapped column names
     expected_columns = []
     for geo_level in ordered_geo_levels:
@@ -322,14 +348,52 @@ def upload_locations():
             geo_level_mapping_lookup[geo_level.geo_level_uid]["location_name_column"]
         )
 
-    # Check if the mapped column names correspond to what is in the csv file
+    # Check if any columns are able to be read in - if not the first row is probably empty
+    # If so do not proceed as it will cause errors
 
-    # Read the csv content into a dataframe
-    locations_df = pd.read_csv(
-        io.StringIO(base64.b64decode(payload_validator.file.data).decode("utf-8")),
-        usecols=expected_columns,
-        dtype=str,
+    csv_string = base64.b64decode(payload_validator.file.data).decode("utf-8")
+
+    col_names = DictReader(io.StringIO(csv_string)).fieldnames
+
+    if len(col_names) == 0:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file": [
+                            "Column names were not found in the file. Make sure the first row of the file contains column names."
+                        ],
+                        "geo_level_mapping": [],
+                    },
+                }
+            ),
+            422,
+        )
+
+    # Build the locations dataframe
+
+    locations_df = build_locations_df(csv_string, col_names)
+
+    # Validate the data in the dataframe
+
+    file_errors = run_locations_file_validations(
+        locations_df, expected_columns, ordered_geo_levels, geo_level_mapping_lookup
     )
+
+    if len(file_errors) > 0:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file": file_errors,
+                        "geo_level_mapping": [],
+                    },
+                }
+            ),
+            422,
+        )
 
     # We will have to delete the existing locations for the survey
     Location.query.filter_by(survey_uid=survey_uid).delete()
@@ -364,109 +428,32 @@ def upload_locations():
 
             columns.append(parent_location_id_column_name)
 
-        # Move this to an earlier validation step
-        # # Check if the column name exists in the csv file
-        # file_errors = []
-        # if location_id_column_name not in locations_df.columns:
-        #     file_errors.append(
-        #         f"Column name {location_id_column_name} not found in the uploaded file"
-        #     )
-        # if location_name_column_name not in locations_df.columns:
-        #     file_errors.append(
-        #         f"Column name {location_name_column_name} not found in the uploaded file"
-        #     )
-
-        # if len(file_errors) > 0:
-        #     return (
-        #         jsonify(
-        #             {
-        #                 "success": False,
-        #                 "errors": {
-        #                     "file": [
-        #                         f"Column name {location_id_column_name} not found in the uploaded file"
-        #                     ]
-        #                 },
-        #             }
-        #         ),
-        #         422,
-        #     )
-
-        # Get the parent geo level for the current geo level
-        # if i > 0:
-
-        # # We need to find the parent location uid for the current location
-
-        # # Use the geo level to get the parent geo level
-        # parent_geo_level = geo_levels[i - 1]
-
-        # # Use the parent geo level to get the mapped column name: we need the location id column name for the parent geo level
-        # parent_location_id_column_name = geo_level_mapping[
-        #     parent_geo_level.geo_level_uid
-        # ].location_id_column.data
-
-        # # Use the location id column name to get the location id for the parent location (from the csv file row)
-        # locations_df.loc[df[parent_location_id_column_name] == ]
-
-        # # Query the database with survey_uid, location_id, geo_level_uid to get the parent location uid
-
-        # parent_location_name_column_name = geo_level_mapping[
-        #     parent_geo_level.geo_level_uid
-        # ].location_name_column.data
-
-        # parent_location_uid = (
-        #     Location.query.filter_by(
-        #         survey_uid=survey_uid,
-        #         location_id=locations_df[parent_location_id_column_name],
-        #     )
-        #     .first()
-        #     .location_uid
-        # )
-
-        # TODO make sure the parent location id column is not null
-
-        # TODO make sure the parent location id column exists in the csv file
-
-        # TODO make sure the parent location name column is not null
-
-        # TODO make sure the parent location name column exists in the csv file
-
-        # TODO make sure the parent location id column is unique
-
-        # TODO make sure the parent location name column is unique
-
-        # TODO make sure the parent location id column is not empty
-
-        # TODO make sure the parent location name column is not empty
-
-        # TODO make sure the parent location id column is not the same as the location id column
-
-        # TODO make sure the parent location name column is not the same as the location name column
-
-        # TODO make sure the parent location id column is not the same as the parent location name column
-
-        # TODO make sure the parent location name column is not the same as the parent location id column
-
         # Create and add location models for the geo level
+
+        location_records_to_insert = []
         for i, row in enumerate(locations_df[columns].drop_duplicates().itertuples()):
             parent_location_uid = None
             if parent_geo_level_uid is not None:
                 parent_location_uid = parent_locations.get(str(row[3]))
 
-            location = Location(
-                survey_uid=survey_uid,
-                location_id=row[1],
-                location_name=row[2],
-                parent_location_uid=parent_location_uid,
-                geo_level_uid=geo_level.geo_level_uid,
+            location_records_to_insert.append(
+                {
+                    "survey_uid": survey_uid,
+                    "location_id": row[1],  # location_id
+                    "location_name": row[2],  # location_name
+                    "parent_location_uid": parent_location_uid,
+                    "geo_level_uid": geo_level.geo_level_uid,
+                }
             )
 
-            db.session.add(location)
-
-            if i % 1000 == 0:
+            if i > 0 and i % 1000 == 0:
+                db.session.execute(insert(Location).values(location_records_to_insert))
                 db.session.flush()
+                location_records_to_insert.clear()
 
         # We need to flush the session to get the location_uids
         # These will be used to set the parent_location_uids for the next geo level
+        db.session.execute(insert(Location).values(location_records_to_insert))
         db.session.flush()
 
     try:
@@ -474,10 +461,6 @@ def upload_locations():
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500
-
-    # Perform validations
-
-    # If validations pass, save file to database
 
     # If validations fail, return error
     return jsonify(message="Success"), 200

@@ -18,10 +18,6 @@ Fixes: https://idinsight.atlassian.net/browse/DODSS-##
 
 ## How Has This Been Tested?
 
-## UI Changes
-- Add screenshots or Loom videos here
-- Add links to relevant Figma files
-
 ## To-do before merge
 
 (Optional -- remove this section if not needed)
@@ -42,6 +38,6 @@ Put an `x` in all the items that apply and remove any items that are not relevan
 - [ ] I have updated the automated tests (if applicable)
 - [ ] I have written [good commit messages][1]
 - [ ] I have updated the README file (if applicable)
-- [ ] I have updated affected documentation (if applicable)
+- [ ] I have updated the OpenAPI documentation (if applicable)
 
 [1]: http://chris.beams.io/posts/git-commit/

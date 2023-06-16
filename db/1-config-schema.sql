@@ -64,8 +64,8 @@ CREATE TABLE config_sandbox.module_questionnaire (
 	supervisor_hierarchy_exists BOOLEAN,
 	reassignment_required BOOLEAN,
 	assignment_process VARCHAR CHECK (assignment_process IN ('Manual','Random')),
-	supervisor_enumerator_relation VARCHAR,
-	language_lacation_mapping BOOLEAN
+	supervisor_surveyor_relation VARCHAR,
+	language_location_mapping BOOLEAN
 );
 
 /*
@@ -107,6 +107,8 @@ CREATE TABLE config_sandbox.locations (
 	parent_location_uid INTEGER REFERENCES config_sandbox.locations(location_uid),
 	CONSTRAINT _survey_uid_geo_level_uid_location_name_uc UNIQUE (survey_uid, location_id)
 );
+
+CREATE INDEX ix_locations_survey_uid_geo_level_uid ON config_sandbox.locations (survey_uid, geo_level_uid);
 
 CREATE TABLE config_sandbox.parent_forms
 (

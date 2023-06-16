@@ -2,6 +2,8 @@ from flask import jsonify, request
 from sqlalchemy.exc import IntegrityError
 from app import db
 from .models import Survey
+from app.blueprints.roles.models import Role
+from app.blueprints.locations.models import GeoLevel
 from app.blueprints.module_selection.models import ModuleStatus, Module
 from .routes import surveys_bp
 from .validators import (
@@ -10,6 +12,7 @@ from .validators import (
     UpdateSurveyValidator,
 )
 from app.utils.utils import logged_in_active_user_required
+
 
 @surveys_bp.route("", methods=["GET"])
 @logged_in_active_user_required
@@ -68,7 +71,9 @@ def create_survey():
                 default_config_status = ModuleStatus(
                     survey_uid=survey.survey_uid,
                     module_id=module.module_id,
-                    config_status="In Progress" if module.name == "Basic information" else "Not Started"
+                    config_status="In Progress"
+                    if module.name == "Basic information"
+                    else "Not Started",
                 )
                 db.session.add(default_config_status)
 
@@ -100,26 +105,31 @@ def get_survey_config_status(survey_uid):
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     if survey is None:
         return jsonify({"error": "Survey not found"}), 404
-    
-    config_status = db.session.query(
-        Module.module_id,
-        Module.name,
-        ModuleStatus.config_status,
-        Module.optional,
-        Survey.config_status.label("overall_status")
-    ).join(
-        Module,
-        ModuleStatus.module_id == Module.module_id,
-    ).join(
-        Survey,
-        ModuleStatus.survey_uid == Survey.survey_uid,
-    ).filter(
-        ModuleStatus.survey_uid == survey_uid
-    ).all()
-        
+
+    config_status = (
+        db.session.query(
+            Module.module_id,
+            Module.name,
+            ModuleStatus.config_status,
+            Module.optional,
+            Survey.config_status.label("overall_status"),
+        )
+        .join(
+            Module,
+            ModuleStatus.module_id == Module.module_id,
+        )
+        .join(
+            Survey,
+            ModuleStatus.survey_uid == Survey.survey_uid,
+        )
+        .filter(ModuleStatus.survey_uid == survey_uid)
+        .all()
+    )
+
     data = {}
+    optional_module_flag = False
     for status in config_status:
-        overall_status = status["overall_status"]
+        data["overall_status"] = status["overall_status"]
         if status.optional is False:
             if status.name in ["Basic information", "Module selection"]:
                 data[status.name] = {"status": status.config_status}
@@ -127,23 +137,45 @@ def get_survey_config_status(survey_uid):
                 if "Survey information" not in list(data.keys()):
                     data["Survey information"] = []
                 data["Survey information"].append(
-                    {
-                        "name": status.name,
-                        "status": status.config_status
-                    }
-                ) 
+                    {"name": status.name, "status": status.config_status}
+                )
         else:
+            optional_module_flag = True
             if "Module configuration" not in list(data.keys()):
                 data["Module configuration"] = []
             data["Module configuration"].append(
                 {
                     "module_id": status.module_id,
                     "name": status.name,
-                    "status": status.config_status
+                    "status": status.config_status,
                 }
             )
-        data["overall_status"] = overall_status
 
+    # Temp: Update module status based on whether data is present in the corresponding backend 
+    # table because we aren't updating the module status table from each module currently
+    from app.blueprints.forms.models import ParentForm
+
+    survey = Survey.query.filter_by(survey_uid=survey_uid).first()
+    scto_information = ParentForm.query.filter_by(survey_uid=survey_uid).first()
+    roles = Role.query.filter_by(survey_uid=survey_uid).first()
+    locations = GeoLevel.query.filter_by(survey_uid=survey_uid).first()
+
+    if survey is not None:
+        data["Basic information"]["status"] = "In Progress"
+    if optional_module_flag:
+        data["Module selection"]["status"] = "In Progress"
+    
+    for item in data["Survey information"]:
+        if item["name"] == "SurveyCTO information":
+            if scto_information is not None:
+                item["status"] = "In Progress"
+        elif item["name"] == "Field supervisor roles":
+            if roles is not None:
+                item["status"] = "In Progress"
+        elif item["name"] == "Survey locations":
+            if locations is not None:
+                item["status"] = "In Progress"
+    
     response = {"success": True, "data": data}
     return jsonify(response), 200
 
@@ -206,7 +238,7 @@ def delete_survey(survey_uid):
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     if survey is None:
         return jsonify({"error": "Survey not found"}), 404
-    
+
     ModuleStatus.query.filter(ModuleStatus.survey_uid == survey_uid).delete()
     db.session.delete(survey)
 

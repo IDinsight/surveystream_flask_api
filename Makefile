@@ -177,3 +177,19 @@ run-unit-tests:
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
 	docker-compose -f docker-compose/docker-compose.test-unit.yml -f docker-compose/docker-compose.override-test-unit.yml rm -fsv
+
+
+profile-locations:
+	mkdir -p profiling/outputs
+	
+	@BACKEND_NAME=${BACKEND_NAME} \
+	VERSION=${VERSION} \
+	BACKEND_PORT=${BACKEND_PORT} \
+	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
+	docker-compose -f docker-compose/docker-compose.profiling.yml -f docker-compose/docker-compose.override-test-unit.yml run --rm api ;
+	
+	@BACKEND_NAME=${BACKEND_NAME} \
+	VERSION=${VERSION} \
+	BACKEND_PORT=${BACKEND_PORT} \
+	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
+	docker-compose -f docker-compose/docker-compose.profiling.yml -f docker-compose/docker-compose.override-test-unit.yml rm -fsv
