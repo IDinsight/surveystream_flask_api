@@ -620,7 +620,7 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
+
         assert response.status_code == 200
 
         df = pd.read_csv(filepath, dtype=str)

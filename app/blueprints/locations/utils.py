@@ -119,16 +119,16 @@ def run_location_mapping_validations(geo_levels, geo_level_mapping):
     return mapping_errors
 
 
-def build_locations_df(base64_file_content, col_names):
+def build_locations_df(csv_string, col_names):
     """
-    Function to create and format the locations dataframe from the base64-encoded csv file content
+    Function to create and format the locations dataframe from the decoded csv file string
 
     :param base64_file_content: Base64-encoded csv file content from the request payload
     """
 
     # Read the csv content into a dataframe
     locations_df = pd.read_csv(
-        io.StringIO(base64.b64decode(base64_file_content).decode("utf-8")),
+        io.StringIO(csv_string),
         dtype=str,
         keep_default_na=False,
     )
@@ -141,7 +141,6 @@ def build_locations_df(base64_file_content, col_names):
 
     # Strip white space from all columns
     for index in range(locations_df.shape[1]):
-        locations_df.iloc[:, index] = locations_df.iloc[:, index].astype(str)
         locations_df.iloc[:, index] = locations_df.iloc[:, index].str.strip()
 
     # Replace empty strings with NaN

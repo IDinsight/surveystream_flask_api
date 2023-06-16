@@ -327,9 +327,9 @@ def upload_locations():
     # Check if any columns are able to be read in - if not the first row is probably empty
     # If so do not proceed as it will cause errors
 
-    col_names = DictReader(
-        io.StringIO(base64.b64decode(payload_validator.file.data).decode("utf-8"))
-    ).fieldnames
+    csv_string = base64.b64decode(payload_validator.file.data).decode("utf-8")
+
+    col_names = DictReader(io.StringIO(csv_string)).fieldnames
 
     if len(col_names) == 0:
         return (
@@ -349,7 +349,7 @@ def upload_locations():
 
     # Build the locations dataframe
 
-    locations_df = build_locations_df(payload_validator.file.data, col_names)
+    locations_df = build_locations_df(csv_string, col_names)
 
     # Validate the data in the dataframe
 
@@ -405,26 +405,31 @@ def upload_locations():
             columns.append(parent_location_id_column_name)
 
         # Create and add location models for the geo level
+
+        location_records_to_insert = []
         for i, row in enumerate(locations_df[columns].drop_duplicates().itertuples()):
             parent_location_uid = None
             if parent_geo_level_uid is not None:
                 parent_location_uid = parent_locations.get(str(row[3]))
 
-            location = Location(
-                survey_uid=survey_uid,
-                location_id=row[1],
-                location_name=row[2],
-                parent_location_uid=parent_location_uid,
-                geo_level_uid=geo_level.geo_level_uid,
+            location_records_to_insert.append(
+                {
+                    "survey_uid": survey_uid,
+                    "location_id": row[1],  # location_id
+                    "location_name": row[2],  # location_name
+                    "parent_location_uid": parent_location_uid,
+                    "geo_level_uid": geo_level.geo_level_uid,
+                }
             )
 
-            db.session.add(location)
-
-            if i % 1000 == 0 and i > 0:
+            if i > 0 and i % 1000 == 0:
+                db.session.execute(insert(Location).values(location_records_to_insert))
                 db.session.flush()
+                location_records_to_insert.clear()
 
         # We need to flush the session to get the location_uids
         # These will be used to set the parent_location_uids for the next geo level
+        db.session.execute(insert(Location).values(location_records_to_insert))
         db.session.flush()
 
     try:
