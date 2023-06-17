@@ -97,7 +97,16 @@ def create_parent_form():
 
     # Validate the request body payload
     if payload_validator.validate():
-        parent_form = ParentForm(**payload)
+        parent_form = ParentForm(
+            survey_uid=payload_validator.survey_uid.data,
+            scto_form_id=payload_validator.scto_form_id.data,
+            form_name=payload_validator.form_name.data,
+            tz_name=payload_validator.tz_name.data,
+            scto_server_name=payload_validator.scto_server_name.data,
+            encryption_key_shared=payload_validator.encryption_key_shared.data,
+            server_access_role_granted=payload_validator.server_access_role_granted.data,
+            server_access_allowed=payload_validator.server_access_allowed.data,
+        )
         try:
             db.session.add(parent_form)
             db.session.commit()
@@ -222,7 +231,14 @@ def create_scto_question_mapping(form_uid):
         parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
         if parent_form is None:
             return jsonify({"error": "Form not found"}), 404
-        scto_question_mapping = SCTOQuestionMapping(**payload)
+        scto_question_mapping = SCTOQuestionMapping(
+            form_uid=form_uid,
+            survey_status=payload_validator.survey_status.data,
+            revisit_section=payload_validator.revisit_section.data,
+            target_id=payload_validator.target_id.data,
+            enumerator_id=payload_validator.enumerator_id.data,
+            locations=payload["locations"] if "locations" in payload else None,
+        )
         try:
             db.session.add(scto_question_mapping)
             db.session.commit()
@@ -274,7 +290,9 @@ def update_scto_question_mapping(form_uid):
                     SCTOQuestionMapping.revisit_section: payload_validator.revisit_section.data,
                     SCTOQuestionMapping.target_id: payload_validator.target_id.data,
                     SCTOQuestionMapping.enumerator_id: payload_validator.enumerator_id.data,
-                    SCTOQuestionMapping.locations: payload["locations"],
+                    SCTOQuestionMapping.locations: payload["locations"]
+                    if "locations" in payload
+                    else None,
                 },
                 synchronize_session="fetch",
             )

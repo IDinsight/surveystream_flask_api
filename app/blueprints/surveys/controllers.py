@@ -61,7 +61,19 @@ def create_survey():
 
     # Validate the request body payload
     if payload_validator.validate():
-        survey = Survey(**payload)
+        survey = Survey(
+            survey_id=payload_validator.survey_id.data,
+            survey_name=payload_validator.survey_name.data,
+            project_name=payload_validator.project_name.data,
+            survey_description=payload_validator.survey_description.data,
+            surveying_method=payload_validator.surveying_method.data,
+            planned_start_date=payload_validator.planned_start_date.data,
+            planned_end_date=payload_validator.planned_end_date.data,
+            irb_approval=payload_validator.irb_approval.data,
+            config_status=payload_validator.config_status.data,
+            state=payload_validator.state.data,
+            created_by_user_uid=payload_validator.created_by_user_uid.data,
+        )
         try:
             db.session.add(survey)
 
@@ -151,7 +163,7 @@ def get_survey_config_status(survey_uid):
                 }
             )
 
-    # Temp: Update module status based on whether data is present in the corresponding backend 
+    # Temp: Update module status based on whether data is present in the corresponding backend
     # table because we aren't updating the module status table from each module currently
     from app.blueprints.forms.models import ParentForm
 
@@ -164,7 +176,7 @@ def get_survey_config_status(survey_uid):
         data["Basic information"]["status"] = "In Progress"
     if optional_module_flag:
         data["Module selection"]["status"] = "In Progress"
-    
+
     for item in data["Survey information"]:
         if item["name"] == "SurveyCTO information":
             if scto_information is not None:
@@ -175,7 +187,7 @@ def get_survey_config_status(survey_uid):
         elif item["name"] == "Survey locations":
             if locations is not None:
                 item["status"] = "In Progress"
-    
+
     response = {"success": True, "data": data}
     return jsonify(response), 200
 
