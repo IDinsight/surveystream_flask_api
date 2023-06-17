@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import IntegerField, StringField, DateField
-from wtforms.validators import InputRequired, AnyOf
+from wtforms.validators import DataRequired, AnyOf
 from wtforms import ValidationError
 
 
@@ -8,28 +8,28 @@ class GetSurveyQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    user_uid = IntegerField(validators=[InputRequired()])
+    user_uid = IntegerField(validators=[DataRequired()])
 
 
 class CreateSurveyValidator(FlaskForm):
-    survey_id = StringField(validators=[InputRequired()])
-    survey_name = StringField(validators=[InputRequired()])
+    survey_id = StringField(validators=[DataRequired()])
+    survey_name = StringField(validators=[DataRequired()])
     project_name = StringField()
     survey_description = StringField()
     surveying_method = StringField(
         validators=[
-            InputRequired(),
+            DataRequired(),
             AnyOf(["in-person", "phone"], message="Value must be one of %(values)s"),
         ]
     )
     irb_approval = StringField(
         validators=[
-            InputRequired(),
+            DataRequired(),
             AnyOf(["Yes", "No", "Pending"], message="Value must be one of %(values)s"),
         ]
     )
-    planned_start_date = DateField(validators=[InputRequired()], format="%Y-%m-%d")
-    planned_end_date = DateField(validators=[InputRequired()], format="%Y-%m-%d")
+    planned_start_date = DateField(validators=[DataRequired()], format="%Y-%m-%d")
+    planned_end_date = DateField(validators=[DataRequired()], format="%Y-%m-%d")
     state = StringField(
         validators=[
             AnyOf(
@@ -49,7 +49,7 @@ class CreateSurveyValidator(FlaskForm):
             )
         ]
     )
-    created_by_user_uid = IntegerField(validators=[InputRequired()])
+    created_by_user_uid = IntegerField(validators=[DataRequired()])
 
     def validate_planned_end_date(form, planned_end_date):
         if planned_end_date.data < form.planned_start_date.data:
@@ -59,25 +59,25 @@ class CreateSurveyValidator(FlaskForm):
 
 
 class UpdateSurveyValidator(FlaskForm):
-    survey_uid = IntegerField(validators=[InputRequired()])
-    survey_id = StringField(validators=[InputRequired()])
-    survey_name = StringField(validators=[InputRequired()])
+    survey_uid = IntegerField(validators=[DataRequired()])
+    survey_id = StringField(validators=[DataRequired()])
+    survey_name = StringField(validators=[DataRequired()])
     project_name = StringField()
     survey_description = StringField()
     surveying_method = StringField(
         validators=[
-            InputRequired(),
+            DataRequired(),
             AnyOf(["in-person", "phone"], message="Value must be one of %(values)s"),
         ]
     )
     irb_approval = StringField(
         validators=[
-            InputRequired(),
+            DataRequired(),
             AnyOf(["Yes", "No", "Pending"], message="Value must be one of %(values)s"),
         ]
     )
-    planned_start_date = DateField(validators=[InputRequired()], format="%Y-%m-%d")
-    planned_end_date = DateField(validators=[InputRequired()], format="%Y-%m-%d")
+    planned_start_date = DateField(validators=[DataRequired()], format="%Y-%m-%d")
+    planned_end_date = DateField(validators=[DataRequired()], format="%Y-%m-%d")
     state = StringField(
         validators=[
             AnyOf(
