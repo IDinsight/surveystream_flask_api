@@ -1,10 +1,10 @@
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, FieldList, IntegerField, StringField
-from wtforms.validators import DataRequired
+from wtforms.validators import InputRequired
 
 
 class ModuleQuestionnaireForm(FlaskForm):
-    survey_uid = IntegerField(validators=[DataRequired()])
+    survey_uid = IntegerField(validators=[InputRequired()])
 
     target_assignment_criteria = FieldList(StringField(validators=[]), validators=[])
     supervisor_assignment_criteria = FieldList(

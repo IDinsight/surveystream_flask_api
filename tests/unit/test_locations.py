@@ -970,3 +970,33 @@ class TestLocations:
         checkdiff = jsondiff.diff(expected_response, response.json)
 
         assert checkdiff == {}
+
+    def test_create_geo_levels_missing_keys(
+        self, client, login_test_user, csrf_token, create_survey
+    ):
+        """
+        Insert new geo levels with missing keys to test the validator
+        """
+
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "State",
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "District",
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
