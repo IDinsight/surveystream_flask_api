@@ -70,6 +70,10 @@ tags:
     description: Endpoints related to miscellaneous functionalities
   - name: Module Questionnaire
     description: Endpoints related to module questionnaire
+  - name: Roles
+    description: Endpoints related to user roles
+  - name: Locations
+    description: Endpoints related to locations
 x-tagGroups:
   - name: User Management
     tags:
@@ -104,6 +108,12 @@ x-tagGroups:
   - name: Module Questionnaire
     tags:
       - Module Questionnaire
+  - name: Roles
+    tags:
+      - Roles
+  - name: Locations
+    tags:
+      - Locations
 paths:
   /healthcheck:
     get:
@@ -590,7 +600,7 @@ paths:
                   type: string
                   example: AgriFieldneet Survey
                   description: The name of the project the survey belongs to
-                description:
+                survey_description:
                   type: string
                   example: 'AgriFieldnet survey starting on 1st Jan, 2023'
                   description: A description of the survey
@@ -653,7 +663,7 @@ paths:
                 - state
                 - created_by_user_uid
       responses:
-        '201':
+        '200':
           description: The survey was created successfully
           content:
             application/json:
@@ -675,18 +685,18 @@ paths:
                           survey_uid:
                             type: integer
                             example: 19
-                            description: The unique identifier for the survey
+                            description: The database-assigned unique identifier for the survey
                           survey_id:
                             type: string
-                            example: AgriFieldneet
+                            example: AgriFieldnet
                             description: The unique identifier for the survey
                           survey_name:
                             type: string
-                            example: Agrifieldneet Main Survey Form
+                            example: Agrifieldnet Main Survey Form
                             description: The name of the survey
                           project_name:
                             type: string
-                            example: AgriFieldneet Survey
+                            example: AgriFieldnet Survey
                             description: The name of the project the survey belongs to
                           survey_description:
                             type: string
@@ -698,42 +708,39 @@ paths:
                               - phone
                               - in-person
                             example: in-person
-                            irb_approval:
-                              type: string
-                              enum:
-                                - 'Yes'
-                                - 'No'
-                                - Pending
-                              example: Pending
-                            planned_start_date:
-                              type: string
-                              format: date
-                              example: 2023-01-01T00:00:00.000Z
-                            planned_end_date:
-                              type: string
-                              format: date
-                              example: 2023-06-30T00:00:00.000Z
-                            config_status:
-                              type: string
-                              enum:
-                                - In Progress - Configuration
-                                - In Progress - Backend Setup
-                                - Done
-                              example: In Progress - Configuration
-                            state:
-                              type: string
-                              enum:
-                                - Draft
-                                - Active
-                                - Past
-                              example: Draft
-                            survey_uid:
-                              type: integer
-                              example: 19
-                            last_updated_at:
-                              type: string
-                              format: date-time
-                              example: 2023-04-18T00:00:00.000Z
+                          irb_approval:
+                            type: string
+                            enum:
+                              - 'Yes'
+                              - 'No'
+                              - Pending
+                            example: Pending
+                          planned_start_date:
+                            type: string
+                            format: date
+                            example: 2023-01-01T00:00:00.000Z
+                          planned_end_date:
+                            type: string
+                            format: date
+                            example: 2023-06-30T00:00:00.000Z
+                          config_status:
+                            type: string
+                            enum:
+                              - In Progress - Configuration
+                              - In Progress - Backend Setup
+                              - Done
+                            example: In Progress - Configuration
+                          state:
+                            type: string
+                            enum:
+                              - Draft
+                              - Active
+                              - Past
+                            example: Draft
+                          last_updated_at:
+                            type: string
+                            format: date-time
+                            example: 2023-04-18T00:00:00.000Z
         '400':
           description: A survey with the same survey_id already exists
           content:
@@ -746,7 +753,153 @@ paths:
                     example: false
                   error:
                     type: string
-                    example: Survey already exists
+                    example: survey_id already exists
+  /surveys/<survey_uid>/basic-information:
+    get:
+      summary: Get basic information for a specific survey
+      description: Returns basic information about a specific survey
+      tags:
+        - Surveys
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    description: Basic information related to a specific survey
+                    items:
+                      type: object
+                      properties:
+                        survey_uid:
+                          type: integer
+                          description: The unique ID of the survey.
+                        survey_id:
+                          type: string
+                          description: The ID of the survey.
+                        survey_name:
+                          type: string
+                          description: The name of the survey.
+                        project_name:
+                          type: string
+                          description: The name of the project that the survey belongs to.
+                        survey_description:
+                          type: string
+                          description: A description of the survey.
+                        surveying_method:
+                          type: string
+                          description: 'The method of surveying, e.g. in-person, phone.'
+                        irb_approval:
+                          type: string
+                          description: >-
+                            The status of the IRB approval, e.g. Yes, No,
+                            Pending.
+                        planned_start_date:
+                          type: string
+                          description: >-
+                            The planned start date of the survey in ISO 8601
+                            format.
+                        planned_end_date:
+                          type: string
+                          description: >-
+                            The planned end date of the survey in ISO 8601
+                            format.
+                        state:
+                          type: string
+                          description: 'The state of the survey, e.g. Draft, Active, Past.'
+                        last_updated_at:
+                          type: string
+                          description: >-
+                            The date and time that the survey was last updated
+                            in ISO 8601 format.
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful.
+        '404':
+          description: No surveys found for the specified user or all users.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A message indicating that no surveys were found.
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful.
+  /surveys/<survey_uid>/config-status:
+    get:
+      summary: Get configuration status for each module for a specific survey
+      description: Returns module configuration status for a specific survey
+      tags:
+        - Surveys
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    description: Configuration status for a specific survey
+                    items:
+                      type: object
+                      properties:
+                        Basic information:
+                          type: object
+                          description: Status of basic information module of the survey
+                          items:
+                            type: object
+                            properties:
+                              status:
+                                type: string
+                                description: Configration Status (Not started/ In progress/ Done)
+                        Survey information:
+                          type: array
+                          description: Status of modules in the survey information section of the survey
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: Name of the module like SurveyCTO information, Field supervisor roles etc.
+                              status:
+                                type: string
+                                description: Configration Status (Not started/ In progress/ Done)
+                        Module selection:
+                          type: object
+                          description: Status of module selection for the survey
+                          items:
+                            type: object
+                            properties:
+                              status:
+                                type: string
+                                description: Configration Status (Not started/ In progress/ Done)
+                        overall_status:
+                          type: string
+                          description: Overall Status (In progress - Configuration/ In Progress - Backend Setup/ Done)
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful.
+        '404':
+          description: No surveys found for the specified user or all users.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A message indicating that no surveys were found.
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful.
   /modules:
     get:
       tags:
@@ -756,36 +909,40 @@ paths:
       responses:
         '200':
           description: OK
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-                description: Indicates if the request was successful
-              data:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    module_id:
-                      type: integer
-                      format: int64
-                      description: ID of the module
-                    name:
-                      type: string
-                      description: Name of the module
-                    optional:
-                      type: boolean
-                      description: Indicates if the module is optional
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates if the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        module_id:
+                          type: integer
+                          format: int64
+                          description: ID of the module
+                        name:
+                          type: string
+                          description: Name of the module
+                        optional:
+                          type: boolean
+                          description: Indicates if the module is optional
         '404':
           description: Not Found
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-                description: Error message
-                example: No modules found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+                    example: No modules found.
   /module-status:
     post:
       tags:
@@ -856,16 +1013,16 @@ paths:
             type: integer
           required: true
           description: The ID of the survey to update the status for
-        - in: body
-          name: status
-          description: The new status to set for the module
-          schema:
-            type: object
-            properties:
-              config_status:
-                type: string
-                enum: [ Done, In Progress, Not Started, Error ]
-          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config_status:
+                  type: string
+                  enum: [ Done, In Progress, Not Started, Error ]
       responses:
         '200':
           description: Successfully updated module status for survey
@@ -966,19 +1123,50 @@ paths:
                   message:
                     type: string
                     description: Error message indicating that the specified survey ID was not found.
-  /forms/{form_uid}:
-    get:
-      summary: Get forms
-      description: Return the information for the requested parent form
+  /forms:
+    post:
+      summary: Create a new form
       tags:
         - Forms
-      parameters:
-        - in: path
-          name: form_uid
-          schema:
-            type: integer
-          required: true
-          description: Unique ID of the parent form
+      description: Create a new form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: string
+                  description: The unique identifier for the survey
+                form_name:
+                  type: string
+                  description: The name of the form to display as a label on the web app
+                scto_form_id:
+                  type: string
+                  description: The form's SurveyCTO form ID
+                tz_name:
+                  type: string
+                  description: The timezone in which data collection will happen for the form
+                scto_server_name:
+                  type: string
+                  description: The SurveyCTO server name for the form
+                encryption_key_shared:
+                  type: boolean
+                  description:
+                    Whether the encryption key for the form has been shared with the SurveyStream team
+                server_access_role_granted:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                server_access_allowed:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+              required:
+                - survey_uid
+                - scto_form_id
+                - form_name
       responses:
         '200':
           description: OK
@@ -987,12 +1175,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  survey_id:
+                  survey_uid:
                     type: string
-                    description: The ID of the survey
-                  survey_name:
-                    type: string
-                    description: The name of the survey
+                    description: The unique ID of the survey
                   form_uid:
                     type: integer
                     description: The unique ID of the form
@@ -1002,35 +1187,656 @@ paths:
                   scto_form_id:
                     type: string
                     description: The form's SurveyCTO form ID
-                  planned_start_date:
+                  tz_name:
                     type: string
-                    description: Planned start date of the form in isoformat
-                  planned_end_date:
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
                     type: string
-                    description: Planned end date of the form in isoformat
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                   last_ingested_at:
                     type: string
                     description: >-
                       Date when form submissions were last ingested from
                       SurveyCTO in isoformat
-                  child_forms:
-                    type: array
-                    description: Child forms associated with the main form
-                    items:
-                      type: object
-                      properties:
-                        scto_form_id:
-                          type: string
-                          description: The form's SurveyCTO form ID
-                        form_type:
-                          type: string
-                          description: >-
-                            The form type (Spotcheck, Backcheck, Bikelog, Audio
-                            Audit)
+        '400':
+          description: A form with the same survey_uid and scto_form_id already exists, or a form with the same survey_uid and form_name already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the form could not be created.
+  /forms/{form_uid}:
+    get:
+      summary: Get forms
+      description: Return the information for the requested form. If path parameter is not provided, return all forms for the logged in user.
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+        - in: query
+          name: survey_uid
+          schema:
+            type: integer
+          required: false
+          description: Unique ID of the survey to return forms for. Cannot be used in conjuction with the `form_uid` path parameter.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  survey_uid:
+                    type: string
+                    description: The unique ID of the survey
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  form_name:
+                    type: string
+                    description: The name of the form
+                  scto_form_id:
+                    type: string
+                    description: The form's SurveyCTO form ID
+                  tz_name:
+                    type: string
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
+                    type: string
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  last_ingested_at:
+                    type: string
+                    description: >-
+                      Date when form submissions were last ingested from
+                      SurveyCTO in isoformat
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    put:
+      summary: Update an existing form
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Update an existing form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The unique identifier for the form
+                survey_uid:
+                  type: string
+                  description: The unique identifier for the survey
+                form_name:
+                  type: string
+                  description: The name of the form to display as a label on the web app
+                scto_form_id:
+                  type: string
+                  description: The form's SurveyCTO form ID
+                tz_name:
+                  type: string
+                  description: The timezone in which data collection will happen for the form
+                scto_server_name:
+                  type: string
+                  description: The SurveyCTO server name for the form
+                encryption_key_shared:
+                  type: boolean
+                  description:
+                    Whether the encryption key for the form has been shared with the SurveyStream team
+                server_access_role_granted:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                server_access_allowed:
+                  type: boolean
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+              required:
+                - survey_uid
+                - scto_form_id
+                - form_name
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  survey_uid:
+                    type: string
+                    description: The unique ID of the survey
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  form_name:
+                    type: string
+                    description: The name of the form
+                  scto_form_id:
+                    type: string
+                    description: The form's SurveyCTO form ID
+                  tz_name:
+                    type: string
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
+                    type: string
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  last_ingested_at:
+                    type: string
+                    description: >-
+                      Date when form submissions were last ingested from
+                      SurveyCTO in isoformat
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    delete:
+      summary: Delete a form
+      tags:
+        - Forms
+      description: Delete a form
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+  /forms/{form_uid}/scto-question-mapping:
+    get:
+      summary: Get SurveyCTO question mapping for a form
+      description: >-
+        Return the SurveyCTO question mapping information for the requested form. 
+        The SurveyCTO question mapping information is used to map SurveyStream variables to SurveyCTO questions.
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  survey_status:
+                    type: string
+                    description: The status of the survey
+                  revisit_section:
+                    type: string
+                    description: The form's revisit section
+                  enumerator_id:
+                    type: string
+                    description: The form's enumerator ID
+                  target_id:
+                    type: string
+                    description: The form's target ID
+                  locations:
+                    type: object
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    post:
+      summary: Create a SurveyCTO question mapping
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Create a SurveyCTO question mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The unique ID of the form
+                survey_status:
+                  type: string
+                  description: The status of the survey
+                revisit_section:
+                  type: string
+                  description: The form's revisit section
+                enumerator_id:
+                  type: string
+                  description: The form's enumerator ID
+                target_id:
+                  type: string
+                  description: The form's target ID
+                locations:
+                  type: object
+                  description:
+                    The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+              required:
+                - form_uid
+                - survey_status
+                - revisit_section
+                - enumerator_id
+                - target_id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "success":
+                    type: boolean
+                    description: Indicates whether the request was successful
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    put:
+      summary: Update an existing SurveyCTO question mapping
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Update an existing SurveyCTO question mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The unique ID of the form
+                survey_status:
+                  type: string
+                  description: The status of the survey
+                revisit_section:
+                  type: string
+                  description: The form's revisit section
+                enumerator_id:
+                  type: string
+                  description: The form's enumerator ID
+                target_id:
+                  type: string
+                  description: The form's target ID
+                locations:
+                  type: object
+                  description:
+                    The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+              required:
+                - form_uid
+                - survey_status
+                - revisit_section
+                - enumerator_id
+                - target_id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  survey_status:
+                    type: string
+                    description: The status of the survey
+                  revisit_section:
+                    type: string
+                    description: The form's revisit section
+                  enumerator_id:
+                    type: string
+                    description: The form's enumerator ID
+                  target_id:
+                    type: string
+                    description: The form's target ID
+                  locations:
+                    type: object
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    delete:
+      summary: Delete an existing SurveyCTO question mapping
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Delete an existing SurveyCTO question mapping
+      responses:
+        '204':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "success":
+                    type: boolean
+                    description: Indicates whether the request was successful
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+  /forms/{form_uid}/scto-form-definition/refresh:
+    post:
+      summary: Refresh the SurveyCTO form definition
+      tags:
+        - Forms
+      description: >-
+        Refresh the SurveyCTO form definition from the SurveyCTO server and store it in the database. 
+        The old form definition will be deleted and a new one created, which will increment the `question_uid` and `list_uid`.
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+  /forms/{form_uid}/scto-form-definition:
+    get:
+      summary: Get the SurveyCTO form definition for a form
+      tags:
+        - Forms
+      description: Get the SurveyCTO form definition for a form
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: object
+                    description: The SurveyCTO form definition for the form
+                    properties:
+                      questions:
+                        description: >-
+                          The SurveyCTO form questions from the `Survey` tab
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            question_uid:
+                              type: integer
+                              description: ID of the question
+                            form_uid:
+                              type: integer
+                              description: ID of the form
+                            question_name:
+                              type: string
+                              description: Name of the question
+                            question_type:
+                              type: string
+                              description: Type of the question
+                            list_uid:
+                              type: integer
+                              description: ID of the choice list
+                            is_repeat_group:
+                              type: boolean
+                              description: Indicates if the question is a repeat group
+                      settings:
+                        type: object
+                        description: The SurveyCTO form settings from the `Settings` tab
+                        properties:
+                          form_uid:
+                            type: integer
+                            description: ID of the form
+                          form_title:
+                            type: string
+                            description: Name of the form
+                          version:
+                            type: string
+                            description: Version of the form
+                          submission_url:
+                            type: string
+                            description: URL to submit the form to
+                          public_key:
+                            type: string
+                            description: The form's public key
+                          default_language:
+                            type: string
+                            description: The form's default language
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+    delete:
+      summary: Delete an existing SurveyCTO form definition
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      description: Delete an existing SurveyCTO form definition
+      responses:
+        '204':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "success":
+                    type: boolean
+                    description: Indicates whether the request was successful
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
   /enumerators:
     get:
       summary: Get enumerators
-      description: Return the logged in user's enumerators for the given parent form
+      description: Return the logged in user's enumerators for the given form
       tags:
         - Enumerators
       parameters:
@@ -1038,7 +1844,7 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: Unique ID of the parent form
+          description: Unique ID of the form
       responses:
         '200':
           description: OK
@@ -1152,7 +1958,7 @@ paths:
                             description: >-
                               The enumerator's total assigned targets for the
                               form
-  '/enumerators/{enumerator_uid}':
+  /enumerators/{enumerator_uid}:
     patch:
       summary: Update enumerator status
       description: >
@@ -1204,7 +2010,7 @@ paths:
   /targets:
     get:
       summary: Get targets
-      description: Return the logged in user's targets for the given parent form
+      description: Return the logged in user's targets for the given form
       tags:
         - Targets
       parameters:
@@ -1212,7 +2018,7 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: Unique ID of the parent form
+          description: Unique ID of the form
       responses:
         '200':
           description: OK
@@ -1318,7 +2124,7 @@ paths:
   /assignments:
     get:
       summary: Get assignments
-      description: Return the logged in user's assignment details for the given parent form
+      description: Return the logged in user's assignment details for the given form
       tags:
         - Assignments
       parameters:
@@ -1326,7 +2132,7 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: Unique ID of the parent form
+          description: Unique ID of the form
       responses:
         '200':
           description: OK
@@ -1584,7 +2390,7 @@ paths:
       summary: Get table configuration
       description: >-
         Return the web flask_app table configuration details for the given
-        parent form
+        form
       tags:
         - Table Configuration
       parameters:
@@ -1592,7 +2398,7 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: Unique ID of the parent form
+          description: Unique ID of the form
       responses:
         '200':
           description: OK
@@ -1861,3 +2667,346 @@ paths:
           description: X-CSRF-Token required in header
         '422':
           description: Form errors
+  '/roles':
+    get:
+      tags:
+        - Roles
+      summary: Get user roles for a survey
+      description: |
+        Returns the user roles for a given survey.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Returns the user roles for a given survey.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of roles for the given survey
+                    items:
+                      type: object
+                      properties:
+                        role_uid:
+                          type: integer
+                          description: The unique ID of the role.
+                        role_name:
+                          type: string
+                          description: The name of the role.
+                        reporting_role_uid:
+                          type: integer
+                          description: The unique role ID of role that supervises the given role.
+                        survey_uid:
+                          type: integer
+                          description: The unique ID of the given survey.
+    put:
+      tags:
+        - Roles
+      summary: Save the user roles for a survey
+      description: |
+        Saves the user roles for a given survey to the database. If a role_uid is provided, the role will be updated. If role_uid is `None`, a new role will be created. Existing roles in the database that are not in the payload (by `role_uid`) will be deleted.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: JSON object containing the desired roles for the survey.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                  - roles
+              properties:
+                roles:
+                  type: array
+                  description: Full list of roles for the given survey
+                  items:
+                    type: object
+                    required:
+                      - role_uid
+                      - role_name
+                      - reporting_role_uid
+                    properties:
+                      role_uid:
+                        type: integer
+                        nullable: true
+                        description: The unique ID of the role. If equal to None, a new role will be created. 
+                      role_name:
+                        type: string
+                        nullable: false
+                        description: The name of the role. 
+                      reporting_role_uid:
+                        type: integer
+                        nullable: true
+                        description: The unique role ID of role that supervises the given role.
+                validate_hierarchy:
+                  type: boolean
+                  description: |
+                    Whether to validate the hierarchy of the roles. Set this as true when updating the reporting_role_uid fields of the roles.
+                    This will check that the role hierarchy is a valid tree structure.
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: X-CSRF-Token required in header
+        '422':
+          description: Form errors
+            Form errors
+            When `validate_hierarchy` is set to true, any validation errors will be returned as an array under the `errors` key in the response.
+  /timezones:
+    get:
+      summary: Get the list of postgres timezones
+      tags:
+        - Misc
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    description: List of postgres timezones
+                    items:
+                      type: object
+                      description: Postgres timezone object
+                      properties:
+                        name:
+                          type: string
+                          description: Postgres timezone name
+                        abbrev:
+                          type: string
+                          description: Postgres timezone abbreviation
+                        utc_offset:
+                          type: string
+                          description: Postgres timezone UTC offset
+  '/locations/geo-levels':
+    get:
+      tags:
+        - Locations
+      summary: Get geo levels for a survey
+      description: |
+        Returns the geo levels for a given survey.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Returns the geo levels for a given survey.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of geo levels for the given survey
+                    items:
+                      type: object
+                      properties:
+                        geo_level_uid:
+                          type: integer
+                          description: The unique ID of the geo level.
+                        geo_level_name:
+                          type: string
+                          description: The name of the geo level.
+                        parent_geo_level_uid:
+                          type: integer
+                          description: The unique ID of geo level that is the parent of the given geo level.
+                        survey_uid:
+                          type: integer
+                          description: The unique ID of the given survey.
+    put:
+      tags:
+        - Locations
+      summary: Save the geo levels for a survey
+      description: |
+        Saves the geo levels for a given survey to the database. If a geo_level_uid is provided, the geo level will be updated. If geo_level_uid is `None`, a new geo level will be created. Existing geo levels in the database that are not in the payload (by `geo_level_uid`) will be deleted.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: JSON object containing the desired geo levels for the survey.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                  - geo_levels
+              properties:
+                geo_levels:
+                  type: array
+                  description: Full list of geo levels for the given survey
+                  items:
+                    type: object
+                    properties:
+                      geo_level_uid:
+                        type: integer
+                        nullable: true
+                        description: The unique ID of the geo level. If equal to None, a new geo level will be created.
+                      geo_level_name:
+                        type: string
+                        nullable: false
+                        description: The name of the geo level.
+                      parent_geo_level_uid:
+                        type: integer
+                        nullable: true
+                        description: The unique ID of geo level that is the parent of the given geo level.
+                validate_hierarchy:
+                  type: boolean
+                  description: |
+                    Whether to validate the hierarchy of the geo levels. Set this as true when updating the parent_geo_level_uid fields of the geo levels.
+                    This will check that the location type hierarchy is a valid tree structure.
+
+
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: X-CSRF-Token required in header
+        '422':
+          description: |
+            Form errors
+            When `validate_hierarchy` is set to true, any validation errors will be returned as an array under the `errors` key in the response.
+  '/locations':
+    get:
+      tags:
+        - Locations
+      summary: Get locations for a survey
+      description: |
+        Returns the locations for a given survey.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Returns the locations for a given survey.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: object
+                    properties:
+                      ordered_columns:
+                        type: array
+                        description: |
+                          List of columns to display in the table in the correct order. 
+                          These will be of the form [<geo level 1 name> ID, <geo level 1 name> Name, <geo level 2 name> ID, <geo level 2 name> Name, ...]. 
+                          For example, ["State ID", "State Name", "District ID", "District Name", "Block ID", "Block Name"].
+                          The order of geo levels will be descending from the top level geo level to the lowest level geo level.
+                          Will be empty if no geo levels have been configured for the given survey.
+                      records:
+                        type: array
+                        description: |
+                          List of location objects for the given survey. Each location object contains keys corresponding to the columns in the `ordered_columns` array.
+                          The columns are determined by the geo levels for the given survey, so columns will vary from survey to survey.
+                          Will be empty of no geo levels or no locations have been configured for the given survey.
+        '500':
+          description: |
+            Error message indicating that the locations could not be retrieved.
+            If the location type hierarchy is invalid, the `errors` key will contain a `geo_level_hierarchy` key with an error message string.
+ 
+    post:
+      tags:
+        - Locations
+      summary: Upload a locations CSV file for a survey
+      description: |
+        Upload a locations CSV file for a given survey to the database. A column mapping is required in the payload to map the columns in the CSV file to the geo levels for the given survey.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: JSON object containing locations file content and geo level column mapping.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                geo_level_mapping:
+                  type: array
+                  description: An array of objects mapping the columns in the CSV file to the geo levels for the given survey.
+                  items:
+                    type: object
+                    properties:
+                      geo_level_uid:
+                        type: integer
+                        nullable: false
+                        description: The unique ID of the geo level.
+                      location_id_column:
+                        type: string
+                        nullable: false
+                        description: The name of the column in the CSV file that contains the location id for the given geo level.
+                      location_name_column:
+                        type: integer
+                        nullable: false
+                        description: The name of the column in the CSV file that contains the location name for the given geo level.
+                    required:
+                      - geo_level_uid
+                      - location_id_column
+                      - location_name_column
+                file:
+                  type: string
+                  description: Base64 encoded CSV file content
+              required:
+                - geo_level_mapping
+                - file
+
+
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: X-CSRF-Token required in header
+        '422':
+          description: |
+            Form errors
+            Validation errors for the geo level mapping will be returned as an array under the `geo_level_mapping` key in the `errors` key of the response.
+            Validation errors for the file will be returned as an array under the `file` key in the `errors` key of the response.
+            Validation errors for the location type hierarchy will be returned as an array under the `geo_level_hierarchy` key in the `errors` key of the response.
+            Note that the file validation will only be run if the geo level mapping is valid.

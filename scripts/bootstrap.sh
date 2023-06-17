@@ -47,20 +47,23 @@ function get_global_secret_value() {
     unset AWS_SESSION_TOKEN
 }
 
-echo "Fetching variables from aws store.."
+echo "Fetching variables from aws store..."
 
 # DB credentials
-export DB_HOST=$(get_secret_value "data-db-connection-details" "host" "json" "$AWS_REGION")
-export DB_USER=$(get_secret_value "data-db-connection-details" "username" "json" "$AWS_REGION")
-export DB_PASS=$(get_secret_value "data-db-connection-details" "password" "json" "$AWS_REGION")
-export DB_NAME=$(get_secret_value "data-db-connection-details" "dbname" "json" "$AWS_REGION")
+
+DB_SECRET=$(get_secret_value "data-db-connection-details" "" "json" "$AWS_REGION")
+
+export DB_HOST=$(echo "$DB_SECRET" | jq -r 'fromjson | .host')
+export DB_USER=$(echo "$DB_SECRET" | jq -r 'fromjson | .username')
+export DB_PASS=$(echo "$DB_SECRET" | jq -r 'fromjson | .password')
+export DB_NAME=$(echo "$DB_SECRET" | jq -r 'fromjson | .dbname')
 
 # Sendgrid API credentials
 export MAIL_PASSWORD=$(get_global_secret_value "sendgrid-api-key" "" "text" "$AWS_REGION")
 export MAIL_USERNAME="apikey"
 
 # S3 web assets bucket
-export S3_BUCKET_NAME=$(get_secret_value "web-assets-bucket-name" "" "text" "$AWS_REGION")
+export S3_BUCKET_NAME=$(get_secret_value "web-callisto-assets-bucket-name" "" "text" "$AWS_REGION")
 
 # Flask secret key
 export SECRET_KEY=$(get_secret_value "flask-secret-key" "SECRET_KEY" "json" "$AWS_REGION")

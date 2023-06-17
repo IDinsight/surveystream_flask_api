@@ -1,5 +1,5 @@
 from . import table_config_bp
-from app.utils import logged_in_active_user_required
+from app.utils.utils import logged_in_active_user_required
 from flask import jsonify, request
 from flask_login import current_user
 from app import db

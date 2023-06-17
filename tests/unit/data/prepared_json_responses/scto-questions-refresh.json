@@ -1,0 +1,471 @@
+{
+    "data": {
+        "questions": [
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "starttime",
+                "question_type": "start",
+                "question_uid": 72
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "endtime",
+                "question_type": "end",
+                "question_uid": 73
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "deviceid",
+                "question_type": "deviceid",
+                "question_uid": 74
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "subscriberid",
+                "question_type": "subscriberid",
+                "question_uid": 75
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "simid",
+                "question_type": "simserial",
+                "question_uid": 76
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "devicephonenum",
+                "question_type": "phonenumber",
+                "question_uid": 77
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "username",
+                "question_type": "username",
+                "question_uid": 78
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "duration",
+                "question_type": "calculate",
+                "question_uid": 79
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "caseid",
+                "question_type": "caseid",
+                "question_uid": 80
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "round_id",
+                "question_type": "calculate",
+                "question_uid": 82
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "month",
+                "question_type": "calculate",
+                "question_uid": 83
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 22,
+                "question_name": "state_id",
+                "question_type": "select_one state",
+                "question_uid": 85
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "state_name",
+                "question_type": "calculate",
+                "question_uid": 86
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 23,
+                "question_name": "district_id",
+                "question_type": "select_one district",
+                "question_uid": 87
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "district_name",
+                "question_type": "calculate",
+                "question_uid": 88
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 24,
+                "question_name": "block_id",
+                "question_type": "select_one block",
+                "question_uid": 89
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "block_name",
+                "question_type": "calculate",
+                "question_uid": 90
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 25,
+                "question_name": "initial_id",
+                "question_type": "select_one first_letter",
+                "question_uid": 91
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "enum_first_letter",
+                "question_type": "calculate",
+                "question_uid": 92
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 26,
+                "question_name": "enum_id",
+                "question_type": "select_one enumerator",
+                "question_uid": 93
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "enum_name",
+                "question_type": "calculate",
+                "question_uid": 94
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 39,
+                "question_name": "designation_id",
+                "question_type": "select_one designation",
+                "question_uid": 95
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "designation",
+                "question_type": "calculate",
+                "question_uid": 96
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 40,
+                "question_name": "monitor_id",
+                "question_type": "select_one monitor",
+                "question_uid": 97
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "monitor_name",
+                "question_type": "calculate",
+                "question_uid": 98
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 31,
+                "question_name": "dc_id",
+                "question_type": "select_one dc",
+                "question_uid": 100
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "dc_id_long",
+                "question_type": "calculate",
+                "question_uid": 101
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "dc_type",
+                "question_type": "calculate",
+                "question_uid": 102
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 27,
+                "question_name": "sc_dc_found",
+                "question_type": "select_one yesno",
+                "question_uid": 103
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 42,
+                "question_name": "sc_dc_open",
+                "question_type": "select_one yesnoonly",
+                "question_uid": 105
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 27,
+                "question_name": "sc_intro",
+                "question_type": "select_one yesno",
+                "question_uid": 107
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 41,
+                "question_name": "sc_paperscarry",
+                "question_type": "select_one papers",
+                "question_uid": 108
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 27,
+                "question_name": "sc_dc_form_access",
+                "question_type": "select_one yesno",
+                "question_uid": 109
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 32,
+                "question_name": "sc_dc_fac_id",
+                "question_type": "select_one sampledfacilities",
+                "question_uid": 111
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "sc_dc_fac_id_long",
+                "question_type": "calculate",
+                "question_uid": 112
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "sc_dc_facility_name",
+                "question_type": "calculate",
+                "question_uid": 113
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 27,
+                "question_name": "sc_dc_form_avail",
+                "question_type": "select_one yesno",
+                "question_uid": 114
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 27,
+                "question_name": "sc_dc_form_month_conf",
+                "question_type": "select_one yesno",
+                "question_uid": 115
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "fac_anc_reg_1_trim",
+                "question_type": "integer",
+                "question_uid": 117
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "fac_4anc",
+                "question_type": "integer",
+                "question_uid": 118
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "fac_4hb",
+                "question_type": "integer",
+                "question_uid": 119
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "fac_sev_anem_treat",
+                "question_type": "integer",
+                "question_uid": 120
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "fac_sba_birth",
+                "question_type": "integer",
+                "question_uid": 121
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "fac_insti_birth",
+                "question_type": "integer",
+                "question_uid": 122
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "fac_live_birth_m",
+                "question_type": "integer",
+                "question_uid": 123
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "fac_live_birth_uw",
+                "question_type": "integer",
+                "question_uid": 124
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "fac_bfeeding_1hr",
+                "question_type": "integer",
+                "question_uid": 125
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "fac_full_immu_f",
+                "question_type": "integer",
+                "question_uid": 126
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 27,
+                "question_name": "sc_dc_fac_dataentry",
+                "question_type": "select_one yesno",
+                "question_uid": 127
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 27,
+                "question_name": "sc_dc_fac_photo_consent",
+                "question_type": "select_one yesno",
+                "question_uid": 128
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 27,
+                "question_name": "sc_dc_fac_photo_num",
+                "question_type": "select_one yesno",
+                "question_uid": 129
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 35,
+                "question_name": "sc_protocol_rate",
+                "question_type": "select_one protocol",
+                "question_uid": 135
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 36,
+                "question_name": "sc_probing_rate",
+                "question_type": "select_one probing",
+                "question_uid": 136
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 37,
+                "question_name": "sc_comfort_rate",
+                "question_type": "select_one comfort",
+                "question_uid": 137
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": 38,
+                "question_name": "sc_speed_rate",
+                "question_type": "select_one speed",
+                "question_uid": 138
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "sc_final_score",
+                "question_type": "integer",
+                "question_uid": 140
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "monitor_comments",
+                "question_type": "text",
+                "question_uid": 141
+            }
+        ],
+        "settings": {
+            "default_language": "english",
+            "form_title": "TEST SurveyCTO_Inputs & Outputs",
+            "form_uid": 1,
+            "public_key": "",
+            "submission_url": "",
+            "version": "2211010014"
+        }
+    },
+    "success": true
+}

@@ -16,6 +16,9 @@ class Config:
     # AWS region
     AWS_REGION = os.getenv("AWS_REGION")
 
+    # Admin account for global secrets
+    ADMIN_ACCOUNT = os.getenv("ADMIN_ACCOUNT")
+
     # Flask secret key
     SECRET_KEY = os.getenv("SECRET_KEY")
 
@@ -46,6 +49,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     REACT_BASE_URL = "http://localhost:3000"
+
+    PROTECT_DOCS_ENDPOINT = True
 
     LOGGING_CONFIG = {
         "version": 1,
@@ -81,36 +86,10 @@ class DevelopmentConfig(Config):
         Config.DB_NAME,
     )
 
-
-class ProfilerConfig(Config):
-    SQLALCHEMY_ECHO = True
-    LOGGING_CONFIG = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {"default": {"format": "%(message)s"}},
-        "handlers": {
-            "file": {
-                "class": "logging.FileHandler",
-                "level": "INFO",
-                "formatter": "default",
-                "filename": "/usr/src/dod_surveystream_backend/app.log",
-                "mode": "w",
-            },
-        },
-        "root": {"handlers": ["file"], "level": "INFO"},
-    }
-
-    SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
-        Config.DB_USER,
-        Config.DB_PASS,
-        Config.DB_HOST,
-        5432,
-        Config.DB_NAME,
-    )
+    PROTECT_DOCS_ENDPOINT = False
 
 
-class TestConfig(Config):
-
+class ProfilingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
         "dod",
@@ -119,9 +98,24 @@ class TestConfig(Config):
         "dod",
     )
 
+    TESTING = True
+    DEBUG = True
+
+
+class UnitTestConfig(Config):
+    SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
+        "test_user",
+        "dod",
+        "postgres",
+        5433,
+        "dod",
+    )
+
+    TESTING = True
+    DEBUG = True
+
 
 class StagingConfig(Config):
-
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         Config.DB_USER,
         Config.DB_PASS,
@@ -130,17 +124,19 @@ class StagingConfig(Config):
         Config.DB_NAME,
     )
 
-    REACT_BASE_URL = "https://stg.surveystream.idinsight.io"
+    REACT_BASE_URL = "https://callisto.stg.surveystream.idinsight.io"
 
     SENTRY_CONFIG = {
         "dsn": "https://c320e08cbf204069afb2cc62ee498018@o564222.ingest.sentry.io/4505070237319168",
         "traces_sample_rate": "1.0",
-        "environment": "staging",
+        "environment": "staging-callisto",
     }
+
+    SESSION_COOKIE_HTTPONLY = False
+    REMEMBER_COOKIE_HTTPONLY = False
 
 
 class ProductionConfig(Config):
-
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         Config.DB_USER,
         Config.DB_PASS,
@@ -156,3 +152,6 @@ class ProductionConfig(Config):
         "traces_sample_rate": "1.0",
         "environment": "production",
     }
+
+    SESSION_COOKIE_HTTPONLY = False
+    REMEMBER_COOKIE_HTTPONLY = False
