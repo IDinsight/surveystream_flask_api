@@ -2756,6 +2756,11 @@ paths:
                         type: integer
                         nullable: true
                         description: The unique role ID of role that supervises the given role.
+                validate_hierarchy:
+                  type: boolean
+                  description: |
+                    Whether to validate the hierarchy of the roles. Set this as true when updating the reporting_role_uid fields of the roles.
+                    This will check that the role hierarchy is a valid tree structure.
       responses:
         '200':
           description: Success
@@ -2763,6 +2768,8 @@ paths:
           description: X-CSRF-Token required in header
         '422':
           description: Form errors
+            Form errors
+            When `validate_hierarchy` is set to true, any validation errors will be returned as an array under the `errors` key in the response.
   /timezones:
     get:
       summary: Get the list of postgres timezones
@@ -2881,10 +2888,7 @@ paths:
                   type: boolean
                   description: |
                     Whether to validate the hierarchy of the geo levels. Set this as true when updating the parent_geo_level_uid fields of the geo levels.
-                    The following validations will be performed:
-                    - Exactly one geo level should be at the top of the hierarchy (parent_geo_level_uid is null)
-                    - Each parent_geo_level_uid should refer to a geo level in the payload
-                    - Each geo level should be referenced as a parent exactly once
+                    This will check that the location type hierarchy is a valid tree structure.
 
 
       responses:
