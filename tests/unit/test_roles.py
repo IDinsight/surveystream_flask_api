@@ -306,3 +306,336 @@ class TestRoles:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 500
+
+    def test_roles_validate_hierarchy_invalid_hierarchy(
+        self, client, login_test_user, create_survey, csrf_token
+    ):
+        """
+        Test that existing roles can be updated
+        """
+
+        payload = {
+            "roles": [
+                {
+                    "role_uid": None,
+                    "role_name": "Core Team",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "State Coordinator",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "District Coordinator",
+                    "reporting_role_uid": None,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Case 1:
+        # Multiple child nodes
+        payload = {
+            "roles": [
+                {
+                    "role_uid": 1,
+                    "role_name": "Core Team",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": 2,
+                    "role_name": "State Coordinator",
+                    "reporting_role_uid": 1,
+                },
+                {
+                    "role_uid": 3,
+                    "role_name": "District Coordinator",
+                    "reporting_role_uid": 1,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        # Check the response
+        assert response.json["errors"] == [
+            "Each role should have at most one child role. Role 'Core Team' has 2 child roles:\nState Coordinator, District Coordinator"
+        ]
+
+        # Case 2:
+        # No root node
+        payload = {
+            "roles": [
+                {
+                    "role_uid": 1,
+                    "role_name": "Core Team",
+                    "reporting_role_uid": 3,
+                },
+                {
+                    "role_uid": 2,
+                    "role_name": "State Coordinator",
+                    "reporting_role_uid": 1,
+                },
+                {
+                    "role_uid": 3,
+                    "role_name": "District Coordinator",
+                    "reporting_role_uid": 2,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        # Check the response
+        assert response.json["errors"] == [
+            "The hierarchy should have exactly one top level role (ie, a role with no parent). The current hierarchy has 0 roles with no parent."
+        ]
+
+        # Case 3:
+        # Multiple root nodes
+        payload = {
+            "roles": [
+                {
+                    "role_uid": 1,
+                    "role_name": "Core Team",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": 2,
+                    "role_name": "State Coordinator",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": 3,
+                    "role_name": "District Coordinator",
+                    "reporting_role_uid": 2,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        # Check the response
+        assert response.json["errors"] == [
+            "The hierarchy should have exactly one top level role (ie, a role with no parent). The current hierarchy has 2 roles with no parent:\nCore Team, State Coordinator"
+        ]
+
+        # Case 4:
+        # Check for a disconnected hierarchy
+        payload = {
+            "roles": [
+                {
+                    "role_uid": 1,
+                    "role_name": "Core Team",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": 2,
+                    "role_name": "State Coordinator",
+                    "reporting_role_uid": 3,
+                },
+                {
+                    "role_uid": 3,
+                    "role_name": "District Coordinator",
+                    "reporting_role_uid": 2,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        assert response.json["errors"] == [
+            "All roles in the hierarchy should be able to be connected back to the top level role via a chain of parent role references. The current hierarchy has 2 roles that cannot be connected:\nState Coordinator, District Coordinator"
+        ]
+
+        # Case 5:
+        # Check for a disconnected hierarchy
+        # Caused by self-reference and non-existent parent
+        payload = {
+            "roles": [
+                {
+                    "role_uid": 1,
+                    "role_name": "Core Team",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": 2,
+                    "role_name": "State Coordinator",
+                    "reporting_role_uid": 2,
+                },
+                {
+                    "role_uid": 3,
+                    "role_name": "District Coordinator",
+                    "reporting_role_uid": 5,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        assert response.json["errors"] == [
+            "All roles in the hierarchy should be able to be connected back to the top level role via a chain of parent role references. The current hierarchy has 2 roles that cannot be connected:\nState Coordinator, District Coordinator",
+            "Role 'State Coordinator' is referenced as its own parent. Self-referencing is not allowed.",
+            "Role 'District Coordinator' references a parent role with unique id '5' that is not found in the hierarchy.",
+        ]
+
+        # Case 6:
+        # Duplicate uid's and names
+        payload = {
+            "roles": [
+                {
+                    "role_uid": 1,
+                    "role_name": "Core Team",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": 1,
+                    "role_name": "State Coordinator",
+                    "reporting_role_uid": 2,
+                },
+                {
+                    "role_uid": 3,
+                    "role_name": "State Coordinator",
+                    "reporting_role_uid": 5,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        assert response.json["errors"] == [
+            "Each role unique id defined in the role hierarchy should appear exactly once in the hierarchy. Role with role_uid='1' appears 2 times in the hierarchy.",
+            "Each role name defined in the role hierarchy should appear exactly once in the hierarchy. Role with role_name='State Coordinator' appears 2 times in the hierarchy.",
+        ]
+
+    def test_roles_validate_hierarchy_valid_hierarchy(
+        self, client, login_test_user, create_survey, csrf_token
+    ):
+        """
+        Test that existing roles can be updated
+        """
+
+        payload = {
+            "roles": [
+                {
+                    "role_uid": None,
+                    "role_name": "Core Team",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "State Coordinator",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "District Coordinator",
+                    "reporting_role_uid": None,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Try to update the existing roles
+        payload = {
+            "roles": [
+                {
+                    "role_uid": 1,
+                    "role_name": "Core Team",
+                    "reporting_role_uid": None,
+                },
+                {
+                    "role_uid": 2,
+                    "role_name": "State Coordinator",
+                    "reporting_role_uid": 1,
+                },
+                {
+                    "role_uid": 3,
+                    "role_name": "District Coordinator",
+                    "reporting_role_uid": 2,
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1, "validate_hierarchy": "true"},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200

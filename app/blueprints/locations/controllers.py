@@ -108,13 +108,18 @@ def update_survey_geo_levels():
         if payload.get("validate_hierarchy"):
             geo_levels = payload_validator.geo_levels.data
 
-            geo_level_hierarchy_errors = run_geo_level_hierarchy_validations(geo_levels)
-
-            if len(geo_level_hierarchy_errors) > 0:
-                return (
-                    jsonify({"success": False, "errors": geo_level_hierarchy_errors}),
-                    422,
+            if len(geo_levels) > 0:
+                geo_level_hierarchy_errors = run_geo_level_hierarchy_validations(
+                    geo_levels
                 )
+
+                if len(geo_level_hierarchy_errors) > 0:
+                    return (
+                        jsonify(
+                            {"success": False, "errors": geo_level_hierarchy_errors}
+                        ),
+                        422,
+                    )
 
         # Get the geo level data in the db for the given survey
         existing_geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
