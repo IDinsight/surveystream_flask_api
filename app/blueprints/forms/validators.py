@@ -1,19 +1,19 @@
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, IntegerField, StringField, FormField
-from wtforms.validators import InputRequired
+from wtforms.validators import DataRequired
 
 
 class GetParentFormQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    survey_uid = IntegerField(validators=[InputRequired()])
+    survey_uid = IntegerField(validators=[DataRequired()])
 
 
 class CreateParentFormValidator(FlaskForm):
-    survey_uid = IntegerField(validators=[InputRequired()])
-    scto_form_id = StringField(validators=[InputRequired()])
-    form_name = StringField(validators=[InputRequired()])
+    survey_uid = IntegerField(validators=[DataRequired()])
+    scto_form_id = StringField(validators=[DataRequired()])
+    form_name = StringField(validators=[DataRequired()])
     tz_name = StringField()
     scto_server_name = StringField()
     encryption_key_shared = BooleanField()
@@ -22,8 +22,8 @@ class CreateParentFormValidator(FlaskForm):
 
 
 class UpdateParentFormValidator(FlaskForm):
-    scto_form_id = StringField(validators=[InputRequired()])
-    form_name = StringField(validators=[InputRequired()])
+    scto_form_id = StringField(validators=[DataRequired()])
+    form_name = StringField(validators=[DataRequired()])
     tz_name = StringField()
     scto_server_name = StringField()
     encryption_key_shared = BooleanField()
@@ -41,20 +41,20 @@ class LocationQuestionMappingValidator(FlaskForm):
 
 
 class CreateSCTOQuestionMappingValidator(FlaskForm):
-    form_uid = IntegerField(validators=[InputRequired()])
-    survey_status = StringField(validators=[InputRequired()])
-    revisit_section = StringField(validators=[InputRequired()])
-    target_id = StringField(validators=[InputRequired()])
-    enumerator_id = StringField(validators=[InputRequired()])
+    form_uid = IntegerField(validators=[DataRequired()])
+    survey_status = StringField(validators=[DataRequired()])
+    revisit_section = StringField(validators=[DataRequired()])
+    target_id = StringField(validators=[DataRequired()])
+    enumerator_id = StringField(validators=[DataRequired()])
     locations = FormField(LocationQuestionMappingValidator)
 
 
 class UpdateSCTOQuestionMappingValidator(FlaskForm):
-    form_uid = IntegerField(validators=[InputRequired()])
-    survey_status = StringField(validators=[InputRequired()])
-    revisit_section = StringField(validators=[InputRequired()])
-    target_id = StringField(validators=[InputRequired()])
-    enumerator_id = StringField(validators=[InputRequired()])
+    form_uid = IntegerField(validators=[DataRequired()])
+    survey_status = StringField(validators=[DataRequired()])
+    revisit_section = StringField(validators=[DataRequired()])
+    target_id = StringField(validators=[DataRequired()])
+    enumerator_id = StringField(validators=[DataRequired()])
     locations = FormField(LocationQuestionMappingValidator)
 
 

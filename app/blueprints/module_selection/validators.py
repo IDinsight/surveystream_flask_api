@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 
 
 class UpdateModuleStatusValidator(FlaskForm):
-    config_status = StringField(validators=[validators.InputRequired()])
+    config_status = StringField(validators=[validators.DataRequired()])
 
     def validate(self, status):
         if not super().validate():
@@ -17,8 +17,8 @@ class UpdateModuleStatusValidator(FlaskForm):
 
 
 class AddModuleStatusValidator(FlaskForm):
-    survey_uid = StringField(validators=[validators.InputRequired()])
-    modules = FieldList(StringField(), validators=[validators.InputRequired()])
+    survey_uid = StringField(validators=[validators.DataRequired()])
+    modules = FieldList(StringField(), validators=[validators.DataRequired()])
 
     def validate(self):
         if not super().validate():

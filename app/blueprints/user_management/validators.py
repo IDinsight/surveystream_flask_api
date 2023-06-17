@@ -1,12 +1,12 @@
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, StringField
-from wtforms.validators import InputRequired
+from wtforms.validators import DataRequired
 
 
 class RegisterValidator(FlaskForm):
-    email = StringField(validators=[InputRequired()])
-    password = PasswordField(validators=[InputRequired()])
+    email = StringField(validators=[DataRequired()])
+    password = PasswordField(validators=[DataRequired()])
 
 
 class WelcomeUserValidator(FlaskForm):
-    email = StringField(validators=[InputRequired()])
+    email = StringField(validators=[DataRequired()])
