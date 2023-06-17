@@ -1,18 +1,18 @@
 from flask_wtf import FlaskForm
 from wtforms import IntegerField, PasswordField, StringField
-from wtforms.validators import InputRequired, EqualTo
+from wtforms.validators import DataRequired, EqualTo
 
 
 class LoginValidator(FlaskForm):
-    email = StringField(validators=[InputRequired()])
-    password = PasswordField(validators=[InputRequired()])
+    email = StringField(validators=[DataRequired()])
+    password = PasswordField(validators=[DataRequired()])
 
 
 class ChangePasswordValidator(FlaskForm):
     cur_password = PasswordField()
     new_password = PasswordField(
         validators=[
-            InputRequired(),
+            DataRequired(),
             EqualTo("confirm", message="New passwords must match!"),
         ],
     )
@@ -20,16 +20,16 @@ class ChangePasswordValidator(FlaskForm):
 
 
 class ForgotPasswordValidator(FlaskForm):
-    email = StringField(validators=[InputRequired()])
+    email = StringField(validators=[DataRequired()])
 
 
 class ResetPasswordValidator(FlaskForm):
-    rpt_id = IntegerField(validators=[InputRequired()])
-    rpt_token = StringField(validators=[InputRequired()])
+    rpt_id = IntegerField(validators=[DataRequired()])
+    rpt_token = StringField(validators=[DataRequired()])
 
     new_password = PasswordField(
         validators=[
-            InputRequired(),
+            DataRequired(),
             EqualTo("confirm", message="New passwords must match!"),
         ],
     )
