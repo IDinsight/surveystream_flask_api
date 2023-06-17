@@ -12,62 +12,109 @@ def run_geo_level_hierarchy_validations(geo_levels):
     """
     errors_list = []
 
-    # Exactly one geo level should have no parent
-    top_level_geo_level_count = 0
-    for geo_level in geo_levels:
-        if geo_level["parent_geo_level_uid"] is None:
-            top_level_geo_level_count += 1
-    if top_level_geo_level_count != 1:
-        errors_list.append(
-            f"The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has {top_level_geo_level_count} location types with no parent."
-        )
+    # Prechecks before we validate the tree
 
-    # Each parent geo level should be one of the geo levels in the hierarchy
+    # There should be no duplicates on geo_level_uid
     geo_level_uids = [geo_level["geo_level_uid"] for geo_level in geo_levels]
-    for geo_level in geo_levels:
-        if (
-            geo_level["parent_geo_level_uid"] is not None
-            and geo_level["parent_geo_level_uid"] not in geo_level_uids
-        ):
-            errors_list.append(
-                f"Location type '{geo_level['geo_level_name']}' references a parent location type with location type unique id '{geo_level['parent_geo_level_uid']}' that is not found in the hierarchy."
-            )
+    for geo_level_uid in geo_level_uids:
+        if geo_level_uids.count(geo_level_uid) > 1:
+            error_message = f"Each location type unique id defined in the location type hierarchy should appear exactly once in the hierarchy. Location type with geo_level_uid='{geo_level_uid}' appears {geo_level_uids.count(geo_level_uid)} times in the hierarchy."
 
-    # A geo level should not be its own parent
-    for geo_level in geo_levels:
-        if geo_level["parent_geo_level_uid"] == geo_level["geo_level_uid"]:
-            errors_list.append(
-                f"Location type '{geo_level['geo_level_name']}' is referenced as its own parent. Self-referencing is not allowed."
-            )
+            if error_message not in errors_list:
+                errors_list.append(error_message)
 
-    # 1. Geo levels should not be referenced as a parent by more than one other geo level
-    # 2. There should be exactly 1 geo level at the bottom of the hierarchy (not referenced as a parent by another geo level)
-    parent_geo_level_uids = [
-        geo_level["parent_geo_level_uid"]
+    # There should be no duplicates on geo_level_name
+    geo_level_names = [geo_level["geo_level_name"] for geo_level in geo_levels]
+    for geo_level_name in geo_level_names:
+        if geo_level_names.count(geo_level_name) > 1:
+            error_message = f"Each location type name defined in the location type hierarchy should appear exactly once in the hierarchy. Location type with geo_level_name='{geo_level_name}' appears {geo_level_names.count(geo_level_name)} times in the hierarchy."
+
+            if error_message not in errors_list:
+                errors_list.append(error_message)
+
+    if len(errors_list) > 0:
+        return errors_list
+
+    # Now validate the tree
+
+    # Exactly one geo level should have no parent
+    root_nodes = [
+        geo_level
         for geo_level in geo_levels
-        if geo_level["parent_geo_level_uid"] is not None
+        if geo_level["parent_geo_level_uid"] is None
     ]
-    unreferenced_geo_levels = []
-    for geo_level in geo_levels:
-        parent_reference_count = 0
-        for parent_geo_level_uid in parent_geo_level_uids:
-            if geo_level["geo_level_uid"] == parent_geo_level_uid:
-                parent_reference_count += 1
-        if parent_reference_count == 0:
-            unreferenced_geo_levels.append(geo_level)
-        elif parent_reference_count > 1:
-            errors_list.append(
-                f"Location type '{geo_level['geo_level_name']}' is referenced as a parent by {parent_reference_count} other location types. Each location type should be referenced as a parent by at most one other location type."
-            )
 
-    if len(unreferenced_geo_levels) == 0:
+    if len(root_nodes) == 0:
         errors_list.append(
-            f"The location type hierarchy should have exactly one location type that is at the bottom level of the hierarchy (not referenced as a parent by another location type). The current hierarchy has 0 location types that are at the bottom level of the hierarchy."
+            f"The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has 0 location types with no parent."
         )
-    elif len(unreferenced_geo_levels) > 1:
+        return errors_list
+    elif len(root_nodes) > 1:
         errors_list.append(
-            f"The location type hierarchy should have exactly one location type that is at the bottom level of the hierarchy (not referenced as a parent by another location type). The current hierarchy has {len(unreferenced_geo_levels)} location types that are not referenced as a parent by another location type:\n{', '.join([geo_level['geo_level_name'] for geo_level in unreferenced_geo_levels])}"
+            f"The hierarchy should have exactly one top level location type (ie, a location type with no parent). The current hierarchy has {len(root_nodes)} location types with no parent:\n{', '.join([geo_level['geo_level_name'] for geo_level in root_nodes])}"
         )
+        return errors_list
+
+    # Traverse the tree to validate the following:
+    # 1. Each location type should have at most one child location type
+    # 2. The location type hierarchy should not have any cycles
+    # 3. There are no location types that couldn't be visited from the top level location type (graph is connected)
+    root_node = root_nodes[0]
+    visited_nodes = [root_node]
+
+    while True:
+        child_nodes = [
+            geo_level
+            for geo_level in geo_levels
+            if geo_level["parent_geo_level_uid"] == visited_nodes[-1]["geo_level_uid"]
+        ]
+
+        if len(child_nodes) > 1:
+            errors_list.append(
+                f"Each location type should have at most one child location type. Location type '{visited_nodes[-1]['geo_level_name']}' has {len(child_nodes)} child location types:\n{', '.join([geo_level['geo_level_name'] for geo_level in child_nodes])}"
+            )
+            return errors_list
+        elif len(child_nodes) == 1:
+            if child_nodes[0]["geo_level_uid"] in [
+                geo_level["geo_level_uid"] for geo_level in visited_nodes
+            ]:
+                errors_list.append(
+                    f"The location type hierarchy should not have any cycles. The current hierarchy has a cycle starting with location type '{child_nodes[0]['geo_level_name']}'."
+                )
+                return errors_list
+            visited_nodes.append(child_nodes[0])
+        elif len(child_nodes) == 0:
+            break
+
+    # Now check that all nodes were visited
+    if len(visited_nodes) != len(geo_levels):
+        unvisited_nodes = [
+            geo_level
+            for geo_level in geo_levels
+            if geo_level["geo_level_uid"]
+            not in [visited_node["geo_level_uid"] for visited_node in visited_nodes]
+        ]
+
+        errors_list.append(
+            f"All location types in the hierarchy should be able to be connected back to the top level location type via a chain of parent location type references. The current hierarchy has {len(unvisited_nodes)} location types that cannot be connected:\n{', '.join([geo_level['geo_level_name'] for geo_level in unvisited_nodes])}"
+        )
+
+        # Attempt to diagnose the unvisited nodes
+        # Not exhaustive of all issues
+        for geo_level in unvisited_nodes:
+            # Check for self-referencing
+            if geo_level["parent_geo_level_uid"] == geo_level["geo_level_uid"]:
+                errors_list.append(
+                    f"Location type '{geo_level['geo_level_name']}' is referenced as its own parent. Self-referencing is not allowed."
+                )
+
+            # Check for parent referencing a non-existent geo level
+            elif geo_level["parent_geo_level_uid"] not in [
+                geo_level["geo_level_uid"] for geo_level in geo_levels
+            ]:
+                errors_list.append(
+                    f"Location type '{geo_level['geo_level_name']}' references a parent location type with unique id '{geo_level['parent_geo_level_uid']}' that is not found in the hierarchy."
+                )
 
     return errors_list
 

@@ -8,6 +8,7 @@ from app import db
 from .models import Role
 from .routes import roles_bp
 from .validators import SurveyRolesQueryParamValidator, SurveyRolesPayloadValidator
+from .utils import run_role_hierarchy_validations
 
 
 @roles_bp.route("", methods=["GET"])
@@ -73,7 +74,8 @@ def update_survey_roles():
     # Check if the logged in user has permission to access the given survey
 
     # Import the request body payload validator
-    payload_validator = SurveyRolesPayloadValidator.from_json(request.get_json())
+    payload = request.get_json()
+    payload_validator = SurveyRolesPayloadValidator.from_json(payload)
 
     # Add the CSRF token to be checked by the validator
     if "X-CSRF-Token" in request.headers:
@@ -83,6 +85,18 @@ def update_survey_roles():
 
     # Validate the request body payload
     if payload_validator.validate():
+        # If validate_hierarchy is true, validate the hierarchy of the geo levels
+        if payload.get("validate_hierarchy"):
+            roles = payload_validator.roles.data
+
+            if len(roles) > 0:
+                role_hierarchy_errors = run_role_hierarchy_validations(roles)
+
+                if len(role_hierarchy_errors) > 0:
+                    return (
+                        jsonify({"success": False, "errors": role_hierarchy_errors}),
+                        422,
+                    )
         # Get the role data in the db for the given survey
         existing_roles = Role.query.filter_by(survey_uid=survey_uid).all()
 
