@@ -18,7 +18,7 @@ class UpdateModuleStatusValidator(FlaskForm):
 
 class AddModuleStatusValidator(FlaskForm):
     survey_uid = StringField(validators=[validators.InputRequired()])
-    modules = FieldList(StringField(), validators=[validators.InputRequired()])
+    modules = FieldList(StringField(), validators=[validators.DataRequired()])
 
     def validate(self):
         if not super().validate():
