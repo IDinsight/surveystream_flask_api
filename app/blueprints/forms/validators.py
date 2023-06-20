@@ -42,8 +42,8 @@ class LocationQuestionMappingValidator(FlaskForm):
 
 class CreateSCTOQuestionMappingValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
-    survey_status = StringField(validators=[DataRequired()])
-    revisit_section = StringField(validators=[DataRequired()])
+    survey_status = StringField()
+    revisit_section = StringField()
     target_id = StringField(validators=[DataRequired()])
     enumerator_id = StringField(validators=[DataRequired()])
     locations = FormField(LocationQuestionMappingValidator)
