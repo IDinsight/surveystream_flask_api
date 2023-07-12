@@ -1,15 +1,13 @@
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy import Enum
+from sqlalchemy import CheckConstraint
 from app import db
 from app.blueprints.surveys.models import Survey
 
 
 class ModuleQuestionnaire(db.Model):
-
     __tablename__ = "module_questionnaire"
     __table_args__ = {
-        "extend_existing": True,
-        "schema": "config_sandbox",
+        "schema": "webapp",
     }
 
     survey_uid = db.Column(
@@ -20,19 +18,13 @@ class ModuleQuestionnaire(db.Model):
     supervisor_hierarchy_exists = db.Column(db.Boolean())
     reassignment_required = db.Column(db.Boolean())
     assignment_process = db.Column(
-        Enum(
-            "Random",
-            "Manual",
-            name="assignment_process",
-            create_type=False,
-        )
+        db.String(), CheckConstraint("assignment_process IN ('Manual','Random')")
     )
     supervisor_surveyor_relation = db.Column(
-        Enum(
-            '1:1','1:many','many:1','many:many',
-            name="supervisor_surveyor_relation",
-            create_type=False,
-        )
+        db.String(),
+        CheckConstraint(
+            "supervisor_surveyor_relation IN ('1:1', '1:many', 'many:1', 'many:many')"
+        ),
     )
     language_location_mapping = db.Column(db.Boolean())
 

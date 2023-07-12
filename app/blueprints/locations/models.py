@@ -32,7 +32,7 @@ class GeoLevel(db.Model):
             name="_survey_uid_geo_level_name_uc",
             deferrable=True,
         ),
-        {"extend_existing": True, "schema": "config_sandbox"},
+        {"schema": "webapp"},
     )
 
     def __init__(
@@ -69,7 +69,11 @@ class Location(db.Model):
     )
     location_id = db.Column(db.String(), nullable=False)
     location_name = db.Column(db.String(), nullable=False)
-    geo_level_uid = db.Column(db.Integer(), db.ForeignKey(GeoLevel.geo_level_uid))
+    geo_level_uid = db.Column(
+        db.Integer(),
+        db.ForeignKey(GeoLevel.geo_level_uid, ondelete="CASCADE"),
+        nullable=False,
+    )
     parent_location_uid = db.Column(db.Integer(), db.ForeignKey(location_uid))
     surveys = db.relationship(
         Survey, backref=backref("locations", passive_deletes=True)
@@ -90,7 +94,7 @@ class Location(db.Model):
             "survey_uid",
             "geo_level_uid",
         ),
-        {"extend_existing": True, "schema": "config_sandbox"},
+        {"schema": "webapp"},
     )
 
     def __init__(

@@ -23,8 +23,7 @@ class ParentForm(db.Model):
             "survey_uid", "form_name", name="_parent_forms_survey_uid_form_name_uc"
         ),
         {
-            "schema": "config_sandbox",
-            "extend_existing": True,
+            "schema": "webapp",
         },
     )
 
@@ -91,8 +90,7 @@ class SCTOFormSettings(db.Model):
 
     __table_args__ = (
         {
-            "schema": "config_sandbox",
-            "extend_existing": True,
+            "schema": "webapp",
         },
     )
 
@@ -150,8 +148,7 @@ class SCTOQuestionMapping(db.Model):
 
     __table_args__ = (
         {
-            "schema": "config_sandbox",
-            "extend_existing": True,
+            "schema": "webapp",
         },
     )
 
@@ -161,8 +158,8 @@ class SCTOQuestionMapping(db.Model):
         primary_key=True,
         nullable=False,
     )
-    survey_status = db.Column(db.String())
-    revisit_section = db.Column(db.String())
+    survey_status = db.Column(db.String(), nullable=False)
+    revisit_section = db.Column(db.String(), nullable=False)
     target_id = db.Column(db.String(), nullable=False)
     enumerator_id = db.Column(db.String(), nullable=False)
     locations = db.Column(JSONB)
@@ -210,8 +207,7 @@ class SCTOChoiceList(db.Model):
             "list_name",
         ),
         {
-            "schema": "config_sandbox",
-            "extend_existing": True,
+            "schema": "webapp",
         },
     )
 
@@ -254,8 +250,7 @@ class SCTOChoiceLabel(db.Model):
             "language",
         ),
         {
-            "schema": "config_sandbox",
-            "extend_existing": True,
+            "schema": "webapp",
         },
     )
     list_uid = db.Column(
@@ -307,8 +302,7 @@ class SCTOQuestion(db.Model):
             "question_type",
         ),
         {
-            "schema": "config_sandbox",
-            "extend_existing": True,
+            "schema": "webapp",
         },
     )
     question_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -360,8 +354,7 @@ class SCTOQuestionLabel(db.Model):
             "language",
         ),
         {
-            "schema": "config_sandbox",
-            "extend_existing": True,
+            "schema": "webapp",
         },
     )
 

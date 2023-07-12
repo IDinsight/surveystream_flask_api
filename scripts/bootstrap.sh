@@ -51,7 +51,7 @@ echo "Fetching variables from aws store..."
 
 # DB credentials
 
-DB_SECRET=$(get_secret_value "data-db-connection-details" "" "json" "$AWS_REGION")
+DB_SECRET=$(get_secret_value "web-db-connection-details" "" "json" "$AWS_REGION")
 
 export DB_HOST=$(echo "$DB_SECRET" | jq -r 'fromjson | .host')
 export DB_USER=$(echo "$DB_SECRET" | jq -r 'fromjson | .username')

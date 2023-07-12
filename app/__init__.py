@@ -9,16 +9,29 @@ from flask_mail import Mail
 import logging.config
 import wtforms_json
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask import Flask, jsonify
 from flask_login import LoginManager
 from flask_mail import Mail
 from app.config import Config
+from sqlalchemy import MetaData
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 
-db = SQLAlchemy()
+db = SQLAlchemy(
+    metadata=MetaData(
+        naming_convention={
+            "pk": "pk_%(table_name)s",
+            "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+            "ix": "ix_%(table_name)s_%(column_0_name)s",
+            "uq": "uq_%(table_name)s_%(column_0_name)s",
+            "ck": "ck_%(table_name)s_%(column_0_name)s",
+        }
+    )
+)
+migrate = Migrate()
 mail = Mail()
 login_manager = LoginManager()
 wtforms_json.init()
@@ -46,11 +59,12 @@ def create_app():
 
     # Initialize flask extension objects
     db.init_app(app)
+    migrate.init_app(app, db)
     mail.init_app(app)
     login_manager.init_app(app)
 
     # Configure login manager
-    from app.models.data_models import User
+    from app.blueprints.auth.models import User
 
     @login_manager.user_loader
     def user_loader(user_uid):
@@ -72,10 +86,11 @@ def create_app():
 
 ### Helper Functions ###
 def register_blueprints(app):
-    from app.blueprints.assignments import assignments_bp
+    # from app.blueprints.assignments import assignments_bp
     from app.blueprints.auth import auth_bp
     from app.blueprints.docs import docs_bp
-    from app.blueprints.enumerators import enumerators_bp
+
+    # from app.blueprints.enumerators import enumerators_bp
     from app.blueprints.forms import forms_bp
     from app.blueprints.healthcheck import healthcheck_bp
     from app.blueprints.module_questionnaire import module_questionnaire_bp
@@ -84,15 +99,16 @@ def register_blueprints(app):
     from app.blueprints.roles import roles_bp
     from app.blueprints.locations import locations_bp
     from app.blueprints.surveys import surveys_bp
-    from app.blueprints.table_config import table_config_bp
-    from app.blueprints.targets import targets_bp
+
+    # from app.blueprints.table_config import table_config_bp
+    # from app.blueprints.targets import targets_bp
     from app.blueprints.timezones import timezones_bp
     from app.blueprints.user_management import user_management_bp
 
-    app.register_blueprint(assignments_bp)
+    # app.register_blueprint(assignments_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(docs_bp)
-    app.register_blueprint(enumerators_bp)
+    # app.register_blueprint(enumerators_bp)
     app.register_blueprint(forms_bp)
     app.register_blueprint(healthcheck_bp)
     app.register_blueprint(module_questionnaire_bp)
@@ -101,8 +117,8 @@ def register_blueprints(app):
     app.register_blueprint(roles_bp)
     app.register_blueprint(locations_bp)
     app.register_blueprint(surveys_bp)
-    app.register_blueprint(table_config_bp)
-    app.register_blueprint(targets_bp)
+    # app.register_blueprint(table_config_bp)
+    # app.register_blueprint(targets_bp)
     app.register_blueprint(timezones_bp)
     app.register_blueprint(user_management_bp)
 
