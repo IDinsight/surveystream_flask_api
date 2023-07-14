@@ -1,10 +1,8 @@
 SHELL = /bin/sh
 
-$(eval BACKEND_NAME=dod_surveystream_backend)
+$(eval BACKEND_NAME=surveystream_backend)
 $(eval BACKEND_PORT=5001)
 $(eval VERSION=0.1)
-$(eval PROD_NEW_ACCOUNT=923242859002)
-$(eval STAGING_ACCOUNT=210688620213)
 $(eval ADMIN_ACCOUNT=077878936716)
 $(eval DEV_ACCOUNT=453207568606)
 
@@ -35,7 +33,7 @@ web-db-tunnel:
 	--parameters '{"portNumber":["5433"],"localPortNumber":["5432"]}'
 
 container-up:
-	# Start a local version of the web app that uses the DoD dev database
+	# Start a local version of the web app that uses the remote dev database
 	@BACKEND_NAME=${BACKEND_NAME} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	VERSION=${VERSION} \

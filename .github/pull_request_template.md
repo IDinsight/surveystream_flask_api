@@ -8,7 +8,7 @@ Provide a short, concise and meaningful PR title above. Examples of good PR titl
 
 ## Ticket
 
-Fixes: https://idinsight.atlassian.net/browse/DODSS-##
+Fixes: https://idinsight.atlassian.net/browse/SS-##
 
 ## Description, Motivation and Context
 

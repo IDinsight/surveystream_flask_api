@@ -6,14 +6,14 @@ info:
 
     ### Context
 
-    SurveyStream is a survey management software application for IDinsight’s
-    Data on Demand initiative.  SurveyStream is the centralized hub for managing
-    DoD’s survey operations in real time, enabling fast,  cheap, high quality
+    SurveyStream is a survey management software application developed under IDinsight’s
+    DataDelta initiative.  SurveyStream is the centralized hub for managing
+    DataDelta’s survey operations in real time enabling fast,  cheap, high quality
     data collection.
 
 
-    The SurveyStream web application enables DoD supervisors to view survey
-    targets,  view and manage enumerator information, and make assignments
+    The SurveyStream web application enables survey supervisors to view survey
+    targets, view and manage enumerator information, and make assignments
     between targets and enumerators.
   version: '1.0'
 servers:

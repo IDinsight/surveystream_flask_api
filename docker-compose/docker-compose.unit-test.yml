@@ -5,7 +5,7 @@ services:
     restart: always
     environment:
       - POSTGRES_USER=test_user
-      - POSTGRES_PASSWORD=dod
+      - POSTGRES_PASSWORD=asdf
       - POSTGRES_DB=surveystream
     volumes:
       - ../tests/unit/data/launch_local_db/data:/docker-entrypoint-initdb.d/data
