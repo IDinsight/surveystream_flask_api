@@ -1,10 +1,12 @@
 from app import db
 from app.blueprints.surveys.models import Survey
+from sqlalchemy import CheckConstraint
+
+
 class Module(db.Model):
-    __tablename__ = 'modules'
+    __tablename__ = "modules"
     __table_args__ = {
-        'extend_existing': True,
-        'schema': 'config_sandbox',
+        "schema": "webapp",
     }
 
     module_id = db.Column(db.Integer, primary_key=True)
@@ -19,21 +21,29 @@ class Module(db.Model):
 
     def to_dict(self):
         return {
-            'module_id': self.module_id,
-            'name': self.name,
-            'optional': self.optional
+            "module_id": self.module_id,
+            "name": self.name,
+            "optional": self.optional,
         }
 
+
 class ModuleStatus(db.Model):
-    __tablename__ = 'module_status'
+    __tablename__ = "module_status"
     __table_args__ = {
-        'extend_existing': True,
-        'schema': 'config_sandbox',
+        "schema": "webapp",
     }
 
-    survey_uid = db.Column(db.Integer, db.ForeignKey(Survey.survey_uid), primary_key=True)
+    survey_uid = db.Column(
+        db.Integer, db.ForeignKey(Survey.survey_uid), primary_key=True
+    )
     module_id = db.Column(db.Integer, db.ForeignKey(Module.module_id), primary_key=True)
-    config_status = db.Column(db.String, nullable=False, default='Not Started', server_default='Not Started')
+    config_status = db.Column(
+        db.String,
+        CheckConstraint(
+            "config_status IN ('Done','In Progress','Not Started', 'Error')"
+        ),
+        server_default="Not Started",
+    )
 
     module = db.relationship(Module, back_populates="module_status")
 
@@ -41,9 +51,10 @@ class ModuleStatus(db.Model):
         self.survey_uid = survey_uid
         self.module_id = module_id
         self.config_status = config_status
+
     def to_dict(self):
         return {
-            'survey_uid': self.survey_uid,
-            'module_id': self.module_id,
-            'config_status': self.config_status
+            "survey_uid": self.survey_uid,
+            "module_id": self.module_id,
+            "config_status": self.config_status,
         }

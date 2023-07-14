@@ -2,11 +2,10 @@ from flask import jsonify, session, current_app
 from flask_login import login_required
 from functools import wraps
 from app import db
-from app.models.data_models import User
+from app.blueprints.auth.models import User
 import boto3
 import base64
 from botocore.exceptions import ClientError
-import os
 
 
 def concat_names(name_tuple):

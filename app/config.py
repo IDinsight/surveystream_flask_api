@@ -108,7 +108,7 @@ class UnitTestConfig(Config):
         "dod",
         "postgres",
         5433,
-        "dod",
+        "surveystream",
     )
 
     TESTING = True
@@ -155,3 +155,7 @@ class ProductionConfig(Config):
 
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False
+
+
+class DbMigrationConfig(Config):
+    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI")

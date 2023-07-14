@@ -34,7 +34,7 @@ WORKDIR ${HOME_DIR}
 COPY app ${HOME_DIR}/app
 COPY tests/unit ${HOME_DIR}/tests
 COPY profiling ${HOME_DIR}/profiling
-COPY db ${HOME_DIR}/db
+COPY migrations ${HOME_DIR}/migrations
 
 COPY scripts/entrypoint.sh /entrypoint.sh
 COPY scripts/bootstrap.sh /bootstrap.sh

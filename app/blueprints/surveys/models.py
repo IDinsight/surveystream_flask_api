@@ -1,12 +1,13 @@
 import datetime
 from app import db
+from app.blueprints.auth.models import User
+from sqlalchemy import CheckConstraint
 
 
 class Survey(db.Model):
     __tablename__ = "surveys"
     __table_args__ = {
-        "extend_existing": True,
-        "schema": "config_sandbox",
+        "schema": "webapp",
     }
 
     survey_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -14,15 +15,31 @@ class Survey(db.Model):
     survey_name = db.Column(db.String(256), unique=True, nullable=False)
     project_name = db.Column(db.String(256), nullable=True)
     survey_description = db.Column(db.String(1024), nullable=True)
-    surveying_method = db.Column(db.String(16), nullable=False)
+    surveying_method = db.Column(
+        db.String(16),
+        CheckConstraint("surveying_method IN ('phone', 'in-person')"),
+        nullable=False,
+    )
     planned_start_date = db.Column(db.Date, nullable=False)
     planned_end_date = db.Column(db.Date, nullable=False)
-    irb_approval = db.Column(db.String(8), nullable=False)
-    config_status = db.Column(db.String(32), nullable=True)
-    state = db.Column(db.String(16), nullable=True)
-    created_by_user_uid = db.Column(
-        db.Integer, db.ForeignKey("users.user_uid"), nullable=False
+    irb_approval = db.Column(
+        db.String(8),
+        CheckConstraint("irb_approval IN ('Yes','No','Pending')"),
+        nullable=False,
     )
+    config_status = db.Column(
+        db.String(32),
+        CheckConstraint(
+            "config_status IN ('In Progress - Configuration','In Progress - Backend Setup','Done')"
+        ),
+        nullable=True,
+    )
+    state = db.Column(
+        db.String(16),
+        CheckConstraint("state IN ('Draft','Active','Past')"),
+        nullable=True,
+    )
+    created_by_user_uid = db.Column(db.Integer(), db.ForeignKey(User.user_uid))
     last_updated_at = db.Column(
         db.TIMESTAMP, nullable=False, default=db.func.current_timestamp()
     )

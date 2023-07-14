@@ -1,7 +1,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/IDinsight/surveystream_flask_api/badge.svg?t=BhAQ0K)](https://coveralls.io/github/IDinsight/surveystream_flask_api)
 ![Unit Tests](https://github.com/IDinsight/surveystream_flask_api/actions/workflows/cicd_unittest_deploy.yml/badge.svg)
 
-# DOD SurveyStream Flask API
+# SurveyStream Flask API
 
 ## Instructions for running locally
 
@@ -20,7 +20,7 @@ region = ap-south-1
 
 - Verify that you *do not* have an entry for `surveystream_dev` in your AWS credentials file (`~/.aws/credentials`). This is needed to make sure the local endpoints container looks for your temporary SSO-based credentials that are stored in `~/.aws/sso/`.
 - From the `root` directory, run `make login` to log into AWS SSO. You will be prompted to log in via a browser window that opens automatically.
-- Open a second terminal window and `cd` into the repository root directory. Run `make db-tunnel` to open the connection to the remote db via the bastion host.
+- Open a second terminal window and `cd` into the repository root directory. Run `make web-db-tunnel` to open the connection to the remote db via the bastion host.
 - Build the backend image by running `make image`
 - Start the container by running `make container-up`.
 
@@ -67,3 +67,35 @@ Once the images are built, the unit tests can be run with the following commands
 ### Running the tests on CI/CD
 
 The unit tests will run on GitHub Actions on any `push` or `pull request` actions.
+
+## Instructions for database migrations
+
+The database schema is managed through `Flask-Migrate`. When running unit tests, the test db schema will be created using the migration script(s) in `/migrations/versions`.
+
+New migration scripts should be generated against the remote development environment database, then each database (dev, staging, prod) will be updated using the same set of migration scripts. Note that Alembic will create a `public.alembic_version` table in each database to track the latest applied migration version.
+
+### Creating a new migration
+
+To create a new migration script against the remote dev database, run the following commands:
+
+- Log in to AWS with `make login`.
+- Open a second terminal window and `cd` into the repository root directory. Run `make web-db-tunnel` to open the connection to the remote db via the bastion host.
+- Build the backend image by running `make image`.
+- Generate the new migration script with `make generate-db-migration-dev`.
+
+Now you should see the new migration script in your `/migrations/versions/` directory. This script should be scrutinized and edited with reference to [changes Alembic won't auto-detect](https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect).
+
+### Applying a migration
+
+When running unit tests, the test db will be built using the migration scripts in the repo. This is critical for testing the migration before it is deployed.
+
+To bring the remote dev database in sync with the migration scripts, run the following commands:
+
+- Log in to AWS with `make login`.
+- Open a second terminal window and `cd` into the repository root directory. Run `make web-db-tunnel` to open the connection to the remote db via the bastion host.
+- Build the backend image by running `make image`.
+- Generate the new migration script with `make apply-db-migration-dev`.
+
+We are planning to apply migrations to the staging and production databases through CI/CD but this is yet to be set up.
+
+

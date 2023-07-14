@@ -18,21 +18,14 @@ class Role(db.Model):
     to_delete = db.Column(db.Integer(), default=0, nullable=False)
 
     __table_args__ = (
-        db.UniqueConstraint("survey_uid", "role_name", name="_survey_uid_role_name_uc", deferrable=True),
-        {
-            "extend_existing": True,
-            "schema": "config_sandbox"
-        }
+        db.UniqueConstraint(
+            "survey_uid", "role_name", name="_survey_uid_role_name_uc", deferrable=True
+        ),
+        {"schema": "webapp"},
     )
 
     def __init__(
-        self,
-        role_uid,
-        survey_uid,
-        role_name,
-        reporting_role_uid,
-        user_uid,
-        to_delete
+        self, role_uid, survey_uid, role_name, reporting_role_uid, user_uid, to_delete
     ):
         self.role_uid = role_uid
         self.survey_uid = survey_uid
@@ -46,6 +39,5 @@ class Role(db.Model):
             "role_uid": self.role_uid,
             "survey_uid": self.survey_uid,
             "role_name": self.role_name,
-            "reporting_role_uid": self.reporting_role_uid
+            "reporting_role_uid": self.reporting_role_uid,
         }
-
