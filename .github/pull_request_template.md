@@ -1,4 +1,4 @@
-## [SS-##] <PR Title>
+# [SS-##] <PR Title>
 
 Provide a short, concise and meaningful PR title above. Examples of good PR titles:
 
