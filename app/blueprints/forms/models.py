@@ -158,8 +158,8 @@ class SCTOQuestionMapping(db.Model):
         primary_key=True,
         nullable=False,
     )
-    survey_status = db.Column(db.String(), nullable=False)
-    revisit_section = db.Column(db.String(), nullable=False)
+    survey_status = db.Column(db.String())
+    revisit_section = db.Column(db.String())
     target_id = db.Column(db.String(), nullable=False)
     enumerator_id = db.Column(db.String(), nullable=False)
     locations = db.Column(JSONB)
