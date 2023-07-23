@@ -5,10 +5,7 @@ from sqlalchemy import insert, cast, Integer
 from sqlalchemy.sql import case
 from sqlalchemy.exc import IntegrityError
 import pandas as pd
-import numpy as np
 import base64
-import io
-from csv import DictReader
 from app import db
 from .models import GeoLevel, Location
 from .routes import locations_bp
@@ -19,10 +16,16 @@ from .validators import (
     LocationsQueryParamValidator,
 )
 from .utils import (
-    run_location_mapping_validations,
-    build_locations_df,
-    run_locations_file_validations,
-    run_geo_level_hierarchy_validations,
+    LocationsUpload,
+    GeoLevelHierarchy,
+    LocationColumnMapping,
+    GeoLevelPayloadItem,
+)
+from .errors import (
+    HeaderRowEmptyError,
+    InvalidLocationsError,
+    InvalidGeoLevelHierarchyError,
+    InvalidGeoLevelMappingError,
 )
 
 
@@ -106,17 +109,17 @@ def update_survey_geo_levels():
     if payload_validator.validate():
         # If validate_hierarchy is true, validate the hierarchy of the geo levels
         if payload.get("validate_hierarchy"):
-            geo_levels = payload_validator.geo_levels.data
+            geo_levels = [
+                GeoLevelPayloadItem(item) for item in payload_validator.geo_levels.data
+            ]
 
             if len(geo_levels) > 0:
-                geo_level_hierarchy_errors = run_geo_level_hierarchy_validations(
-                    geo_levels
-                )
-
-                if len(geo_level_hierarchy_errors) > 0:
+                try:
+                    GeoLevelHierarchy(geo_levels)
+                except InvalidGeoLevelHierarchyError as e:
                     return (
                         jsonify(
-                            {"success": False, "errors": geo_level_hierarchy_errors}
+                            {"success": False, "errors": e.geo_level_hierarchy_errors}
                         ),
                         422,
                     )
@@ -265,18 +268,15 @@ def upload_locations():
     # Get the geo levels for the survey
     geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
 
-    # Validate the geo level hierarchy
-    geo_level_hierarchy_errors = run_geo_level_hierarchy_validations(
-        [geo_level.to_dict() for geo_level in geo_levels]
-    )
-
-    if len(geo_level_hierarchy_errors) > 0:
+    try:
+        geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+    except InvalidGeoLevelHierarchyError as e:
         return (
             jsonify(
                 {
                     "success": False,
                     "errors": {
-                        "geo_level_hierarchy": geo_level_hierarchy_errors,
+                        "geo_level_hierarchy": e.geo_level_hierarchy_errors,
                         "file": [],
                         "geo_level_mapping": [],
                     },
@@ -285,66 +285,45 @@ def upload_locations():
             422,
         )
 
-    # Create an ordered list of geo levels based on the geo level hierarchy
-    # IMPORTANT: This assumes that the geo level hierarchy has been validated
-    ordered_geo_levels = [
-        geo_level for geo_level in geo_levels if geo_level.parent_geo_level_uid is None
-    ]
-    for i in range(len(geo_levels) - 1):
-        for geo_level in geo_levels:
-            if geo_level.parent_geo_level_uid == ordered_geo_levels[i].geo_level_uid:
-                ordered_geo_levels.append(geo_level)
-
-    # Run validations on the geo level column mapping
-    geo_level_mapping = payload_validator.geo_level_mapping.data
-
-    mapping_errors = run_location_mapping_validations(geo_levels, geo_level_mapping)
-
-    if len(mapping_errors) > 0:
+    try:
+        column_mapping = LocationColumnMapping(
+            geo_levels, payload_validator.geo_level_mapping.data
+        )
+    except InvalidGeoLevelMappingError as e:
         return (
             jsonify(
                 {
                     "success": False,
                     "errors": {
-                        "geo_level_mapping": mapping_errors,
+                        "geo_level_mapping": e.geo_level_mapping_errors,
                         "file": [],
                     },
                 }
             ),
             422,
         )
-
-    # Create a lookup object for the geo level mapping
-    geo_level_mapping_lookup = {
-        mapping["geo_level_uid"]: mapping for mapping in geo_level_mapping
-    }
 
     # Get the expected columns from the mapped column names
     expected_columns = []
-    for geo_level in ordered_geo_levels:
-        expected_columns.append(
-            geo_level_mapping_lookup[geo_level.geo_level_uid]["location_id_column"]
+    for geo_level in geo_level_hierarchy.ordered_geo_levels:
+        location_type_columns = column_mapping.get_by_uid(geo_level.geo_level_uid)
+        expected_columns += [
+            location_type_columns["location_id_column"],
+            location_type_columns["location_name_column"],
+        ]
+
+    # Create a LocationsUpload object from the uploaded file
+    try:
+        locations_upload = LocationsUpload(
+            csv_string=base64.b64decode(payload_validator.file.data).decode("utf-8")
         )
-        expected_columns.append(
-            geo_level_mapping_lookup[geo_level.geo_level_uid]["location_name_column"]
-        )
-
-    # Check if any columns are able to be read in - if not the first row is probably empty
-    # If so do not proceed as it will cause errors
-
-    csv_string = base64.b64decode(payload_validator.file.data).decode("utf-8")
-
-    col_names = DictReader(io.StringIO(csv_string)).fieldnames
-
-    if len(col_names) == 0:
+    except HeaderRowEmptyError as e:
         return (
             jsonify(
                 {
                     "success": False,
                     "errors": {
-                        "file": [
-                            "Column names were not found in the file. Make sure the first row of the file contains column names."
-                        ],
+                        "file": e.message,
                         "geo_level_mapping": [],
                     },
                 }
@@ -352,23 +331,20 @@ def upload_locations():
             422,
         )
 
-    # Build the locations dataframe
-
-    locations_df = build_locations_df(csv_string, col_names)
-
-    # Validate the data in the dataframe
-
-    file_errors = run_locations_file_validations(
-        locations_df, expected_columns, ordered_geo_levels, geo_level_mapping_lookup
-    )
-
-    if len(file_errors) > 0:
+    # Validate the locations data
+    try:
+        locations_upload.validate_records(
+            expected_columns,
+            geo_level_hierarchy.ordered_geo_levels,
+            column_mapping.geo_level_mapping_lookup,
+        )
+    except InvalidLocationsError as e:
         return (
             jsonify(
                 {
                     "success": False,
                     "errors": {
-                        "file": file_errors,
+                        "file": e.locations_errors,
                         "geo_level_mapping": [],
                     },
                 }
@@ -379,14 +355,11 @@ def upload_locations():
     # We will have to delete the existing locations for the survey
     Location.query.filter_by(survey_uid=survey_uid).delete()
 
-    for i, geo_level in enumerate(ordered_geo_levels):
+    for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
         # Get the location_id and location_name column names for the geo level
-        location_id_column_name = geo_level_mapping_lookup[geo_level.geo_level_uid][
-            "location_id_column"
-        ]
-        location_name_column_name = geo_level_mapping_lookup[geo_level.geo_level_uid][
-            "location_name_column"
-        ]
+        location_type_columns = column_mapping.get_by_uid(geo_level.geo_level_uid)
+        location_id_column_name = location_type_columns["location_id_column"]
+        location_name_column_name = location_type_columns["location_name_column"]
 
         columns = [location_id_column_name, location_name_column_name]
 
@@ -403,16 +376,18 @@ def upload_locations():
                 )
             }
 
-            parent_location_id_column_name = geo_level_mapping_lookup[
+            parent_location_id_column_name = column_mapping.get_by_uid(
                 parent_geo_level_uid
-            ]["location_id_column"]
+            )["location_id_column"]
 
             columns.append(parent_location_id_column_name)
 
         # Create and add location models for the geo level
 
         location_records_to_insert = []
-        for i, row in enumerate(locations_df[columns].drop_duplicates().itertuples()):
+        for i, row in enumerate(
+            locations_upload.locations_df[columns].drop_duplicates().itertuples()
+        ):
             parent_location_uid = None
             if parent_geo_level_uid is not None:
                 parent_location_uid = parent_locations.get(str(row[3]))
@@ -420,8 +395,8 @@ def upload_locations():
             location_records_to_insert.append(
                 {
                     "survey_uid": survey_uid,
-                    "location_id": row[1],  # location_id
-                    "location_name": row[2],  # location_name
+                    "location_id": row[1],
+                    "location_name": row[2],
                     "parent_location_uid": parent_location_uid,
                     "geo_level_uid": geo_level.geo_level_uid,
                 }
@@ -445,7 +420,6 @@ def upload_locations():
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
-    # If validations fail, return error
     return jsonify(message="Success"), 200
 
 
@@ -493,11 +467,10 @@ def get_locations():
         )
 
     # Validate the geo level hierarchy
-    geo_level_hierarchy_errors = run_geo_level_hierarchy_validations(
-        [geo_level.to_dict() for geo_level in geo_levels]
-    )
 
-    if len(geo_level_hierarchy_errors) > 0:
+    try:
+        geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+    except InvalidGeoLevelHierarchyError as e:
         return (
             jsonify(
                 {
@@ -510,24 +483,14 @@ def get_locations():
             500,
         )
 
-    # Create an ordered list of geo levels based on the geo level hierarchy
-    # IMPORTANT: This assumes that the geo level hierarchy has been validated
-    ordered_geo_levels = [
-        geo_level for geo_level in geo_levels if geo_level.parent_geo_level_uid is None
-    ]
-    for i in range(len(geo_levels) - 1):
-        for geo_level in geo_levels:
-            if geo_level.parent_geo_level_uid == ordered_geo_levels[i].geo_level_uid:
-                ordered_geo_levels.append(geo_level)
-
     # Get the expected columns from the mapped column names
     expected_columns = []
-    for geo_level in ordered_geo_levels:
+    for geo_level in geo_level_hierarchy.ordered_geo_levels:
         expected_columns.append(geo_level.geo_level_name + " ID")
         expected_columns.append(geo_level.geo_level_name + " Name")
 
     final_df = pd.DataFrame()
-    for i, geo_level in enumerate(ordered_geo_levels):
+    for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
         locations = (
             db.session.query(
                 Location.location_uid,
