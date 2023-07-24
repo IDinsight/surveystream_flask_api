@@ -27,6 +27,7 @@ from .errors import (
     InvalidGeoLevelHierarchyError,
     InvalidGeoLevelMappingError,
 )
+import binascii
 
 
 @locations_bp.route("/geo-levels", methods=["GET"])
@@ -315,7 +316,35 @@ def upload_locations():
     # Create a LocationsUpload object from the uploaded file
     try:
         locations_upload = LocationsUpload(
-            csv_string=base64.b64decode(payload_validator.file.data).decode("utf-8")
+            csv_string=base64.b64decode(
+                payload_validator.file.data, validate=True
+            ).decode("utf-8")
+        )
+    except binascii.Error:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file": ["File data has invalid base64 encoding"],
+                        "geo_level_mapping": [],
+                    },
+                }
+            ),
+            422,
+        )
+    except UnicodeDecodeError:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file": ["File data has invalid UTF-8 encoding"],
+                        "geo_level_mapping": [],
+                    },
+                }
+            ),
+            422,
         )
     except HeaderRowEmptyError as e:
         return (
