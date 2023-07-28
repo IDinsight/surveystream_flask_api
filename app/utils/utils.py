@@ -64,7 +64,7 @@ def logged_in_active_user_required(f):
                     .filter(User.user_uid == user_uid)
                     .one_or_none()
                 )
-                if user.is_active() is False:
+                if user is not None and user.is_active() is False:
                     return jsonify(message="INACTIVE_USER"), 403
 
         return login_required(f)(*args, **kwargs)
