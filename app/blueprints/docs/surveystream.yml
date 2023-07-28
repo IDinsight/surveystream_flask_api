@@ -1246,12 +1246,6 @@ paths:
       tags:
         - Forms
       parameters:
-        - in: path
-          name: form_uid
-          schema:
-            type: integer
-          required: true
-          description: Unique ID of the form
         - in: query
           name: survey_uid
           schema:
@@ -1264,56 +1258,45 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  survey_uid:
-                    type: string
-                    description: The unique ID of the survey
-                  form_uid:
-                    type: integer
-                    description: The unique ID of the form
-                  form_name:
-                    type: string
-                    description: The name of the form
-                  scto_form_id:
-                    type: string
-                    description: The form's SurveyCTO form ID
-                  tz_name:
-                    type: string
-                    description: The timezone in which data collection will happen for the form
-                  scto_server_name:
-                    type: string
-                    description: The SurveyCTO server name for the form
-                  encryption_key_shared:
-                    type: boolean
-                    description:
-                      Whether the encryption key for the form has been shared with the SurveyStream team
-                  server_access_role_granted:
-                    type: boolean
-                    description:
-                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
-                  server_access_allowed:
-                    type: boolean
-                    description:
-                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
-                  last_ingested_at:
-                    type: string
-                    description: >-
-                      Date when form submissions were last ingested from
-                      SurveyCTO in isoformat
-        '404':
-          description: The specified form ID was not found.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    description: Indicates whether the request was successful
-                  error:
-                    type: string
-                    description: Error message indicating that the specified form ID was not found.
+                type: array
+                items:
+                  type: object
+                  properties:
+                    survey_uid:
+                      type: string
+                      description: The unique ID of the survey
+                    form_uid:
+                      type: integer
+                      description: The unique ID of the form
+                    form_name:
+                      type: string
+                      description: The name of the form
+                    scto_form_id:
+                      type: string
+                      description: The form's SurveyCTO form ID
+                    tz_name:
+                      type: string
+                      description: The timezone in which data collection will happen for the form
+                    scto_server_name:
+                      type: string
+                      description: The SurveyCTO server name for the form
+                    encryption_key_shared:
+                      type: boolean
+                      description:
+                        Whether the encryption key for the form has been shared with the SurveyStream team
+                    server_access_role_granted:
+                      type: boolean
+                      description:
+                        Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                    server_access_allowed:
+                      type: boolean
+                      description:
+                        Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                    last_ingested_at:
+                      type: string
+                      description: >-
+                        Date when form submissions were last ingested from
+                        SurveyCTO in isoformat
   /forms/{form_uid}:
     get:
       summary: Get forms
