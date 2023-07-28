@@ -1,4 +1,4 @@
-from utils import set_user_active_status, logout, get_csrf_token
+from utils import set_user_active_status, logout, get_csrf_token, delete_user
 from app import db
 import pytest
 
@@ -59,7 +59,7 @@ class TestAuth:
     ):
         """
         Known user; correct PASSWORD; inactive; currently logged out
-        Expected behavior: 403 unauthorized
+        Expected behavior: 403 forbidden
         """
 
         set_user_active_status(app, db, test_user_credentials["email"], active=False)
@@ -80,7 +80,7 @@ class TestAuth:
     ):
         """
         Known user; correct PASSWORD; inactive; currently logged in
-        Expected behavior: 401 unauthorized
+        Expected behavior: 403 forbidden
         """
 
         response = client.post(
@@ -315,3 +315,20 @@ class TestAuth:
         )
 
         assert response.status_code == 200
+
+    def test_user_in_session_not_in_db(
+        self, app, client, login_test_user, test_user_credentials
+    ):
+        """
+        Verify that if a user is in the session but not in the database, they are logged out
+        """
+
+        response = client.get("/api/profile")
+
+        assert response.status_code == 200
+
+        delete_user(app, db, test_user_credentials["email"])
+
+        response = client.get("/api/profile")
+
+        assert response.status_code == 401

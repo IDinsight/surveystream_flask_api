@@ -91,3 +91,16 @@ def load_reference_data(filename_stub):
         reference_data = json.load(json_file)
 
     return reference_data
+
+
+def delete_user(app, db, email):
+    """
+    Delete a user directly in the database. Needed to set up certain tests.
+    """
+
+    with app.app_context():
+        db.session.execute(
+            "DELETE FROM webapp.users WHERE email=:email",
+            {"email": email},
+        )
+        db.session.commit()
