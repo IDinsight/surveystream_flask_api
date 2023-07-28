@@ -1064,11 +1064,141 @@ class TestLocations:
             "Column names were not found in the file. Make sure the first row of the file contains column names."
         ]
 
+    def test_locations_validations_file_errors_empty_string(
+        self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
+    ):
+        """
+        Test uploading an empty string as the locations base64 encoded csv
+        """
+
+        locations_csv_encoded = ""
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 422
+        assert "file" in response.json["errors"]
+        assert response.json["errors"]["file"] == ["This field is required."]
+
+    def test_locations_validations_file_errors_invalid_base64_length(
+        self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
+    ):
+        """
+        Test uploading an invalid base64 string as the locations csv
+        """
+
+        locations_csv_encoded = "a"
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 422
+        assert "file" in response.json["errors"]
+        assert response.json["errors"]["file"] == [
+            "File data has invalid base64 encoding"
+        ]
+
+    def test_locations_validations_file_errors_invalid_base64_char(
+        self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
+    ):
+        """
+        Test uploading an invalid base64 string as the locations csv
+        """
+
+        locations_csv_encoded = "))))"
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 422
+        assert "file" in response.json["errors"]
+        assert response.json["errors"]["file"] == [
+            "File data has invalid base64 encoding"
+        ]
+
     def test_get_locations_null_result(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
     ):
         """
-        Test that the locations csv can be uploaded
+        Test that the locations can be fetched when there are geo levels but no location data uploaded
         """
 
         # Check the response
@@ -1099,7 +1229,7 @@ class TestLocations:
         self, client, login_test_user, csrf_token
     ):
         """
-        Test that the locations csv can be uploaded
+        Test that the locations  can be fetched when there are no geo levels and no location data uploaded
         """
 
         # Check the response

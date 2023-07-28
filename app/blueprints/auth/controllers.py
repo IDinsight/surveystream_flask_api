@@ -7,7 +7,7 @@ from flask_login import current_user, login_user, logout_user
 from flask_mail import Message
 from passlib.pwd import genword
 from app import db, mail
-from app.models.data_models import ResetPasswordToken, User
+from app.blueprints.auth.models import ResetPasswordToken, User
 from .validators import (
     ChangePasswordValidator,
     ForgotPasswordValidator,

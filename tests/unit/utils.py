@@ -48,7 +48,7 @@ def set_user_active_status(app, db, email, active):
 
     with app.app_context():
         db.session.execute(
-            "UPDATE users SET active=:active_value WHERE email=:email",
+            "UPDATE webapp.users SET active=:active_value WHERE email=:email",
             {"active_value": active_value, "email": email},
         )
         db.session.commit()
