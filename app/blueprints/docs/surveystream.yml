@@ -19,6 +19,8 @@ info:
 servers:
   - url: 'https://surveystream.idinsight.io/api'
     description: Production server
+  - url: 'https://stg.surveystream.idinsight.io/api'
+    description: Staging server
 components:
   securitySchemes:
     cookieAuth:
@@ -397,6 +399,9 @@ paths:
               schema:
                 type: object
                 properties:
+                  user_uid:
+                    type: integer
+                    description: The unique ID of the user
                   first_name:
                     type: string
                     description: The first name of the user
@@ -663,7 +668,7 @@ paths:
                 - state
                 - created_by_user_uid
       responses:
-        '200':
+        '201':
           description: The survey was created successfully
           content:
             application/json:
@@ -754,6 +759,10 @@ paths:
                   error:
                     type: string
                     example: survey_id already exists
+        '403':
+          description: X-CSRF-Token required in header
+        '422':
+          description: Form errors
   /surveys/<survey_uid>/basic-information:
     get:
       summary: Get basic information for a specific survey
@@ -995,6 +1004,10 @@ paths:
                     type: string
                     description: Error message
                     example: "Both survey_id and modules are required."
+        '403':
+          description: X-CSRF-Token required in header
+        '422':
+          description: Form errors
   /modules/{module_id}/status/{survey_uid}:
     put:
       tags:
@@ -1168,7 +1181,7 @@ paths:
                 - scto_form_id
                 - form_name
       responses:
-        '200':
+        '201':
           description: OK
           content:
             application/json:
@@ -1223,6 +1236,84 @@ paths:
                   error:
                     type: string
                     description: Error message indicating that the form could not be created.
+        '403':
+          description: X-CSRF-Token required in header
+        '422':
+          description: Form errors
+    get:
+      summary: Get forms for a user
+      description: Get the forms for the logged in user. Optionally, a `?survey_uid=<survey_uid>` query parameter can be provided to return forms for a specific survey.
+      tags:
+        - Forms
+      parameters:
+        - in: path
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+        - in: query
+          name: survey_uid
+          schema:
+            type: integer
+          required: false
+          description: Unique ID of the survey to return forms for.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  survey_uid:
+                    type: string
+                    description: The unique ID of the survey
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  form_name:
+                    type: string
+                    description: The name of the form
+                  scto_form_id:
+                    type: string
+                    description: The form's SurveyCTO form ID
+                  tz_name:
+                    type: string
+                    description: The timezone in which data collection will happen for the form
+                  scto_server_name:
+                    type: string
+                    description: The SurveyCTO server name for the form
+                  encryption_key_shared:
+                    type: boolean
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
+                  server_access_role_granted:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  server_access_allowed:
+                    type: boolean
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
+                  last_ingested_at:
+                    type: string
+                    description: >-
+                      Date when form submissions were last ingested from
+                      SurveyCTO in isoformat
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
   /forms/{form_uid}:
     get:
       summary: Get forms
@@ -1394,6 +1485,8 @@ paths:
                     description: >-
                       Date when form submissions were last ingested from
                       SurveyCTO in isoformat
+        '403':
+          description: X-CSRF-Token required in header
         '404':
           description: The specified form ID was not found.
           content:
@@ -1407,6 +1500,9 @@ paths:
                   error:
                     type: string
                     description: Error message indicating that the specified form ID was not found.
+        '422':
+          description: Form errors
+
     delete:
       summary: Delete a form
       tags:
