@@ -23,7 +23,6 @@ def get_survey_module_questionnaire(survey_uid):
 
 @module_questionnaire_bp.route("/<int:survey_uid>", methods=["PUT"])
 def update_survey_module_questionnaire(survey_uid):
-
     validator = ModuleQuestionnaireForm.from_json(request.get_json())
 
     if "X-CSRF-Token" in request.headers:
@@ -32,7 +31,6 @@ def update_survey_module_questionnaire(survey_uid):
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if validator.validate():
-
         # do upsert
         statement = (
             pg_insert(ModuleQuestionnaire)
@@ -47,7 +45,7 @@ def update_survey_module_questionnaire(survey_uid):
                 language_location_mapping=validator.language_location_mapping.data,
             )
             .on_conflict_do_update(
-                constraint="module_questionnaire_pkey",
+                constraint="pk_module_questionnaire",
                 set_={
                     "target_assignment_criteria": validator.target_assignment_criteria.data,
                     "supervisor_assignment_criteria": validator.supervisor_assignment_criteria.data,
