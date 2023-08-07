@@ -1,12 +1,11 @@
 from flask import jsonify, session, current_app
-from flask_login import login_required
+from flask_login import login_required, logout_user
 from functools import wraps
 from app import db
-from app.models.data_models import User
+from app.blueprints.auth.models import User
 import boto3
 import base64
 from botocore.exceptions import ClientError
-import os
 
 
 def concat_names(name_tuple):
@@ -65,6 +64,9 @@ def logged_in_active_user_required(f):
                     .filter(User.user_uid == user_uid)
                     .one_or_none()
                 )
+                if user is None:
+                    logout_user()
+                    return jsonify(message="UNAUTHORIZED"), 401
                 if user.is_active() is False:
                     return jsonify(message="INACTIVE_USER"), 403
 

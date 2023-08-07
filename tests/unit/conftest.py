@@ -1,10 +1,10 @@
 import pytest
-from app import create_app
-from app import db
+from app import create_app, db
 from passlib.hash import pbkdf2_sha256
 import yaml
 from werkzeug.http import parse_cookie
 from pathlib import Path
+import flask_migrate
 
 
 def pytest_collection_modifyitems(config, items):
@@ -130,15 +130,16 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
 
     filepath = Path(__file__).resolve().parent.parent
     with app.app_context():
-        db.session.execute(open(f"{filepath}/db/3-web-app-schema.sql", "r").read())
-        db.session.execute(open(f"{filepath}/db/1-config-schema.sql", "r").read())
+        db.engine.execute("CREATE SCHEMA IF NOT EXISTS webapp;")
+        flask_migrate.upgrade(directory=f"{filepath}/migrations")
+
         db.session.execute(
             open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
         )
 
         # Set the credentials for the desired test user
         db.session.execute(
-            "UPDATE users SET email=:email, password_secure=:pw_hash WHERE user_uid=:user_uid",
+            "UPDATE webapp.users SET email=:email, password_secure=:pw_hash WHERE user_uid=:user_uid",
             {
                 "email": test_user_credentials["email"],
                 "pw_hash": test_user_credentials["pw_hash"],
@@ -150,7 +151,7 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
 
         # Add the registration user
         db.session.execute(
-            "INSERT INTO users (email, password_secure) VALUES (:email, :pw_hash) ON CONFLICT DO NOTHING",
+            "INSERT INTO webapp.users (email, password_secure) VALUES (:email, :pw_hash) ON CONFLICT DO NOTHING",
             {
                 "email": registration_user_credentials["email"],
                 "pw_hash": registration_user_credentials["pw_hash"],
@@ -160,3 +161,9 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
         db.session.commit()
 
     yield
+
+    # Clean up the database after each test
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
+        db.engine.execute("DROP TABLE alembic_version")

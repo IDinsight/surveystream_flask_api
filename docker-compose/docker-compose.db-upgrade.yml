@@ -1,0 +1,20 @@
+version: '2.1'
+services:
+  api:
+    image: ${BACKEND_NAME}:${VERSION}
+    restart: always
+    environment:
+        - CONFIG_TYPE=app.config.DevelopmentConfig
+        - PYTHONUNBUFFERED=0
+        - AWS_REGION=ap-south-1
+        - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
+    ports:
+        - "${BACKEND_PORT}:${BACKEND_PORT}"
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
+    entrypoint: ["/bin/bash","-c"]
+    command:
+    - |
+       . /bootstrap.sh
+       flask db upgrade
+      

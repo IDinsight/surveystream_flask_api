@@ -8,7 +8,7 @@ from flask_mail import Message
 from passlib.pwd import genword
 from flask_cors import CORS, cross_origin
 from app import db, mail
-from app.models.data_models import ResetPasswordToken, User
+from app.blueprints.auth.models import ResetPasswordToken, User
 from .validators import (
     ChangePasswordValidator,
     ForgotPasswordValidator,

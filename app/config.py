@@ -92,10 +92,10 @@ class DevelopmentConfig(Config):
 class ProfilingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
-        "dod",
+        "asdf",
         "postgres",
         5433,
-        "dod",
+        "surveystream",
     )
 
     TESTING = True
@@ -105,10 +105,10 @@ class ProfilingConfig(Config):
 class UnitTestConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
-        "dod",
+        "asdf",
         "postgres",
         5433,
-        "dod",
+        "surveystream",
     )
 
     TESTING = True
@@ -155,3 +155,7 @@ class ProductionConfig(Config):
 
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False
+
+
+class DbMigrationConfig(Config):
+    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI")

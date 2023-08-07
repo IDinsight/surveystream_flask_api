@@ -1,11 +1,11 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField
-from wtforms.validators import InputRequired, Email
+from wtforms.validators import DataRequired, Email
 
 
 class UpdateUserProfileValidator(FlaskForm):
-    new_email = StringField(validators=[InputRequired(), Email()])
+    new_email = StringField(validators=[DataRequired(), Email()])
 
 
 class UploadUserAvatarValidator(FlaskForm):
