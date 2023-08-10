@@ -131,7 +131,8 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
     filepath = Path(__file__).resolve().parent.parent
     with app.app_context():
         db.engine.execute("CREATE SCHEMA IF NOT EXISTS webapp;")
-        flask_migrate.upgrade(directory=f"{filepath}/migrations")
+        # flask_migrate.upgrade(directory=f"{filepath}/migrations")
+        db.create_all()
 
         db.session.execute(
             open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
@@ -166,4 +167,4 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
     with app.app_context():
         db.session.remove()
         db.drop_all()
-        db.engine.execute("DROP TABLE alembic_version")
+        db.engine.execute("DROP TABLE IF EXISTS alembic_version;")
