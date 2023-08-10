@@ -131,8 +131,7 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
     filepath = Path(__file__).resolve().parent.parent
     with app.app_context():
         db.engine.execute("CREATE SCHEMA IF NOT EXISTS webapp;")
-        # flask_migrate.upgrade(directory=f"{filepath}/migrations")
-        db.create_all()
+        flask_migrate.upgrade(directory=f"{filepath}/migrations")
 
         db.session.execute(
             open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
