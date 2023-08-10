@@ -150,7 +150,7 @@ class UpdateEnumeratorRole(FlaskForm):
         ]
     )
     form_uid = IntegerField(validators=[DataRequired()])
-    location_uid = StringField(validators=[DataRequired()])
+    location_uid = StringField()
 
 
 class DeleteEnumeratorRole(FlaskForm):

@@ -340,6 +340,54 @@ class TestEnumerators:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
+    def test_update_location_mapping(
+        self, client, login_test_user, upload_enumerators_csv, csrf_token
+    ):
+        """
+        Test that a location mapping can be updated
+        """
+
+        # Update the enumerator
+        payload = {
+            "form_uid": 1,
+            "enumerator_type": "surveyor",
+            "location_uid": None,
+        }
+
+        response = client.put(
+            "/api/enumerators/1/roles",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "form_uid": 1,
+                "roles": [
+                    {
+                        "enumerator_type": "surveyor",
+                        "status": "Active",
+                        "locations": None,
+                    }
+                ],
+            },
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get(
+            "/api/enumerators/1/roles",
+            query_string={"form_uid": 1, "enumerator_type": "surveyor"},
+            content_type="application/json",
+        )
+        print(response.json)
+        assert response.status_code == 200
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_delete_enumerator(self, client, login_test_user, upload_enumerators_csv):
         """
         Test that an individual enumerator can be deleted
