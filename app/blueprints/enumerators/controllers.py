@@ -402,114 +402,81 @@ def get_enumerators():
         )
     )
 
-    # Get the enumerators for the given form
-    if enumerator_type is None:
-        result = (
-            db.session.query(
-                Enumerator,
-                SurveyorForm.status.label("surveyor_status"),
-                MonitorForm.status.label("monitor_status"),
-                surveyor_locations_subquery.c.locations.label("surveyor_locations"),
-                monitor_locations_subquery.c.locations.label("monitor_locations"),
-            )
-            .join(
+    models = [Enumerator]
+    joined_keys = []
+
+    if enumerator_type is None or enumerator_type == "surveyor":
+        models.append(SurveyorForm.status.label("surveyor_status"))
+        models.append(
+            surveyor_locations_subquery.c.locations.label("surveyor_locations")
+        )
+        joined_keys.append("surveyor_status")
+        joined_keys.append("surveyor_locations")
+
+    if enumerator_type is None or enumerator_type == "monitor":
+        models.append(MonitorForm.status.label("monitor_status"))
+        models.append(monitor_locations_subquery.c.locations.label("monitor_locations"))
+        joined_keys.append("monitor_status")
+        joined_keys.append("monitor_locations")
+
+    query_to_build = db.session.query(*models)
+
+    if enumerator_type is None or enumerator_type == "surveyor":
+        query_to_build = (
+            query_to_build.outerjoin(
                 SurveyorForm,
                 (Enumerator.enumerator_uid == SurveyorForm.enumerator_uid)
                 & (Enumerator.form_uid == SurveyorForm.form_uid),
-                isouter=True,
             )
-            .join(
+            .outerjoin(
                 SurveyorLocation,
                 (Enumerator.enumerator_uid == SurveyorLocation.enumerator_uid)
                 & (Enumerator.form_uid == SurveyorLocation.form_uid),
-                isouter=True,
             )
-            .join(
-                MonitorForm,
-                (Enumerator.enumerator_uid == MonitorForm.enumerator_uid)
-                & (Enumerator.form_uid == MonitorForm.form_uid),
-                isouter=True,
-            )
-            .join(
-                MonitorLocation,
-                (Enumerator.enumerator_uid == MonitorLocation.enumerator_uid)
-                & (Enumerator.form_uid == MonitorLocation.form_uid),
-                isouter=True,
-            )
-            .join(
+            .outerjoin(
                 surveyor_locations_subquery,
                 SurveyorLocation.location_uid
                 == surveyor_locations_subquery.c.location_uid,
-                isouter=True,
             )
-            .join(
+        )
+
+    if enumerator_type is None or enumerator_type == "monitor":
+        query_to_build = (
+            query_to_build.outerjoin(
+                MonitorForm,
+                (Enumerator.enumerator_uid == MonitorForm.enumerator_uid)
+                & (Enumerator.form_uid == MonitorForm.form_uid),
+            )
+            .outerjoin(
+                MonitorLocation,
+                (Enumerator.enumerator_uid == MonitorLocation.enumerator_uid)
+                & (Enumerator.form_uid == MonitorLocation.form_uid),
+            )
+            .outerjoin(
                 monitor_locations_subquery,
                 MonitorLocation.location_uid
                 == monitor_locations_subquery.c.location_uid,
-                isouter=True,
             )
-            .filter(Enumerator.form_uid == form_uid)
-        ).all()
+        )
 
+    final_query = query_to_build.filter(Enumerator.form_uid == form_uid)
+
+    result = final_query.all()
+
+    if enumerator_type is None:
         for (
             enumerator,
             surveyor_status,
-            monitor_status,
             surveyor_locations,
+            monitor_status,
             monitor_locations,
         ) in result:
             enumerator.surveyor_status = surveyor_status
-            enumerator.monitor_status = monitor_status
             enumerator.surveyor_locations = surveyor_locations
+            enumerator.monitor_status = monitor_status
             enumerator.monitor_locations = monitor_locations
-
-        response = jsonify(
-            {
-                "success": True,
-                "data": [
-                    enumerator.to_dict(
-                        joined_keys=(
-                            "surveyor_status",
-                            "monitor_status",
-                            "surveyor_locations",
-                            "monitor_locations",
-                        )
-                    )
-                    for enumerator, surveyor_status, monitor_status, surveyor_locations, monitor_locations in result
-                ],
-            }
-        )
-
-        return response, 200
 
     elif enumerator_type == "surveyor":
-        result = (
-            db.session.query(
-                Enumerator,
-                SurveyorForm.status.label("surveyor_status"),
-                surveyor_locations_subquery.c.locations.label("surveyor_locations"),
-            )
-            .join(
-                SurveyorForm,
-                (Enumerator.enumerator_uid == SurveyorForm.enumerator_uid)
-                & (Enumerator.form_uid == SurveyorForm.form_uid),
-                isouter=True,
-            )
-            .join(
-                SurveyorLocation,
-                (Enumerator.enumerator_uid == SurveyorLocation.enumerator_uid)
-                & (Enumerator.form_uid == SurveyorLocation.form_uid),
-                isouter=True,
-            )
-            .join(
-                surveyor_locations_subquery,
-                SurveyorLocation.location_uid
-                == surveyor_locations_subquery.c.location_uid,
-                isouter=True,
-            )
-            .filter(Enumerator.form_uid == form_uid)
-        ).all()
-
         for (
             enumerator,
             surveyor_status,
@@ -518,51 +485,7 @@ def get_enumerators():
             enumerator.surveyor_status = surveyor_status
             enumerator.surveyor_locations = surveyor_locations
 
-        response = jsonify(
-            {
-                "success": True,
-                "data": [
-                    enumerator.to_dict(
-                        joined_keys=(
-                            "surveyor_status",
-                            "surveyor_locations",
-                        )
-                    )
-                    for enumerator, surveyor_status, surveyor_locations in result
-                ],
-            }
-        )
-
-        return response, 200
-
     elif enumerator_type == "monitor":
-        result = (
-            db.session.query(
-                Enumerator,
-                MonitorForm.status.label("monitor_status"),
-                monitor_locations_subquery.c.locations.label("monitor_locations"),
-            )
-            .join(
-                MonitorForm,
-                (Enumerator.enumerator_uid == MonitorForm.enumerator_uid)
-                & (Enumerator.form_uid == MonitorForm.form_uid),
-                isouter=True,
-            )
-            .join(
-                MonitorLocation,
-                (Enumerator.enumerator_uid == MonitorLocation.enumerator_uid)
-                & (Enumerator.form_uid == MonitorLocation.form_uid),
-                isouter=True,
-            )
-            .join(
-                monitor_locations_subquery,
-                MonitorLocation.location_uid
-                == monitor_locations_subquery.c.location_uid,
-                isouter=True,
-            )
-            .filter(Enumerator.form_uid == form_uid)
-        ).all()
-
         for (
             enumerator,
             monitor_status,
@@ -571,34 +494,16 @@ def get_enumerators():
             enumerator.monitor_status = monitor_status
             enumerator.monitor_locations = monitor_locations
 
-        response = jsonify(
-            {
-                "success": True,
-                "data": [
-                    enumerator.to_dict(
-                        joined_keys=(
-                            "monitor_status",
-                            "monitor_locations",
-                        )
-                    )
-                    for enumerator, monitor_status, monitor_locations in result
-                ],
-            }
-        )
+    response = jsonify(
+        {
+            "success": True,
+            "data": [
+                enumerator.to_dict(joined_keys=joined_keys) for result[0] in result
+            ],
+        }
+    )
 
-        return response, 200
-
-    else:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": "Invalid enumerator type",
-                }
-            ),
-            400,
-        )
+    return response, 200
 
 
 @enumerators_bp.route("/<int:enumerator_uid>", methods=["GET"])
