@@ -2,7 +2,6 @@ import io
 import pandas as pd
 import numpy as np
 from csv import DictReader
-from app.blueprints.surveys.models import Survey
 from app.blueprints.locations.models import Location
 from .models import Enumerator
 from .errors import (

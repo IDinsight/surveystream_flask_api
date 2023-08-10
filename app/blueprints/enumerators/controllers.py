@@ -680,17 +680,6 @@ def delete_enumerator(enumerator_uid):
     Method to delete an enumerator from the database
     """
 
-    payload_validator = UpdateEnumerator.from_json(request.get_json())
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
-
     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
         return jsonify({"error": "Enumerator not found"}), 404
 
@@ -699,7 +688,12 @@ def delete_enumerator(enumerator_uid):
     MonitorForm.query.filter_by(enumerator_uid=enumerator_uid).delete()
     MonitorLocation.query.filter_by(enumerator_uid=enumerator_uid).delete()
     Enumerator.query.filter_by(enumerator_uid=enumerator_uid).delete()
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
     return jsonify({"success": True}), 200
 
@@ -1275,78 +1269,107 @@ def update_enumerator_status(enumerator_uid):
     return jsonify({"success": True}), 200
 
 
-# @enumerators_bp.route("/<int:enumerator_uid>/roles", methods=["GET"])
-# def get_enumerator_roles(enumerator_uid):
-#     """
-#     Method to get an enumerator's roles from the database
-#     """
+@enumerators_bp.route("/<int:enumerator_uid>/roles", methods=["GET"])
+def get_enumerator_roles(enumerator_uid):
+    """
+    Method to get an enumerator's roles from the database
+    """
 
-#     payload_validator = GetEnumeratorRolesQueryParamValidator.from_json(
-#         request.get_json()
-#     )
+    payload_validator = GetEnumeratorRolesQueryParamValidator.from_json(request.args)
 
-#     if not payload_validator.validate():
-#         return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    if not payload_validator.validate():
+        return jsonify({"success": False, "errors": payload_validator.errors}), 422
 
-#     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
-#         return jsonify({"error": "Enumerator not found"}), 404
+    if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
+        return jsonify({"error": "Enumerator not found"}), 404
 
-#     if (
-#         ParentForm.query.filter_by(form_uid=payload_validator.form_uid.data).first()
-#         is None
-#     ):
-#         return jsonify({"error": "Form not found"}), 404
+    roles = []
 
-#     if payload_validator.enumerator_type.data is None:
-#         result = (
-#             db.query(
-#                 Enumerator,
-#                 MonitorForm.status.label("monitor_status"),
-#                 MonitorLocation.location_uid.label("monitor_location_uid"),
-#             )
-#             .join(
-#                 MonitorForm,
-#                 Enumerator.enumerator_uid == MonitorForm.enumerator_uid,
-#                 Enumerator.form_uid == MonitorForm.form_uid,
-#                 isouter=True,
-#             )
-#             .join(
-#                 MonitorLocation,
-#                 Enumerator.enumerator_uid == MonitorLocation.enumerator_uid,
-#                 Enumerator.form_uid == MonitorLocation.form_uid,
-#                 isouter=True,
-#             )
-#             .filter(
-#                 Enumerator.form_uid == payload_validator.form_uid.data,
-#                 Enumerator.enumerator_uid == enumerator_uid,
-#             )
-#             .all()
-#         )
+    if (
+        payload_validator.enumerator_type.data == "surveyor"
+        or payload_validator.enumerator_type.data is None
+    ):
+        surveyor_result = (
+            db.session.query(SurveyorForm, SurveyorLocation)
+            .join(
+                SurveyorLocation,
+                (SurveyorForm.enumerator_uid == SurveyorLocation.enumerator_uid)
+                & (SurveyorForm.form_uid == SurveyorLocation.form_uid),
+                isouter=True,
+            )
+            .filter(
+                SurveyorForm.enumerator_uid == enumerator_uid,
+                SurveyorForm.form_uid == payload_validator.form_uid.data,
+            )
+            .all()
+        )
 
-#         for enumerator, monitor_status, monitor_location_uid in result:
-#             enumerator.monitor_status = monitor_status
-#             enumerator.monitor_location_uid = monitor_location_uid
+        surveyor_nested_result = {}
+        for surveyor_form, surveyor_location in surveyor_result:
+            if len(surveyor_nested_result) == 0:
+                surveyor_nested_result["enumerator_type"] = "surveyor"
+                surveyor_nested_result["status"] = surveyor_form.status
+                surveyor_nested_result["locations"] = None
+                if surveyor_location.location_uid is not None:
+                    surveyor_nested_result["locations"] = [
+                        {"location_uid": surveyor_location.location_uid}
+                    ]
+            else:
+                if surveyor_location.location_uid is not None:
+                    # The surveyor has multiple locations - this is the only way we can have multiple rows for a given form-role for an enumerator
+                    surveyor_nested_result["locations"].append(
+                        {"location_uid": surveyor_location.location_uid}
+                    )
+        if len(surveyor_nested_result) > 0:
+            roles.append(surveyor_nested_result)
 
-#         response = jsonify(
-#             {
-#                 "success": True,
-#                 "data": [
-#                     enumerator.to_dict(
-#                         joined_keys=(monitor_status, monitor_location_uid)
-#                     )
-#                     for enumerator in result
-#                 ],
-#             }
-#         )
-#         {
-#             "form_uid"
-#             "roles": [
-#                 {
-#                     "enumerator_type": "surveyor",
-#                     "status": "active",
-#                     "location_uid": "1234",
-#                 },
-#             ]
-#         }
+    if (
+        payload_validator.enumerator_type.data == "monitor"
+        or payload_validator.enumerator_type.data is None
+    ):
+        monitor_result = (
+            db.session.query(MonitorForm, MonitorLocation)
+            .join(
+                MonitorLocation,
+                (MonitorForm.enumerator_uid == MonitorLocation.enumerator_uid)
+                & (MonitorForm.form_uid == MonitorLocation.form_uid),
+                isouter=True,
+            )
+            .filter(
+                MonitorForm.enumerator_uid == enumerator_uid,
+                MonitorForm.form_uid == payload_validator.form_uid.data,
+            )
+            .all()
+        )
 
-#     return jsonify({"success": True}), 200
+        monitor_nested_result = {}
+        for monitor_form, monitor_location in monitor_result:
+            if len(monitor_nested_result) == 0:
+                monitor_nested_result["enumerator_type"] = "monitor"
+                monitor_nested_result["status"] = monitor_form.status
+                monitor_nested_result["locations"] = None
+                if monitor_location.location_uid is not None:
+                    monitor_nested_result["locations"] = [
+                        {"location_uid": monitor_location.location_uid}
+                    ]
+            else:
+                if monitor_location.location_uid is not None:
+                    # The monitor has multiple locations - this is the only way we can have multiple rows for a given form-role for an enumerator
+                    monitor_nested_result["locations"].append(
+                        {"location_uid": monitor_location.location_uid}
+                    )
+        if len(monitor_nested_result) > 0:
+            roles.append(monitor_nested_result)
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": {
+                    "form_uid": payload_validator.form_uid.data,
+                    "roles": roles,
+                },
+            }
+        ),
+        200,
+    )

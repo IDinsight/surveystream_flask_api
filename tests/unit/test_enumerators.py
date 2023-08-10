@@ -193,11 +193,12 @@ class TestEnumerators:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_upload_enumerators_csv(
+    @pytest.fixture()
+    def upload_enumerators_csv(
         self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
     ):
         """
-        Test that the enumerators csv can be uploaded
+        Upload the enumerators csv
         """
 
         filepath = (
@@ -210,7 +211,7 @@ class TestEnumerators:
             enumerators_csv = f.read()
             enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
 
-        # Try to upload the locations csv
+        # Try to upload the enumerators csv
         payload = {
             "column_mapping": {
                 "enumerator_id": "enumerator_id",
@@ -243,8 +244,14 @@ class TestEnumerators:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
+
+    def test_upload_enumerators_csv(
+        self, client, login_test_user, upload_enumerators_csv, csrf_token
+    ):
+        """
+        Test that the enumerators csv can be uploaded
+        """
 
         expected_response = {
             "data": [
@@ -282,56 +289,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
     def test_update_enumerator(
-        self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
+        self, client, login_test_user, upload_enumerators_csv, csrf_token
     ):
         """
         Test that an individual enumerator can be updated
         """
-
-        filepath = (
-            Path(__file__).resolve().parent
-            / f"data/file_uploads/sample_enumerators_small.csv"
-        )
-
-        # Read the enumerators.csv file and convert it to base64
-        with open(filepath, "rb") as f:
-            enumerators_csv = f.read()
-            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
-
-        # Try to upload the locations csv
-        payload = {
-            "column_mapping": {
-                "enumerator_id": "enumerator_id",
-                "first_name": "first_name",
-                "middle_name": "middle_name",
-                "last_name": "last_name",
-                "email": "email",
-                "mobile_primary": "mobile_primary",
-                "language": "language",
-                "home_address": "home_address",
-                "gender": "gender",
-                "enumerator_type": "enumerator_type",
-                "location_id_column": "district_id",
-                "custom_fields": [
-                    {
-                        "field_label": "Mobile (Secondary)",
-                        "column_name": "mobile_secondary",
-                    },
-                ],
-            },
-            "file": enumerators_csv_encoded,
-            "mode": "overwrite",
-        }
-
-        response = client.post(
-            "/api/enumerators",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
 
         # Update the enumerator
         payload = {
@@ -352,7 +314,7 @@ class TestEnumerators:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
+
         assert response.status_code == 200
 
         expected_response = {
@@ -374,6 +336,68 @@ class TestEnumerators:
 
         # Check the response
         response = client.get("/api/enumerators/1")
+        assert response.status_code == 200
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_delete_enumerator(self, client, login_test_user, upload_enumerators_csv):
+        """
+        Test that an individual enumerator can be deleted
+        """
+
+        # Delete the enumerator
+        response = client.delete("/api/enumerators/1")
+
+        assert response.status_code == 200
+
+        response = client.get("/api/enumerators/1", content_type="application/json")
+
+        assert response.status_code == 404
+
+    def test_update_role_status(
+        self, client, login_test_user, upload_enumerators_csv, csrf_token
+    ):
+        """
+        Test that the surveyor status can be updated
+        """
+
+        # Update the enumerator
+        payload = {
+            "status": "Temp. Inactive",
+            "form_uid": 1,
+            "enumerator_type": "surveyor",
+        }
+
+        response = client.patch(
+            "/api/enumerators/1/roles/status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "form_uid": 1,
+                "roles": [
+                    {
+                        "enumerator_type": "surveyor",
+                        "status": "Temp. Inactive",
+                        "locations": [{"location_uid": 1}],
+                    }
+                ],
+            },
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get(
+            "/api/enumerators/1/roles",
+            query_string={"form_uid": 1, "enumerator_type": "surveyor"},
+            content_type="application/json",
+        )
+        print(response.json)
         assert response.status_code == 200
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}

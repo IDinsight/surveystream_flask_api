@@ -88,7 +88,9 @@ class GetEnumeratorRolesQueryParamValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     enumerator_type = StringField(
         validators=[
-            AnyOf(["surveyor", "monitor"], message="Value must be one of %(values)s"),
+            AnyOf(
+                ["surveyor", "monitor", None], message="Value must be one of %(values)s"
+            ),
         ]
     )
 
