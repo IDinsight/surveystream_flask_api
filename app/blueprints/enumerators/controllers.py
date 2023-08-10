@@ -841,183 +841,99 @@ def update_enumerator_role(enumerator_uid):
     if form is None:
         return jsonify({"error": "Form not found"}), 404
 
-    if payload_validator.enumerator_type.data == "surveyor":
-        # Check if the surveyor form already exists
-        if (
-            SurveyorForm.query.filter_by(
-                enumerator_uid=enumerator_uid,
-                form_uid=payload_validator.form_uid.data,
-            ).first()
-            is None
-        ):
+    model_lookup = {
+        "surveyor": {"form_model": SurveyorForm, "location_model": SurveyorLocation},
+        "monitor": {"form_model": MonitorForm, "location_model": MonitorLocation},
+    }
+
+    # Check if the form-role already exists
+    if (
+        db.session.query(
+            model_lookup[payload_validator.enumerator_type.data]["form_model"]
+        )
+        .filter_by(
+            enumerator_uid=enumerator_uid,
+            form_uid=payload_validator.form_uid.data,
+        )
+        .first()
+        is None
+    ):
+        return (
+            jsonify(
+                {
+                    "error": f"The enumerator is not assigned as a {payload_validator.enumerator_type.data} for the given form. Use the create endpoint to assign the enumerator as a {payload_validator.enumerator_type.data}.",
+                    "success": False,
+                }
+            ),
+            409,
+        )
+
+    if payload_validator.location_uid.data is not None:
+        # Check if the prime geo level is configured for the survey
+        prime_geo_level_uid = (
+            Survey.query.filter_by(survey_uid=form.survey_uid)
+            .first()
+            .prime_geo_level_uid
+        )
+        if prime_geo_level_uid is None:
             return (
                 jsonify(
                     {
-                        "error": "The enumerator is not assigned as a surveyor for the given form. Use the create endpoint to assign the enumerator as a surveyor.",
-                        "success": False,
+                        "error": f"Prime geo level not configured for the survey. Cannot map {payload_validator.enumerator_type.data} to location"
                     }
                 ),
-                409,
+                400,
             )
 
-        if payload_validator.location_uid.data is not None:
-            # Check if the prime geo level is configured for the survey
-            prime_geo_level_uid = (
-                Survey.query.filter_by(survey_uid=form.survey_uid)
-                .first()
-                .prime_geo_level_uid
-            )
-            if prime_geo_level_uid is None:
-                return (
-                    jsonify(
-                        {
-                            "error": "Prime geo level not configured for the survey. Cannot map surveyor to location"
-                        }
-                    ),
-                    400,
-                )
-
-            # Check if the location exists for the form's survey
-            location = Location.query.filter_by(
-                location_uid=payload_validator.location_uid.data,
-                survey_uid=form.survey_uid,
-            ).first()
-            if location is None:
-                return (
-                    jsonify({"error": "Location does not exist for the survey"}),
-                    404,
-                )
-
-            # Check if the location is of the correct geo level
-            if location.geo_level_uid != prime_geo_level_uid:
-                return (
-                    jsonify(
-                        {
-                            "error": "Location geo level does not match the prime geo level configured for the survey"
-                        }
-                    ),
-                    400,
-                )
-
-            # Add the surveyor location mapping
-            surveyor_location = SurveyorLocation(
-                enumerator_uid=enumerator_uid,
-                form_uid=payload_validator.form_uid.data,
-                location_uid=payload_validator.location_uid.data,
+        # Check if the location exists for the form's survey
+        location = Location.query.filter_by(
+            location_uid=payload_validator.location_uid.data,
+            survey_uid=form.survey_uid,
+        ).first()
+        if location is None:
+            return (
+                jsonify({"error": "Location does not exist for the survey"}),
+                404,
             )
 
-            # Do an upsert of the surveyor location mapping
-            statement = (
-                pg_insert(SurveyorLocation)
-                .values(
-                    enumerator_uid=enumerator_uid,
-                    form_uid=payload_validator.form_uid.data,
-                    location_uid=payload_validator.location_uid.data,
-                )
-                .on_conflict_do_update(
-                    constraint="surveyor_location_pkey",
-                    set_={
-                        "location_uid": payload_validator.location_uid.data,
-                    },
-                )
-            )
-
-            db.session.execute(statement)
-
-        else:
-            SurveyorLocation.query.filter_by(
-                enumerator_uid=enumerator_uid,
-                form_uid=payload_validator.form_uid.data,
-            ).delete()
-
-    if payload_validator.enumerator_type.data == "monitor":
-        # Check if the monitor form already exists
-        if (
-            MonitorForm.query.filter_by(
-                enumerator_uid=enumerator_uid,
-                form_uid=payload_validator.form_uid.data,
-            ).first()
-            is None
-        ):
+        # Check if the location is of the correct geo level
+        if location.geo_level_uid != prime_geo_level_uid:
             return (
                 jsonify(
                     {
-                        "error": "The enumerator is not assigned as a monitor for the given form. Use the create endpoint to assign the enumerator as a monitor.",
-                        "success": False,
+                        "error": "Location geo level does not match the prime geo level configured for the survey"
                     }
                 ),
-                409,
+                400,
             )
 
-        if payload_validator.location_uid.data is not None:
-            # Check if the prime geo level is configured for the survey
-            prime_geo_level_uid = (
-                Survey.query.filter_by(survey_uid=form.survey_uid)
-                .first()
-                .prime_geo_level_uid
+        # Do an upsert of the surveyor location mapping
+        statement = (
+            pg_insert(
+                model_lookup[payload_validator.enumerator_type.data]["location_model"]
             )
-            if prime_geo_level_uid is None:
-                return (
-                    jsonify(
-                        {
-                            "error": "Prime geo level not configured for the survey. Cannot map surveyor to location"
-                        }
-                    ),
-                    400,
-                )
-
-            # Check if the location exists for the form's survey
-            location = Location.query.filter_by(
-                location_uid=payload_validator.location_uid.data,
-                survey_uid=form.survey_uid,
-            ).first()
-            if location is None:
-                return (
-                    jsonify({"error": "Location does not exist for the survey"}),
-                    404,
-                )
-
-            # Check if the location is of the correct geo level
-            if location.geo_level_uid != prime_geo_level_uid:
-                return (
-                    jsonify(
-                        {
-                            "error": "Location geo level does not match the prime geo level configured for the survey"
-                        }
-                    ),
-                    400,
-                )
-
-            # Add the monitor location mapping
-            monitor_location = MonitorLocation(
+            .values(
                 enumerator_uid=enumerator_uid,
                 form_uid=payload_validator.form_uid.data,
                 location_uid=payload_validator.location_uid.data,
             )
-
-            # Do an upsert of the monitor location mapping
-            statement = (
-                pg_insert(MonitorLocation)
-                .values(
-                    enumerator_uid=enumerator_uid,
-                    form_uid=payload_validator.form_uid.data,
-                    location_uid=payload_validator.location_uid.data,
-                )
-                .on_conflict_do_update(
-                    constraint="monitor_location_pkey",
-                    set_={
-                        "location_uid": payload_validator.location_uid.data,
-                    },
-                )
+            .on_conflict_do_update(
+                constraint=f"{payload_validator.enumerator_type.data}_location_pkey",
+                set_={
+                    "location_uid": payload_validator.location_uid.data,
+                },
             )
+        )
 
-            db.session.execute(statement)
+        db.session.execute(statement)
 
-        else:
-            MonitorLocation.query.filter_by(
-                enumerator_uid=enumerator_uid,
-                form_uid=payload_validator.form_uid.data,
-            ).delete()
+    else:
+        db.session.query(
+            model_lookup[payload_validator.enumerator_type.data]["location_model"]
+        ).filter_by(
+            enumerator_uid=enumerator_uid,
+            form_uid=payload_validator.form_uid.data,
+        ).delete()
 
     try:
         db.session.commit()
@@ -1132,38 +1048,31 @@ def update_enumerator_status(enumerator_uid):
     ):
         return jsonify({"error": "Form not found"}), 404
 
-    if payload_validator.enumerator_type.data == "surveyor":
-        surveyor_form = SurveyorForm.query.filter_by(
-            enumerator_uid=enumerator_uid, form_uid=payload_validator.form_uid.data
-        ).first()
-        if surveyor_form is None:
-            return (
-                jsonify(
-                    {
-                        "error": "The enumerator is not assigned as a surveyor for the given form. Nothing to update.",
-                        "success": False,
-                    }
-                ),
-                404,
-            )
+    model_lookup = {
+        "surveyor": SurveyorForm,
+        "monitor": MonitorForm,
+    }
 
-        surveyor_form.status = payload_validator.status.data
-
-    elif payload_validator.enumerator_type.data == "monitor":
-        monitor_form = MonitorForm.query.filter_by(
+    result = (
+        db.session.query(model_lookup[payload_validator.enumerator_type.data])
+        .filter_by(
             enumerator_uid=enumerator_uid, form_uid=payload_validator.form_uid.data
-        ).first()
-        if monitor_form is None:
-            return (
-                jsonify(
-                    {
-                        "error": "The enumerator is not assigned as a monitor for the given form. Nothing to update.",
-                        "success": False,
-                    }
-                ),
-                404,
-            )
-        monitor_form.status = payload_validator.status.data
+        )
+        .first()
+    )
+
+    if result is None:
+        return (
+            jsonify(
+                {
+                    "error": f"The enumerator is not assigned as a {payload_validator.enumerator_type.data} for the given form. Nothing to update.",
+                    "success": False,
+                }
+            ),
+            404,
+        )
+
+    result.status = payload_validator.status.data
 
     try:
         db.session.commit()
