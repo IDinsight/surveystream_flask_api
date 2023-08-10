@@ -62,6 +62,7 @@ class TestSurveys:
                     "planned_start_date": "2021-01-01",
                     "planned_end_date": "2021-12-31",
                     "state": "Draft",
+                    "prime_geo_level_uid": None,
                     "config_status": "In Progress - Configuration",
                     "last_updated_at": "2023-05-30 00:00:00",
                 }
@@ -125,6 +126,7 @@ class TestSurveys:
             "planned_start_date": "2021-01-02",
             "planned_end_date": "2021-12-30",
             "state": "Active",
+            "prime_geo_level_uid": None,
             "config_status": "In Progress - Backend Setup",
             "last_updated_at": "2023-05-30 00:00:00",
         }

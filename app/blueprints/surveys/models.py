@@ -17,28 +17,35 @@ class Survey(db.Model):
     survey_description = db.Column(db.String(1024), nullable=True)
     surveying_method = db.Column(
         db.String(16),
-        CheckConstraint("surveying_method IN ('phone', 'in-person')"),
+        CheckConstraint(
+            "surveying_method IN ('phone', 'in-person')",
+            name="ck_surveys_surveying_method",
+        ),
         nullable=False,
     )
     planned_start_date = db.Column(db.Date, nullable=False)
     planned_end_date = db.Column(db.Date, nullable=False)
     irb_approval = db.Column(
         db.String(8),
-        CheckConstraint("irb_approval IN ('Yes','No','Pending')"),
+        CheckConstraint(
+            "irb_approval IN ('Yes','No','Pending')", name="ck_surveys_irb_approval"
+        ),
         nullable=False,
     )
     config_status = db.Column(
         db.String(32),
         CheckConstraint(
-            "config_status IN ('In Progress - Configuration','In Progress - Backend Setup','Done')"
+            "config_status IN ('In Progress - Configuration','In Progress - Backend Setup','Done')",
+            name="ck_surveys_config_status",
         ),
         nullable=True,
     )
     state = db.Column(
         db.String(16),
-        CheckConstraint("state IN ('Draft','Active','Past')"),
+        CheckConstraint("state IN ('Draft','Active','Past')", name="ck_surveys_state"),
         nullable=True,
     )
+    prime_geo_level_uid = db.Column(db.Integer(), nullable=True)
     created_by_user_uid = db.Column(db.Integer(), db.ForeignKey(User.user_uid))
     last_updated_at = db.Column(
         db.TIMESTAMP, nullable=False, default=db.func.current_timestamp()
@@ -56,6 +63,7 @@ class Survey(db.Model):
         irb_approval,
         config_status,
         state,
+        prime_geo_level_uid,
         created_by_user_uid,
     ):
         self.survey_id = survey_id
@@ -68,6 +76,7 @@ class Survey(db.Model):
         self.irb_approval = irb_approval
         self.config_status = config_status
         self.state = state
+        self.prime_geo_level_uid = prime_geo_level_uid
         self.created_by_user_uid = created_by_user_uid
         self.last_updated_at = datetime.datetime.now()
 
@@ -84,5 +93,6 @@ class Survey(db.Model):
             "planned_end_date": str(self.planned_end_date),
             "config_status": self.config_status,
             "state": self.state,
+            "prime_geo_level_uid": self.prime_geo_level_uid,
             "last_updated_at": str(self.last_updated_at),
         }

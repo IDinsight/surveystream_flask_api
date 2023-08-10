@@ -37,6 +37,7 @@ class CreateSurveyValidator(FlaskForm):
             )
         ]
     )
+    prime_geo_level_uid = IntegerField()
     config_status = StringField(
         validators=[
             AnyOf(
@@ -85,6 +86,7 @@ class UpdateSurveyValidator(FlaskForm):
             )
         ]
     )
+    prime_geo_level_uid = IntegerField()
     config_status = StringField(
         validators=[
             AnyOf(

@@ -72,6 +72,7 @@ def create_survey():
             irb_approval=payload_validator.irb_approval.data,
             config_status=payload_validator.config_status.data,
             state=payload_validator.state.data,
+            prime_geo_level_uid=payload_validator.prime_geo_level_uid.data,
             created_by_user_uid=payload_validator.created_by_user_uid.data,
         )
         try:
@@ -232,6 +233,7 @@ def update_survey(survey_uid):
                 Survey.planned_start_date: payload_validator.planned_start_date.data,
                 Survey.planned_end_date: payload_validator.planned_end_date.data,
                 Survey.state: payload_validator.state.data,
+                Survey.prime_geo_level_uid: payload_validator.prime_geo_level_uid.data,
                 Survey.config_status: payload_validator.config_status.data,
             },
             synchronize_session="fetch",
