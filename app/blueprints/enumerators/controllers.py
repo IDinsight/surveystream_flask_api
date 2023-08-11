@@ -337,25 +337,16 @@ def upload_enumerators():
 
                 if hasattr(column_mapping, "location_id_column"):
                     # Get the position of the location column in the dataframe
-<<<<<<< HEAD
                     col_index = (
                         enumerators_upload.enumerators_df.columns.get_loc(
                             getattr(column_mapping, "location_id_column")
                         )
                         + 1
-=======
-                    col_index = enumerators_upload.enumerators_df.columns.get_loc(
-                        getattr(column_mapping, "location_id_column")
->>>>>>> dev
                     )
                     monitor_location = MonitorLocation(
                         enumerator_uid=enumerator.enumerator_uid,
                         form_uid=form_uid,
-<<<<<<< HEAD
                         location_uid=location_uid_lookup[row[col_index]],
-=======
-                        location_uid=location_uid_lookup.get(row[col_index]),
->>>>>>> dev
                     )
 
                     db.session.add(monitor_location)
@@ -488,7 +479,6 @@ def get_enumerators():
             enumerator.monitor_status = monitor_status
             enumerator.monitor_locations = monitor_locations
 
-<<<<<<< HEAD
         response = jsonify(
             {
                 "success": True,
@@ -501,8 +491,6 @@ def get_enumerators():
 
         return response, 200
 
-=======
->>>>>>> dev
     elif enumerator_type == "surveyor":
         for (
             enumerator,
@@ -512,7 +500,6 @@ def get_enumerators():
             enumerator.surveyor_status = surveyor_status
             enumerator.surveyor_locations = surveyor_locations
 
-<<<<<<< HEAD
         response = jsonify(
             {
                 "success": True,
@@ -525,8 +512,6 @@ def get_enumerators():
 
         return response, 200
 
-=======
->>>>>>> dev
     elif enumerator_type == "monitor":
         for (
             enumerator,
@@ -536,7 +521,6 @@ def get_enumerators():
             enumerator.monitor_status = monitor_status
             enumerator.monitor_locations = monitor_locations
 
-<<<<<<< HEAD
         response = jsonify(
             {
                 "success": True,
@@ -548,18 +532,6 @@ def get_enumerators():
         )
 
         return response, 200
-=======
-    response = jsonify(
-        {
-            "success": True,
-            "data": [
-                enumerator.to_dict(joined_keys=joined_keys) for result[0] in result
-            ],
-        }
-    )
-
-    return response, 200
->>>>>>> dev
 
 
 @enumerators_bp.route("/<int:enumerator_uid>", methods=["GET"])
