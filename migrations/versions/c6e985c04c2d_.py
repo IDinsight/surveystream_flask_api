@@ -1,8 +1,8 @@
 """Add enumerators endpoint
 
-Revision ID: 4ce98b420b89
+Revision ID: c6e985c04c2d
 Revises: d5b758a41d9f
-Create Date: 2023-08-10 03:08:12.386763
+Create Date: 2023-08-11 14:11:52.251365
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "4ce98b420b89"
+revision = "c6e985c04c2d"
 down_revision = "d5b758a41d9f"
 branch_labels = None
 depends_on = None
@@ -43,6 +43,7 @@ def upgrade():
         sa.UniqueConstraint(
             "form_uid", "enumerator_id", name="_enumerators_form_uid_enumerator_id_uc"
         ),
+        schema="webapp",
     )
     op.create_table(
         "location_monitor_mapping",
@@ -51,7 +52,7 @@ def upgrade():
         sa.Column("location_uid", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["enumerator_uid"],
-            ["enumerators.enumerator_uid"],
+            ["webapp.enumerators.enumerator_uid"],
             name=op.f("fk_location_monitor_mapping_enumerator_uid_enumerators"),
         ),
         sa.ForeignKeyConstraint(
@@ -70,6 +71,7 @@ def upgrade():
             "location_uid",
             name=op.f("pk_location_monitor_mapping"),
         ),
+        schema="webapp",
     )
     op.create_table(
         "location_surveyor_mapping",
@@ -78,7 +80,7 @@ def upgrade():
         sa.Column("location_uid", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["enumerator_uid"],
-            ["enumerators.enumerator_uid"],
+            ["webapp.enumerators.enumerator_uid"],
             name=op.f("fk_location_surveyor_mapping_enumerator_uid_enumerators"),
         ),
         sa.ForeignKeyConstraint(
@@ -97,6 +99,7 @@ def upgrade():
             "location_uid",
             name=op.f("pk_location_surveyor_mapping"),
         ),
+        schema="webapp",
     )
     op.create_table(
         "monitor_forms",
@@ -115,7 +118,7 @@ def upgrade():
         sa.Column("user_uid", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(
             ["enumerator_uid"],
-            ["enumerators.enumerator_uid"],
+            ["webapp.enumerators.enumerator_uid"],
             name=op.f("fk_monitor_forms_enumerator_uid_enumerators"),
         ),
         sa.ForeignKeyConstraint(
@@ -126,6 +129,7 @@ def upgrade():
         sa.PrimaryKeyConstraint(
             "form_uid", "enumerator_uid", name=op.f("pk_monitor_forms")
         ),
+        schema="webapp",
     )
     op.create_table(
         "surveyor_forms",
@@ -144,7 +148,7 @@ def upgrade():
         sa.Column("user_uid", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(
             ["enumerator_uid"],
-            ["enumerators.enumerator_uid"],
+            ["webapp.enumerators.enumerator_uid"],
             name=op.f("fk_surveyor_forms_enumerator_uid_enumerators"),
         ),
         sa.ForeignKeyConstraint(
@@ -155,6 +159,7 @@ def upgrade():
         sa.PrimaryKeyConstraint(
             "form_uid", "enumerator_uid", name=op.f("pk_surveyor_forms")
         ),
+        schema="webapp",
     )
     with op.batch_alter_table("surveys", schema="webapp") as batch_op:
         batch_op.add_column(
@@ -169,9 +174,9 @@ def downgrade():
     with op.batch_alter_table("surveys", schema="webapp") as batch_op:
         batch_op.drop_column("prime_geo_level_uid")
 
-    op.drop_table("surveyor_forms")
-    op.drop_table("monitor_forms")
-    op.drop_table("location_surveyor_mapping")
-    op.drop_table("location_monitor_mapping")
-    op.drop_table("enumerators")
+    op.drop_table("surveyor_forms", schema="webapp")
+    op.drop_table("monitor_forms", schema="webapp")
+    op.drop_table("location_surveyor_mapping", schema="webapp")
+    op.drop_table("location_monitor_mapping", schema="webapp")
+    op.drop_table("enumerators", schema="webapp")
     # ### end Alembic commands ###
