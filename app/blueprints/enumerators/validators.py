@@ -36,9 +36,7 @@ class ColumnMappingValidator(FlaskForm):
         csrf = False
 
     enumerator_id = StringField(validators=[DataRequired()])
-    first_name = StringField(validators=[DataRequired()])
-    middle_name = StringField()
-    last_name = StringField(validators=[DataRequired()])
+    name = StringField(validators=[DataRequired()])
     email = StringField(validators=[DataRequired()])
     mobile_primary = StringField(validators=[DataRequired()])
     language = StringField()
@@ -97,9 +95,7 @@ class GetEnumeratorRolesQueryParamValidator(FlaskForm):
 
 class UpdateEnumerator(FlaskForm):
     enumerator_id = StringField(validators=[DataRequired()])
-    first_name = StringField(validators=[DataRequired()])
-    middle_name = StringField()
-    last_name = StringField(validators=[DataRequired()])
+    name = StringField(validators=[DataRequired()])
     email = StringField(validators=[DataRequired()])
     mobile_primary = StringField(validators=[DataRequired()])
     language = StringField()

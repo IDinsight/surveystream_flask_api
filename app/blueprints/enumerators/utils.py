@@ -22,9 +22,7 @@ class EnumeratorColumnMapping:
                 column_mapping, prime_geo_level_uid, geo_levels
             )
             self.enumerator_id = column_mapping["enumerator_id"]
-            self.first_name = column_mapping["first_name"]
-            self.middle_name = column_mapping["middle_name"]
-            self.last_name = column_mapping["last_name"]
+            self.name = column_mapping["name"]
             self.email = column_mapping["email"]
             self.mobile_primary = column_mapping["mobile_primary"]
             self.language = column_mapping["language"]
