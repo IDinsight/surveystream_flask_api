@@ -145,9 +145,7 @@ def upload_enumerators():
     # Get the expected columns from the mapped column names
     expected_columns = [
         column_mapping.enumerator_id,
-        column_mapping.first_name,
-        column_mapping.middle_name,
-        column_mapping.last_name,
+        column_mapping.name,
         column_mapping.email,
         column_mapping.mobile_primary,
         column_mapping.language,
@@ -272,14 +270,12 @@ def upload_enumerators():
         enumerator = Enumerator(
             form_uid=form_uid,
             enumerator_id=row[1],
-            first_name=row[2],
-            middle_name=row[3],
-            last_name=row[4],
-            email=row[5],
-            mobile_primary=row[6],
-            language=row[7],
-            home_address=row[8],
-            gender=row[9],
+            name=row[2],
+            email=row[3],
+            mobile_primary=row[4],
+            language=row[5],
+            home_address=row[6],
+            gender=row[7],
         )
 
         # Add the custom fields if they exist
@@ -298,7 +294,7 @@ def upload_enumerators():
         db.session.add(enumerator)
         db.session.flush()
 
-        enumerator_types = [item.lower().strip() for item in row[10].split(";")]
+        enumerator_types = [item.lower().strip() for item in row[8].split(";")]
 
         for enumerator_type in enumerator_types:
             if enumerator_type == "surveyor":
@@ -584,9 +580,7 @@ def update_enumerator(enumerator_uid):
             Enumerator.query.filter_by(enumerator_uid=enumerator_uid).update(
                 {
                     Enumerator.enumerator_id: payload_validator.enumerator_id.data,
-                    Enumerator.first_name: payload_validator.first_name.data,
-                    Enumerator.middle_name: payload_validator.middle_name.data,
-                    Enumerator.last_name: payload_validator.last_name.data,
+                    Enumerator.name: payload_validator.name.data,
                     Enumerator.email: payload_validator.email.data,
                     Enumerator.mobile_primary: payload_validator.mobile_primary.data,
                     Enumerator.language: payload_validator.language.data,

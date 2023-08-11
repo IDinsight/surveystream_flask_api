@@ -1948,15 +1948,9 @@ paths:
                     enumerator_uid:
                       type: integer
                       description: The unique ID of the enumerator
-                    first_name:
+                    name:
                       type: string
-                      description: The first name of the enumerator
-                    middle_name:
-                      type: string
-                      description: The middle name of the enumerator
-                    last_name:
-                      type: string
-                      description: The last name of the enumerator
+                      description: The name of the enumerator
                     language:
                       type: string
                       description: The primary language of the enumerator
@@ -2066,15 +2060,9 @@ paths:
                     enumerator_type:
                       type: string
                       description: The column name of the enumerator type
-                    first_name:
+                    name:
                       type: string
-                      description: The column name of the enumerator's first name
-                    middle_name:
-                      type: string
-                      description: The column name of the enumerator's middle name
-                    last_name:
-                      type: string
-                      description: The column name of the enumerator's last name
+                      description: The column name of the enumerator's name
                     email:
                       type: string
                       description: The column name of the enumerator's email
@@ -2112,8 +2100,7 @@ paths:
                           - column_name
                   required:
                     - enumerator_id
-                    - first_name
-                    - last_name
+                    - name
                     - email
                     - mobile_primary
                     - gender
@@ -2196,15 +2183,9 @@ paths:
                     enumerator_uid:
                       type: integer
                       description: The system-assigned unique ID of the enumerator
-                    first_name:
+                    name:
                       type: string
-                      description: The first name of the enumerator
-                    middle_name:
-                      type: string
-                      description: The middle name of the enumerator
-                    last_name:
-                      type: string
-                      description: The last name of the enumerator
+                      description: The name of the enumerator
                     email:
                       type: string
                       description: The email of the enumerator
@@ -2252,15 +2233,9 @@ paths:
                 enumerator_id:
                   type: string
                   description: The user-assigned unique ID of the enumerator
-                first_name:
+                name:
                   type: string
-                  description: The first name of the enumerator
-                middle_name:
-                  type: string
-                  description: The middle name of the enumerator
-                last_name:
-                  type: string
-                  description: The last name of the enumerator
+                  description: The name of the enumerator
                 email:
                   type: string
                   description: The email of the enumerator
@@ -2284,8 +2259,7 @@ paths:
                     custom fields.
               required:
                 - enumerator_id
-                - first_name
-                - last_name
+                - name
                 - email
                 - mobile_primary
                 - gender

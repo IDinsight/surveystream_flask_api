@@ -16,9 +16,7 @@ class Enumerator(db.Model):
 
     enumerator_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     enumerator_id = db.Column(db.String(), nullable=False)
-    first_name = db.Column(db.String(), nullable=False)
-    middle_name = db.Column(db.String(), nullable=True)
-    last_name = db.Column(db.String(), nullable=False)
+    name = db.Column(db.String(), nullable=False)
     email = db.Column(db.String(), nullable=False)
     mobile_primary = db.Column(db.String(), nullable=False)
     language = db.Column(db.String(), nullable=True)
@@ -42,9 +40,7 @@ class Enumerator(db.Model):
     def __init__(
         self,
         enumerator_id,
-        first_name,
-        middle_name,
-        last_name,
+        name,
         email,
         mobile_primary,
         language,
@@ -53,9 +49,7 @@ class Enumerator(db.Model):
         form_uid,
     ):
         self.enumerator_id = enumerator_id
-        self.first_name = first_name
-        self.middle_name = middle_name
-        self.last_name = last_name
+        self.name = name
         self.email = email
         self.mobile_primary = mobile_primary
         self.language = language
@@ -67,9 +61,7 @@ class Enumerator(db.Model):
         result = {
             "enumerator_uid": self.enumerator_uid,
             "enumerator_id": self.enumerator_id,
-            "first_name": self.first_name,
-            "middle_name": self.middle_name,
-            "last_name": self.last_name,
+            "name": self.name,
             "email": self.email,
             "mobile_primary": self.mobile_primary,
             "language": self.language,
