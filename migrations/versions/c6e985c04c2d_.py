@@ -1,4 +1,4 @@
-"""empty message
+"""Add enumerators endpoint
 
 Revision ID: c6e985c04c2d
 Revises: d5b758a41d9f
