@@ -37,6 +37,7 @@ class Enumerator(db.Model):
             "enumerator_id",
             name="_enumerators_form_uid_enumerator_id_uc",
         ),
+        {"schema": "webapp"},
     )
 
     def __init__(
@@ -97,7 +98,7 @@ class SurveyorForm(db.Model):
     __tablename__ = "surveyor_forms"
 
     enumerator_uid = db.Column(
-        db.Integer(), db.ForeignKey("enumerators.enumerator_uid"), nullable=False
+        db.Integer(), db.ForeignKey(Enumerator.enumerator_uid), nullable=False
     )
     form_uid = db.Column(
         db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
@@ -113,7 +114,10 @@ class SurveyorForm(db.Model):
     )
     user_uid = db.Column(db.Integer(), default=-1)
 
-    __table_args__ = (db.PrimaryKeyConstraint("form_uid", "enumerator_uid"),)
+    __table_args__ = (
+        db.PrimaryKeyConstraint("form_uid", "enumerator_uid"),
+        {"schema": "webapp"},
+    )
 
 
 class SurveyorLocation(db.Model):
@@ -128,12 +132,13 @@ class SurveyorLocation(db.Model):
         db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
     )
     enumerator_uid = db.Column(
-        db.Integer(), db.ForeignKey("enumerators.enumerator_uid"), nullable=False
+        db.Integer(), db.ForeignKey(Enumerator.enumerator_uid), nullable=False
     )
     location_uid = db.Column(db.Integer(), db.ForeignKey(Location.location_uid))
 
     __table_args__ = (
         db.PrimaryKeyConstraint("form_uid", "enumerator_uid", "location_uid"),
+        {"schema": "webapp"},
     )
 
 
@@ -146,7 +151,7 @@ class MonitorForm(db.Model):
     __tablename__ = "monitor_forms"
 
     enumerator_uid = db.Column(
-        db.Integer(), db.ForeignKey("enumerators.enumerator_uid"), nullable=False
+        db.Integer(), db.ForeignKey(Enumerator.enumerator_uid), nullable=False
     )
     form_uid = db.Column(
         db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
@@ -162,7 +167,10 @@ class MonitorForm(db.Model):
     )
     user_uid = db.Column(db.Integer(), default=-1)
 
-    __table_args__ = (db.PrimaryKeyConstraint("form_uid", "enumerator_uid"),)
+    __table_args__ = (
+        db.PrimaryKeyConstraint("form_uid", "enumerator_uid"),
+        {"schema": "webapp"},
+    )
 
 
 class MonitorLocation(db.Model):
@@ -177,10 +185,11 @@ class MonitorLocation(db.Model):
         db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
     )
     enumerator_uid = db.Column(
-        db.Integer(), db.ForeignKey("enumerators.enumerator_uid"), nullable=False
+        db.Integer(), db.ForeignKey(Enumerator.enumerator_uid), nullable=False
     )
     location_uid = db.Column(db.Integer(), db.ForeignKey(Location.location_uid))
 
     __table_args__ = (
         db.PrimaryKeyConstraint("form_uid", "enumerator_uid", "location_uid"),
+        {"schema": "webapp"},
     )
