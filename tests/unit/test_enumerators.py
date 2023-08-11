@@ -243,7 +243,183 @@ class TestEnumerators:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
+        assert response.status_code == 200
 
+    @pytest.fixture()
+    def upload_enumerators_csv_no_locations(
+        self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
+    ):
+        """
+        Upload the enumerators csv
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_no_locations.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id",
+                "first_name": "first_name",
+                "middle_name": "middle_name",
+                "last_name": "last_name",
+                "email": "email",
+                "mobile_primary": "mobile_primary",
+                "language": "language",
+                "home_address": "home_address",
+                "gender": "gender",
+                "enumerator_type": "enumerator_type",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def upload_enumerators_csv_no_custom_fields(
+        self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
+    ):
+        """
+        Upload the enumerators csv
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_no_custom_fields.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id",
+                "first_name": "first_name",
+                "middle_name": "middle_name",
+                "last_name": "last_name",
+                "email": "email",
+                "mobile_primary": "mobile_primary",
+                "language": "language",
+                "home_address": "home_address",
+                "gender": "gender",
+                "enumerator_type": "enumerator_type",
+                "location_id_column": "district_id",
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def upload_enumerators_csv_mandal_prime_geo_level(
+        self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
+    ):
+        """
+        Upload the enumerators csv
+        """
+
+        # Update the survey config to have mandal as the prime geo level
+
+        payload = {
+            "survey_uid": 1,
+            "survey_id": "test_survey",
+            "survey_name": "Test Survey",
+            "survey_description": "A test survey",
+            "project_name": "Test Project",
+            "surveying_method": "in-person",
+            "irb_approval": "Yes",
+            "planned_start_date": "2021-01-01",
+            "planned_end_date": "2021-12-31",
+            "state": "Draft",
+            "prime_geo_level_uid": 2,
+            "config_status": "In Progress - Configuration",
+        }
+
+        response = client.put(
+            "/api/surveys/1/basic-information",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_mandal_prime_geo_level.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id",
+                "first_name": "first_name",
+                "middle_name": "middle_name",
+                "last_name": "last_name",
+                "email": "email",
+                "mobile_primary": "mobile_primary",
+                "language": "language",
+                "home_address": "home_address",
+                "gender": "gender",
+                "enumerator_type": "enumerator_type",
+                "location_id_column": "mandal_id",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
         assert response.status_code == 200
 
     def test_upload_enumerators_csv(
@@ -277,7 +453,350 @@ class TestEnumerators:
                         }
                     ],
                     "monitor_locations": None,
-                }
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "email": "jahnavi.meher@idinsight.org",
+                    "enumerator_id": "0294613",
+                    "enumerator_uid": 2,
+                    "first_name": "Jahnavi",
+                    "gender": "Female",
+                    "home_address": "my house",
+                    "language": "Hindi",
+                    "last_name": "Meher",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "email": "jay.prakash@idinsight.org",
+                    "enumerator_id": "0294614",
+                    "enumerator_uid": 3,
+                    "first_name": "Jay",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Hindi",
+                    "last_name": "Prakash",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_status": "Active",
+                    "surveyor_locations": None,
+                    "surveyor_status": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "email": "griffin.muteti@idinsight.org",
+                    "enumerator_id": "0294615",
+                    "enumerator_uid": 4,
+                    "first_name": "Griffin",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Hindi",
+                    "last_name": "Muteti",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "surveyor_status": "Active",
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/enumerators", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_enumerators_csv_no_locations(
+        self, client, login_test_user, upload_enumerators_csv_no_locations, csrf_token
+    ):
+        """
+        Test uploading enumerators csv with no locations mapped
+        """
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "email": "eric.dodge@idinsight.org",
+                    "enumerator_id": "0294612",
+                    "enumerator_uid": 1,
+                    "first_name": "Eric",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "English",
+                    "last_name": "Dodge",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": None,
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "email": "jahnavi.meher@idinsight.org",
+                    "enumerator_id": "0294613",
+                    "enumerator_uid": 2,
+                    "first_name": "Jahnavi",
+                    "gender": "Female",
+                    "home_address": "my house",
+                    "language": "Hindi",
+                    "last_name": "Meher",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": None,
+                    "monitor_locations": None,
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/enumerators", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_enumerators_csv_no_custom_fields(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv_no_custom_fields,
+        csrf_token,
+    ):
+        """
+        Test uploading enumerators csv without custom fields
+        """
+
+        expected_response = {
+            "data": [
+                {
+                    "email": "eric.dodge@idinsight.org",
+                    "enumerator_id": "0294612",
+                    "enumerator_uid": 1,
+                    "first_name": "Eric",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "English",
+                    "last_name": "Dodge",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_locations": None,
+                    "custom_fields": None,
+                },
+                {
+                    "email": "jahnavi.meher@idinsight.org",
+                    "enumerator_id": "0294613",
+                    "enumerator_uid": 2,
+                    "first_name": "Jahnavi",
+                    "gender": "Female",
+                    "home_address": "my house",
+                    "language": "Hindi",
+                    "last_name": "Meher",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_locations": None,
+                    "custom_fields": None,
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/enumerators", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_enumerators_csv_mandal_prime_geo_level(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv_mandal_prime_geo_level,
+        csrf_token,
+    ):
+        """
+        Test uploading enumerators csv with a prime geo level that is not the top level geo level
+        """
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "email": "eric.dodge@idinsight.org",
+                    "enumerator_id": "0294612",
+                    "enumerator_uid": 1,
+                    "first_name": "Eric",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "English",
+                    "last_name": "Dodge",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                        },
+                    ],
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "email": "jahnavi.meher@idinsight.org",
+                    "enumerator_id": "0294613",
+                    "enumerator_uid": 2,
+                    "first_name": "Jahnavi",
+                    "gender": "Female",
+                    "home_address": "my house",
+                    "language": "Hindi",
+                    "last_name": "Meher",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1104",
+                            "location_name": "BELA",
+                        },
+                    ],
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "email": "jay.prakash@idinsight.org",
+                    "enumerator_id": "0294614",
+                    "enumerator_uid": 3,
+                    "first_name": "Jay",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Hindi",
+                    "last_name": "Prakash",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                        },
+                    ],
+                    "monitor_status": "Active",
+                    "surveyor_locations": None,
+                    "surveyor_status": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "email": "griffin.muteti@idinsight.org",
+                    "enumerator_id": "0294615",
+                    "enumerator_uid": 4,
+                    "first_name": "Griffin",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Hindi",
+                    "last_name": "Muteti",
+                    "middle_name": "NaN",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1104",
+                            "location_name": "BELA",
+                        },
+                    ],
+                    "monitor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1104",
+                            "location_name": "BELA",
+                        },
+                    ],
+                    "surveyor_status": "Active",
+                },
             ],
             "success": True,
         }
