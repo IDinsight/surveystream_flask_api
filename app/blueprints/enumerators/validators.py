@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import FieldList, FormField, IntegerField, StringField
+from wtforms import FieldList, FormField, IntegerField, StringField, BooleanField
 from wtforms.validators import DataRequired, AnyOf
 
 
@@ -29,6 +29,14 @@ class CustomColumnsValidator(FlaskForm):
 
     field_label = StringField(validators=[DataRequired()])
     column_name = StringField(validators=[DataRequired()])
+
+
+class CustomColumnBulkUpdateValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    field_label = StringField(validators=[DataRequired()])
+    value = StringField()
 
 
 class ColumnMappingValidator(FlaskForm):
@@ -93,6 +101,11 @@ class GetEnumeratorRolesQueryParamValidator(FlaskForm):
     )
 
 
+class BulkUpdateEnumeratorsValidator(FlaskForm):
+    enumerator_uids = FieldList(IntegerField(), validators=[DataRequired()])
+    form_uid = IntegerField(validators=[DataRequired()])
+
+
 class UpdateEnumerator(FlaskForm):
     enumerator_id = StringField(validators=[DataRequired()])
     name = StringField(validators=[DataRequired()])
@@ -149,6 +162,20 @@ class UpdateEnumeratorRole(FlaskForm):
     location_uid = StringField()
 
 
+class BulkUpdateEnumeratorsRoleLocationValidator(FlaskForm):
+    enumerator_uids = FieldList(IntegerField(), validators=[DataRequired()])
+    form_uid = IntegerField(validators=[DataRequired()])
+    enumerator_type = StringField(
+        validators=[
+            AnyOf(
+                ["surveyor", "monitor", None], message="Value must be one of %(values)s"
+            ),
+            DataRequired(),
+        ]
+    )
+    location_uids = FieldList(IntegerField())
+
+
 class DeleteEnumeratorRole(FlaskForm):
     enumerator_type = StringField(
         validators=[
@@ -176,3 +203,30 @@ class UpdateEnumeratorRoleStatus(FlaskForm):
             DataRequired(),
         ]
     )
+
+
+class ColumnConfigValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    column_name = StringField(validators=[DataRequired()])
+    column_type = StringField(
+        AnyOf(
+            ["personal_details", "location", "custom_fields"],
+            message="Value must be one of %(values)s",
+        ),
+        validators=[DataRequired()],
+    )
+    # bulk_editable = BooleanField(validators=[DataRequired()])
+
+
+class UpdateEnumeratorsColumnConfig(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
+    column_config = FieldList(FormField(ColumnConfigValidator))
+
+
+class EnumeratorColumnConfigQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
