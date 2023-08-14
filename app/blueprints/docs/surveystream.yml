@@ -1924,6 +1924,14 @@ paths:
           schema:
             type: integer
           description: Unique ID of the form
+          required: true
+        - in: query
+          name: enumerator_type
+          schema:
+            type: string
+            enum: [monitor, supervisor]
+          description: Type of enumerators to return
+          required: false
       responses:
         '200':
           description: OK
@@ -1949,107 +1957,75 @@ paths:
                     gender:
                       type: string
                       description: The gender of the enumerator
-                    home_state:
-                      type: string
-                      description: The home state of the enumerator
-                    home_district:
-                      type: string
-                      description: The home district of the enumerator
-                    home_block:
-                      type: string
-                      description: The home block of the enumerator
                     home_address:
                       type: string
                       description: The home address of the enumerator
-                    phone_primary:
+                    mobile_primary:
                       type: string
-                      description: The primary phone number of the enumerator
-                    phone_secondary:
-                      type: string
-                      description: The secondary phone number of the enumerator
-                    status:
+                      description: The primary mobile number of the enumerator
+                    form_uid:
+                      type: integer
+                      description: The unique ID of the form that the enumerator was uploaded to
+                    surveyor_status:
                       type: string
                       enum:
                         - Active
                         - Temp. inactive
                         - Dropout
-                      description: The working status of the enumerator
-                    locations:
+                      description: The working status of the enumerator if they are a surveyor on the form
+                    surveyor_locations:
                       type: array
                       description: >-
-                        An array of locations associated with the enumerator.
-                        Each array item is an object of the form {`location`_id:
-                        _location_id_, `location`_name: _location_name_} in
-                        descending order from highest to lowest level location.
-                    supervisors:
-                      type: array
-                      description: >-
-                        An array of supervisors associated with the enumerator.
-                        Array items are in descending order from highest to
-                        lowest level supervisor working under the logged in
-                        user.
+                        The working geography of the enumerator if they are a surveyor on the form. 
+                        Each array item is an object of the form {`location`_id: _location_id_, `location`_name: 
+                        _location_name_, `geo_level_name`: __geo_level_name__} in descending order from highest 
+                        to lowest level location down to the level of the prime geo level the surveyor is mapped to.
+                        Will be null if the surveyor is not mapped to a prime geo level.
                       items:
                         type: object
                         properties:
-                          role_name:
+                          location_id:
+                            type: integer
+                            description: The user-defined unique ID of the location
+                          location_name:
                             type: string
-                            description: >-
-                              The role of the supervisor, .e.g. regional
-                              coordinator, cluster coordinator
-                          level:
-                            type: number
-                            description: >-
-                              The level of the supervisor. Counting starts at 0
-                              with the core team and ascends for each
-                              successively lower level of the supervisor
-                              hierarchy.
-                          supervisor_name:
+                            description: The name of the location
+                          geo_level_name:
                             type: string
-                            description: The name of the supervisor
-                          supervisor_email:
-                            type: string
-                            description: The email of the supervisor
-                    forms:
+                            description: The name of the geo level
+                    monitor_status:
+                      type: string
+                      enum:
+                        - Active
+                        - Temp. inactive
+                        - Dropout
+                      description: The working status of the enumerator if they are a monitor on the form
+                    monitor_locations:
                       type: array
                       description: >-
-                        An array of form names of the forms in the given survey
-                        the enumerator is working on
-                      items:
-                        type: string
-                    form_productivity:
-                      type: array
-                      description: >-
-                        An array of productivity details for each form the
-                        enumerator is working on in the given survey
+                        The working geography of the enumerator if they are a monitor on the form. 
+                        Each array item is an object of the form {`location`_id: _location_id_, `location`_name: 
+                        _location_name_, `geo_level_name`: __geo_level_name__} in descending order from highest 
+                        to lowest level location down to the level of the prime geo level the monitor is mapped to.
+                        Will be null if the monitor is not mapped to a prime geo level.
                       items:
                         type: object
                         properties:
-                          form_name:
+                          location_id:
+                            type: integer
+                            description: The user-defined unique ID of the location
+                          location_name:
                             type: string
-                            description: The name of the form
-                          total_complete:
-                            type: integer
-                            description: >-
-                              The enumerator's total completed targets for the
-                              form
-                          total_assigned:
-                            type: integer
-                            description: >-
-                              The enumerator's total assigned targets for the
-                              form
-  /enumerators/{enumerator_uid}:
-    patch:
-      summary: Update enumerator status
+                            description: The name of the location
+                          geo_level_name:
+                            type: string
+                            description: The name of the geo level
+        '400':
+          description: Form ID is required
+    post:
+      summary: Upload a csv of new enumerators
       description: >
-        Set the status of an enumerator to Active, Temp. Inactive, or Dropout 
-
-
-        The status update is applied to all forms the enumerator is working on
-        in the given form's survey 
-
-
-        If the status is set to "Dropout" all the enumerator's assignments on
-        the given form's survey will be released
+        Upload a csv of new enumerators to be added to the given form
       tags:
         - Enumerators
       parameters:
@@ -2059,6 +2035,12 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
       requestBody:
         required: true
         content:
@@ -2066,26 +2048,230 @@ paths:
             schema:
               type: object
               properties:
-                form_uid:
-                  type: integer
-                status:
+                column_mapping:
+                  type: object
+                  description: >-
+                    An object mapping the column names in the csv to the
+                    corresponding enumerator properties
+                  properties:
+                    enumerator_id:
+                      type: string
+                      description: The column name of the enumerator ID
+                    enumerator_type:
+                      type: string
+                      description: The column name of the enumerator type
+                    name:
+                      type: string
+                      description: The column name of the enumerator's name
+                    email:
+                      type: string
+                      description: The column name of the enumerator's email
+                    mobile_primary:
+                      type: string
+                      description: The column name of the enumerator's primary mobile number
+                    language:
+                      type: string
+                      description: The column name of the enumerator's primary language
+                    home_address:
+                      type: string
+                      description: The column nmae of the enumerator's home address
+                    gender:
+                      type: string
+                      description: The column name of the enumerator's gender
+                    location_id_column:
+                      type: string
+                      description: The column name of the enumerator's location ID. This is the prime geo level location that the enumerator is mapped to.
+                    custom_fields:
+                      type: array
+                      description: >-
+                        An array of custom fields to be added to the enumerator
+                        object
+                      items:
+                        type: object
+                        properties:
+                          field_label:
+                            type: string
+                            description: The user-defined label of the custom field
+                          column_name:
+                            type: string
+                            description: The column name of the custom field
+                        required:
+                          - field_label
+                          - column_name
+                  required:
+                    - enumerator_id
+                    - name
+                    - email
+                    - mobile_primary
+                    - gender
+                file:
+                  type: string
+                  format: Base64
+                  description: >-
+                    The csv file to be uploaded in base64 encoding
+
+                    The csv must have a header row with the column names
+                    specified in the `column_mapping` object.
+
+                    **Notes**: 
+                    - The `enumerator_type` field can take values of
+                      `monitor` or `supervisor`. If the enumerator is to be
+                      assigned to multiple types, separate the values with a
+                      semi-colon, e.g. `monitor;supervisor`.
+                    - If enumerators are to be mapped by location, the 
+                      `location_id_column` field contains the location ID of the
+                      prime geo level location that the enumerator is mapped to.
+                      The `prime_geo_level_uid` for the survey needs to be defined 
+                      in the survey config at `POST /surveys`.
+                mode:
                   type: string
                   enum:
-                    - Active
-                    - Temp. inactive
-                    - Dropout
+                    - overwrite
+                    - append
+                  description: >-
+                    The mode of the upload. If `overwrite`, all enumerators
+                    with the given form_uid (from the query parameter) will be 
+                    deleted and replaced with the new enumerators in the csv. If `append`, 
+                    the new enumerators in the csv will be added to the existing enumerators.
+
+                    **Note:** If the `append` mode is used, the enumerators in the csv
+                    must have unique enumerator IDs or the upload will fail.
               required:
-                - form_uid
-                - status
+                - column_mapping
+                - file
+                - mode
       responses:
         '200':
-          description: Record updated
+          description: Records added successfully
         '400':
-          description: Record not found
+          description: Query parameter errors
         '403':
           description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
         '422':
           description: Form errors
+  /enumerators/{enumerator_uid}:
+    get:
+      summary: Get details of an enumerator
+      description: >
+        Get details of an enumerator by their unique ID.
+
+        **Note**: This endpoint does not return information related to the enumerator's role (like surveyor, monitor, etc.) on different forms or the enumerator's mapping information for different forms. To get this information, use the `GET /enumerators` endpoint or the `GET /enumerators/{enumerator_uid}/roles` endpoint.
+      tags:
+        - Enumerators
+      parameters:
+        - in: path
+          name: enumerator_uid
+          schema:
+            type: integer
+          description: Unique ID of the enumerator
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    enumerator_id:
+                      type: string
+                      description: The user-assigned unique ID of the enumerator
+                    enumerator_uid:
+                      type: integer
+                      description: The system-assigned unique ID of the enumerator
+                    name:
+                      type: string
+                      description: The name of the enumerator
+                    email:
+                      type: string
+                      description: The email of the enumerator
+                    mobile_primary:
+                      type: string
+                      description: The primary mobile number of the enumerator
+                    language:
+                      type: string
+                      description: The primary language of the enumerator
+                    gender:
+                      type: string
+                      description: The gender of the enumerator
+                    home_address:
+                      type: string
+                      description: The home address of the enumerator
+                    custom_fields:
+                      type: object
+                      description: >-
+                        Any non-standard fields that should be displayed for the
+                        enumerator. The keys are the user-defined labels of the
+                        custom fields.
+    put: 
+      summary: Update an enumerator
+      description: >
+        Update an enumerator's details by their unique ID.
+
+        **Note**: This endpoint does not update information related to the enumerator's role (like surveyor, monitor, etc.) on different forms or the enumerator's mapping information for different forms. To update this information, use the `PUT /enumerators/{enumerator_uid}/roles` endpoint.
+      tags:
+        - Enumerators
+      parameters:
+        - in: path
+          name: enumerator_uid
+          schema:
+            type: integer
+          description: Unique ID of the enumerator
+          required: true
+      requestBody:
+        description: The updated record as it should be saved in the database. Note that values should be provided even if they are not being updated, otherwise they will be set to null.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enumerator_id:
+                  type: string
+                  description: The user-assigned unique ID of the enumerator
+                name:
+                  type: string
+                  description: The name of the enumerator
+                email:
+                  type: string
+                  description: The email of the enumerator
+                mobile_primary:
+                  type: string
+                  description: The primary mobile number of the enumerator
+                language:
+                  type: string
+                  description: The language of the enumerator
+                gender:
+                  type: string
+                  description: The gender of the enumerator
+                home_address:
+                  type: string
+                  description: The home address of the enumerator
+                custom_fields:
+                  type: object
+                  description: >-
+                    Any non-standard fields that should be displayed for the
+                    enumerator. The keys are the user-defined labels of the
+                    custom fields.
+              required:
+                - enumerator_id
+                - name
+                - email
+                - mobile_primary
+                - gender
+      responses:
+        '200':
+          description: Successfully updated
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Enumerator not found
+        '422':
+          description: Enumerator errors
   /targets:
     get:
       summary: Get targets
@@ -3089,3 +3275,4 @@ paths:
             Validation errors for the file will be returned as an array under the `file` key in the `errors` key of the response.
             Validation errors for the location type hierarchy will be returned as an array under the `geo_level_hierarchy` key in the `errors` key of the response.
             Note that the file validation will only be run if the geo level mapping is valid.
+

@@ -166,4 +166,4 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
     with app.app_context():
         db.session.remove()
         db.drop_all()
-        db.engine.execute("DROP TABLE alembic_version")
+        db.engine.execute("DROP TABLE IF EXISTS alembic_version;")

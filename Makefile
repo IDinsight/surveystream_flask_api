@@ -101,3 +101,16 @@ apply-db-migration-dev:
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
 	docker-compose -f docker-compose/docker-compose.db-upgrade.yml -f docker-compose/docker-compose.override.yml rm -fsv
 
+downgrade-db-dev:
+	@BACKEND_NAME=${BACKEND_NAME} \
+	VERSION=${VERSION} \
+	BACKEND_PORT=${BACKEND_PORT} \
+	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
+	docker-compose -f docker-compose/docker-compose.db-downgrade.yml -f docker-compose/docker-compose.override.yml run --rm api ;
+
+	@BACKEND_NAME=${BACKEND_NAME} \
+	VERSION=${VERSION} \
+	BACKEND_PORT=${BACKEND_PORT} \
+	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
+	docker-compose -f docker-compose/docker-compose.db-downgrade.yml -f docker-compose/docker-compose.override.yml rm -fsv
+

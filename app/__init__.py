@@ -97,7 +97,7 @@ def register_blueprints(app):
     from app.blueprints.auth import auth_bp
     from app.blueprints.docs import docs_bp
 
-    # from app.blueprints.enumerators import enumerators_bp
+    from app.blueprints.enumerators import enumerators_bp
     from app.blueprints.forms import forms_bp
     from app.blueprints.healthcheck import healthcheck_bp
     from app.blueprints.module_questionnaire import module_questionnaire_bp
@@ -115,7 +115,7 @@ def register_blueprints(app):
     # app.register_blueprint(assignments_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(docs_bp)
-    # app.register_blueprint(enumerators_bp)
+    app.register_blueprint(enumerators_bp)
     app.register_blueprint(forms_bp)
     app.register_blueprint(healthcheck_bp)
     app.register_blueprint(module_questionnaire_bp)

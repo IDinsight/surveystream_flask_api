@@ -18,12 +18,17 @@ class ModuleQuestionnaire(db.Model):
     supervisor_hierarchy_exists = db.Column(db.Boolean())
     reassignment_required = db.Column(db.Boolean())
     assignment_process = db.Column(
-        db.String(), CheckConstraint("assignment_process IN ('Manual','Random')")
+        db.String(),
+        CheckConstraint(
+            "assignment_process IN ('Manual','Random')",
+            name="ck_module_questionnaire_assignment_process",
+        ),
     )
     supervisor_surveyor_relation = db.Column(
         db.String(),
         CheckConstraint(
-            "supervisor_surveyor_relation IN ('1:1', '1:many', 'many:1', 'many:many')"
+            "supervisor_surveyor_relation IN ('1:1', '1:many', 'many:1', 'many:many')",
+            name="ck_module_questionnaire_supervisor_surveyor_relation",
         ),
     )
     language_location_mapping = db.Column(db.Boolean())

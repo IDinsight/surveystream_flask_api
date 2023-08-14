@@ -5,8 +5,8 @@ from sqlalchemy.orm import backref
 
 class GeoLevel(db.Model):
     """
-    SQLAlchemy data model for Role
-    This tables defines the supervisor roles for a given survey
+    SQLAlchemy data model for Geo Level
+    This tables defines the geo levels for a given survey
     """
 
     __tablename__ = "geo_levels"
