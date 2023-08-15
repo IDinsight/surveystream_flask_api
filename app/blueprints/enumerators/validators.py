@@ -217,7 +217,6 @@ class ColumnConfigValidator(FlaskForm):
         ),
         validators=[DataRequired()],
     )
-    # bulk_editable = BooleanField(validators=[DataRequired()])
 
 
 class UpdateEnumeratorsColumnConfig(FlaskForm):
