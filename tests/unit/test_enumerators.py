@@ -194,6 +194,83 @@ class TestEnumerators:
         assert checkdiff == {}
 
     @pytest.fixture()
+    def create_enumerator_column_config(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Upload the enumerators column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "enumerator_id",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "name",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "email",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "mobile_primary",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "personal_details",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "home_address",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "prime_geo_level_location_id",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "Mobile (Secondary)",
+                    "column_type": "custom_fields",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "Age",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/enumerators/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
     def upload_enumerators_csv(
         self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
     ):
@@ -227,6 +304,10 @@ class TestEnumerators:
                     {
                         "field_label": "Mobile (Secondary)",
                         "column_name": "mobile_secondary",
+                    },
+                    {
+                        "field_label": "Age",
+                        "column_name": "age",
                     },
                 ],
             },
@@ -424,7 +505,7 @@ class TestEnumerators:
         expected_response = {
             "data": [
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "enumerator_uid": 1,
@@ -445,14 +526,14 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "2"},
                     "email": "jahnavi.meher@idinsight.org",
                     "enumerator_id": "0294613",
                     "enumerator_uid": 2,
                     "name": "Jahnavi Meher",
                     "gender": "Female",
                     "home_address": "my house",
-                    "language": "Hindi",
+                    "language": "Telugu",
                     "mobile_primary": "0123456789",
                     "monitor_status": None,
                     "surveyor_status": "Active",
@@ -466,7 +547,7 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "3"},
                     "email": "jay.prakash@idinsight.org",
                     "enumerator_id": "0294614",
                     "enumerator_uid": 3,
@@ -487,14 +568,14 @@ class TestEnumerators:
                     "surveyor_status": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "4"},
                     "email": "griffin.muteti@idinsight.org",
                     "enumerator_id": "0294615",
                     "enumerator_uid": 4,
                     "name": "Griffin Muteti",
                     "gender": "Male",
                     "home_address": "my house",
-                    "language": "Hindi",
+                    "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
                         {
@@ -555,7 +636,7 @@ class TestEnumerators:
                     "name": "Jahnavi Meher",
                     "gender": "Female",
                     "home_address": "my house",
-                    "language": "Hindi",
+                    "language": "Telugu",
                     "mobile_primary": "0123456789",
                     "monitor_status": None,
                     "surveyor_status": "Active",
@@ -613,7 +694,7 @@ class TestEnumerators:
                     "name": "Jahnavi Meher",
                     "gender": "Female",
                     "home_address": "my house",
-                    "language": "Hindi",
+                    "language": "Telugu",
                     "mobile_primary": "0123456789",
                     "monitor_status": None,
                     "surveyor_status": "Active",
@@ -684,7 +765,7 @@ class TestEnumerators:
                     "name": "Jahnavi Meher",
                     "gender": "Female",
                     "home_address": "my house",
-                    "language": "Hindi",
+                    "language": "Telugu",
                     "mobile_primary": "0123456789",
                     "monitor_status": None,
                     "surveyor_status": "Active",
@@ -736,7 +817,7 @@ class TestEnumerators:
                     "name": "Griffin Muteti",
                     "gender": "Male",
                     "home_address": "my house",
-                    "language": "Hindi",
+                    "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
                         {
@@ -775,6 +856,80 @@ class TestEnumerators:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
+    def test_upload_column_config(
+        self, client, login_test_user, create_enumerator_column_config, csrf_token
+    ):
+        """
+        Test uploading the enumerators column config
+        """
+
+        expected_response = {
+            "success": True,
+            "data": [
+                {
+                    "column_name": "enumerator_id",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "name",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "email",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "mobile_primary",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "personal_details",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "home_address",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "prime_geo_level_location_id",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "Mobile (Secondary)",
+                    "column_type": "custom_fields",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "Age",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                },
+            ],
+        }
+
+        # Check the response
+        response = client.get(
+            "/api/enumerators/column-config",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_update_enumerator(
         self, client, login_test_user, upload_enumerators_csv, csrf_token
     ):
@@ -791,7 +946,7 @@ class TestEnumerators:
             "language": "English",
             "gender": "Male",
             "home_address": "my house",
-            "custom_fields": {"Mobile (Secondary)": "1123456789"},
+            "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
         }
 
         response = client.put(
@@ -805,7 +960,7 @@ class TestEnumerators:
 
         expected_response = {
             "data": {
-                "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
                 "email": "eric.dodge@idinsight.org",
                 "enumerator_id": "0294612",
                 "enumerator_uid": 1,
@@ -839,7 +994,7 @@ class TestEnumerators:
         }
 
         response = client.put(
-            "/api/enumerators/1/roles",
+            "/api/enumerators/1/roles/locations",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -931,6 +1086,257 @@ class TestEnumerators:
         )
         print(response.json)
         assert response.status_code == 200
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_bulk_update_enumerators_locations(
+        self,
+        client,
+        login_test_user,
+        create_enumerator_column_config,
+        upload_enumerators_csv,
+        csrf_token,
+    ):
+        """
+        Test that enumerators locations can be bulk updated
+        """
+
+        # Update the enumerator
+        payload = {
+            "enumerator_uids": [1, 2],
+            "form_uid": 1,
+            "enumerator_type": "surveyor",
+            "location_uids": [],
+        }
+
+        response = client.put(
+            "/api/enumerators/roles/locations",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
+                    "email": "eric.dodge@idinsight.org",
+                    "enumerator_id": "0294612",
+                    "enumerator_uid": 1,
+                    "name": "Eric Dodge",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "English",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": None,
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "2"},
+                    "email": "jahnavi.meher@idinsight.org",
+                    "enumerator_id": "0294613",
+                    "enumerator_uid": 2,
+                    "name": "Jahnavi Meher",
+                    "gender": "Female",
+                    "home_address": "my house",
+                    "language": "Telugu",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": None,
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "3"},
+                    "email": "jay.prakash@idinsight.org",
+                    "enumerator_id": "0294614",
+                    "enumerator_uid": 3,
+                    "name": "Jay Prakash",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Hindi",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_status": "Active",
+                    "surveyor_locations": None,
+                    "surveyor_status": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "4"},
+                    "email": "griffin.muteti@idinsight.org",
+                    "enumerator_id": "0294615",
+                    "enumerator_uid": 4,
+                    "name": "Griffin Muteti",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Swahili",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "surveyor_status": "Active",
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/enumerators", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_bulk_update_enumerators(
+        self,
+        client,
+        login_test_user,
+        create_enumerator_column_config,
+        upload_enumerators_csv,
+        csrf_token,
+    ):
+        """
+        Test that enumerators can be bulk updated
+        """
+
+        # Update the enumerator
+        payload = {
+            "enumerator_uids": [1, 2],
+            "form_uid": 1,
+            "Mobile (Secondary)": "0123456789",
+            "language": "Tagalog",
+        }
+
+        response = client.patch(
+            "/api/enumerators",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {"Mobile (Secondary)": "0123456789", "Age": "1"},
+                    "email": "eric.dodge@idinsight.org",
+                    "enumerator_id": "0294612",
+                    "enumerator_uid": 1,
+                    "name": "Eric Dodge",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Tagalog",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "0123456789", "Age": "2"},
+                    "email": "jahnavi.meher@idinsight.org",
+                    "enumerator_id": "0294613",
+                    "enumerator_uid": 2,
+                    "name": "Jahnavi Meher",
+                    "gender": "Female",
+                    "home_address": "my house",
+                    "language": "Tagalog",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "3"},
+                    "email": "jay.prakash@idinsight.org",
+                    "enumerator_id": "0294614",
+                    "enumerator_uid": 3,
+                    "name": "Jay Prakash",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Hindi",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_status": "Active",
+                    "surveyor_locations": None,
+                    "surveyor_status": None,
+                },
+                {
+                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "4"},
+                    "email": "griffin.muteti@idinsight.org",
+                    "enumerator_id": "0294615",
+                    "enumerator_uid": 4,
+                    "name": "Griffin Muteti",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Swahili",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "monitor_status": "Active",
+                    "surveyor_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        }
+                    ],
+                    "surveyor_status": "Active",
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/enumerators", query_string={"form_uid": 1})
+        print(response.json)
+
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 

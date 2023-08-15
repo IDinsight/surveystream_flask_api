@@ -2151,6 +2151,230 @@ paths:
           description: Form not found
         '422':
           description: Form errors
+    patch:
+      summary: Bulk update enumerators for a provided set of fields
+      description: >
+        Bulk update enumerators for a provided set of fields. The enumerators to be updated are specified by their enumerator IDs.
+        Only the fields specified in the request body will be updated. If a field is not specified, it will not be updated.
+        Only personal details and custom fields can be updated can be updated through this endpoint. To bulk update enumerators'
+        locations, use the `PUT /enumerators/roles/locations` endpoint.
+
+        **Note:** Only fields that are defined in the enumerators column config table and set as `bulk_editable` can be updated via
+        this endpoint. See the `PUT /enumerators/column-config` endpoint for more details.
+      tags:
+        - Enumerators
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enumerator_uids:
+                  type: array
+                  description: >-
+                    An array of enumerator UIDs of the enumerators to be updated
+                  items:
+                    type: integer
+                    description: The enumerator UID of the enumerator to be updated
+                form_uid:
+                  type: integer
+                  description: >-
+                    The form UID of the enumerators to be updated.
+                patch_key_example:
+                  description: >-
+                    An example of the field name and value to be updated for the enumerators. Multiple fields to be updated can be specified in the same object. The field name must be the same as the field name in the enumerator column config for the form and set as `bulk_editable.` See the `PUT /enumerators/column-config` for more details on defining the column config for a form.
+              required:
+                - enumerator_uids
+                - form_uid
+      responses:
+        '200':
+          description: Enumerators updated successfully
+        '400':
+          description: Request errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+  /enumerators/column-config:
+    put:
+      summary: Update the enumerators column config for a form
+      description: >
+        Update the column config for enumerators for a form. The column config defines the fields that are available for bulk editing via the `PATCH /enumerators`
+        and `PUT /enumerators/roles/locations`` endpoints.
+      tags:
+        - Enumerators
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: >-
+                    The form UID of the enumerators to be updated.
+                column_config:
+                  type: array
+                  description: >-
+                    An array of column config objects for the enumerators data. Each object defines the column name, its type, and whether it is bulk editable or not.
+                    
+                    The location mapping column must be named `prime_geo_level_location_id` and its enumerator_type must be `location`.
+
+                    The personal details columns must be named `enumerator_id`, `name`, `email`, `mobile_primary`, `home_address`, `language` and `gender` and their enumerator_types must be `personal_details`.
+                  
+                    The custom fields columns must match their corresponding json keys in the `custom_fields` column of the `enumerators` table and their enumerator_types must be `custom_field`.
+                  items:
+                    type: object
+                    properties:
+                      column_name:
+                        type: string
+                        description: The field name of the column
+                      column_type:
+                        type: string
+                        description: The field type of the column. Can be one of `personal_details`, `custom_field`, or `location`.
+                      bulk_editable:
+                        type: boolean
+                        description: Whether the field is bulk editable or not
+                    required:
+                      - column_name
+                      - column_type
+                      - bulk_editable
+              required:
+                - form_uid
+                - column_config
+      responses:
+        '200':
+          description: Column config updated successfully
+        '400':
+          description: Request errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+    get:
+      summary: Get the enumerators column config for a form
+      description: >
+        Get the enumerators column config for a form. The column config defines the fields that are available for bulk editing via the `PATCH /enumerators`
+        and `PUT /enumerators/roles/locations`` endpoints.
+      tags:
+        - Enumerators
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: >-
+            The form UID of the enumerator column config to be updated.
+          required: true
+      responses:
+        '200':
+          description: Column config retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                description: >-
+                  An array of column config objects for the enumerators data. Each object defines the column name, its type, and whether it is bulk editable or not.
+                items:
+                  type: object
+                  properties:
+                    column_name:
+                      type: string
+                      description: The field name of the column
+                    column_type:
+                      type: string
+                      description: The field type of the column. Can be one of `personal_details`, `custom_field`, or `location`.
+                    bulk_editable:
+                      type: boolean
+                      description: Whether the field is bulk editable or not
+        '400':
+          description: Request errors
+        '404':
+          description: Form not found
+  /enumerators/roles/locations:
+    put:
+      summary: Bulk update the location mapping for enumerators for a form
+      description: >
+        Bulk update the location mapping for enumerators of a specific enumerator_type for a form. The location mapping defines the prime_geo_level location(s) that the enumerator is mapped to for a form.
+
+        This method will replace the existing location mapping for the enumerators with the new location mapping provided in the request body. The existing location mapping for the enumerators can be dropped by providing `None` or an empty array as the `location_uids` value in the request body.
+      
+        In order for the location mapping to be bulk editable, the enumerators column configuration must have a `column_name` entry `prime_geo_level_location_id` with `column_type` of `location` and its `bulk_editable` value set to `True`. See the `PUT /enumerators/column-config` endpiont for more details on defining the enumerators column config for a form.
+      tags:
+
+        - Enumerators
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: >-
+                    The form UID of the enumerators to be updated.
+                enumerator_type:
+                  type: string
+                  description: >-
+                    The enumerator_type of the enumerators to be updated. Can be one of `monitor` or `surveyor`.
+                enumerator_uids:
+                  type: array
+                  description: >-
+                    An array of enumerator UIDs of the enumerators to be updated
+                  items:
+                    type: integer
+                    description: The enumerator UID of the enumerator to be updated
+                location_uids:
+                  type: array
+                  description: >-
+                    An array of location UIDs of the locations to be mapped to the enumerators. Enumerators can be mapped to 0, 1, or many locations.
+                  items:
+                    type: integer
+                    description: The location UID of the location to be mapped
+              required:
+                - enumerator_uids
+                - form_uid
+                - enumerator_type
+                - location_uids
+      responses:
+        '200':
+          description: Location mapping updated successfully
+        '400':
+          description: Request errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
   /enumerators/{enumerator_uid}:
     get:
       summary: Get details of an enumerator
@@ -2212,7 +2436,7 @@ paths:
       description: >
         Update an enumerator's details by their unique ID.
 
-        **Note**: This endpoint does not update information related to the enumerator's role (like surveyor, monitor, etc.) on different forms or the enumerator's mapping information for different forms. To update this information, use the `PUT /enumerators/{enumerator_uid}/roles` endpoint.
+        **Note**: This endpoint does not update information related to the enumerator's role (like surveyor, monitor, etc.) on different forms or the enumerator's mapping information for different forms. To update this information, use the `/enumerators/{enumerator_uid}/roles` and `/enumerators/{enumerator_uid}/roles/locations` endpoints.
       tags:
         - Enumerators
       parameters:
