@@ -2151,6 +2151,106 @@ paths:
           description: Form not found
         '422':
           description: Form errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to the csv file upload.
+                      Each key will only be present if there are errors of that type.
+                      
+                      In addition to the errors listed below, the `errors` object may also contain
+                      errors related to an incorrectly specified payload.
+                    properties:
+                      file_structure_errors:
+                        type: array
+                        description: >-
+                          An array of errors in the file structure. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      column_mapping:
+                        type: array
+                        description: >-
+                          An array of errors in the column. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      geo_level_hierarchy:
+                        type: array
+                        description: >-
+                          An array of errors in the geo level hierarchy. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      record_errors:
+                        type: object
+                        description: >-
+                          An object with information on validation errors in the csv records.
+                        properties:
+                          summary:
+                            type: object
+                            description: >-
+                              A summary of the validation errors in the csv records
+                            properties:
+                              error_count:
+                                type: integer
+                                description: The total number of errors in the csv records
+                              total_correct_rows:
+                                type: integer
+                                description: The total number of correct rows in the csv records
+                              total_rows:
+                                type: integer
+                                description: The total number of rows in the csv records
+                              total_rows_with_errors:
+                                type: integer
+                                description: The total number of rows with errors in the csv records                            
+                          summary_by_error_type:
+                            type: array
+                            description: >-
+                              An array of objects with information on validation errors by error type in the csv records.
+                            items:
+                              type: object
+                              properties:
+                                error_count:
+                                  type: integer
+                                  description: The total number of errors of this type in the csv records
+                                error_message:
+                                  type: string
+                                  description: The error message for this error type
+                                error_type:
+                                  type: string
+                                  description: The error type
+                                row_numbers_with_errors:
+                                  type: array
+                                  description: >-
+                                    An array of row numbers with errors of this type in the csv records
+                                  items:
+                                    type: integer
+                                    description: The row number with an error of this type in the csv records
+                          invalid_records:
+                            type: object
+                            description: >-
+                              An object with information on validation errors by record in the csv records.
+                              This can be used to identify the specific errors in each record and to let users download a csv with the errors.
+                            properties:
+                              records:
+                                type: array
+                                description: >-
+                                  An array of objects that represent the original records in the csv with the validation errors.
+                                  A new `errors` field is added to each record that contains a semicolon-separated list of the validation errors for that record.
+                                  A new `row_number` field is also added to each record that contains the row number of the record in the original csv.
+                              ordered_columns:
+                                type: array
+                                description: >-
+                                  An array of strings that represent the column names in the `records` array of objects in the order that they should 
+                                  appear in a table or downloadable csv file.
+                                items:
+                                  type: string
+                                  description: The column name in the csv
+                  success:
+                    type: boolean
+                    description: Whether the upload was successful
     patch:
       summary: Bulk update enumerators for a provided set of fields
       description: >

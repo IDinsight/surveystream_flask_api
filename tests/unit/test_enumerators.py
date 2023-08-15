@@ -856,6 +856,219 @@ class TestEnumerators:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
+    def test_upload_enumerators_csv_record_errors(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        csrf_token,
+    ):
+        """
+        Test that the sheet validations are working
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_errors.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id",
+                "name": "name",
+                "email": "email",
+                "mobile_primary": "mobile_primary",
+                "language": "language",
+                "home_address": "home_address",
+                "gender": "gender",
+                "enumerator_type": "enumerator_type",
+                "location_id_column": "district_id",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary",
+                    },
+                    {
+                        "field_label": "Age",
+                        "column_name": "age",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "append",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+        print(response.json)
+        expected_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "enumerator_id",
+                            "name",
+                            "email",
+                            "mobile_primary",
+                            "language",
+                            "home_address",
+                            "gender",
+                            "enumerator_type",
+                            "district_id",
+                            "mobile_secondary",
+                            "age",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "age": "1",
+                                "district_id": "2",
+                                "email": "eric.dodge@idinsight.org",
+                                "enumerator_id": "0294612",
+                                "enumerator_type": "surveyor",
+                                "errors": "Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Location id not found in uploaded locations data for the survey's prime geo level",
+                                "gender": "Male",
+                                "home_address": "my house",
+                                "language": "English",
+                                "mobile_primary": "0123456789",
+                                "mobile_secondary": "1123456789",
+                                "name": "Eric Dodge",
+                                "row_number": 2,
+                            },
+                            {
+                                "age": "2",
+                                "district_id": "1",
+                                "email": "jahnavi.meher@idinsight.org",
+                                "enumerator_id": "0294612",
+                                "enumerator_type": "surveyor",
+                                "errors": "Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "gender": "Female",
+                                "home_address": "my house",
+                                "language": "Telugu",
+                                "mobile_primary": "0123456789*&",
+                                "mobile_secondary": "1123456789",
+                                "name": "Jahnavi Meher",
+                                "row_number": 3,
+                            },
+                            {
+                                "age": "3",
+                                "district_id": "1",
+                                "email": "jay.prakash@idinsight.org",
+                                "enumerator_id": "0294614",
+                                "enumerator_type": "monitor",
+                                "errors": "Blank field(s) found in the follwoing column(s): name. The column(s) cannot contain blank fields.; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "gender": "Male",
+                                "home_address": "my house",
+                                "language": "Hindi",
+                                "mobile_primary": "012345678901234567890123456789",
+                                "mobile_secondary": "1123456789",
+                                "name": "",
+                                "row_number": 4,
+                            },
+                            {
+                                "age": "4",
+                                "district_id": "1",
+                                "email": "griffin.muteti@gmal.com",
+                                "enumerator_id": "0294615",
+                                "enumerator_type": "monitor;surveyor",
+                                "errors": "Duplicate row; Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "gender": "Male",
+                                "home_address": "my house",
+                                "language": "Swahili",
+                                "mobile_primary": "012345678",
+                                "mobile_secondary": "1123456789",
+                                "name": "Griffin Muteti",
+                                "row_number": 5,
+                            },
+                            {
+                                "age": "4",
+                                "district_id": "1",
+                                "email": "griffin.muteti@gmal.com",
+                                "enumerator_id": "0294615",
+                                "enumerator_type": "monitor;surveyor",
+                                "errors": "Duplicate row; Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "gender": "Male",
+                                "home_address": "my house",
+                                "language": "Swahili",
+                                "mobile_primary": "012345678",
+                                "mobile_secondary": "1123456789",
+                                "name": "Griffin Muteti",
+                                "row_number": 6,
+                            },
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 19,
+                        "total_correct_rows": 0,
+                        "total_rows": 5,
+                        "total_rows_with_errors": 5,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "Blank values are not allowed in the following columns: enumerator_id, name, email. Blank values in these columns were found for the following row(s): 4",
+                            "error_type": "Blank field",
+                            "row_numbers_with_errors": [4],
+                        },
+                        {
+                            "error_count": 2,
+                            "error_message": "The file has 2 duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: 5, 6",
+                            "error_type": "Duplicate rows",
+                            "row_numbers_with_errors": [5, 6],
+                        },
+                        {
+                            "error_count": 4,
+                            "error_message": "The file has 4 duplicate enumerator_id(s). The following row numbers contain enumerator_id duplicates: 2, 3, 5, 6",
+                            "error_type": "Duplicate enumerator_id's in file",
+                            "row_numbers_with_errors": [2, 3, 5, 6],
+                        },
+                        {
+                            "error_count": 5,
+                            "error_message": "The file contains 5 enumerator_id(s) that have already been uploaded. The following row numbers contain enumerator_id's that have already been uploaded: 2, 3, 4, 5, 6",
+                            "error_type": "Enumerator_id's found in database",
+                            "row_numbers_with_errors": [2, 3, 4, 5, 6],
+                        },
+                        {
+                            "error_count": 2,
+                            "error_message": "The file contains 2 invalid email ID(s). The following row numbers have invalid email ID's: 5, 6",
+                            "error_type": "Invalid email ID",
+                            "row_numbers_with_errors": [5, 6],
+                        },
+                        {
+                            "error_count": 4,
+                            "error_message": "The file contains 4 invalid mobile number(s) in the mobile_primary field. Mobile numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'. The following row numbers have invalid mobile numbers: 3, 4, 5, 6",
+                            "error_type": "Invalid mobile number",
+                            "row_numbers_with_errors": [3, 4, 5, 6],
+                        },
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: 2",
+                            "error_type": "Invalid location_id's",
+                            "row_numbers_with_errors": [2],
+                        },
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_upload_column_config(
         self, client, login_test_user, create_enumerator_column_config, csrf_token
     ):

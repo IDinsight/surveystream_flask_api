@@ -44,7 +44,8 @@ from app.blueprints.locations.utils import GeoLevelHierarchy
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from .errors import (
     HeaderRowEmptyError,
-    InvalidEnumeratorsError,
+    InvalidEnumeratorRecordsError,
+    InvalidFileStructureError,
     InvalidColumnMappingError,
 )
 import binascii
@@ -118,8 +119,6 @@ def upload_enumerators():
                     "success": False,
                     "errors": {
                         "geo_level_hierarchy": e.geo_level_hierarchy_errors,
-                        "file": [],
-                        "geo_level_mapping": [],
                     },
                 }
             ),
@@ -142,7 +141,6 @@ def upload_enumerators():
                     "success": False,
                     "errors": {
                         "column_mapping": e.column_mapping_errors,
-                        "file": [],
                     },
                 }
             ),
@@ -181,8 +179,9 @@ def upload_enumerators():
                 {
                     "success": False,
                     "errors": {
-                        "file": ["File data has invalid base64 encoding"],
-                        "column_mapping": [],
+                        "file_structure_errors": [
+                            "File data has invalid base64 encoding"
+                        ],
                     },
                 }
             ),
@@ -194,8 +193,9 @@ def upload_enumerators():
                 {
                     "success": False,
                     "errors": {
-                        "file": ["File data has invalid UTF-8 encoding"],
-                        "column_mapping": [],
+                        "file_structure_errors": [
+                            "File data has invalid UTF-8 encoding"
+                        ],
                     },
                 }
             ),
@@ -207,8 +207,7 @@ def upload_enumerators():
                 {
                     "success": False,
                     "errors": {
-                        "file": e.message,
-                        "column_mapping": [],
+                        "file_structure_errors": e.message,
                     },
                 }
             ),
@@ -224,14 +223,25 @@ def upload_enumerators():
             prime_geo_level_uid,
             payload_validator.mode.data,
         )
-    except InvalidEnumeratorsError as e:
+    except InvalidFileStructureError as e:
         return (
             jsonify(
                 {
                     "success": False,
                     "errors": {
-                        "file": e.enumerators_errors,
-                        "column_mapping": [],
+                        "file_structure_errors": e.file_stucture_errors,
+                    },
+                }
+            ),
+            422,
+        )
+    except InvalidEnumeratorRecordsError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "record_errors": e.record_errors,
                     },
                 }
             ),
