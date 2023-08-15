@@ -316,6 +316,53 @@ class EnumeratorsUpload:
             )
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
+        # If the mode is `append`, the file should have no enumerator_id's that are already in the database
+        if mode == "append":
+            enumerator_id_query = (
+                Enumerator.query.filter(
+                    Enumerator.form_uid == form.form_uid,
+                )
+                .with_entities(Enumerator.enumerator_id)
+                .distinct()
+            )
+            invalid_enumerator_id_df = self.enumerators_df[
+                self.enumerators_df["enumerator_id"].isin(
+                    [row[0] for row in enumerator_id_query.all()]
+                )
+            ]
+            if len(invalid_enumerator_id_df) > 0:
+                record_errors["summary_by_error_type"].append(
+                    {
+                        "error_type": "Enumerator_id's found in database",
+                        "error_message": f"The file contains {len(invalid_enumerator_id_df)} enumerator_id(s) that have already been uploaded. The following row numbers contain enumerator_id's that have already been uploaded: {', '.join(str(row_number) for row_number in invalid_enumerator_id_df.index.to_list())}",
+                        "error_count": len(invalid_enumerator_id_df),
+                        "row_numbers_with_errors": invalid_enumerator_id_df.index.to_list(),
+                    }
+                )
+
+                invalid_enumerator_id_df[
+                    "errors"
+                ] = "The same enumerator_id already exists for the form - enumerator_id's must be unique for each form"
+                invalid_records_df = invalid_records_df.merge(
+                    invalid_enumerator_id_df["errors"],
+                    how="left",
+                    left_index=True,
+                    right_index=True,
+                )
+                # Replace NaN with empty string
+                invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna(
+                    ""
+                )
+                invalid_records_df["errors"] = invalid_records_df[
+                    ["errors_x", "errors_y"]
+                ].apply("; ".join, axis=1)
+                invalid_records_df = invalid_records_df.drop(
+                    columns=["errors_x", "errors_y"]
+                )
+                invalid_records_df["errors"] = invalid_records_df["errors"].str.strip(
+                    "; "
+                )
+
         # Validate the email ID's
         self.enumerators_df["errors"] = ""
         for index, row in self.enumerators_df.iterrows():
@@ -388,53 +435,6 @@ class EnumeratorsUpload:
                 columns=["errors_x", "errors_y"]
             )
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
-
-        # If the mode is `append`, the file should have no enumerator_id's that are already in the database
-        if mode == "append":
-            enumerator_id_query = (
-                Enumerator.query.filter(
-                    Enumerator.form_uid == form.form_uid,
-                )
-                .with_entities(Enumerator.enumerator_id)
-                .distinct()
-            )
-            invalid_enumerator_id_df = self.enumerators_df[
-                self.enumerators_df["enumerator_id"].isin(
-                    [row[0] for row in enumerator_id_query.all()]
-                )
-            ]
-            if len(invalid_enumerator_id_df) > 0:
-                record_errors["summary_by_error_type"].append(
-                    {
-                        "error_type": "Enumerator_id's found in database",
-                        "error_message": f"The file contains {len(invalid_enumerator_id_df)} enumerator_id(s) that have already been uploaded. The following row numbers contain enumerator_id's that have already been uploaded: {', '.join(str(row_number) for row_number in invalid_enumerator_id_df.index.to_list())}",
-                        "error_count": len(invalid_enumerator_id_df),
-                        "row_numbers_with_errors": invalid_enumerator_id_df.index.to_list(),
-                    }
-                )
-
-                invalid_enumerator_id_df[
-                    "errors"
-                ] = "enumerator_id already exists for the form - enumerator_id's must be unique for each form"
-                invalid_records_df = invalid_records_df.merge(
-                    invalid_enumerator_id_df["errors"],
-                    how="left",
-                    left_index=True,
-                    right_index=True,
-                )
-                # Replace NaN with empty string
-                invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna(
-                    ""
-                )
-                invalid_records_df["errors"] = invalid_records_df[
-                    ["errors_x", "errors_y"]
-                ].apply("; ".join, axis=1)
-                invalid_records_df = invalid_records_df.drop(
-                    columns=["errors_x", "errors_y"]
-                )
-                invalid_records_df["errors"] = invalid_records_df["errors"].str.strip(
-                    "; "
-                )
 
         # If the location_id_column is mapped, the file should contain no location_id's that are not in the database
         if hasattr(column_mapping, "location_id_column"):

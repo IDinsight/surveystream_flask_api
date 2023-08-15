@@ -857,7 +857,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
     def test_upload_enumerators_csv_record_errors(
-        self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        csrf_token,
     ):
         """
         Test that the sheet validations are working
@@ -897,7 +901,7 @@ class TestEnumerators:
                 ],
             },
             "file": enumerators_csv_encoded,
-            "mode": "overwrite",
+            "mode": "append",
         }
 
         response = client.post(
@@ -936,7 +940,7 @@ class TestEnumerators:
                                 "email": "eric.dodge@idinsight.org",
                                 "enumerator_id": "0294612",
                                 "enumerator_type": "surveyor",
-                                "errors": "Duplicate enumerator_id; Location id not found in uploaded locations data for the survey's prime geo level",
+                                "errors": "Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Location id not found in uploaded locations data for the survey's prime geo level",
                                 "gender": "Male",
                                 "home_address": "my house",
                                 "language": "English",
@@ -951,7 +955,7 @@ class TestEnumerators:
                                 "email": "jahnavi.meher@idinsight.org",
                                 "enumerator_id": "0294612",
                                 "enumerator_type": "surveyor",
-                                "errors": "Duplicate enumerator_id; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "errors": "Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
                                 "gender": "Female",
                                 "home_address": "my house",
                                 "language": "Telugu",
@@ -966,7 +970,7 @@ class TestEnumerators:
                                 "email": "jay.prakash@idinsight.org",
                                 "enumerator_id": "0294614",
                                 "enumerator_type": "monitor",
-                                "errors": "Blank field(s) found in the follwoing column(s): name. The column(s) cannot contain blank fields.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "errors": "Blank field(s) found in the follwoing column(s): name. The column(s) cannot contain blank fields.; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
                                 "gender": "Male",
                                 "home_address": "my house",
                                 "language": "Hindi",
@@ -981,7 +985,7 @@ class TestEnumerators:
                                 "email": "griffin.muteti@gmal.com",
                                 "enumerator_id": "0294615",
                                 "enumerator_type": "monitor;surveyor",
-                                "errors": "Duplicate row; Duplicate enumerator_id; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "errors": "Duplicate row; Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
                                 "gender": "Male",
                                 "home_address": "my house",
                                 "language": "Swahili",
@@ -996,7 +1000,7 @@ class TestEnumerators:
                                 "email": "griffin.muteti@gmal.com",
                                 "enumerator_id": "0294615",
                                 "enumerator_type": "monitor;surveyor",
-                                "errors": "Duplicate row; Duplicate enumerator_id; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "errors": "Duplicate row; Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
                                 "gender": "Male",
                                 "home_address": "my house",
                                 "language": "Swahili",
@@ -1008,7 +1012,7 @@ class TestEnumerators:
                         ],
                     },
                     "summary": {
-                        "error_count": 14,
+                        "error_count": 19,
                         "total_correct_rows": 0,
                         "total_rows": 5,
                         "total_rows_with_errors": 5,
@@ -1033,6 +1037,12 @@ class TestEnumerators:
                             "row_numbers_with_errors": [2, 3, 5, 6],
                         },
                         {
+                            "error_count": 5,
+                            "error_message": "The file contains 5 enumerator_id(s) that have already been uploaded. The following row numbers contain enumerator_id's that have already been uploaded: 2, 3, 4, 5, 6",
+                            "error_type": "Enumerator_id's found in database",
+                            "row_numbers_with_errors": [2, 3, 4, 5, 6],
+                        },
+                        {
                             "error_count": 2,
                             "error_message": "The file contains 2 invalid email ID(s). The following row numbers have invalid email ID's: 5, 6",
                             "error_type": "Invalid email ID",
@@ -1051,7 +1061,7 @@ class TestEnumerators:
                             "row_numbers_with_errors": [2],
                         },
                     ],
-                },
+                }
             },
             "success": False,
         }
