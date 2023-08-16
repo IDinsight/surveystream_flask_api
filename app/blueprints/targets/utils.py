@@ -3,34 +3,27 @@ import pandas as pd
 import numpy as np
 from csv import DictReader
 from app.blueprints.locations.models import Location
-from .models import Enumerator
+from .models import Target
 from .errors import (
     HeaderRowEmptyError,
-    InvalidEnumeratorRecordsError,
+    InvalidTargetRecordsError,
     InvalidColumnMappingError,
     InvalidFileStructureError,
 )
-from email_validator import validate_email, EmailNotValidError
 
 
-class EnumeratorColumnMapping:
+class TargetColumnMapping:
     """
-    Class to represent the enumerator column mapping and run validations on it
+    Class to represent the target column mapping and run validations on it
     """
 
-    def __init__(self, column_mapping, prime_geo_level_uid, geo_levels):
+    def __init__(self, column_mapping, geo_levels):
         try:
-            self.__validate_column_mapping(
-                column_mapping, prime_geo_level_uid, geo_levels
-            )
-            self.enumerator_id = column_mapping["enumerator_id"]
-            self.name = column_mapping["name"]
-            self.email = column_mapping["email"]
-            self.mobile_primary = column_mapping["mobile_primary"]
-            self.language = column_mapping["language"]
-            self.home_address = column_mapping["home_address"]
-            self.gender = column_mapping["gender"]
-            self.enumerator_type = column_mapping["enumerator_type"]
+            self.__validate_column_mapping(column_mapping, geo_levels)
+            self.target_id = column_mapping["target_id"]
+
+            if column_mapping.get("language"):
+                self.language = column_mapping["language"]
 
             if column_mapping.get("location_id_column"):
                 self.location_id_column = column_mapping["location_id_column"]
@@ -41,9 +34,7 @@ class EnumeratorColumnMapping:
         except:
             raise
 
-    def __validate_column_mapping(
-        self, column_mapping, prime_geo_level_uid, geo_levels
-    ):
+    def __validate_column_mapping(self, column_mapping, geo_levels):
         """
         Method to run validations on the column mapping and raise an exception containing a list of errors
 
@@ -74,12 +65,6 @@ class EnumeratorColumnMapping:
                     )
                 field_names.append(field_name)
 
-        # If location_id_column is mapped, there should be a prime geo level defined for the survey
-        if column_mapping.get("location_id_column") and not prime_geo_level_uid:
-            mapping_errors.append(
-                "A prime geo level must be defined for the survey if the location_id_column is mapped."
-            )
-
         # Mapped column names should be unique
         rev_multidict = {}
         for field_name, mapped_column in column_mapping.items():
@@ -102,9 +87,9 @@ class EnumeratorColumnMapping:
         return
 
 
-class EnumeratorsUpload:
+class TargetsUpload:
     """
-    Class to represent the enumerators data and run validations on it
+    Class to represent the targets data and run validations on it
     """
 
     def __init__(self, csv_string):
@@ -112,7 +97,7 @@ class EnumeratorsUpload:
             self.col_names = self.__get_col_names(csv_string)
         except:
             raise
-        self.enumerators_df = self.__build_enumerators_df(csv_string)
+        self.targets_df = self.__build_targets_df(csv_string)
 
     def __get_col_names(self, csv_string):
         col_names = DictReader(io.StringIO(csv_string)).fieldnames
@@ -123,13 +108,13 @@ class EnumeratorsUpload:
 
         return col_names
 
-    def __build_enumerators_df(self, csv_string):
+    def __build_targets_df(self, csv_string):
         """
-        Method to create and format the enumerators dataframe from the decoded csv file string
+        Method to create and format the targets dataframe from the decoded csv file string
         """
 
         # Read the csv content into a dataframe
-        enumerators_df = pd.read_csv(
+        targets_df = pd.read_csv(
             io.StringIO(csv_string),
             dtype=str,
             keep_default_na=False,
@@ -139,28 +124,28 @@ class EnumeratorsUpload:
         # This is needed because pandas will append a .1 to the duplicate column name
         # Get column names from csv file using DictReader
 
-        enumerators_df.columns = self.col_names
+        targets_df.columns = self.col_names
 
         # Strip white space from all columns
-        for index in range(enumerators_df.shape[1]):
-            enumerators_df.iloc[:, index] = enumerators_df.iloc[:, index].str.strip()
+        for index in range(targets_df.shape[1]):
+            targets_df.iloc[:, index] = targets_df.iloc[:, index].str.strip()
 
         # Replace empty strings with NaN
-        enumerators_df = enumerators_df.replace("", np.nan)
+        targets_df = targets_df.replace("", np.nan)
 
         # Shift the index by 2 so that the row numbers start at 2 (to match the row numbers in the csv file)
-        enumerators_df.index += 2
+        targets_df.index += 2
 
         # Rename the index column to row_number
-        enumerators_df.index.name = "row_number"
+        targets_df.index.name = "row_number"
 
-        return enumerators_df
+        return targets_df
 
     def validate_records(
-        self, expected_columns, column_mapping, form, prime_geo_level_uid, mode
+        self, expected_columns, column_mapping, bottom_level_geo_level_uid, form, mode
     ):
         """
-        Method to run validations on the enumerators data
+        Method to run validations on the targets data
 
         :param expected_columns: List of expected column names from the column mapping
         """
@@ -169,7 +154,7 @@ class EnumeratorsUpload:
 
         record_errors = {
             "summary": {
-                "total_rows": len(self.enumerators_df),
+                "total_rows": len(self.targets_df),
                 "total_correct_rows": None,
                 "total_rows_with_errors": None,
             },
@@ -183,7 +168,7 @@ class EnumeratorsUpload:
         # Check for a valid file structure before running any other validations on the records
 
         # Each mapped column should appear in the csv file exactly once
-        file_columns = self.enumerators_df.columns.to_list()
+        file_columns = self.targets_df.columns.to_list()
         for column_name in expected_columns:
             if file_columns.count(column_name) != 1:
                 file_structure_errors.append(
@@ -202,47 +187,51 @@ class EnumeratorsUpload:
 
         # Run validations on the records
 
-        # Create an empty copy of the enumerators dataframe to store the error messages for the invalid records
-        invalid_records_df = self.enumerators_df.copy()
+        # Create an empty copy of the targets dataframe to store the error messages for the invalid records
+        invalid_records_df = self.targets_df.copy()
         invalid_records_df["errors"] = ""
 
-        # Mandatory columns should contain no blank fields
-        mandatory_columns = [
-            "enumerator_id",
-            "name",
-            "email",
+        # Non-nullable columns should contain no blank fields
+        non_null_columns = [
+            "target_id",
         ]
 
-        mandatory_columns_df = self.enumerators_df.copy()[
-            self.enumerators_df[mandatory_columns].isnull().any(axis=1)
+        if hasattr(column_mapping, "language"):
+            non_null_columns.append("language")
+
+        if hasattr(column_mapping, "location_id_column_name"):
+            non_null_columns.append(column_mapping.location_id_column_name)
+
+        non_null_columns_df = self.targets_df.copy()[
+            self.targets_df[non_null_columns].isnull().any(axis=1)
         ]
 
-        if len(mandatory_columns_df) > 0:
+        if len(non_null_columns_df) > 0:
             record_errors["summary_by_error_type"].append(
                 {
                     "error_type": "Blank field",
-                    "error_message": f"Blank values are not allowed in the following columns: {', '.join(mandatory_columns)}. Blank values in these columns were found for the following row(s): {', '.join(str(row_number) for row_number in mandatory_columns_df.index.to_list())}",
+                    "error_message": f"Blank values are not allowed in the following columns: {', '.join(non_null_columns)}. Blank values in these columns were found for the following row(s): {', '.join(str(row_number) for row_number in non_null_columns_df.index.to_list())}",
                     "error_count": 0,
-                    "row_numbers_with_errors": mandatory_columns_df.index.to_list(),
+                    "row_numbers_with_errors": non_null_columns_df.index.to_list(),
                 }
             )
 
-            # Add the error message to the mandatory_columns_df dataframe
+            # Add the error message to the non_null_columns_df dataframe
             # The error message should contain the column name(s) with the blank field(s)
             # Iterate over the dataframe
-            for index, row in mandatory_columns_df.iterrows():
+            for index, row in non_null_columns_df.iterrows():
                 blank_columns = []
-                for column_name in mandatory_columns:
+                for column_name in non_null_columns:
                     if pd.isnull(row[column_name]):
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                mandatory_columns_df.at[
+                non_null_columns_df.at[
                     index, "errors"
                 ] = f"Blank field(s) found in the follwoing column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
 
             invalid_records_df = invalid_records_df.merge(
-                mandatory_columns_df[["errors"]],
+                non_null_columns_df[["errors"]],
                 how="left",
                 left_index=True,
                 right_index=True,
@@ -259,9 +248,7 @@ class EnumeratorsUpload:
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
         # The file should have no duplicate rows
-        duplicates_df = self.enumerators_df.copy()[
-            self.enumerators_df.duplicated(keep=False)
-        ]
+        duplicates_df = self.targets_df.copy()[self.targets_df.duplicated(keep=False)]
         if len(duplicates_df) > 0:
             record_errors["summary_by_error_type"].append(
                 {
@@ -288,21 +275,21 @@ class EnumeratorsUpload:
             )
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
-        # The file should have no duplicate enumerator IDs
-        duplicates_df = self.enumerators_df[
-            self.enumerators_df.duplicated(subset="enumerator_id", keep=False)
+        # The file should have no duplicate target IDs
+        duplicates_df = self.targets_df[
+            self.targets_df.duplicated(subset="target_id", keep=False)
         ]
         if len(duplicates_df) > 0:
             record_errors["summary_by_error_type"].append(
                 {
-                    "error_type": "Duplicate enumerator_id's in file",
-                    "error_message": f"The file has {len(duplicates_df)} duplicate enumerator_id(s). The following row numbers contain enumerator_id duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
+                    "error_type": "Duplicate target_id's in file",
+                    "error_message": f"The file has {len(duplicates_df)} duplicate target_id(s). The following row numbers contain target_id duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
                     "error_count": len(duplicates_df),
                     "row_numbers_with_errors": duplicates_df.index.to_list(),
                 }
             )
 
-            duplicates_df["errors"] = "Duplicate enumerator_id"
+            duplicates_df["errors"] = "Duplicate target_id"
             invalid_records_df = invalid_records_df.merge(
                 duplicates_df["errors"], how="left", left_index=True, right_index=True
             )
@@ -316,35 +303,35 @@ class EnumeratorsUpload:
             )
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
-        # If the mode is `append`, the file should have no enumerator_id's that are already in the database
+        # If the mode is `append`, the file should have no target_id's that are already in the database
         if mode == "append":
-            enumerator_id_query = (
-                Enumerator.query.filter(
-                    Enumerator.form_uid == form.form_uid,
+            target_id_query = (
+                Target.query.filter(
+                    Target.form_uid == form.form_uid,
                 )
-                .with_entities(Enumerator.enumerator_id)
+                .with_entities(Target.target_id)
                 .distinct()
             )
-            invalid_enumerator_id_df = self.enumerators_df[
-                self.enumerators_df["enumerator_id"].isin(
-                    [row[0] for row in enumerator_id_query.all()]
+            invalid_target_id_df = self.targets_df[
+                self.targets_df["target_id"].isin(
+                    [row[0] for row in target_id_query.all()]
                 )
             ]
-            if len(invalid_enumerator_id_df) > 0:
+            if len(invalid_target_id_df) > 0:
                 record_errors["summary_by_error_type"].append(
                     {
-                        "error_type": "Enumerator_id's found in database",
-                        "error_message": f"The file contains {len(invalid_enumerator_id_df)} enumerator_id(s) that have already been uploaded. The following row numbers contain enumerator_id's that have already been uploaded: {', '.join(str(row_number) for row_number in invalid_enumerator_id_df.index.to_list())}",
-                        "error_count": len(invalid_enumerator_id_df),
-                        "row_numbers_with_errors": invalid_enumerator_id_df.index.to_list(),
+                        "error_type": "target_id's found in database",
+                        "error_message": f"The file contains {len(invalid_target_id_df)} target_id(s) that have already been uploaded. The following row numbers contain target_id's that have already been uploaded: {', '.join(str(row_number) for row_number in invalid_target_id_df.index.to_list())}",
+                        "error_count": len(invalid_target_id_df),
+                        "row_numbers_with_errors": invalid_target_id_df.index.to_list(),
                     }
                 )
 
-                invalid_enumerator_id_df[
+                invalid_target_id_df[
                     "errors"
-                ] = "The same enumerator_id already exists for the form - enumerator_id's must be unique for each form"
+                ] = "The same target_id already exists for the form - target_id's must be unique for each form"
                 invalid_records_df = invalid_records_df.merge(
-                    invalid_enumerator_id_df["errors"],
+                    invalid_target_id_df["errors"],
                     how="left",
                     left_index=True,
                     right_index=True,
@@ -363,91 +350,18 @@ class EnumeratorsUpload:
                     "; "
                 )
 
-        # Validate the email ID's
-        self.enumerators_df["errors"] = ""
-        for index, row in self.enumerators_df.iterrows():
-            try:
-                validate_email(row["email"])
-            except Exception as e:
-                self.enumerators_df.loc[index, "errors"] = str(e)
-
-        invalid_email_id_df = self.enumerators_df[self.enumerators_df["errors"] != ""]
-        if len(invalid_email_id_df) > 0:
-            record_errors["summary_by_error_type"].append(
-                {
-                    "error_type": "Invalid email ID",
-                    "error_message": f"The file contains {len(invalid_email_id_df)} invalid email ID(s). The following row numbers have invalid email ID's: {', '.join(str(row_number) for row_number in invalid_email_id_df.index.to_list())}",
-                    "error_count": len(invalid_email_id_df),
-                    "row_numbers_with_errors": invalid_email_id_df.index.to_list(),
-                }
-            )
-
-            invalid_records_df = invalid_records_df.merge(
-                invalid_email_id_df["errors"],
-                how="left",
-                left_index=True,
-                right_index=True,
-            )
-            # Replace NaN with empty string
-            invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna("")
-            invalid_records_df["errors"] = invalid_records_df[
-                ["errors_x", "errors_y"]
-            ].apply("; ".join, axis=1)
-            invalid_records_df = invalid_records_df.drop(
-                columns=["errors_x", "errors_y"]
-            )
-            invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
-
-        self.enumerators_df.drop(columns=["errors"], inplace=True)
-
-        # Validate the phone numbers
-        invalid_mobile_primary_df = self.enumerators_df[
-            ~self.enumerators_df["mobile_primary"].str.contains(
-                r"^[0-9\.\s\-\(\)\+]{10,20}$"
-            )
-        ]
-        if len(invalid_mobile_primary_df) > 0:
-            record_errors["summary_by_error_type"].append(
-                {
-                    "error_type": "Invalid mobile number",
-                    "error_message": f"The file contains {len(invalid_mobile_primary_df)} invalid mobile number(s) in the mobile_primary field. Mobile numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'. The following row numbers have invalid mobile numbers: {', '.join(str(row_number) for row_number in invalid_mobile_primary_df.index.to_list())}",
-                    "error_count": len(invalid_mobile_primary_df),
-                    "row_numbers_with_errors": invalid_mobile_primary_df.index.to_list(),
-                }
-            )
-
-            invalid_mobile_primary_df[
-                "errors"
-            ] = "Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'"
-
-            invalid_records_df = invalid_records_df.merge(
-                invalid_mobile_primary_df["errors"],
-                how="left",
-                left_index=True,
-                right_index=True,
-            )
-            # Replace NaN with empty string
-            invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna("")
-            invalid_records_df["errors"] = invalid_records_df[
-                ["errors_x", "errors_y"]
-            ].apply("; ".join, axis=1)
-            invalid_records_df = invalid_records_df.drop(
-                columns=["errors_x", "errors_y"]
-            )
-            invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
-
         # If the location_id_column is mapped, the file should contain no location_id's that are not in the database
         if hasattr(column_mapping, "location_id_column"):
             location_id_query = (
                 Location.query.filter(
                     Location.survey_uid == form.survey_uid,
-                    Location.geo_level_uid == prime_geo_level_uid,
+                    Location.geo_level_uid == bottom_level_geo_level_uid,
                 )
                 .with_entities(Location.location_id)
                 .distinct()
             )
-            invalid_location_id_df = self.enumerators_df[
-                ~self.enumerators_df[column_mapping.location_id_column].isin(
+            invalid_location_id_df = self.targets_df[
+                ~self.targets_df[column_mapping.location_id_column].isin(
                     [row[0] for row in location_id_query.all()]
                 )
             ]
@@ -463,7 +377,7 @@ class EnumeratorsUpload:
 
                 invalid_location_id_df[
                     "errors"
-                ] = "Location id not found in uploaded locations data for the survey's prime geo level"
+                ] = "Location id not found in uploaded locations data for the survey's bottom level geo level"
                 invalid_records_df = invalid_records_df.merge(
                     invalid_location_id_df["errors"],
                     how="left",
@@ -505,6 +419,6 @@ class EnumeratorsUpload:
                 .fillna("")
                 .to_dict(orient="records")
             )
-            raise InvalidEnumeratorRecordsError(record_errors)
+            raise InvalidTargetRecordsError(record_errors)
 
         return

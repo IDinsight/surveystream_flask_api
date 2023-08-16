@@ -207,42 +207,42 @@ class EnumeratorsUpload:
         invalid_records_df["errors"] = ""
 
         # Mandatory columns should contain no blank fields
-        mandatory_columns = [
+        non_null_columns = [
             "enumerator_id",
             "name",
             "email",
         ]
 
-        mandatory_columns_df = self.enumerators_df.copy()[
-            self.enumerators_df[mandatory_columns].isnull().any(axis=1)
+        non_null_columns_df = self.enumerators_df.copy()[
+            self.enumerators_df[non_null_columns].isnull().any(axis=1)
         ]
 
-        if len(mandatory_columns_df) > 0:
+        if len(non_null_columns_df) > 0:
             record_errors["summary_by_error_type"].append(
                 {
                     "error_type": "Blank field",
-                    "error_message": f"Blank values are not allowed in the following columns: {', '.join(mandatory_columns)}. Blank values in these columns were found for the following row(s): {', '.join(str(row_number) for row_number in mandatory_columns_df.index.to_list())}",
+                    "error_message": f"Blank values are not allowed in the following columns: {', '.join(non_null_columns)}. Blank values in these columns were found for the following row(s): {', '.join(str(row_number) for row_number in non_null_columns_df.index.to_list())}",
                     "error_count": 0,
-                    "row_numbers_with_errors": mandatory_columns_df.index.to_list(),
+                    "row_numbers_with_errors": non_null_columns_df.index.to_list(),
                 }
             )
 
-            # Add the error message to the mandatory_columns_df dataframe
+            # Add the error message to the non_null_columns_df dataframe
             # The error message should contain the column name(s) with the blank field(s)
             # Iterate over the dataframe
-            for index, row in mandatory_columns_df.iterrows():
+            for index, row in non_null_columns_df.iterrows():
                 blank_columns = []
-                for column_name in mandatory_columns:
+                for column_name in non_null_columns:
                     if pd.isnull(row[column_name]):
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                mandatory_columns_df.at[
+                non_null_columns_df.at[
                     index, "errors"
                 ] = f"Blank field(s) found in the follwoing column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
 
             invalid_records_df = invalid_records_df.merge(
-                mandatory_columns_df[["errors"]],
+                non_null_columns_df[["errors"]],
                 how="left",
                 left_index=True,
                 right_index=True,

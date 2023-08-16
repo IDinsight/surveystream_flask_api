@@ -3,7 +3,7 @@ class InvalidColumnMappingError(Exception):
         self.column_mapping_errors = column_mapping_errors
 
 
-class InvalidEnumeratorRecordsError(Exception):
+class InvalidTargetRecordsError(Exception):
     def __init__(self, record_errors):
         self.record_errors = record_errors
 
