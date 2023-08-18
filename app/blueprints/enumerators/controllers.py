@@ -593,8 +593,46 @@ def update_enumerator(enumerator_uid):
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if payload_validator.validate():
-        if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
+        enumerator = Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first()
+        if enumerator is None:
             return jsonify({"error": "Enumerator not found"}), 404
+
+        # The payload needs to pass in the same custom field keys as are in the database
+        # This is because this method is used to update values but not add/remove/modify columns
+        custom_fields_in_db = getattr(enumerator, "custom_fields", None)
+        custom_fields_in_payload = payload.get("custom_fields")
+
+        keys_in_db = []
+        keys_in_payload = []
+
+        if custom_fields_in_db is not None:
+            keys_in_db = custom_fields_in_db.keys()
+
+        if custom_fields_in_payload is not None:
+            keys_in_payload = custom_fields_in_payload.keys()
+
+        for payload_key in keys_in_payload:
+            if payload_key not in keys_in_db:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": f"The payload has a custom key with field label {payload_key} that does not exist in the custom fields for the database record. This method can only be used to update values for existing fields, not to add/remove/modify fields",
+                        }
+                    ),
+                    422,
+                )
+        for db_key in keys_in_db:
+            if db_key not in keys_in_payload:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": f"The payload is missing a custom key with field label {db_key} that exists in the database. This method can only be used to update values for existing fields, not to add/remove/modify fields",
+                        }
+                    ),
+                    422,
+                )
 
         try:
             Enumerator.query.filter_by(enumerator_uid=enumerator_uid).update(

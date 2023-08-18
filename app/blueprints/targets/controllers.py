@@ -380,7 +380,7 @@ def get_targets():
         )
     )
 
-    result = (
+    targets_query = (
         db.session.query(
             Target,
             TargetStatus,
@@ -395,43 +395,124 @@ def get_targets():
             Target.location_uid == target_locations_subquery.c.location_uid,
         )
         .filter(Target.form_uid == form_uid)
-        .all()
     )
 
-    response = jsonify(
-        {
-            "success": True,
-            "data": [
-                {
-                    **target.to_dict(),
-                    **{
-                        "completed_flag": getattr(
-                            target_status, "completed_flag", None
-                        ),
-                        "refusal_flag": getattr(target_status, "refusal_flag", None),
-                        "num_attempts": getattr(target_status, "num_attempts", None),
-                        "last_attempt_survey_status": getattr(
-                            target_status, "last_attempt_survey_status", None
-                        ),
-                        "last_attempt_survey_status_label": getattr(
-                            target_status, "last_attempt_survey_status_label", None
-                        ),
-                        "target_assignable": getattr(
-                            target_status, "target_assignable", None
-                        ),
-                        "webapp_tag_color": getattr(
-                            target_status, "webapp_tag_color", None
-                        ),
-                        "revisit_sections": getattr(
-                            target_status, "revisit_sections", None
-                        ),
-                    },
-                    **{"target_locations": target_locations},
-                }
-                for target, target_status, target_locations in result
-            ],
-        }
-    )
+    # Check if we need to paginate the results
+    if "page" in request.args and "per_page" in request.args:
+        page = request.args.get("page", None, type=int)
+        per_page = request.args.get("per_page", None, type=int)
+        targets_query = targets_query.paginate(page=page, per_page=per_page)
+
+        response = jsonify(
+            {
+                "success": True,
+                "data": [
+                    {
+                        **target.to_dict(),
+                        **{
+                            "completed_flag": getattr(
+                                target_status, "completed_flag", None
+                            ),
+                            "refusal_flag": getattr(
+                                target_status, "refusal_flag", None
+                            ),
+                            "num_attempts": getattr(
+                                target_status, "num_attempts", None
+                            ),
+                            "last_attempt_survey_status": getattr(
+                                target_status, "last_attempt_survey_status", None
+                            ),
+                            "last_attempt_survey_status_label": getattr(
+                                target_status, "last_attempt_survey_status_label", None
+                            ),
+                            "target_assignable": getattr(
+                                target_status, "target_assignable", None
+                            ),
+                            "webapp_tag_color": getattr(
+                                target_status, "webapp_tag_color", None
+                            ),
+                            "revisit_sections": getattr(
+                                target_status, "revisit_sections", None
+                            ),
+                        },
+                        **{"target_locations": target_locations},
+                    }
+                    for target, target_status, target_locations in targets_query.items
+                ],
+                "pagination": {
+                    "count": targets_query.total,
+                    "page": page,
+                    "per_page": per_page,
+                    "pages": targets_query.pages,
+                },
+            }
+        )
+
+    else:
+        response = jsonify(
+            {
+                "success": True,
+                "data": [
+                    {
+                        **target.to_dict(),
+                        **{
+                            "completed_flag": getattr(
+                                target_status, "completed_flag", None
+                            ),
+                            "refusal_flag": getattr(
+                                target_status, "refusal_flag", None
+                            ),
+                            "num_attempts": getattr(
+                                target_status, "num_attempts", None
+                            ),
+                            "last_attempt_survey_status": getattr(
+                                target_status, "last_attempt_survey_status", None
+                            ),
+                            "last_attempt_survey_status_label": getattr(
+                                target_status, "last_attempt_survey_status_label", None
+                            ),
+                            "target_assignable": getattr(
+                                target_status, "target_assignable", None
+                            ),
+                            "webapp_tag_color": getattr(
+                                target_status, "webapp_tag_color", None
+                            ),
+                            "revisit_sections": getattr(
+                                target_status, "revisit_sections", None
+                            ),
+                        },
+                        **{"target_locations": target_locations},
+                    }
+                    for target, target_status, target_locations in targets_query.all()
+                ],
+            }
+        )
+
+        def target_row_format(target, target_status, target_locations):
+            return {
+                **target.to_dict(),
+                **{
+                    "completed_flag": getattr(target_status, "completed_flag", None),
+                    "refusal_flag": getattr(target_status, "refusal_flag", None),
+                    "num_attempts": getattr(target_status, "num_attempts", None),
+                    "last_attempt_survey_status": getattr(
+                        target_status, "last_attempt_survey_status", None
+                    ),
+                    "last_attempt_survey_status_label": getattr(
+                        target_status, "last_attempt_survey_status_label", None
+                    ),
+                    "target_assignable": getattr(
+                        target_status, "target_assignable", None
+                    ),
+                    "webapp_tag_color": getattr(
+                        target_status, "webapp_tag_color", None
+                    ),
+                    "revisit_sections": getattr(
+                        target_status, "revisit_sections", None
+                    ),
+                },
+                **{"target_locations": target_locations},
+            }
 
     return response, 200
 
@@ -609,6 +690,44 @@ def update_target(target_uid):
                     ),
                     404,
                 )
+
+        # The payload needs to pass in the same custom field keys as are in the database
+        # This is because this method is used to update values but not add/remove/modify columns
+        custom_fields_in_db = getattr(target, "custom_fields", None)
+        custom_fields_in_payload = payload.get("custom_fields")
+
+        keys_in_db = []
+        keys_in_payload = []
+
+        if custom_fields_in_db is not None:
+            keys_in_db = custom_fields_in_db.keys()
+
+        if custom_fields_in_payload is not None:
+            keys_in_payload = custom_fields_in_payload.keys()
+
+        for payload_key in keys_in_payload:
+            if payload_key not in keys_in_db:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": f"The payload has a custom key with field label {payload_key} that does not exist in the custom fields for the database record. This method can only be used to update values for existing fields, not to add/remove/modify fields",
+                        }
+                    ),
+                    422,
+                )
+        for db_key in keys_in_db:
+            if db_key not in keys_in_payload:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": f"The payload is missing a custom key with field label {db_key} that exists in the database. This method can only be used to update values for existing fields, not to add/remove/modify fields",
+                        }
+                    ),
+                    422,
+                )
+
         try:
             Target.query.filter_by(target_uid=target_uid).update(
                 {

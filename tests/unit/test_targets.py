@@ -434,16 +434,22 @@ class TestTargets:
                             "geo_level_name": "District",
                             "location_id": "1",
                             "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
                         },
                         {
                             "geo_level_name": "Mandal",
                             "location_id": "1101",
                             "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
                         },
                         {
                             "geo_level_name": "PSU",
                             "location_id": "17101102",
                             "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
                         },
                     ],
                     "target_uid": 1,
@@ -472,16 +478,22 @@ class TestTargets:
                             "geo_level_name": "District",
                             "location_id": "1",
                             "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
                         },
                         {
                             "geo_level_name": "Mandal",
                             "location_id": "1101",
                             "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
                         },
                         {
                             "geo_level_name": "PSU",
                             "location_id": "17101102",
                             "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
                         },
                     ],
                     "target_uid": 2,
@@ -500,6 +512,72 @@ class TestTargets:
 
         # Check the response
         response = client.get("/api/targets", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_paginate_targets(
+        self, client, login_test_user, upload_targets_csv, csrf_token
+    ):
+        """
+        Test that the targets csv can be uploaded
+        """
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {
+                        "Address": "Hyderabad",
+                        "Name": "Anil",
+                        "Mobile no.": "1234567890",
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "location_uid": 4,
+                    "target_id": "1",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 1,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                },
+            ],
+            "success": True,
+            "pagination": {"count": 2, "page": 1, "pages": 2, "per_page": 1},
+        }
+
+        # Check the response
+        response = client.get(
+            "/api/targets", query_string={"form_uid": 1, "page": 1, "per_page": 1}
+        )
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -592,16 +670,22 @@ class TestTargets:
                             "geo_level_name": "District",
                             "location_id": "1",
                             "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
                         },
                         {
                             "geo_level_name": "Mandal",
                             "location_id": "1101",
                             "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
                         },
                         {
                             "geo_level_name": "PSU",
                             "location_id": "17101102",
                             "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
                         },
                     ],
                     "target_uid": 1,
@@ -626,16 +710,22 @@ class TestTargets:
                             "geo_level_name": "District",
                             "location_id": "1",
                             "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
                         },
                         {
                             "geo_level_name": "Mandal",
                             "location_id": "1101",
                             "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
                         },
                         {
                             "geo_level_name": "PSU",
                             "location_id": "17101102",
                             "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
                         },
                     ],
                     "target_uid": 2,
@@ -925,16 +1015,22 @@ class TestTargets:
                         "geo_level_name": "District",
                         "location_id": "1",
                         "location_name": "ADILABAD",
+                        "geo_level_uid": 1,
+                        "location_uid": 1,
                     },
                     {
                         "geo_level_name": "Mandal",
                         "location_id": "1101",
                         "location_name": "ADILABAD RURAL",
+                        "geo_level_uid": 2,
+                        "location_uid": 2,
                     },
                     {
                         "geo_level_name": "PSU",
                         "location_id": "17101107",
                         "location_name": "ANKAPUR",
+                        "geo_level_uid": 3,
+                        "location_uid": 5,
                     },
                 ],
                 "completed_flag": None,
@@ -954,6 +1050,35 @@ class TestTargets:
         assert response.status_code == 200
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_update_target_incorrect_custom_fields(
+        self, client, login_test_user, upload_targets_csv, csrf_token
+    ):
+        """
+        Test that an individual target can be updated
+        """
+
+        # Update the target
+        payload = {
+            "target_id": "2",
+            "gender": "Male",
+            "language": "Hindi",
+            "location_uid": 5,
+            "custom_fields": {
+                "Address": "North Delhi",
+                "Name": "Anupama Srivastava",
+                "Some key": "0234567891",
+            },
+        }
+
+        response = client.put(
+            "/api/targets/2",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
 
     def test_delete_target(self, client, login_test_user, upload_targets_csv):
         """
@@ -1017,16 +1142,22 @@ class TestTargets:
                             "geo_level_name": "District",
                             "location_id": "1",
                             "location_name": "ADILABAD",
+                            "geo_level_uid": 1,
+                            "location_uid": 1,
                         },
                         {
                             "geo_level_name": "Mandal",
                             "location_id": "1101",
                             "location_name": "ADILABAD RURAL",
+                            "geo_level_uid": 2,
+                            "location_uid": 2,
                         },
                         {
                             "geo_level_name": "PSU",
                             "location_id": "17101107",
                             "location_name": "ANKAPUR",
+                            "geo_level_uid": 3,
+                            "location_uid": 5,
                         },
                     ],
                     "target_uid": 1,
@@ -1055,16 +1186,22 @@ class TestTargets:
                             "geo_level_name": "District",
                             "location_id": "1",
                             "location_name": "ADILABAD",
+                            "geo_level_uid": 1,
+                            "location_uid": 1,
                         },
                         {
                             "geo_level_name": "Mandal",
                             "location_id": "1101",
                             "location_name": "ADILABAD RURAL",
+                            "geo_level_uid": 2,
+                            "location_uid": 2,
                         },
                         {
                             "geo_level_name": "PSU",
                             "location_id": "17101107",
                             "location_name": "ANKAPUR",
+                            "geo_level_uid": 3,
+                            "location_uid": 5,
                         },
                     ],
                     "target_uid": 2,

@@ -1938,88 +1938,100 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    enumerator_id:
-                      type: string
-                      description: The ID of the enumerator
-                    enumerator_uid:
-                      type: integer
-                      description: The unique ID of the enumerator
-                    name:
-                      type: string
-                      description: The name of the enumerator
-                    language:
-                      type: string
-                      description: The primary language of the enumerator
-                    gender:
-                      type: string
-                      description: The gender of the enumerator
-                    home_address:
-                      type: string
-                      description: The home address of the enumerator
-                    mobile_primary:
-                      type: string
-                      description: The primary mobile number of the enumerator
-                    form_uid:
-                      type: integer
-                      description: The unique ID of the form that the enumerator was uploaded to
-                    surveyor_status:
-                      type: string
-                      enum:
-                        - Active
-                        - Temp. inactive
-                        - Dropout
-                      description: The working status of the enumerator if they are a surveyor on the form
-                    surveyor_locations:
-                      type: array
-                      description: >-
-                        The working geography of the enumerator if they are a surveyor on the form. 
-                        Each array item is an object of the form {`location`_id: _location_id_, `location`_name: 
-                        _location_name_, `geo_level_name`: __geo_level_name__} in descending order from highest 
-                        to lowest level location down to the level of the prime geo level the surveyor is mapped to.
-                        Will be null if the surveyor is not mapped to a prime geo level.
-                      items:
-                        type: object
-                        properties:
-                          location_id:
-                            type: integer
-                            description: The user-defined unique ID of the location
-                          location_name:
-                            type: string
-                            description: The name of the location
-                          geo_level_name:
-                            type: string
-                            description: The name of the geo level
-                    monitor_status:
-                      type: string
-                      enum:
-                        - Active
-                        - Temp. inactive
-                        - Dropout
-                      description: The working status of the enumerator if they are a monitor on the form
-                    monitor_locations:
-                      type: array
-                      description: >-
-                        The working geography of the enumerator if they are a monitor on the form. 
-                        Each array item is an object of the form {`location`_id: _location_id_, `location`_name: 
-                        _location_name_, `geo_level_name`: __geo_level_name__} in descending order from highest 
-                        to lowest level location down to the level of the prime geo level the monitor is mapped to.
-                        Will be null if the monitor is not mapped to a prime geo level.
-                      items:
-                        type: object
-                        properties:
-                          location_id:
-                            type: integer
-                            description: The user-defined unique ID of the location
-                          location_name:
-                            type: string
-                            description: The name of the location
-                          geo_level_name:
-                            type: string
-                            description: The name of the geo level
+                type: object
+                properties:
+                  success: 
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        enumerator_id:
+                          type: string
+                          description: The ID of the enumerator
+                        enumerator_uid:
+                          type: integer
+                          description: The unique ID of the enumerator
+                        name:
+                          type: string
+                          description: The name of the enumerator
+                        language:
+                          type: string
+                          description: The primary language of the enumerator
+                        gender:
+                          type: string
+                          description: The gender of the enumerator
+                        home_address:
+                          type: string
+                          description: The home address of the enumerator
+                        mobile_primary:
+                          type: string
+                          description: The primary mobile number of the enumerator
+                        custom_fields:
+                          type: object
+                          description: >-
+                            The custom fields of the enumerator. Each key is the
+                            user-defined label of the custom field and each value is the
+                            value of the custom field.
+                        form_uid:
+                          type: integer
+                          description: The unique ID of the form that the enumerator was uploaded to
+                        surveyor_status:
+                          type: string
+                          enum:
+                            - Active
+                            - Temp. inactive
+                            - Dropout
+                          description: The working status of the enumerator if they are a surveyor on the form
+                        surveyor_locations:
+                          type: array
+                          description: >-
+                            The working geography of the enumerator if they are a surveyor on the form. 
+                            Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                            _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
+                            to lowest level location down to the level of the prime geo level the surveyor is mapped to.
+                            Will be null if the surveyor is not mapped to a prime geo level.
+                          items:
+                            type: object
+                            properties:
+                              location_id:
+                                type: integer
+                                description: The user-defined unique ID of the location
+                              location_name:
+                                type: string
+                                description: The name of the location
+                              geo_level_name:
+                                type: string
+                                description: The name of the geo level
+                        monitor_status:
+                          type: string
+                          enum:
+                            - Active
+                            - Temp. inactive
+                            - Dropout
+                          description: The working status of the enumerator if they are a monitor on the form
+                        monitor_locations:
+                          type: array
+                          description: >-
+                            The working geography of the enumerator if they are a monitor on the form. 
+                            Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                            _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
+                            to lowest level location down to the level of the prime geo level the monitor is mapped to.
+                            Will be null if the monitor is not mapped to a prime geo level.
+                          items:
+                            type: object
+                            properties:
+                              location_id:
+                                type: integer
+                                description: The user-defined unique ID of the location
+                              location_name:
+                                type: string
+                                description: The name of the location
+                              geo_level_name:
+                                type: string
+                                description: The name of the geo level
         '400':
           description: Form ID is required
     post:
@@ -2497,40 +2509,44 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    enumerator_id:
-                      type: string
-                      description: The user-assigned unique ID of the enumerator
-                    enumerator_uid:
-                      type: integer
-                      description: The system-assigned unique ID of the enumerator
-                    name:
-                      type: string
-                      description: The name of the enumerator
-                    email:
-                      type: string
-                      description: The email of the enumerator
-                    mobile_primary:
-                      type: string
-                      description: The primary mobile number of the enumerator
-                    language:
-                      type: string
-                      description: The primary language of the enumerator
-                    gender:
-                      type: string
-                      description: The gender of the enumerator
-                    home_address:
-                      type: string
-                      description: The home address of the enumerator
-                    custom_fields:
-                      type: object
-                      description: >-
-                        Any non-standard fields that should be displayed for the
-                        enumerator. The keys are the user-defined labels of the
-                        custom fields.
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: object
+                    properties:
+                      enumerator_id:
+                        type: string
+                        description: The user-assigned unique ID of the enumerator
+                      enumerator_uid:
+                        type: integer
+                        description: The system-assigned unique ID of the enumerator
+                      name:
+                        type: string
+                        description: The name of the enumerator
+                      email:
+                        type: string
+                        description: The email of the enumerator
+                      mobile_primary:
+                        type: string
+                        description: The primary mobile number of the enumerator
+                      language:
+                        type: string
+                        description: The primary language of the enumerator
+                      gender:
+                        type: string
+                        description: The gender of the enumerator
+                      home_address:
+                        type: string
+                        description: The home address of the enumerator
+                      custom_fields:
+                        type: object
+                        description: >-
+                          Any non-standard fields that should be displayed for the
+                          enumerator. The keys are the user-defined labels of the
+                          custom fields.
     put: 
       summary: Update an enumerator
       description: >
@@ -3499,53 +3515,96 @@ paths:
             type: integer
           description: Unique ID of the form
           required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: >-
+            The page number of the results to return. Results will be paginated only if `page` and `per_page` are both specified.\
+          required: false
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: >-
+            The number of results to return per page. Results will be paginated only if `page` and `per_page` are both specified.
+          required: false
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    target_id:
-                      type: string
-                      description: The ID of the target
-                    target_uid:
-                      type: integer
-                      description: The unique ID of the target
-                    language:
-                      type: string
-                      description: The primary language of the target
-                    gender:
-                      type: string
-                      description: The gender of the target
-                    location_uid:
-                      type: integer
-                      description: The unique ID of the target's location
-                    target_locations:
-                      type: array
-                      description: >-
-                        The geography of the target. 
-                        Each array item is an object of the form {`location`_id: _location_id_, `location`_name: 
-                        _location_name_, `geo_level_name`: __geo_level_name__} in descending order from highest 
-                        to lowest level location the target is location in.
-                        Can be null if a location has not been specified for the target.
-                      items:
-                        type: object
-                        properties:
-                          location_id:
-                            type: integer
-                            description: The user-defined unique ID of the location
-                          location_name:
-                            type: string
-                            description: The name of the location
-                          geo_level_name:
-                            type: string
-                            description: The name of the geo level
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        target_id:
+                          type: string
+                          description: The ID of the target
+                        target_uid:
+                          type: integer
+                          description: The unique ID of the target
+                        language:
+                          type: string
+                          description: The primary language of the target
+                        gender:
+                          type: string
+                          description: The gender of the target
+                        custom_fields:
+                          type: object
+                          description: >-
+                            Any non-standard fields that should be displayed for
+                            the target
+                        location_uid:
+                          type: integer
+                          description: The unique ID of the target's location
+                        target_locations:
+                          type: array
+                          description: >-
+                            The geography of the target. 
+                            Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                            _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
+                            to lowest level location the target is location in.
+                            Can be null if a location has not been specified for the target.
+                          items:
+                            type: object
+                            properties:
+                              location_id:
+                                type: integer
+                                description: The user-defined unique ID of the location
+                              location_name:
+                                type: string
+                                description: The name of the location
+                              geo_level_name:
+                                type: string
+                                description: The name of the geo level
+                  paginate:
+                    type: object
+                    description: Pagination details. Will only be included if `page` and `per_page` are both specified in the query parameters.
+                    properties:
+                      page:
+                        type: integer
+                        description: The page number of the results
+                      per_page:
+                        type: integer
+                        description: The number of results per page
+                      count:
+                        type: integer
+                        description: The total number of results
+                      pages:
+                        type: integer
+                        description: The total number of pages
         '400':
           description: Form ID is required
+        '404':
+          description: Invalid values for `page` or `per_page` query parameters
     post:
       summary: Upload a csv of new targets
       description: >
@@ -3929,52 +3988,56 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    target_id:
-                      type: string
-                      description: The user-assigned unique ID of the target
-                    target_uid:
-                      type: integer
-                      description: The system-assigned unique ID of the target
-                    language:
-                      type: string
-                      description: The primary language of the target
-                    gender:
-                      type: string
-                      description: The gender of the target
-                    location_uid:
-                      type: integer
-                      description: The unique ID of the target's location
-                    target_locations:
-                      type: array
-                      description: >-
-                        The geography of the target. 
-                        Each array item is an object of the form {`location`_id: _location_id_, `location`_name: 
-                        _location_name_, `geo_level_name`: __geo_level_name__} in descending order from highest 
-                        to lowest level location the target is located in.
+                type: object
+                properties:
+                  success: 
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: object
+                    properties:
+                      target_id:
+                        type: string
+                        description: The user-assigned unique ID of the target
+                      target_uid:
+                        type: integer
+                        description: The system-assigned unique ID of the target
+                      language:
+                        type: string
+                        description: The primary language of the target
+                      gender:
+                        type: string
+                        description: The gender of the target
+                      location_uid:
+                        type: integer
+                        description: The unique ID of the target's location
+                      target_locations:
+                        type: array
+                        description: >-
+                          The geography of the target. 
+                          Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                          _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
+                          to lowest level location the target is located in.
 
-                        Can be null if a location has not been specified for the target.
-                      items:
+                          Can be null if a location has not been specified for the target.
+                        items:
+                          type: object
+                          properties:
+                            location_id:
+                              type: integer
+                              description: The user-defined unique ID of the location
+                            location_name:
+                              type: string
+                              description: The name of the location
+                            geo_level_name:
+                              type: string
+                              description: The name of the geo level
+                      custom_fields:
                         type: object
-                        properties:
-                          location_id:
-                            type: integer
-                            description: The user-defined unique ID of the location
-                          location_name:
-                            type: string
-                            description: The name of the location
-                          geo_level_name:
-                            type: string
-                            description: The name of the geo level
-                    custom_fields:
-                      type: object
-                      description: >-
-                        Any non-standard fields that should be displayed for the
-                        target. The keys are the user-defined labels of the
-                        custom fields.
+                        description: >-
+                          Any non-standard fields that should be displayed for the
+                          target. The keys are the user-defined labels of the
+                          custom fields.
     put: 
       summary: Update an target
       description: >

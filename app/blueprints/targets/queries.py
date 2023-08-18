@@ -24,10 +24,14 @@ def build_location_hierarchy_query(survey_uid):
                 func.jsonb_build_object(
                     "geo_level_name",
                     GeoLevel.geo_level_name,
+                    "geo_level_uid",
+                    GeoLevel.geo_level_uid,
                     "location_name",
                     Location.location_name,
                     "location_id",
                     Location.location_id,
+                    "location_uid",
+                    Location.location_uid,
                 )
             ).label("locations"),
         )
@@ -51,10 +55,14 @@ def build_location_hierarchy_query(survey_uid):
                 func.jsonb_build_object(
                     "geo_level_name",
                     GeoLevel.geo_level_name,
+                    "geo_level_uid",
+                    GeoLevel.geo_level_uid,
                     "location_name",
                     Location.location_name,
                     "location_id",
                     Location.location_id,
+                    "location_uid",
+                    Location.location_uid,
                 )
             ).label("locations"),
         )
