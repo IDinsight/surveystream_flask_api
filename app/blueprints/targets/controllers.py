@@ -139,6 +139,9 @@ def upload_targets():
     if hasattr(column_mapping, "language"):
         expected_columns.append(column_mapping.language)
 
+    if hasattr(column_mapping, "gender"):
+        expected_columns.append(column_mapping.gender)
+
     if hasattr(column_mapping, "location_id_column"):
         expected_columns.append(column_mapping.location_id_column)
 
@@ -209,7 +212,7 @@ def upload_targets():
                 {
                     "success": False,
                     "errors": {
-                        "file_structure_errors": e.file_stucture_errors,
+                        "file_structure_errors": e.file_structure_errors,
                     },
                 }
             ),
@@ -255,15 +258,9 @@ def upload_targets():
         }
 
     # Insert the targets into the database
+    targets_upload.targets_df = targets_upload.targets_df[expected_columns]
     records_to_insert = []
-    for i, row in enumerate(
-        targets_upload.targets_df[expected_columns].drop_duplicates().itertuples()
-    ):
-        target = Target(
-            form_uid=form_uid,
-            target_id=row[1],
-        )
-
+    for i, row in enumerate(targets_upload.targets_df.drop_duplicates().itertuples()):
         target_dict = {
             "form_uid": form_uid,
             "target_id": row[1],
@@ -274,7 +271,14 @@ def upload_targets():
             col_index = (
                 targets_upload.targets_df.columns.get_loc("language") + 1
             )  # Add 1 to the index to account for the df index
-            target.language = row[col_index]
+            target_dict["language"] = row[col_index]
+
+        # Add the gender if it exists
+        if hasattr(column_mapping, "gender"):
+            col_index = (
+                targets_upload.targets_df.columns.get_loc("gender") + 1
+            )  # Add 1 to the index to account for the df index
+            target_dict["gender"] = row[col_index]
 
         if hasattr(column_mapping, "location_id_column"):
             col_index = (
@@ -300,10 +304,14 @@ def upload_targets():
 
         records_to_insert.append(target_dict)
 
+        # Insert the records in batches of 1000
         if i > 0 and i % 1000 == 0:
             db.session.execute(insert(Target).values(records_to_insert))
             db.session.flush()
             records_to_insert.clear()
+
+    if len(records_to_insert) > 0:
+        db.session.execute(insert(Target).values(records_to_insert))
 
     try:
         db.session.commit()
@@ -373,7 +381,11 @@ def get_targets():
     )
 
     result = (
-        db.session.query(Target, TargetStatus, target_locations)
+        db.session.query(
+            Target,
+            TargetStatus,
+            target_locations_subquery.c.locations.label("target_locations"),
+        )
         .outerjoin(
             TargetStatus,
             Target.target_uid == TargetStatus.target_uid,
@@ -386,18 +398,37 @@ def get_targets():
         .all()
     )
 
-    for (
-        target,
-        target_locations,
-    ) in result:
-        target.target_locations = target_locations
-
     response = jsonify(
         {
             "success": True,
             "data": [
-                target.to_dict(joined_keys=["target_locations"])
-                for target, target_locations in result
+                {
+                    **target.to_dict(),
+                    **{
+                        "completed_flag": getattr(
+                            target_status, "completed_flag", None
+                        ),
+                        "refusal_flag": getattr(target_status, "refusal_flag", None),
+                        "num_attempts": getattr(target_status, "num_attempts", None),
+                        "last_attempt_survey_status": getattr(
+                            target_status, "last_attempt_survey_status", None
+                        ),
+                        "last_attempt_survey_status_label": getattr(
+                            target_status, "last_attempt_survey_status_label", None
+                        ),
+                        "target_assignable": getattr(
+                            target_status, "target_assignable", None
+                        ),
+                        "webapp_tag_color": getattr(
+                            target_status, "webapp_tag_color", None
+                        ),
+                        "revisit_sections": getattr(
+                            target_status, "revisit_sections", None
+                        ),
+                    },
+                    **{"target_locations": target_locations},
+                }
+                for target, target_status, target_locations in result
             ],
         }
     )
@@ -406,12 +437,12 @@ def get_targets():
 
 
 @targets_bp.route("/<int:target_uid>", methods=["GET"])
-def get_enumerator(target_uid):
+def get_target(target_uid):
     """
-    Method to retrieve an enumerator from the database
+    Method to retrieve a target from the database
     """
 
-    # Check if the logged in user has permission to fetch the enumerator
+    # Check if the logged in user has permission to fetch the target
 
     target = Target.query.filter_by(target_uid=target_uid).first()
 
@@ -427,7 +458,89 @@ def get_enumerator(target_uid):
             404,
         )
 
-    response = jsonify({"success": True, "data": target.to_dict()})
+    ## TODO handle cases where these are None
+    survey_uid = ParentForm.query.filter_by(form_uid=target.form_uid).first().survey_uid
+
+    # Get the geo levels for the survey
+    geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+    try:
+        geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+    except InvalidGeoLevelHierarchyError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "geo_level_hierarchy": e.geo_level_hierarchy_errors,
+                    },
+                }
+            ),
+            422,
+        )
+
+    bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
+        -1
+    ].geo_level_uid
+
+    target_locations_subquery = (
+        build_bottom_level_locations_with_location_hierarchy_subquery(
+            survey_uid, bottom_level_geo_level_uid
+        )
+    )
+
+    result = (
+        db.session.query(
+            Target,
+            TargetStatus,
+            target_locations_subquery.c.locations.label("target_locations"),
+        )
+        .outerjoin(
+            TargetStatus,
+            Target.target_uid == TargetStatus.target_uid,
+        )
+        .outerjoin(
+            target_locations_subquery,
+            Target.location_uid == target_locations_subquery.c.location_uid,
+        )
+        .filter(Target.target_uid == target_uid)
+        .all()
+    )
+
+    response = jsonify(
+        {
+            "success": True,
+            "data": [
+                {
+                    **target.to_dict(),
+                    **{
+                        "completed_flag": getattr(
+                            target_status, "completed_flag", None
+                        ),
+                        "refusal_flag": getattr(target_status, "refusal_flag", None),
+                        "num_attempts": getattr(target_status, "num_attempts", None),
+                        "last_attempt_survey_status": getattr(
+                            target_status, "last_attempt_survey_status", None
+                        ),
+                        "last_attempt_survey_status_label": getattr(
+                            target_status, "last_attempt_survey_status_label", None
+                        ),
+                        "target_assignable": getattr(
+                            target_status, "target_assignable", None
+                        ),
+                        "webapp_tag_color": getattr(
+                            target_status, "webapp_tag_color", None
+                        ),
+                        "revisit_sections": getattr(
+                            target_status, "revisit_sections", None
+                        ),
+                    },
+                    **{"target_locations": target_locations},
+                }
+                for target, target_status, target_locations in result
+            ][0],
+        }
+    )
 
     return response, 200
 
@@ -458,43 +571,44 @@ def update_target(target_uid):
 
         # Check if the location_uid is valid
 
-        # Get the geo levels for the survey
-        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+        if payload_validator.location_uid.data is not None:
+            # Get the geo levels for the survey
+            geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
 
-        try:
-            geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
-        except InvalidGeoLevelHierarchyError as e:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "errors": {
-                            "geo_level_hierarchy": e.geo_level_hierarchy_errors,
-                        },
-                    }
-                ),
-                422,
-            )
+            try:
+                geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+            except InvalidGeoLevelHierarchyError as e:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": {
+                                "geo_level_hierarchy": e.geo_level_hierarchy_errors,
+                            },
+                        }
+                    ),
+                    422,
+                )
 
-        bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
-            -1
-        ].geo_level_uid
+            bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
+                -1
+            ].geo_level_uid
 
-        location = Location.query.filter_by(
-            location_uid=payload_validator.location_uid.data,
-            geo_level_uid=bottom_level_geo_level_uid,
-        ).first()
+            location = Location.query.filter_by(
+                location_uid=payload_validator.location_uid.data,
+                geo_level_uid=bottom_level_geo_level_uid,
+            ).first()
 
-        if location is None:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "errors": f"Location UID {payload_validator.location_uid.data} not found in the database for the bottom level geo level",
-                    }
-                ),
-                404,
-            )
+            if location is None:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": f"Location UID {payload_validator.location_uid.data} not found in the database for the bottom level geo level",
+                        }
+                    ),
+                    404,
+                )
         try:
             Target.query.filter_by(target_uid=target_uid).update(
                 {
@@ -557,7 +671,7 @@ def bulk_update_targets():
         return jsonify({"success": False, "errors": payload_validator.errors}), 422
 
     survey_uid = (
-        ParentForm.query.filter_by(form_id=payload_validator.form_uid.data)
+        ParentForm.query.filter_by(form_uid=payload_validator.form_uid.data)
         .first()
         .survey_uid
     )
@@ -574,6 +688,33 @@ def bulk_update_targets():
             404,
         )
 
+    # Check if payload keys are in the column config
+    for key in payload.keys():
+        if key not in ("target_uids", "form_uid", "csrf_token", "location_uid"):
+            if key not in [column.column_name for column in column_config]:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": f"Column key '{key}' not found in column configuration",
+                        }
+                    ),
+                    422,
+                )
+        elif key == "location_uid":
+            if "bottom_geo_level_location" not in [
+                column.column_name for column in column_config
+            ]:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": f"Location key 'location_uid' provided in payload but column 'bottom_geo_level_location' not found in column configuration",
+                        }
+                    ),
+                    422,
+                )
+
     bulk_editable_fields = {
         "basic_details": [],
         "location": [],
@@ -585,12 +726,11 @@ def bulk_update_targets():
             bulk_editable_fields[column.column_type].append(column.column_name)
 
     for key in payload.keys():
-        if key not in ("target_uids", "form_uid", "csrf_token"):
+        if key not in ("target_uids", "form_uid", "csrf_token", "location_uid"):
             if (
                 key
                 not in bulk_editable_fields["basic_details"]
                 + bulk_editable_fields["custom_fields"]
-                + bulk_editable_fields["location"]
             ):
                 return (
                     jsonify(
@@ -601,12 +741,30 @@ def bulk_update_targets():
                     ),
                     422,
                 )
+        elif key == "location_uid":
+            if "bottom_geo_level_location" not in bulk_editable_fields["location"]:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": f"Location key 'location_uid' provided in payload but column 'bottom_geo_level_location' is not bulk editable",
+                        }
+                    ),
+                    422,
+                )
 
-    basic_details_and_locations_patch_keys = [
+    basic_details_patch_keys = [
         key
         for key in payload.keys()
         if key not in ("target_uids", "form_uid", "csrf_token")
-        and key in bulk_editable_fields["basic_details", "location"]
+        and key in bulk_editable_fields["basic_details"]
+    ]
+
+    location_patch_keys = [
+        key
+        for key in payload.keys()
+        if key == "location_uid"
+        and "bottom_geo_level_location" in bulk_editable_fields["location"]
     ]
 
     custom_fields_patch_keys = [
@@ -617,7 +775,7 @@ def bulk_update_targets():
     ]
 
     # Check if the location_uid is valid
-    if "location_uid" in basic_details_and_locations_patch_keys:
+    if "location_uid" in location_patch_keys:
         # Get the geo levels for the survey
         geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
 
@@ -656,11 +814,14 @@ def bulk_update_targets():
                 404,
             )
 
-    if len(basic_details_and_locations_patch_keys) > 0:
+    basic_details_and_location_patch_keys = (
+        basic_details_patch_keys + location_patch_keys
+    )
+    if len(basic_details_and_location_patch_keys) > 0:
         Target.query.filter(
             Target.target_uid.in_(payload_validator.target_uids.data)
         ).update(
-            {key: payload[key] for key in basic_details_and_locations_patch_keys},
+            {key: payload[key] for key in basic_details_and_location_patch_keys},
             synchronize_session=False,
         )
 

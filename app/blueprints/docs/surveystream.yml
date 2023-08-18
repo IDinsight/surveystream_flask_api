@@ -2336,7 +2336,7 @@ paths:
                   description: >-
                     An array of column config objects for the enumerators data. Each object defines the column name, its type, and whether it is bulk editable or not.
                     
-                    The location mapping column must be named `prime_geo_level_location_id` and its enumerator_type must be `location`.
+                    The location mapping column must be named `prime_geo_level_location` and its enumerator_type must be `location`.
 
                     The personal details columns must be named `enumerator_id`, `name`, `email`, `mobile_primary`, `home_address`, `language` and `gender` and their enumerator_types must be `personal_details`.
                   
@@ -2419,7 +2419,7 @@ paths:
 
         This method will replace the existing location mapping for the enumerators with the new location mapping provided in the request body. The existing location mapping for the enumerators can be dropped by providing `None` or an empty array as the `location_uids` value in the request body.
       
-        In order for the location mapping to be bulk editable, the enumerators column configuration must have a `column_name` entry `prime_geo_level_location_id` with `column_type` of `location` and its `bulk_editable` value set to `True`. See the `PUT /enumerators/column-config` endpiont for more details on defining the enumerators column config for a form.
+        In order for the location mapping to be bulk editable, the enumerators column configuration must have a `column_name` entry `prime_geo_level_location` with `column_type` of `location` and its `bulk_editable` value set to `True`. See the `PUT /enumerators/column-config` endpiont for more details on defining the enumerators column config for a form.
       tags:
 
         - Enumerators
@@ -2596,120 +2596,6 @@ paths:
           description: Enumerator not found
         '422':
           description: Enumerator errors
-  /targets:
-    get:
-      summary: Get targets
-      description: Return the logged in user's targets for the given form
-      tags:
-        - Targets
-      parameters:
-        - in: query
-          name: form_uid
-          schema:
-            type: integer
-          description: Unique ID of the form
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    target_id:
-                      type: string
-                      description: The ID of the target
-                    respondent_names:
-                      type: array
-                      description: The names of the respondents
-                      items:
-                        type: string
-                        description: Respondent name
-                    respondent_phone_primary:
-                      type: string
-                      description: The primary phone number of the target
-                    respondent_phone_secondary:
-                      type: string
-                      description: The secondary phone number of the target
-                    address:
-                      type: string
-                      description: The address of the target
-                    gps_latitude:
-                      type: string
-                      description: The latitude of the target
-                    gps_longitude:
-                      type: string
-                      description: The longitude of the target
-                    custom_fields:
-                      type: object
-                      description: >-
-                        Any non-standard fields that should be displayed for the
-                        target
-                    final_status:
-                      type: string
-                      description: >-
-                        Grouping of final_survey_status into pending/done
-                        categories. Used to determine if the target is
-                        assignable.
-                      enum:
-                        - Pending
-                        - Done
-                    final_survey_status:
-                      type: integer
-                      description: >-
-                        The survey status from the target's most recent
-                        SurveyCTO submission
-                    final_survey_status_label:
-                      type: string
-                      description: The label corresponding to the final_survey_status code
-                    webapp_tag_color:
-                      type: string
-                      description: >-
-                        The color that should be used to color the status tag on
-                        the web flask_app
-                    revisit_sections:
-                      type: array
-                      description: The revisit sections for the target
-                      items:
-                        type: string
-                        description: Name of the revisit section for the target
-                    locations:
-                      type: array
-                      description: >-
-                        An array of locations associated with the target. Each
-                        array item is an object of the form {`location`_id:
-                        _location_id_, `location`_name: _location_name_} in
-                        descending order from highest to lowest level location.
-                    supervisors:
-                      type: array
-                      description: >-
-                        An array of supervisors associated with the target.
-                        Array items are in descending order from highest to
-                        lowest level supervisor working under the logged in
-                        user.
-                      items:
-                        type: object
-                        properties:
-                          role_name:
-                            type: string
-                            description: >-
-                              The role of the supervisor, .e.g. regional
-                              coordinator, cluster coordinator
-                          level:
-                            type: number
-                            description: >-
-                              The level of the supervisor. Counting starts at 0
-                              with the core team and ascends for each
-                              successively lower level of the supervisor
-                              hierarchy.
-                          supervisor_name:
-                            type: string
-                            description: The name of the supervisor
-                          supervisor_email:
-                            type: string
-                            description: The email of the supervisor
   /assignments:
     get:
       summary: Get assignments

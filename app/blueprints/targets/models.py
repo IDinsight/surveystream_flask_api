@@ -50,7 +50,7 @@ class Target(db.Model):
         self.location_uid = location_uid
         self.form_uid = form_uid
 
-    def to_dict(self, joined_keys=None):
+    def to_dict(self):
         result = {
             "target_uid": self.target_uid,
             "target_id": self.target_id,
@@ -62,11 +62,6 @@ class Target(db.Model):
 
         if hasattr(self, "custom_fields"):
             result["custom_fields"] = self.custom_fields
-
-        if joined_keys is not None:
-            result.update(
-                {joined_key: getattr(self, joined_key) for joined_key in joined_keys}
-            )
 
         return result
 
@@ -92,6 +87,43 @@ class TargetStatus(db.Model):
     revisit_sections = db.Column(ARRAY(db.String()))
 
     __table_args__ = ({"schema": "webapp"},)
+
+    def __init__(
+        self,
+        target_uid,
+        completed_flag,
+        refusal_flag,
+        num_attempts,
+        last_attempt_survey_status,
+        last_attempt_survey_status_label,
+        target_assignable,
+        webapp_tag_color,
+        revisit_sections,
+    ):
+        self.target_uid = target_uid
+        self.completed_flag = completed_flag
+        self.refusal_flag = refusal_flag
+        self.num_attempts = num_attempts
+        self.last_attempt_survey_status = last_attempt_survey_status
+        self.last_attempt_survey_status_label = last_attempt_survey_status_label
+        self.target_assignable = target_assignable
+        self.webapp_tag_color = webapp_tag_color
+        self.revisit_sections = revisit_sections
+
+    def to_dict(self):
+        result = {
+            "target_uid": self.target_uid,
+            "completed_flag": self.completed_flag,
+            "refusal_flag": self.refusal_flag,
+            "num_attempts": self.num_attempts,
+            "last_attempt_survey_status": self.last_attempt_survey_status,
+            "last_attempt_survey_status_label": self.last_attempt_survey_status_label,
+            "target_assignable": self.target_assignable,
+            "webapp_tag_color": self.webapp_tag_color,
+            "revisit_sections": self.revisit_sections,
+        }
+
+        return result
 
 
 class TargetColumnConfig(db.Model):

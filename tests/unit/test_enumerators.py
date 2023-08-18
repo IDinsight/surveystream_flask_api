@@ -240,7 +240,7 @@ class TestEnumerators:
                     "bulk_editable": False,
                 },
                 {
-                    "column_name": "prime_geo_level_location_id",
+                    "column_name": "prime_geo_level_location",
                     "column_type": "location",
                     "bulk_editable": True,
                 },
@@ -1115,7 +1115,7 @@ class TestEnumerators:
                     "bulk_editable": False,
                 },
                 {
-                    "column_name": "prime_geo_level_location_id",
+                    "column_name": "prime_geo_level_location",
                     "column_type": "location",
                     "bulk_editable": True,
                 },

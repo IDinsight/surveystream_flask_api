@@ -25,6 +25,9 @@ class TargetColumnMapping:
             if column_mapping.get("language"):
                 self.language = column_mapping["language"]
 
+            if column_mapping.get("gender"):
+                self.gender = column_mapping["gender"]
+
             if column_mapping.get("location_id_column"):
                 self.location_id_column = column_mapping["location_id_column"]
 
@@ -195,9 +198,6 @@ class TargetsUpload:
         non_null_columns = [
             "target_id",
         ]
-
-        if hasattr(column_mapping, "language"):
-            non_null_columns.append("language")
 
         if hasattr(column_mapping, "location_id_column_name"):
             non_null_columns.append(column_mapping.location_id_column_name)

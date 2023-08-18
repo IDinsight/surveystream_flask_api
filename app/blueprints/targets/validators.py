@@ -17,6 +17,7 @@ class ColumnMappingValidator(FlaskForm):
 
     target_id = StringField(validators=[DataRequired()])
     language = StringField()
+    gender = StringField()
     location_id_column = StringField()
     custom_fields = FieldList(FormField(CustomColumnsValidator))
 

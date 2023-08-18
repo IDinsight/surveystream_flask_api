@@ -229,7 +229,7 @@ def upload_enumerators():
                 {
                     "success": False,
                     "errors": {
-                        "file_structure_errors": e.file_stucture_errors,
+                        "file_structure_errors": e.file_structure_errors,
                     },
                 }
             ),
@@ -278,11 +278,14 @@ def upload_enumerators():
             location.location_id: location.location_uid for location in locations.all()
         }
 
+    # Order the columns in the dataframe so we can easily access them by index
+    enumerators_upload.enumerators_df = enumerators_upload.enumerators_df[
+        expected_columns
+    ]
+
     # Insert the enumerators into the database
     for i, row in enumerate(
-        enumerators_upload.enumerators_df[expected_columns]
-        .drop_duplicates()
-        .itertuples()
+        enumerators_upload.enumerators_df.drop_duplicates().itertuples()
     ):
         enumerator = Enumerator(
             form_uid=form_uid,
@@ -1259,6 +1262,20 @@ def bulk_update_enumerators_custom_fields():
             404,
         )
 
+    # Check if payload keys are in the column config
+    for key in payload.keys():
+        if key not in ("enumerator_uids", "form_uid", "csrf_token"):
+            if key not in [column.column_name for column in column_config]:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": f"Column key '{key}' not found in column configuration",
+                        }
+                    ),
+                    422,
+                )
+
     bulk_editable_fields = {
         "personal_details": [],
         "custom_fields": [],
@@ -1368,7 +1385,7 @@ def bulk_update_enumerators_role_locations():
 
     column_config = EnumeratorColumnConfig.query.filter(
         EnumeratorColumnConfig.form_uid == payload_validator.form_uid.data,
-        EnumeratorColumnConfig.column_name == "prime_geo_level_location_id",
+        EnumeratorColumnConfig.column_name == "prime_geo_level_location",
         EnumeratorColumnConfig.column_type == "location",
     ).first()
 

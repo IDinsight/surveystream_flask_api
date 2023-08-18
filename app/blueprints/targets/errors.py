@@ -15,4 +15,4 @@ class HeaderRowEmptyError(Exception):
 
 class InvalidFileStructureError(Exception):
     def __init__(self, file_structure_errors):
-        self.message = file_structure_errors
+        self.file_structure_errors = file_structure_errors
