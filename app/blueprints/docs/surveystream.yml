@@ -3486,3 +3486,546 @@ paths:
             Validation errors for the location type hierarchy will be returned as an array under the `geo_level_hierarchy` key in the `errors` key of the response.
             Note that the file validation will only be run if the geo level mapping is valid.
 
+  /targets:
+    get:
+      summary: Get targets
+      description: Return the logged in user's targets for the given form
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    target_id:
+                      type: string
+                      description: The ID of the target
+                    target_uid:
+                      type: integer
+                      description: The unique ID of the target
+                    language:
+                      type: string
+                      description: The primary language of the target
+                    gender:
+                      type: string
+                      description: The gender of the target
+                    location_uid:
+                      type: integer
+                      description: The unique ID of the target's location
+                    target_locations:
+                      type: array
+                      description: >-
+                        The geography of the target. 
+                        Each array item is an object of the form {`location`_id: _location_id_, `location`_name: 
+                        _location_name_, `geo_level_name`: __geo_level_name__} in descending order from highest 
+                        to lowest level location the target is location in.
+                        Can be null if a location has not been specified for the target.
+                      items:
+                        type: object
+                        properties:
+                          location_id:
+                            type: integer
+                            description: The user-defined unique ID of the location
+                          location_name:
+                            type: string
+                            description: The name of the location
+                          geo_level_name:
+                            type: string
+                            description: The name of the geo level
+        '400':
+          description: Form ID is required
+    post:
+      summary: Upload a csv of new targets
+      description: >
+        Upload a csv of new targets to be added to the given form
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                column_mapping:
+                  type: object
+                  description: >-
+                    An object mapping the column names in the csv to the
+                    corresponding target properties
+                  properties:
+                    target_id:
+                      type: string
+                      description: The column name of the target ID
+                    language:
+                      type: string
+                      description: The column name of the target's primary language
+                    gender:
+                      type: string
+                      description: The column name of the target's gender
+                    location_id_column:
+                      type: string
+                      description: The column name of the target's location ID. This is the bottom geo level location that the target is mapped to.
+                    custom_fields:
+                      type: array
+                      description: >-
+                        An array of custom fields to be added to the target
+                        object
+                      items:
+                        type: object
+                        properties:
+                          field_label:
+                            type: string
+                            description: The user-defined label of the custom field
+                          column_name:
+                            type: string
+                            description: The column name of the custom field
+                        required:
+                          - field_label
+                          - column_name
+                  required:
+                    - target_id
+                file:
+                  type: string
+                  format: Base64
+                  description: >-
+                    The csv file to be uploaded in base64 encoding
+
+                    The csv must have a header row with the column names
+                    specified in the `column_mapping` object.
+
+                mode:
+                  type: string
+                  enum:
+                    - overwrite
+                    - append
+                  description: >-
+                    The mode of the upload. If `overwrite`, all targets
+                    with the given form_uid (from the query parameter) will be 
+                    deleted and replaced with the new targets in the csv. If `append`, 
+                    the new targets in the csv will be added to the existing targets.
+
+                    **Note:** If the `append` mode is used, the targets in the csv
+                    must have target IDs that are not already in the database for the form or the upload will fail.
+              required:
+                - column_mapping
+                - file
+                - mode
+      responses:
+        '200':
+          description: Records added successfully
+        '400':
+          description: Query parameter errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to the csv file upload.
+                      Each key will only be present if there are errors of that type.
+                      
+                      In addition to the errors listed below, the `errors` object may also contain
+                      errors related to an incorrectly specified payload.
+                    properties:
+                      file_structure_errors:
+                        type: array
+                        description: >-
+                          An array of errors in the file structure. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      column_mapping:
+                        type: array
+                        description: >-
+                          An array of errors in the column. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      geo_level_hierarchy:
+                        type: array
+                        description: >-
+                          An array of errors in the geo level hierarchy. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      record_errors:
+                        type: object
+                        description: >-
+                          An object with information on validation errors in the csv records.
+                        properties:
+                          summary:
+                            type: object
+                            description: >-
+                              A summary of the validation errors in the csv records
+                            properties:
+                              error_count:
+                                type: integer
+                                description: The total number of errors in the csv records
+                              total_correct_rows:
+                                type: integer
+                                description: The total number of correct rows in the csv records
+                              total_rows:
+                                type: integer
+                                description: The total number of rows in the csv records
+                              total_rows_with_errors:
+                                type: integer
+                                description: The total number of rows with errors in the csv records                            
+                          summary_by_error_type:
+                            type: array
+                            description: >-
+                              An array of objects with information on validation errors by error type in the csv records.
+                            items:
+                              type: object
+                              properties:
+                                error_count:
+                                  type: integer
+                                  description: The total number of errors of this type in the csv records
+                                error_message:
+                                  type: string
+                                  description: The error message for this error type
+                                error_type:
+                                  type: string
+                                  description: The error type
+                                row_numbers_with_errors:
+                                  type: array
+                                  description: >-
+                                    An array of row numbers with errors of this type in the csv records
+                                  items:
+                                    type: integer
+                                    description: The row number with an error of this type in the csv records
+                          invalid_records:
+                            type: object
+                            description: >-
+                              An object with information on validation errors by record in the csv records.
+                              This can be used to identify the specific errors in each record and to let users download a csv with the errors.
+                            properties:
+                              records:
+                                type: array
+                                description: >-
+                                  An array of objects that represent the original records in the csv with the validation errors.
+                                  A new `errors` field is added to each record that contains a semicolon-separated list of the validation errors for that record.
+                                  A new `row_number` field is also added to each record that contains the row number of the record in the original csv.
+                              ordered_columns:
+                                type: array
+                                description: >-
+                                  An array of strings that represent the column names in the `records` array of objects in the order that they should 
+                                  appear in a table or downloadable csv file.
+                                items:
+                                  type: string
+                                  description: The column name in the csv
+                  success:
+                    type: boolean
+                    description: Whether the upload was successful
+    patch:
+      summary: Bulk update targets for a provided set of fields
+      description: >
+        Bulk update targets for a provided set of fields. The targets to be updated are specified by their target IDs.
+        Only the fields specified in the request body will be updated. If a field is not specified, it will not be updated.
+        Only personal details and custom fields can be updated can be updated through this endpoint. To bulk update targets'
+        locations, use the `PUT /targets/roles/locations` endpoint.
+
+        **Note:** Only fields that are defined in the targets column config table and set as `bulk_editable` can be updated via
+        this endpoint. See the `PUT /targets/column-config` endpoint for more details.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_uids:
+                  type: array
+                  description: >-
+                    An array of target UIDs of the targets to be updated
+                  items:
+                    type: integer
+                    description: The target UID of the target to be updated
+                form_uid:
+                  type: integer
+                  description: >-
+                    The form UID of the targets to be updated.
+                patch_key_example:
+                  description: >-
+                    An example of the field name and value to be updated for the targets. Multiple fields to be updated can be specified in the same object. The field name must be the same as the field name in the target column config for the form and set as `bulk_editable.` See the `PUT /targets/column-config` for more details on defining the column config for a form.
+              required:
+                - target_uids
+                - form_uid
+      responses:
+        '200':
+          description: Targets updated successfully
+        '400':
+          description: Request errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+  /targets/column-config:
+    put:
+      summary: Update the targets column config for a form
+      description: >
+        Update the column config for targets for a form. The column config defines the fields that are available for bulk editing via the `PATCH /targets` endpoint 
+        and specifies whether fields contain PII.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: >-
+                    The form UID of the targets to be updated.
+                column_config:
+                  type: array
+                  description: >-
+                    An array of column config objects for the targets data. Each object defines the column name, its type, and whether it is bulk editable or not.
+                    
+                    The location mapping column must be named `bottom_geo_level_location` and its column_types must be `location`.
+
+                    The basic details columns must be named `target_id`, `language` and `gender` and their column_types must be `basic_details`.
+                  
+                    The custom fields columns must match their corresponding json keys in the `custom_fields` column of the `targets` table and their column_types must be `custom_field`.
+                  items:
+                    type: object
+                    properties:
+                      column_name:
+                        type: string
+                        description: The field name of the column
+                      column_type:
+                        type: string
+                        description: The field type of the column. Can be one of `basic_details`, `custom_field`, or `location`.
+                      bulk_editable:
+                        type: boolean
+                        description: Whether the field is bulk editable or not
+                    required:
+                      - column_name
+                      - column_type
+                      - bulk_editable
+              required:
+                - form_uid
+                - column_config
+      responses:
+        '200':
+          description: Column config updated successfully
+        '400':
+          description: Request errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+    get:
+      summary: Get the targets column config for a form
+      description: >
+        Get the targets column config for a form. The column config defines the fields that are available for bulk editing via the `PATCH /targets`
+        endpoint.
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: >-
+            The form UID of the target column config to be updated.
+          required: true
+      responses:
+        '200':
+          description: Column config retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                description: >-
+                  An array of column config objects for the targets data. Each object defines the column name, its type, whether it is bulk editable or not, and whether it contains PII.
+                items:
+                  type: object
+                  properties:
+                    column_name:
+                      type: string
+                      description: The field name of the column
+                    column_type:
+                      type: string
+                      description: The field type of the column. Can be one of `basic_details`, `custom_field`, or `location`.
+                    bulk_editable:
+                      type: boolean
+                      description: Whether the field is bulk editable or not
+                    contains_pii:
+                      type: boolean
+                      description: Whether the field contains PII or not
+        '400':
+          description: Request errors
+        '404':
+          description: Form not found
+  /targets/{target_uid}:
+    get:
+      summary: Get details of an target
+      description: >
+        Get details of an target by their unique ID.
+      tags:
+        - Targets
+      parameters:
+        - in: path
+          name: target_uid
+          schema:
+            type: integer
+          description: Unique ID of the target
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    target_id:
+                      type: string
+                      description: The user-assigned unique ID of the target
+                    target_uid:
+                      type: integer
+                      description: The system-assigned unique ID of the target
+                    language:
+                      type: string
+                      description: The primary language of the target
+                    gender:
+                      type: string
+                      description: The gender of the target
+                    location_uid:
+                      type: integer
+                      description: The unique ID of the target's location
+                    target_locations:
+                      type: array
+                      description: >-
+                        The geography of the target. 
+                        Each array item is an object of the form {`location`_id: _location_id_, `location`_name: 
+                        _location_name_, `geo_level_name`: __geo_level_name__} in descending order from highest 
+                        to lowest level location the target is located in.
+
+                        Can be null if a location has not been specified for the target.
+                      items:
+                        type: object
+                        properties:
+                          location_id:
+                            type: integer
+                            description: The user-defined unique ID of the location
+                          location_name:
+                            type: string
+                            description: The name of the location
+                          geo_level_name:
+                            type: string
+                            description: The name of the geo level
+                    custom_fields:
+                      type: object
+                      description: >-
+                        Any non-standard fields that should be displayed for the
+                        target. The keys are the user-defined labels of the
+                        custom fields.
+    put: 
+      summary: Update an target
+      description: >
+        Update a target's details by their unique ID.
+      tags:
+        - Targets
+      parameters:
+        - in: path
+          name: target_uid
+          schema:
+            type: integer
+          description: Unique ID of the target
+          required: true
+      requestBody:
+        description: The updated record as it should be saved in the database. Note that values should be provided even if they are not being updated, otherwise they will be set to null.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_id:
+                  type: string
+                  description: The user-assigned unique ID of the target
+                language:
+                  type: string
+                  description: The language of the target
+                gender:
+                  type: string
+                  description: The gender of the target
+                location_uid:
+                  type: integer
+                  description: The unique ID of the target's location
+                custom_fields:
+                  type: object
+                  description: >-
+                    Any non-standard fields that should be displayed for the
+                    target. The keys are the user-defined labels of the
+                    custom fields.
+              required:
+                - target_id
+                - language
+                - gender
+                - location_uid
+                - custom_fields
+      responses:
+        '200':
+          description: Successfully updated
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Target not found
+        '422':
+          description: Target errors
