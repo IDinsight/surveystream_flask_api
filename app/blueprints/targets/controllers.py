@@ -96,28 +96,8 @@ def upload_targets():
             422,
         )
 
-    # Get the geo levels for the survey
-    geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
-
     try:
-        geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
-    except InvalidGeoLevelHierarchyError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "geo_level_hierarchy": e.geo_level_hierarchy_errors,
-                    },
-                }
-            ),
-            422,
-        )
-
-    try:
-        column_mapping = TargetColumnMapping(
-            payload_validator.column_mapping.data, geo_levels
-        )
+        column_mapping = TargetColumnMapping(payload_validator.column_mapping.data)
     except InvalidColumnMappingError as e:
         return (
             jsonify(
@@ -130,6 +110,27 @@ def upload_targets():
             ),
             422,
         )
+
+    if hasattr(column_mapping, "location_id_column"):
+        # Get the geo levels for the survey
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+        try:
+            geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+        except InvalidGeoLevelHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "geo_level_hierarchy": e.geo_level_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+    else:
+        geo_level_hierarchy = None
 
     # Get the expected columns from the mapped column names
     expected_columns = [
@@ -197,12 +198,19 @@ def upload_targets():
             422,
         )
 
+    if not geo_level_hierarchy:
+        bottom_level_geo_level_uid = None
+    else:
+        bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
+            -1
+        ].geo_level_uid
+
     # Validate the targets data
     try:
         targets_upload.validate_records(
             expected_columns,
             column_mapping,
-            geo_level_hierarchy.ordered_geo_levels[-1].geo_level_uid,
+            bottom_level_geo_level_uid,
             form,
             payload_validator.mode.data,
         )
@@ -352,27 +360,36 @@ def get_targets():
     ## TODO handle cases where these are None
     survey_uid = ParentForm.query.filter_by(form_uid=form_uid).first().survey_uid
 
-    # Get the geo levels for the survey
-    geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+    if (
+        Target.query.filter(
+            Target.form_uid == form_uid, Target.location_uid.isnot(None)
+        ).first()
+        is not None
+    ):
+        # Get the geo levels for the survey
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
 
-    try:
-        geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
-    except InvalidGeoLevelHierarchyError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "geo_level_hierarchy": e.geo_level_hierarchy_errors,
-                    },
-                }
-            ),
-            422,
-        )
+        try:
+            geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+        except InvalidGeoLevelHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "geo_level_hierarchy": e.geo_level_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
 
-    bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
-        -1
-    ].geo_level_uid
+        bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
+            -1
+        ].geo_level_uid
+
+    else:
+        bottom_level_geo_level_uid = None
 
     target_locations_subquery = (
         build_bottom_level_locations_with_location_hierarchy_subquery(
@@ -488,32 +505,6 @@ def get_targets():
             }
         )
 
-        def target_row_format(target, target_status, target_locations):
-            return {
-                **target.to_dict(),
-                **{
-                    "completed_flag": getattr(target_status, "completed_flag", None),
-                    "refusal_flag": getattr(target_status, "refusal_flag", None),
-                    "num_attempts": getattr(target_status, "num_attempts", None),
-                    "last_attempt_survey_status": getattr(
-                        target_status, "last_attempt_survey_status", None
-                    ),
-                    "last_attempt_survey_status_label": getattr(
-                        target_status, "last_attempt_survey_status_label", None
-                    ),
-                    "target_assignable": getattr(
-                        target_status, "target_assignable", None
-                    ),
-                    "webapp_tag_color": getattr(
-                        target_status, "webapp_tag_color", None
-                    ),
-                    "revisit_sections": getattr(
-                        target_status, "revisit_sections", None
-                    ),
-                },
-                **{"target_locations": target_locations},
-            }
-
     return response, 200
 
 
@@ -542,27 +533,31 @@ def get_target(target_uid):
     ## TODO handle cases where these are None
     survey_uid = ParentForm.query.filter_by(form_uid=target.form_uid).first().survey_uid
 
-    # Get the geo levels for the survey
-    geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+    if target.location_uid is not None:
+        # Get the geo levels for the survey
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
 
-    try:
-        geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
-    except InvalidGeoLevelHierarchyError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "geo_level_hierarchy": e.geo_level_hierarchy_errors,
-                    },
-                }
-            ),
-            422,
-        )
+        try:
+            geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+        except InvalidGeoLevelHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "geo_level_hierarchy": e.geo_level_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
 
-    bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
-        -1
-    ].geo_level_uid
+        bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
+            -1
+        ].geo_level_uid
+
+    else:
+        bottom_level_geo_level_uid = None
 
     target_locations_subquery = (
         build_bottom_level_locations_with_location_hierarchy_subquery(

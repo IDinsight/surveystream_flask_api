@@ -17,9 +17,9 @@ class TargetColumnMapping:
     Class to represent the target column mapping and run validations on it
     """
 
-    def __init__(self, column_mapping, geo_levels):
+    def __init__(self, column_mapping):
         try:
-            self.__validate_column_mapping(column_mapping, geo_levels)
+            self.__validate_column_mapping(column_mapping)
             self.target_id = column_mapping["target_id"]
 
             if column_mapping.get("language"):
@@ -37,7 +37,7 @@ class TargetColumnMapping:
         except:
             raise
 
-    def __validate_column_mapping(self, column_mapping, geo_levels):
+    def __validate_column_mapping(self, column_mapping):
         """
         Method to run validations on the column mapping and raise an exception containing a list of errors
 
@@ -199,8 +199,8 @@ class TargetsUpload:
             "target_id",
         ]
 
-        if hasattr(column_mapping, "location_id_column_name"):
-            non_null_columns.append(column_mapping.location_id_column_name)
+        if hasattr(column_mapping, "location_id_column"):
+            non_null_columns.append(column_mapping.location_id_column)
 
         non_null_columns_df = self.targets_df.copy()[
             self.targets_df[non_null_columns].isnull().any(axis=1)
@@ -228,7 +228,7 @@ class TargetsUpload:
 
                 non_null_columns_df.at[
                     index, "errors"
-                ] = f"Blank field(s) found in the follwoing column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],

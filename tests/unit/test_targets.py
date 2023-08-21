@@ -645,6 +645,114 @@ class TestTargets:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
+    def test_upload_targets_csv_no_locations_no_geo_levels_defined(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Test uploading targets csv with no locations mapped and no geo levels defined
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_no_locations.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id",
+                "language": "language",
+                "gender": "gender",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile no.",
+                        "column_name": "mobile_primary",
+                    },
+                    {
+                        "field_label": "Name",
+                        "column_name": "name",
+                    },
+                    {
+                        "field_label": "Address",
+                        "column_name": "address",
+                    },
+                ],
+            },
+            "file": targets_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {
+                        "Address": "Hyderabad",
+                        "Name": "Anil",
+                        "Mobile no.": "1234567890",
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "location_uid": None,
+                    "target_id": "1",
+                    "target_locations": None,
+                    "target_uid": 1,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                },
+                {
+                    "custom_fields": {
+                        "Address": "South Delhi",
+                        "Name": "Anupama",
+                        "Mobile no.": "1234567891",
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "location_uid": None,
+                    "target_id": "2",
+                    "target_locations": None,
+                    "target_uid": 2,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/targets", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_upload_targets_csv_no_custom_fields(
         self,
         client,
@@ -845,7 +953,7 @@ class TestTargets:
                             },
                             {
                                 "address": "South Delhi",
-                                "errors": "Blank field(s) found in the follwoing column(s): target_id. The column(s) cannot contain blank fields.; Location id not found in uploaded locations data for the survey's bottom level geo level",
+                                "errors": "Blank field(s) found in the following column(s): target_id. The column(s) cannot contain blank fields.; Location id not found in uploaded locations data for the survey's bottom level geo level",
                                 "gender": "Female",
                                 "language": "Hindi",
                                 "mobile_primary": "1234567891",
@@ -865,7 +973,7 @@ class TestTargets:
                     "summary_by_error_type": [
                         {
                             "error_count": 1,
-                            "error_message": "Blank values are not allowed in the following columns: target_id. Blank values in these columns were found for the following row(s): 4",
+                            "error_message": "Blank values are not allowed in the following columns: target_id, psu_id. Blank values in these columns were found for the following row(s): 4",
                             "error_type": "Blank field",
                             "row_numbers_with_errors": [4],
                         },

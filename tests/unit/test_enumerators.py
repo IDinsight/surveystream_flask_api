@@ -376,6 +376,56 @@ class TestEnumerators:
         assert response.status_code == 200
 
     @pytest.fixture()
+    def upload_enumerators_csv_no_locations_no_geo_levels_defined(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Upload the enumerators csv with no locations mapped and no geo levels defined
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_no_locations.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id",
+                "name": "name",
+                "email": "email",
+                "mobile_primary": "mobile_primary",
+                "language": "language",
+                "home_address": "home_address",
+                "gender": "gender",
+                "enumerator_type": "enumerator_type",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+    @pytest.fixture()
     def upload_enumerators_csv_no_custom_fields(
         self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
     ):
@@ -1004,7 +1054,7 @@ class TestEnumerators:
                                 "email": "jay.prakash@idinsight.org",
                                 "enumerator_id": "0294614",
                                 "enumerator_type": "monitor",
-                                "errors": "Blank field(s) found in the follwoing column(s): name. The column(s) cannot contain blank fields.; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "errors": "Blank field(s) found in the following column(s): name. The column(s) cannot contain blank fields.; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
                                 "gender": "Male",
                                 "home_address": "my house",
                                 "language": "Hindi",
