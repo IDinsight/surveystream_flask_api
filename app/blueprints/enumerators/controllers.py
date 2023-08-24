@@ -107,24 +107,6 @@ def upload_enumerators():
             422,
         )
 
-    # Get the geo levels for the survey
-    geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
-
-    try:
-        GeoLevelHierarchy(geo_levels)
-    except InvalidGeoLevelHierarchyError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "geo_level_hierarchy": e.geo_level_hierarchy_errors,
-                    },
-                }
-            ),
-            422,
-        )
-
     # Get the prime geo level from the survey configuration
     prime_geo_level_uid = (
         Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
@@ -132,7 +114,7 @@ def upload_enumerators():
 
     try:
         column_mapping = EnumeratorColumnMapping(
-            payload_validator.column_mapping.data, prime_geo_level_uid, geo_levels
+            payload_validator.column_mapping.data, prime_geo_level_uid
         )
     except InvalidColumnMappingError as e:
         return (

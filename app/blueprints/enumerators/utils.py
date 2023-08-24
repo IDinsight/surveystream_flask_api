@@ -18,11 +18,9 @@ class EnumeratorColumnMapping:
     Class to represent the enumerator column mapping and run validations on it
     """
 
-    def __init__(self, column_mapping, prime_geo_level_uid, geo_levels):
+    def __init__(self, column_mapping, prime_geo_level_uid=None):
         try:
-            self.__validate_column_mapping(
-                column_mapping, prime_geo_level_uid, geo_levels
-            )
+            self.__validate_column_mapping(column_mapping, prime_geo_level_uid)
             self.enumerator_id = column_mapping["enumerator_id"]
             self.name = column_mapping["name"]
             self.email = column_mapping["email"]
@@ -41,9 +39,7 @@ class EnumeratorColumnMapping:
         except:
             raise
 
-    def __validate_column_mapping(
-        self, column_mapping, prime_geo_level_uid, geo_levels
-    ):
+    def __validate_column_mapping(self, column_mapping, prime_geo_level_uid):
         """
         Method to run validations on the column mapping and raise an exception containing a list of errors
 
@@ -239,7 +235,7 @@ class EnumeratorsUpload:
 
                 non_null_columns_df.at[
                     index, "errors"
-                ] = f"Blank field(s) found in the follwoing column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],
