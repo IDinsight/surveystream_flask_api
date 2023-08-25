@@ -537,10 +537,7 @@ def ingest_scto_form_definition(form_uid):
                     db.session.flush()
                 except IntegrityError as e:
                     db.session.rollback()
-                    return (
-                        jsonify(questions_dict),
-                        500,
-                    )
+                    return (jsonify({"error": str(e)}),)
 
                 # Check if a repeat group is ending
                 if questions_dict["type"].strip().lower() == "end repeat":
