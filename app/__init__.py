@@ -101,7 +101,7 @@ def register_blueprints(app):
     from app.blueprints.surveys import surveys_bp
 
     # from app.blueprints.table_config import table_config_bp
-    # from app.blueprints.targets import targets_bp
+    from app.blueprints.targets import targets_bp
     from app.blueprints.timezones import timezones_bp
     from app.blueprints.user_management import user_management_bp
 
@@ -118,7 +118,7 @@ def register_blueprints(app):
     app.register_blueprint(locations_bp)
     app.register_blueprint(surveys_bp)
     # app.register_blueprint(table_config_bp)
-    # app.register_blueprint(targets_bp)
+    app.register_blueprint(targets_bp)
     app.register_blueprint(timezones_bp)
     app.register_blueprint(user_management_bp)
 

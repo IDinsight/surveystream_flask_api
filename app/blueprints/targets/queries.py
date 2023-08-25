@@ -19,6 +19,7 @@ def build_location_hierarchy_query(survey_uid):
     top_query = (
         db.session.query(
             Location.location_uid.label("location_uid"),
+            GeoLevel.geo_level_uid.label("geo_level_uid"),
             func.jsonb_build_array(
                 func.jsonb_build_object(
                     "geo_level_name",
@@ -49,6 +50,7 @@ def build_location_hierarchy_query(survey_uid):
     bottom_query = (
         db.session.query(
             Location.location_uid.label("location_uid"),
+            GeoLevel.geo_level_uid.label("geo_level_uid"),
             top_query.c.locations.concat(
                 func.jsonb_build_object(
                     "geo_level_name",
@@ -76,36 +78,28 @@ def build_location_hierarchy_query(survey_uid):
     return location_hierarchy_query
 
 
-def build_prime_locations_with_location_hierarchy_subquery(
-    survey_uid, prime_geo_level_uid
+def build_bottom_level_locations_with_location_hierarchy_subquery(
+    survey_uid, bottom_level_geo_level_uid
 ):
     """
-    Build a subquery that returns the prime geo level locations for the
-    current survey joined to an array column that contains the location's
-    own and parent region information
+    Build a subquery that returns the bottom geo level locations for the
+    current survey joined to a JSON column that contains each location's
+    own and parent location information
 
-    This will be used to join with the enumerators data on prime location uid
-    to get the enumerators' working locations
+    This will be used to join with the targets data on bottom level locations
     """
 
     location_hierarchy_query = build_location_hierarchy_query(survey_uid)
 
-    # Get the prime geo level locations for the current survey
-    # and join in the ancestors array from the recursive query result
-    prime_locations_with_location_hierarchy_subquery = (
+    # Get the geo level n locations for the current survey
+    # and join in the locations array from the recursive query result
+    bottom_level_locations_with_location_hierarchy_subquery = (
         db.session.query(
-            Location.location_uid.label("location_uid"),
-            Location.location_name.label("location_name"),
+            location_hierarchy_query.c.location_uid.label("location_uid"),
             location_hierarchy_query.c.locations.label("locations"),
         )
-        .join(
-            location_hierarchy_query,
-            Location.location_uid == location_hierarchy_query.c.location_uid,
-            isouter=True,
-        )
-        .filter(Location.survey_uid == survey_uid)
-        .filter(Location.geo_level_uid == prime_geo_level_uid)
+        .filter(location_hierarchy_query.c.geo_level_uid == bottom_level_geo_level_uid)
         .subquery()
     )
 
-    return prime_locations_with_location_hierarchy_subquery
+    return bottom_level_locations_with_location_hierarchy_subquery
