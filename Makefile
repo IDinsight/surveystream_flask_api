@@ -52,6 +52,7 @@ run-unit-tests:
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
+	USE_DB_MIGRATIONS=false \
 	docker-compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
 	
 	@BACKEND_NAME=${BACKEND_NAME} \

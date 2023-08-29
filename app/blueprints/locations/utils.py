@@ -278,8 +278,8 @@ class LocationsUpload:
         # Replace empty strings with NaN
         locations_df = locations_df.replace("", np.nan)
 
-        # Shift the index by 1 so that the row numbers start at 1
-        locations_df.index += 1
+        # Shift the index by 2 so that the row numbers start at 2 (1 is reserved for the header row)
+        locations_df.index += 2
 
         # Rename the index column to row_number
         locations_df.index.name = "row_number"
@@ -316,7 +316,7 @@ class LocationsUpload:
 
         # The file should contain no blank fields
         blank_fields = [
-            f"'column': {self.locations_df.columns[j]}, 'row': {i + 1}"
+            f"'column': {self.locations_df.columns[j]}, 'row': {i + 2}"
             for i, j in zip(*np.where(pd.isnull(self.locations_df)))
         ]
         if len(blank_fields) > 0:

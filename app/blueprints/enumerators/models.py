@@ -185,3 +185,30 @@ class MonitorLocation(db.Model):
         db.PrimaryKeyConstraint("form_uid", "enumerator_uid", "location_uid"),
         {"schema": "webapp"},
     )
+
+
+class EnumeratorColumnConfig(db.Model):
+    """
+    SQLAlchemy data model for Enumerator column configuration
+    """
+
+    __tablename__ = "enumerator_column_config"
+
+    form_uid = db.Column(
+        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
+    )
+    column_name = db.Column(db.String(), nullable=False)
+    column_type = db.Column(
+        db.String(),
+        CheckConstraint(
+            "column_type IN ('personal_details','location','custom_fields')",
+            name="ck_enumerator_column_config_column_type",
+        ),
+        nullable=False,
+    )
+    bulk_editable = db.Column(db.Boolean(), nullable=False, default=False)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("form_uid", "column_name"),
+        {"schema": "webapp"},
+    )

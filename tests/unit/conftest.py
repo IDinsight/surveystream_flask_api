@@ -5,6 +5,7 @@ import yaml
 from werkzeug.http import parse_cookie
 from pathlib import Path
 import flask_migrate
+import os
 
 
 def pytest_collection_modifyitems(config, items):
@@ -131,7 +132,11 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
     filepath = Path(__file__).resolve().parent.parent
     with app.app_context():
         db.engine.execute("CREATE SCHEMA IF NOT EXISTS webapp;")
-        flask_migrate.upgrade(directory=f"{filepath}/migrations")
+
+        if os.getenv("USE_DB_MIGRATIONS") == "true":
+            flask_migrate.upgrade(directory=f"{filepath}/migrations")
+        else:
+            db.create_all()
 
         db.session.execute(
             open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
