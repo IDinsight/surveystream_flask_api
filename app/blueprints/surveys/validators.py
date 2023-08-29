@@ -4,13 +4,6 @@ from wtforms.validators import DataRequired, AnyOf
 from wtforms import ValidationError
 
 
-class GetSurveyQueryParamValidator(FlaskForm):
-    class Meta:
-        csrf = False
-
-    user_uid = IntegerField(validators=[DataRequired()])
-
-
 class CreateSurveyValidator(FlaskForm):
     survey_id = StringField(validators=[DataRequired()])
     survey_name = StringField(validators=[DataRequired()])
@@ -50,7 +43,6 @@ class CreateSurveyValidator(FlaskForm):
             )
         ]
     )
-    created_by_user_uid = IntegerField(validators=[DataRequired()])
 
     def validate_planned_end_date(form, planned_end_date):
         if planned_end_date.data < form.planned_start_date.data:

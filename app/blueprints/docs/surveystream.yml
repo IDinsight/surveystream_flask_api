@@ -492,20 +492,12 @@ paths:
           description: X-CSRF-Token required in header
         '422':
           description: Form errors
-  /surveys?user_uid={user_uid}:
+  /surveys:
     get:
       summary: Get surveys
       description: Returns information about surveys associated with the logged in user.
       tags:
         - Surveys
-      parameters:
-        - in: query
-          name: user_uid
-          schema:
-            type: integer
-          description: >-
-            Optional user ID to retrieve surveys for. If not provided, surveys
-            for the logged in user will be returned.
       responses:
         '200':
           description: Successful response
@@ -517,8 +509,7 @@ paths:
                   data:
                     type: array
                     description: >-
-                      An array of surveys belonging to the specified user or all
-                      users if no user_uid is provided.
+                      An array of surveys associated with the logged in user.
                     items:
                       type: object
                       properties:
@@ -579,7 +570,6 @@ paths:
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
-  /surveys:
     post:
       summary: Create a new survey
       tags:
@@ -652,10 +642,6 @@ paths:
                     - Draft
                     - Active
                     - Past
-                created_by_user_uid:
-                  type: integer
-                  example: 10669
-                  description: The user ID of the user who created the survey
               required:
                 - survey_id
                 - survey_name
@@ -666,7 +652,6 @@ paths:
                 - planned_end_date
                 - config_status
                 - state
-                - created_by_user_uid
       responses:
         '201':
           description: The survey was created successfully
