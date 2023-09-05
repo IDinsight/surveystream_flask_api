@@ -32,6 +32,15 @@ web-db-tunnel:
 	--document-name AWS-StartPortForwardingSession \
 	--parameters '{"portNumber":["5433"],"localPortNumber":["5432"]}'
 
+web-db-tunnel-staging:
+	# Open a connection to the remote db via the bastion host
+	@aws ssm start-session \
+	--target i-086ac1c9a4efc19d6 \
+	--profile surveystream_staging \
+	--region ap-south-1 \
+	--document-name AWS-StartPortForwardingSession \
+	--parameters '{"portNumber":["5433"],"localPortNumber":["5432"]}'
+
 container-up:
 	# Start a local version of the web app that uses the remote dev database
 	@BACKEND_NAME=${BACKEND_NAME} \

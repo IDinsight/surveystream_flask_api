@@ -88,6 +88,19 @@ class DevelopmentConfig(Config):
 
     PROTECT_DOCS_ENDPOINT = False
 
+class RemoteDevelopmentConfig(Config):
+    DEBUG = True
+
+    SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
+        Config.DB_USER,
+        Config.DB_PASS,
+        Config.DB_HOST,
+        5432,
+        Config.DB_NAME,
+    )
+
+    PROTECT_DOCS_ENDPOINT = False
+
 
 class ProfilingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
