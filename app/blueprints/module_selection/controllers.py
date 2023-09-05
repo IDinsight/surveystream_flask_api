@@ -47,7 +47,7 @@ def add_module_status():
             return jsonify({'success': False, 'message': 'Deselected module does not have "Not started" status'}), 422
 
     db.session.commit()
-    return jsonify({'success': True, 'message': 'Module status added successfully.'}), 200
+    return jsonify({'success': True, 'message': 'Module status added/updated successfully.'}), 200
 
 
 @module_selection_bp.route('/module-status/<int:survey_uid>', methods=['GET'])
