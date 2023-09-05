@@ -44,7 +44,7 @@ def add_module_status():
         if module_status.config_status == "Not Started":
             db.session.delete(module_status)
         else:
-            return jsonify({'success': False, 'message': 'Deselected module does not have "Not started" status'}), 422
+            return jsonify({'success': False, 'message': 'Only modules with "Not Started" status can be deselected.'}), 422
 
     db.session.commit()
     return jsonify({'success': True, 'message': 'Module status added/updated successfully.'}), 200
