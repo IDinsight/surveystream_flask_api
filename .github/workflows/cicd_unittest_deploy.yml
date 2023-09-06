@@ -74,9 +74,9 @@ jobs:
 
           echo "Task ID: $TASK_ID"
 
-          WAIT=$(aws ecs wait tasks-stopped --cluster surveystream-ecs-cluster --tasks $(TASK_ID) --region ${{ env.AWS_REGION }})
+          WAIT=$(aws ecs wait tasks-stopped --cluster surveystream-ecs-cluster --tasks $TASK_ID --region ${{ env.AWS_REGION }})
 
-          EXIT_CODE=$(aws ecs describe-tasks --cluster surveystream-ecs-cluster --tasks $(TASK_ID) --region ${{ env.AWS_REGION }}| jq -r '.tasks[0].containers[0].exitCode' )
+          EXIT_CODE=$(aws ecs describe-tasks --cluster surveystream-ecs-cluster --tasks $TASK_ID --region ${{ env.AWS_REGION }} --query tasks[0].containers[0].exitCode --output text  )
 
           if [ $(EXIT_CODE) -eq 0 ]; then\
             echo "DB is up to date";\
