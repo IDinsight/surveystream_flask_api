@@ -66,6 +66,7 @@ jobs:
       #     image: ${{ steps.build-image.outputs.image }}
       - name: Check Db
         id: check-db
+        shell: bash
         env:
           CONTAINER_NAME: api
         run: |
