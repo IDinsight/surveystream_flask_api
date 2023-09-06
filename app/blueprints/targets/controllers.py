@@ -41,6 +41,7 @@ import binascii
 
 
 @targets_bp.route("", methods=["POST"])
+@logged_in_active_user_required
 def upload_targets():
     """
     Method to validate the uploaded targets file and save it to the database
@@ -331,6 +332,7 @@ def upload_targets():
 
 
 @targets_bp.route("", methods=["GET"])
+@logged_in_active_user_required
 def get_targets():
     """
     Method to retrieve the targets information from the database
@@ -509,6 +511,7 @@ def get_targets():
 
 
 @targets_bp.route("/<int:target_uid>", methods=["GET"])
+@logged_in_active_user_required
 def get_target(target_uid):
     """
     Method to retrieve a target from the database
@@ -622,6 +625,7 @@ def get_target(target_uid):
 
 
 @targets_bp.route("/<int:target_uid>", methods=["PUT"])
+@logged_in_active_user_required
 def update_target(target_uid):
     """
     Method to update a target in the database
@@ -746,6 +750,7 @@ def update_target(target_uid):
 
 
 @targets_bp.route("/<int:target_uid>", methods=["DELETE"])
+@logged_in_active_user_required
 def delete_target(target_uid):
     """
     Method to delete a target from the database
@@ -767,6 +772,7 @@ def delete_target(target_uid):
 
 # Patch method to bulk update enumerator details
 @targets_bp.route("", methods=["PATCH"])
+@logged_in_active_user_required
 def bulk_update_targets():
     """
     Method to bulk update enumerators
@@ -966,6 +972,7 @@ def bulk_update_targets():
 
 
 @targets_bp.route("/column-config", methods=["PUT"])
+@logged_in_active_user_required
 def update_target_column_config():
     """
     Method to update targets' column configuration
@@ -1047,6 +1054,7 @@ def update_target_column_config():
 
 
 @targets_bp.route("/column-config", methods=["GET"])
+@logged_in_active_user_required
 def get_target_column_config():
     """
     Method to get targets' column configuration
