@@ -78,7 +78,7 @@ jobs:
 
           EXIT_CODE=$(aws ecs describe-tasks --cluster surveystream-ecs-cluster --tasks $TASK_ID --region ${{ env.AWS_REGION }} --query tasks[0].containers[0].exitCode --output text  )
 
-          if [ $(EXIT_CODE) -eq 0 ]; then\
+          if [ $EXIT_CODE -eq 0 ]; then\
             echo "DB is up to date";\
             exit 0;\
           else\
