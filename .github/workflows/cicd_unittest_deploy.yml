@@ -72,12 +72,12 @@ jobs:
         run: |
           TASK_ID=$(aws ecs run-task --cluster surveystream-ecs-cluster --launch-type FARGATE --task-definition update-db --network-configuration "awsvpcConfiguration={subnets=[subnet-0d2bc255f8695dbb2,subnet-0ea110bb20ce8e7a7],securityGroups=[sg-063bd5346765c1b9f]}" --region ${{ env.AWS_REGION }} --query tasks[0].taskArn --output text )
 
-          echo "Task ID: $TASK_ID"
+          echo "Waiting for task to complete..."
 
           WAIT=$(aws ecs wait tasks-stopped --cluster surveystream-ecs-cluster --tasks $TASK_ID --region ${{ env.AWS_REGION }})
 
           EXIT_CODE=$(aws ecs describe-tasks --cluster surveystream-ecs-cluster --tasks $TASK_ID --region ${{ env.AWS_REGION }} --query tasks[0].containers[0].exitCode --output text  )
-
+          echo "Exit code: $EXIT_CODE"
           if [ $EXIT_CODE -eq 0 ]; then\
             echo "DB is up to date";\
             exit 0;\
