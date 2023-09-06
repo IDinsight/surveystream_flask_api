@@ -51,6 +51,38 @@ jobs:
           docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+      - name: Task definition download
+        id: download-task-def
+        env:
+          ecs_task_def_name: update-db
+        run: |
+          aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: api
+          image: ${{ steps.build-image.outputs.image }}
+      - name: Check Db
+        id: check-db
+        env:
+          CONTAINER_NAME: api
+        run: |
+          $(eval TASK_ID=$(shell aws ecs run-task --cluster surveystream-ecs-cluster --launch-type FARGATE --task-definition bupdate-db --network-configuration "awsvpcConfiguration={subnets=[subnet-0d2bc255f8695dbb2,subnet-0ea110bb20ce8e7a7],securityGroups=[sg-063bd5346765c1b9f]}" ]}' --region ${{ env.AWS_REGION }}\
+          | jq -r '.tasks[0].taskArn' ))\
+
+          $(eval WAIT=$(shell aws ecs wait tasks-stopped --cluster surveystream-ecs-cluster --tasks $${TASK_ID} --region ${{ env.AWS_REGION }}))\
+
+          $(eval EXIT_CODE=$(shell aws ecs describe-tasks --cluster surveystream-ecs-cluster --tasks $${TASK_ID} --region ${{ env.AWS_REGION }}| jq -r '.tasks[0].containers[0].exitCode' ))\
+
+          if [ $${EXIT_CODE} -eq 0 ]; then\
+            echo "DB is up to date";\
+            exit 0;\
+          else\
+            echo "DB is not up to date";\
+            exit 1;\
+          fi
 
   # UnitTest:
   #   runs-on: ubuntu-latest
