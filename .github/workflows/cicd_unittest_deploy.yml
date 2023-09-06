@@ -70,11 +70,11 @@ jobs:
         env:
           CONTAINER_NAME: api
         run: |
-          echo "TASK_ID=$(aws ecs run-task --cluster surveystream-ecs-cluster --launch-type FARGATE --task-definition update-db --network-configuration "awsvpcConfiguration={subnets=[subnet-0d2bc255f8695dbb2,subnet-0ea110bb20ce8e7a7],securityGroups=[sg-063bd5346765c1b9f]}" --region ${{ env.AWS_REGION }} | jq -r '.tasks[0].taskArn' )" >> $TASK_ID
+          $(eval TASK_ID=$(aws ecs run-task --cluster surveystream-ecs-cluster --launch-type FARGATE --task-definition update-db --network-configuration "awsvpcConfiguration={subnets=[subnet-0d2bc255f8695dbb2,subnet-0ea110bb20ce8e7a7],securityGroups=[sg-063bd5346765c1b9f]}" --region ${{ env.AWS_REGION }} | jq -r '.tasks[0].taskArn' ))
           echo "Task ID: $${TASK_ID}"
-          WAIT=$(aws ecs wait tasks-stopped --cluster surveystream-ecs-cluster --tasks $${TASK_ID} --region ${{ env.AWS_REGION }})
+          $(eval WAIT=$(aws ecs wait tasks-stopped --cluster surveystream-ecs-cluster --tasks $${TASK_ID} --region ${{ env.AWS_REGION }}))
 
-          EXIT_CODE=$(aws ecs describe-tasks --cluster surveystream-ecs-cluster --tasks $${TASK_ID} --region ${{ env.AWS_REGION }}| jq -r '.tasks[0].containers[0].exitCode')
+          $(eval EXIT_CODE=$(aws ecs describe-tasks --cluster surveystream-ecs-cluster --tasks $${TASK_ID} --region ${{ env.AWS_REGION }}| jq -r '.tasks[0].containers[0].exitCode' )) 
 
           if [ $${EXIT_CODE} -eq 0 ]; then\
             echo "DB is up to date";\
