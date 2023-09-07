@@ -39,13 +39,13 @@ jobs:
           role-session-name: testingrolesession
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Check DB Migration
-        run: docker-compose -f docker-compose/docker-compose.db-check.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
-
       - name: Configure output directory
         run: |
           mkdir -p /tmp/coverage
           sudo chmod 777 /tmp/coverage
+
+      - name: Check DB Migration
+        run: docker-compose -f docker-compose/docker-compose.db-check.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
 
       - name: Run unit tests
         run: docker-compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
