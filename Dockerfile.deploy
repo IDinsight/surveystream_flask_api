@@ -1,0 +1,50 @@
+# DESCRIPTION: Dockerfile for surveystream_backend
+# BUILD: make image
+
+FROM python:3.9.6-slim-bullseye
+LABEL maintainer="IDinsight"
+LABEL org.opencontainers.image.source="https://github.com/IDinsight/surveystream_flask_api"
+
+ARG NAME
+ARG PORT
+ARG HOME_DIR=/usr/src/${NAME}
+
+# Install psycopg2 dependencies
+# This is the proper way to do it; psycopg2-binary (Python package that doesn't
+# rely on dependencies) is practical for development and testing
+# but not suitable for production
+RUN apt-get update
+RUN apt-get -y install python3-dev postgresql postgresql-contrib python3-psycopg2 libpq-dev gcc g++ jq wget
+
+ARG DOCKERIZE_VERSION=v0.6.0
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz \
+    && rm dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz
+
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir awscli
+
+COPY requirements.txt /requirements.txt
+RUN pip install -r /requirements.txt
+
+RUN useradd -ms /bin/bash -d ${HOME_DIR} container_user
+RUN chown -R container_user: ${HOME_DIR}
+
+WORKDIR ${HOME_DIR}
+COPY app ${HOME_DIR}/app
+COPY tests/unit ${HOME_DIR}/tests
+COPY profiling ${HOME_DIR}/profiling
+COPY migrations ${HOME_DIR}/migrations
+COPY scripts/postgres {HOME_DIR}/scripts
+COPY scripts/entrypoint.sh /entrypoint.sh
+COPY scripts/bootstrap.sh /bootstrap.sh
+
+VOLUME ${HOME_DIR}/app
+
+ENV PORT ${PORT}
+ENV PYTHONPATH "${PYTHONPATH}:${HOME_DIR}"
+EXPOSE ${PORT}
+
+USER container_user
+
+ENTRYPOINT ["/bootstrap.sh", "/entrypoint_upgrade.sh"]

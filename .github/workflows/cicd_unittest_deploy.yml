@@ -32,15 +32,15 @@ jobs:
       - name: Build the Docker image
         run: docker build -f Dockerfile.api --rm --build-arg NAME=$BACKEND_NAME --build-arg PORT=$BACKEND_PORT --platform=linux/amd64 -t $BACKEND_NAME:$VERSION .
 
-      - name: Check DB Migration
-        run: docker-compose -f docker-compose/docker-compose.db-check.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: "arn:aws:iam::${{ env.DEV_ACCOUNT }}:role/github-actions-role-flask-unittest"
           role-session-name: testingrolesession
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check DB Migration
+        run: docker-compose -f docker-compose/docker-compose.db-check.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
 
       - name: Configure output directory
         run: |
@@ -169,7 +169,7 @@ jobs:
           IMAGE_TAG: backend
 
         run: |
-          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
+          docker build -f Dockerfile.deploy --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
           docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -234,7 +234,7 @@ jobs:
           IMAGE_TAG: backend
 
         run: |
-          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} . 
+          docker build -f Dockerfile.deploy --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} . 
           docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
