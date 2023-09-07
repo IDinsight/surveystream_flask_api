@@ -35,7 +35,7 @@ COPY app ${HOME_DIR}/app
 COPY tests/unit ${HOME_DIR}/tests
 COPY profiling ${HOME_DIR}/profiling
 COPY migrations ${HOME_DIR}/migrations
-
+COPY scripts/postgres {HOME_DIR}/scripts
 COPY scripts/entrypoint.sh /entrypoint.sh
 COPY scripts/bootstrap.sh /bootstrap.sh
 

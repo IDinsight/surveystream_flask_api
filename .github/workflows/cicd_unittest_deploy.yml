@@ -7,15 +7,61 @@ on:
       - dev
       - staging
       - production
-      - SS-*
 
   pull_request:
     branches:
       - "*"
 
 jobs:
-  TestDB:
+  UnitTest:
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v1.0.2
+        with:
+          path: ./.github/workflows
+          mode: variables
+
+      - name: Build the Docker image
+        run: docker build -f Dockerfile.api --rm --build-arg NAME=$BACKEND_NAME --build-arg PORT=$BACKEND_PORT --platform=linux/amd64 -t $BACKEND_NAME:$VERSION .
+
+      - name: Check DB Migration
+        run: docker-compose -f docker-compose/docker-compose.db-check.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: "arn:aws:iam::${{ env.DEV_ACCOUNT }}:role/github-actions-role-flask-unittest"
+          role-session-name: testingrolesession
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure output directory
+        run: |
+          mkdir -p /tmp/coverage
+          chmod 777 /tmp/coverage
+
+      - name: Run unit tests
+        run: docker-compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
+
+      - name: Send coverage report to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: /tmp/coverage/coverage.lcov
+
+  UpdateDB:
+    if: github.event_name == 'push' &&  github.ref == 'refs/heads/dev'
+    name: Update DB
+    runs-on: ubuntu-latest
+    needs: UnitTest
+
     permissions:
       id-token: write
       contents: read
@@ -35,37 +81,37 @@ jobs:
           role-session-name: testingrolesession
           aws-region: ${{ env.AWS_REGION }}
 
-      # - name: Login to Amazon ECR
-      #   id: login-ecr
-      #   uses: aws-actions/amazon-ecr-login@v1
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-      # - name: Build, tag, and push image to Amazon ECR
-      #   id: build-image
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #     ECR_REPOSITORY: web-callisto-ecr-repository
-      #     IMAGE_TAG: PreMigration
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: web-callisto-ecr-repository
+          IMAGE_TAG: PreMigration
 
-      #   run: |
-      #     docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
-      #     docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-      #     docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-      #     echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-      # - name: Task definition download
-      #   id: download-task-def
-      #   env:
-      #     ecs_task_def_name: update-db
-      #   run: |
-      #     aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
-      # - name: Fill in the new image ID in the Amazon ECS task definition
-      #   id: task-def
-      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
-      #   with:
-      #     task-definition: task-definition.json
-      #     container-name: api
-      #     image: ${{ steps.build-image.outputs.image }}
-      - name: Check Db
-        id: check-db
+        run: |
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
+          docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+      - name: Task definition download
+        id: download-task-def
+        env:
+          ecs_task_def_name: update-db
+        run: |
+          aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: api
+          image: ${{ steps.build-image.outputs.image }}
+      - name: Update Db
+        id: update-db
         shell: bash
         env:
           CONTAINER_NAME: api
@@ -86,107 +132,132 @@ jobs:
             exit 1;\
           fi
 
-  # UnitTest:
-  #   runs-on: ubuntu-latest
+  Deploy-Staging:
+    if: github.event_name == 'push' &&  github.ref == 'refs/heads/staging'
+    name: Deploy Callisto Staging
+    runs-on: ubuntu-latest
+    needs: UnitTest
 
-  #   permissions:
-  #     id-token: write
-  #     contents: read
+    permissions:
+      id-token: write
+      contents: read
 
-  #   steps:
-  #     - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v3
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v1.0.2
+        with:
+          path: ./.github/workflows
+          mode: variables
 
-  #     - name: Load .env file
-  #       uses: xom9ikk/dotenv@v1.0.2
-  #       with:
-  #         path: ./.github/workflows
-  #         mode: variables
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: "arn:aws:iam::${{ env.STAGING_ACCOUNT }}:role/github-actions-role-backend"
+          role-session-name: stagingrolesession
+          aws-region: ${{ env.AWS_REGION }}
 
-  #     - name: Build the Docker image
-  #       run: docker build -f Dockerfile.api --rm --build-arg NAME=$BACKEND_NAME --build-arg PORT=$BACKEND_PORT --platform=linux/amd64 -t $BACKEND_NAME:$VERSION .
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v2
-  #       with:
-  #         role-to-assume: "arn:aws:iam::${{ env.DEV_ACCOUNT }}:role/github-actions-role-flask-unittest"
-  #         role-session-name: testingrolesession
-  #         aws-region: ${{ env.AWS_REGION }}
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: web-callisto-ecr-repository
+          IMAGE_TAG: backend
 
-  #     - name: Configure output directory
-  #       run: |
-  #         mkdir -p /tmp/coverage
-  #         chmod 777 /tmp/coverage
+        run: |
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
+          docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  #     - name: Run unit tests
-  #       run: docker-compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
+      - name: Task definition download
+        id: download-task-def
+        env:
+          ecs_task_def_name: backend-task
+        run: |
+          aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
 
-  #     - name: Send coverage report to Coveralls
-  #       uses: coverallsapp/github-action@v2
-  #       with:
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
-  #         file: /tmp/coverage/coverage.lcov
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: api
+          image: ${{ steps.build-image.outputs.image }}
 
-  # Deploy-Staging:
-  #   if: github.event_name == 'push' &&  github.ref == 'refs/heads/staging'
-  #   name: Deploy Callisto Staging
-  #   runs-on: ubuntu-latest
-  #   needs: UnitTest
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: backend
+          cluster: web-callisto-cluster
+          wait-for-service-stability: true
 
-  #   permissions:
-  #     id-token: write
-  #     contents: read
+  Deploy-Production:
+    if: github.event_name == 'push' &&  github.ref == 'refs/heads/prod'
+    name: Deploy Callisto Production
+    runs-on: ubuntu-latest
+    needs: UnitTest
 
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Load .env file
-  #       uses: xom9ikk/dotenv@v1.0.2
-  #       with:
-  #         path: ./.github/workflows
-  #         mode: variables
+    permissions:
+      id-token: write
+      contents: read
 
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         role-to-assume: "arn:aws:iam::${{ env.STAGING_ACCOUNT }}:role/github-actions-role-backend"
-  #         role-session-name: stagingrolesession
-  #         aws-region: ${{ env.AWS_REGION }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v1.0.2
+        with:
+          path: ./.github/workflows
+          mode: variables
 
-  #     - name: Login to Amazon ECR
-  #       id: login-ecr
-  #       uses: aws-actions/amazon-ecr-login@v1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: "arn:aws:iam::${{ env.PROD_ACCOUNT }}:role/github-actions-role-backend"
+          role-session-name: stagingrolesession
+          aws-region: ${{ env.AWS_REGION }}
 
-  #     - name: Build, tag, and push image to Amazon ECR
-  #       id: build-image
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #         ECR_REPOSITORY: web-callisto-ecr-repository
-  #         IMAGE_TAG: backend
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-  #       run: |
-  #         docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
-  #         docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-  #         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: web-callisto-ecr-repository
+          IMAGE_TAG: backend
 
-  #     - name: Task definition download
-  #       id: download-task-def
-  #       env:
-  #         ecs_task_def_name: backend-task
-  #       run: |
-  #         aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
+        run: |
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} . 
+          docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  #     - name: Fill in the new image ID in the Amazon ECS task definition
-  #       id: task-def
-  #       uses: aws-actions/amazon-ecs-render-task-definition@v1
-  #       with:
-  #         task-definition: task-definition.json
-  #         container-name: api
-  #         image: ${{ steps.build-image.outputs.image }}
+      - name: Task definition download
+        id: download-task-def
+        env:
+          ecs_task_def_name: backend-task
+        run: |
+          aws ecs describe-task-definition --task-definition "$ecs_task_def_name" --query taskDefinition > task-definition.json
 
-  #     - name: Deploy Amazon ECS task definition
-  #       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-  #       with:
-  #         task-definition: ${{ steps.task-def.outputs.task-definition }}
-  #         service: backend
-  #         cluster: web-callisto-cluster
-  #         wait-for-service-stability: true
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: api
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: backend
+          cluster: web-callisto-cluster
+          wait-for-service-stability: true
