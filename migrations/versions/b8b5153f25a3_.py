@@ -71,7 +71,7 @@ def upgrade():
             "surveying_method",
             sa.String(length=16),
             sa.CheckConstraint(
-                "surveying_method IN ('phone', 'in-person')",
+                "surveying_method IN ('phone', 'in-person', 'mixed-mode')",
                 name="ck_surveys_surveying_method",
             ),
             nullable=False,
