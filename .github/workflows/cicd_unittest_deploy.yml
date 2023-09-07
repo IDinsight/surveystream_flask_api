@@ -45,7 +45,7 @@ jobs:
       - name: Configure output directory
         run: |
           mkdir -p /tmp/coverage
-          chmod 777 /tmp/coverage
+          sudo chmod 777 /tmp/coverage
 
       - name: Run unit tests
         run: docker-compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
@@ -97,6 +97,7 @@ jobs:
           docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
       - name: Task definition download
         id: download-task-def
         env:
