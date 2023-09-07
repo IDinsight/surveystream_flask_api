@@ -20,6 +20,7 @@ services:
       - PYTHONUNBUFFERED=0
       - AWS_REGION=ap-south-1
       - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
+      - USE_DB_MIGRATIONS=${USE_DB_MIGRATIONS}
     volumes:
       - /tmp/coverage:/usr/src/${BACKEND_NAME}/tests/output
     depends_on:
@@ -31,7 +32,7 @@ services:
     - |
        . /bootstrap.sh
        dockerize -wait tcp://postgres:5433 -timeout 15m -wait-retry-interval 10s 
-       coverage run -m pytest tests -m "not appdata" -vv
+       coverage run -m pytest tests -vv
        coverage lcov --include="/usr/src/${BACKEND_NAME}/app/*" -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
        
       

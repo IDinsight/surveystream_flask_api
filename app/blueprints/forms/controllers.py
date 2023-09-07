@@ -423,132 +423,150 @@ def ingest_scto_form_definition(form_uid):
         choices_tab_columns = scto_form_definition["choicesRowsAndColumns"][0]
         settings_tab_columns = scto_form_definition["settingsRowsAndColumns"][0]
         unique_list_names = []
-        try:
-            # Process the settings tab of the form definition
-            settings_dict = dict(
-                zip(
-                    settings_tab_columns,
-                    scto_form_definition["settingsRowsAndColumns"][1:][0],
-                )
+
+        # Process the settings tab of the form definition
+        settings_dict = dict(
+            zip(
+                settings_tab_columns,
+                scto_form_definition["settingsRowsAndColumns"][1:][0],
             )
-            scto_settings = SCTOFormSettings(
-                form_uid=form_uid,
-                form_title=settings_dict["form_title"],
-                version=scto_form_version,
-                public_key=settings_dict["public_key"],
-                submission_url=settings_dict["submission_url"],
-                default_language=settings_dict["default_language"],
-            )
+        )
+        # return jsonify(settings_dict), 422
+        scto_settings = SCTOFormSettings(
+            form_uid=form_uid,
+            form_title=settings_dict["form_title"],
+            version=scto_form_version,
+            public_key=settings_dict["public_key"],
+            submission_url=settings_dict["submission_url"],
+            default_language=settings_dict["default_language"],
+        )
 
-            db.session.add(scto_settings)
+        db.session.add(scto_settings)
 
-            # Process the lists and choices from teh `choices` tab of the form definition
-            for row in scto_form_definition["choicesRowsAndColumns"][1:]:
-                choices_dict = dict(zip(choices_tab_columns, row))
-                if choices_dict["list_name"].strip() != "":
-                    if choices_dict["list_name"] not in unique_list_names:
-                        # Add the choice list to the database
-                        scto_choice_list = SCTOChoiceList(
-                            form_uid=form_uid,
-                            list_name=choices_dict["list_name"],
-                        )
-                        db.session.add(scto_choice_list)
-                        db.session.flush()
-
-                        unique_list_names.append(choices_dict["list_name"])
-
-                    choice_labels = [
-                        col
-                        for col in choices_tab_columns
-                        if col.split(":")[0].lower() == "label"
-                    ]
-
-                    for choice_label in choice_labels:
-                        # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
-                        language = "default"
-                        if len(choice_label.split(":")) > 1:
-                            language = choice_label.split(":")[1]
-
-                        # Add the choice label to the database
-                        scto_choice_label = SCTOChoiceLabel(
-                            list_uid=scto_choice_list.list_uid,
-                            choice_value=choices_dict["value"],
-                            label=choices_dict[choice_label],
-                            language=language,
-                        )
-                        db.session.add(scto_choice_label)
-
-            # Loop through the rows of the `survey` tab of the form definition
-            for row in scto_form_definition["fieldsRowsAndColumns"][1:]:
-                questions_dict = dict(zip(survey_tab_columns, row))
-                if questions_dict["name"].strip() != "":
-                    # There can be nested repeat groups, so we need to keep track of the depth in order to determine if a question is part of a repeat group
-                    repeat_group_depth = 0
-                    # Handle the questions
-                    list_uid = None
-                    list_name = None
-                    is_repeat_group = False
-
-                    # Get the choice name for select questions
-                    # This will be used to link to the choice options table
-                    if questions_dict["type"].strip().lower().split(" ")[0] in [
-                        "select_one",
-                        "select_multiple",
-                    ]:
-                        list_name = questions_dict["type"].strip().split(" ")[1]
-                        list_uid = (
-                            SCTOChoiceList.query.filter_by(
-                                form_uid=form_uid, list_name=list_name
-                            )
-                            .first()
-                            .list_uid
-                        )
-
-                    # Check if a repeat group is starting
-                    if questions_dict["type"].strip().lower() == "begin repeat":
-                        repeat_group_depth += 1
-
-                    if repeat_group_depth > 0:
-                        is_repeat_group = True
-
-                    # Add the question to the database
-                    scto_question = SCTOQuestion(
+        # Process the lists and choices from the `choices` tab of the form definition
+        for row in scto_form_definition["choicesRowsAndColumns"][1:]:
+            choices_dict = dict(zip(choices_tab_columns, row))
+            if choices_dict["list_name"].strip() != "":
+                if choices_dict["list_name"] not in unique_list_names:
+                    # Add the choice list to the database
+                    scto_choice_list = SCTOChoiceList(
                         form_uid=form_uid,
-                        question_name=questions_dict["name"],
-                        question_type=questions_dict["type"].strip().lower(),
-                        list_uid=list_uid,
-                        is_repeat_group=is_repeat_group,
+                        list_name=choices_dict["list_name"],
                     )
-                    db.session.add(scto_question)
-                    db.session.flush()
-
-                    # Check if a repeat group is ending
-                    if questions_dict["type"].strip().lower() == "end repeat":
-                        repeat_group_depth -= 1
-
-                    # Handle the question labels
-                    question_labels = [
-                        col
-                        for col in survey_tab_columns
-                        if col.split(":")[0].lower() == "label"
-                    ]
-
-                    for question_label in question_labels:
-                        # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
-                        language = "default"
-                        if len(question_label.split(":")) > 1:
-                            language = question_label.split(":")[1]
-
-                        # Add the question label to the database
-                        scto_question_label = SCTOQuestionLabel(
-                            question_uid=scto_question.question_uid,
-                            label=questions_dict[question_label],
-                            language=language,
+                    db.session.add(scto_choice_list)
+                    try:
+                        db.session.flush()
+                    except IntegrityError as e:
+                        db.session.rollback()
+                        return (
+                            jsonify(
+                                {
+                                    "error": "SurveyCTO form definition contains duplicate choice list entities"
+                                }
+                            ),
+                            500,
                         )
-                        db.session.add(scto_question_label)
 
+                    unique_list_names.append(choices_dict["list_name"])
+
+                choice_labels = [
+                    col
+                    for col in choices_tab_columns
+                    if col.split(":")[0].lower() == "label"
+                ]
+
+                for choice_label in choice_labels:
+                    # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
+                    language = "default"
+                    if len(choice_label.split(":")) > 1:
+                        language = choice_label.split(":")[1]
+
+                    # Add the choice label to the database
+                    scto_choice_label = SCTOChoiceLabel(
+                        list_uid=scto_choice_list.list_uid,
+                        choice_value=choices_dict["value"],
+                        label=choices_dict[choice_label],
+                        language=language,
+                    )
+                    db.session.add(scto_choice_label)
+
+        # Loop through the rows of the `survey` tab of the form definition
+        for row in scto_form_definition["fieldsRowsAndColumns"][1:]:
+            questions_dict = dict(zip(survey_tab_columns, row))
+            if questions_dict["name"].strip() != "":
+                # There can be nested repeat groups, so we need to keep track of the depth in order to determine if a question is part of a repeat group
+                repeat_group_depth = 0
+                # Handle the questions
+                list_uid = None
+                list_name = None
+                is_repeat_group = False
+
+                # Get the choice name for select questions
+                # This will be used to link to the choice options table
+                if questions_dict["type"].strip().lower().split(" ")[0] in [
+                    "select_one",
+                    "select_multiple",
+                ]:
+                    list_name = questions_dict["type"].strip().split(" ")[1]
+                    list_uid = (
+                        SCTOChoiceList.query.filter_by(
+                            form_uid=form_uid, list_name=list_name
+                        )
+                        .first()
+                        .list_uid
+                    )
+
+                # Check if a repeat group is starting
+                if questions_dict["type"].strip().lower() == "begin repeat":
+                    repeat_group_depth += 1
+
+                if repeat_group_depth > 0:
+                    is_repeat_group = True
+
+                # Add the question to the database
+                scto_question = SCTOQuestion(
+                    form_uid=form_uid,
+                    question_name=questions_dict["name"],
+                    question_type=questions_dict["type"].strip().lower(),
+                    list_uid=list_uid,
+                    is_repeat_group=is_repeat_group,
+                )
+                db.session.add(scto_question)
+
+                try:
+                    db.session.flush()
+                except IntegrityError as e:
+                    db.session.rollback()
+                    return (jsonify({"error": str(e)}),)
+
+                # Check if a repeat group is ending
+                if questions_dict["type"].strip().lower() == "end repeat":
+                    repeat_group_depth -= 1
+
+                # Handle the question labels
+                question_labels = [
+                    col
+                    for col in survey_tab_columns
+                    if col.split(":")[0].lower() == "label"
+                ]
+
+                for question_label in question_labels:
+                    # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
+                    language = "default"
+                    if len(question_label.split(":")) > 1:
+                        language = question_label.split(":")[1]
+
+                    # Add the question label to the database
+                    scto_question_label = SCTOQuestionLabel(
+                        question_uid=scto_question.question_uid,
+                        label=questions_dict[question_label],
+                        language=language,
+                    )
+                    db.session.add(scto_question_label)
+
+        try:
             db.session.commit()
-        except IntegrityError:
+        except IntegrityError as e:
             db.session.rollback()
             return (
                 jsonify(

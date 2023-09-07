@@ -26,6 +26,8 @@ def add_module_status():
 
     survey_uid = validator.survey_uid.data
     modules = validator.modules.data
+    existing_modules_status = ModuleStatus.query.filter_by(survey_uid=survey_uid).all()
+    deselected_modules_status = filter(lambda module: str(module.module_id) not in modules, existing_modules_status)
 
     for module_id in modules:
         module = Module.query.get(module_id)
@@ -37,8 +39,15 @@ def add_module_status():
             module_status = ModuleStatus(survey_uid=survey_uid, module_id=module_id, config_status='Not Started')
             db.session.add(module_status)
 
+    # Removing the modules if user deselect the card
+    for module_status in list(deselected_modules_status):
+        if module_status.config_status == "Not Started":
+            db.session.delete(module_status)
+        else:
+            return jsonify({'success': False, 'message': 'Only modules with "Not Started" status can be deselected.'}), 422
+
     db.session.commit()
-    return jsonify({'success': True, 'message': 'Module status added successfully.'}), 200
+    return jsonify({'success': True, 'message': 'Module status added/updated successfully.'}), 200
 
 
 @module_selection_bp.route('/module-status/<int:survey_uid>', methods=['GET'])

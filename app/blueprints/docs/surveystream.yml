@@ -492,20 +492,12 @@ paths:
           description: X-CSRF-Token required in header
         '422':
           description: Form errors
-  /surveys?user_uid={user_uid}:
+  /surveys:
     get:
       summary: Get surveys
       description: Returns information about surveys associated with the logged in user.
       tags:
         - Surveys
-      parameters:
-        - in: query
-          name: user_uid
-          schema:
-            type: integer
-          description: >-
-            Optional user ID to retrieve surveys for. If not provided, surveys
-            for the logged in user will be returned.
       responses:
         '200':
           description: Successful response
@@ -517,8 +509,7 @@ paths:
                   data:
                     type: array
                     description: >-
-                      An array of surveys belonging to the specified user or all
-                      users if no user_uid is provided.
+                      An array of surveys associated with the logged in user.
                     items:
                       type: object
                       properties:
@@ -579,7 +570,6 @@ paths:
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
-  /surveys:
     post:
       summary: Create a new survey
       tags:
@@ -652,10 +642,6 @@ paths:
                     - Draft
                     - Active
                     - Past
-                created_by_user_uid:
-                  type: integer
-                  example: 10669
-                  description: The user ID of the user who created the survey
               required:
                 - survey_id
                 - survey_name
@@ -666,7 +652,6 @@ paths:
                 - planned_end_date
                 - config_status
                 - state
-                - created_by_user_uid
       responses:
         '201':
           description: The survey was created successfully
@@ -1924,132 +1909,405 @@ paths:
           schema:
             type: integer
           description: Unique ID of the form
+          required: true
+        - in: query
+          name: enumerator_type
+          schema:
+            type: string
+            enum: [monitor, supervisor]
+          description: Type of enumerators to return
+          required: false
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
+                type: object
+                properties:
+                  success: 
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        enumerator_id:
+                          type: string
+                          description: The ID of the enumerator
+                        enumerator_uid:
+                          type: integer
+                          description: The unique ID of the enumerator
+                        name:
+                          type: string
+                          description: The name of the enumerator
+                        language:
+                          type: string
+                          description: The primary language of the enumerator
+                        gender:
+                          type: string
+                          description: The gender of the enumerator
+                        home_address:
+                          type: string
+                          description: The home address of the enumerator
+                        mobile_primary:
+                          type: string
+                          description: The primary mobile number of the enumerator
+                        custom_fields:
+                          type: object
+                          description: >-
+                            The custom fields of the enumerator. Each key is the
+                            user-defined label of the custom field and each value is the
+                            value of the custom field.
+                        form_uid:
+                          type: integer
+                          description: The unique ID of the form that the enumerator was uploaded to
+                        surveyor_status:
+                          type: string
+                          enum:
+                            - Active
+                            - Temp. inactive
+                            - Dropout
+                          description: The working status of the enumerator if they are a surveyor on the form
+                        surveyor_locations:
+                          type: array
+                          description: >-
+                            The working geography of the enumerator if they are a surveyor on the form. 
+                            Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                            _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
+                            to lowest level location down to the level of the prime geo level the surveyor is mapped to.
+                            Will be null if the surveyor is not mapped to a prime geo level.
+                          items:
+                            type: object
+                            properties:
+                              location_id:
+                                type: integer
+                                description: The user-defined unique ID of the location
+                              location_name:
+                                type: string
+                                description: The name of the location
+                              geo_level_name:
+                                type: string
+                                description: The name of the geo level
+                        monitor_status:
+                          type: string
+                          enum:
+                            - Active
+                            - Temp. inactive
+                            - Dropout
+                          description: The working status of the enumerator if they are a monitor on the form
+                        monitor_locations:
+                          type: array
+                          description: >-
+                            The working geography of the enumerator if they are a monitor on the form. 
+                            Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                            _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
+                            to lowest level location down to the level of the prime geo level the monitor is mapped to.
+                            Will be null if the monitor is not mapped to a prime geo level.
+                          items:
+                            type: object
+                            properties:
+                              location_id:
+                                type: integer
+                                description: The user-defined unique ID of the location
+                              location_name:
+                                type: string
+                                description: The name of the location
+                              geo_level_name:
+                                type: string
+                                description: The name of the geo level
+        '400':
+          description: Form ID is required
+    post:
+      summary: Upload a csv of new enumerators
+      description: >
+        Upload a csv of new enumerators to be added to the given form
+      tags:
+        - Enumerators
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                column_mapping:
                   type: object
+                  description: >-
+                    An object mapping the column names in the csv to the
+                    corresponding enumerator properties
                   properties:
                     enumerator_id:
                       type: string
-                      description: The ID of the enumerator
-                    enumerator_uid:
-                      type: integer
-                      description: The unique ID of the enumerator
+                      description: The column name of the enumerator ID
+                    enumerator_type:
+                      type: string
+                      description: The column name of the enumerator type
                     name:
                       type: string
-                      description: The name of the enumerator
+                      description: The column name of the enumerator's name
+                    email:
+                      type: string
+                      description: The column name of the enumerator's email
+                    mobile_primary:
+                      type: string
+                      description: The column name of the enumerator's primary mobile number
                     language:
                       type: string
-                      description: The primary language of the enumerator
-                    gender:
-                      type: string
-                      description: The gender of the enumerator
-                    home_state:
-                      type: string
-                      description: The home state of the enumerator
-                    home_district:
-                      type: string
-                      description: The home district of the enumerator
-                    home_block:
-                      type: string
-                      description: The home block of the enumerator
+                      description: The column name of the enumerator's primary language
                     home_address:
                       type: string
-                      description: The home address of the enumerator
-                    phone_primary:
+                      description: The column nmae of the enumerator's home address
+                    gender:
                       type: string
-                      description: The primary phone number of the enumerator
-                    phone_secondary:
+                      description: The column name of the enumerator's gender
+                    location_id_column:
                       type: string
-                      description: The secondary phone number of the enumerator
-                    status:
-                      type: string
-                      enum:
-                        - Active
-                        - Temp. inactive
-                        - Dropout
-                      description: The working status of the enumerator
-                    locations:
+                      description: The column name of the enumerator's location ID. This is the prime geo level location that the enumerator is mapped to.
+                    custom_fields:
                       type: array
                       description: >-
-                        An array of locations associated with the enumerator.
-                        Each array item is an object of the form {`location`_id:
-                        _location_id_, `location`_name: _location_name_} in
-                        descending order from highest to lowest level location.
-                    supervisors:
-                      type: array
-                      description: >-
-                        An array of supervisors associated with the enumerator.
-                        Array items are in descending order from highest to
-                        lowest level supervisor working under the logged in
-                        user.
+                        An array of custom fields to be added to the enumerator
+                        object
                       items:
                         type: object
                         properties:
-                          role_name:
+                          field_label:
                             type: string
-                            description: >-
-                              The role of the supervisor, .e.g. regional
-                              coordinator, cluster coordinator
-                          level:
-                            type: number
-                            description: >-
-                              The level of the supervisor. Counting starts at 0
-                              with the core team and ascends for each
-                              successively lower level of the supervisor
-                              hierarchy.
-                          supervisor_name:
+                            description: The user-defined label of the custom field
+                          column_name:
                             type: string
-                            description: The name of the supervisor
-                          supervisor_email:
-                            type: string
-                            description: The email of the supervisor
-                    forms:
-                      type: array
-                      description: >-
-                        An array of form names of the forms in the given survey
-                        the enumerator is working on
-                      items:
-                        type: string
-                    form_productivity:
-                      type: array
-                      description: >-
-                        An array of productivity details for each form the
-                        enumerator is working on in the given survey
-                      items:
+                            description: The column name of the custom field
+                        required:
+                          - field_label
+                          - column_name
+                  required:
+                    - enumerator_id
+                    - name
+                    - email
+                    - mobile_primary
+                    - gender
+                file:
+                  type: string
+                  format: Base64
+                  description: >-
+                    The csv file to be uploaded in base64 encoding
+
+                    The csv must have a header row with the column names
+                    specified in the `column_mapping` object.
+
+                    **Notes**: 
+                    - The `enumerator_type` field can take values of
+                      `monitor` or `supervisor`. If the enumerator is to be
+                      assigned to multiple types, separate the values with a
+                      semi-colon, e.g. `monitor;supervisor`.
+                    - If enumerators are to be mapped by location, the 
+                      `location_id_column` field contains the location ID of the
+                      prime geo level location that the enumerator is mapped to.
+                      The `prime_geo_level_uid` for the survey needs to be defined 
+                      in the survey config at `POST /surveys`.
+                mode:
+                  type: string
+                  enum:
+                    - overwrite
+                    - append
+                  description: >-
+                    The mode of the upload. If `overwrite`, all enumerators
+                    with the given form_uid (from the query parameter) will be 
+                    deleted and replaced with the new enumerators in the csv. If `append`, 
+                    the new enumerators in the csv will be added to the existing enumerators.
+
+                    **Note:** If the `append` mode is used, the enumerators in the csv
+                    must have unique enumerator IDs or the upload will fail.
+              required:
+                - column_mapping
+                - file
+                - mode
+      responses:
+        '200':
+          description: Records added successfully
+        '400':
+          description: Query parameter errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to the csv file upload.
+                      Each key will only be present if there are errors of that type.
+                      
+                      In addition to the errors listed below, the `errors` object may also contain
+                      errors related to an incorrectly specified payload.
+                    properties:
+                      file_structure_errors:
+                        type: array
+                        description: >-
+                          An array of errors in the file structure. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      column_mapping:
+                        type: array
+                        description: >-
+                          An array of errors in the column. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      geo_level_hierarchy:
+                        type: array
+                        description: >-
+                          An array of errors in the geo level hierarchy. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      record_errors:
                         type: object
+                        description: >-
+                          An object with information on validation errors in the csv records.
                         properties:
-                          form_name:
-                            type: string
-                            description: The name of the form
-                          total_complete:
-                            type: integer
+                          summary:
+                            type: object
                             description: >-
-                              The enumerator's total completed targets for the
-                              form
-                          total_assigned:
-                            type: integer
+                              A summary of the validation errors in the csv records
+                            properties:
+                              error_count:
+                                type: integer
+                                description: The total number of errors in the csv records
+                              total_correct_rows:
+                                type: integer
+                                description: The total number of correct rows in the csv records
+                              total_rows:
+                                type: integer
+                                description: The total number of rows in the csv records
+                              total_rows_with_errors:
+                                type: integer
+                                description: The total number of rows with errors in the csv records                            
+                          summary_by_error_type:
+                            type: array
                             description: >-
-                              The enumerator's total assigned targets for the
-                              form
-  /enumerators/{enumerator_uid}:
+                              An array of objects with information on validation errors by error type in the csv records.
+                            items:
+                              type: object
+                              properties:
+                                error_count:
+                                  type: integer
+                                  description: The total number of errors of this type in the csv records
+                                error_message:
+                                  type: string
+                                  description: The error message for this error type
+                                error_type:
+                                  type: string
+                                  description: The error type
+                                row_numbers_with_errors:
+                                  type: array
+                                  description: >-
+                                    An array of row numbers with errors of this type in the csv records
+                                  items:
+                                    type: integer
+                                    description: The row number with an error of this type in the csv records
+                          invalid_records:
+                            type: object
+                            description: >-
+                              An object with information on validation errors by record in the csv records.
+                              This can be used to identify the specific errors in each record and to let users download a csv with the errors.
+                            properties:
+                              records:
+                                type: array
+                                description: >-
+                                  An array of objects that represent the original records in the csv with the validation errors.
+                                  A new `errors` field is added to each record that contains a semicolon-separated list of the validation errors for that record.
+                                  A new `row_number` field is also added to each record that contains the row number of the record in the original csv.
+                              ordered_columns:
+                                type: array
+                                description: >-
+                                  An array of strings that represent the column names in the `records` array of objects in the order that they should 
+                                  appear in a table or downloadable csv file.
+                                items:
+                                  type: string
+                                  description: The column name in the csv
+                  success:
+                    type: boolean
+                    description: Whether the upload was successful
     patch:
-      summary: Update enumerator status
+      summary: Bulk update enumerators for a provided set of fields
       description: >
-        Set the status of an enumerator to Active, Temp. Inactive, or Dropout 
+        Bulk update enumerators for a provided set of fields. The enumerators to be updated are specified by their enumerator IDs.
+        Only the fields specified in the request body will be updated. If a field is not specified, it will not be updated.
+        Only personal details and custom fields can be updated can be updated through this endpoint. To bulk update enumerators'
+        locations, use the `PUT /enumerators/roles/locations` endpoint.
 
-
-        The status update is applied to all forms the enumerator is working on
-        in the given form's survey 
-
-
-        If the status is set to "Dropout" all the enumerator's assignments on
-        the given form's survey will be released
+        **Note:** Only fields that are defined in the enumerators column config table and set as `bulk_editable` can be updated via
+        this endpoint. See the `PUT /enumerators/column-config` endpoint for more details.
+      tags:
+        - Enumerators
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enumerator_uids:
+                  type: array
+                  description: >-
+                    An array of enumerator UIDs of the enumerators to be updated
+                  items:
+                    type: integer
+                    description: The enumerator UID of the enumerator to be updated
+                form_uid:
+                  type: integer
+                  description: >-
+                    The form UID of the enumerators to be updated.
+                patch_key_example:
+                  description: >-
+                    An example of the field name and value to be updated for the enumerators. Multiple fields to be updated can be specified in the same object. The field name must be the same as the field name in the enumerator column config for the form and set as `bulk_editable.` See the `PUT /enumerators/column-config` for more details on defining the column config for a form.
+              required:
+                - enumerator_uids
+                - form_uid
+      responses:
+        '200':
+          description: Enumerators updated successfully
+        '400':
+          description: Request errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+  /enumerators/column-config:
+    put:
+      summary: Update the enumerators column config for a form
+      description: >
+        Update the column config for enumerators for a form. The column config defines the fields that are available for bulk editing via the `PATCH /enumerators`
+        and `PUT /enumerators/roles/locations`` endpoints.
       tags:
         - Enumerators
       parameters:
@@ -2068,138 +2326,277 @@ paths:
               properties:
                 form_uid:
                   type: integer
-                status:
-                  type: string
-                  enum:
-                    - Active
-                    - Temp. inactive
-                    - Dropout
+                  description: >-
+                    The form UID of the enumerators to be updated.
+                column_config:
+                  type: array
+                  description: >-
+                    An array of column config objects for the enumerators data. Each object defines the column name, its type, and whether it is bulk editable or not.
+                    
+                    The location mapping column must be named `prime_geo_level_location` and its enumerator_type must be `location`.
+
+                    The personal details columns must be named `enumerator_id`, `name`, `email`, `mobile_primary`, `home_address`, `language` and `gender` and their enumerator_types must be `personal_details`.
+                  
+                    The custom fields columns must match their corresponding json keys in the `custom_fields` column of the `enumerators` table and their enumerator_types must be `custom_field`.
+                  items:
+                    type: object
+                    properties:
+                      column_name:
+                        type: string
+                        description: The field name of the column
+                      column_type:
+                        type: string
+                        description: The field type of the column. Can be one of `personal_details`, `custom_field`, or `location`.
+                      bulk_editable:
+                        type: boolean
+                        description: Whether the field is bulk editable or not
+                    required:
+                      - column_name
+                      - column_type
+                      - bulk_editable
               required:
                 - form_uid
-                - status
+                - column_config
       responses:
         '200':
-          description: Record updated
+          description: Column config updated successfully
         '400':
-          description: Record not found
+          description: Request errors
         '403':
           description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
         '422':
           description: Form errors
-  /targets:
     get:
-      summary: Get targets
-      description: Return the logged in user's targets for the given form
+      summary: Get the enumerators column config for a form
+      description: >
+        Get the enumerators column config for a form. The column config defines the fields that are available for bulk editing via the `PATCH /enumerators`
+        and `PUT /enumerators/roles/locations`` endpoints.
       tags:
-        - Targets
+        - Enumerators
       parameters:
         - in: query
           name: form_uid
           schema:
             type: integer
-          description: Unique ID of the form
+          description: >-
+            The form UID of the enumerator column config to be updated.
+          required: true
+      responses:
+        '200':
+          description: Column config retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                description: >-
+                  An array of column config objects for the enumerators data. Each object defines the column name, its type, and whether it is bulk editable or not.
+                items:
+                  type: object
+                  properties:
+                    column_name:
+                      type: string
+                      description: The field name of the column
+                    column_type:
+                      type: string
+                      description: The field type of the column. Can be one of `personal_details`, `custom_field`, or `location`.
+                    bulk_editable:
+                      type: boolean
+                      description: Whether the field is bulk editable or not
+        '400':
+          description: Request errors
+        '404':
+          description: Form not found
+  /enumerators/roles/locations:
+    put:
+      summary: Bulk update the location mapping for enumerators for a form
+      description: >
+        Bulk update the location mapping for enumerators of a specific enumerator_type for a form. The location mapping defines the prime_geo_level location(s) that the enumerator is mapped to for a form.
+
+        This method will replace the existing location mapping for the enumerators with the new location mapping provided in the request body. The existing location mapping for the enumerators can be dropped by providing `None` or an empty array as the `location_uids` value in the request body.
+      
+        In order for the location mapping to be bulk editable, the enumerators column configuration must have a `column_name` entry `prime_geo_level_location` with `column_type` of `location` and its `bulk_editable` value set to `True`. See the `PUT /enumerators/column-config` endpiont for more details on defining the enumerators column config for a form.
+      tags:
+
+        - Enumerators
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: >-
+                    The form UID of the enumerators to be updated.
+                enumerator_type:
+                  type: string
+                  description: >-
+                    The enumerator_type of the enumerators to be updated. Can be one of `monitor` or `surveyor`.
+                enumerator_uids:
+                  type: array
+                  description: >-
+                    An array of enumerator UIDs of the enumerators to be updated
+                  items:
+                    type: integer
+                    description: The enumerator UID of the enumerator to be updated
+                location_uids:
+                  type: array
+                  description: >-
+                    An array of location UIDs of the locations to be mapped to the enumerators. Enumerators can be mapped to 0, 1, or many locations.
+                  items:
+                    type: integer
+                    description: The location UID of the location to be mapped
+              required:
+                - enumerator_uids
+                - form_uid
+                - enumerator_type
+                - location_uids
+      responses:
+        '200':
+          description: Location mapping updated successfully
+        '400':
+          description: Request errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+  /enumerators/{enumerator_uid}:
+    get:
+      summary: Get details of an enumerator
+      description: >
+        Get details of an enumerator by their unique ID.
+
+        **Note**: This endpoint does not return information related to the enumerator's role (like surveyor, monitor, etc.) on different forms or the enumerator's mapping information for different forms. To get this information, use the `GET /enumerators` endpoint or the `GET /enumerators/{enumerator_uid}/roles` endpoint.
+      tags:
+        - Enumerators
+      parameters:
+        - in: path
+          name: enumerator_uid
+          schema:
+            type: integer
+          description: Unique ID of the enumerator
+          required: true
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    target_id:
-                      type: string
-                      description: The ID of the target
-                    respondent_names:
-                      type: array
-                      description: The names of the respondents
-                      items:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: object
+                    properties:
+                      enumerator_id:
                         type: string
-                        description: Respondent name
-                    respondent_phone_primary:
-                      type: string
-                      description: The primary phone number of the target
-                    respondent_phone_secondary:
-                      type: string
-                      description: The secondary phone number of the target
-                    address:
-                      type: string
-                      description: The address of the target
-                    gps_latitude:
-                      type: string
-                      description: The latitude of the target
-                    gps_longitude:
-                      type: string
-                      description: The longitude of the target
-                    custom_fields:
-                      type: object
-                      description: >-
-                        Any non-standard fields that should be displayed for the
-                        target
-                    final_status:
-                      type: string
-                      description: >-
-                        Grouping of final_survey_status into pending/done
-                        categories. Used to determine if the target is
-                        assignable.
-                      enum:
-                        - Pending
-                        - Done
-                    final_survey_status:
-                      type: integer
-                      description: >-
-                        The survey status from the target's most recent
-                        SurveyCTO submission
-                    final_survey_status_label:
-                      type: string
-                      description: The label corresponding to the final_survey_status code
-                    webapp_tag_color:
-                      type: string
-                      description: >-
-                        The color that should be used to color the status tag on
-                        the web flask_app
-                    revisit_sections:
-                      type: array
-                      description: The revisit sections for the target
-                      items:
+                        description: The user-assigned unique ID of the enumerator
+                      enumerator_uid:
+                        type: integer
+                        description: The system-assigned unique ID of the enumerator
+                      name:
                         type: string
-                        description: Name of the revisit section for the target
-                    locations:
-                      type: array
-                      description: >-
-                        An array of locations associated with the target. Each
-                        array item is an object of the form {`location`_id:
-                        _location_id_, `location`_name: _location_name_} in
-                        descending order from highest to lowest level location.
-                    supervisors:
-                      type: array
-                      description: >-
-                        An array of supervisors associated with the target.
-                        Array items are in descending order from highest to
-                        lowest level supervisor working under the logged in
-                        user.
-                      items:
+                        description: The name of the enumerator
+                      email:
+                        type: string
+                        description: The email of the enumerator
+                      mobile_primary:
+                        type: string
+                        description: The primary mobile number of the enumerator
+                      language:
+                        type: string
+                        description: The primary language of the enumerator
+                      gender:
+                        type: string
+                        description: The gender of the enumerator
+                      home_address:
+                        type: string
+                        description: The home address of the enumerator
+                      custom_fields:
                         type: object
-                        properties:
-                          role_name:
-                            type: string
-                            description: >-
-                              The role of the supervisor, .e.g. regional
-                              coordinator, cluster coordinator
-                          level:
-                            type: number
-                            description: >-
-                              The level of the supervisor. Counting starts at 0
-                              with the core team and ascends for each
-                              successively lower level of the supervisor
-                              hierarchy.
-                          supervisor_name:
-                            type: string
-                            description: The name of the supervisor
-                          supervisor_email:
-                            type: string
-                            description: The email of the supervisor
+                        description: >-
+                          Any non-standard fields that should be displayed for the
+                          enumerator. The keys are the user-defined labels of the
+                          custom fields.
+    put: 
+      summary: Update an enumerator
+      description: >
+        Update an enumerator's details by their unique ID.
+
+        **Note**: This endpoint does not update information related to the enumerator's role (like surveyor, monitor, etc.) on different forms or the enumerator's mapping information for different forms. To update this information, use the `/enumerators/{enumerator_uid}/roles` and `/enumerators/{enumerator_uid}/roles/locations` endpoints.
+      tags:
+        - Enumerators
+      parameters:
+        - in: path
+          name: enumerator_uid
+          schema:
+            type: integer
+          description: Unique ID of the enumerator
+          required: true
+      requestBody:
+        description: The updated record as it should be saved in the database. Note that values should be provided even if they are not being updated, otherwise they will be set to null.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enumerator_id:
+                  type: string
+                  description: The user-assigned unique ID of the enumerator
+                name:
+                  type: string
+                  description: The name of the enumerator
+                email:
+                  type: string
+                  description: The email of the enumerator
+                mobile_primary:
+                  type: string
+                  description: The primary mobile number of the enumerator
+                language:
+                  type: string
+                  description: The language of the enumerator
+                gender:
+                  type: string
+                  description: The gender of the enumerator
+                home_address:
+                  type: string
+                  description: The home address of the enumerator
+                custom_fields:
+                  type: object
+                  description: >-
+                    Any non-standard fields that should be displayed for the
+                    enumerator. The keys are the user-defined labels of the
+                    custom fields.
+              required:
+                - enumerator_id
+                - name
+                - email
+                - mobile_primary
+                - gender
+      responses:
+        '200':
+          description: Successfully updated
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Enumerator not found
+        '422':
+          description: Enumerator errors
   /assignments:
     get:
       summary: Get assignments
@@ -3089,3 +3486,594 @@ paths:
             Validation errors for the file will be returned as an array under the `file` key in the `errors` key of the response.
             Validation errors for the location type hierarchy will be returned as an array under the `geo_level_hierarchy` key in the `errors` key of the response.
             Note that the file validation will only be run if the geo level mapping is valid.
+
+  /targets:
+    get:
+      summary: Get targets
+      description: Return the logged in user's targets for the given form
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: >-
+            The page number of the results to return. Results will be paginated only if `page` and `per_page` are both specified.\
+          required: false
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: >-
+            The number of results to return per page. Results will be paginated only if `page` and `per_page` are both specified.
+          required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        target_id:
+                          type: string
+                          description: The ID of the target
+                        target_uid:
+                          type: integer
+                          description: The unique ID of the target
+                        language:
+                          type: string
+                          description: The primary language of the target
+                        gender:
+                          type: string
+                          description: The gender of the target
+                        custom_fields:
+                          type: object
+                          description: >-
+                            Any non-standard fields that should be displayed for
+                            the target
+                        location_uid:
+                          type: integer
+                          description: The unique ID of the target's location
+                        target_locations:
+                          type: array
+                          description: >-
+                            The geography of the target. 
+                            Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                            _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
+                            to lowest level location the target is location in.
+                            Can be null if a location has not been specified for the target.
+                          items:
+                            type: object
+                            properties:
+                              location_id:
+                                type: integer
+                                description: The user-defined unique ID of the location
+                              location_name:
+                                type: string
+                                description: The name of the location
+                              geo_level_name:
+                                type: string
+                                description: The name of the geo level
+                  paginate:
+                    type: object
+                    description: Pagination details. Will only be included if `page` and `per_page` are both specified in the query parameters.
+                    properties:
+                      page:
+                        type: integer
+                        description: The page number of the results
+                      per_page:
+                        type: integer
+                        description: The number of results per page
+                      count:
+                        type: integer
+                        description: The total number of results
+                      pages:
+                        type: integer
+                        description: The total number of pages
+        '400':
+          description: Form ID is required
+        '404':
+          description: Invalid values for `page` or `per_page` query parameters
+    post:
+      summary: Upload a csv of new targets
+      description: >
+        Upload a csv of new targets to be added to the given form
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                column_mapping:
+                  type: object
+                  description: >-
+                    An object mapping the column names in the csv to the
+                    corresponding target properties
+                  properties:
+                    target_id:
+                      type: string
+                      description: The column name of the target ID
+                    language:
+                      type: string
+                      description: The column name of the target's primary language
+                    gender:
+                      type: string
+                      description: The column name of the target's gender
+                    location_id_column:
+                      type: string
+                      description: The column name of the target's location ID. This is the bottom geo level location that the target is mapped to.
+                    custom_fields:
+                      type: array
+                      description: >-
+                        An array of custom fields to be added to the target
+                        object
+                      items:
+                        type: object
+                        properties:
+                          field_label:
+                            type: string
+                            description: The user-defined label of the custom field
+                          column_name:
+                            type: string
+                            description: The column name of the custom field
+                        required:
+                          - field_label
+                          - column_name
+                  required:
+                    - target_id
+                file:
+                  type: string
+                  format: Base64
+                  description: >-
+                    The csv file to be uploaded in base64 encoding
+
+                    The csv must have a header row with the column names
+                    specified in the `column_mapping` object.
+
+                mode:
+                  type: string
+                  enum:
+                    - overwrite
+                    - append
+                  description: >-
+                    The mode of the upload. If `overwrite`, all targets
+                    with the given form_uid (from the query parameter) will be 
+                    deleted and replaced with the new targets in the csv. If `append`, 
+                    the new targets in the csv will be added to the existing targets.
+
+                    **Note:** If the `append` mode is used, the targets in the csv
+                    must have target IDs that are not already in the database for the form or the upload will fail.
+              required:
+                - column_mapping
+                - file
+                - mode
+      responses:
+        '200':
+          description: Records added successfully
+        '400':
+          description: Query parameter errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to the csv file upload.
+                      Each key will only be present if there are errors of that type.
+                      
+                      In addition to the errors listed below, the `errors` object may also contain
+                      errors related to an incorrectly specified payload.
+                    properties:
+                      file_structure_errors:
+                        type: array
+                        description: >-
+                          An array of errors in the file structure. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      column_mapping:
+                        type: array
+                        description: >-
+                          An array of errors in the column. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      geo_level_hierarchy:
+                        type: array
+                        description: >-
+                          An array of errors in the geo level hierarchy. Each
+                          array item is a string containing the error message
+                          related to an individual error.
+                      record_errors:
+                        type: object
+                        description: >-
+                          An object with information on validation errors in the csv records.
+                        properties:
+                          summary:
+                            type: object
+                            description: >-
+                              A summary of the validation errors in the csv records
+                            properties:
+                              error_count:
+                                type: integer
+                                description: The total number of errors in the csv records
+                              total_correct_rows:
+                                type: integer
+                                description: The total number of correct rows in the csv records
+                              total_rows:
+                                type: integer
+                                description: The total number of rows in the csv records
+                              total_rows_with_errors:
+                                type: integer
+                                description: The total number of rows with errors in the csv records                            
+                          summary_by_error_type:
+                            type: array
+                            description: >-
+                              An array of objects with information on validation errors by error type in the csv records.
+                            items:
+                              type: object
+                              properties:
+                                error_count:
+                                  type: integer
+                                  description: The total number of errors of this type in the csv records
+                                error_message:
+                                  type: string
+                                  description: The error message for this error type
+                                error_type:
+                                  type: string
+                                  description: The error type
+                                row_numbers_with_errors:
+                                  type: array
+                                  description: >-
+                                    An array of row numbers with errors of this type in the csv records
+                                  items:
+                                    type: integer
+                                    description: The row number with an error of this type in the csv records
+                          invalid_records:
+                            type: object
+                            description: >-
+                              An object with information on validation errors by record in the csv records.
+                              This can be used to identify the specific errors in each record and to let users download a csv with the errors.
+                            properties:
+                              records:
+                                type: array
+                                description: >-
+                                  An array of objects that represent the original records in the csv with the validation errors.
+                                  A new `errors` field is added to each record that contains a semicolon-separated list of the validation errors for that record.
+                                  A new `row_number` field is also added to each record that contains the row number of the record in the original csv.
+                              ordered_columns:
+                                type: array
+                                description: >-
+                                  An array of strings that represent the column names in the `records` array of objects in the order that they should 
+                                  appear in a table or downloadable csv file.
+                                items:
+                                  type: string
+                                  description: The column name in the csv
+                  success:
+                    type: boolean
+                    description: Whether the upload was successful
+    patch:
+      summary: Bulk update targets for a provided set of fields
+      description: >
+        Bulk update targets for a provided set of fields. The targets to be updated are specified by their target IDs.
+        Only the fields specified in the request body will be updated. If a field is not specified, it will not be updated.
+        Only personal details and custom fields can be updated can be updated through this endpoint. To bulk update targets'
+        locations, use the `PUT /targets/roles/locations` endpoint.
+
+        **Note:** Only fields that are defined in the targets column config table and set as `bulk_editable` can be updated via
+        this endpoint. See the `PUT /targets/column-config` endpoint for more details.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_uids:
+                  type: array
+                  description: >-
+                    An array of target UIDs of the targets to be updated
+                  items:
+                    type: integer
+                    description: The target UID of the target to be updated
+                form_uid:
+                  type: integer
+                  description: >-
+                    The form UID of the targets to be updated.
+                patch_key_example:
+                  description: >-
+                    An example of the field name and value to be updated for the targets. Multiple fields to be updated can be specified in the same object. The field name must be the same as the field name in the target column config for the form and set as `bulk_editable.` See the `PUT /targets/column-config` for more details on defining the column config for a form.
+              required:
+                - target_uids
+                - form_uid
+      responses:
+        '200':
+          description: Targets updated successfully
+        '400':
+          description: Request errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+  /targets/column-config:
+    put:
+      summary: Update the targets column config for a form
+      description: >
+        Update the column config for targets for a form. The column config defines the fields that are available for bulk editing via the `PATCH /targets` endpoint 
+        and specifies whether fields contain PII.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: >-
+                    The form UID of the targets to be updated.
+                column_config:
+                  type: array
+                  description: >-
+                    An array of column config objects for the targets data. Each object defines the column name, its type, and whether it is bulk editable or not.
+                    
+                    The location mapping column must be named `bottom_geo_level_location` and its column_types must be `location`.
+
+                    The basic details columns must be named `target_id`, `language` and `gender` and their column_types must be `basic_details`.
+                  
+                    The custom fields columns must match their corresponding json keys in the `custom_fields` column of the `targets` table and their column_types must be `custom_field`.
+                  items:
+                    type: object
+                    properties:
+                      column_name:
+                        type: string
+                        description: The field name of the column
+                      column_type:
+                        type: string
+                        description: The field type of the column. Can be one of `basic_details`, `custom_field`, or `location`.
+                      bulk_editable:
+                        type: boolean
+                        description: Whether the field is bulk editable or not
+                    required:
+                      - column_name
+                      - column_type
+                      - bulk_editable
+              required:
+                - form_uid
+                - column_config
+      responses:
+        '200':
+          description: Column config updated successfully
+        '400':
+          description: Request errors
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Form not found
+        '422':
+          description: Form errors
+    get:
+      summary: Get the targets column config for a form
+      description: >
+        Get the targets column config for a form. The column config defines the fields that are available for bulk editing via the `PATCH /targets`
+        endpoint.
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: >-
+            The form UID of the target column config to be updated.
+          required: true
+      responses:
+        '200':
+          description: Column config retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                description: >-
+                  An array of column config objects for the targets data. Each object defines the column name, its type, whether it is bulk editable or not, and whether it contains PII.
+                items:
+                  type: object
+                  properties:
+                    column_name:
+                      type: string
+                      description: The field name of the column
+                    column_type:
+                      type: string
+                      description: The field type of the column. Can be one of `basic_details`, `custom_field`, or `location`.
+                    bulk_editable:
+                      type: boolean
+                      description: Whether the field is bulk editable or not
+                    contains_pii:
+                      type: boolean
+                      description: Whether the field contains PII or not
+        '400':
+          description: Request errors
+        '404':
+          description: Form not found
+  /targets/{target_uid}:
+    get:
+      summary: Get details of an target
+      description: >
+        Get details of an target by their unique ID.
+      tags:
+        - Targets
+      parameters:
+        - in: path
+          name: target_uid
+          schema:
+            type: integer
+          description: Unique ID of the target
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: 
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: object
+                    properties:
+                      target_id:
+                        type: string
+                        description: The user-assigned unique ID of the target
+                      target_uid:
+                        type: integer
+                        description: The system-assigned unique ID of the target
+                      language:
+                        type: string
+                        description: The primary language of the target
+                      gender:
+                        type: string
+                        description: The gender of the target
+                      location_uid:
+                        type: integer
+                        description: The unique ID of the target's location
+                      target_locations:
+                        type: array
+                        description: >-
+                          The geography of the target. 
+                          Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                          _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
+                          to lowest level location the target is located in.
+
+                          Can be null if a location has not been specified for the target.
+                        items:
+                          type: object
+                          properties:
+                            location_id:
+                              type: integer
+                              description: The user-defined unique ID of the location
+                            location_name:
+                              type: string
+                              description: The name of the location
+                            geo_level_name:
+                              type: string
+                              description: The name of the geo level
+                      custom_fields:
+                        type: object
+                        description: >-
+                          Any non-standard fields that should be displayed for the
+                          target. The keys are the user-defined labels of the
+                          custom fields.
+    put: 
+      summary: Update an target
+      description: >
+        Update a target's details by their unique ID.
+      tags:
+        - Targets
+      parameters:
+        - in: path
+          name: target_uid
+          schema:
+            type: integer
+          description: Unique ID of the target
+          required: true
+      requestBody:
+        description: The updated record as it should be saved in the database. Note that values should be provided even if they are not being updated, otherwise they will be set to null.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_id:
+                  type: string
+                  description: The user-assigned unique ID of the target
+                language:
+                  type: string
+                  description: The language of the target
+                gender:
+                  type: string
+                  description: The gender of the target
+                location_uid:
+                  type: integer
+                  description: The unique ID of the target's location
+                custom_fields:
+                  type: object
+                  description: >-
+                    Any non-standard fields that should be displayed for the
+                    target. The keys are the user-defined labels of the
+                    custom fields.
+              required:
+                - target_id
+                - language
+                - gender
+                - location_uid
+                - custom_fields
+      responses:
+        '200':
+          description: Successfully updated
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Target not found
+        '422':
+          description: Target errors

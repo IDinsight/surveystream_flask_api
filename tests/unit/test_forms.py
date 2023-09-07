@@ -428,6 +428,7 @@ class TestForms:
             "/api/forms/1/scto-form-definition/refresh",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
         # Get the SCTO questions from the database

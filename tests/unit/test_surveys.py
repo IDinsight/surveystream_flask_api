@@ -6,7 +6,7 @@ import re
 @pytest.mark.surveys
 class TestSurveys:
     @pytest.fixture()
-    def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
+    def create_survey(self, client, login_test_user, csrf_token):
         """
         Insert new survey as a setup step for the survey tests
         """
@@ -22,7 +22,6 @@ class TestSurveys:
             "planned_end_date": "2021-12-31",
             "state": "Draft",
             "config_status": "In Progress - Configuration",
-            "created_by_user_uid": test_user_credentials["user_uid"],
         }
 
         response = client.post(
@@ -36,17 +35,13 @@ class TestSurveys:
 
         yield
 
-    def test_create_survey(
-        self, client, login_test_user, create_survey, test_user_credentials
-    ):
+    def test_create_survey(self, client, login_test_user, create_survey):
         """
         Test that the survey is inserted correctly
         """
 
         # Test the survey was inserted correctly
-        response = client.get(
-            "/api/surveys", query_string={"user_uid": test_user_credentials["user_uid"]}
-        )
+        response = client.get("/api/surveys")
         assert response.status_code == 200
 
         expected_response = {
@@ -62,6 +57,7 @@ class TestSurveys:
                     "planned_start_date": "2021-01-01",
                     "planned_end_date": "2021-12-31",
                     "state": "Draft",
+                    "prime_geo_level_uid": None,
                     "config_status": "In Progress - Configuration",
                     "last_updated_at": "2023-05-30 00:00:00",
                 }
@@ -125,6 +121,7 @@ class TestSurveys:
             "planned_start_date": "2021-01-02",
             "planned_end_date": "2021-12-30",
             "state": "Active",
+            "prime_geo_level_uid": None,
             "config_status": "In Progress - Backend Setup",
             "last_updated_at": "2023-05-30 00:00:00",
         }
@@ -141,9 +138,7 @@ class TestSurveys:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_delete_survey(
-        self, client, login_test_user, create_survey, csrf_token, test_user_credentials
-    ):
+    def test_delete_survey(self, client, login_test_user, create_survey, csrf_token):
         """
         Test that a survey can be deleted
         """
@@ -155,24 +150,18 @@ class TestSurveys:
         assert response.status_code == 204
 
         # Check the response
-        response = client.get(
-            "/api/surveys/",
-            query_string={"user_uid": test_user_credentials["user_uid"]},
-        )
+        response = client.get("/api/surveys/")
 
         assert response.status_code == 404
 
     def test_get_config_status(
-        self, client, login_test_user, create_survey, csrf_token, test_user_credentials
+        self, client, login_test_user, create_survey, csrf_token
     ):
         """
         Test that module config status for the survey can be retreived
         """
 
-        response = client.get(
-            "/api/surveys/1/config-status",
-            query_string={"user_uid": test_user_credentials["user_uid"]},
-        )
+        response = client.get("/api/surveys/1/config-status")
         assert response.status_code == 200
 
         expected_response = {

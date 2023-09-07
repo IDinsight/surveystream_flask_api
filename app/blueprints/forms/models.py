@@ -296,11 +296,6 @@ class SCTOQuestion(db.Model):
     __tablename__ = "scto_form_questions"
 
     __table_args__ = (
-        db.UniqueConstraint(
-            "form_uid",
-            "question_name",
-            "question_type",
-        ),
         {
             "schema": "webapp",
         },
