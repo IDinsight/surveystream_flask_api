@@ -86,7 +86,11 @@ class EnumeratorColumnMapping:
                     )
             else:
                 rev_multidict.setdefault(mapped_column, set()).add(field_name)
-        duplicates = [key for key, values in rev_multidict.items() if len(values) > 1]
+        duplicates = [
+            key
+            for key, values in rev_multidict.items()
+            if len(values) > 1 and key not in ("", "None", None)
+        ]
         for mapped_column in duplicates:
             mapping_errors.append(
                 f"Column name '{mapped_column}' is mapped to multiple fields: ({', '.join(rev_multidict[mapped_column])}). Column names should only be mapped once."

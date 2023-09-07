@@ -1680,3 +1680,47 @@ class TestEnumerators:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_unmapped_columns(
+        self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
+    ):
+        """
+        Upload the enumerators csv
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_no_language_no_address.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id",
+                "gender": "gender",
+                "name": "name",
+                "email": "email",
+                "mobile_primary": "mobile_primary",
+                "enumerator_type": "enumerator_type",
+                "location_id_column": "district_id",
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+        assert response.status_code == 200
