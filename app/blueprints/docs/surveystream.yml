@@ -530,7 +530,7 @@ paths:
                           description: A description of the survey.
                         surveying_method:
                           type: string
-                          description: 'The method of surveying, e.g. in-person, phone.'
+                          description: 'The method of surveying, e.g. in-person, phone, mixed-mode.'
                         irb_approval:
                           type: string
                           description: >-
@@ -606,6 +606,7 @@ paths:
                   enum:
                     - phone
                     - in-person
+                    - mixed-mode
                 irb_approval:
                   type: string
                   example: Pending
@@ -697,6 +698,7 @@ paths:
                             enum:
                               - phone
                               - in-person
+                              - mixed-mode
                             example: in-person
                           irb_approval:
                             type: string
@@ -785,7 +787,7 @@ paths:
                           description: A description of the survey.
                         surveying_method:
                           type: string
-                          description: 'The method of surveying, e.g. in-person, phone.'
+                          description: 'The method of surveying, e.g. in-person, phone, mixed-mode.'
                         irb_approval:
                           type: string
                           description: >-
