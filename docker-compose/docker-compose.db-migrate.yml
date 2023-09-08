@@ -18,5 +18,5 @@ services:
     command:
     - |
        . /bootstrap.sh
-       flask db revision -m "Update survey method constraint"
+       flask db migrate
       
