@@ -307,13 +307,6 @@ class LocationsUpload:
                     f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} times in the uploaded file. It should appear exactly once."
                 )
 
-        # Each column in the csv file should be mapped exactly once
-        for column_name in file_columns:
-            if expected_columns.count(column_name) != 1:
-                file_errors.append(
-                    f"Column name '{column_name}' in the csv file appears {expected_columns.count(column_name)} times in the location type column mapping. It should appear exactly once."
-                )
-
         # The file should contain no blank fields
         blank_fields = [
             f"'column': {self.locations_df.columns[j]}, 'row': {i + 2}"
