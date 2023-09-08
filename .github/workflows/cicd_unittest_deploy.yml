@@ -1,5 +1,5 @@
 # Create GitHub Action to run unit tests inside a Docker container
-name: Run Unit Tests and Deploy
+name: Run Unit Tests and
 
 on:
   push:
@@ -30,8 +30,6 @@ jobs:
           mode: variables
 
       - name: Build the Docker image
-        env:
-          DEPLOY: false
         run: docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
 
       - name: Configure AWS credentials
@@ -93,7 +91,6 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: web-callisto-ecr-repository
           IMAGE_TAG: PreMigration
-          DEPLOY: false
 
         run: |
           docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
@@ -171,7 +168,6 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: web-callisto-ecr-repository
           IMAGE_TAG: backend
-          DEPLOY: true
 
         run: |
           docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
@@ -237,7 +233,6 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: web-callisto-ecr-repository
           IMAGE_TAG: backend
-          DEPLOY: true
 
         run: |
           docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} . 
