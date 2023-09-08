@@ -58,8 +58,7 @@ export DB_USER=$(echo "$DB_SECRET" | jq -r 'fromjson | .username')
 export DB_PASS=$(echo "$DB_SECRET" | jq -r 'fromjson | .password')
 export DB_NAME=$(echo "$DB_SECRET" | jq -r 'fromjson | .dbname')
 
-if [ "$CONFIG_TYPE" != "app.config.MigrationConfig" ] ; then
-	# Sendgrid API credentials
+# Sendgrid API credentials
 export MAIL_PASSWORD=$(get_global_secret_value "sendgrid-api-key" "" "text" "$AWS_REGION")
 export MAIL_USERNAME="apikey"
 
@@ -68,7 +67,6 @@ export S3_BUCKET_NAME=$(get_secret_value "web-callisto-assets-bucket-name" "" "t
 
 # Flask secret key
 export SECRET_KEY=$(get_secret_value "flask-secret-key" "SECRET_KEY" "json" "$AWS_REGION")
-fi
 
 
 exec "$@"

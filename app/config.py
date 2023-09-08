@@ -75,7 +75,7 @@ class Config:
     SENTRY_CONFIG = {"dsn": ""}
 
 
-class DevelopmentConfig(Config):
+class LocalDevelopmentConfig(Config):
     DEBUG = True
 
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
