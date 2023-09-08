@@ -21,8 +21,6 @@ services:
       - PYTHONUNBUFFERED=0
       - AWS_REGION=ap-south-1
       - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
-    volumes:
-      - /tmp/coverage:/usr/src/${BACKEND_NAME}/tests/output
     depends_on:
       - postgres
     extra_hosts:
