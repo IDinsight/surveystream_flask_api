@@ -7,7 +7,6 @@ from app.blueprints.locations.models import GeoLevel
 from app.blueprints.module_selection.models import ModuleStatus, Module
 from .routes import surveys_bp
 from .validators import (
-    GetSurveyQueryParamValidator,
     CreateSurveyValidator,
     UpdateSurveyValidator,
 )
@@ -18,26 +17,8 @@ from app.utils.utils import logged_in_active_user_required
 @logged_in_active_user_required
 def get_all_surveys():
     # /surveys will return all surveys
-    # /surveys?user_uid=1 will return surveys created by user with user_uid=1
 
-    user_uid = request.args.get("user_uid")
-    if user_uid:
-        # Validate the query parameter
-        query_param_validator = GetSurveyQueryParamValidator.from_json(request.args)
-        if not query_param_validator.validate():
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "data": None,
-                        "message": query_param_validator.errors,
-                    }
-                ),
-                400,
-            )
-        surveys = Survey.query.filter_by(created_by_user_uid=user_uid).all()
-    else:
-        surveys = Survey.query.all()
+    surveys = Survey.query.all()
 
     data = [survey.to_dict() for survey in surveys]
     response = {"success": True, "data": data}
@@ -73,7 +54,6 @@ def create_survey():
             config_status=payload_validator.config_status.data,
             state=payload_validator.state.data,
             prime_geo_level_uid=payload_validator.prime_geo_level_uid.data,
-            created_by_user_uid=payload_validator.created_by_user_uid.data,
         )
         try:
             db.session.add(survey)
