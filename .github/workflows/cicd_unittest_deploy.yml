@@ -1,5 +1,5 @@
 # Create GitHub Action to run unit tests inside a Docker container
-name: Run Unit Tests and
+name: Run Unit Tests and Deploy
 
 on:
   push:

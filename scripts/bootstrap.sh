@@ -58,7 +58,7 @@ export DB_USER=$(echo "$DB_SECRET" | jq -r 'fromjson | .username')
 export DB_PASS=$(echo "$DB_SECRET" | jq -r 'fromjson | .password')
 export DB_NAME=$(echo "$DB_SECRET" | jq -r 'fromjson | .dbname')
 
-if [ "$CONFIG_TYPE" != "app.config.RemoteDevelopmentConfig" ] ; then
+if [ "$CONFIG_TYPE" != "app.config.MigrationConfig" ] ; then
 	# Sendgrid API credentials
 export MAIL_PASSWORD=$(get_global_secret_value "sendgrid-api-key" "" "text" "$AWS_REGION")
 export MAIL_USERNAME="apikey"
