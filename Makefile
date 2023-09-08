@@ -7,12 +7,14 @@ $(eval ADMIN_ACCOUNT=077878936716)
 $(eval DEV_ACCOUNT=453207568606)
 
 
+
 login:
 	@export AWS_PROFILE=surveystream_dev
 	@aws sso login --profile surveystream_dev
 
 image:
 	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --platform=linux/amd64 -t $(BACKEND_NAME):$(VERSION) .
+
 
 data-db-tunnel:
 	# Open a connection to the remote db via the bastion host
@@ -123,4 +125,3 @@ downgrade-db-dev:
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
 	docker-compose -f docker-compose/docker-compose.db-downgrade.yml -f docker-compose/docker-compose.override.yml rm -fsv
-

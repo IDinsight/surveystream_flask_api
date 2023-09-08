@@ -88,7 +88,7 @@ class DevelopmentConfig(Config):
 
     PROTECT_DOCS_ENDPOINT = False
 
-class RemoteDevelopmentConfig(Config):
+class MigrationConfig(Config):
     DEBUG = True
 
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
@@ -116,6 +116,18 @@ class ProfilingConfig(Config):
 
 
 class UnitTestConfig(Config):
+    SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
+        "test_user",
+        "asdf",
+        "postgres",
+        5433,
+        "surveystream",
+    )
+
+    TESTING = True
+    DEBUG = True
+
+class DBCheckConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
         "asdf",

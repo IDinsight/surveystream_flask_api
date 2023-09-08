@@ -17,7 +17,7 @@ services:
   api:
     image: ${BACKEND_NAME}:${VERSION}
     environment:
-      - CONFIG_TYPE=app.config.UnitTestConfig
+      - CONFIG_TYPE=app.config.DBCheckConfig
       - PYTHONUNBUFFERED=0
       - AWS_REGION=ap-south-1
       - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}

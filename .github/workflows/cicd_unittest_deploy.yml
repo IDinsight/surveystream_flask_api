@@ -30,7 +30,9 @@ jobs:
           mode: variables
 
       - name: Build the Docker image
-        run: docker build -f Dockerfile.api --rm --build-arg NAME=$BACKEND_NAME --build-arg PORT=$BACKEND_PORT --platform=linux/amd64 -t $BACKEND_NAME:$VERSION .
+        env:
+          DEPLOY: false
+        run: docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -91,6 +93,7 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: web-callisto-ecr-repository
           IMAGE_TAG: PreMigration
+          DEPLOY: false
 
         run: |
           docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
@@ -168,9 +171,10 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: web-callisto-ecr-repository
           IMAGE_TAG: backend
+          DEPLOY: true
 
         run: |
-          docker build -f Dockerfile.deploy --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
           docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -233,9 +237,10 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: web-callisto-ecr-repository
           IMAGE_TAG: backend
+          DEPLOY: true
 
         run: |
-          docker build -f Dockerfile.deploy --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} . 
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} . 
           docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
