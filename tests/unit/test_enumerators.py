@@ -291,23 +291,23 @@ class TestEnumerators:
         # Try to upload the enumerators csv
         payload = {
             "column_mapping": {
-                "enumerator_id": "enumerator_id",
-                "name": "name",
-                "email": "email",
-                "mobile_primary": "mobile_primary",
-                "language": "language",
-                "home_address": "home_address",
-                "gender": "gender",
-                "enumerator_type": "enumerator_type",
-                "location_id_column": "district_id",
+                "enumerator_id": "enumerator_id1",
+                "name": "name1",
+                "email": "email1",
+                "mobile_primary": "mobile_primary1",
+                "language": "language1",
+                "home_address": "home_address1",
+                "gender": "gender1",
+                "enumerator_type": "enumerator_type1",
+                "location_id_column": "district_id1",
                 "custom_fields": [
                     {
                         "field_label": "Mobile (Secondary)",
-                        "column_name": "mobile_secondary",
+                        "column_name": "mobile_secondary1",
                     },
                     {
                         "field_label": "Age",
-                        "column_name": "age",
+                        "column_name": "age1",
                     },
                 ],
             },
@@ -1104,7 +1104,7 @@ class TestEnumerators:
                     "summary_by_error_type": [
                         {
                             "error_count": 1,
-                            "error_message": "Blank values are not allowed in the following columns: enumerator_id, name, email. Blank values in these columns were found for the following row(s): 4",
+                            "error_message": "Blank values are not allowed in the following columns: enumerator_id, name, email, enumerator_type. Blank values in these columns were found for the following row(s): 4",
                             "error_type": "Blank field",
                             "row_numbers_with_errors": [4],
                         },
@@ -1679,4 +1679,104 @@ class TestEnumerators:
         print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_incorrect_enumerator_types(
+        self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
+    ):
+        """
+        Upload the enumerators csv
+        """
+
+        # Try to upload the enumerators csv
+        # This is a payload that was provided by Utkarsh for testing 500 errors
+        payload = {
+            "column_mapping": {
+                "custom_fields": {},
+                "email": "email1",
+                "enumerator_id": "enumerator_id",
+                "enumerator_type": "type",
+                "gender": "gender1",
+                "home_address": "state_id",
+                "language": "language1",
+                "location_id_column": "locati1on_id",
+                "mobile_primary": "mobile1",
+                "name": "name",
+            },
+            "file": "ZW51bWVyYXRvcl9pZCxuYW1lLGVtYWlsMSxtb2JpbGUxLGdlbmRlcjEsbG9jYXRpMW9uX2lkLGxhbmd1YWdlMSxzdGF0ZV9pZCx0eXBlDQoxLHlvLHlvQGlkaW5zaWdodC5vcmcsMCxGLDEsU3BhbmlzaCwxLGVudW0NCg==",
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        expected_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "enumerator_id",
+                            "name",
+                            "email1",
+                            "mobile1",
+                            "language1",
+                            "state_id",
+                            "gender1",
+                            "type",
+                            "locati1on_id",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "email1": "yo@idinsight.org",
+                                "enumerator_id": "1",
+                                "errors": "Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'; Invalid enumerator type - valid enumerator types are 'surveyor' and 'monitor' and can be separated by a semicolon if the enumerator has multiple types",
+                                "gender1": "F",
+                                "language1": "Spanish",
+                                "locati1on_id": "1",
+                                "mobile1": "0",
+                                "name": "yo",
+                                "row_number": 2,
+                                "state_id": "1",
+                                "type": "enum",
+                            }
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 2,
+                        "total_correct_rows": 0,
+                        "total_rows": 1,
+                        "total_rows_with_errors": 1,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 invalid mobile number(s) in the mobile_primary field. Mobile numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'. The following row numbers have invalid mobile numbers: 2",
+                            "error_type": "Invalid mobile number",
+                            "row_numbers_with_errors": [2],
+                        },
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 invalid enumerator type(s) in the enumerator_type field. Valid enumerator types are 'surveyor' and 'monitor' and can be separated by a semicolon if the enumerator has multiple types. The following row numbers have invalid enumerator types: 2",
+                            "error_type": "Invalid enumerator type",
+                            "row_numbers_with_errors": [2],
+                        },
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        print(response.json)
+
+        assert response.status_code == 422
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
         assert checkdiff == {}
