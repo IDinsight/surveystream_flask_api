@@ -21,7 +21,7 @@ class Enumerator(db.Model):
     mobile_primary = db.Column(db.String(), nullable=False)
     language = db.Column(db.String(), nullable=True)
     home_address = db.Column(db.String(), nullable=True)
-    gender = db.Column(db.String(), nullable=False)
+    gender = db.Column(db.String(), nullable=True)
     custom_fields = db.Column(JSONB, nullable=True)
     form_uid = db.Column(
         db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
@@ -44,19 +44,21 @@ class Enumerator(db.Model):
         name,
         email,
         mobile_primary,
-        language,
-        home_address,
-        gender,
         form_uid,
+        home_address=None,
+        language=None,
+        gender=None,
+        custom_fields=None,
     ):
         self.enumerator_id = enumerator_id
         self.name = name
         self.email = email
         self.mobile_primary = mobile_primary
-        self.language = language
         self.home_address = home_address
-        self.gender = gender
         self.form_uid = form_uid
+        self.language = language
+        self.gender = gender
+        self.custom_fields = custom_fields
 
     def to_dict(self, joined_keys=None):
         result = {
@@ -65,13 +67,11 @@ class Enumerator(db.Model):
             "name": self.name,
             "email": self.email,
             "mobile_primary": self.mobile_primary,
-            "language": self.language,
             "home_address": self.home_address,
             "gender": self.gender,
+            "language": self.language,
+            "custom_fields": self.custom_fields,
         }
-
-        if hasattr(self, "custom_fields"):
-            result["custom_fields"] = self.custom_fields
 
         if joined_keys is not None:
             result.update(
