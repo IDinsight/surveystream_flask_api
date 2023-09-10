@@ -39,10 +39,10 @@ class Target(db.Model):
     def __init__(
         self,
         target_id,
-        language,
-        gender,
-        location_uid,
         form_uid,
+        language=None,
+        gender=None,
+        location_uid=None,
     ):
         self.target_id = target_id
         self.language = language
@@ -58,10 +58,8 @@ class Target(db.Model):
             "gender": self.gender,
             "location_uid": self.location_uid,
             "form_uid": self.form_uid,
+            "custom_fields": self.custom_fields,
         }
-
-        if hasattr(self, "custom_fields"):
-            result["custom_fields"] = self.custom_fields
 
         return result
 
