@@ -1,4 +1,4 @@
-[![Coverage Status](https://coveralls.io/repos/github/IDinsight/surveystream_flask_api/badge.svg?t=BhAQ0K)](https://coveralls.io/github/IDinsight/surveystream_flask_api)
+[![Coverage Status](https://coveralls.io/repos/github/IDinsight/surveystream_flask_api/badge.svg?branch=dev&t=psTgfm)](https://coveralls.io/github/IDinsight/surveystream_flask_api?branch=dev)
 ![Unit Tests](https://github.com/IDinsight/surveystream_flask_api/actions/workflows/cicd_unittest_deploy.yml/badge.svg)
 
 # SurveyStream Flask API

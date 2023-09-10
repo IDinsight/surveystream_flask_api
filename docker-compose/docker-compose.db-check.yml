@@ -1,0 +1,33 @@
+version: '2.1'
+services:
+  postgres:
+    image: postgres:15.3 
+    restart: always
+    environment:
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=asdf
+      - POSTGRES_DB=surveystream
+    volumes:
+      - ../tests/unit/data/launch_local_db/data:/docker-entrypoint-initdb.d/data
+      - ../scripts/postgres:/docker-entrypoint-initdb.d/
+    ports:
+      - "5433:5433"
+    command:
+      -p 5433
+  api:
+    image: ${BACKEND_NAME}:${VERSION}
+    environment:
+      - CONFIG_TYPE=app.config.DBCheckConfig
+      - PYTHONUNBUFFERED=0
+      - AWS_REGION=ap-south-1
+      - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
+    depends_on:
+      - postgres
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    entrypoint: ["/bin/bash","-c"]
+    command:
+    - |
+        . /bootstrap.sh
+        flask db upgrade
+        flask db check

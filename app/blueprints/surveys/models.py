@@ -18,7 +18,7 @@ class Survey(db.Model):
     surveying_method = db.Column(
         db.String(16),
         CheckConstraint(
-            "surveying_method IN ('phone', 'in-person')",
+            "surveying_method IN ('phone', 'in-person', 'mixed-mode')",
             name="ck_surveys_surveying_method",
         ),
         nullable=False,
