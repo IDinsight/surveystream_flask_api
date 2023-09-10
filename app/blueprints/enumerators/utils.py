@@ -18,16 +18,15 @@ class EnumeratorColumnMapping:
     Class to represent the enumerator column mapping and run validations on it
     """
 
-    def __init__(self, column_mapping, prime_geo_level_uid=None):
+    def __init__(
+        self, column_mapping, prime_geo_level_uid=None, optional_hardcoded_fields=[]
+    ):
         try:
             self.__validate_column_mapping(column_mapping, prime_geo_level_uid)
             self.enumerator_id = column_mapping["enumerator_id"]
             self.name = column_mapping["name"]
             self.email = column_mapping["email"]
             self.mobile_primary = column_mapping["mobile_primary"]
-            self.language = column_mapping["language"]
-            self.home_address = column_mapping["home_address"]
-            self.gender = column_mapping["gender"]
             self.enumerator_type = column_mapping["enumerator_type"]
 
             if column_mapping.get("location_id_column"):
@@ -35,6 +34,10 @@ class EnumeratorColumnMapping:
 
             if column_mapping.get("custom_fields"):
                 self.custom_fields = column_mapping["custom_fields"]
+
+            for field in optional_hardcoded_fields:
+                if column_mapping.get(field):
+                    setattr(self, field, column_mapping[field])
 
         except:
             raise
@@ -86,7 +89,11 @@ class EnumeratorColumnMapping:
                     )
             else:
                 rev_multidict.setdefault(mapped_column, set()).add(field_name)
-        duplicates = [key for key, values in rev_multidict.items() if len(values) > 1]
+        duplicates = [
+            key
+            for key, values in rev_multidict.items()
+            if len(values) > 1 and key not in ("", "None", None)
+        ]
         for mapped_column in duplicates:
             mapping_errors.append(
                 f"Column name '{mapped_column}' is mapped to multiple fields: ({', '.join(rev_multidict[mapped_column])}). Column names should only be mapped once."
@@ -204,9 +211,10 @@ class EnumeratorsUpload:
 
         # Mandatory columns should contain no blank fields
         non_null_columns = [
-            "enumerator_id",
-            "name",
-            "email",
+            column_mapping.enumerator_id,
+            column_mapping.name,
+            column_mapping.email,
+            column_mapping.enumerator_type,
         ]
 
         non_null_columns_df = self.enumerators_df.copy()[
@@ -286,7 +294,9 @@ class EnumeratorsUpload:
 
         # The file should have no duplicate enumerator IDs
         duplicates_df = self.enumerators_df[
-            self.enumerators_df.duplicated(subset="enumerator_id", keep=False)
+            self.enumerators_df.duplicated(
+                subset=column_mapping.enumerator_id, keep=False
+            )
         ]
         if len(duplicates_df) > 0:
             record_errors["summary_by_error_type"].append(
@@ -363,7 +373,7 @@ class EnumeratorsUpload:
         self.enumerators_df["errors"] = ""
         for index, row in self.enumerators_df.iterrows():
             try:
-                validate_email(row["email"])
+                validate_email(row[column_mapping.email])
             except Exception as e:
                 self.enumerators_df.loc[index, "errors"] = str(e)
 
@@ -398,7 +408,7 @@ class EnumeratorsUpload:
 
         # Validate the phone numbers
         invalid_mobile_primary_df = self.enumerators_df[
-            ~self.enumerators_df["mobile_primary"].str.contains(
+            ~self.enumerators_df[column_mapping.mobile_primary].str.contains(
                 r"^[0-9\.\s\-\(\)\+]{10,20}$"
             )
         ]
@@ -418,6 +428,51 @@ class EnumeratorsUpload:
 
             invalid_records_df = invalid_records_df.merge(
                 invalid_mobile_primary_df["errors"],
+                how="left",
+                left_index=True,
+                right_index=True,
+            )
+            # Replace NaN with empty string
+            invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna("")
+            invalid_records_df["errors"] = invalid_records_df[
+                ["errors_x", "errors_y"]
+            ].apply("; ".join, axis=1)
+            invalid_records_df = invalid_records_df.drop(
+                columns=["errors_x", "errors_y"]
+            )
+            invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
+
+        def validate_enumerator_type(enumerator_type):
+            is_valid = True
+            type_list = enumerator_type.strip().lower().split(";")
+            for type in type_list:
+                if type.strip() not in ["surveyor", "monitor"]:
+                    is_valid = False
+
+            return is_valid
+
+        # Validate the enumerator types
+        invalid_enumerator_type_df = self.enumerators_df[
+            ~self.enumerators_df[column_mapping.enumerator_type].apply(
+                validate_enumerator_type
+            )
+        ]
+        if len(invalid_enumerator_type_df) > 0:
+            record_errors["summary_by_error_type"].append(
+                {
+                    "error_type": "Invalid enumerator type",
+                    "error_message": f"The file contains {len(invalid_enumerator_type_df)} invalid enumerator type(s) in the enumerator_type field. Valid enumerator types are 'surveyor' and 'monitor' and can be separated by a semicolon if the enumerator has multiple types. The following row numbers have invalid enumerator types: {', '.join(str(row_number) for row_number in invalid_enumerator_type_df.index.to_list())}",
+                    "error_count": len(invalid_enumerator_type_df),
+                    "row_numbers_with_errors": invalid_enumerator_type_df.index.to_list(),
+                }
+            )
+
+            invalid_enumerator_type_df[
+                "errors"
+            ] = "Invalid enumerator type - valid enumerator types are 'surveyor' and 'monitor' and can be separated by a semicolon if the enumerator has multiple types"
+
+            invalid_records_df = invalid_records_df.merge(
+                invalid_enumerator_type_df["errors"],
                 how="left",
                 left_index=True,
                 right_index=True,

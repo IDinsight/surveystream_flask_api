@@ -1,4 +1,4 @@
-enumerator_id,name,email,mobile_primary,language,home_address,gender,enumerator_type,district_id,mobile_secondary,age
+enumerator_id1,name1,email1,mobile_primary1,language1,home_address1,gender1,enumerator_type1,district_id1,mobile_secondary1,age1
 0294612,Eric Dodge,eric.dodge@idinsight.org,0123456789,English,my house,Male,surveyor,1,1123456789,1
 0294613,Jahnavi Meher,jahnavi.meher@idinsight.org,0123456789,Telugu,my house,Female,surveyor,1,1123456789,2
 0294614,Jay Prakash,jay.prakash@idinsight.org,0123456789,Hindi,my house,Male,monitor,1,1123456789,3
