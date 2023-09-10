@@ -196,7 +196,7 @@ class TargetsUpload:
 
         # Non-nullable columns should contain no blank fields
         non_null_columns = [
-            "target_id",
+            column_mapping.target_id,
         ]
 
         if hasattr(column_mapping, "location_id_column"):
@@ -277,7 +277,7 @@ class TargetsUpload:
 
         # The file should have no duplicate target IDs
         duplicates_df = self.targets_df[
-            self.targets_df.duplicated(subset="target_id", keep=False)
+            self.targets_df.duplicated(subset=column_mapping.target_id, keep=False)
         ]
         if len(duplicates_df) > 0:
             record_errors["summary_by_error_type"].append(

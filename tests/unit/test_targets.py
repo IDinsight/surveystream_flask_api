@@ -283,22 +283,22 @@ class TestTargets:
         # Try to upload the targets csv
         payload = {
             "column_mapping": {
-                "target_id": "target_id",
-                "language": "language",
-                "gender": "gender",
-                "location_id_column": "psu_id",
+                "target_id": "target_id1",
+                "language": "language1",
+                "gender": "gender1",
+                "location_id_column": "psu_id1",
                 "custom_fields": [
                     {
                         "field_label": "Mobile no.",
-                        "column_name": "mobile_primary",
+                        "column_name": "mobile_primary1",
                     },
                     {
                         "field_label": "Name",
-                        "column_name": "name",
+                        "column_name": "name1",
                     },
                     {
                         "field_label": "Address",
-                        "column_name": "address",
+                        "column_name": "address1",
                     },
                 ],
             },
