@@ -113,9 +113,13 @@ def upload_enumerators():
         Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
     )
 
+    optional_hardcoded_fields = ["language", "gender", "home_address"]
+
     try:
         column_mapping = EnumeratorColumnMapping(
-            payload_validator.column_mapping.data, prime_geo_level_uid
+            payload_validator.column_mapping.data,
+            prime_geo_level_uid,
+            optional_hardcoded_fields,
         )
     except InvalidColumnMappingError as e:
         return (
@@ -136,11 +140,12 @@ def upload_enumerators():
         column_mapping.name,
         column_mapping.email,
         column_mapping.mobile_primary,
-        column_mapping.language,
-        column_mapping.home_address,
-        column_mapping.gender,
         column_mapping.enumerator_type,
     ]
+
+    for optional_field in optional_hardcoded_fields:
+        if hasattr(column_mapping, optional_field):
+            expected_columns.append(getattr(column_mapping, optional_field))
 
     if hasattr(column_mapping, "location_id_column"):
         expected_columns.append(column_mapping.location_id_column)
@@ -276,10 +281,18 @@ def upload_enumerators():
             name=row[2],
             email=row[3],
             mobile_primary=row[4],
-            language=row[5],
-            home_address=row[6],
-            gender=row[7],
         )
+
+        for optional_field in optional_hardcoded_fields:
+            # Add the optional fields
+            if hasattr(column_mapping, optional_field):
+                col_index = (
+                    enumerators_upload.enumerators_df.columns.get_loc(
+                        getattr(column_mapping, optional_field)
+                    )
+                    + 1
+                )  # Add 1 to the index to account for the df index
+                setattr(enumerator, optional_field, row[col_index])
 
         # Add the custom fields if they exist
         if hasattr(column_mapping, "custom_fields"):
@@ -297,7 +310,7 @@ def upload_enumerators():
         db.session.add(enumerator)
         db.session.flush()
 
-        enumerator_types = [item.lower().strip() for item in row[8].split(";")]
+        enumerator_types = [item.lower().strip() for item in row[5].split(";")]
 
         for enumerator_type in enumerator_types:
             if enumerator_type == "surveyor":

@@ -18,16 +18,15 @@ class EnumeratorColumnMapping:
     Class to represent the enumerator column mapping and run validations on it
     """
 
-    def __init__(self, column_mapping, prime_geo_level_uid=None):
+    def __init__(
+        self, column_mapping, prime_geo_level_uid=None, optional_hardcoded_fields=[]
+    ):
         try:
             self.__validate_column_mapping(column_mapping, prime_geo_level_uid)
             self.enumerator_id = column_mapping["enumerator_id"]
             self.name = column_mapping["name"]
             self.email = column_mapping["email"]
             self.mobile_primary = column_mapping["mobile_primary"]
-            self.language = column_mapping["language"]
-            self.home_address = column_mapping["home_address"]
-            self.gender = column_mapping["gender"]
             self.enumerator_type = column_mapping["enumerator_type"]
 
             if column_mapping.get("location_id_column"):
@@ -35,6 +34,10 @@ class EnumeratorColumnMapping:
 
             if column_mapping.get("custom_fields"):
                 self.custom_fields = column_mapping["custom_fields"]
+
+            for field in optional_hardcoded_fields:
+                if column_mapping.get(field):
+                    setattr(self, field, column_mapping[field])
 
         except:
             raise
@@ -86,7 +89,11 @@ class EnumeratorColumnMapping:
                     )
             else:
                 rev_multidict.setdefault(mapped_column, set()).add(field_name)
-        duplicates = [key for key, values in rev_multidict.items() if len(values) > 1]
+        duplicates = [
+            key
+            for key, values in rev_multidict.items()
+            if len(values) > 1 and key not in ("", "None", None)
+        ]
         for mapped_column in duplicates:
             mapping_errors.append(
                 f"Column name '{mapped_column}' is mapped to multiple fields: ({', '.join(rev_multidict[mapped_column])}). Column names should only be mapped once."
