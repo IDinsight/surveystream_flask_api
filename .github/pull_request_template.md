@@ -36,6 +36,7 @@ Put an `x` in all the items that apply and remove any items that are not relevan
 - [ ] I have tested the functionality of my code to ensure it works as intended
 - [ ] I have resolved merge conflicts
 - [ ] I have written [good commit messages][1]
+- [ ] I have created migration scripts from the latest dev changes. This will prevent migration script version conflicts (if applicable)
 - [ ] I have scrutinized and edited the migration script with reference to [changes Alembic won't auto-detect](https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect) (if applicable). Note that this includes manually adding the creation of new `CHECK` constraints.
 - [ ] I have updated the automated tests (if applicable)
 - [ ] I have updated the README file (if applicable)

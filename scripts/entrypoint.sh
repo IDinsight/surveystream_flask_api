@@ -5,7 +5,17 @@ echo "Starting"
 
 case "$1" in
   api)
+	if [ -z $2 ]; then 
 
 	gunicorn --chdir app --timeout 300 "app:create_app()" -b "0.0.0.0:5001" -k gevent -w 2
+	
+	else
+	flask db upgrade
+
+	echo "Upgraded......"
+
+	echo "Starting API..........."
+	gunicorn --chdir app --timeout 300 "app:create_app()" -b "0.0.0.0:5001" -k gevent -w 2
+	fi
 	;;
 esac
