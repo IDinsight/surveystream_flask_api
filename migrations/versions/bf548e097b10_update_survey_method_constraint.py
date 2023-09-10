@@ -18,19 +18,21 @@ depends_on = None
 
 def upgrade():
     # Modify the constraint condition to include 'mixed-mode'
-    op.drop_constraint("ck_surveys_surveying_method", "webapp.surveys")
+    op.drop_constraint("ck_surveys_surveying_method", "surveys", schema="webapp")
     op.create_check_constraint(
         "ck_surveys_surveying_method",
-        "webapp.surveys",
+        "surveys",
         sa.text("surveying_method IN ('phone', 'in-person', 'mixed-mode')"),
+        schema="webapp",
     )
 
 
 def downgrade():
     # Revert the constraint
-    op.drop_constraint("ck_surveys_surveying_method", "webapp.surveys")
+    op.drop_constraint("ck_surveys_surveying_method", "surveys", schema="webapp")
     op.create_check_constraint(
         "ck_surveys_surveying_method",
-        "webapp.surveys",
+        "surveys",
         sa.text("surveying_method IN ('phone', 'in-person')"),
+        schema="webapp",
     )
