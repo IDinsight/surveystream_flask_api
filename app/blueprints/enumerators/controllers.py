@@ -287,7 +287,9 @@ def upload_enumerators():
             # Add the optional fields
             if hasattr(column_mapping, optional_field):
                 col_index = (
-                    enumerators_upload.enumerators_df.columns.get_loc(optional_field)
+                    enumerators_upload.enumerators_df.columns.get_loc(
+                        getattr(column_mapping, optional_field)
+                    )
                     + 1
                 )  # Add 1 to the index to account for the df index
                 setattr(enumerator, optional_field, row[col_index])
