@@ -283,22 +283,22 @@ class TestTargets:
         # Try to upload the targets csv
         payload = {
             "column_mapping": {
-                "target_id": "target_id",
-                "language": "language",
-                "gender": "gender",
-                "location_id_column": "psu_id",
+                "target_id": "target_id1",
+                "language": "language1",
+                "gender": "gender1",
+                "location_id_column": "psu_id1",
                 "custom_fields": [
                     {
                         "field_label": "Mobile no.",
-                        "column_name": "mobile_primary",
+                        "column_name": "mobile_primary1",
                     },
                     {
                         "field_label": "Name",
-                        "column_name": "name",
+                        "column_name": "name1",
                     },
                     {
                         "field_label": "Address",
-                        "column_name": "address",
+                        "column_name": "address1",
                     },
                 ],
             },
@@ -1332,3 +1332,40 @@ class TestTargets:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_unmapped_columns(
+        self, client, login_test_user, create_locations_for_targets_file, csrf_token
+    ):
+        """
+        Upload the targets csv
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_no_language_no_gender.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id",
+                "location_id_column": "psu_id",
+            },
+            "file": targets_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
