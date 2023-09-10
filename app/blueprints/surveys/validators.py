@@ -12,7 +12,7 @@ class CreateSurveyValidator(FlaskForm):
     surveying_method = StringField(
         validators=[
             DataRequired(),
-            AnyOf(["in-person", "phone"], message="Value must be one of %(values)s"),
+            AnyOf(["in-person", "phone", "mixed-mode"], message="Value must be one of %(values)s"),
         ]
     )
     irb_approval = StringField(
@@ -60,7 +60,7 @@ class UpdateSurveyValidator(FlaskForm):
     surveying_method = StringField(
         validators=[
             DataRequired(),
-            AnyOf(["in-person", "phone"], message="Value must be one of %(values)s"),
+            AnyOf(["in-person", "phone", "mixed-mode"], message="Value must be one of %(values)s"),
         ]
     )
     irb_approval = StringField(
