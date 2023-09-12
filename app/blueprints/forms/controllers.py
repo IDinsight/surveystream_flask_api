@@ -433,6 +433,7 @@ def ingest_scto_form_definition(form_uid):
         )
 
         public_key = settings_dict.get("public_key", None)
+        submission_url = settings_dict.get("submission_url", None)
 
         # return jsonify(settings_dict), 422
         scto_settings = SCTOFormSettings(
@@ -440,7 +441,7 @@ def ingest_scto_form_definition(form_uid):
             form_title=settings_dict["form_title"],
             version=scto_form_version,
             public_key=public_key,
-            submission_url=settings_dict["submission_url"],
+            submission_url=submission_url,
             default_language=settings_dict["default_language"],
         )
 
