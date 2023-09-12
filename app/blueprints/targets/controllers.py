@@ -278,14 +278,14 @@ def upload_targets():
         # Add the language if it exists
         if hasattr(column_mapping, "language"):
             col_index = (
-                targets_upload.targets_df.columns.get_loc("language") + 1
+                targets_upload.targets_df.columns.get_loc(column_mapping.language) + 1
             )  # Add 1 to the index to account for the df index
             target_dict["language"] = row[col_index]
 
         # Add the gender if it exists
         if hasattr(column_mapping, "gender"):
             col_index = (
-                targets_upload.targets_df.columns.get_loc("gender") + 1
+                targets_upload.targets_df.columns.get_loc(column_mapping.gender) + 1
             )  # Add 1 to the index to account for the df index
             target_dict["gender"] = row[col_index]
 

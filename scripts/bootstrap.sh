@@ -68,6 +68,7 @@ export S3_BUCKET_NAME=$(get_secret_value "web-callisto-assets-bucket-name" "" "t
 # Flask secret key
 export SECRET_KEY=$(get_secret_value "flask-secret-key" "SECRET_KEY" "json" "$AWS_REGION")
 
+
 exec "$@"
 
 
