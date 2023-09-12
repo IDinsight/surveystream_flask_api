@@ -431,12 +431,15 @@ def ingest_scto_form_definition(form_uid):
                 scto_form_definition["settingsRowsAndColumns"][1:][0],
             )
         )
+
+        public_key = settings_dict.get("public_key", None)
+
         # return jsonify(settings_dict), 422
         scto_settings = SCTOFormSettings(
             form_uid=form_uid,
             form_title=settings_dict["form_title"],
             version=scto_form_version,
-            public_key=settings_dict["public_key"],
+            public_key=public_key,
             submission_url=settings_dict["submission_url"],
             default_language=settings_dict["default_language"],
         )
