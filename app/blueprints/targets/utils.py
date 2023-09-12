@@ -347,6 +347,53 @@ class TargetsUpload:
                     "; "
                 )
 
+        # If the mode is `add_columns`, the files target_id's should already be in the database
+        if mode == "append":
+            target_id_query = (
+                Target.query.filter(
+                    Target.form_uid == form.form_uid,
+                )
+                .with_entities(Target.target_id)
+                .distinct()
+            )
+            invalid_target_id_df = self.targets_df[
+                ~self.targets_df["target_id"].isin(
+                    [row[0] for row in target_id_query.all()]
+                )
+            ]
+            if len(invalid_target_id_df) > 0:
+                record_errors["summary_by_error_type"].append(
+                    {
+                        "error_type": "target_id's found in database",
+                        "error_message": f"The file contains {len(invalid_target_id_df)} target_id(s) that were not found in the database. When using the 'add columns' funtionality the uploaded sheet must contain only target_id's that have already been uploaded. The following row numbers contain target_id's that were not found in the database: {', '.join(str(row_number) for row_number in invalid_target_id_df.index.to_list())}",
+                        "error_count": len(invalid_target_id_df),
+                        "row_numbers_with_errors": invalid_target_id_df.index.to_list(),
+                    }
+                )
+
+                invalid_target_id_df[
+                    "errors"
+                ] = "The target_id was not found in the database for this form"
+                invalid_records_df = invalid_records_df.merge(
+                    invalid_target_id_df["errors"],
+                    how="left",
+                    left_index=True,
+                    right_index=True,
+                )
+                # Replace NaN with empty string
+                invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna(
+                    ""
+                )
+                invalid_records_df["errors"] = invalid_records_df[
+                    ["errors_x", "errors_y"]
+                ].apply("; ".join, axis=1)
+                invalid_records_df = invalid_records_df.drop(
+                    columns=["errors_x", "errors_y"]
+                )
+                invalid_records_df["errors"] = invalid_records_df["errors"].str.strip(
+                    "; "
+                )
+
         # If the location_id_column is mapped, the file should contain no location_id's that are not in the database
         if hasattr(column_mapping, "location_id_column"):
             location_id_query = (

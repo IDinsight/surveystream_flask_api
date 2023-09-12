@@ -36,6 +36,7 @@ from .errors import (
     InvalidTargetRecordsError,
     InvalidFileStructureError,
     InvalidColumnMappingError,
+    InvalidNewColumnError,
 )
 import binascii
 
@@ -111,6 +112,31 @@ def upload_targets():
             ),
             422,
         )
+
+    if payload_validator.mode.data == "add_columns":
+        new_column_errors = []
+        # Make sure the columns haven't already been added to the column config
+        column_config_column_names = [
+            row.column_name
+            for row in TargetColumnConfig.query.filter(
+                TargetColumnConfig.form_uid == form_uid,
+            ).all()
+        ]
+
+        for field_name, mapped_column in payload_validator.column_mapping.data.items():
+            if field_name == "custom_fields":
+                for custom_field in column_mapping["custom_fields"]:
+                    if custom_field["field_label"] in column_config_column_names:
+                        new_column_errors.append(
+                            f"Column '{custom_field['field_label']}' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality."
+                        )
+            else:
+                if field_name in column_config_column_names:
+                    new_column_errors.append(
+                        f"Column '{field_name}' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality."
+                    )
+        if len(new_column_errors) > 0:
+            raise InvalidNewColumnError(new_column_errors)
 
     if hasattr(column_mapping, "location_id_column"):
         # Get the geo levels for the survey
@@ -311,16 +337,51 @@ def upload_targets():
                 custom_fields[custom_field["field_label"]] = row[col_index]
             target_dict["custom_fields"] = custom_fields
 
-        records_to_insert.append(target_dict)
+        if payload_validator.mode.data == "add_columns":
+            Target.query.filter(
+                Target.target_id == target_dict["target_id"],
+                Target.form_uid == form_uid,
+            ).update(
+                {
+                    key: target_dict[key]
+                    for key in target_dict
+                    if key not in ["target_id", "form_uid", "custom_fields"]
+                },
+                synchronize_session=False,
+            )
 
-        # Insert the records in batches of 1000
-        if i > 0 and i % 1000 == 0:
+            if "custom_fields" in target_dict:
+                for field_name, field_value in target_dict["custom_fields"].items():
+                    db.session.execute(
+                        update(Target)
+                        .values(
+                            custom_fields=func.jsonb_set(
+                                Target.custom_fields,
+                                "{%s}" % field_name,
+                                cast(
+                                    field_value,
+                                    JSONB,
+                                ),
+                            )
+                        )
+                        .where(
+                            Target.target_id == target_dict["target_id"],
+                            Target.form_uid == target_dict["form_uid"],
+                        )
+                    )
+
+        else:
+            records_to_insert.append(target_dict)
+
+            # Insert the records in batches of 1000
+            if i > 0 and i % 1000 == 0:
+                db.session.execute(insert(Target).values(records_to_insert))
+                db.session.flush()
+                records_to_insert.clear()
+
+    if payload_validator.mode.data != "add_columns":
+        if len(records_to_insert) > 0:
             db.session.execute(insert(Target).values(records_to_insert))
-            db.session.flush()
-            records_to_insert.clear()
-
-    if len(records_to_insert) > 0:
-        db.session.execute(insert(Target).values(records_to_insert))
 
     try:
         db.session.commit()
@@ -770,12 +831,12 @@ def delete_target(target_uid):
     return jsonify({"success": True}), 200
 
 
-# Patch method to bulk update enumerator details
+# Patch method to bulk update target details
 @targets_bp.route("", methods=["PATCH"])
 @logged_in_active_user_required
 def bulk_update_targets():
     """
-    Method to bulk update enumerators
+    Method to bulk update targets
     """
 
     payload = request.get_json()
