@@ -111,7 +111,7 @@ jobs:
           task-definition: task-definition.json
           container-name: api
           image: ${{ steps.build-image.outputs.image }}
-      - name: Update Db
+      - name: Update Dev Db
         id: update-db
         shell: bash
         env:
