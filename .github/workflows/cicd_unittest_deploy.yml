@@ -56,7 +56,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           file: /tmp/coverage/coverage.lcov
 
-  UpdateDB:
+  UpdateDevDB:
     if: github.event_name == 'push' &&  github.ref == 'refs/heads/dev'
     name: Update Dev DB
     runs-on: ubuntu-latest
@@ -112,7 +112,7 @@ jobs:
           container-name: api
           image: ${{ steps.build-image.outputs.image }}
       - name: Update Dev Db
-        id: update-db
+        id: update-dev-db
         shell: bash
         env:
           CONTAINER_NAME: api
