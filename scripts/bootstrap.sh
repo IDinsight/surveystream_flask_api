@@ -29,8 +29,10 @@ function get_global_secret_value() {
     export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" \
         $(aws sts assume-role \
         --role-arn $ASSUME_TASK_ROLE_ARN \
+		--region $AWS_REGION \
         --role-session-name GlobalSecretSession \
         --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" \
+		--endpoint-url https://sts.$AWS_REGION.amazonaws.com \
         --output text))	
 
   	: "${json_secret:=$(aws secretsmanager get-secret-value --secret-id ${secret_name} --region "${region}" --output ${form} --query "SecretString")}"
