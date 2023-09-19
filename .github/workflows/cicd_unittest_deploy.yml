@@ -58,7 +58,7 @@ jobs:
 
   UpdateDB:
     if: github.event_name == 'push' &&  github.ref == 'refs/heads/dev'
-    name: Update DB
+    name: Update Dev DB
     runs-on: ubuntu-latest
     needs: UnitTest
 
@@ -199,7 +199,7 @@ jobs:
           wait-for-service-stability: true
 
   Deploy-Production:
-    if: github.event_name == 'push' &&  github.ref == 'refs/heads/prod'
+    if: github.event_name == 'push' &&  github.ref == 'refs/heads/production'
     name: Deploy Callisto Production
     runs-on: ubuntu-latest
     needs: UnitTest
