@@ -58,15 +58,23 @@ export DB_USER=$(echo "$DB_SECRET" | jq -r 'fromjson | .username')
 export DB_PASS=$(echo "$DB_SECRET" | jq -r 'fromjson | .password')
 export DB_NAME=$(echo "$DB_SECRET" | jq -r 'fromjson | .dbname')
 
+echo "Finished with DB"
+
 # Sendgrid API credentials
 export MAIL_PASSWORD=$(get_global_secret_value "sendgrid-api-key" "" "text" "$AWS_REGION")
 export MAIL_USERNAME="apikey"
 
+echo "Finished with Sendgrid"
+
 # S3 web assets bucket
 export S3_BUCKET_NAME=$(get_secret_value "web-callisto-assets-bucket-name" "" "text" "$AWS_REGION")
 
+echo "Finished with bucket"
+
 # Flask secret key
 export SECRET_KEY=$(get_secret_value "flask-secret-key" "SECRET_KEY" "json" "$AWS_REGION")
+
+echo "Finished with flask"
 
 
 exec "$@"
