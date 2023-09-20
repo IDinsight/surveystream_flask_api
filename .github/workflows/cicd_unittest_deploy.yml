@@ -220,7 +220,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: "arn:aws:iam::${{ env.PROD_ACCOUNT }}:role/github-actions-role-backend"
-          role-session-name: stagingrolesession
+          role-session-name: prodrolesession
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
