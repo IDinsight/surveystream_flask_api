@@ -70,6 +70,6 @@ The unit tests will run on GitHub Actions on any `pull request` action or on a `
 
 ## Instructions for database migrations
 
-The database schema is managed through `Flask-Migrate`. Instructions for working with database migrations can be found [here]([url](https://idinsight.atlassian.net/wiki/spaces/DOD/pages/2199912628/Flask+Development+Standards#Working-with-Flask-Migrate)https://idinsight.atlassian.net/wiki/spaces/DOD/pages/2199912628/Flask+Development+Standards#Working-with-Flask-Migrate).
+The database schema is managed through `Flask-Migrate`. Instructions for working with database migrations can be found [here](https://idinsight.atlassian.net/wiki/spaces/DOD/pages/2199912628/Flask+Development+Standards#Working-with-Flask-Migrate).
 
 
