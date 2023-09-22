@@ -66,36 +66,10 @@ Once the images are built, the unit tests can be run with the following commands
 
 ### Running the tests on CI/CD
 
-The unit tests will run on GitHub Actions on any `push` or `pull request` actions.
+The unit tests will run on GitHub Actions on any `pull request` action or on a `push` to the `dev`, `staging`, or `production` branches.
 
 ## Instructions for database migrations
 
-The database schema is managed through `Flask-Migrate`. When running unit tests, the test db schema will be created using the migration script(s) in `/migrations/versions`.
-
-New migration scripts should be generated against the remote development environment database, then each database (dev, staging, prod) will be updated using the same set of migration scripts. Note that Alembic will create a `public.alembic_version` table in each database to track the latest applied migration version.
-
-### Creating a new migration
-
-To create a new migration script against the remote dev database, run the following commands:
-
-- Log in to AWS with `make login`.
-- Open a second terminal window and `cd` into the repository root directory. Run `make web-db-tunnel` to open the connection to the remote db via the bastion host.
-- Build the backend image by running `make image`.
-- Generate the new migration script with `make generate-db-migration-dev`.
-
-Now you should see the new migration script in your `/migrations/versions/` directory. This script should be scrutinized and edited with reference to [changes Alembic won't auto-detect](https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect).
-
-### Applying a migration
-
-When running unit tests, the test db will be built using the migration scripts in the repo. This is critical for testing the migration before it is deployed.
-
-To bring the remote dev database in sync with the migration scripts, run the following commands:
-
-- Log in to AWS with `make login`.
-- Open a second terminal window and `cd` into the repository root directory. Run `make web-db-tunnel` to open the connection to the remote db via the bastion host.
-- Build the backend image by running `make image`.
-- Generate the new migration script with `make apply-db-migration-dev`.
-
-We are planning to apply migrations to the staging and production databases through CI/CD but this is yet to be set up.
+The database schema is managed through `Flask-Migrate`. Instructions for working with database migrations can be found [here]([url](https://idinsight.atlassian.net/wiki/spaces/DOD/pages/2199912628/Flask+Development+Standards#Working-with-Flask-Migrate)https://idinsight.atlassian.net/wiki/spaces/DOD/pages/2199912628/Flask+Development+Standards#Working-with-Flask-Migrate).
 
 
