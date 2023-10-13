@@ -431,13 +431,17 @@ def ingest_scto_form_definition(form_uid):
                 scto_form_definition["settingsRowsAndColumns"][1:][0],
             )
         )
+
+        public_key = settings_dict.get("public_key", None)
+        submission_url = settings_dict.get("submission_url", None)
+
         # return jsonify(settings_dict), 422
         scto_settings = SCTOFormSettings(
             form_uid=form_uid,
             form_title=settings_dict["form_title"],
             version=scto_form_version,
-            public_key=settings_dict["public_key"],
-            submission_url=settings_dict["submission_url"],
+            public_key=public_key,
+            submission_url=submission_url,
             default_language=settings_dict["default_language"],
         )
 
@@ -477,6 +481,7 @@ def ingest_scto_form_definition(form_uid):
 
                 for choice_label in choice_labels:
                     # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
+                    choice_value = choices_dict.get("value", choices_dict.get("name", None))
                     language = "default"
                     if len(choice_label.split(":")) > 1:
                         language = choice_label.split(":")[1]
@@ -484,7 +489,7 @@ def ingest_scto_form_definition(form_uid):
                     # Add the choice label to the database
                     scto_choice_label = SCTOChoiceLabel(
                         list_uid=scto_choice_list.list_uid,
-                        choice_value=choices_dict["value"],
+                        choice_value=choice_value,
                         label=choices_dict[choice_label],
                         language=language,
                     )

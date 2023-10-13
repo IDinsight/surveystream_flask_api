@@ -193,13 +193,6 @@ class EnumeratorsUpload:
                     f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} time(s) in the uploaded file. It should appear exactly once."
                 )
 
-        # Each column in the csv file should be mapped exactly once
-        for column_name in file_columns:
-            if expected_columns.count(column_name) != 1:
-                file_structure_errors.append(
-                    f"Column name '{column_name}' in the csv file appears {expected_columns.count(column_name)} time(s) in the column mapping. It should appear exactly once."
-                )
-
         if len(file_structure_errors) > 0:
             raise InvalidFileStructureError(file_structure_errors)
 

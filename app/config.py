@@ -75,13 +75,26 @@ class Config:
     SENTRY_CONFIG = {"dsn": ""}
 
 
-class DevelopmentConfig(Config):
+class LocalDevelopmentConfig(Config):
     DEBUG = True
 
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         Config.DB_USER,
         Config.DB_PASS,
         "host.docker.internal",
+        5432,
+        Config.DB_NAME,
+    )
+
+    PROTECT_DOCS_ENDPOINT = False
+
+class MigrationConfig(Config):
+    DEBUG = True
+
+    SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
+        Config.DB_USER,
+        Config.DB_PASS,
+        Config.DB_HOST,
         5432,
         Config.DB_NAME,
     )
@@ -103,6 +116,18 @@ class ProfilingConfig(Config):
 
 
 class UnitTestConfig(Config):
+    SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
+        "test_user",
+        "asdf",
+        "postgres",
+        5433,
+        "surveystream",
+    )
+
+    TESTING = True
+    DEBUG = True
+
+class DBCheckConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
         "asdf",
@@ -145,7 +170,7 @@ class ProductionConfig(Config):
         Config.DB_NAME,
     )
 
-    REACT_BASE_URL = "https://surveystream.idinsight.io"
+    REACT_BASE_URL = "https://callisto.surveystream.idinsight.io"
 
     SENTRY_CONFIG = {
         "dsn": "https://c320e08cbf204069afb2cc62ee498018@o564222.ingest.sentry.io/4505070237319168",
