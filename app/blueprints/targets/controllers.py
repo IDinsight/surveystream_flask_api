@@ -2,13 +2,11 @@ from flask import jsonify, request
 from app.utils.utils import logged_in_active_user_required
 from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.dialects.postgresql import insert as pg_insert, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.functions import func
-from sqlalchemy import update, cast, insert
+from sqlalchemy import update, cast
 import base64
-from sqlalchemy.orm import aliased
 from app import db
-from app.blueprints.surveys.models import Survey
 from app.blueprints.forms.models import ParentForm
 from app.blueprints.locations.models import Location, GeoLevel
 from .models import (
@@ -98,8 +96,11 @@ def upload_targets():
             422,
         )
 
+    # Create the column mapping object from the payload
     try:
-        column_mapping = TargetColumnMapping(payload_validator.column_mapping.data)
+        column_mapping = TargetColumnMapping(
+            payload_validator.column_mapping.data, form_uid, payload_validator.mode.data
+        )
     except InvalidColumnMappingError as e:
         return (
             jsonify(
@@ -112,34 +113,21 @@ def upload_targets():
             ),
             422,
         )
+    except InvalidNewColumnError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "column_mapping": e.new_column_errors,
+                    },
+                }
+            ),
+            422,
+        )
 
-    if payload_validator.mode.data == "add_columns":
-        new_column_errors = []
-        # Make sure the columns haven't already been added to the column config
-        column_config_column_names = [
-            row.column_name
-            for row in TargetColumnConfig.query.filter(
-                TargetColumnConfig.form_uid == form_uid,
-            ).all()
-        ]
-
-        for field_name, mapped_column in payload_validator.column_mapping.data.items():
-            if field_name == "custom_fields":
-                for custom_field in column_mapping["custom_fields"]:
-                    if custom_field["field_label"] in column_config_column_names:
-                        new_column_errors.append(
-                            f"Column '{custom_field['field_label']}' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality."
-                        )
-            else:
-                if field_name in column_config_column_names:
-                    new_column_errors.append(
-                        f"Column '{field_name}' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality."
-                    )
-        if len(new_column_errors) > 0:
-            raise InvalidNewColumnError(new_column_errors)
-
+    # If the column mapping has a location_id_column, make sure the geo levels for the survey are valid
     if hasattr(column_mapping, "location_id_column"):
-        # Get the geo levels for the survey
         geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
 
         try:
@@ -159,30 +147,15 @@ def upload_targets():
     else:
         geo_level_hierarchy = None
 
-    # Get the expected columns from the mapped column names
-    expected_columns = [
-        column_mapping.target_id,
-    ]
-
-    if hasattr(column_mapping, "language"):
-        expected_columns.append(column_mapping.language)
-
-    if hasattr(column_mapping, "gender"):
-        expected_columns.append(column_mapping.gender)
-
-    if hasattr(column_mapping, "location_id_column"):
-        expected_columns.append(column_mapping.location_id_column)
-
-    if hasattr(column_mapping, "custom_fields"):
-        for custom_field in column_mapping.custom_fields:
-            expected_columns.append(custom_field["column_name"])
-
     # Create a TargetsUpload object from the uploaded file
     try:
         targets_upload = TargetsUpload(
             csv_string=base64.b64decode(
                 payload_validator.file.data, validate=True
-            ).decode("utf-8")
+            ).decode("utf-8"),
+            column_mapping=column_mapping,
+            survey_uid=survey_uid,
+            form_uid=form_uid,
         )
     except binascii.Error:
         return (
@@ -225,6 +198,7 @@ def upload_targets():
             422,
         )
 
+    # Get the bottom level geo level UID for the survey, this is used to validate the location IDs
     if not geo_level_hierarchy:
         bottom_level_geo_level_uid = None
     else:
@@ -235,10 +209,8 @@ def upload_targets():
     # Validate the targets data
     try:
         targets_upload.validate_records(
-            expected_columns,
             column_mapping,
             bottom_level_geo_level_uid,
-            form,
             payload_validator.mode.data,
         )
     except InvalidFileStructureError as e:
@@ -266,125 +238,12 @@ def upload_targets():
             422,
         )
 
-    if payload_validator.mode.data == "overwrite":
-        Target.query.filter_by(form_uid=form_uid).delete()
-
-        try:
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return jsonify(message=str(e)), 500
-
-    # Create a location UID lookup if the location ID column is present
-    if hasattr(column_mapping, "location_id_column"):
-        # Get the location UID from the location ID
-        locations = Location.query.filter(
-            Location.location_id.in_(
-                targets_upload.targets_df[column_mapping.location_id_column]
-                .drop_duplicates()
-                .tolist()
-            ),
-            Location.survey_uid == survey_uid,
-        ).with_entities(Location.location_uid, Location.location_id)
-
-        # Create a dictionary of location ID to location UID
-        location_uid_lookup = {
-            location.location_id: location.location_uid for location in locations.all()
-        }
-
-    # Insert the targets into the database
-    targets_upload.targets_df = targets_upload.targets_df[expected_columns]
-    records_to_insert = []
-    for i, row in enumerate(targets_upload.targets_df.drop_duplicates().itertuples()):
-        target_dict = {
-            "form_uid": form_uid,
-            "target_id": row[1],
-        }
-
-        # Add the language if it exists
-        if hasattr(column_mapping, "language"):
-            col_index = (
-                targets_upload.targets_df.columns.get_loc(column_mapping.language) + 1
-            )  # Add 1 to the index to account for the df index
-            target_dict["language"] = row[col_index]
-
-        # Add the gender if it exists
-        if hasattr(column_mapping, "gender"):
-            col_index = (
-                targets_upload.targets_df.columns.get_loc(column_mapping.gender) + 1
-            )  # Add 1 to the index to account for the df index
-            target_dict["gender"] = row[col_index]
-
-        if hasattr(column_mapping, "location_id_column"):
-            col_index = (
-                targets_upload.targets_df.columns.get_loc(
-                    column_mapping.location_id_column
-                )
-                + 1
-            )
-            target_dict["location_uid"] = location_uid_lookup[row[col_index]]
-
-        # Add the custom fields if they exist
-        if hasattr(column_mapping, "custom_fields"):
-            custom_fields = {}
-            for custom_field in column_mapping.custom_fields:
-                col_index = (
-                    targets_upload.targets_df.columns.get_loc(
-                        custom_field["column_name"]
-                    )
-                    + 1
-                )  # Add 1 to the index to account for the df index
-                custom_fields[custom_field["field_label"]] = row[col_index]
-            target_dict["custom_fields"] = custom_fields
-
-        if payload_validator.mode.data == "add_columns":
-            Target.query.filter(
-                Target.target_id == target_dict["target_id"],
-                Target.form_uid == form_uid,
-            ).update(
-                {
-                    key: target_dict[key]
-                    for key in target_dict
-                    if key not in ["target_id", "form_uid", "custom_fields"]
-                },
-                synchronize_session=False,
-            )
-
-            if "custom_fields" in target_dict:
-                for field_name, field_value in target_dict["custom_fields"].items():
-                    db.session.execute(
-                        update(Target)
-                        .values(
-                            custom_fields=func.jsonb_set(
-                                Target.custom_fields,
-                                "{%s}" % field_name,
-                                cast(
-                                    field_value,
-                                    JSONB,
-                                ),
-                            )
-                        )
-                        .where(
-                            Target.target_id == target_dict["target_id"],
-                            Target.form_uid == target_dict["form_uid"],
-                        )
-                    )
-
-        else:
-            records_to_insert.append(target_dict)
-
-            # Insert the records in batches of 1000
-            if i > 0 and i % 1000 == 0:
-                db.session.execute(insert(Target).values(records_to_insert))
-                db.session.flush()
-                records_to_insert.clear()
-
-    if payload_validator.mode.data != "add_columns":
-        if len(records_to_insert) > 0:
-            db.session.execute(insert(Target).values(records_to_insert))
-
     try:
-        db.session.commit()
+        targets_upload.save_records(
+            column_mapping,
+            payload_validator.mode.data,
+        )
+
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500

@@ -1,14 +1,18 @@
 import io
 import pandas as pd
 import numpy as np
+from app import db
+from sqlalchemy import insert, update, func, cast
+from sqlalchemy.dialects.postgresql import JSONB
 from csv import DictReader
 from app.blueprints.locations.models import Location
-from .models import Target
+from .models import Target, TargetColumnConfig
 from .errors import (
     HeaderRowEmptyError,
     InvalidTargetRecordsError,
     InvalidColumnMappingError,
     InvalidFileStructureError,
+    InvalidNewColumnError,
 )
 
 
@@ -17,7 +21,7 @@ class TargetColumnMapping:
     Class to represent the target column mapping and run validations on it
     """
 
-    def __init__(self, column_mapping):
+    def __init__(self, column_mapping, form_uid, write_mode):
         try:
             self.__validate_column_mapping(column_mapping)
             self.target_id = column_mapping["target_id"]
@@ -33,6 +37,9 @@ class TargetColumnMapping:
 
             if column_mapping.get("custom_fields"):
                 self.custom_fields = column_mapping["custom_fields"]
+
+            if write_mode == "add_columns":
+                self.__validate_new_columns(form_uid)
 
         except:
             raise
@@ -93,17 +100,63 @@ class TargetColumnMapping:
 
         return
 
+    def __validate_new_columns(self, form_uid):
+        """
+        If we're in `add_columns` mode we need to check that the mapped columns don't conflict with existing columns in the column config
+        """
+
+        new_column_errors = []
+        column_config_column_names = [
+            row.column_name
+            for row in TargetColumnConfig.query.filter(
+                TargetColumnConfig.form_uid == form_uid,
+            ).all()
+        ]
+
+        # We can only have a single location_id_column, so check if one already exists in the column config
+        if hasattr(self, "location_id_column"):
+            if (
+                TargetColumnConfig.query.filter(
+                    TargetColumnConfig.form_uid == form_uid,
+                    TargetColumnConfig.column_type == "location",
+                ).first()
+                is not None
+            ):
+                new_column_errors.append(
+                    f"A location column '{self.location_id_column}' already exists in the targets column configuration. Only a single location can be added for targets."
+                )
+
+        if hasattr(self, "custom_fields"):
+            for custom_field in self.custom_fields:
+                if custom_field["field_label"] in column_config_column_names:
+                    new_column_errors.append(
+                        f"Column '{custom_field['field_label']}' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality."
+                    )
+        for field_name in ["gender", "language"]:
+            if hasattr(self, field_name) and field_name in column_config_column_names:
+                new_column_errors.append(
+                    f"Column '{field_name}' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality."
+                )
+        if len(new_column_errors) > 0:
+            raise InvalidNewColumnError(new_column_errors)
+
+        return
+
 
 class TargetsUpload:
     """
     Class to represent the targets data and run validations on it
     """
 
-    def __init__(self, csv_string):
+    def __init__(self, csv_string, column_mapping, survey_uid, form_uid):
         try:
             self.col_names = self.__get_col_names(csv_string)
         except:
             raise
+
+        self.survey_uid = survey_uid
+        self.form_uid = form_uid
+        self.expected_columns = self.__build_expected_columns(column_mapping)
         self.targets_df = self.__build_targets_df(csv_string)
 
     def __get_col_names(self, csv_string):
@@ -114,6 +167,31 @@ class TargetsUpload:
             )
 
         return col_names
+
+    def __build_expected_columns(self, column_mapping):
+        """
+        Get the expected columns from the mapped column names
+        These are the columns that should be in the csv file
+        """
+
+        expected_columns = [
+            column_mapping.target_id,
+        ]
+
+        if hasattr(column_mapping, "language"):
+            expected_columns.append(column_mapping.language)
+
+        if hasattr(column_mapping, "gender"):
+            expected_columns.append(column_mapping.gender)
+
+        if hasattr(column_mapping, "location_id_column"):
+            expected_columns.append(column_mapping.location_id_column)
+
+        if hasattr(column_mapping, "custom_fields"):
+            for custom_field in column_mapping.custom_fields:
+                expected_columns.append(custom_field["column_name"])
+
+        return expected_columns
 
     def __build_targets_df(self, csv_string):
         """
@@ -148,13 +226,9 @@ class TargetsUpload:
 
         return targets_df
 
-    def validate_records(
-        self, expected_columns, column_mapping, bottom_level_geo_level_uid, form, mode
-    ):
+    def validate_records(self, column_mapping, bottom_level_geo_level_uid, write_mode):
         """
         Method to run validations on the targets data
-
-        :param expected_columns: List of expected column names from the column mapping
         """
 
         file_structure_errors = []
@@ -167,7 +241,7 @@ class TargetsUpload:
             },
             "summary_by_error_type": [],
             "invalid_records": {
-                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "ordered_columns": ["row_number"] + self.expected_columns + ["errors"],
                 "records": None,
             },
         }
@@ -176,7 +250,7 @@ class TargetsUpload:
 
         # Each mapped column should appear in the csv file exactly once
         file_columns = self.targets_df.columns.to_list()
-        for column_name in expected_columns:
+        for column_name in self.expected_columns:
             if file_columns.count(column_name) != 1:
                 file_structure_errors.append(
                     f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} time(s) in the uploaded file. It should appear exactly once."
@@ -300,17 +374,17 @@ class TargetsUpload:
             )
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
-        # If the mode is `append`, the file should have no target_id's that are already in the database
-        if mode == "append":
+        # If the write_mode is `append`, the file should have no target_id's that are already in the database
+        if write_mode == "append":
             target_id_query = (
                 Target.query.filter(
-                    Target.form_uid == form.form_uid,
+                    Target.form_uid == self.form_uid,
                 )
                 .with_entities(Target.target_id)
                 .distinct()
             )
             invalid_target_id_df = self.targets_df[
-                self.targets_df["target_id"].isin(
+                self.targets_df[column_mapping.target_id].isin(
                     [row[0] for row in target_id_query.all()]
                 )
             ]
@@ -347,25 +421,25 @@ class TargetsUpload:
                     "; "
                 )
 
-        # If the mode is `add_columns`, the files target_id's should already be in the database
-        if mode == "append":
+        # If the write_mode is `add_columns`, the files target_id's should already be in the database
+        if write_mode == "add_columns":
             target_id_query = (
                 Target.query.filter(
-                    Target.form_uid == form.form_uid,
+                    Target.form_uid == self.form_uid,
                 )
                 .with_entities(Target.target_id)
                 .distinct()
             )
             invalid_target_id_df = self.targets_df[
-                ~self.targets_df["target_id"].isin(
+                ~self.targets_df[column_mapping.target_id].isin(
                     [row[0] for row in target_id_query.all()]
                 )
             ]
             if len(invalid_target_id_df) > 0:
                 record_errors["summary_by_error_type"].append(
                     {
-                        "error_type": "target_id's found in database",
-                        "error_message": f"The file contains {len(invalid_target_id_df)} target_id(s) that were not found in the database. When using the 'add columns' funtionality the uploaded sheet must contain only target_id's that have already been uploaded. The following row numbers contain target_id's that were not found in the database: {', '.join(str(row_number) for row_number in invalid_target_id_df.index.to_list())}",
+                        "error_type": "target_id's not found in database",
+                        "error_message": f"The file contains {len(invalid_target_id_df)} target_id(s) that were not found in the database. When using the 'add columns' functionality the uploaded sheet must contain only target_id's that have already been uploaded. The following row numbers contain target_id's that were not found in the database: {', '.join(str(row_number) for row_number in invalid_target_id_df.index.to_list())}",
                         "error_count": len(invalid_target_id_df),
                         "row_numbers_with_errors": invalid_target_id_df.index.to_list(),
                     }
@@ -398,7 +472,7 @@ class TargetsUpload:
         if hasattr(column_mapping, "location_id_column"):
             location_id_query = (
                 Location.query.filter(
-                    Location.survey_uid == form.survey_uid,
+                    Location.survey_uid == self.survey_uid,
                     Location.geo_level_uid == bottom_level_geo_level_uid,
                 )
                 .with_entities(Location.location_id)
@@ -466,3 +540,150 @@ class TargetsUpload:
             raise InvalidTargetRecordsError(record_errors)
 
         return
+
+    def save_records(self, column_mapping, write_mode):
+        """
+        Method to save the targets data to the database
+        """
+
+        ####################################################################
+        # Prepare a list of the target records to insert into the database
+        ####################################################################
+
+        location_uid_lookup = self.__build_location_uid_lookup(column_mapping)
+
+        self.targets_df = self.targets_df[self.expected_columns]
+
+        records_to_write = [
+            self.__build_target_dict(row, column_mapping, location_uid_lookup)
+            for row in self.targets_df.drop_duplicates().itertuples()
+        ]
+
+        ####################################################################
+        # Use the list of target records to write to the database
+        ####################################################################
+
+        if write_mode in ["overwrite", "append"]:
+            # For the overwrite and append methods, insert the records in chunks of 1000 using the fast bulk insert method
+
+            if write_mode == "overwrite":
+                Target.query.filter_by(form_uid=self.form_uid).delete()
+                db.session.commit()
+
+            chunk_size = 1000
+            for pos in range(0, len(records_to_write), chunk_size):
+                db.session.execute(
+                    insert(Target).values(records_to_write[pos : pos + chunk_size])
+                )
+                db.session.flush()
+
+        elif write_mode == "add_columns":
+            # For the add columns method, update the existing records with the new data
+            # `language` and `gender` are mandatory columns so we are not updating them here - they should have been added in the initial upload
+
+            for target_dict in records_to_write:
+                if "location_uid" in target_dict:
+                    Target.query.filter(
+                        Target.target_id == target_dict["target_id"],
+                        Target.form_uid == self.form_uid,
+                    ).update(
+                        {
+                            key: target_dict[key]
+                            for key in target_dict
+                            if key not in ["target_id", "form_uid", "custom_fields"]
+                        },
+                        synchronize_session=False,
+                    )
+
+                if "custom_fields" in target_dict:
+                    for field_name, field_value in target_dict["custom_fields"].items():
+                        db.session.execute(
+                            update(Target)
+                            .values(
+                                custom_fields=func.jsonb_set(
+                                    Target.custom_fields,
+                                    "{%s}" % field_name,
+                                    cast(
+                                        field_value,
+                                        JSONB,
+                                    ),
+                                )
+                            )
+                            .where(
+                                Target.target_id == target_dict["target_id"],
+                                Target.form_uid == target_dict["form_uid"],
+                            )
+                        )
+
+        db.session.commit()
+
+        return
+
+    def __build_location_uid_lookup(self, column_mapping):
+        """
+        Create a location UID lookup if the location ID column is present
+        """
+
+        if hasattr(column_mapping, "location_id_column"):
+            # Get the location UID from the location ID
+            locations = Location.query.filter(
+                Location.location_id.in_(
+                    self.targets_df[column_mapping.location_id_column]
+                    .drop_duplicates()
+                    .tolist()
+                ),
+                Location.survey_uid == self.survey_uid,
+            ).with_entities(Location.location_uid, Location.location_id)
+
+            # Create a dictionary of location ID to location UID
+            location_uid_lookup = {
+                location.location_id: location.location_uid
+                for location in locations.all()
+            }
+
+            return location_uid_lookup
+
+        else:
+            return None
+
+    def __build_target_dict(self, row, column_mapping, location_uid_lookup):
+        """
+        Method to build the target dictionary from the targets dataframe row
+        """
+
+        target_dict = {
+            "form_uid": self.form_uid,
+            "target_id": row[1],
+        }
+
+        # Add the language if it exists
+        if hasattr(column_mapping, "language"):
+            col_index = (
+                self.targets_df.columns.get_loc(column_mapping.language) + 1
+            )  # Add 1 to the index to account for the df index
+            target_dict["language"] = row[col_index]
+
+        # Add the gender if it exists
+        if hasattr(column_mapping, "gender"):
+            col_index = (
+                self.targets_df.columns.get_loc(column_mapping.gender) + 1
+            )  # Add 1 to the index to account for the df index
+            target_dict["gender"] = row[col_index]
+
+        if hasattr(column_mapping, "location_id_column"):
+            col_index = (
+                self.targets_df.columns.get_loc(column_mapping.location_id_column) + 1
+            )
+            target_dict["location_uid"] = location_uid_lookup[row[col_index]]
+
+        # Add the custom fields if they exist
+        if hasattr(column_mapping, "custom_fields"):
+            custom_fields = {}
+            for custom_field in column_mapping.custom_fields:
+                col_index = (
+                    self.targets_df.columns.get_loc(custom_field["column_name"]) + 1
+                )  # Add 1 to the index to account for the df index
+                custom_fields[custom_field["field_label"]] = row[col_index]
+            target_dict["custom_fields"] = custom_fields
+
+        return target_dict

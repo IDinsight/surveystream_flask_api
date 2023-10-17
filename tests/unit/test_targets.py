@@ -1408,7 +1408,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "overwrite",
+            "mode": "add_columns",
         }
 
         response = client.post(
@@ -1563,7 +1563,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "overwrite",
+            "mode": "add_columns",
         }
 
         response = client.post(
@@ -1574,7 +1574,50 @@ class TestTargets:
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.json)
-        assert response.status_code == 200
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "target_id1",
+                            "mobile_primary2",
+                            "language2",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "errors": "The target_id was not found in the database for this form",
+                                "language2": "Hindi",
+                                "mobile_primary2": "1234567891",
+                                "row_number": 3,
+                                "target_id1": "3",
+                            }
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 1,
+                        "total_correct_rows": 1,
+                        "total_rows": 2,
+                        "total_rows_with_errors": 1,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 target_id(s) that were not found in the database. When using the 'add columns' functionality the uploaded sheet must contain only target_id's that have already been uploaded. The following row numbers contain target_id's that were not found in the database: 3",
+                            "error_type": "target_id's not found in database",
+                            "row_numbers_with_errors": [3],
+                        }
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
 
     def test_add_columns_csv_existing_columns(
         self,
@@ -1611,7 +1654,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "overwrite",
+            "mode": "add_columns",
         }
 
         response = client.post(
@@ -1621,5 +1664,18 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
-        assert response.status_code == 200
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "column_mapping": [
+                    "Column 'Mobile no.' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality.",
+                    "Column 'language' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality.",
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
