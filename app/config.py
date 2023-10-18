@@ -115,6 +115,13 @@ class ProfilingConfig(Config):
     DEBUG = True
 
 
+class AirflowE2ETestConfig(Config):
+    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI")
+
+    TESTING = True
+    DEBUG = True
+
+
 class UnitTestConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
