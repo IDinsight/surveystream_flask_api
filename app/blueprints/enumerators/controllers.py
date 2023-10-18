@@ -218,19 +218,6 @@ def upload_enumerators():
             422,
         )
 
-    if payload_validator.mode.data == "overwrite":
-        SurveyorForm.query.filter_by(form_uid=form_uid).delete()
-        SurveyorLocation.query.filter_by(form_uid=form_uid).delete()
-        MonitorForm.query.filter_by(form_uid=form_uid).delete()
-        MonitorLocation.query.filter_by(form_uid=form_uid).delete()
-        Enumerator.query.filter_by(form_uid=form_uid).delete()
-
-        try:
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return jsonify(message=str(e)), 500
-
     try:
         enumerators_upload.save_records(
             column_mapping,
