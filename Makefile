@@ -125,21 +125,3 @@ downgrade-db-dev:
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
 	docker-compose -f docker-compose/docker-compose.db-downgrade.yml -f docker-compose/docker-compose.override.yml rm -fsv
-
-image-airflow-e2e-test:
-	# Build docker image
-	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --platform=linux/amd64 -t $(BACKEND_NAME):$(VERSION) .
-
-	# Tag 
-	@docker tag $(BACKEND_NAME):$(VERSION) $(DEV_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web-callisto-ecr-repository:AirflowE2ETest
-
-	# Login to aws 
-	@aws ecr get-login-password \
-    --region ap-south-1 \
-	--profile surveystream_dev | \
-	docker login \
-    --username AWS \
-    --password-stdin $(DEV_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com
-
-	# Push image to ECS repository
-	@docker push $(DEV_ACCOUNT).dkr.ecr.ap-south-1.amazonaws.com/web-callisto-ecr-repository:AirflowE2ETest
