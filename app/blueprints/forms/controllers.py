@@ -431,6 +431,7 @@ def ingest_scto_form_definition(form_uid):
                 scto_form_definition["settingsRowsAndColumns"][1:][0],
             )
         )
+
         public_key = settings_dict.get("public_key", None)
         submission_url = settings_dict.get("submission_url", None)
 
