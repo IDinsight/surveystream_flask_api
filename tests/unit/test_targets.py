@@ -1408,7 +1408,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "add_columns",
+            "mode": "append",
         }
 
         response = client.post(
@@ -1563,7 +1563,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "add_columns",
+            "mode": "append",
         }
 
         response = client.post(
@@ -1654,7 +1654,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "add_columns",
+            "mode": "append",
         }
 
         response = client.post(
@@ -1665,7 +1665,7 @@ class TestTargets:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        assert response.status_code == 422
+        assert response.status_code == 200
 
         expected_response = {
             "errors": {

@@ -38,8 +38,6 @@ class TargetColumnMapping:
             if column_mapping.get("custom_fields"):
                 self.custom_fields = column_mapping["custom_fields"]
 
-            if write_mode == "add_columns":
-                self.__validate_new_columns(form_uid)
 
         except:
             raise
@@ -563,12 +561,10 @@ class TargetsUpload:
         # Use the list of target records to write to the database
         ####################################################################
 
-        if write_mode in ["overwrite", "append"]:
-            # For the overwrite and append methods, insert the records in chunks of 1000 using the fast bulk insert method
-
-            if write_mode == "overwrite":
-                Target.query.filter_by(form_uid=self.form_uid).delete()
-                db.session.commit()
+        if write_mode == "overwrite":
+            # For the overwrite mode, delete existing records for the form and insert the records in chunks of 1000 using the fast bulk insert method
+            Target.query.filter_by(form_uid=self.form_uid).delete()
+            db.session.commit()
 
             chunk_size = 1000
             for pos in range(0, len(records_to_write), chunk_size):
@@ -577,43 +573,66 @@ class TargetsUpload:
                 )
                 db.session.flush()
 
-        elif write_mode == "add_columns":
-            # For the add columns method, update the existing records with the new data
-            # `language` and `gender` are mandatory columns so we are not updating them here - they should have been added in the initial upload
+        elif write_mode == "append":
+            # This mode will include new records added and update the existing records with the new data;
+            # target_id columns should not be updated
+
+            # Create a set to store existing target IDs
+            existing_target_ids = set()
+            existing_targets = Target.query.filter_by(form_uid=self.form_uid).all()
+            existing_target_ids = {target.target_id for target in existing_targets}
+
+            # Collect records to update separately from the records to insert, so we can perform bulk updates reducing db overhead
+            records_to_insert = []
+            records_to_update = []
 
             for target_dict in records_to_write:
-                if "location_uid" in target_dict:
+                if "target_id" in target_dict:
+                    if target_dict["target_id"] in existing_target_ids:
+                        records_to_update.append(target_dict)
+                    else:
+                        records_to_insert.append(target_dict)
+                else:
+                    records_to_insert.append(target_dict)
+
+            for record in records_to_update:
                     Target.query.filter(
-                        Target.target_id == target_dict["target_id"],
+                        Target.target_id == record["target_id"],
                         Target.form_uid == self.form_uid,
                     ).update(
                         {
-                            key: target_dict[key]
-                            for key in target_dict
+                            key: record[key]
+                            for key in record
                             if key not in ["target_id", "form_uid", "custom_fields"]
                         },
                         synchronize_session=False,
                     )
-
-                if "custom_fields" in target_dict:
-                    for field_name, field_value in target_dict["custom_fields"].items():
-                        db.session.execute(
-                            update(Target)
-                            .values(
-                                custom_fields=func.jsonb_set(
-                                    Target.custom_fields,
-                                    "{%s}" % field_name,
-                                    cast(
-                                        field_value,
-                                        JSONB,
-                                    ),
+                    if "custom_fields" in record:
+                        for field_name, field_value in record["custom_fields"].items():
+                            db.session.execute(
+                                update(Target)
+                                .values(
+                                    custom_fields=func.jsonb_set(
+                                        Target.custom_fields,
+                                        "{%s}" % field_name,
+                                        cast(
+                                            field_value,
+                                            JSONB,
+                                        ),
+                                    )
+                                )
+                                .where(
+                                    Target.target_id == record["target_id"],
+                                    Target.form_uid == record["form_uid"],
                                 )
                             )
-                            .where(
-                                Target.target_id == target_dict["target_id"],
-                                Target.form_uid == target_dict["form_uid"],
-                            )
-                        )
+            if records_to_insert:
+                chunk_size = 1000
+                for pos in range(0, len(records_to_insert), chunk_size):
+                    db.session.execute(
+                        insert(Target).values(records_to_insert[pos: pos + chunk_size])
+                    )
+                    db.session.flush()
 
         db.session.commit()
 

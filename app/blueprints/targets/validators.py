@@ -28,7 +28,7 @@ class TargetsFileUploadValidator(FlaskForm):
     mode = StringField(
         validators=[
             AnyOf(
-                ["append", "overwrite", "add_columns"],
+                ["append", "overwrite"],
                 message="Value must be one of %(values)s",
             ),
             DataRequired(),
