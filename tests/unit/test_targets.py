@@ -900,7 +900,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "append",
+            "mode": "merge",
         }
 
         response = client.post(
@@ -1408,7 +1408,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "append",
+            "mode": "merge",
         }
 
         response = client.post(
@@ -1563,7 +1563,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "append",
+            "mode": "merge",
         }
 
         response = client.post(
@@ -1654,7 +1654,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "append",
+            "mode": "merge",
         }
 
         response = client.post(
