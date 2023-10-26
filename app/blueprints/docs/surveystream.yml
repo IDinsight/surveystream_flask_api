@@ -2126,15 +2126,13 @@ paths:
                   type: string
                   enum:
                     - overwrite
-                    - append
+                    - merge
                   description: >-
                     The mode of the upload. If `overwrite`, all enumerators
                     with the given form_uid (from the query parameter) will be 
-                    deleted and replaced with the new enumerators in the csv. If `append`, 
-                    the new enumerators in the csv will be added to the existing enumerators.
-
-                    **Note:** If the `append` mode is used, the enumerators in the csv
-                    must have unique enumerator IDs or the upload will fail.
+                    deleted and replaced with the new enumerators in the csv. If `merge`, 
+                    the new enumerators in the csv will be added to the existing enumerators.Existing records will also
+                    be updated if included in the upload.
               required:
                 - column_mapping
                 - file
