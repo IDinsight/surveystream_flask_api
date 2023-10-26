@@ -985,7 +985,7 @@ class TestEnumerators:
                 ],
             },
             "file": enumerators_csv_encoded,
-            "mode": "append",
+            "mode": "merge",
         }
 
         response = client.post(
