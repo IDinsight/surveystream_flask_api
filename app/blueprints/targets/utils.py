@@ -450,16 +450,17 @@ class TargetsUpload:
 
         self.targets_df = self.targets_df[self.expected_columns]
 
-        records_to_write = [
-            self.__build_target_dict(row, column_mapping, location_uid_lookup)
-            for row in self.targets_df.drop_duplicates().itertuples()
-        ]
 
         ####################################################################
         # Use the list of target records to write to the database
         ####################################################################
 
         if write_mode == "overwrite":
+
+            records_to_write = [
+                self.__build_target_dict(row, column_mapping, location_uid_lookup)
+                for row in self.targets_df.drop_duplicates().itertuples()
+            ]
             # For the overwrite mode, delete existing records for the form and insert the records in chunks of 1000 using the fast bulk insert method
             Target.query.filter_by(form_uid=self.form_uid).delete()
             db.session.commit()
@@ -475,23 +476,20 @@ class TargetsUpload:
             # This mode will include new records added and update the existing records with the new data;
             # target_id columns should not be updated
 
-            # Create a set to store existing target IDs
-            existing_target_ids = set()
-            existing_targets = Target.query.filter_by(form_uid=self.form_uid).all()
-            existing_target_ids = {target.target_id for target in existing_targets}
-
             # Collect records to update separately from the records to insert, so we can perform bulk updates reducing db overhead
             records_to_insert = []
             records_to_update = []
 
-            for target_dict in records_to_write:
-                if "target_id" in target_dict:
-                    if target_dict["target_id"] in existing_target_ids:
+            for row in self.targets_df.drop_duplicates().itertuples():
+                target_dict = self.__build_target_dict(row, column_mapping, location_uid_lookup)
+                existing_target = Target.query.filter_by(form_uid=self.form_uid,
+                                                         target_id=target_dict["target_id"]).first()
+
+                if existing_target:
                         records_to_update.append(target_dict)
-                    else:
-                        records_to_insert.append(target_dict)
                 else:
                     records_to_insert.append(target_dict)
+
 
             for record in records_to_update:
                     Target.query.filter(
