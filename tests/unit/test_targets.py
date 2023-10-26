@@ -931,7 +931,7 @@ class TestTargets:
                         "records": [
                             {
                                 "address": "Hyderabad",
-                                "errors": "Duplicate row; Duplicate target_id; The same target_id already exists for the form - target_id's must be unique for each form",
+                                "errors": "Duplicate row; Duplicate target_id",
                                 "gender": "Male",
                                 "language": "Telugu",
                                 "mobile_primary": "1234567890",
@@ -942,7 +942,7 @@ class TestTargets:
                             },
                             {
                                 "address": "Hyderabad",
-                                "errors": "Duplicate row; Duplicate target_id; The same target_id already exists for the form - target_id's must be unique for each form",
+                                "errors": "Duplicate row; Duplicate target_id",
                                 "gender": "Male",
                                 "language": "Telugu",
                                 "mobile_primary": "1234567890",
@@ -965,7 +965,7 @@ class TestTargets:
                         ],
                     },
                     "summary": {
-                        "error_count": 8,
+                        "error_count": 6,
                         "total_correct_rows": 0,
                         "total_rows": 3,
                         "total_rows_with_errors": 3,
@@ -987,12 +987,6 @@ class TestTargets:
                             "error_count": 2,
                             "error_message": "The file has 2 duplicate target_id(s). The following row numbers contain target_id duplicates: 2, 3",
                             "error_type": "Duplicate target_id's in file",
-                            "row_numbers_with_errors": [2, 3],
-                        },
-                        {
-                            "error_count": 2,
-                            "error_message": "The file contains 2 target_id(s) that have already been uploaded. The following row numbers contain target_id's that have already been uploaded: 2, 3",
-                            "error_type": "target_id's found in database",
                             "row_numbers_with_errors": [2, 3],
                         },
                         {
@@ -1370,7 +1364,7 @@ class TestTargets:
 
         assert response.status_code == 200
 
-    def test_add_columns_csv(
+    def test_merge_columns_csv(
         self,
         client,
         login_test_user,
@@ -1525,7 +1519,7 @@ class TestTargets:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_add_columns_csv_incorrect_target_id(
+    def test_merge_csv_incorrect_target_id(
         self,
         client,
         login_test_user,
@@ -1574,52 +1568,15 @@ class TestTargets:
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.json)
-        assert response.status_code == 422
+        assert response.status_code == 200
 
-        expected_response = {
-            "errors": {
-                "record_errors": {
-                    "invalid_records": {
-                        "ordered_columns": [
-                            "row_number",
-                            "target_id1",
-                            "mobile_primary2",
-                            "language2",
-                            "errors",
-                        ],
-                        "records": [
-                            {
-                                "errors": "The target_id was not found in the database for this form",
-                                "language2": "Hindi",
-                                "mobile_primary2": "1234567891",
-                                "row_number": 3,
-                                "target_id1": "3",
-                            }
-                        ],
-                    },
-                    "summary": {
-                        "error_count": 1,
-                        "total_correct_rows": 1,
-                        "total_rows": 2,
-                        "total_rows_with_errors": 1,
-                    },
-                    "summary_by_error_type": [
-                        {
-                            "error_count": 1,
-                            "error_message": "The file contains 1 target_id(s) that were not found in the database. When using the 'add columns' functionality the uploaded sheet must contain only target_id's that have already been uploaded. The following row numbers contain target_id's that were not found in the database: 3",
-                            "error_type": "target_id's not found in database",
-                            "row_numbers_with_errors": [3],
-                        }
-                    ],
-                }
-            },
-            "success": False,
-        }
+        expected_response = {'message': 'Success'}
+
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_add_columns_csv_existing_columns(
+    def test_merge_csv_existing_columns(
         self,
         client,
         login_test_user,
@@ -1667,15 +1624,7 @@ class TestTargets:
 
         assert response.status_code == 200
 
-        expected_response = {
-            "errors": {
-                "column_mapping": [
-                    "Column 'Mobile no.' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality.",
-                    "Column 'language' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality.",
-                ]
-            },
-            "success": False,
-        }
+        expected_response = {'message': 'Success'}
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
