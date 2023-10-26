@@ -492,6 +492,7 @@ class TargetsUpload:
 
 
             for record in records_to_update:
+                if any(key for key in record if key not in ["target_id", "form_uid", "custom_fields"]):
                     Target.query.filter(
                         Target.target_id == record["target_id"],
                         Target.form_uid == self.form_uid,
@@ -503,25 +504,25 @@ class TargetsUpload:
                         },
                         synchronize_session=False,
                     )
-                    if "custom_fields" in record:
-                        for field_name, field_value in record["custom_fields"].items():
-                            db.session.execute(
-                                update(Target)
-                                .values(
-                                    custom_fields=func.jsonb_set(
-                                        Target.custom_fields,
-                                        "{%s}" % field_name,
-                                        cast(
-                                            field_value,
-                                            JSONB,
-                                        ),
-                                    )
-                                )
-                                .where(
-                                    Target.target_id == record["target_id"],
-                                    Target.form_uid == record["form_uid"],
+                if "custom_fields" in record:
+                    for field_name, field_value in record["custom_fields"].items():
+                        db.session.execute(
+                            update(Target)
+                            .values(
+                                custom_fields=func.jsonb_set(
+                                    Target.custom_fields,
+                                    "{%s}" % field_name,
+                                    cast(
+                                        field_value,
+                                        JSONB,
+                                    ),
                                 )
                             )
+                            .where(
+                                Target.target_id == record["target_id"],
+                                Target.form_uid == record["form_uid"],
+                            )
+                        )
             if records_to_insert:
                 chunk_size = 1000
                 for pos in range(0, len(records_to_insert), chunk_size):
