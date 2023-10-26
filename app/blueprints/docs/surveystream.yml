@@ -2126,15 +2126,13 @@ paths:
                   type: string
                   enum:
                     - overwrite
-                    - append
+                    - merge
                   description: >-
                     The mode of the upload. If `overwrite`, all enumerators
                     with the given form_uid (from the query parameter) will be 
-                    deleted and replaced with the new enumerators in the csv. If `append`, 
-                    the new enumerators in the csv will be added to the existing enumerators.
-
-                    **Note:** If the `append` mode is used, the enumerators in the csv
-                    must have unique enumerator IDs or the upload will fail.
+                    deleted and replaced with the new enumerators in the csv. If `merge`, 
+                    the new enumerators in the csv will be added to the existing enumerators.Existing records will also
+                    be updated if included in the upload.
               required:
                 - column_mapping
                 - file
@@ -3669,20 +3667,15 @@ paths:
                   enum:
                     - overwrite
                     - append
-                    - add_columns
                   description: >-
                     The mode of the upload. If `overwrite`, all targets
                     with the given form_uid (from the query parameter) will be 
                     deleted and replaced with the new targets in the csv. If `append`, 
                     the new targets in the csv will be added to the existing targets.
-                    If `add_columns`, the columns in the csv will be added to the existing targets (with a left join). 
 
                     **Note:** If the `append` mode is used, the targets in the csv
-                    must have target IDs that are not already in the database for the form or the upload will fail.
-
-                    **Note:** If the `add_columns` mode is used, the targets in the csv
-                    must have target IDs that already exist in the database for the form or the upload will fail. 
-                    In addition, the mapped columns must not already be present in the targets column config table.
+                    may have target IDs that are not already in the database for the form and those will be inserted. 
+                    Also updates to on new and existing columns will be made if this mode is used.
               required:
                 - column_mapping
                 - file

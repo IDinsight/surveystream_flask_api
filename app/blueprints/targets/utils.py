@@ -37,9 +37,10 @@ class TargetColumnMapping:
 
             if column_mapping.get("custom_fields"):
                 self.custom_fields = column_mapping["custom_fields"]
+                
+            if write_mode == "merge":
+                self.__validate_merge(form_uid)
 
-            if write_mode == "add_columns":
-                self.__validate_new_columns(form_uid)
 
         except:
             raise
@@ -100,9 +101,9 @@ class TargetColumnMapping:
 
         return
 
-    def __validate_new_columns(self, form_uid):
+    def __validate_merge(self, form_uid):
         """
-        If we're in `add_columns` mode we need to check that the mapped columns don't conflict with existing columns in the column config
+        If we're in `merge` mode we need to check that the mapped columns don't conflict with existing columns in the column config
         """
 
         new_column_errors = []
@@ -126,17 +127,6 @@ class TargetColumnMapping:
                     f"A location column '{self.location_id_column}' already exists in the targets column configuration. Only a single location can be added for targets."
                 )
 
-        if hasattr(self, "custom_fields"):
-            for custom_field in self.custom_fields:
-                if custom_field["field_label"] in column_config_column_names:
-                    new_column_errors.append(
-                        f"Column '{custom_field['field_label']}' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality."
-                    )
-        for field_name in ["gender", "language"]:
-            if hasattr(self, field_name) and field_name in column_config_column_names:
-                new_column_errors.append(
-                    f"Column '{field_name}' already exists in the targets column configuration. Only new columns can be uploaded using the 'add columns' functionality."
-                )
         if len(new_column_errors) > 0:
             raise InvalidNewColumnError(new_column_errors)
 
@@ -374,100 +364,6 @@ class TargetsUpload:
             )
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
-        # If the write_mode is `append`, the file should have no target_id's that are already in the database
-        if write_mode == "append":
-            target_id_query = (
-                Target.query.filter(
-                    Target.form_uid == self.form_uid,
-                )
-                .with_entities(Target.target_id)
-                .distinct()
-            )
-            invalid_target_id_df = self.targets_df[
-                self.targets_df[column_mapping.target_id].isin(
-                    [row[0] for row in target_id_query.all()]
-                )
-            ]
-            if len(invalid_target_id_df) > 0:
-                record_errors["summary_by_error_type"].append(
-                    {
-                        "error_type": "target_id's found in database",
-                        "error_message": f"The file contains {len(invalid_target_id_df)} target_id(s) that have already been uploaded. The following row numbers contain target_id's that have already been uploaded: {', '.join(str(row_number) for row_number in invalid_target_id_df.index.to_list())}",
-                        "error_count": len(invalid_target_id_df),
-                        "row_numbers_with_errors": invalid_target_id_df.index.to_list(),
-                    }
-                )
-
-                invalid_target_id_df[
-                    "errors"
-                ] = "The same target_id already exists for the form - target_id's must be unique for each form"
-                invalid_records_df = invalid_records_df.merge(
-                    invalid_target_id_df["errors"],
-                    how="left",
-                    left_index=True,
-                    right_index=True,
-                )
-                # Replace NaN with empty string
-                invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna(
-                    ""
-                )
-                invalid_records_df["errors"] = invalid_records_df[
-                    ["errors_x", "errors_y"]
-                ].apply("; ".join, axis=1)
-                invalid_records_df = invalid_records_df.drop(
-                    columns=["errors_x", "errors_y"]
-                )
-                invalid_records_df["errors"] = invalid_records_df["errors"].str.strip(
-                    "; "
-                )
-
-        # If the write_mode is `add_columns`, the files target_id's should already be in the database
-        if write_mode == "add_columns":
-            target_id_query = (
-                Target.query.filter(
-                    Target.form_uid == self.form_uid,
-                )
-                .with_entities(Target.target_id)
-                .distinct()
-            )
-            invalid_target_id_df = self.targets_df[
-                ~self.targets_df[column_mapping.target_id].isin(
-                    [row[0] for row in target_id_query.all()]
-                )
-            ]
-            if len(invalid_target_id_df) > 0:
-                record_errors["summary_by_error_type"].append(
-                    {
-                        "error_type": "target_id's not found in database",
-                        "error_message": f"The file contains {len(invalid_target_id_df)} target_id(s) that were not found in the database. When using the 'add columns' functionality the uploaded sheet must contain only target_id's that have already been uploaded. The following row numbers contain target_id's that were not found in the database: {', '.join(str(row_number) for row_number in invalid_target_id_df.index.to_list())}",
-                        "error_count": len(invalid_target_id_df),
-                        "row_numbers_with_errors": invalid_target_id_df.index.to_list(),
-                    }
-                )
-
-                invalid_target_id_df[
-                    "errors"
-                ] = "The target_id was not found in the database for this form"
-                invalid_records_df = invalid_records_df.merge(
-                    invalid_target_id_df["errors"],
-                    how="left",
-                    left_index=True,
-                    right_index=True,
-                )
-                # Replace NaN with empty string
-                invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna(
-                    ""
-                )
-                invalid_records_df["errors"] = invalid_records_df[
-                    ["errors_x", "errors_y"]
-                ].apply("; ".join, axis=1)
-                invalid_records_df = invalid_records_df.drop(
-                    columns=["errors_x", "errors_y"]
-                )
-                invalid_records_df["errors"] = invalid_records_df["errors"].str.strip(
-                    "; "
-                )
-
         # If the location_id_column is mapped, the file should contain no location_id's that are not in the database
         if hasattr(column_mapping, "location_id_column"):
             location_id_query = (
@@ -554,21 +450,20 @@ class TargetsUpload:
 
         self.targets_df = self.targets_df[self.expected_columns]
 
-        records_to_write = [
-            self.__build_target_dict(row, column_mapping, location_uid_lookup)
-            for row in self.targets_df.drop_duplicates().itertuples()
-        ]
 
         ####################################################################
         # Use the list of target records to write to the database
         ####################################################################
 
-        if write_mode in ["overwrite", "append"]:
-            # For the overwrite and append methods, insert the records in chunks of 1000 using the fast bulk insert method
+        if write_mode == "overwrite":
 
-            if write_mode == "overwrite":
-                Target.query.filter_by(form_uid=self.form_uid).delete()
-                db.session.commit()
+            records_to_write = [
+                self.__build_target_dict(row, column_mapping, location_uid_lookup)
+                for row in self.targets_df.drop_duplicates().itertuples()
+            ]
+            # For the overwrite mode, delete existing records for the form and insert the records in chunks of 1000 using the fast bulk insert method
+            Target.query.filter_by(form_uid=self.form_uid).delete()
+            db.session.commit()
 
             chunk_size = 1000
             for pos in range(0, len(records_to_write), chunk_size):
@@ -577,26 +472,40 @@ class TargetsUpload:
                 )
                 db.session.flush()
 
-        elif write_mode == "add_columns":
-            # For the add columns method, update the existing records with the new data
-            # `language` and `gender` are mandatory columns so we are not updating them here - they should have been added in the initial upload
+        elif write_mode == "merge":
+            # This mode will include new records added and update the existing records with the new data;
+            # target_id columns should not be updated
 
-            for target_dict in records_to_write:
-                if "location_uid" in target_dict:
+            # Collect records to update separately from the records to insert, so we can perform bulk updates reducing db overhead
+            records_to_insert = []
+            records_to_update = []
+
+            for row in self.targets_df.drop_duplicates().itertuples():
+                target_dict = self.__build_target_dict(row, column_mapping, location_uid_lookup)
+                existing_target = Target.query.filter_by(form_uid=self.form_uid,
+                                                         target_id=target_dict["target_id"]).first()
+
+                if existing_target:
+                        records_to_update.append(target_dict)
+                else:
+                    records_to_insert.append(target_dict)
+
+
+            for record in records_to_update:
+                if any(key for key in record if key not in ["target_id", "form_uid", "custom_fields"]):
                     Target.query.filter(
-                        Target.target_id == target_dict["target_id"],
+                        Target.target_id == record["target_id"],
                         Target.form_uid == self.form_uid,
                     ).update(
                         {
-                            key: target_dict[key]
-                            for key in target_dict
+                            key: record[key]
+                            for key in record
                             if key not in ["target_id", "form_uid", "custom_fields"]
                         },
                         synchronize_session=False,
                     )
-
-                if "custom_fields" in target_dict:
-                    for field_name, field_value in target_dict["custom_fields"].items():
+                if "custom_fields" in record:
+                    for field_name, field_value in record["custom_fields"].items():
                         db.session.execute(
                             update(Target)
                             .values(
@@ -610,10 +519,17 @@ class TargetsUpload:
                                 )
                             )
                             .where(
-                                Target.target_id == target_dict["target_id"],
-                                Target.form_uid == target_dict["form_uid"],
+                                Target.target_id == record["target_id"],
+                                Target.form_uid == record["form_uid"],
                             )
                         )
+            if records_to_insert:
+                chunk_size = 1000
+                for pos in range(0, len(records_to_insert), chunk_size):
+                    db.session.execute(
+                        insert(Target).values(records_to_insert[pos: pos + chunk_size])
+                    )
+                    db.session.flush()
 
         db.session.commit()
 
