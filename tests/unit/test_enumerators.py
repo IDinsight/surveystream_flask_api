@@ -1070,6 +1070,7 @@ class TestEnumerators:
                                 "enumerator_id": "0294615",
                                 "enumerator_type": "monitor;surveyor",
                                 "errors": "Duplicate row; Duplicate enumerator_id; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "gender": "Male",
                                 "home_address": "my house",
                                 "language": "Swahili",
                                 "mobile_primary": "012345678",
