@@ -321,7 +321,7 @@ class TestTargets:
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
     ):
         """
-        Upload the targets csv
+        Upload the targets csv with no locations
         """
 
         filepath = (
@@ -374,7 +374,7 @@ class TestTargets:
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
     ):
         """
-        Upload the targets csv
+        Upload the targets csv with no custmo fields
         """
 
         filepath = (
@@ -520,7 +520,7 @@ class TestTargets:
         self, client, login_test_user, upload_targets_csv, csrf_token
     ):
         """
-        Test that the targets csv can be uploaded
+        Test that we can paginate the targets response
         """
 
         expected_response = {
@@ -586,7 +586,7 @@ class TestTargets:
         self, client, login_test_user, upload_targets_csv_no_locations, csrf_token
     ):
         """
-        Test uploading targets csv with no locations mapped
+        Test that we can upload a targets csv with no locations mapped
         """
 
         expected_response = {
@@ -642,6 +642,8 @@ class TestTargets:
         # Check the response
         response = client.get("/api/targets", query_string={"form_uid": 1})
 
+        assert response.status_code == 200
+
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -649,7 +651,7 @@ class TestTargets:
         self, client, login_test_user, create_form, csrf_token
     ):
         """
-        Test uploading targets csv with no locations mapped and no geo levels defined
+        Test that we can upload a targets csv with no locations mapped and no geo levels defined
         """
 
         filepath = (
@@ -912,7 +914,7 @@ class TestTargets:
         )
 
         assert response.status_code == 422
-        print(response.json)
+
         expected_response = {
             "errors": {
                 "record_errors": {
@@ -1157,7 +1159,7 @@ class TestTargets:
         self, client, login_test_user, upload_targets_csv, csrf_token
     ):
         """
-        Test that an individual target can be updated
+        Test that an individual target cannot be updated with incorrect custom fields
         """
 
         # Update the target
@@ -1331,7 +1333,7 @@ class TestTargets:
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
     ):
         """
-        Upload the targets csv
+        Test that we can leave columns unmapped
         """
 
         filepath = (
@@ -1364,7 +1366,7 @@ class TestTargets:
 
         assert response.status_code == 200
 
-    def test_merge_columns_csv(
+    def test_merge_csv(
         self,
         client,
         login_test_user,
@@ -1373,12 +1375,18 @@ class TestTargets:
         csrf_token,
     ):
         """
-        Test that the targets csv can be uploaded
+        Test the merge functionality
+
+        Expected behaviour:
+        New target_id's should be appended
+        New mapped columns should be added for all rows
+        Existing target_id's should be updated for mapped columns
+        Make sure to check that the custom fields get added and updated correctly
         """
 
         filepath = (
             Path(__file__).resolve().parent
-            / f"data/file_uploads/sample_targets_new_columns.csv"
+            / f"data/file_uploads/sample_targets_merge.csv"
         )
 
         # Read the targets.csv file and convert it to base64
@@ -1390,14 +1398,15 @@ class TestTargets:
         payload = {
             "column_mapping": {
                 "target_id": "target_id1",
+                "language": "language1",
                 "custom_fields": [
                     {
                         "field_label": "Mobile no. (Alternate)",
                         "column_name": "mobile_primary2",
                     },
                     {
-                        "field_label": "Language (Alternate)",
-                        "column_name": "language2",
+                        "field_label": "Address",
+                        "column_name": "address1",
                     },
                 ],
             },
@@ -1419,11 +1428,10 @@ class TestTargets:
             "data": [
                 {
                     "custom_fields": {
-                        "Address": "Hyderabad",
+                        "Address": "India",
                         "Name": "Anil",
                         "Mobile no.": "1234567890",
                         "Mobile no. (Alternate)": "1234567890",
-                        "Language (Alternate)": "Telugu",
                     },
                     "form_uid": 1,
                     "gender": "Male",
@@ -1465,15 +1473,14 @@ class TestTargets:
                 },
                 {
                     "custom_fields": {
-                        "Address": "South Delhi",
+                        "Address": "Kenya",
                         "Name": "Anupama",
                         "Mobile no.": "1234567891",
                         "Mobile no. (Alternate)": "1234567891",
-                        "Language (Alternate)": "Hindi",
                     },
                     "form_uid": 1,
                     "gender": "Female",
-                    "language": "Hindi",
+                    "language": "Telugu",
                     "location_uid": 4,
                     "target_id": "2",
                     "target_locations": [
@@ -1509,122 +1516,33 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                 },
+                {
+                    "completed_flag": None,
+                    "custom_fields": {
+                        "Address": "Philippines",
+                        "Mobile no. (Alternate)": "1234567892",
+                    },
+                    "form_uid": 1,
+                    "gender": None,
+                    "language": "Tagalog",
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "location_uid": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "target_id": "3",
+                    "target_locations": None,
+                    "target_uid": 3,
+                    "webapp_tag_color": None,
+                },
             ],
             "success": True,
         }
 
         # Check the response
         response = client.get("/api/targets", query_string={"form_uid": 1})
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_merge_csv_incorrect_target_id(
-        self,
-        client,
-        login_test_user,
-        upload_targets_csv,
-        create_target_column_config,
-        csrf_token,
-    ):
-        """
-        Test that the targets csv can be uploaded
-        """
-
-        filepath = (
-            Path(__file__).resolve().parent
-            / f"data/file_uploads/sample_targets_new_columns_invalid_target_id.csv"
-        )
-
-        # Read the targets.csv file and convert it to base64
-        with open(filepath, "rb") as f:
-            targets_csv = f.read()
-            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
-
-        # Try to upload the targets csv
-        payload = {
-            "column_mapping": {
-                "target_id": "target_id1",
-                "custom_fields": [
-                    {
-                        "field_label": "Mobile no. (Alternate)",
-                        "column_name": "mobile_primary2",
-                    },
-                    {
-                        "field_label": "Language (Alternate)",
-                        "column_name": "language2",
-                    },
-                ],
-            },
-            "file": targets_csv_encoded,
-            "mode": "merge",
-        }
-
-        response = client.post(
-            "/api/targets",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        print(response.json)
-        assert response.status_code == 200
-
-        expected_response = {'message': 'Success'}
-
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_merge_csv_existing_columns(
-        self,
-        client,
-        login_test_user,
-        upload_targets_csv,
-        create_target_column_config,
-        csrf_token,
-    ):
-        """
-        Test that the targets csv can be uploaded
-        """
-
-        filepath = (
-            Path(__file__).resolve().parent
-            / f"data/file_uploads/sample_targets_new_columns.csv"
-        )
-
-        # Read the targets.csv file and convert it to base64
-        with open(filepath, "rb") as f:
-            targets_csv = f.read()
-            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
-
-        # Try to upload the targets csv
-        payload = {
-            "column_mapping": {
-                "target_id": "target_id1",
-                "language": "language2",
-                "custom_fields": [
-                    {
-                        "field_label": "Mobile no.",
-                        "column_name": "mobile_primary2",
-                    }
-                ],
-            },
-            "file": targets_csv_encoded,
-            "mode": "merge",
-        }
-
-        response = client.post(
-            "/api/targets",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-        expected_response = {'message': 'Success'}
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
