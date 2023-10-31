@@ -126,7 +126,8 @@ class TestTargets:
         # Read the locations.csv file and convert it to base64
         with open(filepath, "rb") as f:
             locations_csv = f.read()
-            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+            locations_csv_encoded = base64.b64encode(
+                locations_csv).decode("utf-8")
 
         # Try to upload the locations csv
         payload = {
@@ -420,6 +421,21 @@ class TestTargets:
             "data": [
                 {
                     "custom_fields": {
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary1',
+                                 'field_label': 'Mobile no.'},
+                                {'column_name': 'name1',
+                                 'field_label': 'Name'},
+                                {'column_name': 'address1',
+                                 'field_label': 'Address'}
+                            ],
+                            'gender': 'gender1',
+                            'language': 'language1',
+                            'location_id_column': 'psu_id1',
+                            'target_id': 'target_id1'
+                        },
+
                         "Address": "Hyderabad",
                         "Name": "Anil",
                         "Mobile no.": "1234567890",
@@ -464,6 +480,19 @@ class TestTargets:
                 },
                 {
                     "custom_fields": {
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary1',
+                                    'field_label': 'Mobile no.'},
+                                {'column_name': 'name1', 'field_label': 'Name'},
+                                {'column_name': 'address1',
+                                    'field_label': 'Address'}
+                            ],
+                            'gender': 'gender1',
+                            'language': 'language1',
+                            'location_id_column': 'psu_id1',
+                            'target_id': 'target_id1'
+                        },
                         "Address": "South Delhi",
                         "Name": "Anupama",
                         "Mobile no.": "1234567891",
@@ -527,6 +556,21 @@ class TestTargets:
             "data": [
                 {
                     "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {"column_name": "mobile_primary1",
+                                    "field_label": "Mobile no."},
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1",
+                                    "field_label": "Address"}
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1"
+
+                        },
+
                         "Address": "Hyderabad",
                         "Name": "Anil",
                         "Mobile no.": "1234567890",
@@ -593,6 +637,18 @@ class TestTargets:
             "data": [
                 {
                     "custom_fields": {
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary',
+                                    'field_label': 'Mobile no.'},
+                                {'column_name': 'name', 'field_label': 'Name'},
+                                {'column_name': 'address',
+                                    'field_label': 'Address'}
+                            ],
+                            'gender': 'gender',
+                            'language': 'language',
+                            'target_id': 'target_id'
+                        },
                         "Address": "Hyderabad",
                         "Name": "Anil",
                         "Mobile no.": "1234567890",
@@ -615,6 +671,18 @@ class TestTargets:
                 },
                 {
                     "custom_fields": {
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary',
+                                    'field_label': 'Mobile no.'},
+                                {'column_name': 'name', 'field_label': 'Name'},
+                                {'column_name': 'address',
+                                    'field_label': 'Address'}
+                            ],
+                            'gender': 'gender',
+                            'language': 'language',
+                            'target_id': 'target_id'
+                        },
                         "Address": "South Delhi",
                         "Name": "Anupama",
                         "Mobile no.": "1234567891",
@@ -703,6 +771,25 @@ class TestTargets:
             "data": [
                 {
                     "custom_fields": {
+                        "column_mapping": {
+                            "target_id": "target_id",
+                            "language": "language",
+                            "gender": "gender",
+                            "custom_fields": [
+                                {
+                                    "field_label": "Mobile no.",
+                                    "column_name": "mobile_primary",
+                                },
+                                {
+                                    "field_label": "Name",
+                                    "column_name": "name",
+                                },
+                                {
+                                    "field_label": "Address",
+                                    "column_name": "address",
+                                },
+                            ],
+                        },
                         "Address": "Hyderabad",
                         "Name": "Anil",
                         "Mobile no.": "1234567890",
@@ -725,6 +812,25 @@ class TestTargets:
                 },
                 {
                     "custom_fields": {
+                        "column_mapping": {
+                            "target_id": "target_id",
+                            "language": "language",
+                            "gender": "gender",
+                            "custom_fields": [
+                                {
+                                    "field_label": "Mobile no.",
+                                    "column_name": "mobile_primary",
+                                },
+                                {
+                                    "field_label": "Name",
+                                    "column_name": "name",
+                                },
+                                {
+                                    "field_label": "Address",
+                                    "column_name": "address",
+                                },
+                            ],
+                        },
                         "Address": "South Delhi",
                         "Name": "Anupama",
                         "Mobile no.": "1234567891",
@@ -769,7 +875,14 @@ class TestTargets:
         expected_response = {
             "data": [
                 {
-                    "custom_fields": None,
+                    "custom_fields": {
+                        'column_mapping': {
+                            'gender': 'gender',
+                            'language': 'language',
+                            'location_id_column': 'psu_id',
+                            'target_id': 'target_id'
+                        }
+                    },
                     "form_uid": 1,
                     "gender": "Male",
                     "language": "Telugu",
@@ -809,7 +922,14 @@ class TestTargets:
                     "webapp_tag_color": None,
                 },
                 {
-                    "custom_fields": None,
+                    "custom_fields": {
+                        'column_mapping': {
+                            'gender': 'gender',
+                            'language': 'language',
+                            'location_id_column': 'psu_id',
+                            'target_id': 'target_id'
+                        }
+                    },
                     "form_uid": 1,
                     "gender": "Female",
                     "language": "Hindi",
@@ -1104,9 +1224,16 @@ class TestTargets:
         expected_response = {
             "data": {
                 "custom_fields": {
+                    "column_mapping": {
+                        "custom_fields": [
+                            {"column_name": "mobile_primary1", "field_label": "Mobile no."},
+                            {"column_name": "name1", "field_label": "Name"},
+                            {"column_name": "address1", "field_label": "Address"}
+                        ]
+                    },
                     "Address": "North Delhi",
                     "Mobile no.": "0234567891",
-                    "Name": "Anupama Srivastava",
+                    "Name": "Anupama Srivastava"
                 },
                 "form_uid": 1,
                 "gender": "Male",
@@ -1151,6 +1278,9 @@ class TestTargets:
 
         # Check the response
         response = client.get("/api/targets/2")
+
+        print(expected_response)
+        print(response.json)
         assert response.status_code == 200
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -1194,7 +1324,8 @@ class TestTargets:
 
         assert response.status_code == 200
 
-        response = client.get("/api/targets/1", content_type="application/json")
+        response = client.get(
+            "/api/targets/1", content_type="application/json")
 
         assert response.status_code == 404
 
@@ -1232,6 +1363,22 @@ class TestTargets:
             "data": [
                 {
                     "custom_fields": {
+
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary1',
+                                 'field_label': 'Mobile no.'},
+                                {'column_name': 'name1',
+                                 'field_label': 'Name'},
+                                {'column_name': 'address1',
+                                 'field_label': 'Address'}
+                            ],
+                            'gender': 'gender1',
+                            'language': 'language1',
+                            'location_id_column': 'psu_id1',
+                            'target_id': 'target_id1'
+                        },
+
                         "Address": "North Delhi",
                         "Mobile no.": "1234567890",
                         "Name": "Anil",
@@ -1276,6 +1423,19 @@ class TestTargets:
                 },
                 {
                     "custom_fields": {
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary1',
+                                    'field_label': 'Mobile no.'},
+                                {'column_name': 'name1', 'field_label': 'Name'},
+                                {'column_name': 'address1',
+                                    'field_label': 'Address'}
+                            ],
+                            'gender': 'gender1',
+                            'language': 'language1',
+                            'location_id_column': 'psu_id1',
+                            'target_id': 'target_id1'
+                        },
                         "Address": "North Delhi",
                         "Mobile no.": "1234567891",
                         "Name": "Anupama",
@@ -1421,13 +1581,26 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
         assert response.status_code == 200
 
         expected_response = {
             "data": [
                 {
                     "custom_fields": {
+                        "column_mapping": {
+                            "target_id": "target_id1",
+                            "language": "language1",
+                            "custom_fields": [
+                                {
+                                    "field_label": "Mobile no. (Alternate)",
+                                    "column_name": "mobile_primary2",
+                                },
+                                {
+                                    "field_label": "Address",
+                                    "column_name": "address1",
+                                },
+                            ],
+                        },
                         "Address": "India",
                         "Name": "Anil",
                         "Mobile no.": "1234567890",
@@ -1473,6 +1646,20 @@ class TestTargets:
                 },
                 {
                     "custom_fields": {
+                        "column_mapping": {
+                            "target_id": "target_id1",
+                            "language": "language1",
+                            "custom_fields": [
+                                {
+                                    "field_label": "Mobile no. (Alternate)",
+                                    "column_name": "mobile_primary2",
+                                },
+                                {
+                                    "field_label": "Address",
+                                    "column_name": "address1",
+                                },
+                            ],
+                        },
                         "Address": "Kenya",
                         "Name": "Anupama",
                         "Mobile no.": "1234567891",
@@ -1519,6 +1706,20 @@ class TestTargets:
                 {
                     "completed_flag": None,
                     "custom_fields": {
+                        "column_mapping": {
+                            "target_id": "target_id1",
+                            "language": "language1",
+                            "custom_fields": [
+                                {
+                                    "field_label": "Mobile no. (Alternate)",
+                                    "column_name": "mobile_primary2",
+                                },
+                                {
+                                    "field_label": "Address",
+                                    "column_name": "address1",
+                                },
+                            ],
+                        },
                         "Address": "Philippines",
                         "Mobile no. (Alternate)": "1234567892",
                     },
