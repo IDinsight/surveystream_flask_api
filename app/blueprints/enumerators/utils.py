@@ -737,7 +737,7 @@ class EnumeratorsUpload:
                         )  # Add 1 to the index to account for the df index
                         setattr(record, optional_field, row[col_index])
 
-                if any(key for key in record if key not in ["enumerator_id", "form_uid", "location_id_column", "custom_fields", "enumerator_type"]):
+                if any(key for key in record if key not in ["enumerator_id", "form_uid", "location_id_column", "custom_fields"]):
                     Enumerator.query.filter(
                         Enumerator.enumerator_id == record["enumerator_id"],
                         Enumerator.form_uid == self.form_uid,
@@ -745,7 +745,7 @@ class EnumeratorsUpload:
                         {
                             key: record[key]
                             for key in record
-                            if key not in ["enumerator_id", "form_uid", "location_id_column", "custom_fields", "enumerator_type"]
+                            if key not in ["enumerator_id", "form_uid", "location_id_column", "custom_fields"]
                         },
                         synchronize_session=False,
                     )
