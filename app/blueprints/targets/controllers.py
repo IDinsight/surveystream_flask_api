@@ -625,7 +625,7 @@ def update_target(target_uid):
             keys_in_payload = custom_fields_in_payload.keys()
 
         for payload_key in keys_in_payload:
-            if payload_key not in keys_in_db:
+            if payload_key not in keys_in_db and payload_key != 'column_mapping':
                 return (
                     jsonify(
                         {
@@ -636,7 +636,7 @@ def update_target(target_uid):
                     422,
                 )
         for db_key in keys_in_db:
-            if db_key not in keys_in_payload:
+            if db_key not in keys_in_payload and db_key != 'column_mapping':
                 return (
                     jsonify(
                         {
@@ -646,6 +646,9 @@ def update_target(target_uid):
                     ),
                     422,
                 )
+            if db_key == 'column_mapping':
+                # add column mapping to custom_fields from db
+                payload["custom_fields"]['column_mapping'] = custom_fields_in_db[db_key]
 
         try:
             Target.query.filter_by(target_uid=target_uid).update(

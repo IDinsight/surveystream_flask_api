@@ -1229,7 +1229,11 @@ class TestTargets:
                             {"column_name": "mobile_primary1", "field_label": "Mobile no."},
                             {"column_name": "name1", "field_label": "Name"},
                             {"column_name": "address1", "field_label": "Address"}
-                        ]
+                        ],
+                        "gender": "gender1",
+                        "language": "language1",
+                        "location_id_column": "psu_id1",
+                        "target_id": "target_id1",
                     },
                     "Address": "North Delhi",
                     "Mobile no.": "0234567891",
@@ -1278,9 +1282,7 @@ class TestTargets:
 
         # Check the response
         response = client.get("/api/targets/2")
-
-        print(expected_response)
-        print(response.json)
+        
         assert response.status_code == 200
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
