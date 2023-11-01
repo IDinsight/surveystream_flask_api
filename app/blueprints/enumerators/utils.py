@@ -21,6 +21,7 @@ from .errors import (
 from email_validator import validate_email, EmailNotValidError
 
 
+
 class EnumeratorColumnMapping:
     """
     Class to represent the enumerator column mapping and run validations on it
