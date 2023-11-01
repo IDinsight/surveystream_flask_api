@@ -613,6 +613,7 @@ class EnumeratorsUpload:
             enumerator_ids = [item['enumerator_id']
                               for item in records_to_write]
 
+            
             existing_enumerator = db.session.query(Enumerator.enumerator_id).filter_by(
                 form_uid == self.form_uid,
                 Enumerator.enumerator_id.in_(enumerator_ids)
