@@ -37,13 +37,27 @@ class TargetColumnMapping:
 
             if column_mapping.get("custom_fields"):
                 self.custom_fields = column_mapping["custom_fields"]
-                
             if write_mode == "merge":
                 self.__validate_merge(form_uid)
 
-
         except:
             raise
+
+    def to_dict(self):
+        result = {}
+
+        if hasattr(self, 'target_id') and self.target_id:
+            result["target_id"] = self.target_id
+        if hasattr(self, 'language') and self.language:
+            result["language"] = self.language
+        if hasattr(self, 'location_id_column') and self.location_id_column:
+            result["location_id_column"] = self.location_id_column
+        if hasattr(self, 'gender') and self.gender:
+            result["gender"] = self.gender
+        if hasattr(self, 'custom_fields') and self.custom_fields:
+            result["custom_fields"] = self.custom_fields
+
+        return result
 
     def __validate_column_mapping(self, column_mapping):
         """
@@ -450,17 +464,23 @@ class TargetsUpload:
 
         self.targets_df = self.targets_df[self.expected_columns]
 
-
         ####################################################################
         # Use the list of target records to write to the database
         ####################################################################
 
-        if write_mode == "overwrite":
+        records_to_write = []
 
-            records_to_write = [
-                self.__build_target_dict(row, column_mapping, location_uid_lookup)
-                for row in self.targets_df.drop_duplicates().itertuples()
-            ]
+        for row in self.targets_df.drop_duplicates().itertuples():
+            target_dict = self.__build_target_dict(row, column_mapping, location_uid_lookup)
+
+            # Ensure 'custom_fields' exists and add 'column_mapping'
+            custom_fields = target_dict.setdefault('custom_fields', {})
+            custom_fields.setdefault('column_mapping', column_mapping.to_dict())
+
+            records_to_write.append(target_dict)
+
+
+        if write_mode == "overwrite":
             # For the overwrite mode, delete existing records for the form and insert the records in chunks of 1000 using the fast bulk insert method
             Target.query.filter_by(form_uid=self.form_uid).delete()
             db.session.commit()
@@ -468,28 +488,34 @@ class TargetsUpload:
             chunk_size = 1000
             for pos in range(0, len(records_to_write), chunk_size):
                 db.session.execute(
-                    insert(Target).values(records_to_write[pos : pos + chunk_size])
+                    insert(Target).values(
+                        records_to_write[pos: pos + chunk_size])
                 )
                 db.session.flush()
 
         elif write_mode == "merge":
             # This mode will include new records added and update the existing records with the new data;
             # target_id columns should not be updated
+            target_ids = [item['target_id'] for item in records_to_write]
 
             # Collect records to update separately from the records to insert, so we can perform bulk updates reducing db overhead
             records_to_insert = []
             records_to_update = []
 
-            for row in self.targets_df.drop_duplicates().itertuples():
-                target_dict = self.__build_target_dict(row, column_mapping, location_uid_lookup)
-                existing_target = Target.query.filter_by(form_uid=self.form_uid,
-                                                         target_id=target_dict["target_id"]).first()
+            existing_targets = db.session.query(Target.target_id).filter(
+                Target.form_uid == self.form_uid,
+                Target.target_id.in_(target_ids)
+            ).all()
 
-                if existing_target:
-                        records_to_update.append(target_dict)
+            existing_target_ids = [result[0] for result in existing_targets]
+
+
+            for row in records_to_write:
+                target_dict = row
+                if target_dict["target_id"] in existing_target_ids:
+                    records_to_update.append(target_dict)
                 else:
                     records_to_insert.append(target_dict)
-
 
             for record in records_to_update:
                 if any(key for key in record if key not in ["target_id", "form_uid", "custom_fields"]):
@@ -512,10 +538,8 @@ class TargetsUpload:
                                 custom_fields=func.jsonb_set(
                                     Target.custom_fields,
                                     "{%s}" % field_name,
-                                    cast(
-                                        field_value,
-                                        JSONB,
-                                    ),
+                                    cast(field_value, JSONB),
+                                    True  #add true to overwrite existing keys
                                 )
                             )
                             .where(

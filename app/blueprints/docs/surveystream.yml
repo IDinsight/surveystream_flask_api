@@ -2128,11 +2128,12 @@ paths:
                     - overwrite
                     - merge
                   description: >-
-                    The mode of the upload. If `overwrite`, all enumerators
-                    with the given form_uid (from the query parameter) will be 
-                    deleted and replaced with the new enumerators in the csv. If `merge`, 
-                    the new enumerators in the csv will be added to the existing enumerators.Existing records will also
-                    be updated if included in the upload.
+                    The mode of the upload.
+                    In 'overwrite' mode, all enumerators with the provided form_uid from 
+                    the query parameter will be removed and replaced with the new enumerators from 
+                    the CSV file.
+                    In 'merge' mode, the new enumerators from the CSV will be added to the existing ones. 
+                    Any existing records included in the upload will also be updated.
               required:
                 - column_mapping
                 - file
