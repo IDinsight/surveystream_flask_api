@@ -470,7 +470,8 @@ def update_enumerator(enumerator_uid):
             keys_in_payload = custom_fields_in_payload.keys()
 
         for payload_key in keys_in_payload:
-            if payload_key not in keys_in_db:
+            #exclude column_mapping from these checks
+            if payload_key not in keys_in_db and payload_key != 'column_mapping':
                 return (
                     jsonify(
                         {
@@ -481,7 +482,8 @@ def update_enumerator(enumerator_uid):
                     422,
                 )
         for db_key in keys_in_db:
-            if db_key not in keys_in_payload:
+            # exclude column_mapping from these checks
+            if db_key not in keys_in_payload and db_key != 'column_mapping':
                 return (
                     jsonify(
                         {
@@ -491,6 +493,10 @@ def update_enumerator(enumerator_uid):
                     ),
                     422,
                 )
+
+            if db_key == 'column_mapping':
+                #add column mapping to custom_fields from db
+                payload["custom_fields"]['column_mapping']  = custom_fields_in_db[db_key]
 
         try:
             Enumerator.query.filter_by(enumerator_uid=enumerator_uid).update(

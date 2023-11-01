@@ -21,6 +21,7 @@ from .errors import (
 from email_validator import validate_email, EmailNotValidError
 
 
+
 class EnumeratorColumnMapping:
     """
     Class to represent the enumerator column mapping and run validations on it
@@ -49,6 +50,28 @@ class EnumeratorColumnMapping:
 
         except:
             raise
+
+    def to_dict(self, optional_hardcoded_fields=[]):
+        result = {}
+
+        if hasattr(self, 'enumerator_id') and self.enumerator_id:
+            result["enumerator_id"] = self.enumerator_id
+        if hasattr(self, 'name') and self.name:
+            result["name"] = self.name
+        if hasattr(self, 'email') and self.email:
+            result["email"] = self.email
+        if hasattr(self, 'mobile_primary') and self.mobile_primary:
+            result["mobile_primary"] = self.mobile_primary
+        if hasattr(self, 'enumerator_type') and self.enumerator_type:
+            result["enumerator_type"] = self.enumerator_type
+        if hasattr(self, 'location_id_column') and self.location_id_column:
+            result["location_id_column"] = self.location_id_column
+        if hasattr(self, 'custom_fields') and self.custom_fields:
+            result["custom_fields"] = self.custom_fields
+        for field in optional_hardcoded_fields:
+            if hasattr(self, field) and getattr(self, field):
+                result[field] = getattr(self, field)
+        return result
 
     def __validate_column_mapping(self, column_mapping, prime_geo_level_uid):
         """
@@ -361,52 +384,7 @@ class EnumeratorsUpload:
             )
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
-        # If the write_mode is `append`, the file should have no enumerator_id's that are already in the database
-        if write_mode == "append":
-            enumerator_id_query = (
-                Enumerator.query.filter(
-                    Enumerator.form_uid == self.form_uid,
-                )
-                .with_entities(Enumerator.enumerator_id)
-                .distinct()
-            )
-            invalid_enumerator_id_df = self.enumerators_df[
-                self.enumerators_df[column_mapping.enumerator_id].isin(
-                    [row[0] for row in enumerator_id_query.all()]
-                )
-            ]
-            if len(invalid_enumerator_id_df) > 0:
-                record_errors["summary_by_error_type"].append(
-                    {
-                        "error_type": "Enumerator_id's found in database",
-                        "error_message": f"The file contains {len(invalid_enumerator_id_df)} enumerator_id(s) that have already been uploaded. The following row numbers contain enumerator_id's that have already been uploaded: {', '.join(str(row_number) for row_number in invalid_enumerator_id_df.index.to_list())}",
-                        "error_count": len(invalid_enumerator_id_df),
-                        "row_numbers_with_errors": invalid_enumerator_id_df.index.to_list(),
-                    }
-                )
-
-                invalid_enumerator_id_df[
-                    "errors"
-                ] = "The same enumerator_id already exists for the form - enumerator_id's must be unique for each form"
-                invalid_records_df = invalid_records_df.merge(
-                    invalid_enumerator_id_df["errors"],
-                    how="left",
-                    left_index=True,
-                    right_index=True,
-                )
-                # Replace NaN with empty string
-                invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna(
-                    ""
-                )
-                invalid_records_df["errors"] = invalid_records_df[
-                    ["errors_x", "errors_y"]
-                ].apply("; ".join, axis=1)
-                invalid_records_df = invalid_records_df.drop(
-                    columns=["errors_x", "errors_y"]
-                )
-                invalid_records_df["errors"] = invalid_records_df["errors"].str.strip(
-                    "; "
-                )
+        # If the write_mode is `merge`, the file can have enumerator_id's that are already in the database
 
         # Validate the email ID's
         self.enumerators_df["errors"] = ""
@@ -617,6 +595,12 @@ class EnumeratorsUpload:
         # Use the list of enumerator records to write to the database
         ####################################################################
 
+        records_to_write = [
+            row for row in self.enumerators_df.drop_duplicates().itertuples()]
+
+        records_to_insert = []
+        records_to_update = []
+
         if write_mode == "overwrite":
             SurveyorForm.query.filter_by(form_uid=self.form_uid).delete()
             SurveyorLocation.query.filter_by(form_uid=self.form_uid).delete()
@@ -624,94 +608,179 @@ class EnumeratorsUpload:
             MonitorLocation.query.filter_by(form_uid=self.form_uid).delete()
             Enumerator.query.filter_by(form_uid=self.form_uid).delete()
             db.session.commit()
+            records_to_insert = records_to_write
 
-        # Insert the enumerators into the database
-        for i, row in enumerate(self.enumerators_df.drop_duplicates().itertuples()):
-            enumerator = Enumerator(
-                form_uid=self.form_uid,
-                enumerator_id=row[1],
-                name=row[2],
-                email=row[3],
-                mobile_primary=row[4],
-            )
+        if write_mode == "merge":
+            enumerator_ids = [item['enumerator_id']
+                              for item in records_to_write]
 
-            for optional_field in self.optional_hardcoded_fields:
-                # Add the optional fields
-                if hasattr(column_mapping, optional_field):
-                    col_index = (
-                        self.enumerators_df.columns.get_loc(
-                            getattr(column_mapping, optional_field)
-                        )
-                        + 1
-                    )  # Add 1 to the index to account for the df index
-                    setattr(enumerator, optional_field, row[col_index])
+            
+            existing_enumerator = db.session.query(Enumerator.enumerator_id).filter_by(
+                form_uid == self.form_uid,
+                Enumerator.enumerator_id.in_(enumerator_ids)
+            ).all()
 
-            # Add the custom fields if they exist
-            if hasattr(column_mapping, "custom_fields"):
-                custom_fields = {}
-                for custom_field in column_mapping.custom_fields:
-                    col_index = (
-                        self.enumerators_df.columns.get_loc(custom_field["column_name"])
-                        + 1
-                    )  # Add 1 to the index to account for the df index
-                    custom_fields[custom_field["field_label"]] = row[col_index]
-                enumerator.custom_fields = custom_fields
+            existing_enumerator_ids = [result[0]
+                                       for result in existing_enumerator]
 
-            db.session.add(enumerator)
-            db.session.flush()
+            for row in records_to_write:
+                enumerator_dict = row
+                if enumerator_dict["enumerator_id"] in existing_enumerator_ids:
+                    records_to_update.append(enumerator_dict)
+                else:
+                    records_to_insert.append(enumerator_dict)
 
-            enumerator_types = [item.lower().strip() for item in row[5].split(";")]
+        if records_to_insert:
+            # Insert the enumerators into the database
+            for i, row in enumerate(records_to_insert):
+                enumerator = Enumerator(
+                    form_uid=self.form_uid,
+                    enumerator_id=row[1],
+                    name=row[2],
+                    email=row[3],
+                    mobile_primary=row[4],
+                )
 
-            for enumerator_type in enumerator_types:
-                if enumerator_type == "surveyor":
-                    surveyor_form = SurveyorForm(
-                        enumerator_uid=enumerator.enumerator_uid,
-                        form_uid=self.form_uid,
-                        user_uid=current_user.user_uid,
-                    )
-
-                    db.session.add(surveyor_form)
-
-                    if hasattr(column_mapping, "location_id_column"):
-                        # Get the position of the location column in the dataframe
+                for optional_field in self.optional_hardcoded_fields:
+                    # Add the optional fields
+                    if hasattr(column_mapping, optional_field):
                         col_index = (
                             self.enumerators_df.columns.get_loc(
-                                getattr(column_mapping, "location_id_column")
+                                getattr(column_mapping, optional_field)
                             )
                             + 1
                         )  # Add 1 to the index to account for the df index
-                        surveyor_location = SurveyorLocation(
-                            enumerator_uid=enumerator.enumerator_uid,
-                            form_uid=self.form_uid,
-                            location_uid=location_uid_lookup[row[col_index]],
-                        )
+                        setattr(enumerator, optional_field, row[col_index])
 
-                        db.session.add(surveyor_location)
+                # Add the custom fields with column_mapping if they don't exist
+                custom_fields = {}
 
-                if enumerator_type == "monitor":
-                    monitor_form = MonitorForm(
-                        enumerator_uid=enumerator.enumerator_uid,
-                        form_uid=self.form_uid,
-                        user_uid=current_user.user_uid,
-                    )
-
-                    db.session.add(monitor_form)
-
-                    if hasattr(column_mapping, "location_id_column"):
-                        # Get the position of the location column in the dataframe
+                if hasattr(column_mapping, "custom_fields"):
+                    for custom_field in column_mapping.custom_fields:
                         col_index = (
                             self.enumerators_df.columns.get_loc(
-                                getattr(column_mapping, "location_id_column")
-                            )
+                                custom_field["column_name"])
                             + 1
-                        )
-                        monitor_location = MonitorLocation(
+                        )  # Add 1 to the index to account for the df index
+                        custom_fields[custom_field["field_label"]
+                                      ] = row[col_index]
+
+                # Add column_mapping to custom fields
+                custom_fields['column_mapping'] = column_mapping.to_dict()
+                enumerator.custom_fields = custom_fields
+
+                db.session.add(enumerator)
+                db.session.flush()
+
+                enumerator_types = [item.lower().strip() for item in row[5].split(";")]
+
+                for enumerator_type in enumerator_types:
+                    if enumerator_type == "surveyor":
+                        surveyor_form = SurveyorForm(
                             enumerator_uid=enumerator.enumerator_uid,
                             form_uid=self.form_uid,
-                            location_uid=location_uid_lookup[row[col_index]],
+                            user_uid=current_user.user_uid,
                         )
 
-                        db.session.add(monitor_location)
+                        db.session.add(surveyor_form)
+
+                        if hasattr(column_mapping, "location_id_column"):
+                            # Get the position of the location column in the dataframe
+                            col_index = (
+                                self.enumerators_df.columns.get_loc(
+                                    getattr(column_mapping, "location_id_column")
+                                )
+                                + 1
+                            )  # Add 1 to the index to account for the df index
+                            surveyor_location = SurveyorLocation(
+                                enumerator_uid=enumerator.enumerator_uid,
+                                form_uid=self.form_uid,
+                                location_uid=location_uid_lookup[row[col_index]],
+                            )
+
+                            db.session.add(surveyor_location)
+
+                    if enumerator_type == "monitor":
+                        monitor_form = MonitorForm(
+                            enumerator_uid=enumerator.enumerator_uid,
+                            form_uid=self.form_uid,
+                            user_uid=current_user.user_uid,
+                        )
+
+                        db.session.add(monitor_form)
+
+                        if hasattr(column_mapping, "location_id_column"):
+                            # Get the position of the location column in the dataframe
+                            col_index = (
+                                self.enumerators_df.columns.get_loc(
+                                    getattr(column_mapping, "location_id_column")
+                                )
+                                + 1
+                            )
+                            monitor_location = MonitorLocation(
+                                enumerator_uid=enumerator.enumerator_uid,
+                                form_uid=self.form_uid,
+                                location_uid=location_uid_lookup[row[col_index]],
+                            )
+
+                            db.session.add(monitor_location)
+
+        if records_to_update:
+            for record in records_to_update:
+
+                for optional_field in self.optional_hardcoded_fields:
+                    # Add the optional fields
+                    if hasattr(column_mapping, optional_field):
+                        col_index = (
+                            self.enumerators_df.columns.get_loc(
+                                getattr(column_mapping, optional_field)
+                            )
+                            + 1
+                        )  # Add 1 to the index to account for the df index
+                        setattr(record, optional_field, row[col_index])
+
+                if any(key for key in record if key not in ["enumerator_id", "form_uid", "location_id_column", "custom_fields"]):
+                    Enumerator.query.filter(
+                        Enumerator.enumerator_id == record["enumerator_id"],
+                        Enumerator.form_uid == self.form_uid,
+                    ).update(
+                        {
+                            key: record[key]
+                            for key in record
+                            if key not in ["enumerator_id", "form_uid", "location_id_column", "custom_fields"]
+                        },
+                        synchronize_session=False,
+                    )
+
+                # Add column_mapping to custom fields
+                try:
+                    custom_fields = record['custom_fields']
+                except KeyError:
+                    custom_fields = {}
+                custom_fields['column_mapping'] = column_mapping.to_dict()
+
+                record.custom_fields = custom_fields
+
+                if "custom_fields" in record:
+                    for field_name, field_value in record["custom_fields"].items():
+                        db.session.execute(
+                            update(Enumerator)
+                            .values(
+                                custom_fields=func.jsonb_set(
+                                    Enumerator.custom_fields,
+                                    "{%s}" % field_name,
+                                    cast(
+                                        field_value,
+                                        JSONB,
+                                    ),
+                                    True  # add true to overwrite existing keys
+                                )
+                            )
+                            .where(
+                                Enumerator.target_id == record["enumerator_id"],
+                                Enumerator.form_uid == record["form_uid"],
+                            )
+                        )
 
         db.session.commit()
 
