@@ -21,6 +21,7 @@ from .errors import (
 from email_validator import validate_email, EmailNotValidError
 
 
+
 class EnumeratorColumnMapping:
     """
     Class to represent the enumerator column mapping and run validations on it
@@ -613,6 +614,7 @@ class EnumeratorsUpload:
             enumerator_ids = [item['enumerator_id']
                               for item in records_to_write]
 
+            
             existing_enumerator = db.session.query(Enumerator.enumerator_id).filter_by(
                 form_uid == self.form_uid,
                 Enumerator.enumerator_id.in_(enumerator_ids)
