@@ -115,6 +115,13 @@ class ProfilingConfig(Config):
     DEBUG = True
 
 
+class AirflowE2ETestConfig(Config):
+    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI")
+
+    TESTING = True
+    DEBUG = True
+
+
 class UnitTestConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
@@ -170,7 +177,7 @@ class ProductionConfig(Config):
         Config.DB_NAME,
     )
 
-    REACT_BASE_URL = "https://surveystream.idinsight.io"
+    REACT_BASE_URL = "https://callisto.surveystream.idinsight.io"
 
     SENTRY_CONFIG = {
         "dsn": "https://c320e08cbf204069afb2cc62ee498018@o564222.ingest.sentry.io/4505070237319168",

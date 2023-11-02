@@ -126,7 +126,8 @@ class TestEnumerators:
         # Read the locations.csv file and convert it to base64
         with open(filepath, "rb") as f:
             locations_csv = f.read()
-            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+            locations_csv_encoded = base64.b64encode(
+                locations_csv).decode("utf-8")
 
         # Try to upload the locations csv
         payload = {
@@ -286,7 +287,8 @@ class TestEnumerators:
         # Read the enumerators.csv file and convert it to base64
         with open(filepath, "rb") as f:
             enumerators_csv = f.read()
-            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+            enumerators_csv_encoded = base64.b64encode(
+                enumerators_csv).decode("utf-8")
 
         # Try to upload the enumerators csv
         payload = {
@@ -341,7 +343,8 @@ class TestEnumerators:
         # Read the enumerators.csv file and convert it to base64
         with open(filepath, "rb") as f:
             enumerators_csv = f.read()
-            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+            enumerators_csv_encoded = base64.b64encode(
+                enumerators_csv).decode("utf-8")
 
         # Try to upload the enumerators csv
         payload = {
@@ -391,7 +394,8 @@ class TestEnumerators:
         # Read the enumerators.csv file and convert it to base64
         with open(filepath, "rb") as f:
             enumerators_csv = f.read()
-            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+            enumerators_csv_encoded = base64.b64encode(
+                enumerators_csv).decode("utf-8")
 
         # Try to upload the enumerators csv
         payload = {
@@ -441,7 +445,8 @@ class TestEnumerators:
         # Read the enumerators.csv file and convert it to base64
         with open(filepath, "rb") as f:
             enumerators_csv = f.read()
-            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+            enumerators_csv_encoded = base64.b64encode(
+                enumerators_csv).decode("utf-8")
 
         # Try to upload the enumerators csv
         payload = {
@@ -510,7 +515,8 @@ class TestEnumerators:
         # Read the enumerators.csv file and convert it to base64
         with open(filepath, "rb") as f:
             enumerators_csv = f.read()
-            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+            enumerators_csv_encoded = base64.b64encode(
+                enumerators_csv).decode("utf-8")
 
         # Try to upload the enumerators csv
         payload = {
@@ -545,6 +551,94 @@ class TestEnumerators:
         print(response.json)
         assert response.status_code == 200
 
+    def test_upload_merge_enumerators_csv(
+        self, client, create_form, login_test_user, csrf_token
+    ):
+        """
+        Test that the enumerators csv can be uploaded
+        """
+        """
+              Upload the enumerators csv
+              """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_no_locations.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(
+                enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id",
+                "name": "name",
+                "email": "email",
+                "mobile_primary": "mobile_primary",
+                "language": "language",
+                "home_address": "home_address",
+                "gender": "gender",
+                "enumerator_type": "enumerator_type",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "merge",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            'data': [{'custom_fields': {'Mobile (Secondary)': '1123456789', 'column_mapping': {
+                'custom_fields': [{'column_name': 'mobile_secondary', 'field_label': 'Mobile (Secondary)'}],
+                'email': 'email', 'enumerator_id': 'enumerator_id', 'enumerator_type': 'enumerator_type',
+                'mobile_primary': 'mobile_primary', 'name': 'name'}}, 'email': 'eric.dodge@idinsight.org',
+                'enumerator_id': '0294612', 'enumerator_uid': 1, 'gender': 'Male', 'home_address': 'my house',
+                'language': 'English', 'mobile_primary': '0123456789', 'monitor_locations': None,
+                'monitor_status': None, 'name': 'Eric Dodge', 'surveyor_locations': None,
+                'surveyor_status': 'Active'}, {'custom_fields': {'Mobile (Secondary)': '1123456789',
+                                                                 'column_mapping': {'custom_fields': [
+                                                                     {'column_name': 'mobile_secondary',
+                                                                      'field_label': 'Mobile (Secondary)'}],
+                                                                     'email': 'email',
+                                                                     'enumerator_id': 'enumerator_id',
+                                                                     'enumerator_type': 'enumerator_type',
+                                                                     'mobile_primary': 'mobile_primary',
+                                                                     'name': 'name'}},
+                                               'email': 'jahnavi.meher@idinsight.org',
+                                               'enumerator_id': '0294613', 'enumerator_uid': 2,
+                                               'gender': 'Female', 'home_address': 'my house',
+                                               'language': 'Telugu', 'mobile_primary': '0123456789',
+                                               'monitor_locations': None, 'monitor_status': None,
+                                               'name': 'Jahnavi Meher', 'surveyor_locations': None,
+                                               'surveyor_status': 'Active'}], 'success': True
+
+        }
+
+        # Check the response
+        response = client.get("/api/enumerators", query_string={"form_uid": 1})
+
+        print(response.json)
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_upload_enumerators_csv(
         self, client, login_test_user, upload_enumerators_csv, csrf_token
     ):
@@ -555,7 +649,19 @@ class TestEnumerators:
         expected_response = {
             "data": [
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
+                    "custom_fields": {"column_mapping": {
+                        "custom_fields": [
+                            {"column_name": "mobile_secondary1",
+                             "field_label": "Mobile (Secondary)"},
+                            {"column_name": "age1", "field_label": "Age"}
+                        ],
+                        "email": "email1",
+                        "enumerator_id": "enumerator_id1",
+                        "enumerator_type": "enumerator_type1",
+                        "location_id_column": "district_id1",
+                        "mobile_primary": "mobile_primary1",
+                        "name": "name1"
+                    }, "Mobile (Secondary)": "1123456789", "Age": "1"},
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "enumerator_uid": 1,
@@ -578,7 +684,19 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "2"},
+                    "custom_fields": {"column_mapping": {
+                        "custom_fields": [
+                            {"column_name": "mobile_secondary1",
+                             "field_label": "Mobile (Secondary)"},
+                            {"column_name": "age1", "field_label": "Age"}
+                        ],
+                        "email": "email1",
+                        "enumerator_id": "enumerator_id1",
+                        "enumerator_type": "enumerator_type1",
+                        "location_id_column": "district_id1",
+                        "mobile_primary": "mobile_primary1",
+                        "name": "name1"
+                    }, "Mobile (Secondary)": "1123456789", "Age": "2"},
                     "email": "jahnavi.meher@idinsight.org",
                     "enumerator_id": "0294613",
                     "enumerator_uid": 2,
@@ -601,7 +719,22 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "3"},
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {"column_name": "mobile_secondary1",
+                                 "field_label": "Mobile (Secondary)"},
+                                {"column_name": "age1", "field_label": "Age"}
+                            ],
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1"
+                        },
+                        "Mobile (Secondary)": "1123456789", "Age": "3"
+                    },
                     "email": "jay.prakash@idinsight.org",
                     "enumerator_id": "0294614",
                     "enumerator_uid": 3,
@@ -624,7 +757,19 @@ class TestEnumerators:
                     "surveyor_status": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "4"},
+                    "custom_fields": {"column_mapping": {
+                        "custom_fields": [
+                            {"column_name": "mobile_secondary1",
+                             "field_label": "Mobile (Secondary)"},
+                            {"column_name": "age1", "field_label": "Age"}
+                        ],
+                        "email": "email1",
+                        "enumerator_id": "enumerator_id1",
+                        "enumerator_type": "enumerator_type1",
+                        "location_id_column": "district_id1",
+                        "mobile_primary": "mobile_primary1",
+                        "name": "name1"
+                    }, "Mobile (Secondary)": "1123456789", "Age": "4"},
                     "email": "griffin.muteti@idinsight.org",
                     "enumerator_id": "0294615",
                     "enumerator_uid": 4,
@@ -661,6 +806,8 @@ class TestEnumerators:
         # Check the response
         response = client.get("/api/enumerators", query_string={"form_uid": 1})
 
+        print(response.json)
+
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -674,7 +821,17 @@ class TestEnumerators:
         expected_response = {
             "data": [
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "custom_fields": {"column_mapping": {
+                        "custom_fields": [
+                            {"column_name": "mobile_secondary",
+                             "field_label": "Mobile (Secondary)"},
+                        ],
+                        "email": "email",
+                        "enumerator_id": "enumerator_id",
+                        "enumerator_type": "enumerator_type",
+                        "mobile_primary": "mobile_primary",
+                        "name": "name"
+                    }, "Mobile (Secondary)": "1123456789"},
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "enumerator_uid": 1,
@@ -689,7 +846,17 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "custom_fields": {"column_mapping": {
+                        "custom_fields": [
+                            {"column_name": "mobile_secondary",
+                             "field_label": "Mobile (Secondary)"},
+                        ],
+                        "email": "email",
+                        "enumerator_id": "enumerator_id",
+                        "enumerator_type": "enumerator_type",
+                        "mobile_primary": "mobile_primary",
+                        "name": "name"
+                    }, "Mobile (Secondary)": "1123456789"},
                     "email": "jahnavi.meher@idinsight.org",
                     "enumerator_id": "0294613",
                     "enumerator_uid": 2,
@@ -709,6 +876,8 @@ class TestEnumerators:
 
         # Check the response
         response = client.get("/api/enumerators", query_string={"form_uid": 1})
+
+        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -747,7 +916,16 @@ class TestEnumerators:
                         }
                     ],
                     "monitor_locations": None,
-                    "custom_fields": None,
+                    "custom_fields": {
+                        "column_mapping": {
+                            "email": "email",
+                            "enumerator_id": "enumerator_id",
+                            "enumerator_type": "enumerator_type",
+                            "location_id_column": "district_id",
+                            "mobile_primary": "mobile_primary",
+                            "name": "name"
+                        }
+                    },
                 },
                 {
                     "email": "jahnavi.meher@idinsight.org",
@@ -770,7 +948,16 @@ class TestEnumerators:
                         }
                     ],
                     "monitor_locations": None,
-                    "custom_fields": None,
+                    "custom_fields": {
+                        "column_mapping": {
+                            "email": "email",
+                            "enumerator_id": "enumerator_id",
+                            "enumerator_type": "enumerator_type",
+                            "location_id_column": "district_id",
+                            "mobile_primary": "mobile_primary",
+                            "name": "name"
+                        }
+                    },
                 },
             ],
             "success": True,
@@ -778,6 +965,8 @@ class TestEnumerators:
 
         # Check the response
         response = client.get("/api/enumerators", query_string={"form_uid": 1})
+
+        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -796,7 +985,20 @@ class TestEnumerators:
         expected_response = {
             "data": [
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "custom_fields": {"column_mapping": {
+                        "enumerator_id": "enumerator_id",
+                        "name": "name",
+                        "email": "email",
+                        "mobile_primary": "mobile_primary",
+                        "enumerator_type": "enumerator_type",
+                        "location_id_column": "mandal_id",
+                        "custom_fields": [
+                            {
+                                "field_label": "Mobile (Secondary)",
+                                "column_name": "mobile_secondary",
+                            },
+                        ],
+                    }, "Mobile (Secondary)": "1123456789"},
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "enumerator_uid": 1,
@@ -826,7 +1028,20 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "custom_fields": {"column_mapping": {
+                        "enumerator_id": "enumerator_id",
+                        "name": "name",
+                        "email": "email",
+                        "mobile_primary": "mobile_primary",
+                        "enumerator_type": "enumerator_type",
+                        "location_id_column": "mandal_id",
+                        "custom_fields": [
+                            {
+                                "field_label": "Mobile (Secondary)",
+                                "column_name": "mobile_secondary",
+                            },
+                        ],
+                    }, "Mobile (Secondary)": "1123456789"},
                     "email": "jahnavi.meher@idinsight.org",
                     "enumerator_id": "0294613",
                     "enumerator_uid": 2,
@@ -856,7 +1071,20 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "custom_fields": {"column_mapping": {
+                        "enumerator_id": "enumerator_id",
+                        "name": "name",
+                        "email": "email",
+                        "mobile_primary": "mobile_primary",
+                        "enumerator_type": "enumerator_type",
+                        "location_id_column": "mandal_id",
+                        "custom_fields": [
+                            {
+                                "field_label": "Mobile (Secondary)",
+                                "column_name": "mobile_secondary",
+                            },
+                        ],
+                    }, "Mobile (Secondary)": "1123456789"},
                     "email": "jay.prakash@idinsight.org",
                     "enumerator_id": "0294614",
                     "enumerator_uid": 3,
@@ -886,7 +1114,20 @@ class TestEnumerators:
                     "surveyor_status": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789"},
+                    "custom_fields": {"column_mapping": {
+                        "enumerator_id": "enumerator_id",
+                        "name": "name",
+                        "email": "email",
+                        "mobile_primary": "mobile_primary",
+                        "enumerator_type": "enumerator_type",
+                        "location_id_column": "mandal_id",
+                        "custom_fields": [
+                            {
+                                "field_label": "Mobile (Secondary)",
+                                "column_name": "mobile_secondary",
+                            },
+                        ],
+                    }, "Mobile (Secondary)": "1123456789"},
                     "email": "griffin.muteti@idinsight.org",
                     "enumerator_id": "0294615",
                     "enumerator_uid": 4,
@@ -937,6 +1178,7 @@ class TestEnumerators:
         # Check the response
         response = client.get("/api/enumerators", query_string={"form_uid": 1})
 
+        print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -959,7 +1201,8 @@ class TestEnumerators:
         # Read the enumerators.csv file and convert it to base64
         with open(filepath, "rb") as f:
             enumerators_csv = f.read()
-            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+            enumerators_csv_encoded = base64.b64encode(
+                enumerators_csv).decode("utf-8")
 
         # Try to upload the enumerators csv
         payload = {
@@ -985,7 +1228,7 @@ class TestEnumerators:
                 ],
             },
             "file": enumerators_csv_encoded,
-            "mode": "append",
+            "mode": "merge",
         }
 
         response = client.post(
@@ -1024,7 +1267,7 @@ class TestEnumerators:
                                 "email": "eric.dodge@idinsight.org",
                                 "enumerator_id": "0294612",
                                 "enumerator_type": "surveyor",
-                                "errors": "Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Location id not found in uploaded locations data for the survey's prime geo level",
+                                "errors": "Duplicate enumerator_id; Location id not found in uploaded locations data for the survey's prime geo level",
                                 "gender": "Male",
                                 "home_address": "my house",
                                 "language": "English",
@@ -1039,7 +1282,7 @@ class TestEnumerators:
                                 "email": "jahnavi.meher@idinsight.org",
                                 "enumerator_id": "0294612",
                                 "enumerator_type": "surveyor",
-                                "errors": "Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "errors": "Duplicate enumerator_id; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
                                 "gender": "Female",
                                 "home_address": "my house",
                                 "language": "Telugu",
@@ -1054,7 +1297,7 @@ class TestEnumerators:
                                 "email": "jay.prakash@idinsight.org",
                                 "enumerator_id": "0294614",
                                 "enumerator_type": "monitor",
-                                "errors": "Blank field(s) found in the following column(s): name. The column(s) cannot contain blank fields.; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "errors": "Blank field(s) found in the following column(s): name. The column(s) cannot contain blank fields.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
                                 "gender": "Male",
                                 "home_address": "my house",
                                 "language": "Hindi",
@@ -1069,7 +1312,7 @@ class TestEnumerators:
                                 "email": "griffin.muteti@gmal.com",
                                 "enumerator_id": "0294615",
                                 "enumerator_type": "monitor;surveyor",
-                                "errors": "Duplicate row; Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "errors": "Duplicate row; Duplicate enumerator_id; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
                                 "gender": "Male",
                                 "home_address": "my house",
                                 "language": "Swahili",
@@ -1084,7 +1327,7 @@ class TestEnumerators:
                                 "email": "griffin.muteti@gmal.com",
                                 "enumerator_id": "0294615",
                                 "enumerator_type": "monitor;surveyor",
-                                "errors": "Duplicate row; Duplicate enumerator_id; The same enumerator_id already exists for the form - enumerator_id's must be unique for each form; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
+                                "errors": "Duplicate row; Duplicate enumerator_id; The domain name gmal.com does not accept email.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
                                 "gender": "Male",
                                 "home_address": "my house",
                                 "language": "Swahili",
@@ -1096,7 +1339,7 @@ class TestEnumerators:
                         ],
                     },
                     "summary": {
-                        "error_count": 19,
+                        "error_count": 14,
                         "total_correct_rows": 0,
                         "total_rows": 5,
                         "total_rows_with_errors": 5,
@@ -1119,12 +1362,6 @@ class TestEnumerators:
                             "error_message": "The file has 4 duplicate enumerator_id(s). The following row numbers contain enumerator_id duplicates: 2, 3, 5, 6",
                             "error_type": "Duplicate enumerator_id's in file",
                             "row_numbers_with_errors": [2, 3, 5, 6],
-                        },
-                        {
-                            "error_count": 5,
-                            "error_message": "The file contains 5 enumerator_id(s) that have already been uploaded. The following row numbers contain enumerator_id's that have already been uploaded: 2, 3, 4, 5, 6",
-                            "error_type": "Enumerator_id's found in database",
-                            "row_numbers_with_errors": [2, 3, 4, 5, 6],
                         },
                         {
                             "error_count": 2,
@@ -1253,11 +1490,33 @@ class TestEnumerators:
             headers={"X-CSRF-Token": csrf_token},
         )
 
+        print(response.json)
         assert response.status_code == 200
 
         expected_response = {
             "data": {
-                "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
+                "custom_fields": {
+                    "Age": "1",
+                    "Mobile (Secondary)": "1123456789",
+                    "column_mapping": {
+                        "custom_fields": [
+                            {
+                                "column_name": "mobile_secondary1",
+                                "field_label": "Mobile (Secondary)"
+                            },
+                            {
+                                "column_name": "age1",
+                                "field_label": "Age"
+                            }
+                        ],
+                        "email": "email1",
+                        "enumerator_id": "enumerator_id1",
+                        "enumerator_type": "enumerator_type1",
+                        "location_id_column": "district_id1",
+                        "mobile_primary": "mobile_primary1",
+                        "name": "name1"
+                    }
+                },
                 "email": "eric.dodge@idinsight.org",
                 "enumerator_id": "0294612",
                 "enumerator_uid": 1,
@@ -1272,6 +1531,7 @@ class TestEnumerators:
 
         # Check the response
         response = client.get("/api/enumerators/1")
+        print(response.json)
         assert response.status_code == 200
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -1362,7 +1622,8 @@ class TestEnumerators:
 
         assert response.status_code == 200
 
-        response = client.get("/api/enumerators/1", content_type="application/json")
+        response = client.get("/api/enumerators/1",
+                              content_type="application/json")
 
         assert response.status_code == 404
 
@@ -1446,7 +1707,27 @@ class TestEnumerators:
         expected_response = {
             "data": [
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)"
+                                },
+                                {
+                                    "column_name": "age1",
+                                    "field_label": "Age"
+                                }
+                            ],
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1"
+                        },
+
+                        "Mobile (Secondary)": "1123456789", "Age": "1"},
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "enumerator_uid": 1,
@@ -1461,7 +1742,25 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "2"},
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)"
+                                },
+                                {
+                                    "column_name": "age1",
+                                    "field_label": "Age"
+                                }
+                            ],
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1"
+                        },                 "Mobile (Secondary)": "1123456789", "Age": "2"},
                     "email": "jahnavi.meher@idinsight.org",
                     "enumerator_id": "0294613",
                     "enumerator_uid": 2,
@@ -1476,7 +1775,26 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "3"},
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)"
+                                },
+                                {
+                                    "column_name": "age1",
+                                    "field_label": "Age"
+                                }
+                            ],
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1"
+                        },
+                        "Mobile (Secondary)": "1123456789", "Age": "3"},
                     "email": "jay.prakash@idinsight.org",
                     "enumerator_id": "0294614",
                     "enumerator_uid": 3,
@@ -1499,7 +1817,25 @@ class TestEnumerators:
                     "surveyor_status": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "4"},
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)"
+                                },
+                                {
+                                    "column_name": "age1",
+                                    "field_label": "Age"
+                                }
+                            ],
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1"
+                        },                        "Mobile (Secondary)": "1123456789", "Age": "4"},
                     "email": "griffin.muteti@idinsight.org",
                     "enumerator_id": "0294615",
                     "enumerator_uid": 4,
@@ -1571,7 +1907,26 @@ class TestEnumerators:
         expected_response = {
             "data": [
                 {
-                    "custom_fields": {"Mobile (Secondary)": "0123456789", "Age": "1"},
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)"
+                                },
+                                {
+                                    "column_name": "age1",
+                                    "field_label": "Age"
+                                }
+                            ],
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1"
+                        },
+                        "Mobile (Secondary)": "0123456789", "Age": "1"},
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "enumerator_uid": 1,
@@ -1594,7 +1949,25 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "0123456789", "Age": "2"},
+                    "custom_fields": {"column_mapping": {
+                        "custom_fields": [
+                            {
+                                "column_name": "mobile_secondary1",
+                                "field_label": "Mobile (Secondary)"
+                            },
+                            {
+                                "column_name": "age1",
+                                "field_label": "Age"
+                            }
+                        ],
+                        "email": "email1",
+                        "enumerator_id": "enumerator_id1",
+                        "enumerator_type": "enumerator_type1",
+                        "location_id_column": "district_id1",
+                        "mobile_primary": "mobile_primary1",
+                        "name": "name1"
+                    },
+                        "Mobile (Secondary)": "0123456789", "Age": "2"},
                     "email": "jahnavi.meher@idinsight.org",
                     "enumerator_id": "0294613",
                     "enumerator_uid": 2,
@@ -1617,7 +1990,26 @@ class TestEnumerators:
                     "monitor_locations": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "3"},
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)"
+                                },
+                                {
+                                    "column_name": "age1",
+                                    "field_label": "Age"
+                                }
+                            ],
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1"
+                        },
+                        "Mobile (Secondary)": "1123456789", "Age": "3"},
                     "email": "jay.prakash@idinsight.org",
                     "enumerator_id": "0294614",
                     "enumerator_uid": 3,
@@ -1640,7 +2032,26 @@ class TestEnumerators:
                     "surveyor_status": None,
                 },
                 {
-                    "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "4"},
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)"
+                                },
+                                {
+                                    "column_name": "age1",
+                                    "field_label": "Age"
+                                }
+                            ],
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1"
+                        },
+                        "Mobile (Secondary)": "1123456789", "Age": "4"},
                     "email": "griffin.muteti@idinsight.org",
                     "enumerator_id": "0294615",
                     "enumerator_uid": 4,
@@ -1696,7 +2107,8 @@ class TestEnumerators:
         # Read the enumerators.csv file and convert it to base64
         with open(filepath, "rb") as f:
             enumerators_csv = f.read()
-            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+            enumerators_csv_encoded = base64.b64encode(
+                enumerators_csv).decode("utf-8")
 
         # Try to upload the enumerators csv
         payload = {

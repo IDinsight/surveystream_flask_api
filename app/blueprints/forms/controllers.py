@@ -481,6 +481,7 @@ def ingest_scto_form_definition(form_uid):
 
                 for choice_label in choice_labels:
                     # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
+                    choice_value = choices_dict.get("value", choices_dict.get("name", None))
                     language = "default"
                     if len(choice_label.split(":")) > 1:
                         language = choice_label.split(":")[1]
@@ -488,7 +489,7 @@ def ingest_scto_form_definition(form_uid):
                     # Add the choice label to the database
                     scto_choice_label = SCTOChoiceLabel(
                         list_uid=scto_choice_list.list_uid,
-                        choice_value=choices_dict["value"],
+                        choice_value=choice_value,
                         label=choices_dict[choice_label],
                         language=language,
                     )

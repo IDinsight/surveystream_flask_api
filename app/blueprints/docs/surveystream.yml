@@ -2126,15 +2126,14 @@ paths:
                   type: string
                   enum:
                     - overwrite
-                    - append
+                    - merge
                   description: >-
-                    The mode of the upload. If `overwrite`, all enumerators
-                    with the given form_uid (from the query parameter) will be 
-                    deleted and replaced with the new enumerators in the csv. If `append`, 
-                    the new enumerators in the csv will be added to the existing enumerators.
-
-                    **Note:** If the `append` mode is used, the enumerators in the csv
-                    must have unique enumerator IDs or the upload will fail.
+                    The mode of the upload.
+                    In 'overwrite' mode, all enumerators with the provided form_uid from 
+                    the query parameter will be removed and replaced with the new enumerators from 
+                    the CSV file.
+                    In 'merge' mode, the new enumerators from the CSV will be added to the existing ones. 
+                    Any existing records included in the upload will also be updated.
               required:
                 - column_mapping
                 - file
@@ -3593,7 +3592,7 @@ paths:
         '404':
           description: Invalid values for `page` or `per_page` query parameters
     post:
-      summary: Upload a csv of new targets
+      summary: Upload a csv of targets
       description: >
         Upload a csv of new targets to be added to the given form
       tags:
@@ -3676,7 +3675,8 @@ paths:
                     the new targets in the csv will be added to the existing targets.
 
                     **Note:** If the `append` mode is used, the targets in the csv
-                    must have target IDs that are not already in the database for the form or the upload will fail.
+                    may have target IDs that are not already in the database for the form and those will be inserted. 
+                    Also updates to on new and existing columns will be made if this mode is used.
               required:
                 - column_mapping
                 - file
