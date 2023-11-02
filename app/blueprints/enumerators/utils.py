@@ -729,47 +729,46 @@ class EnumeratorsUpload:
 
         if records_to_update:
             for record in records_to_update:
-                if isinstance(record, pd.DataFrame):
-                    # Check if record is a Pandas DataFrame
-                    if any(key for key in record.columns if key not in ["enumerator_id", "form_uid", "custom_fields"]):
-                        Enumerator.query.filter(
-                            Enumerator.enumerator_id == record["enumerator_id"].iloc[0],
-                            Enumerator.form_uid == self.form_uid,
-                        ).update(
-                            {
-                                key: record[key].iloc[0]
-                                for key in record.columns
-                                if key not in ["enumerator_id", "form_uid", "custom_fields"]
-                            },
-                            synchronize_session=False,
-                        )
+                # Check if record is a Pandas DataFrame
+                if any(key for key in record.columns if key not in ["enumerator_id", "form_uid", "custom_fields"]):
+                    Enumerator.query.filter(
+                        Enumerator.enumerator_id == record["enumerator_id"].iloc[0],
+                        Enumerator.form_uid == self.form_uid,
+                    ).update(
+                        {
+                            key: record[key].iloc[0]
+                            for key in record.columns
+                            if key not in ["enumerator_id", "form_uid", "custom_fields"]
+                        },
+                        synchronize_session=False,
+                    )
 
-                    # Add column_mapping to custom fields
-                    custom_fields = record["custom_fields"].iloc[0] if "custom_fields" in record else pd.Series()
-                    custom_fields['column_mapping'] = column_mapping.to_dict()
+                # Add column_mapping to custom fields
+                custom_fields = record["custom_fields"].iloc[0] if "custom_fields" in record else pd.Series()
+                custom_fields['column_mapping'] = column_mapping.to_dict()
 
-                    record["custom_fields"] = custom_fields
+                record["custom_fields"] = custom_fields
 
-                    if "custom_fields" in record:
-                        for field_name, field_value in record["custom_fields"].iloc[0].items():
-                            db.session.execute(
-                                update(Enumerator)
-                                .values(
-                                    custom_fields=cast(
-                                        func.jsonb_set(
-                                            Enumerator.custom_fields,
-                                            '{%s}' % field_name,
-                                            field_value,
-                                            True  # add true to overwrite existing keys
-                                        ),
-                                        JSONB
-                                    )
-                                )
-                                .where(
-                                    (Enumerator.target_id == record["enumerator_id"].iloc[0]) &
-                                    (Enumerator.form_uid == self.form_uid)
+                if "custom_fields" in record:
+                    for field_name, field_value in record["custom_fields"].iloc[0].items():
+                        db.session.execute(
+                            update(Enumerator)
+                            .values(
+                                custom_fields=cast(
+                                    func.jsonb_set(
+                                        Enumerator.custom_fields,
+                                        '{%s}' % field_name,
+                                        field_value,
+                                        True  # add true to overwrite existing keys
+                                    ),
+                                    JSONB
                                 )
                             )
+                            .where(
+                                (Enumerator.target_id == record["enumerator_id"].iloc[0]) &
+                                (Enumerator.form_uid == self.form_uid)
+                            )
+                        )
         db.session.commit()
         return
 
