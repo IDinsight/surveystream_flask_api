@@ -611,7 +611,7 @@ class EnumeratorsUpload:
             records_to_insert = records_to_write
 
         if write_mode == "merge":
-            enumerator_ids = [item['enumerator_id']
+            enumerator_ids = [item[1]
                               for item in records_to_write]
 
             
