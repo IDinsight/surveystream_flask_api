@@ -1,4 +1,5 @@
 import io
+import json
 import pandas as pd
 import numpy as np
 from app import db
@@ -41,6 +42,15 @@ class EnumeratorColumnMapping:
             if column_mapping.get("location_id_column"):
                 self.location_id_column = column_mapping["location_id_column"]
 
+            if column_mapping.get("gender"):
+                self.gender = column_mapping["gender"]
+
+            if column_mapping.get("home_address"):
+                self.home_address = column_mapping["home_address"]
+
+            if column_mapping.get("language"):
+                self.language = column_mapping["language"]
+
             if column_mapping.get("custom_fields"):
                 self.custom_fields = column_mapping["custom_fields"]
 
@@ -62,6 +72,14 @@ class EnumeratorColumnMapping:
             result["email"] = self.email
         if hasattr(self, 'mobile_primary') and self.mobile_primary:
             result["mobile_primary"] = self.mobile_primary
+        if hasattr(self, 'enumerator_type') and self.enumerator_type:
+            result["enumerator_type"] = self.enumerator_type
+        if hasattr(self, 'gender') and self.gender:
+            result["gender"] = self.gender
+        if hasattr(self, 'language') and self.language:
+            result["language"] = self.language
+        if hasattr(self, 'home_address') and self.home_address:
+            result["home_address"] = self.home_address
         if hasattr(self, 'enumerator_type') and self.enumerator_type:
             result["enumerator_type"] = self.enumerator_type
         if hasattr(self, 'location_id_column') and self.location_id_column:
@@ -727,61 +745,63 @@ class EnumeratorsUpload:
 
         if records_to_update:
             for record in records_to_update:
+                excluded_columns = ["enumerator_id", "form_uid", "custom_fields", "enumerator_type", "location_id_column"]
 
-                for optional_field in self.optional_hardcoded_fields:
-                    # Add the optional fields
-                    if hasattr(column_mapping, optional_field):
-                        col_index = (
-                            self.enumerators_df.columns.get_loc(
-                                getattr(column_mapping, optional_field)
-                            )
-                            + 1
-                        )  # Add 1 to the index to account for the df index
-                        setattr(record, optional_field, row[col_index])
+                column_to_key_mapping = {}
 
-                if any(key for key in record if key not in ["enumerator_id", "form_uid", "location_id_column", "custom_fields"]):
-                    Enumerator.query.filter(
-                        Enumerator.enumerator_id == record["enumerator_id"],
-                        Enumerator.form_uid == self.form_uid,
-                    ).update(
-                        {
-                            key: record[key]
-                            for key in record
-                            if key not in ["enumerator_id", "form_uid", "location_id_column", "custom_fields"]
-                        },
-                        synchronize_session=False,
-                    )
+                for key, value in column_mapping.to_dict().items():
+                    if key != "custom_fields" and key != 'location_id_column' and key != 'enumerator_type':
+                        column_to_key_mapping[value] = key
+
+
+                enumerator_id = record[1]
+
+                update_data = {
+                    column_to_key_mapping[col]: getattr(record, col)
+                    for col in record._fields
+                    if col not in excluded_columns
+                       and col in column_to_key_mapping
+                }
+
+                # Update the records in the database
+                Enumerator.query.filter(
+                    Enumerator.enumerator_id == enumerator_id,
+                    Enumerator.form_uid == self.form_uid,
+                ).update(update_data, synchronize_session=False)
 
                 # Add column_mapping to custom fields
-                try:
-                    custom_fields = record['custom_fields']
-                except KeyError:
-                    custom_fields = {}
+                # Add the custom fields with column_mapping if they don't exist
+                custom_fields = {}
+
+                if hasattr(column_mapping, "custom_fields"):
+                    for custom_field in column_mapping.custom_fields:
+                        col_index = (
+                                self.enumerators_df.columns.get_loc(
+                                    custom_field["column_name"])
+                                + 1
+                        )  # Add 1 to the index to account for the df index
+                        custom_fields[custom_field["field_label"]
+                        ] = record[col_index]
+                # Add column_mapping to custom fields
                 custom_fields['column_mapping'] = column_mapping.to_dict()
 
-                record.custom_fields = custom_fields
-
-                if "custom_fields" in record:
-                    for field_name, field_value in record["custom_fields"].items():
-                        db.session.execute(
-                            update(Enumerator)
-                            .values(
-                                custom_fields=func.jsonb_set(
-                                    Enumerator.custom_fields,
-                                    "{%s}" % field_name,
-                                    cast(
-                                        field_value,
-                                        JSONB,
-                                    ),
-                                    True  # add true to overwrite existing keys
-                                )
-                            )
-                            .where(
-                                Enumerator.target_id == record["enumerator_id"],
-                                Enumerator.form_uid == record["form_uid"],
-                            )
+                if custom_fields:
+                    for field_name, field_value in custom_fields.items():
+                        jsonb_set_expression = func.jsonb_set(
+                            Enumerator.custom_fields,
+                            '{%s}' % field_name,
+                            json.dumps(field_value),
+                            True  # add true to overwrite existing keys
                         )
 
+                        db.session.execute(
+                            update(Enumerator)
+                            .values(custom_fields=cast(jsonb_set_expression, JSONB))
+                            .where(
+                                (Enumerator.enumerator_id == record[1]) &
+                                (Enumerator.form_uid == self.form_uid)
+                            )
+                        )            
         db.session.commit()
 
         return
