@@ -18,7 +18,6 @@ from sqlalchemy import MetaData
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
-from flask_cors import CORS
 
 
 db = SQLAlchemy(
