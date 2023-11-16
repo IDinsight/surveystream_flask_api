@@ -6,6 +6,8 @@ from app import db
 from flask_login import current_user
 from csv import DictReader
 from app.blueprints.locations.models import Location
+from sqlalchemy import insert, update, func, cast
+from sqlalchemy.dialects.postgresql import JSONB
 from .models import (
     Enumerator,
     SurveyorForm,
