@@ -633,7 +633,7 @@ class EnumeratorsUpload:
                               for item in records_to_write]
 
             
-            existing_enumerator = db.session.query(Enumerator.enumerator_id).filter_by(
+            existing_enumerator = db.session.query(Enumerator.enumerator_id).filter(
                 form_uid == self.form_uid,
                 Enumerator.enumerator_id.in_(enumerator_ids)
             ).all()
@@ -643,7 +643,7 @@ class EnumeratorsUpload:
 
             for row in records_to_write:
                 enumerator_dict = row
-                if enumerator_dict["enumerator_id"] in existing_enumerator_ids:
+                if enumerator_dict[1] in existing_enumerator_ids:
                     records_to_update.append(enumerator_dict)
                 else:
                     records_to_insert.append(enumerator_dict)
