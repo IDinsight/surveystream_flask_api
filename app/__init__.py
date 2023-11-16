@@ -42,12 +42,6 @@ wtforms_json.init()
 def create_app():
     app = Flask(__name__)
 
-    #initialize cors for localhost and idinsight.io subdomains
-    origins = ['http://localhost:*', 'https://*.idinsight.io']
-    CORS(app, origins=origins, supports_credentials=True)
-    app.config['SESSION_COOKIE_HTTPONLY'] = False  # Set httponly attribute to False for session cookie
-    app.config['REMEMBER_COOKIE_HTTPONLY'] = False  # Set httponly attribute to False for remember cookie
-
     # Configure the flask app instance
     CONFIG_TYPE = os.getenv("CONFIG_TYPE", default="app.config.DevelopmentConfig")
     app.config.from_object(CONFIG_TYPE)
