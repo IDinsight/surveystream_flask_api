@@ -634,7 +634,7 @@ class EnumeratorsUpload:
 
             
             existing_enumerator = db.session.query(Enumerator.enumerator_id).filter(
-                form_uid == self.form_uid,
+                Enumerator.form_uid == self.form_uid,
                 Enumerator.enumerator_id.in_(enumerator_ids)
             ).all()
 
