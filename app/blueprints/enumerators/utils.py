@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 from app import db
 from flask_login import current_user
-from sqlalchemy import insert, update, func, cast
-from sqlalchemy.dialects.postgresql import JSONB
 from csv import DictReader
 from app.blueprints.locations.models import Location
 from .models import (
@@ -617,8 +615,8 @@ class EnumeratorsUpload:
                               for item in records_to_write]
 
             
-            existing_enumerator = db.session.query(Enumerator.enumerator_id).filter(
-                Enumerator.form_uid == self.form_uid,
+            existing_enumerator = db.session.query(Enumerator.enumerator_id).filter_by(
+                form_uid == self.form_uid,
                 Enumerator.enumerator_id.in_(enumerator_ids)
             ).all()
 
@@ -627,7 +625,7 @@ class EnumeratorsUpload:
 
             for row in records_to_write:
                 enumerator_dict = row
-                if enumerator_dict[1] in existing_enumerator_ids:
+                if enumerator_dict["enumerator_id"] in existing_enumerator_ids:
                     records_to_update.append(enumerator_dict)
                 else:
                     records_to_insert.append(enumerator_dict)
@@ -729,47 +727,63 @@ class EnumeratorsUpload:
 
         if records_to_update:
             for record in records_to_update:
-                # Check if record is a Pandas DataFrame
-                if any(key for key in record.columns if key not in ["enumerator_id", "form_uid", "custom_fields"]):
+
+                for optional_field in self.optional_hardcoded_fields:
+                    # Add the optional fields
+                    if hasattr(column_mapping, optional_field):
+                        col_index = (
+                            self.enumerators_df.columns.get_loc(
+                                getattr(column_mapping, optional_field)
+                            )
+                            + 1
+                        )  # Add 1 to the index to account for the df index
+                        setattr(record, optional_field, row[col_index])
+
+                if any(key for key in record if key not in ["enumerator_id", "form_uid", "location_id_column", "custom_fields"]):
                     Enumerator.query.filter(
-                        Enumerator.enumerator_id == record["enumerator_id"].iloc[0],
+                        Enumerator.enumerator_id == record["enumerator_id"],
                         Enumerator.form_uid == self.form_uid,
                     ).update(
                         {
-                            key: record[key].iloc[0]
-                            for key in record.columns
-                            if key not in ["enumerator_id", "form_uid", "custom_fields"]
+                            key: record[key]
+                            for key in record
+                            if key not in ["enumerator_id", "form_uid", "location_id_column", "custom_fields"]
                         },
                         synchronize_session=False,
                     )
 
                 # Add column_mapping to custom fields
-                custom_fields = record["custom_fields"].iloc[0] if "custom_fields" in record else pd.Series()
+                try:
+                    custom_fields = record['custom_fields']
+                except KeyError:
+                    custom_fields = {}
                 custom_fields['column_mapping'] = column_mapping.to_dict()
 
-                record["custom_fields"] = custom_fields
+                record.custom_fields = custom_fields
 
                 if "custom_fields" in record:
-                    for field_name, field_value in record["custom_fields"].iloc[0].items():
+                    for field_name, field_value in record["custom_fields"].items():
                         db.session.execute(
                             update(Enumerator)
                             .values(
-                                custom_fields=cast(
-                                    func.jsonb_set(
-                                        Enumerator.custom_fields,
-                                        '{%s}' % field_name,
+                                custom_fields=func.jsonb_set(
+                                    Enumerator.custom_fields,
+                                    "{%s}" % field_name,
+                                    cast(
                                         field_value,
-                                        True  # add true to overwrite existing keys
+                                        JSONB,
                                     ),
-                                    JSONB
+                                    True  # add true to overwrite existing keys
                                 )
                             )
                             .where(
-                                (Enumerator.target_id == record["enumerator_id"].iloc[0]) &
-                                (Enumerator.form_uid == self.form_uid)
+                                Enumerator.target_id == record["enumerator_id"],
+                                Enumerator.form_uid == record["form_uid"],
                             )
                         )
+
         db.session.commit()
+
         return
 
     def __build_location_uid_lookup(self, column_mapping):
