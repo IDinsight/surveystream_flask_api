@@ -551,11 +551,280 @@ class TestEnumerators:
         print(response.json)
         assert response.status_code == 200
 
-    def test_upload_merge_enumerators_csv(
+    def test_upload_merge_update_enumerators_csv(
+        self, client, create_form, login_test_user, csrf_token, upload_enumerators_csv
+    ):
+        """
+        Test that the enumerators merge functionality that columns can be updated
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_small_updated.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(
+                enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id1",
+                "name": "name1",
+                "email": "email1",
+                "mobile_primary": "mobile_primary1",
+                "language": "language1",
+                "home_address": "home_address1",
+                "gender": "gender1",
+                "enumerator_type": "enumerator_type1",
+                "location_id_column": "district_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary1",
+                    },
+                    {
+                        "field_label": "Age",
+                        "column_name": "age1",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "merge",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        #upload data with changes for merge
+
+
+        expected_response = {
+                "data": [
+                    {
+                        "custom_fields": {
+                            "Age": "1",
+                            "Mobile (Secondary)": "1123456789",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_secondary1",
+                                        "field_label": "Mobile (Secondary)"
+                                    },
+                                    {
+                                        "column_name": "age1",
+                                        "field_label": "Age"
+                                    }
+                                ],
+                                "email": "email1",
+                                "enumerator_id": "enumerator_id1",
+                                "enumerator_type": "enumerator_type1",
+                                "gender": "gender1",
+                                "home_address": "home_address1",
+                                "language": "language1",
+                                "location_id_column": "district_id1",
+                                "mobile_primary": "mobile_primary1",
+                                "name": "name1"
+                            }
+                        },
+                        "email": "eric.dodge@idinsight.org",
+                        "enumerator_id": "0294612",
+                        "enumerator_uid": 1,
+                        "gender": "Male",
+                        "home_address": "my house",
+                        "language": "English",
+                        "mobile_primary": "0123456789",
+                        "monitor_locations": None,
+                        "monitor_status": None,
+                        "name": "E Dodge",
+                        "surveyor_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1
+                            }
+                        ],
+                        "surveyor_status": "Active"
+                    },
+                    {
+                        "custom_fields": {
+                            "Age": "2",
+                            "Mobile (Secondary)": "1123456789",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_secondary1",
+                                        "field_label": "Mobile (Secondary)"
+                                    },
+                                    {
+                                        "column_name": "age1",
+                                        "field_label": "Age"
+                                    }
+                                ],
+                                "email": "email1",
+                                "enumerator_id": "enumerator_id1",
+                                "enumerator_type": "enumerator_type1",
+                                "gender": "gender1",
+                                "home_address": "home_address1",
+                                "language": "language1",
+                                "location_id_column": "district_id1",
+                                "mobile_primary": "mobile_primary1",
+                                "name": "name1"
+                            }
+                        },
+                        "email": "jahnavi.meher@idinsight.org",
+                        "enumerator_id": "0294613",
+                        "enumerator_uid": 2,
+                        "gender": "Female",
+                        "home_address": "my house",
+                        "language": "Telugu",
+                        "mobile_primary": "0123456789",
+                        "monitor_locations": None,
+                        "monitor_status": None,
+                        "name": "Jan Meher",
+                        "surveyor_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1
+                            }
+                        ],
+                        "surveyor_status": "Active"
+                    },
+                    {
+                        "custom_fields": {
+                            "Age": "3",
+                            "Mobile (Secondary)": "1123456789",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_secondary1",
+                                        "field_label": "Mobile (Secondary)"
+                                    },
+                                    {
+                                        "column_name": "age1",
+                                        "field_label": "Age"
+                                    }
+                                ],
+                                "email": "email1",
+                                "enumerator_id": "enumerator_id1",
+                                "enumerator_type": "enumerator_type1",
+                                "gender": "gender1",
+                                "home_address": "home_address1",
+                                "language": "language1",
+                                "location_id_column": "district_id1",
+                                "mobile_primary": "mobile_primary1",
+                                "name": "name1"
+                            }
+                        },
+                        "email": "jay.prakash@idinsight.org",
+                        "enumerator_id": "0294614",
+                        "enumerator_uid": 3,
+                        "gender": "Male",
+                        "home_address": "my house",
+                        "language": "Hindi",
+                        "mobile_primary": "0123456789",
+                        "monitor_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1
+                            }
+                        ],
+                        "monitor_status": "Active",
+                        "name": "J Prakash",
+                        "surveyor_locations": None,
+                        "surveyor_status": None
+                    },
+                    {
+                        "custom_fields": {
+                            "Age": "4",
+                            "Mobile (Secondary)": "1123456789",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_secondary1",
+                                        "field_label": "Mobile (Secondary)"
+                                    },
+                                    {
+                                        "column_name": "age1",
+                                        "field_label": "Age"
+                                    }
+                                ],
+                                "email": "email1",
+                                "enumerator_id": "enumerator_id1",
+                                "enumerator_type": "enumerator_type1",
+                                "gender": "gender1",
+                                "home_address": "home_address1",
+                                "language": "language1",
+                                "location_id_column": "district_id1",
+                                "mobile_primary": "mobile_primary1",
+                                "name": "name1"
+                            }
+                        },
+                        "email": "griffin.muteti@idinsight.org",
+                        "enumerator_id": "0294615",
+                        "enumerator_uid": 4,
+                        "gender": "Male",
+                        "home_address": "my house",
+                        "language": "Swahili",
+                        "mobile_primary": "0123456789",
+                        "monitor_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1
+                            }
+                        ],
+                        "monitor_status": "Active",
+                        "name": "Griff Muteti",
+                        "surveyor_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1
+                            }
+                        ],
+                        "surveyor_status": "Active"
+                    }
+                ],
+                "success": True
+            }
+
+        # Check the response
+        response = client.get("/api/enumerators", query_string={"form_uid": 1})
+
+        print(response.json)
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+
+    def test_upload_merge_append_enumerators_csv(
         self, client, create_form, login_test_user, csrf_token
     ):
         """
-        Test that the enumerators csv can be uploaded
+        Test that the enumerators merge functionality that new columns are being added
         """
         """
               Upload the enumerators csv
@@ -604,31 +873,76 @@ class TestEnumerators:
         print(response.json)
         assert response.status_code == 200
 
-        expected_response = {
-            'data': [{'custom_fields': {'Mobile (Secondary)': '1123456789', 'column_mapping': {
-                'custom_fields': [{'column_name': 'mobile_secondary', 'field_label': 'Mobile (Secondary)'}],
-                'email': 'email', 'enumerator_id': 'enumerator_id', 'enumerator_type': 'enumerator_type',
-                'mobile_primary': 'mobile_primary', 'name': 'name'}}, 'email': 'eric.dodge@idinsight.org',
-                'enumerator_id': '0294612', 'enumerator_uid': 1, 'gender': 'Male', 'home_address': 'my house',
-                'language': 'English', 'mobile_primary': '0123456789', 'monitor_locations': None,
-                'monitor_status': None, 'name': 'Eric Dodge', 'surveyor_locations': None,
-                'surveyor_status': 'Active'}, {'custom_fields': {'Mobile (Secondary)': '1123456789',
-                                                                 'column_mapping': {'custom_fields': [
-                                                                     {'column_name': 'mobile_secondary',
-                                                                      'field_label': 'Mobile (Secondary)'}],
-                                                                     'email': 'email',
-                                                                     'enumerator_id': 'enumerator_id',
-                                                                     'enumerator_type': 'enumerator_type',
-                                                                     'mobile_primary': 'mobile_primary',
-                                                                     'name': 'name'}},
-                                               'email': 'jahnavi.meher@idinsight.org',
-                                               'enumerator_id': '0294613', 'enumerator_uid': 2,
-                                               'gender': 'Female', 'home_address': 'my house',
-                                               'language': 'Telugu', 'mobile_primary': '0123456789',
-                                               'monitor_locations': None, 'monitor_status': None,
-                                               'name': 'Jahnavi Meher', 'surveyor_locations': None,
-                                               'surveyor_status': 'Active'}], 'success': True
-
+        expected_response =  {
+          "data": [
+            {
+              "custom_fields": {
+                "Mobile (Secondary)": "1123456789",
+                "column_mapping": {
+                  "custom_fields": [
+                    {
+                      "column_name": "mobile_secondary",
+                      "field_label": "Mobile (Secondary)"
+                    }
+                  ],
+                  "email": "email",
+                  "enumerator_id": "enumerator_id",
+                  "enumerator_type": "enumerator_type",
+                  "gender": "gender",
+                  "home_address": "home_address",
+                  "language": "language",
+                  "mobile_primary": "mobile_primary",
+                  "name": "name"
+                }
+              },
+              "email": "eric.dodge@idinsight.org",
+              "enumerator_id": "0294612",
+              "enumerator_uid": 1,
+              "gender": "Male",
+              "home_address": "my house",
+              "language": "English",
+              "mobile_primary": "0123456789",
+              "monitor_locations": None,
+              "monitor_status": None,
+              "name": "Eric Dodge",
+              "surveyor_locations": None,
+              "surveyor_status": "Active"
+            },
+            {
+              "custom_fields": {
+                "Mobile (Secondary)": "1123456789",
+                "column_mapping": {
+                  "custom_fields": [
+                    {
+                      "column_name": "mobile_secondary",
+                      "field_label": "Mobile (Secondary)"
+                    }
+                  ],
+                  "email": "email",
+                  "enumerator_id": "enumerator_id",
+                  "enumerator_type": "enumerator_type",
+                  "gender": "gender",
+                  "home_address": "home_address",
+                  "language": "language",
+                  "mobile_primary": "mobile_primary",
+                  "name": "name"
+                }
+              },
+              "email": "jahnavi.meher@idinsight.org",
+              "enumerator_id": "0294613",
+              "enumerator_uid": 2,
+              "gender": "Female",
+              "home_address": "my house",
+              "language": "Telugu",
+              "mobile_primary": "0123456789",
+              "monitor_locations": None,
+              "monitor_status": None,
+              "name": "Jahnavi Meher",
+              "surveyor_locations": None,
+              "surveyor_status": "Active"
+            }
+          ],
+          "success": True
         }
 
         # Check the response
@@ -645,7 +959,6 @@ class TestEnumerators:
         """
         Test that the enumerators csv can be uploaded
         """
-
         expected_response = {
             "data": [
                 {
@@ -655,6 +968,9 @@ class TestEnumerators:
                              "field_label": "Mobile (Secondary)"},
                             {"column_name": "age1", "field_label": "Age"}
                         ],
+                        'gender': 'gender1',
+                        'home_address': 'home_address1',
+                        'language': 'language1',
                         "email": "email1",
                         "enumerator_id": "enumerator_id1",
                         "enumerator_type": "enumerator_type1",
@@ -690,6 +1006,9 @@ class TestEnumerators:
                              "field_label": "Mobile (Secondary)"},
                             {"column_name": "age1", "field_label": "Age"}
                         ],
+                        'gender': 'gender1',
+                        'home_address': 'home_address1',
+                        'language': 'language1',
                         "email": "email1",
                         "enumerator_id": "enumerator_id1",
                         "enumerator_type": "enumerator_type1",
@@ -726,6 +1045,9 @@ class TestEnumerators:
                                  "field_label": "Mobile (Secondary)"},
                                 {"column_name": "age1", "field_label": "Age"}
                             ],
+                            'gender': 'gender1',
+                            'home_address': 'home_address1',
+                            'language': 'language1',
                             "email": "email1",
                             "enumerator_id": "enumerator_id1",
                             "enumerator_type": "enumerator_type1",
@@ -763,6 +1085,9 @@ class TestEnumerators:
                              "field_label": "Mobile (Secondary)"},
                             {"column_name": "age1", "field_label": "Age"}
                         ],
+                        'gender': 'gender1',
+                        'home_address': 'home_address1',
+                        'language': 'language1',
                         "email": "email1",
                         "enumerator_id": "enumerator_id1",
                         "enumerator_type": "enumerator_type1",
@@ -826,6 +1151,9 @@ class TestEnumerators:
                             {"column_name": "mobile_secondary",
                              "field_label": "Mobile (Secondary)"},
                         ],
+                        'gender': 'gender',
+                        'home_address': 'home_address',
+                        'language': 'language',
                         "email": "email",
                         "enumerator_id": "enumerator_id",
                         "enumerator_type": "enumerator_type",
@@ -851,6 +1179,9 @@ class TestEnumerators:
                             {"column_name": "mobile_secondary",
                              "field_label": "Mobile (Secondary)"},
                         ],
+                        'gender': 'gender',
+                        'home_address': 'home_address',
+                        'language': 'language',
                         "email": "email",
                         "enumerator_id": "enumerator_id",
                         "enumerator_type": "enumerator_type",
@@ -918,6 +1249,9 @@ class TestEnumerators:
                     "monitor_locations": None,
                     "custom_fields": {
                         "column_mapping": {
+                            'gender': 'gender',
+                            'home_address': 'home_address',
+                            'language': 'language',
                             "email": "email",
                             "enumerator_id": "enumerator_id",
                             "enumerator_type": "enumerator_type",
@@ -950,6 +1284,9 @@ class TestEnumerators:
                     "monitor_locations": None,
                     "custom_fields": {
                         "column_mapping": {
+                            'gender': 'gender',
+                            'home_address': 'home_address',
+                            'language': 'language',
                             "email": "email",
                             "enumerator_id": "enumerator_id",
                             "enumerator_type": "enumerator_type",
@@ -985,10 +1322,14 @@ class TestEnumerators:
         expected_response = {
             "data": [
                 {
-                    "custom_fields": {"column_mapping": {
+                    "custom_fields": {
+                        "column_mapping": {
                         "enumerator_id": "enumerator_id",
                         "name": "name",
                         "email": "email",
+                        'gender': 'gender',
+                        'home_address': 'home_address',
+                        'language': 'language',
                         "mobile_primary": "mobile_primary",
                         "enumerator_type": "enumerator_type",
                         "location_id_column": "mandal_id",
@@ -998,7 +1339,9 @@ class TestEnumerators:
                                 "column_name": "mobile_secondary",
                             },
                         ],
-                    }, "Mobile (Secondary)": "1123456789"},
+                    },
+                    "Mobile (Secondary)": "1123456789"
+                    },
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "enumerator_uid": 1,
@@ -1034,6 +1377,9 @@ class TestEnumerators:
                         "email": "email",
                         "mobile_primary": "mobile_primary",
                         "enumerator_type": "enumerator_type",
+                        'gender': 'gender',
+                        'home_address': 'home_address',
+                        'language': 'language',
                         "location_id_column": "mandal_id",
                         "custom_fields": [
                             {
@@ -1076,6 +1422,9 @@ class TestEnumerators:
                         "name": "name",
                         "email": "email",
                         "mobile_primary": "mobile_primary",
+                        'gender': 'gender',
+                        'home_address': 'home_address',
+                        'language': 'language',
                         "enumerator_type": "enumerator_type",
                         "location_id_column": "mandal_id",
                         "custom_fields": [
@@ -1119,6 +1468,9 @@ class TestEnumerators:
                         "name": "name",
                         "email": "email",
                         "mobile_primary": "mobile_primary",
+                        'gender': 'gender',
+                        'home_address': 'home_address',
+                        'language': 'language',
                         "enumerator_type": "enumerator_type",
                         "location_id_column": "mandal_id",
                         "custom_fields": [
@@ -1509,6 +1861,9 @@ class TestEnumerators:
                                 "field_label": "Age"
                             }
                         ],
+                        "gender": "gender1",
+                        "home_address": "home_address1",
+                        "language": "language1",
                         "email": "email1",
                         "enumerator_id": "enumerator_id1",
                         "enumerator_type": "enumerator_type1",
@@ -1719,6 +2074,9 @@ class TestEnumerators:
                                     "field_label": "Age"
                                 }
                             ],
+                            'gender': 'gender1',
+                            'home_address': 'home_address1',
+                            'language': 'language1',
                             "email": "email1",
                             "enumerator_id": "enumerator_id1",
                             "enumerator_type": "enumerator_type1",
@@ -1754,6 +2112,9 @@ class TestEnumerators:
                                     "field_label": "Age"
                                 }
                             ],
+                            'gender': 'gender1',
+                            'home_address': 'home_address1',
+                            'language': 'language1',
                             "email": "email1",
                             "enumerator_id": "enumerator_id1",
                             "enumerator_type": "enumerator_type1",
@@ -1787,6 +2148,9 @@ class TestEnumerators:
                                     "field_label": "Age"
                                 }
                             ],
+                            'gender': 'gender1',
+                            'home_address': 'home_address1',
+                            'language': 'language1',
                             "email": "email1",
                             "enumerator_id": "enumerator_id1",
                             "enumerator_type": "enumerator_type1",
@@ -1829,6 +2193,9 @@ class TestEnumerators:
                                     "field_label": "Age"
                                 }
                             ],
+                            'gender': 'gender1',
+                            'home_address': 'home_address1',
+                            'language': 'language1',
                             "email": "email1",
                             "enumerator_id": "enumerator_id1",
                             "enumerator_type": "enumerator_type1",
@@ -1919,6 +2286,9 @@ class TestEnumerators:
                                     "field_label": "Age"
                                 }
                             ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
                             "email": "email1",
                             "enumerator_id": "enumerator_id1",
                             "enumerator_type": "enumerator_type1",
@@ -1960,6 +2330,9 @@ class TestEnumerators:
                                 "field_label": "Age"
                             }
                         ],
+                        "gender": "gender1",
+                        "home_address": "home_address1",
+                        "language": "language1",
                         "email": "email1",
                         "enumerator_id": "enumerator_id1",
                         "enumerator_type": "enumerator_type1",
@@ -2002,6 +2375,9 @@ class TestEnumerators:
                                     "field_label": "Age"
                                 }
                             ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
                             "email": "email1",
                             "enumerator_id": "enumerator_id1",
                             "enumerator_type": "enumerator_type1",
@@ -2044,6 +2420,9 @@ class TestEnumerators:
                                     "field_label": "Age"
                                 }
                             ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
                             "email": "email1",
                             "enumerator_id": "enumerator_id1",
                             "enumerator_type": "enumerator_type1",
