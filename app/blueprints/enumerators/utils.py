@@ -750,9 +750,10 @@ class EnumeratorsUpload:
                 excluded_columns = ["enumerator_id", "form_uid", "custom_fields", "enumerator_type", "location_id_column"]
 
                 column_to_key_mapping = {}
+                excluded_keys = ["custom_fields", "enumerator_type", "location_id_column"]
 
                 for key, value in column_mapping.to_dict().items():
-                    if key != "custom_fields" and key != 'location_id_column' and key != 'enumerator_type':
+                    if key not in excluded_keys:
                         column_to_key_mapping[value] = key
 
 
