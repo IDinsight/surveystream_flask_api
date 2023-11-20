@@ -37,9 +37,6 @@ class TargetColumnMapping:
 
             if column_mapping.get("custom_fields"):
                 self.custom_fields = column_mapping["custom_fields"]
-            if write_mode == "merge":
-                self.__validate_merge(form_uid)
-
         except:
             raise
 
@@ -112,37 +109,6 @@ class TargetColumnMapping:
 
         if len(mapping_errors) > 0:
             raise InvalidColumnMappingError(mapping_errors)
-
-        return
-
-    def __validate_merge(self, form_uid):
-        """
-        If we're in `merge` mode we need to check that the mapped columns don't conflict with existing columns in the column config
-        """
-
-        new_column_errors = []
-        column_config_column_names = [
-            row.column_name
-            for row in TargetColumnConfig.query.filter(
-                TargetColumnConfig.form_uid == form_uid,
-            ).all()
-        ]
-
-        # We can only have a single location_id_column, so check if one already exists in the column config
-        if hasattr(self, "location_id_column"):
-            if (
-                TargetColumnConfig.query.filter(
-                    TargetColumnConfig.form_uid == form_uid,
-                    TargetColumnConfig.column_type == "location",
-                ).first()
-                is not None
-            ):
-                new_column_errors.append(
-                    f"A location column '{self.location_id_column}' already exists in the targets column configuration. Only a single location can be added for targets."
-                )
-
-        if len(new_column_errors) > 0:
-            raise InvalidNewColumnError(new_column_errors)
 
         return
 
@@ -548,13 +514,13 @@ class TargetsUpload:
                             )
                         )
             if records_to_insert:
+               # Insert records in chunks to the database
                 chunk_size = 1000
                 for pos in range(0, len(records_to_insert), chunk_size):
                     db.session.execute(
                         insert(Target).values(records_to_insert[pos: pos + chunk_size])
                     )
                     db.session.flush()
-
         db.session.commit()
 
         return
