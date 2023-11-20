@@ -517,7 +517,9 @@ class TargetsUpload:
                # Insert records in chunks to the database
                 chunk_size = 1000
                 for pos in range(0, len(records_to_insert), chunk_size):
-                    db.session.bulk_insert_mappings(Target, records_to_insert[pos: pos + chunk_size])
+                    db.session.execute(
+                        insert(Target).values(records_to_insert[pos: pos + chunk_size])
+                    )
                     db.session.flush()
         db.session.commit()
 
