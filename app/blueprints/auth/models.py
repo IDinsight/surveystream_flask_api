@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 from app import db
 from passlib.hash import pbkdf2_sha256
+from flask_security import UserMixin
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     """
     SQLAlchemy data model for User
     """
@@ -14,7 +15,7 @@ class User(db.Model):
 
     user_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     email = db.Column(db.String(), unique=True, nullable=False)
-    password_secure = db.Column(db.String(), nullable=False)
+    password_secure = db.Column(db.String(), nullable=True)
     first_name = db.Column(db.String())
     middle_name = db.Column(db.String())
     last_name = db.Column(db.String())
@@ -24,6 +25,11 @@ class User(db.Model):
     phone_secondary = db.Column(db.String())
     avatar_s3_filekey = db.Column(db.String())
     active = db.Column(db.Boolean(), nullable=False, server_default="t")
+
+    ## rbac fields
+    roles = db.Column(db.ARRAY(db.Integer), default=[], nullable=True)
+    is_super_admin = db.Column(db.Boolean, default=False, nullable=True)
+
 
     def __init__(self, email, password):
         self.email = email
@@ -67,6 +73,23 @@ class User(db.Model):
         False, as anonymous users aren't supported.
         """
         return False
+
+
+class Invite(db.Model):
+    __tablename__ = "invites"
+    __table_args__ = {"schema": "webapp"}
+
+    invite_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    invite_code = db.Column(db.String(8), unique=True, nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    user_uid = db.Column(db.Integer(), db.ForeignKey(User.user_uid), nullable=False, unique=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    def __init__(self, invite_code, email, user_uid, is_active):
+        self.invite_code = invite_code
+        self.email = email
+        self.user_uid = user_uid
+        self.is_active = is_active
 
 
 class ResetPasswordToken(db.Model):
