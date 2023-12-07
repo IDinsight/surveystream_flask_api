@@ -54,7 +54,6 @@ class UserHierarchy(db.Model):
         db.Integer,
         db.ForeignKey(Survey.survey_uid),
     )
-    user_hierarchy_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete='CASCADE'))
     user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete='CASCADE'))
     parent_user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete='CASCADE'))

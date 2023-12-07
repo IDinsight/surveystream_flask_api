@@ -21,6 +21,7 @@ class TestUserManagement:
                 "last_name": "Doe",
                 "role": "user",
             },
+            content_type="application/json",
             headers={"X-CSRF-Token": csrf_token}
         )
         assert response.status_code == 200
@@ -44,14 +45,15 @@ class TestUserManagement:
                 "new_password": "newpassword",
                 "confirm_password": "newpassword",
             },
+            content_type="application/json",
             headers={"X-CSRF-Token": csrf_token}
         )
         assert response.status_code == 404
         assert b"Invalid or expired invite code" in response.data
 
-    def test_complete_registration_inactive_invite(self, client, login_test_user, csrf_token, user_fixture):
+    def test_complete_registration_inactive_invite(self, client, login_test_user, csrf_token, sample_user):
         """Test completing registration with an inactive invite."""
-        user = user_fixture
+        user = sample_user
         invite_code = generate_invite_code()
         invite = Invite(invite_code=invite_code, email=user.email, user_uid=user.user_uid, is_active=False)
         db.session.add(invite)
@@ -64,6 +66,7 @@ class TestUserManagement:
                 "new_password": "newpassword",
                 "confirm_password": "newpassword",
             },
+            content_type="application/json",
             headers={"X-CSRF-Token": csrf_token}
         )
         assert response.status_code == 404
@@ -81,6 +84,7 @@ class TestUserManagement:
                 "is_super_admin": True,
                 "permissions": ["update_permission"],
             },
+            content_type="application/json",
             headers={"X-CSRF-Token": csrf_token}
         )
         assert response.status_code == 200

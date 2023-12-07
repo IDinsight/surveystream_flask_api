@@ -1,19 +1,21 @@
-from app.blueprints.user_management.models import Invite
-from app.blueprints.user_management.utils import generate_invite_code, send_invite_email
+
 from . import user_management_bp
-from app.utils.utils import logged_in_active_user_required
 from flask import jsonify, request, current_app
 from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
+from .models import Invite
+from .utils import generate_invite_code, send_invite_email
 from .validators import (
     AddUserValidator,
     CompleteRegistrationValidator,
     RegisterValidator,
     WelcomeUserValidator
 )
+from app.utils.utils import logged_in_active_user_required
+
 @user_management_bp.route("/register", methods=["POST"])
 @logged_in_active_user_required
 def register():
