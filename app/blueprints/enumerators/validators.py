@@ -60,7 +60,7 @@ class EnumeratorsFileUploadValidator(FlaskForm):
     file = StringField(validators=[DataRequired()])
     mode = StringField(
         validators=[
-            AnyOf(["append", "overwrite"], message="Value must be one of %(values)s"),
+            AnyOf(["overwrite", "merge"], message="Value must be one of %(values)s"),
             DataRequired(),
         ]
     )

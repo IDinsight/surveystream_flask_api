@@ -126,7 +126,8 @@ class TestTargets:
         # Read the locations.csv file and convert it to base64
         with open(filepath, "rb") as f:
             locations_csv = f.read()
-            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+            locations_csv_encoded = base64.b64encode(
+                locations_csv).decode("utf-8")
 
         # Try to upload the locations csv
         payload = {
@@ -321,7 +322,7 @@ class TestTargets:
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
     ):
         """
-        Upload the targets csv
+        Upload the targets csv with no locations
         """
 
         filepath = (
@@ -374,7 +375,7 @@ class TestTargets:
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
     ):
         """
-        Upload the targets csv
+        Upload the targets csv with no custmo fields
         """
 
         filepath = (
@@ -420,6 +421,21 @@ class TestTargets:
             "data": [
                 {
                     "custom_fields": {
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary1',
+                                 'field_label': 'Mobile no.'},
+                                {'column_name': 'name1',
+                                 'field_label': 'Name'},
+                                {'column_name': 'address1',
+                                 'field_label': 'Address'}
+                            ],
+                            'gender': 'gender1',
+                            'language': 'language1',
+                            'location_id_column': 'psu_id1',
+                            'target_id': 'target_id1'
+                        },
+
                         "Address": "Hyderabad",
                         "Name": "Anil",
                         "Mobile no.": "1234567890",
@@ -464,6 +480,19 @@ class TestTargets:
                 },
                 {
                     "custom_fields": {
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary1',
+                                    'field_label': 'Mobile no.'},
+                                {'column_name': 'name1', 'field_label': 'Name'},
+                                {'column_name': 'address1',
+                                    'field_label': 'Address'}
+                            ],
+                            'gender': 'gender1',
+                            'language': 'language1',
+                            'location_id_column': 'psu_id1',
+                            'target_id': 'target_id1'
+                        },
                         "Address": "South Delhi",
                         "Name": "Anupama",
                         "Mobile no.": "1234567891",
@@ -520,13 +549,28 @@ class TestTargets:
         self, client, login_test_user, upload_targets_csv, csrf_token
     ):
         """
-        Test that the targets csv can be uploaded
+        Test that we can paginate the targets response
         """
 
         expected_response = {
             "data": [
                 {
                     "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {"column_name": "mobile_primary1",
+                                    "field_label": "Mobile no."},
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1",
+                                    "field_label": "Address"}
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1"
+
+                        },
+
                         "Address": "Hyderabad",
                         "Name": "Anil",
                         "Mobile no.": "1234567890",
@@ -586,13 +630,25 @@ class TestTargets:
         self, client, login_test_user, upload_targets_csv_no_locations, csrf_token
     ):
         """
-        Test uploading targets csv with no locations mapped
+        Test that we can upload a targets csv with no locations mapped
         """
 
         expected_response = {
             "data": [
                 {
                     "custom_fields": {
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary',
+                                    'field_label': 'Mobile no.'},
+                                {'column_name': 'name', 'field_label': 'Name'},
+                                {'column_name': 'address',
+                                    'field_label': 'Address'}
+                            ],
+                            'gender': 'gender',
+                            'language': 'language',
+                            'target_id': 'target_id'
+                        },
                         "Address": "Hyderabad",
                         "Name": "Anil",
                         "Mobile no.": "1234567890",
@@ -615,6 +671,18 @@ class TestTargets:
                 },
                 {
                     "custom_fields": {
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary',
+                                    'field_label': 'Mobile no.'},
+                                {'column_name': 'name', 'field_label': 'Name'},
+                                {'column_name': 'address',
+                                    'field_label': 'Address'}
+                            ],
+                            'gender': 'gender',
+                            'language': 'language',
+                            'target_id': 'target_id'
+                        },
                         "Address": "South Delhi",
                         "Name": "Anupama",
                         "Mobile no.": "1234567891",
@@ -642,6 +710,8 @@ class TestTargets:
         # Check the response
         response = client.get("/api/targets", query_string={"form_uid": 1})
 
+        assert response.status_code == 200
+
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -649,7 +719,7 @@ class TestTargets:
         self, client, login_test_user, create_form, csrf_token
     ):
         """
-        Test uploading targets csv with no locations mapped and no geo levels defined
+        Test that we can upload a targets csv with no locations mapped and no geo levels defined
         """
 
         filepath = (
@@ -701,6 +771,25 @@ class TestTargets:
             "data": [
                 {
                     "custom_fields": {
+                        "column_mapping": {
+                            "target_id": "target_id",
+                            "language": "language",
+                            "gender": "gender",
+                            "custom_fields": [
+                                {
+                                    "field_label": "Mobile no.",
+                                    "column_name": "mobile_primary",
+                                },
+                                {
+                                    "field_label": "Name",
+                                    "column_name": "name",
+                                },
+                                {
+                                    "field_label": "Address",
+                                    "column_name": "address",
+                                },
+                            ],
+                        },
                         "Address": "Hyderabad",
                         "Name": "Anil",
                         "Mobile no.": "1234567890",
@@ -723,6 +812,25 @@ class TestTargets:
                 },
                 {
                     "custom_fields": {
+                        "column_mapping": {
+                            "target_id": "target_id",
+                            "language": "language",
+                            "gender": "gender",
+                            "custom_fields": [
+                                {
+                                    "field_label": "Mobile no.",
+                                    "column_name": "mobile_primary",
+                                },
+                                {
+                                    "field_label": "Name",
+                                    "column_name": "name",
+                                },
+                                {
+                                    "field_label": "Address",
+                                    "column_name": "address",
+                                },
+                            ],
+                        },
                         "Address": "South Delhi",
                         "Name": "Anupama",
                         "Mobile no.": "1234567891",
@@ -767,7 +875,14 @@ class TestTargets:
         expected_response = {
             "data": [
                 {
-                    "custom_fields": None,
+                    "custom_fields": {
+                        'column_mapping': {
+                            'gender': 'gender',
+                            'language': 'language',
+                            'location_id_column': 'psu_id',
+                            'target_id': 'target_id'
+                        }
+                    },
                     "form_uid": 1,
                     "gender": "Male",
                     "language": "Telugu",
@@ -807,7 +922,14 @@ class TestTargets:
                     "webapp_tag_color": None,
                 },
                 {
-                    "custom_fields": None,
+                    "custom_fields": {
+                        'column_mapping': {
+                            'gender': 'gender',
+                            'language': 'language',
+                            'location_id_column': 'psu_id',
+                            'target_id': 'target_id'
+                        }
+                    },
                     "form_uid": 1,
                     "gender": "Female",
                     "language": "Hindi",
@@ -900,7 +1022,7 @@ class TestTargets:
                 ],
             },
             "file": targets_csv_encoded,
-            "mode": "append",
+            "mode": "merge",
         }
 
         response = client.post(
@@ -912,7 +1034,7 @@ class TestTargets:
         )
 
         assert response.status_code == 422
-        print(response.json)
+
         expected_response = {
             "errors": {
                 "record_errors": {
@@ -931,7 +1053,7 @@ class TestTargets:
                         "records": [
                             {
                                 "address": "Hyderabad",
-                                "errors": "Duplicate row; Duplicate target_id; The same target_id already exists for the form - target_id's must be unique for each form",
+                                "errors": "Duplicate row; Duplicate target_id",
                                 "gender": "Male",
                                 "language": "Telugu",
                                 "mobile_primary": "1234567890",
@@ -942,7 +1064,7 @@ class TestTargets:
                             },
                             {
                                 "address": "Hyderabad",
-                                "errors": "Duplicate row; Duplicate target_id; The same target_id already exists for the form - target_id's must be unique for each form",
+                                "errors": "Duplicate row; Duplicate target_id",
                                 "gender": "Male",
                                 "language": "Telugu",
                                 "mobile_primary": "1234567890",
@@ -965,7 +1087,7 @@ class TestTargets:
                         ],
                     },
                     "summary": {
-                        "error_count": 8,
+                        "error_count": 6,
                         "total_correct_rows": 0,
                         "total_rows": 3,
                         "total_rows_with_errors": 3,
@@ -987,12 +1109,6 @@ class TestTargets:
                             "error_count": 2,
                             "error_message": "The file has 2 duplicate target_id(s). The following row numbers contain target_id duplicates: 2, 3",
                             "error_type": "Duplicate target_id's in file",
-                            "row_numbers_with_errors": [2, 3],
-                        },
-                        {
-                            "error_count": 2,
-                            "error_message": "The file contains 2 target_id(s) that have already been uploaded. The following row numbers contain target_id's that have already been uploaded: 2, 3",
-                            "error_type": "target_id's found in database",
                             "row_numbers_with_errors": [2, 3],
                         },
                         {
@@ -1108,9 +1224,20 @@ class TestTargets:
         expected_response = {
             "data": {
                 "custom_fields": {
+                    "column_mapping": {
+                        "custom_fields": [
+                            {"column_name": "mobile_primary1", "field_label": "Mobile no."},
+                            {"column_name": "name1", "field_label": "Name"},
+                            {"column_name": "address1", "field_label": "Address"}
+                        ],
+                        "gender": "gender1",
+                        "language": "language1",
+                        "location_id_column": "psu_id1",
+                        "target_id": "target_id1",
+                    },
                     "Address": "North Delhi",
                     "Mobile no.": "0234567891",
-                    "Name": "Anupama Srivastava",
+                    "Name": "Anupama Srivastava"
                 },
                 "form_uid": 1,
                 "gender": "Male",
@@ -1155,6 +1282,7 @@ class TestTargets:
 
         # Check the response
         response = client.get("/api/targets/2")
+        
         assert response.status_code == 200
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -1163,7 +1291,7 @@ class TestTargets:
         self, client, login_test_user, upload_targets_csv, csrf_token
     ):
         """
-        Test that an individual target can be updated
+        Test that an individual target cannot be updated with incorrect custom fields
         """
 
         # Update the target
@@ -1198,7 +1326,8 @@ class TestTargets:
 
         assert response.status_code == 200
 
-        response = client.get("/api/targets/1", content_type="application/json")
+        response = client.get(
+            "/api/targets/1", content_type="application/json")
 
         assert response.status_code == 404
 
@@ -1236,6 +1365,22 @@ class TestTargets:
             "data": [
                 {
                     "custom_fields": {
+
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary1',
+                                 'field_label': 'Mobile no.'},
+                                {'column_name': 'name1',
+                                 'field_label': 'Name'},
+                                {'column_name': 'address1',
+                                 'field_label': 'Address'}
+                            ],
+                            'gender': 'gender1',
+                            'language': 'language1',
+                            'location_id_column': 'psu_id1',
+                            'target_id': 'target_id1'
+                        },
+
                         "Address": "North Delhi",
                         "Mobile no.": "1234567890",
                         "Name": "Anil",
@@ -1280,6 +1425,19 @@ class TestTargets:
                 },
                 {
                     "custom_fields": {
+                        'column_mapping': {
+                            'custom_fields': [
+                                {'column_name': 'mobile_primary1',
+                                    'field_label': 'Mobile no.'},
+                                {'column_name': 'name1', 'field_label': 'Name'},
+                                {'column_name': 'address1',
+                                    'field_label': 'Address'}
+                            ],
+                            'gender': 'gender1',
+                            'language': 'language1',
+                            'location_id_column': 'psu_id1',
+                            'target_id': 'target_id1'
+                        },
                         "Address": "North Delhi",
                         "Mobile no.": "1234567891",
                         "Name": "Anupama",
@@ -1337,7 +1495,7 @@ class TestTargets:
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
     ):
         """
-        Upload the targets csv
+        Test that we can leave columns unmapped
         """
 
         filepath = (
@@ -1369,3 +1527,225 @@ class TestTargets:
         )
 
         assert response.status_code == 200
+
+    def test_merge_csv(
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test the merge functionality
+
+        Expected behaviour:
+        New target_id's should be appended
+        New mapped columns should be added for all rows
+        Existing target_id's should be updated for mapped columns
+        Make sure to check that the custom fields get added and updated correctly
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_merge.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "language": "language1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile no. (Alternate)",
+                        "column_name": "mobile_primary2",
+                    },
+                    {
+                        "field_label": "Address",
+                        "column_name": "address1",
+                    },
+                ],
+            },
+            "file": targets_csv_encoded,
+            "mode": "merge",
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "target_id": "target_id1",
+                            "language": "language1",
+                            "custom_fields": [
+                                {
+                                    "field_label": "Mobile no. (Alternate)",
+                                    "column_name": "mobile_primary2",
+                                },
+                                {
+                                    "field_label": "Address",
+                                    "column_name": "address1",
+                                },
+                            ],
+                        },
+                        "Address": "India",
+                        "Name": "Anil",
+                        "Mobile no.": "1234567890",
+                        "Mobile no. (Alternate)": "1234567890",
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "location_uid": 4,
+                    "target_id": "1",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 1,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "target_id": "target_id1",
+                            "language": "language1",
+                            "custom_fields": [
+                                {
+                                    "field_label": "Mobile no. (Alternate)",
+                                    "column_name": "mobile_primary2",
+                                },
+                                {
+                                    "field_label": "Address",
+                                    "column_name": "address1",
+                                },
+                            ],
+                        },
+                        "Address": "Kenya",
+                        "Name": "Anupama",
+                        "Mobile no.": "1234567891",
+                        "Mobile no. (Alternate)": "1234567891",
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Telugu",
+                    "location_uid": 4,
+                    "target_id": "2",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 2,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                },
+                {
+                    "completed_flag": None,
+                    "custom_fields": {
+                        "column_mapping": {
+                            "target_id": "target_id1",
+                            "language": "language1",
+                            "custom_fields": [
+                                {
+                                    "field_label": "Mobile no. (Alternate)",
+                                    "column_name": "mobile_primary2",
+                                },
+                                {
+                                    "field_label": "Address",
+                                    "column_name": "address1",
+                                },
+                            ],
+                        },
+                        "Address": "Philippines",
+                        "Mobile no. (Alternate)": "1234567892",
+                    },
+                    "form_uid": 1,
+                    "gender": None,
+                    "language": "Tagalog",
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "location_uid": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "target_id": "3",
+                    "target_locations": None,
+                    "target_uid": 3,
+                    "webapp_tag_color": None,
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/targets", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}

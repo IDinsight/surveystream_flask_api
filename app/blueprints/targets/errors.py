@@ -3,6 +3,11 @@ class InvalidColumnMappingError(Exception):
         self.column_mapping_errors = column_mapping_errors
 
 
+class InvalidNewColumnError(Exception):
+    def __init__(self, new_column_errors):
+        self.new_column_errors = new_column_errors
+
+
 class InvalidTargetRecordsError(Exception):
     def __init__(self, record_errors):
         self.record_errors = record_errors
