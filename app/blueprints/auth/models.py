@@ -30,14 +30,34 @@ class User(db.Model, UserMixin):
     roles = db.Column(db.ARRAY(db.Integer), default=[], nullable=True)
     is_super_admin = db.Column(db.Boolean, default=False, nullable=True)
 
-
-    def __init__(self, email, password):
+    def __init__(self, email, first_name, last_name, password=None, is_super_admin=False, roles="[]"):
+        if roles is None:
+            roles = []
         self.email = email
-        self.password_secure = pbkdf2_sha256.hash(password)
+        self.first_name = first_name
+        self.last_name = last_name
+        if password is not None:
+            self.password_secure = pbkdf2_sha256.hash(password)
+        else:
+            # Handle the case where no password is provided
+            self.password_secure = None
+
+        self.roles = roles
+        self.is_super_admin = is_super_admin
         self.active = True
+
         db.session.add(self)
         db.session.commit()
 
+    def to_dict(self):
+        return {
+            'user_uid': self.user_uid,
+            'email': self.email,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'roles': self.roles,
+            'is_super_admin': self.is_super_admin
+        }
     def verify_password(self, password):
         return pbkdf2_sha256.verify(password, self.password_secure)
 

@@ -16,3 +16,11 @@ class Invite(db.Model):
         self.email = email
         self.user_uid = user_uid
         self.is_active = is_active
+
+    def to_dict(self):
+        return {
+            'invite_code': self.invite_code,
+            'email': self.email,
+            'user_uid': self.user_uid,
+            'is_active': self.is_active,
+        }

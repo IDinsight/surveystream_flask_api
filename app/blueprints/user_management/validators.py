@@ -16,22 +16,23 @@ class AddUserValidator(FlaskForm):
     email = StringField(validators=[DataRequired()])
     first_name = StringField(validators=[DataRequired()])
     last_name = StringField(validators=[DataRequired()])
-    role = StringField(validators=[DataRequired()])
+    roles = StringField(default=[], validators=[Optional()])
+    is_super_admin = BooleanField(default=False, validators=[Optional()])
+
 
 
 class CompleteRegistrationValidator(Form):
-    invite_code = StringField("Invite Code", [validators.InputRequired()])
-    new_password = PasswordField(
-        "New Password", [validators.InputRequired(), validators.Length(min=8)])
-    confirm_password = PasswordField("Confirm Password", [validators.EqualTo(
+    invite_code = StringField([validators.InputRequired()])
+    new_password = PasswordField([validators.InputRequired(), validators.Length(min=8)])
+    confirm_password = PasswordField([validators.EqualTo(
         "new_password", message="Passwords must match")])
 
 
 class EditUserValidator(FlaskForm):
-    email = StringField("Email", validators=[Email(), DataRequired()])
-    first_name = StringField("First Name", validators=[DataRequired()])
-    last_name = StringField("Last Name", validators=[DataRequired()])
-    roles = SelectMultipleField("Roles", choices=[], validators=[Optional()])
-    is_super_admin = BooleanField("Is Super Admin", default=False, validators=[Optional()])
+    email = StringField(validators=[Email(), DataRequired()])
+    first_name = StringField( validators=[DataRequired()])
+    last_name = StringField(validators=[DataRequired()])
+    roles = SelectMultipleField(default=[], choices=[], validators=[Optional()])
+    is_super_admin = BooleanField(default=False, validators=[Optional()])
     # Add fields for permissions if needed
-    permissions = SelectMultipleField("Permissions", choices=[], validators=[Optional()])
+    permissions = SelectMultipleField(default=[], choices=[], validators=[Optional()])
