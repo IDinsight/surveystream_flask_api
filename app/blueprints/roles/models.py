@@ -2,6 +2,8 @@ from app import db
 from app.blueprints.auth.models import User
 from app.blueprints.surveys.models import Survey
 from flask_security import RoleMixin
+from sqlalchemy import event, inspect
+
 
 
 class Role(db.Model, RoleMixin):
@@ -71,6 +73,7 @@ class Permission(db.Model):
     permission_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
+    active = db.Column(db.Boolean(), nullable=False, default=True)
 
 
 class RolePermissions(db.Model):

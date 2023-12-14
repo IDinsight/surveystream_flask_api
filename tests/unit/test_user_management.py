@@ -7,7 +7,6 @@ import jsondiff
 import json
 
 
-
 @pytest.mark.user_management
 class TestUserManagement:
     @pytest.fixture
@@ -34,8 +33,7 @@ class TestUserManagement:
         print(user_object)
         print(invite_object)
 
-
-        return {"user": user_object, "invite":invite_object}
+        return {"user": user_object, "invite": invite_object}
 
     @pytest.fixture
     def sample_user(self, added_user):
@@ -46,6 +44,7 @@ class TestUserManagement:
     def sample_invite(self, added_user):
         # Return the user added by added_user fixture as the sample_user
         return added_user.get('invite')
+
     @pytest.fixture
     def complete_registration_active_invite(self, client, login_test_user, csrf_token, sample_user, sample_invite):
         """Test completing registration with an active invite."""
@@ -64,6 +63,39 @@ class TestUserManagement:
         assert response.status_code == 200
         assert b"Success: registration completed" in response.data
 
+    def test_check_user(self, client, login_test_user, csrf_token, sample_user):
+        # Test checking a user by email
+        response = client.post(
+            "/api/check-user",
+            json={"email": sample_user.get('email')},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+        assert b"User already exists" in response.data
+
+        # Check if the returned user data matches the expected data
+        expected_data = {
+            "user_uid": sample_user.get('user_uid'),
+            "email": sample_user.get('email'),
+            "first_name": sample_user.get('first_name'),
+            "last_name": sample_user.get('last_name'),
+            "roles": sample_user.get('roles'),
+            "is_super_admin": sample_user.get('is_super_admin'),
+            "active": True
+        }
+        assert response.json["user"] == expected_data
+
+    def test_check_user_nonexistent(self, client, login_test_user, csrf_token):
+        # Test checking a nonexistent user by email
+        response = client.post(
+            "/api/check-user",
+            json={"email": "nonexistent@example.com"},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 404
+        assert b"User not found" in response.data
 
     def test_complete_registration_invalid_invite(self, client, login_test_user, csrf_token):
         """Test completing registration with an invalid invite code."""
@@ -86,7 +118,8 @@ class TestUserManagement:
         response = client.post(
             "/api/complete-registration",
             json={
-                "invite_code": sample_invite.get('invite_code'), ##invite code should be invalid at this point
+                # invite code should be invalid at this point
+                "invite_code": sample_invite.get('invite_code'),
                 "new_password": "newpassword",
                 "confirm_password": "newpassword",
             },
@@ -97,10 +130,10 @@ class TestUserManagement:
         assert response.status_code == 404
         assert b"Invalid or expired invite code" in response.data
 
-
-    def test_get_user(self,client, sample_user, login_test_user, csrf_token):
+    def test_get_user(self, client, sample_user, login_test_user, csrf_token):
         # Return the user added by added_user fixture as the sample_user
-        response = client.get(f"/api/get-user/{sample_user.get('user_uid')}", headers={"X-CSRF-Token": csrf_token})
+        response = client.get(
+            f"/api/get-user/{sample_user.get('user_uid')}", headers={"X-CSRF-Token": csrf_token})
 
         print(response.json)
 
@@ -140,19 +173,20 @@ class TestUserManagement:
         updated_user = response_data.get('user_data')
 
         expected_data = {
-            "user_uid":user_uid,
+            "user_uid": user_uid,
             "email": "updateduser@example.com",
             "first_name": "Updated",
             "last_name": "User",
             "roles": [],
             "is_super_admin": True,
+            "active": True
         }
         assert jsondiff.diff(expected_data, updated_user) == {}
 
-
     def test_get_all_users(self, client, login_test_user, csrf_token):
         # Retrieve information for all users
-        response = client.get("/api/get-all-users", headers={"X-CSRF-Token": csrf_token})
+        response = client.get("/api/get-all-users",
+                              headers={"X-CSRF-Token": csrf_token})
         print(response.json)
 
         assert response.status_code == 200
@@ -164,10 +198,18 @@ class TestUserManagement:
 
         assert isinstance(users, list)
 
-    # def test_get_all_users_with_survey_id(self, client, login_test_user, csrf_token):
-    #     # Try to retrieve information for all users with a survey_id (expect a 400)
-    #     response = client.get("/api/get-all-users?survey_id=123", headers={"X-CSRF-Token": csrf_token})
-    #     print(response.json)
-    #
-    #     assert response.status_code == 400
-    #     assert b"Survey ID is required for non-super-admin users" in response.data
+
+    def test_delete_user(self, client, login_test_user, csrf_token, sample_user):
+        user_id = sample_user.get('user_uid')
+
+        response = client.delete(
+            f'/api/delete-user/{user_id}', headers={"X-CSRF-Token": csrf_token})
+        print(response)
+        assert response.status_code == 200
+        assert b'User deleted successfully' in response.data
+
+        # Check if the deleted user is not returned by the get-user endpoint
+        response_get_user = client.get(
+            f'/api/get-user/{user_id}', headers={"X-CSRF-Token": csrf_token})
+        assert response_get_user.status_code == 404
+        assert b'User not found' in response_get_user.data

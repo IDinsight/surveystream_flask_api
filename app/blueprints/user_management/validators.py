@@ -1,38 +1,47 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, Form, validators, SelectMultipleField, BooleanField
+from wtforms import StringField, PasswordField, validators, SelectMultipleField, BooleanField, FieldList, IntegerField
 from wtforms.validators import DataRequired, Email, Optional
 
 
 class RegisterValidator(FlaskForm):
-    email = StringField(validators=[DataRequired()])
-    password = PasswordField(validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
 
 
 class WelcomeUserValidator(FlaskForm):
-    email = StringField(validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired()])
+
+
+class CheckUserValidator(FlaskForm):
+    email = StringField("Email", validators=[DataRequired()])
 
 
 class AddUserValidator(FlaskForm):
-    email = StringField(validators=[DataRequired()])
-    first_name = StringField(validators=[DataRequired()])
-    last_name = StringField(validators=[DataRequired()])
-    roles = StringField(default=[], validators=[Optional()])
-    is_super_admin = BooleanField(default=False, validators=[Optional()])
+    email = StringField("Email", validators=[DataRequired()])
+    first_name = StringField("First Name", validators=[DataRequired()])
+    last_name = StringField("Last Name", validators=[DataRequired()])
+    roles = FieldList(IntegerField(default=[], validators=[Optional()]))
+    is_super_admin = BooleanField("Is Super Admin", default=False, validators=[Optional()])
 
 
-
-class CompleteRegistrationValidator(Form):
-    invite_code = StringField([validators.InputRequired()])
-    new_password = PasswordField([validators.InputRequired(), validators.Length(min=8)])
-    confirm_password = PasswordField([validators.EqualTo(
-        "new_password", message="Passwords must match")])
+class CompleteRegistrationValidator(FlaskForm):
+    invite_code = StringField("Invite Code", validators=[DataRequired()])
+    new_password = PasswordField("New Password", [
+        validators.DataRequired(),
+        validators.Length(min=8)
+    ])
+    confirm_password = PasswordField("Confirm Password", [
+        validators.DataRequired(),
+        validators.EqualTo("new_password", message="Passwords must match")
+    ])
 
 
 class EditUserValidator(FlaskForm):
-    email = StringField(validators=[Email(), DataRequired()])
-    first_name = StringField( validators=[DataRequired()])
-    last_name = StringField(validators=[DataRequired()])
-    roles = SelectMultipleField(default=[], choices=[], validators=[Optional()])
-    is_super_admin = BooleanField(default=False, validators=[Optional()])
+    email = StringField("Email", validators=[Email(), DataRequired()])
+    first_name = StringField("First Name", validators=[DataRequired()])
+    last_name = StringField("Last Name", validators=[DataRequired()])
+    roles = FieldList(IntegerField("Roles",default=[], validators=[Optional()]))
+
+    is_super_admin = BooleanField("Is Super Admin", default=False, validators=[Optional()])
     # Add fields for permissions if needed
-    permissions = SelectMultipleField(default=[], choices=[], validators=[Optional()])
+    permissions = FieldList(IntegerField("Permissions",default=[], validators=[Optional()]))
