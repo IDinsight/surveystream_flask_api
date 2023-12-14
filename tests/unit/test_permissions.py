@@ -77,8 +77,8 @@ class TestPermissions:
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
         assert response.json == [
-            {'permission_uid': create_permission['permission_uid'], 'name': 'READ',
-                'description': 'Read permission'},
+            {'permission_uid': create_permission['permission_uid'], 'name': create_permission['name'],
+                'description': create_permission['description']},
             {'description': 'Admin permission',
                 'name': 'ADMIN', 'permission_uid': 1},
             {'description': 'Read Survey Locations permission',
@@ -125,8 +125,8 @@ class TestPermissions:
         response = client.get(f"/api/permissions/{create_permission['permission_uid']}", content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
-        assert response.json == {'permission_uid': create_permission['permission_uid'],
-                                 'name': 'READ', 'description': 'Read permission'}
+        assert response.json == {'permission_uid': create_permission['permission_uid'], 'name': create_permission['name'],
+                'description': create_permission['description']}
 
     def test_update_permission(self, client, login_test_user, csrf_token, create_permission):
         permission_id = create_permission['permission_uid']
