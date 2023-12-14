@@ -29,25 +29,26 @@ class User(db.Model, UserMixin):
     ## rbac fields
     roles = db.Column(db.ARRAY(db.Integer), default=[], nullable=True)
     is_super_admin = db.Column(db.Boolean, default=False, nullable=True)
+    
+    to_delete = db.Column(db.Boolean(), default=False, nullable=True)
 
-    def __init__(self, email, first_name, last_name, password=None, is_super_admin=False, roles="[]"):
+
+    def __init__(self, email, first_name, last_name, active=True, password=None, is_super_admin=False, roles=None, to_delete=False):
         if roles is None:
             roles = []
+        
         self.email = email
         self.first_name = first_name
         self.last_name = last_name
         if password is not None:
             self.password_secure = pbkdf2_sha256.hash(password)
         else:
-            # Handle the case where no password is provided
             self.password_secure = None
-
         self.roles = roles
         self.is_super_admin = is_super_admin
-        self.active = True
+        self.active = active
+        self.to_delete = to_delete
 
-        db.session.add(self)
-        db.session.commit()
 
     def to_dict(self):
         return {
@@ -56,7 +57,8 @@ class User(db.Model, UserMixin):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'roles': self.roles,
-            'is_super_admin': self.is_super_admin
+            'is_super_admin': self.is_super_admin,
+            'active': self.active
         }
     def verify_password(self, password):
         return pbkdf2_sha256.verify(password, self.password_secure)
