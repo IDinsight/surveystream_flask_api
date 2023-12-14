@@ -1,4 +1,3 @@
-
 from . import user_management_bp
 from flask import jsonify, request, current_app
 from flask_login import current_user
@@ -375,6 +374,32 @@ def get_all_users():
 
     return jsonify(user_list), 200
 
+
+@user_management_bp.route("/delete-user/<int:user_id>", methods=["DELETE"])
+@logged_in_active_user_required
+def delete_user(user_id):
+    """
+    Endpoint to delete a user.
+    """
+    user = User.query.get(user_id)
+    print(user)
+    """
+        Endpoint to delete a user.
+        """
+    user = User.query.get(user_id)
+    if user:
+        try:
+            # Set user as deleted and update active field
+            user.to_delete = True
+            user.active = False
+            db.session.commit()
+            return jsonify(message="User deleted successfully"), 200
+        except Exception as e:
+            db.session.rollback()
+            print(e)
+            return jsonify(message=f"Error deleting user: {str(e)}"), 500
+    else:
+        return jsonify(message="User not found"), 404
 
 @user_management_bp.route("/delete-user/<int:user_id>", methods=["DELETE"])
 @logged_in_active_user_required

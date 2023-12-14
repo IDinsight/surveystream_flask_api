@@ -1,3 +1,4 @@
+
 from app import db
 from app.blueprints.auth.models import User
 from app.blueprints.surveys.models import Survey
@@ -83,3 +84,4 @@ class RolePermissions(db.Model):
     role_permissions_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete='CASCADE'))
     permission_uid = db.Column(db.Integer, db.ForeignKey(Permission.permission_uid, ondelete='CASCADE'))
+

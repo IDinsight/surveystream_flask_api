@@ -213,3 +213,4 @@ class TestUserManagement:
             f'/api/get-user/{user_id}', headers={"X-CSRF-Token": csrf_token})
         assert response_get_user.status_code == 404
         assert b'User not found' in response_get_user.data
+

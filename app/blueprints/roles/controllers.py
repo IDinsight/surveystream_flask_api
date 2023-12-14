@@ -279,3 +279,101 @@ def delete_permission(permission_id):
     db.session.commit()
 
     return jsonify(message='Permission deleted successfully'), 200
+
+
+
+
+### PERMISSIONS
+
+
+# GET all permissions
+@roles_bp.route('/permissions', methods=['GET'])
+@logged_in_active_user_required
+def get_permissions():
+    permissions = Permission.query.all()
+    permission_list = [{'permission_uid': permission.permission_uid, 'name': permission.name, 'description': permission.description}
+                       for permission in permissions]
+    return jsonify(permission_list)
+
+
+# POST create a new permission
+@roles_bp.route('/permissions', methods=['POST'])
+@logged_in_active_user_required
+def create_permission():
+    data = request.get_json()
+
+    # Validate input data
+    if 'name' not in data or 'description' not in data:
+        return jsonify({'error': 'Name and description are required fields'}), 400
+
+    new_permission = Permission(name=data['name'], description=data['description'])
+    db.session.add(new_permission)
+    db.session.commit()
+
+    result = {
+        'message': 'Permission created successfully',
+        'permission_uid': new_permission.permission_uid,
+        'name': new_permission.name,
+        'description': new_permission.description
+    }
+
+    return jsonify(result), 201
+
+
+# GET details of a specific permission
+@roles_bp.route('/permissions/<int:permission_id>', methods=['GET'])
+@logged_in_active_user_required
+def get_permission(permission_id):
+    permission = Permission.query.get(permission_id)
+    if not permission:
+        return jsonify(message='Permission not found'), 404
+
+    result = {
+        'permission_uid': permission.permission_uid,
+        'name': permission.name,
+        'description': permission.description
+    }
+
+    return jsonify(result)
+
+
+# PUT update a specific permission
+@roles_bp.route('/permissions/<int:permission_id>', methods=['PUT'])
+@logged_in_active_user_required
+def update_permission(permission_id):
+    permission = Permission.query.get(permission_id)
+    if not permission:
+        return jsonify(message='Permission not found'), 404
+
+    data = request.get_json()
+
+    # Validate input data
+    if 'name' not in data or 'description' not in data:
+        return jsonify({'error': 'Name and description are required fields'}), 400
+
+    permission.name = data['name']
+    permission.description = data['description']
+    db.session.commit()
+
+    result = {
+        'message': 'Permission updated successfully',
+        'permission_uid': permission.permission_uid,
+        'name': permission.name,
+        'description': permission.description
+    }
+
+    return jsonify(result), 200
+
+
+# DELETE a specific permission
+@roles_bp.route('/permissions/<int:permission_id>', methods=['DELETE'])
+@logged_in_active_user_required
+def delete_permission(permission_id):
+    permission = Permission.query.get(permission_id)
+    if not permission:
+        return jsonify(message='Permission not found'), 404
+
+    db.session.delete(permission)
+    db.session.commit()
+
+    return jsonify(message='Permission deleted successfully'), 200
