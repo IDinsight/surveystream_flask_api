@@ -11,7 +11,7 @@ import json
 class TestPermissions:
 
     @pytest.fixture
-    def create_permission(client, login_test_user, csrf_token):
+    def create_permission(self, client, login_test_user, csrf_token):
         data = {'name': 'WRITE', 'description': 'Write permission'}
         response = client.post('/api/permissions', json=data, content_type="application/json",
                                headers={"X-CSRF-Token": csrf_token})
@@ -24,7 +24,7 @@ class TestPermissions:
             'description': response.json['description']
         }
 
-    def test_default_data_available(self, client, login_test_user, csrf_token):
+    def test_default_data_available(self, client, login_test_user, csrf_token, create_permission):
         response = client.get('/api/permissions', content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
@@ -32,14 +32,14 @@ class TestPermissions:
         assert response.json == [
             {'permission_uid': 1, 'name': 'READ', 'description': 'Read permission'}]
 
-    def test_get_permissions(self, client, login_test_user, csrf_token):
+    def test_get_permissions(self, client, login_test_user, csrf_token, create_permission):
         response = client.get('/api/permissions', content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
         assert response.json == [
             {'permission_uid': 1, 'name': 'READ', 'description': 'Read permission'}]
 
-    def test_get_permission(self, client, login_test_user, csrf_token):
+    def test_get_permission(self, client, login_test_user, csrf_token, create_permission):
         response = client.get('/api/permissions/1', content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
