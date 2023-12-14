@@ -24,26 +24,108 @@ class TestPermissions:
             'description': response.json['description']
         }
 
-    def test_default_data_available(self, client, login_test_user, csrf_token, create_permission):
+    def test_default_data_available(self, client, login_test_user, csrf_token):
         response = client.get('/api/permissions', content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
         # Ensure the default permission is present in the response
         assert response.json == [
-            {'permission_uid': 1, 'name': 'READ', 'description': 'Read permission'}]
+            {'description': 'Admin permission',
+                'name': 'ADMIN', 'permission_uid': 1},
+            {'description': 'Read Survey Locations permission',
+                'name': 'READ Survey Locations', 'permission_uid': 2},
+            {'description': 'Write Survey Locations permission', 'name': 'WRITE Survey Locations',
+             'permission_uid': 3},
+            {'description': 'Read Enumerators permission',
+                'name': 'READ Enumerators', 'permission_uid': 4},
+            {'description': 'Write Enumerators permission',
+                'name': 'WRITE Enumerators', 'permission_uid': 5},
+            {'description': 'Read Targets permission',
+                'name': 'READ Targets', 'permission_uid': 6},
+            {'description': 'Write Targets permission',
+                'name': 'WRITE Targets', 'permission_uid': 7},
+            {'description': 'Read Assignments permission',
+                'name': 'READ Assignments', 'permission_uid': 8},
+            {'description': 'Write Assignments permission',
+                'name': 'WRITE Assignments', 'permission_uid': 9},
+            {'description': 'Read Audio Audits permission',
+                'name': 'READ Audio Audits', 'permission_uid': 10},
+            {'description': 'Write Audio Audits permission',
+                'name': 'WRITE Audio Audits', 'permission_uid': 11},
+            {'description': 'Read Photo Audits permission',
+                'name': 'READ Photo Audits', 'permission_uid': 12},
+            {'description': 'Write Photo Audits permission',
+                'name': 'WRITE Photo Audits', 'permission_uid': 13},
+            {'description': 'Read Productivity permission',
+                'name': 'READ Productivity', 'permission_uid': 14},
+            {'description': 'Write Productivity permission',
+                'name': 'WRITE Productivity', 'permission_uid': 15},
+            {'description': 'Read Data Quality permission',
+                'name': 'READ Data Quality', 'permission_uid': 16},
+            {'description': 'Write Data Quality permission',
+                'name': 'WRITE Data Quality', 'permission_uid': 17},
+            {'description': 'Read Emails permission',
+                'name': 'READ Emails', 'permission_uid': 18},
+            {'description': 'Write Emails permission',
+                'name': 'WRITE Emails', 'permission_uid': 19},
+            {'description': 'Write permission',
+                'name': 'WRITE', 'permission_uid': 20}
+        ]
 
     def test_get_permissions(self, client, login_test_user, csrf_token, create_permission):
         response = client.get('/api/permissions', content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
         assert response.json == [
-            {'permission_uid': 1, 'name': 'READ', 'description': 'Read permission'}]
+            {'permission_uid': create_permission['permission_uid'], 'name': 'READ',
+                'description': 'Read permission'},
+            {'description': 'Admin permission',
+                'name': 'ADMIN', 'permission_uid': 1},
+            {'description': 'Read Survey Locations permission',
+                'name': 'READ Survey Locations', 'permission_uid': 2},
+            {'description': 'Write Survey Locations permission', 'name': 'WRITE Survey Locations',
+             'permission_uid': 3},
+            {'description': 'Read Enumerators permission',
+                'name': 'READ Enumerators', 'permission_uid': 4},
+            {'description': 'Write Enumerators permission',
+                'name': 'WRITE Enumerators', 'permission_uid': 5},
+            {'description': 'Read Targets permission',
+                'name': 'READ Targets', 'permission_uid': 6},
+            {'description': 'Write Targets permission',
+                'name': 'WRITE Targets', 'permission_uid': 7},
+            {'description': 'Read Assignments permission',
+                'name': 'READ Assignments', 'permission_uid': 8},
+            {'description': 'Write Assignments permission',
+                'name': 'WRITE Assignments', 'permission_uid': 9},
+            {'description': 'Read Audio Audits permission',
+                'name': 'READ Audio Audits', 'permission_uid': 10},
+            {'description': 'Write Audio Audits permission',
+                'name': 'WRITE Audio Audits', 'permission_uid': 11},
+            {'description': 'Read Photo Audits permission',
+                'name': 'READ Photo Audits', 'permission_uid': 12},
+            {'description': 'Write Photo Audits permission',
+                'name': 'WRITE Photo Audits', 'permission_uid': 13},
+            {'description': 'Read Productivity permission',
+                'name': 'READ Productivity', 'permission_uid': 14},
+            {'description': 'Write Productivity permission',
+                'name': 'WRITE Productivity', 'permission_uid': 15},
+            {'description': 'Read Data Quality permission',
+                'name': 'READ Data Quality', 'permission_uid': 16},
+            {'description': 'Write Data Quality permission',
+                'name': 'WRITE Data Quality', 'permission_uid': 17},
+            {'description': 'Read Emails permission',
+                'name': 'READ Emails', 'permission_uid': 18},
+            {'description': 'Write Emails permission',
+                'name': 'WRITE Emails', 'permission_uid': 19},
+            {'description': 'Write permission',
+                'name': 'WRITE', 'permission_uid': 20}
+        ]
 
     def test_get_permission(self, client, login_test_user, csrf_token, create_permission):
-        response = client.get('/api/permissions/1', content_type="application/json",
+        response = client.get(f"/api/permissions/{create_permission['permission_uid']}", content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
-        assert response.json == {'permission_uid': 1,
+        assert response.json == {'permission_uid': create_permission['permission_uid'],
                                  'name': 'READ', 'description': 'Read permission'}
 
     def test_update_permission(self, client, login_test_user, csrf_token, create_permission):
