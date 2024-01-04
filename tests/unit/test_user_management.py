@@ -13,7 +13,7 @@ class TestUserManagement:
     def added_user(self, client, login_test_user, csrf_token):
         # Add a user for testing and return it
         response = client.post(
-            "/api/add-user",
+            "/api/users",
             json={
                 "email": "newuser1@example.com",
                 "first_name": "John",
@@ -50,7 +50,7 @@ class TestUserManagement:
         """Test completing registration with an active invite."""
 
         response = client.post(
-            "/api/complete-registration",
+            "/api/users/complete-registration",
             json={
                 "invite_code": sample_invite.get("invite_code"),
                 "new_password": "newpassword",
@@ -66,7 +66,7 @@ class TestUserManagement:
     def test_check_user(self, client, login_test_user, csrf_token, sample_user):
         # Test checking a user by email
         response = client.post(
-            "/api/check-user",
+            "/api/users/check-email-availability",
             json={"email": sample_user.get('email')},
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -89,7 +89,7 @@ class TestUserManagement:
     def test_check_user_nonexistent(self, client, login_test_user, csrf_token):
         # Test checking a nonexistent user by email
         response = client.post(
-            "/api/check-user",
+            "/api/users/check-email-availability",
             json={"email": "nonexistent@example.com"},
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -100,7 +100,7 @@ class TestUserManagement:
     def test_complete_registration_invalid_invite(self, client, login_test_user, csrf_token):
         """Test completing registration with an invalid invite code."""
         response = client.post(
-            "/api/complete-registration",
+            "/api/users/complete-registration",
             json={
                 "invite_code": "invalid_invite_code",
                 "new_password": "newpassword",
@@ -116,7 +116,7 @@ class TestUserManagement:
         """Test completing registration with an inactive invite."""
 
         response = client.post(
-            "/api/complete-registration",
+            "/api/users/complete-registration",
             json={
                 # invite code should be invalid at this point
                 "invite_code": sample_invite.get('invite_code'),
@@ -133,7 +133,7 @@ class TestUserManagement:
     def test_get_user(self, client, sample_user, login_test_user, csrf_token):
         # Return the user added by added_user fixture as the sample_user
         response = client.get(
-            f"/api/get-user/{sample_user.get('user_uid')}", headers={"X-CSRF-Token": csrf_token})
+            f"/api/users/{sample_user.get('user_uid')}", headers={"X-CSRF-Token": csrf_token})
 
         print(response.json)
 
@@ -154,7 +154,7 @@ class TestUserManagement:
         # Update user information
         user_uid = sample_user.get('user_uid')
         response = client.put(
-            f"/api/edit-user/{user_uid}",
+            f"/api/users/{user_uid}",
             json={
                 "email": "updateduser@example.com",
                 "first_name": "Updated",
@@ -185,7 +185,7 @@ class TestUserManagement:
 
     def test_get_all_users(self, client, login_test_user, csrf_token):
         # Retrieve information for all users
-        response = client.get("/api/get-all-users",
+        response = client.get("/api/users",
                               headers={"X-CSRF-Token": csrf_token})
         print(response.json)
 
@@ -203,14 +203,14 @@ class TestUserManagement:
         user_id = sample_user.get('user_uid')
 
         response = client.delete(
-            f'/api/delete-user/{user_id}', headers={"X-CSRF-Token": csrf_token})
+            f'/api/users/{user_id}', headers={"X-CSRF-Token": csrf_token})
         print(response)
         assert response.status_code == 200
         assert b'User deleted successfully' in response.data
 
         # Check if the deleted user is not returned by the get-user endpoint
         response_get_user = client.get(
-            f'/api/get-user/{user_id}', headers={"X-CSRF-Token": csrf_token})
+            f'/api/users/{user_id}', headers={"X-CSRF-Token": csrf_token})
         assert response_get_user.status_code == 404
         assert b'User not found' in response_get_user.data
 

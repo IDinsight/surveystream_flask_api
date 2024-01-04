@@ -17,6 +17,7 @@ from .validators import (
     CheckUserValidator
 )
 from app.utils.utils import logged_in_active_user_required
+from sqlalchemy import or_
 
 
 @user_management_bp.route("/register", methods=["POST"])
@@ -119,7 +120,7 @@ def welcome_user():
 ##############################################################################
 
 
-@user_management_bp.route("/check-user", methods=["POST"])
+@user_management_bp.route("/users/check-email-availability", methods=["POST"])
 @logged_in_active_user_required
 def check_user():
     """
@@ -144,7 +145,7 @@ def check_user():
         return jsonify(message=form.errors), 422
 
 
-@user_management_bp.route("/add-user", methods=["POST"])
+@user_management_bp.route("/users", methods=["POST"])
 @logged_in_active_user_required
 def add_user():
     """
@@ -207,7 +208,7 @@ def add_user():
         return jsonify(message=form.errors), 422
 
 
-@user_management_bp.route("/complete-registration", methods=["POST"])
+@user_management_bp.route("/users/complete-registration", methods=["POST"])
 def complete_registration():
     """
     Endpoint to complete user registration using an invite code.
@@ -249,7 +250,7 @@ def complete_registration():
         return jsonify(message=form.errors), 422
 
 
-@user_management_bp.route("/edit-user/<int:user_id>", methods=["PUT"])
+@user_management_bp.route("/users/<int:user_id>", methods=["PUT"])
 @logged_in_active_user_required
 def edit_user(user_id):
     print(user_id)
@@ -294,13 +295,15 @@ def edit_user(user_id):
         return jsonify(message="Unauthorized"), 401
 
 
-@user_management_bp.route("/get-user/<int:user_id>", methods=["GET"])
+@user_management_bp.route("/users/<int:user_id>", methods=["GET"])
 @logged_in_active_user_required
 def get_user(user_id):
     """
     Endpoint to get information for a single user.
     """
-    user = User.query.filter_by(user_uid=user_id, to_delete=False).first()
+    user = User.query.filter(
+        (User.user_uid == user_id) & ((User.to_delete == False) | (User.to_delete.is_(None)))
+    ).first()
 
     if user:
         user_data = {
@@ -316,7 +319,7 @@ def get_user(user_id):
         return jsonify(message="User not found"), 404
 
 
-@user_management_bp.route("/get-all-users", methods=["GET"])
+@user_management_bp.route("/users", methods=["GET"])
 @logged_in_active_user_required
 def get_all_users():
     """
@@ -338,7 +341,7 @@ def get_all_users():
         users = (
             db.session.query(
                 User, subquery.c.is_active.label("invite_is_active"))
-            .filter(User.to_delete == False)
+            .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
             .outerjoin(subquery, User.user_uid == subquery.c.user_uid)
             .all()
         )
@@ -346,7 +349,7 @@ def get_all_users():
         users = (
             db.session.query(
                 User, subquery.c.is_active.label("invite_is_active"))
-            .filter(User.to_delete == False)
+            .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
             .outerjoin(subquery, User.user_uid == subquery.c.user_uid)
             .all()
         )
@@ -375,7 +378,7 @@ def get_all_users():
     return jsonify(user_list), 200
 
 
-@user_management_bp.route("/delete-user/<int:user_id>", methods=["DELETE"])
+@user_management_bp.route("/users/<int:user_id>", methods=["DELETE"])
 @logged_in_active_user_required
 def delete_user(user_id):
     """
