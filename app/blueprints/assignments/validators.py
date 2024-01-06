@@ -13,3 +13,10 @@ class SurveyorAssignmentValidator(FlaskForm):
 
 class UpdateSurveyorAssignmentsValidator(FlaskForm):
     assignments = FieldList(FormField(SurveyorAssignmentValidator))
+
+
+class AssignmentsQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
