@@ -86,10 +86,10 @@ def create_app():
 
 ### Helper Functions ###
 def register_blueprints(app):
-    from app.blueprints.assignments import assignments_bp
     from app.blueprints.auth import auth_bp
-    from app.blueprints.docs import docs_bp
 
+    from app.blueprints.assignments import assignments_bp
+    from app.blueprints.docs import docs_bp
     from app.blueprints.enumerators import enumerators_bp
     from app.blueprints.forms import forms_bp
     from app.blueprints.healthcheck import healthcheck_bp
@@ -105,8 +105,9 @@ def register_blueprints(app):
     from app.blueprints.timezones import timezones_bp
     from app.blueprints.user_management import user_management_bp
 
-    app.register_blueprint(assignments_bp)
+    # Auth needs to be registered first to avoid circular imports
     app.register_blueprint(auth_bp)
+    app.register_blueprint(assignments_bp)
     app.register_blueprint(docs_bp)
     app.register_blueprint(enumerators_bp)
     app.register_blueprint(forms_bp)
