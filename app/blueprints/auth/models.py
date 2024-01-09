@@ -47,7 +47,7 @@ class User(db.Model, UserMixin):
         self.roles = roles
         self.is_super_admin = is_super_admin
         self.active = active
-        self.to_delete = to_delete
+        self.to_delete = to_delete if to_delete is not None else False
 
 
     def to_dict(self):

@@ -74,7 +74,7 @@ class TestPermissions:
         assert jsondiff.diff(expected_data, response_data) == {}
 
 
-    def test_get_permissions(self, client, login_test_user, csrf_token, create_permission):
+    def test_create_permission(self, client, login_test_user, csrf_token, create_permission):
         response = client.get('/api/permissions', content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200

@@ -33,7 +33,7 @@ class Role(db.Model, RoleMixin):
     )
 
     def __init__(
-        self, role_uid, survey_uid, role_name, reporting_role_uid, user_uid, to_delete
+        self, role_uid, survey_uid, role_name, reporting_role_uid, user_uid, to_delete, permissions
     ):
         self.role_uid = role_uid
         self.survey_uid = survey_uid
@@ -41,6 +41,7 @@ class Role(db.Model, RoleMixin):
         self.reporting_role_uid = reporting_role_uid
         self.user_uid = user_uid
         self.to_delete = to_delete
+        self.permissions = permissions
 
     def to_dict(self):
         return {
@@ -48,6 +49,7 @@ class Role(db.Model, RoleMixin):
             "survey_uid": self.survey_uid,
             "role_name": self.role_name,
             "reporting_role_uid": self.reporting_role_uid,
+            "permissions": self.permissions
         }
 
 class UserHierarchy(db.Model):

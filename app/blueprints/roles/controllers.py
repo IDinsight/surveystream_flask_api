@@ -1,11 +1,11 @@
 from flask import jsonify, request
 from app.utils.utils import logged_in_active_user_required
 from flask_login import current_user
-from sqlalchemy import insert, cast, Integer
+from sqlalchemy import insert, cast, Integer, ARRAY
 from sqlalchemy.sql import case
 from sqlalchemy.exc import IntegrityError
 from app import db
-from .models import Role, Permission
+from .models import Role, Permission, RolePermissions
 from .routes import roles_bp
 from .validators import SurveyRolesQueryParamValidator, SurveyRolesPayloadValidator
 from .utils import run_role_hierarchy_validations
@@ -152,11 +152,29 @@ def update_survey_roles():
                             value=Role.role_uid,
                         ),
                         Role.user_uid: user_uid,
-                    },
+                        Role.permissions: case(
+                            {role["role_uid"]: cast(role["permissions"], ARRAY(Integer)) for role in roles_to_update},
+                            value=Role.role_uid,
+                        ),
+                },
                     synchronize_session=False,
                 )
-
                 db.session.commit()
+
+                # Update RolePermissions table
+                for role in roles_to_update:
+                    # Clear existing permissions for the role
+                    RolePermissions.query.filter_by(role_uid=role["role_uid"]).delete()
+
+                    # Insert new permissions for the role
+                    for permission_uid in role["permissions"]:
+                        permissions_statement = insert(RolePermissions).values(
+                            role_uid=role["role_uid"],
+                            permission_uid=permission_uid,
+                        )
+                        db.session.execute(permissions_statement)
+                db.session.commit()
+
             except IntegrityError as e:
                 db.session.rollback()
                 return jsonify(message=str(e)), 500
@@ -172,10 +190,22 @@ def update_survey_roles():
                     survey_uid=survey_uid,
                     reporting_role_uid=role["reporting_role_uid"],
                     user_uid=user_uid,
+                    permissions=role["permissions"],
                 )
 
-                db.session.execute(statement)
+                result = db.session.execute(statement)
+                role_uid = result.inserted_primary_key[0]
+
+                # Associating roles with permissions in the RolePermissions table
+                for permission_uid in role["permissions"]:
+                    permissions_statement = insert(RolePermissions).values(
+                        role_uid=role_uid,
+                        permission_uid=permission_uid,
+                    )
+                    db.session.execute(permissions_statement)
+
                 db.session.commit()
+
 
         return jsonify(message="Success"), 200
 
@@ -223,10 +253,10 @@ def create_permission():
 
 
 # GET details of a specific permission
-@roles_bp.route('/permissions/<int:permission_id>', methods=['GET'])
+@roles_bp.route('/permissions/<int:permission_uid>', methods=['GET'])
 @logged_in_active_user_required
-def get_permission(permission_id):
-    permission = Permission.query.get(permission_id)
+def get_permission(permission_uid):
+    permission = Permission.query.get(permission_uid)
     if not permission:
         return jsonify(message='Permission not found'), 404
 
@@ -240,10 +270,10 @@ def get_permission(permission_id):
 
 
 # PUT update a specific permission
-@roles_bp.route('/permissions/<int:permission_id>', methods=['PUT'])
+@roles_bp.route('/permissions/<int:permission_uid>', methods=['PUT'])
 @logged_in_active_user_required
-def update_permission(permission_id):
-    permission = Permission.query.get(permission_id)
+def update_permission(permission_uid):
+    permission = Permission.query.get(permission_uid)
     if not permission:
         return jsonify(message='Permission not found'), 404
 
@@ -268,10 +298,10 @@ def update_permission(permission_id):
 
 
 # DELETE a specific permission
-@roles_bp.route('/permissions/<int:permission_id>', methods=['DELETE'])
+@roles_bp.route('/permissions/<int:permission_uid>', methods=['DELETE'])
 @logged_in_active_user_required
-def delete_permission(permission_id):
-    permission = Permission.query.get(permission_id)
+def delete_permission(permission_uid):
+    permission = Permission.query.get(permission_uid)
     if not permission:
         return jsonify(message='Permission not found'), 404
 
