@@ -68,6 +68,14 @@ class UserHierarchy(db.Model):
         {"schema": "webapp"},
     )
 
+    def to_dict(self):
+        return {
+            "role_uid": self.role_uid,
+            "survey_uid": self.survey_uid,
+            "parent_user_uid": self.parent_user_uid,
+            "user_uid": self.user_uid,
+        }
+
 
 class Permission(db.Model):
     __tablename__ = "permissions"
