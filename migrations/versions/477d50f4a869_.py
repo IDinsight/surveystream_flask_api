@@ -35,6 +35,7 @@ def upgrade():
             name=op.f("fk_surveyor_assignments_target_uid_targets"),
         ),
         sa.PrimaryKeyConstraint("target_uid", name=op.f("pk_surveyor_assignments")),
+        schema="webapp",
     )
     # ### end Alembic commands ###
 

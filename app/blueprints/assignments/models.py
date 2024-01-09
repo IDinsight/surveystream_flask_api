@@ -19,3 +19,5 @@ class SurveyorAssignment(db.Model):
     )
     user_uid = db.Column(db.Integer(), default=-1)
     to_delete = db.Column(db.Integer(), default=0, nullable=False)
+
+    __table_args__ = ({"schema": "webapp"},)
