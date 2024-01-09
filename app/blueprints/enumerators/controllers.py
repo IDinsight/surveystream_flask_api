@@ -863,7 +863,7 @@ def update_enumerator_role(enumerator_uid):
                 location_uid=payload_validator.location_uid.data,
             )
             .on_conflict_do_update(
-                constraint=f"{payload_validator.enumerator_type.data}_location_pkey",
+                constraint=f"pkey_{payload_validator.enumerator_type.data}_location",
                 set_={
                     "location_uid": payload_validator.location_uid.data,
                 },

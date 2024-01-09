@@ -8,6 +8,7 @@ from app import db
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.sql.functions import func
 from sqlalchemy import cast
+from sqlalchemy.exc import IntegrityError
 from .models import SurveyorAssignment
 from .validators import (
     AssignmentsQueryParamValidator,
@@ -121,7 +122,7 @@ def view_assignments():
             target_locations_subquery,
             Target.location_uid == target_locations_subquery.c.location_uid,
         )
-        .filter(Target.form_uid == form_uid, Target.active.is_(True))
+        .filter(Target.form_uid == form_uid)
     )
 
     # Note that we use gettatr() here because we are joining in models that may not have a joined row for a given target, so the row's object corresponding to that model will be None
@@ -180,7 +181,7 @@ def view_assignments():
                     },
                     "target_locations": target_locations,
                 }
-                for target, target_status, enumerator, target_locations in assignments_query.items
+                for target, target_status, enumerator, target_locations in assignments_query.all()
             ],
         }
     )
@@ -289,7 +290,7 @@ def view_assignments_enumerators():
                     "total_pending_targets": total_pending_targets,
                     "total_completed_targets": total_completed_targets,
                 }
-                for enumerator, surveyor_form, locations, total_assigned_targets, total_pending_targets, total_completed_targets, in assignment_enumerators_query.items
+                for enumerator, surveyor_form, locations, total_assigned_targets, total_pending_targets, total_completed_targets, in assignment_enumerators_query.all()
             ],
         }
     )
@@ -310,45 +311,124 @@ def update_assignments():
     else:
         return jsonify(message="X-CSRF-Token required in header"), 403
 
-    if form.validate():
-        for assignment in form.assignments.data:
-            if assignment["enumerator_uid"] is not None:
-                # do upsert
-                statement = (
-                    pg_insert(SurveyorAssignment)
-                    .values(
-                        target_uid=assignment["target_uid"],
-                        enumerator_uid=assignment["enumerator_uid"],
-                        user_uid=current_user.user_uid,
-                    )
-                    .on_conflict_do_update(
-                        constraint="surveyor_assignments_pkey",
-                        set_={
-                            "enumerator_uid": assignment["enumerator_uid"],
-                            "user_uid": current_user.user_uid,
-                        },
-                    )
-                )
-
-                db.session.execute(statement)
-                db.session.commit()
-            else:
-                db.session.query(SurveyorAssignment).filter(
-                    SurveyorAssignment.target_uid == assignment["target_uid"]
-                ).update(
-                    {
-                        SurveyorAssignment.user_uid: current_user.user_uid,
-                        SurveyorAssignment.to_delete: 1,
-                    },
-                    synchronize_session=False,
-                )
-
-                db.session.query(SurveyorAssignment).filter(
-                    SurveyorAssignment.target_uid == assignment["target_uid"]
-                ).delete()
-                db.session.commit()
-
-        return jsonify(message="Success"), 200
-
-    else:
+    if not form.validate():
         return jsonify(message=form.errors), 422
+
+    # TODO: Check if the user has permission to make assignments for this form
+
+    # Run database-backed validations on the assignment inputs
+    dropout_enumerator_uids = []
+    not_found_enumerator_uids = []
+    not_found_target_uids = []
+    unassignable_target_uids = []
+    for assignment in form.assignments.data:
+        if assignment["enumerator_uid"] is not None:
+            enumerator_result = (
+                db.session.query(Enumerator, SurveyorForm)
+                .join(
+                    SurveyorForm,
+                    Enumerator.enumerator_uid == SurveyorForm.enumerator_uid,
+                )
+                .filter(
+                    Enumerator.enumerator_uid == assignment["enumerator_uid"],
+                    SurveyorForm.form_uid == form.form_uid.data,
+                )
+                .first()
+            )
+            if enumerator_result is None:
+                not_found_enumerator_uids.append(assignment["enumerator_uid"])
+            elif enumerator_result[1].status == "Dropout":
+                dropout_enumerator_uids.append(assignment["enumerator_uid"])
+
+        target_result = (
+            db.session.query(Target, TargetStatus)
+            .outerjoin(TargetStatus, Target.target_uid == TargetStatus.target_uid)
+            .filter(
+                Target.target_uid == assignment["target_uid"],
+                Target.form_uid == form.form_uid.data,
+            )
+            .first()
+        )
+        if target_result is None:
+            not_found_target_uids.append(assignment["target_uid"])
+        elif (
+            len(target_result) == 2
+            and target_result[1] is not None
+            and target_result[1].target_assignable is not True
+        ):
+            unassignable_target_uids.append(assignment["target_uid"])
+
+    if len(dropout_enumerator_uids) > 0:
+        return (
+            jsonify(
+                message=f'The following enumerator_uid\'s have status "Dropout" and are ineligible for assignment: {", ".join(str(enumerator_uid) for enumerator_uid in dropout_enumerator_uids)}'
+            ),
+            422,
+        )
+
+    if len(unassignable_target_uids) > 0:
+        return (
+            jsonify(
+                message=f"The following target_uid's are not assignable for this form (most likely because they are complete): {', '.join(str(target_uid) for target_uid in unassignable_target_uids)}"
+            ),
+            422,
+        )
+
+    if len(not_found_enumerator_uids) > 0:
+        return (
+            jsonify(
+                message=f"The following enumerator_uid's were not found for this form: {', '.join(str(enumerator_uid) for enumerator_uid in not_found_enumerator_uids)}"
+            ),
+            404,
+        )
+
+    if len(not_found_target_uids) > 0:
+        return (
+            jsonify(
+                message=f"The following target_uid's were not found for this form: {', '.join(str(target_uid) for target_uid in not_found_target_uids)}"
+            ),
+            404,
+        )
+
+    for assignment in form.assignments.data:
+        if assignment["enumerator_uid"] is not None:
+            # do upsert
+            statement = (
+                pg_insert(SurveyorAssignment)
+                .values(
+                    target_uid=assignment["target_uid"],
+                    enumerator_uid=assignment["enumerator_uid"],
+                    user_uid=current_user.user_uid,
+                )
+                .on_conflict_do_update(
+                    constraint="pk_surveyor_assignments",
+                    set_={
+                        "enumerator_uid": assignment["enumerator_uid"],
+                        "user_uid": current_user.user_uid,
+                    },
+                )
+            )
+
+            db.session.execute(statement)
+        else:
+            db.session.query(SurveyorAssignment).filter(
+                SurveyorAssignment.target_uid == assignment["target_uid"]
+            ).update(
+                {
+                    SurveyorAssignment.user_uid: current_user.user_uid,
+                    SurveyorAssignment.to_delete: 1,
+                },
+                synchronize_session=False,
+            )
+
+            db.session.query(SurveyorAssignment).filter(
+                SurveyorAssignment.target_uid == assignment["target_uid"]
+            ).delete()
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return jsonify(message="Success"), 200

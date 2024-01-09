@@ -50,6 +50,7 @@ def build_location_hierarchy_query(survey_uid):
     bottom_query = (
         db.session.query(
             Location.location_uid.label("location_uid"),
+            GeoLevel.geo_level_uid.label("geo_level_uid"),
             top_query.c.locations.concat(
                 func.jsonb_build_object(
                     "geo_level_name",

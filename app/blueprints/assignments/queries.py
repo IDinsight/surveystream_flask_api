@@ -2,8 +2,8 @@ from app import db
 from .models import SurveyorAssignment
 from app.blueprints.targets.models import TargetStatus
 from app.blueprints.enumerators.models import SurveyorForm
-from sqlalchemy.sql.functions import func, case
-from sqlalchemy import or_
+from sqlalchemy.sql.functions import func
+from sqlalchemy import case, or_
 
 
 def build_assignment_status_subquery(form_uid):

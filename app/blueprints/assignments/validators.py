@@ -12,6 +12,7 @@ class SurveyorAssignmentValidator(FlaskForm):
 
 
 class UpdateSurveyorAssignmentsValidator(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
     assignments = FieldList(FormField(SurveyorAssignmentValidator))
 
 
