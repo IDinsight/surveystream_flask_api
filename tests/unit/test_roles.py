@@ -150,8 +150,6 @@ class TestRoles:
 
         response = client.get("/api/roles", query_string={"survey_uid": 1})
 
-        print(response)
-
         expected_response = {
             "data": [
                 {

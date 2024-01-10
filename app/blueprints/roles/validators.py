@@ -2,7 +2,10 @@ from flask_wtf import FlaskForm
 from wtforms import FieldList, FormField, IntegerField, StringField
 from wtforms.validators import DataRequired, ValidationError, InputRequired
 
-from app.blueprints.roles.models import Permission
+from app.blueprints.auth.models import User
+from app.blueprints.roles.models import Permission, Role
+from app.blueprints.surveys.models import Survey
+
 
 class SurveyRolesQueryParamValidator(FlaskForm):
     class Meta:
@@ -39,5 +42,36 @@ class SurveyRoleValidator(FlaskForm):
 
             if permission_id not in all_permission_ids:
                 raise ValidationError(f"Invalid permission ID: {permission_id} in role {form.role_name.data}")
+
 class SurveyRolesPayloadValidator(FlaskForm):
     roles = FieldList(FormField(SurveyRoleValidator))
+
+class UserHierarchyParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField(validators=[DataRequired()])
+    user_uid = IntegerField(validators=[DataRequired()])
+
+class UserHierarchyPayloadValidator(FlaskForm):
+    survey_uid = IntegerField(validators=[DataRequired()])
+    role_uid = IntegerField(validators=[DataRequired()])
+    parent_user_uid = IntegerField(validators=[DataRequired()])
+    user_uid = IntegerField(validators=[DataRequired()])
+
+    def validate_survey_uid(form, field):
+        survey = Survey.query.get(field.data)
+        if not survey:
+            raise ValidationError(f"Survey with ID {field.data} does not exist.")
+    def validate_role_uid(form, field):
+        role = Role.query.get(field.data)
+        if not role:
+            raise ValidationError(f"Role with ID {field.data} does not exist.")
+    def validate_parent_user_uid(form, field):
+        user = User.query.get(field.data)
+        if not user:
+            raise ValidationError(f"Parent user with ID {field.data} does not exist.")
+    def validate_user_uid(form, field):
+        user = User.query.get(field.data)
+        if not user:
+            raise ValidationError(f"User with ID {field.data} does not exist.")

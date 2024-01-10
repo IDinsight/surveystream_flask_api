@@ -1,11 +1,6 @@
 import pytest
-from app import db
-from app.blueprints.user_management.models import Invite
-from app.blueprints.user_management.utils import generate_invite_code, send_invite_email
-from app.blueprints.auth.models import User
 import jsondiff
 import json
-
 
 @pytest.mark.user_management
 class TestUserManagement:
@@ -200,6 +195,11 @@ class TestUserManagement:
 
 
     def test_delete_user(self, client, login_test_user, csrf_token, sample_user):
+        """
+        Test endpoint for deleting users
+        the test uses the delete endpoint to delete a user
+        then using the fetch endpoint checks if user is available
+        """
         user_id = sample_user.get('user_uid')
 
         response = client.delete(

@@ -4,8 +4,11 @@ from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
 from sqlalchemy.orm import aliased, subqueryload
+from sqlalchemy import or_, func
+
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
+from app.blueprints.roles.models import Role
 from .models import Invite
 from .utils import generate_invite_code, send_invite_email
 from .validators import (
@@ -17,7 +20,6 @@ from .validators import (
     CheckUserValidator
 )
 from app.utils.utils import logged_in_active_user_required
-from sqlalchemy import or_
 
 
 @user_management_bp.route("/register", methods=["POST"])
@@ -253,7 +255,6 @@ def complete_registration():
 @user_management_bp.route("/users/<int:user_id>", methods=["PUT"])
 @logged_in_active_user_required
 def edit_user(user_id):
-    print(user_id)
     """
     Endpoint to edit a user's information.
 
@@ -287,7 +288,6 @@ def edit_user(user_id):
 
             db.session.commit()
             user_data = user_to_edit.to_dict()
-            print(user_data)
             return jsonify(message="User updated", user_data=user_data), 200
         else:
             return jsonify(message="User not found"), 404
@@ -326,11 +326,17 @@ def get_all_users():
     Endpoint to get information for all users.
     """
 
-    # Get the survey_id from the query parameters
-    subquery = (
+    # Get the survey_id from the query parameters (assuming you have a request object)
+    survey_id = request.args.get('survey_id')
+
+    # Check if survey_id is provided and the user is not a super admin
+    if survey_id and not current_user.is_super_admin:
+        return jsonify(message="Survey ID is required for non-super-admin users"), 400
+
+    # Define an outer join to list users with pending invites with a status
+    invite_subquery = (
         db.session.query(Invite)
         .filter(Invite.user_uid == User.user_uid)
-        # Assuming you have a timestamp column like created_at
         .order_by(Invite.invite_uid.desc())
         .limit(1)
         .subquery()
@@ -339,26 +345,38 @@ def get_all_users():
     # Check if the user is a super admin
     if current_user.is_super_admin:
         users = (
-            db.session.query(
-                User, subquery.c.is_active.label("invite_is_active"))
+            db.session.query(User, invite_subquery.c.is_active.label("invite_is_active"))
             .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
-            .outerjoin(subquery, User.user_uid == subquery.c.user_uid)
+            .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
             .all()
         )
     else:
-        users = (
+        roles_subquery = (
             db.session.query(
-                User, subquery.c.is_active.label("invite_is_active"))
-            .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
-            .outerjoin(subquery, User.user_uid == subquery.c.user_uid)
-            .all()
+                Role.role_name,
+                func.max(Role.survey_uid).label("max_survey_uid")
+            )
+            .group_by(Role.role_name)
+            .subquery()
         )
 
-        #
-        # if survey_id:
-        #     users = User.query.filter_by(survey_id=survey_id).all()
-        # else:
-        #     return jsonify(message="Survey ID is required for non-super-admin users"), 400
+        # Use alias for the roles_subquery to avoid naming conflicts
+        roles_alias = aliased(Role, roles_subquery)
+
+        users = (
+            db.session.query(
+                User, invite_subquery.c.is_active.label("invite_is_active"))
+            .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
+            .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
+            .outerjoin(roles_alias, User.user_uid == roles_alias.user_uid)
+            .filter(
+                or_(
+                    roles_alias.max_survey_uid == survey_id,
+                    survey_id.is_(None),
+                )
+            )
+            .all()
+        )
 
     user_list = []
 
@@ -385,7 +403,6 @@ def delete_user(user_id):
     Endpoint to delete a user.
     """
     user = User.query.get(user_id)
-    print(user)
     """
         Endpoint to delete a user.
         """
@@ -399,7 +416,6 @@ def delete_user(user_id):
             return jsonify(message="User deleted successfully"), 200
         except Exception as e:
             db.session.rollback()
-            print(e)
             return jsonify(message=f"Error deleting user: {str(e)}"), 500
     else:
         return jsonify(message="User not found"), 404
