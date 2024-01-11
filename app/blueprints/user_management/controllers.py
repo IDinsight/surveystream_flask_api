@@ -385,8 +385,8 @@ def get_all_users():
             "first_name": user.first_name,
             "last_name": user.last_name,
             "roles": user.roles,
-            "user_survey_names": user.user_survey_names,
-            "user_role_names": user.user_role_names,
+            "user_survey_names": user_survey_names,
+            "user_role_names": user_role_names,
             "is_super_admin": user.is_super_admin,
             "status": "Active" if user.active else ("Invite pending" if invite_is_active else "Deactivated"),
         }
