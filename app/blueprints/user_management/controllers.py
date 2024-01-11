@@ -4,7 +4,7 @@ from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
 from sqlalchemy.orm import aliased, subqueryload
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, exists, and_
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
@@ -20,6 +20,7 @@ from .validators import (
     CheckUserValidator
 )
 from app.utils.utils import logged_in_active_user_required
+from ..surveys.models import Survey
 
 
 @user_management_bp.route("/register", methods=["POST"])
@@ -326,14 +327,10 @@ def get_all_users():
     Endpoint to get information for all users.
     """
 
-    # Get the survey_id from the query parameters (assuming you have a request object)
     survey_id = request.args.get('survey_id')
-
-    # Check if survey_id is provided and the user is not a super admin
     if survey_id and not current_user.is_super_admin:
         return jsonify(message="Survey ID is required for non-super-admin users"), 400
 
-    # Define an outer join to list users with pending invites with a status
     invite_subquery = (
         db.session.query(Invite)
         .filter(Invite.user_uid == User.user_uid)
@@ -342,51 +339,54 @@ def get_all_users():
         .subquery()
     )
 
-    # Check if the user is a super admin
+    roles_subquery = (
+        db.session.query(
+            Role.role_name,
+            Role.role_uid,
+            Role.survey_uid,
+        )
+        .distinct()
+        .subquery()
+    )
+
+
+    user_query = (
+        db.session.query(
+            User,
+            invite_subquery.c.is_active.label("invite_is_active"),
+            func.array_agg(roles_subquery.c.role_name.distinct()).label("user_role_names"),
+            func.array_agg(Survey.survey_name.distinct()).label("user_survey_names")
+        )
+        .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
+        .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
+        .outerjoin(
+            roles_subquery,
+            roles_subquery.c.role_uid == func.any(User.roles)
+        )
+        .outerjoin(Survey, Survey.survey_uid == roles_subquery.c.survey_uid)
+        .group_by(
+            User.user_uid,
+            invite_subquery.c.is_active,
+        )
+    )
+
+    # Apply conditions based on current_user.is_super_admin
     if current_user.is_super_admin:
-        users = (
-            db.session.query(User, invite_subquery.c.is_active.label("invite_is_active"))
-            .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
-            .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
-            .all()
-        )
+        users = user_query.all()
     else:
-        roles_subquery = (
-            db.session.query(
-                Role.role_name,
-                func.max(Role.survey_uid).label("max_survey_uid")
-            )
-            .group_by(Role.role_name)
-            .subquery()
-        )
-
-        # Use alias for the roles_subquery to avoid naming conflicts
-        roles_alias = aliased(Role, roles_subquery)
-
-        users = (
-            db.session.query(
-                User, invite_subquery.c.is_active.label("invite_is_active"))
-            .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
-            .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
-            .outerjoin(roles_alias, User.user_uid == roles_alias.user_uid)
-            .filter(
-                or_(
-                    roles_alias.max_survey_uid == survey_id,
-                    survey_id.is_(None),
-                )
-            )
-            .all()
-        )
+        users = user_query.filter(roles_subquery.c.survey_uid == survey_id).all()
 
     user_list = []
 
-    for user, invite_is_active in users:
+    for user, invite_is_active,user_role_names,user_survey_names  in users:
         user_data = {
             "user_id": user.user_uid,
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "roles": user.roles,
+            "user_survey_names": user.user_survey_names,
+            "user_role_names": user.user_role_names,
             "is_super_admin": user.is_super_admin,
             "status": "Active" if user.active else ("Invite pending" if invite_is_active else "Deactivated"),
         }
