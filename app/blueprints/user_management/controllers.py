@@ -328,7 +328,7 @@ def get_all_users():
     """
 
     survey_id = request.args.get('survey_id')
-    if survey_id and not current_user.is_super_admin:
+    if  survey_id is None and not current_user.is_super_admin:
         return jsonify(message="Survey ID is required for non-super-admin users"), 400
 
     invite_subquery = (
@@ -371,7 +371,7 @@ def get_all_users():
     )
 
     # Apply conditions based on current_user.is_super_admin
-    if current_user.is_super_admin:
+    if current_user.is_super_admin and survey_id is not None:
         users = user_query.all()
     else:
         users = user_query.filter(roles_subquery.c.survey_uid == survey_id).all()
