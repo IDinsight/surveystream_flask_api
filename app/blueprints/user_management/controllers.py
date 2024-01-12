@@ -265,7 +265,6 @@ def edit_user(user_id):
     - last_name
     - roles
     - is_super_admin
-    - permissions
 
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
@@ -285,7 +284,6 @@ def edit_user(user_id):
             user_to_edit.last_name = form.last_name.data
             user_to_edit.roles = form.roles.data
             user_to_edit.is_super_admin = form.is_super_admin.data
-            user_to_edit.permissions = form.permissions.data
 
             db.session.commit()
             user_data = user_to_edit.to_dict()
@@ -293,7 +291,7 @@ def edit_user(user_id):
         else:
             return jsonify(message="User not found"), 404
     else:
-        return jsonify(message="Unauthorized"), 401
+        return jsonify(message=form.errors), 422
 
 
 @user_management_bp.route("/users/<int:user_id>", methods=["GET"])
@@ -371,7 +369,7 @@ def get_all_users():
     )
 
     # Apply conditions based on current_user.is_super_admin
-    if current_user.is_super_admin and survey_id is not None:
+    if current_user.is_super_admin and survey_id is None:
         users = user_query.all()
     else:
         users = user_query.filter(roles_subquery.c.survey_uid == survey_id).all()
