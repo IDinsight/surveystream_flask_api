@@ -369,7 +369,7 @@ def get_all_users():
     )
 
     # Apply conditions based on current_user.is_super_admin
-    if current_user.is_super_admin and survey_id is not None:
+    if current_user.is_super_admin and survey_id is None:
         users = user_query.all()
     else:
         users = user_query.filter(roles_subquery.c.survey_uid == survey_id).all()
