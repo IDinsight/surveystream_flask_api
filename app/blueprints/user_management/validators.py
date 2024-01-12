@@ -21,7 +21,7 @@ class AddUserValidator(FlaskForm):
     email = StringField("Email", validators=[DataRequired()])
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
-    roles = FieldList(IntegerField(default=[], validators=[Optional()]))
+    roles = FieldList(StringField("Roles"), default=[], validators=[Optional()])
     is_super_admin = BooleanField("Is Super Admin", default=False, validators=[Optional()])
 
 
@@ -41,8 +41,5 @@ class EditUserValidator(FlaskForm):
     email = StringField("Email", validators=[Email(), DataRequired()])
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
-    roles = FieldList(IntegerField("Roles",default=[], validators=[Optional()]))
-
+    roles = FieldList(StringField("Roles"), default=[], validators=[Optional()])
     is_super_admin = BooleanField("Is Super Admin", default=False, validators=[Optional()])
-    # Add fields for permissions if needed
-    permissions = FieldList(IntegerField("Permissions",default=[], validators=[Optional()]))
