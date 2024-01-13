@@ -25,9 +25,6 @@ class TestUserManagement:
         user_object = response_data.get("user")
         invite_object = response_data.get("invite")
 
-        print(user_object)
-        print(invite_object)
-
         return {"user": user_object, "invite": invite_object}
 
     @pytest.fixture
@@ -59,7 +56,10 @@ class TestUserManagement:
         assert b"Success: registration completed" in response.data
 
     def test_check_user(self, client, login_test_user, csrf_token, sample_user):
-        # Test checking a user by email
+        """
+            Test checking user availability by email
+            Expect sample_user to be available , also expect similar data
+        """
         response = client.post(
             "/api/users/check-email-availability",
             json={"email": sample_user.get('email')},
@@ -82,7 +82,9 @@ class TestUserManagement:
         assert response.json["user"] == expected_data
 
     def test_check_user_nonexistent(self, client, login_test_user, csrf_token):
-        # Test checking a nonexistent user by email
+        """ Test checking user availability by email
+            Expect user to be unavailable
+        """
         response = client.post(
             "/api/users/check-email-availability",
             json={"email": "nonexistent@example.com"},
@@ -126,11 +128,11 @@ class TestUserManagement:
         assert b"Invalid or expired invite code" in response.data
 
     def test_get_user(self, client, sample_user, login_test_user, csrf_token):
-        # Return the user added by added_user fixture as the sample_user
+        """  Test endpoint for fetching user data
+             Expect sample_user data
+        """
         response = client.get(
             f"/api/users/{sample_user.get('user_uid')}", headers={"X-CSRF-Token": csrf_token})
-
-        print(response.json)
 
         assert response.status_code == 200
 
@@ -146,7 +148,10 @@ class TestUserManagement:
         assert jsondiff.diff(expected_data, json.loads(response.data)) == {}
 
     def test_edit_user(self, client, login_test_user, csrf_token, sample_user):
-        # Update user information
+        """
+           Test endpoint for updating user data
+           Expect sample_user data to be updated to new values
+        """
         user_uid = sample_user.get('user_uid')
         response = client.put(
             f"/api/users/{user_uid}",
@@ -179,10 +184,12 @@ class TestUserManagement:
         assert jsondiff.diff(expected_data, updated_user) == {}
 
     def test_get_all_users(self, client, login_test_user, csrf_token):
-        # Retrieve information for all users
+        """
+        Test endpoint for getting all users
+        Expect a user list
+        """
         response = client.get("/api/users",
                               headers={"X-CSRF-Token": csrf_token})
-        print(response.json)
 
         assert response.status_code == 200
 

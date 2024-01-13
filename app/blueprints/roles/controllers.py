@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from app.utils.utils import logged_in_active_user_required
 from flask_login import current_user
-from sqlalchemy import insert, cast, Integer, ARRAY
+from sqlalchemy import insert, cast, Integer, ARRAY, func, select
 from sqlalchemy.sql import case
 from sqlalchemy.exc import IntegrityError
 from app import db
@@ -10,6 +10,8 @@ from .routes import roles_bp
 from .validators import SurveyRolesQueryParamValidator, SurveyRolesPayloadValidator, UserHierarchyPayloadValidator, \
     UserHierarchyParamValidator
 from .utils import run_role_hierarchy_validations
+from ..auth.models import User
+
 
 @roles_bp.route("/roles", methods=["GET"])
 @logged_in_active_user_required
@@ -28,18 +30,43 @@ def get_survey_roles():
         )
 
     survey_uid = request.args.get("survey_uid")
-    user_uid = current_user.user_uid
 
-    roles = Role.query.filter_by(survey_uid=survey_uid).order_by(Role.role_uid).all()
+    user_subquery = (
+        db.session.query(
+            User.user_uid,
+            func.count().label('user_count_subquery')
+        )
+        .group_by(User.user_uid)
+        .as_scalar()
+        .subquery()
+    )
 
+    query = (
+        db.session.query(
+            Role,
+            user_subquery.c.user_count_subquery.label('user_count')
+        )
+        .outerjoin(User, Role.role_uid == func.any(User.roles))
+        .filter(Role.survey_uid == survey_uid)
+        .group_by(Role.role_uid, user_subquery.c.user_count_subquery)
+        .order_by(Role.role_uid)
+    )
+
+    # Execute the query and fetch the results
+    roles_with_count = query.all()
     response = jsonify(
         {
             "success": True,
-            "data": [role.to_dict() for role in roles],
+            "data": [
+                {
+                    **role.to_dict(),
+                    "user_count": user_count if user_count is not None else 0
+                }
+                for role, user_count in roles_with_count
+            ],
         }
     )
     response.add_etag()
-
     return response, 200
 
 @roles_bp.route("/roles", methods=["PUT"])
@@ -207,18 +234,27 @@ def create_permission():
     if 'name' not in data or 'description' not in data:
         return jsonify({'error': 'Name and description are required fields'}), 400
 
-    new_permission = Permission(name=data['name'], description=data['description'])
-    db.session.add(new_permission)
-    db.session.commit()
+    try:
+        new_permission = Permission(name=data['name'], description=data['description'])
+        db.session.add(new_permission)
+        db.session.commit()
 
-    result = {
-        'message': 'Permission created successfully',
-        'permission_uid': new_permission.permission_uid,
-        'name': new_permission.name,
-        'description': new_permission.description
-    }
+        result = {
+            'message': 'Permission created successfully',
+            'permission_uid': new_permission.permission_uid,
+            'name': new_permission.name,
+            'description': new_permission.description
+        }
 
-    return jsonify(result), 201
+        return jsonify(result), 201
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'error': 'Permission with this name already exists'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'An unexpected error occurred: {str(e)}'}), 500
+    finally:
+        db.session.close()
 
 
 # GET details of a specific permission
@@ -252,18 +288,27 @@ def update_permission(permission_uid):
     if 'name' not in data or 'description' not in data:
         return jsonify({'error': 'Name and description are required fields'}), 400
 
-    permission.name = data['name']
-    permission.description = data['description']
-    db.session.commit()
+    try:
+        permission.name = data['name']
+        permission.description = data['description']
+        db.session.commit()
 
-    result = {
-        'message': 'Permission updated successfully',
-        'permission_uid': permission.permission_uid,
-        'name': permission.name,
-        'description': permission.description
-    }
+        result = {
+            'message': 'Permission updated successfully',
+            'permission_uid': permission.permission_uid,
+            'name': permission.name,
+            'description': permission.description
+        }
 
-    return jsonify(result), 200
+        return jsonify(result), 200
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'error': 'Updating to this name would violate uniqueness constraint'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'An unexpected error occurred: {str(e)}'}), 500
+    finally:
+        db.session.close()
 
 
 # DELETE a specific permission

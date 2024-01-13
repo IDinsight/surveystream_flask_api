@@ -6,6 +6,10 @@ import jsondiff
 class TestUserHierarchy:
     @pytest.fixture
     def created_users(self, client, login_test_user, csrf_token):
+        """
+            Create multiple users using the user endpoint
+            These will be returned and used as parent and child user ids in the user hierarchy
+        """
         users = []
         for i in range(3):  # Create three users for testing
             response = client.post(
@@ -27,8 +31,6 @@ class TestUserHierarchy:
             invite_object = response_data.get("invite")
             users.append({"user": user_object, "invite": invite_object})
 
-        print("users")
-        print(users)
         return users
 
     # Fixture to create a survey
@@ -110,6 +112,10 @@ class TestUserHierarchy:
 
     @pytest.fixture
     def create_user_hierarchy(self, client, login_test_user, csrf_token, create_survey, create_roles, created_users):
+        """
+            Test creating user hierarchy
+            Data will be used in subsequent hierarchy tests
+        """
         survey_uid = create_survey.get('data', {}).get('survey', {}).get('survey_uid')
         role_uid = create_roles.get('data', [{}])[0].get('role_uid')
         user_uid = created_users[0]["user"].get("user_uid")
@@ -142,6 +148,10 @@ class TestUserHierarchy:
         return user_hierarchy_data.get("user_hierarchy")
 
     def test_get_user_hierarchy(self, client, login_test_user, csrf_token, create_user_hierarchy):
+        """
+            Test getting a single user hierarchy record
+            Expect data similar to create_user_hierarchy fixture data
+        """
         user_uid = create_user_hierarchy.get("user_uid")
         survey_uid = create_user_hierarchy.get("survey_uid")
         parent_user_uid = create_user_hierarchy.get("parent_user_uid")
@@ -151,9 +161,6 @@ class TestUserHierarchy:
             f"/api/user-hierarchy?user_uid={user_uid}&survey_uid={survey_uid}",
             headers={"X-CSRF-Token": csrf_token}
         )
-
-        print("test_get_user_hierarchy")
-        print(response.json)
 
         assert response.status_code == 200
         user_hierarchy_data = response.json
@@ -167,6 +174,10 @@ class TestUserHierarchy:
 
     # Test updating a user hierarchy entry
     def test_update_user_hierarchy(self, client, login_test_user, csrf_token, create_user_hierarchy, created_users, create_roles):
+        """
+           Test update for a single user hierarchy record
+           Expect create_user_hierarchy fixture data to change to new values
+        """
         survey_uid = create_user_hierarchy.get("survey_uid")
         user_uid = created_users[0]["user"].get("user_uid")
         parent_user_uid = created_users[2]["user"].get("user_uid")
@@ -197,6 +208,10 @@ class TestUserHierarchy:
 
     # Test deleting a user hierarchy entry
     def test_delete_user_hierarchy(self, client, login_test_user, csrf_token, create_user_hierarchy):
+        """
+          Test delete endpoint for user_hierarchy
+          Expect create_user_hierarchy data to be deleted
+       """
         user_uid = create_user_hierarchy.get("user_uid")
         survey_uid = create_user_hierarchy.get("survey_uid")
 

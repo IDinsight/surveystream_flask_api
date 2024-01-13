@@ -3,8 +3,7 @@ from flask import jsonify, request, current_app
 from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
-from sqlalchemy.orm import aliased, subqueryload
-from sqlalchemy import or_, func, exists, and_
+from sqlalchemy import or_, func
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
@@ -180,16 +179,14 @@ def add_user():
                 last_name=form.last_name.data,
                 password=None,
                 roles=form.roles.data,
-                is_super_admin=form.is_super_admin.data  # No password for invited users
+                is_super_admin=form.is_super_admin.data
             )
 
-            # Add logic to assign roles based on the form input
             db.session.add(new_user)
             db.session.commit()
 
             invite_code = generate_invite_code()
 
-            # Create an invite record
             invite = Invite(
                 invite_code=invite_code,
                 email=form.email.data,
@@ -197,7 +194,6 @@ def add_user():
                 is_active=True,
             )
 
-            # Commit changes to the database
             db.session.add(invite)
             db.session.commit()
 
