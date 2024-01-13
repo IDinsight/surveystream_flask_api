@@ -1,4 +1,10 @@
-"""empty message
+"""
+Create permissions table
+Create invites table
+Create role_permissions table
+Add is_super_admin and roles to the user table
+Create user_hierarchy table
+Add permissions to the roles table
 
 Revision ID: d1d10486ab0a
 Revises: bf548e097b10

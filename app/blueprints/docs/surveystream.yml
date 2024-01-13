@@ -76,12 +76,18 @@ tags:
     description: Endpoints related to user roles
   - name: Locations
     description: Endpoints related to locations
+  - name: Permissions
+    description: Endpoints related to permissions
+  - name: User Hierarchy
+    description: Endpoints related to user hierarchy
 x-tagGroups:
   - name: User Management
     tags:
       - User Authentication
       - Password Management
       - User Registration
+      - User Invite
+      - User Management
   - name: Profile
     tags:
       - Profile
@@ -113,9 +119,12 @@ x-tagGroups:
   - name: Roles
     tags:
       - Roles
+      - Permissions
+      - User Hierarchy
   - name: Locations
     tags:
       - Locations
+
 paths:
   /healthcheck:
     get:
@@ -423,6 +432,9 @@ paths:
                   home_district_name:
                     type: string
                     description: The home district of the user
+                  is_super_admin:
+                    type: boolean
+                    description: Super admin status for the user
   /profile/avatar:
     get:
       summary: Get avatar URL
@@ -492,6 +504,320 @@ paths:
           description: X-CSRF-Token required in header
         '422':
           description: Form errors
+  /users/check-email-availability:
+    post:
+      tags:
+        - User Management
+      summary: Endpoint to check a user by email
+      description: Requires JSON body with email.
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+            required:
+              - email
+      responses:
+        200:
+          description: User already exists
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              user:
+                type: object
+        403:
+          description: X-CSRF-Token required in header
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        404:
+          description: User not found
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+  /users:
+    post:
+      tags:
+        - User Management
+      summary: Endpoint to invite a user by email
+      description: Requires JSON body with email, first name, last name, role, and is_super_admin.
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+              first_name:
+                type: string
+              last_name:
+                type: string
+              role:
+                type: string
+              is_super_admin:
+                type: boolean
+            required:
+              - email
+              - first_name
+              - last_name
+              - role
+              - is_super_admin
+      responses:
+        200:
+          description:
+            Success: user invited
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              user:
+                type: object
+              invite:
+                type: object
+        403:
+          description: X-CSRF-Token required in header
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        422:
+          description: User already exists with email
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    get:
+      tags:
+        - User Management
+      summary: Endpoint to get information for all users
+      parameters:
+        - in: query
+          name: survey_id
+          type: string
+          required: false
+      responses:
+        200:
+          description: User information for all users retrieved
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                email:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                roles:
+                  type: string
+                user_survey_names:
+                  type: string
+                user_role_names:
+                  type: string
+                is_super_admin:
+                  type: boolean
+                status:
+                  type: string
+        400:
+          description: Survey ID is required for non-super-admin users
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+  /users/complete-registration:
+    post:
+      tags:
+        - User Management
+      summary: Endpoint to complete user registration using an invite code
+      description: Requires JSON body with invite_code, new_password, and confirm_password.
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              invite_code:
+                type: string
+              new_password:
+                type: string
+              confirm_password:
+                type: string
+            required:
+              - invite_code
+              - new_password
+              - confirm_password
+      responses:
+        200:
+          description:
+            Success: registration completed
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        403:
+          description: X-CSRF-Token required in header
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        404:
+          description: Invalid or expired invite code
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        422:
+          description: Validation error
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+  /users/{user_id}:
+    put:
+      tags:
+        - User Management
+      summary: Endpoint to edit a user's information
+      description: Requires JSON body with email, first name, last name, roles, and is_super_admin.
+      parameters:
+        - in: path
+          name: user_id
+          type: integer
+          required: true
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+              first_name:
+                type: string
+              last_name:
+                type: string
+              roles:
+                type: array
+              is_super_admin:
+                type: boolean
+            required:
+              - email
+              - first_name
+              - last_name
+              - roles
+              - is_super_admin
+      responses:
+        200:
+          description: User updated
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              user_data:
+                type: object
+        403:
+          description: X-CSRF-Token required in header
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        404:
+          description: User not found
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        422:
+          description: Validation error
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    get:
+      tags:
+        - User Management
+      summary: Endpoint to get information for a single user
+      parameters:
+        - in: path
+          name: user_id
+          type: integer
+          required: true
+      responses:
+        200:
+          description: User information retrieved
+          schema:
+            type: object
+            properties:
+              user_id:
+                type: integer
+              email:
+                type: string
+              first_name:
+                type: string
+              last_name:
+                type: string
+              roles:
+                type: array
+              is_super_admin:
+                type: boolean
+        404:
+          description: User not found
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    delete:
+      tags:
+        - User Management
+      summary: Endpoint to delete a user
+      parameters:
+        - in: path
+          name: user_id
+          type: integer
+          required: true
+      responses:
+        200:
+          description: User deleted successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        404:
+          description: User not found
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
   /surveys:
     get:
       summary: Get surveys
@@ -3182,6 +3508,9 @@ paths:
                         role_name:
                           type: string
                           description: The name of the role.
+                        permissions:
+                          type: array
+                          description: An array of permissions for a role.
                         reporting_role_uid:
                           type: integer
                           description: The unique role ID of role that supervises the given role.
@@ -3220,6 +3549,7 @@ paths:
                       - role_uid
                       - role_name
                       - reporting_role_uid
+                      - permissions
                     properties:
                       role_uid:
                         type: integer
@@ -3233,6 +3563,10 @@ paths:
                         type: integer
                         nullable: true
                         description: The unique role ID of role that supervises the given role.
+                      permissions:
+                        type: array
+                        nullable: true
+                        description: List of permission_uid's for the role.
                 validate_hierarchy:
                   type: boolean
                   description: |
@@ -3247,6 +3581,306 @@ paths:
           description: Form errors
             Form errors
             When `validate_hierarchy` is set to true, any validation errors will be returned as an array under the `errors` key in the response.
+
+  /permissions:
+    get:
+      tags:
+        - Permissions
+      summary: Get all permissions
+      responses:
+        200:
+          description: Permissions retrieved successfully
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                permission_uid:
+                  type: integer
+                name:
+                  type: string
+                description:
+                  type: string
+    post:
+      tags:
+        - Permissions
+      summary: Create a new permission
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+            required:
+              - name
+              - description
+      responses:
+        201:
+          description: Permission created successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              permission_uid:
+                type: integer
+              name:
+                type: string
+              description:
+                type: string
+        400:
+          description: Name and description are required fields or Permission with this name already exists
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        500:
+          description: An unexpected error occurred
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    /permissions/{permission_uid}:
+      get:
+        tags:
+          - Permissions
+        summary: Get details of a specific permission
+        parameters:
+          - in: path
+            name: permission_uid
+            type: integer
+            required: true
+        responses:
+          200:
+            description: Permission details retrieved successfully
+            schema:
+              type: object
+              properties:
+                permission_uid:
+                  type: integer
+                name:
+                  type: string
+                description:
+                  type: string
+          404:
+            description: Permission not found
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+      put:
+        tags:
+          - Permissions
+        summary: Update a specific permission
+        parameters:
+          - in: path
+            name: permission_uid
+            type: integer
+            required: true
+          - in: body
+            name: body
+            required: true
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              required:
+                - name
+                - description
+        responses:
+          200:
+            description: Permission updated successfully
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                permission_uid:
+                  type: integer
+                name:
+                  type: string
+                description:
+                  type: string
+          400:
+            description: Name and description are required fields or Updating to this name would violate uniqueness constraint
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
+          404:
+            description: Permission not found
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+          500:
+            description: An unexpected error occurred
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
+      delete:
+        tags:
+          - Permissions
+        summary: Delete a specific permission
+        parameters:
+          - in: path
+            name: permission_uid
+            type: integer
+            required: true
+        responses:
+          200:
+            description: Permission deleted successfully
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+          404:
+            description: Permission not found
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+  /user-hierarchy:
+    get:
+      tags:
+        - User Hierarchy
+      summary: Get user hierarchy details
+      parameters:
+        - in: query
+          name: survey_uid
+          type: string
+          required: true
+        - in: query
+          name: user_uid
+          type: string
+          required: true
+      responses:
+        200:
+          description: User hierarchy details retrieved successfully
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+              message:
+                type: string
+        404:
+          description: User hierarchy not found
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    put:
+      tags:
+        - User Hierarchy
+      summary: Update user hierarchy
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              survey_uid:
+                type: string
+              user_uid:
+                type: string
+              role_uid:
+                type: string
+              parent_user_uid:
+                type: string
+              X-CSRF-Token:
+                type: string
+            required:
+              - survey_uid
+              - user_uid
+              - role_uid
+              - parent_user_uid
+              - X-CSRF-Token
+      responses:
+        200:
+          description: User hierarchy updated successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              user_hierarchy:
+                type: object
+        200:
+          description: User hierarchy created successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              user_hierarchy:
+                type: object
+        403:
+          description: X-CSRF-Token required in header
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        422:
+          description: Validation error
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              errors:
+                type: object
+    delete:
+      tags:
+        - User Hierarchy
+      summary: Delete user hierarchy
+      parameters:
+        - in: query
+          name: survey_uid
+          type: string
+          required: true
+        - in: query
+          name: user_uid
+          type: string
+          required: true
+      responses:
+        200:
+          description: User hierarchy deleted successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        404:
+          description: User hierarchy not found
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+
   /timezones:
     get:
       summary: Get the list of postgres timezones
