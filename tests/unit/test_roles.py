@@ -101,7 +101,7 @@ class TestRoles:
                     "reporting_role_uid": None,
                     "survey_uid": 1,
                     "permissions": [create_permission['permission_uid']],
-                    "user_count": 1
+                    "user_count": 0
 
                 },
                 {
@@ -110,7 +110,7 @@ class TestRoles:
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
                     "permissions": [create_permission['permission_uid']],
-                    "user_count": 1
+                    "user_count": 0
                 },
             ],
             "success": True,
@@ -164,7 +164,7 @@ class TestRoles:
                     "reporting_role_uid": None,
                     "survey_uid": 1,
                     "permissions": [],
-                    "user_count": 1
+                    "user_count": 0
                 },
                 {
                     "role_uid": 2,
@@ -172,7 +172,7 @@ class TestRoles:
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
                     "permissions": [],
-                    "user_count": 1
+                    "user_count": 0
                 },
             ],
             "success": True,
@@ -226,7 +226,7 @@ class TestRoles:
                     "reporting_role_uid": None,
                     "survey_uid": 1,
                     "permissions": [],
-                    "user_count": 1
+                    "user_count": 0
 
                 },
                 {
@@ -235,7 +235,7 @@ class TestRoles:
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
                     "permissions": [],
-                    "user_count": 1
+                    "user_count": 0
 
                 },
             ],
@@ -317,7 +317,7 @@ class TestRoles:
                     "reporting_role_uid": None,
                     "survey_uid": 1,
                     "permissions": [],
-                    "user_count": 1
+                    "user_count": 0
                 },
             ],
             "success": True,

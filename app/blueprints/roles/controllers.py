@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from app.utils.utils import logged_in_active_user_required
 from flask_login import current_user
-from sqlalchemy import insert, cast, Integer, ARRAY, func, select
+from sqlalchemy import insert, cast, Integer, ARRAY, func, and_, distinct
 from sqlalchemy.sql import case
 from sqlalchemy.exc import IntegrityError
 from app import db
@@ -33,22 +33,20 @@ def get_survey_roles():
 
     user_subquery = (
         db.session.query(
-            User.user_uid,
-            func.count().label('user_count_subquery')
+            func.unnest(User.roles).label('role_uid'),
+            User.user_uid.label('user_uid'),
         )
-        .group_by(User.user_uid)
-        .as_scalar()
+        .filter(and_(~User.to_delete, ))
         .subquery()
     )
 
     query = (
         db.session.query(
             Role,
-            user_subquery.c.user_count_subquery.label('user_count')
-        )
-        .outerjoin(User, Role.role_uid == func.any(User.roles))
+            func.coalesce(func.count(distinct(user_subquery.c.user_uid)), 0).label('user_count')
+        ).outerjoin(user_subquery, user_subquery.c.role_uid == Role.role_uid)
         .filter(Role.survey_uid == survey_uid)
-        .group_by(Role.role_uid, user_subquery.c.user_count_subquery)
+        .group_by(Role.role_uid)
         .order_by(Role.role_uid)
     )
 
