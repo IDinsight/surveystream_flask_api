@@ -287,6 +287,8 @@ def edit_user(user_id):
             user_to_edit.last_name = form.last_name.data
             user_to_edit.roles = form.roles.data
             user_to_edit.is_super_admin = form.is_super_admin.data
+            user_to_edit.to_delete = False
+            user_to_edit.active = True
 
             db.session.commit()
             user_data = user_to_edit.to_dict()
