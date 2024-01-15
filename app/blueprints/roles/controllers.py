@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from app.utils.utils import logged_in_active_user_required
 from flask_login import current_user
-from sqlalchemy import insert, cast, Integer, ARRAY, func, and_, distinct
+from sqlalchemy import insert, cast, Integer, ARRAY, func, and_, distinct, or_
 from sqlalchemy.sql import case
 from sqlalchemy.exc import IntegrityError
 from app import db
@@ -36,7 +36,7 @@ def get_survey_roles():
             func.unnest(User.roles).label('role_uid'),
             User.user_uid.label('user_uid'),
         )
-        .filter(and_(~User.to_delete, ))
+        .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
         .subquery()
     )
 

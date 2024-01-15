@@ -3,7 +3,7 @@ from flask import jsonify, request, current_app
 from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, or_
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
@@ -360,7 +360,7 @@ def get_all_users():
             func.array_agg(roles_subquery.c.role_name.distinct()).label("user_role_names"),
             func.array_agg(Survey.survey_name.distinct()).label("user_survey_names")
         )
-        .filter(and_(~User.to_delete, ))
+        .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
         .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
         .outerjoin(
             roles_subquery,
