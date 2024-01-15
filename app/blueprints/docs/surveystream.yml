@@ -66,8 +66,8 @@ tags:
     description: Endpoints related to the user's targets
   - name: Assignments
     description: Endpoints related to the user's assignments
-  - name: Table Configuration
-    description: Endpoints related to the configuration of tables on the web flask_app
+  - name: Assignments Table Configuration
+    description: Endpoints related to the configuration of tables for the assignments module
   - name: Misc
     description: Endpoints related to miscellaneous functionalities
   - name: Module Questionnaire
@@ -101,9 +101,9 @@ x-tagGroups:
   - name: Assignments
     tags:
       - Assignments
-  - name: Table Configuration
+  - name: Assignments Table Configuration
     tags:
-      - Table Configuration
+      - Assignments Table Configuration
   - name: Misc
     tags:
       - Misc
@@ -2852,14 +2852,13 @@ paths:
           description: Enumerator or target not found
         '422':
           description: Form errors. Specific errors messages will be returned if ineligible/unassignable enumerators or targets are included in the request body.
-  /table-config:
+  /assignments/table-config:
     get:
       summary: Get table configuration
       description: >-
-        Return the web flask_app table configuration details for the given
-        form
+        Return the assignments module table configuration details for the given form
       tags:
-        - Table Configuration
+        - Assignments Table Configuration
       parameters:
         - in: query
           name: form_uid

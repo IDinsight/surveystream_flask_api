@@ -257,6 +257,60 @@ class TestAssignments:
             ],
         }
 
+    @pytest.fixture()
+    def create_enumerator_column_config_no_custom_fields(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Create the enumerators column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "enumerator_id",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "name",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "email",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "mobile_primary",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "personal_details",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "home_address",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "prime_geo_level_location",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                },
+            ],
+        }
+
         response = client.put(
             "/api/enumerators/column-config",
             query_string={"form_uid": 1},
@@ -601,6 +655,57 @@ class TestAssignments:
                     "column_name": "Address",
                     "column_type": "custom_fields",
                     "bulk_editable": True,
+                    "contains_pii": True,
+                },
+                {
+                    "column_name": "bottom_geo_level_location",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/targets/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_target_column_config_no_custom_fields(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Upload the targets column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "target_id",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": False,
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "basic_details",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
                     "contains_pii": True,
                 },
                 {
@@ -2520,4 +2625,781 @@ class TestAssignments:
         print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_table_config_default(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test the default response from the table config endpoint
+        """
+
+        response = client.get(
+            "/api/assignments/table-config", query_string={"form_uid": 1}
+        )
+
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Unique ID"},
+                        {"column_key": "gender", "column_label": "Gender"},
+                        {"column_key": "language", "column_label": "Language"},
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"},
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        },
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        },
+                    ],
+                    "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Interview Status",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                        {"column_key": "attempts", "column_label": "Total Attempts"},
+                    ],
+                    "group_label": "Target Status Details",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "prev_assigned_to",
+                            "column_label": "Previously Assigned To",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Target Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "total_assigned",
+                            "column_label": "Total Assigned",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "total_completed",
+                            "column_label": "Total Completed",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "total_pending", "column_label": "Total Pending"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [{"column_key": "name", "column_label": "Name"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "enumerator_id", "column_label": "ID"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "total_assigned",
+                            "column_label": "Total Assigned",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "total_completed",
+                            "column_label": "Total Completed",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "total_pending", "column_label": "Total Pending"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "email", "column_label": "Email"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "mobile_primary", "column_label": "Mobile"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Interview Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "attempts", "column_label": "Total Attempts"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_no_custom_fields(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv_no_custom_fields,
+        upload_targets_csv_no_custom_fields,
+        create_enumerator_column_config_no_custom_fields,
+        create_target_column_config_no_custom_fields,
+        csrf_token,
+    ):
+        """
+        Test the default response from the table config endpoint when no custom fields are present
+        """
+
+        response = client.get(
+            "/api/assignments/table-config", query_string={"form_uid": 1}
+        )
+
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Unique ID"},
+                        {"column_key": "gender", "column_label": "Gender"},
+                        {"column_key": "language", "column_label": "Language"},
+                    ],
+                    "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Interview Status",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                        {"column_key": "attempts", "column_label": "Total Attempts"},
+                    ],
+                    "group_label": "Target Status Details",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "prev_assigned_to",
+                            "column_label": "Previously Assigned To",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Target Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "total_assigned",
+                            "column_label": "Total Assigned",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "total_completed",
+                            "column_label": "Total Completed",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "total_pending", "column_label": "Total Pending"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [{"column_key": "name", "column_label": "Name"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "enumerator_id", "column_label": "ID"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "total_assigned",
+                            "column_label": "Total Assigned",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "total_completed",
+                            "column_label": "Total Completed",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "total_pending", "column_label": "Total Pending"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "email", "column_label": "Email"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "mobile_primary", "column_label": "Mobile"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Interview Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "attempts", "column_label": "Total Attempts"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
         assert checkdiff == {}
