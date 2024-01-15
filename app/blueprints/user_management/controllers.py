@@ -3,7 +3,7 @@ from flask import jsonify, request, current_app
 from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
-from sqlalchemy import or_, func
+from sqlalchemy import and_, func
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
@@ -225,29 +225,36 @@ def complete_registration():
     else:
         return jsonify(message="X-CSRF-Token required in header"), 403
 
-    if form.validate():
-        invite_code = form.invite_code.data
-        new_password = form.new_password.data
+    try:
+        if form.validate():
+            invite_code = form.invite_code.data
+            new_password = form.new_password.data
 
-        # Find the invite with the provided invite code
-        invite = Invite.query.filter_by(
-            invite_code=invite_code, is_active=True).first()
+            # Find the invite with the provided invite code
+            invite = Invite.query.filter_by(
+                invite_code=invite_code, is_active=True).first()
 
-        if not invite:
-            return jsonify(message="Invalid or expired invite code"), 404
+            if not invite:
+                return jsonify(message="Invalid or expired invite code"), 404
 
-        # Update user password and set invite status to inactive
-        user = User.query.get(invite.user_uid)
-        user.change_password(new_password)
+            # Update user password and set invite status to inactive
+            user = User.query.get(invite.user_uid)
+            # update user in case it was deleted
+            user.to_delete = False
+            user.active = True
+            user.change_password(new_password)
 
-        # Update invite status to inactive
-        invite.is_active = False
-        db.session.commit()
+            # Update invite status to inactive
+            invite.is_active = False
+            db.session.commit()
 
-        return jsonify(message="Success: registration completed"), 200
-    else:
-        return jsonify(message=form.errors), 422
-
+            return jsonify(message="Success: registration completed"), 200
+        else:
+            error_messages = {field: form.errors[field][0] for field in form.errors}
+            return jsonify(errors=error_messages), 422
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(message="An error occurred while processing your request"), 500
 
 @user_management_bp.route("/users/<int:user_id>", methods=["PUT"])
 @logged_in_active_user_required
@@ -351,7 +358,7 @@ def get_all_users():
             func.array_agg(roles_subquery.c.role_name.distinct()).label("user_role_names"),
             func.array_agg(Survey.survey_name.distinct()).label("user_survey_names")
         )
-        .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
+        .filter(and_(~User.to_delete, ))
         .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
         .outerjoin(
             roles_subquery,
