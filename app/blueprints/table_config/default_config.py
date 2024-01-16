@@ -126,7 +126,7 @@ class DefaultTableConfig:
                         "column_label": "Revisit Sections",
                     },
                     {
-                        "column_key": "attempts",
+                        "column_key": "num_attempts",
                         "column_label": "Total Attempts",
                     },
                 ],
@@ -414,7 +414,7 @@ class DefaultTableConfig:
                 "group_label": None,
                 "columns": [
                     {
-                        "column_key": "attempts",
+                        "column_key": "num_attempts",
                         "column_label": "Total Attempts",
                     },
                 ],

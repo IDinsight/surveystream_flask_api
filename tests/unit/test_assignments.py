@@ -2716,7 +2716,10 @@ class TestAssignments:
                             "column_key": "revisit_sections",
                             "column_label": "Revisit Sections",
                         },
-                        {"column_key": "attempts", "column_label": "Total Attempts"},
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Total Attempts",
+                        },
                     ],
                     "group_label": "Target Status Details",
                 },
@@ -3021,7 +3024,7 @@ class TestAssignments:
                 },
                 {
                     "columns": [
-                        {"column_key": "attempts", "column_label": "Total Attempts"}
+                        {"column_key": "num_attempts", "column_label": "Total Attempts"}
                     ],
                     "group_label": None,
                 },
@@ -3112,7 +3115,10 @@ class TestAssignments:
                             "column_key": "revisit_sections",
                             "column_label": "Revisit Sections",
                         },
-                        {"column_key": "attempts", "column_label": "Total Attempts"},
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Total Attempts",
+                        },
                     ],
                     "group_label": "Target Status Details",
                 },
@@ -3393,7 +3399,7 @@ class TestAssignments:
                 },
                 {
                     "columns": [
-                        {"column_key": "attempts", "column_label": "Total Attempts"}
+                        {"column_key": "num_attempts", "column_label": "Total Attempts"}
                     ],
                     "group_label": None,
                 },
