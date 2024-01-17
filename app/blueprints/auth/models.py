@@ -96,6 +96,23 @@ class User(db.Model, UserMixin):
         """
         return False
 
+    ##############################################################################
+    # RBAC
+    ##############################################################################
+    def get_roles(self):
+        """
+        Return user roles for rbac
+        """
+        return self.roles
+
+    def get_is_super_admin(self):
+
+        return self.is_super_admin
+
+    def get_is_survey_admin(self):
+
+        return  self.is_super_admin
+
 
 class ResetPasswordToken(db.Model):
     """

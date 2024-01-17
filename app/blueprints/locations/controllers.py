@@ -1,5 +1,5 @@
 from flask import jsonify, request
-from app.utils.utils import logged_in_active_user_required
+from app.utils.utils import logged_in_active_user_required, custom_permissions_required
 from flask_login import current_user
 from sqlalchemy import insert, cast, Integer
 from sqlalchemy.sql import case
@@ -224,6 +224,8 @@ def update_survey_geo_levels():
 
 
 @locations_bp.route("", methods=["POST"])
+@logged_in_active_user_required
+@custom_permissions_required('WRITE Survey Locations')
 def upload_locations():
     """
     Method to validate the uploaded locations file and save it
@@ -453,6 +455,8 @@ def upload_locations():
 
 
 @locations_bp.route("", methods=["GET"])
+@logged_in_active_user_required
+@custom_permissions_required('READ Survey Locations')
 def get_locations():
     """
     Method to retrieve the locations information from the database
