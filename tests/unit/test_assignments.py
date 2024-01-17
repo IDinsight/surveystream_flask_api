@@ -2662,7 +2662,7 @@ class TestAssignments:
                 },
                 {
                     "columns": [
-                        {"column_key": "target_id", "column_label": "Unique ID"},
+                        {"column_key": "target_id", "column_label": "Target ID"},
                         {"column_key": "gender", "column_label": "Gender"},
                         {"column_key": "language", "column_label": "Language"},
                         {"column_key": "custom_fields['Name']", "column_label": "Name"},
@@ -2710,7 +2710,7 @@ class TestAssignments:
                     "columns": [
                         {
                             "column_key": "last_attempt_survey_status_label",
-                            "column_label": "Interview Status",
+                            "column_label": "Last Attempt Survey Status",
                         },
                         {
                             "column_key": "revisit_sections",
@@ -2939,7 +2939,7 @@ class TestAssignments:
             "targets": [
                 {
                     "columns": [
-                        {"column_key": "target_id", "column_label": "Unique ID"}
+                        {"column_key": "target_id", "column_label": "Target ID"}
                     ],
                     "group_label": None,
                 },
@@ -3008,7 +3008,7 @@ class TestAssignments:
                     "columns": [
                         {
                             "column_key": "last_attempt_survey_status_label",
-                            "column_label": "Interview Status",
+                            "column_label": "Last Attempt Survey Status",
                         }
                     ],
                     "group_label": None,
@@ -3070,7 +3070,7 @@ class TestAssignments:
                 },
                 {
                     "columns": [
-                        {"column_key": "target_id", "column_label": "Unique ID"},
+                        {"column_key": "target_id", "column_label": "Target ID"},
                         {"column_key": "gender", "column_label": "Gender"},
                         {"column_key": "language", "column_label": "Language"},
                     ],
@@ -3109,7 +3109,7 @@ class TestAssignments:
                     "columns": [
                         {
                             "column_key": "last_attempt_survey_status_label",
-                            "column_label": "Interview Status",
+                            "column_label": "Last Attempt Survey Status",
                         },
                         {
                             "column_key": "revisit_sections",
@@ -3338,7 +3338,7 @@ class TestAssignments:
             "targets": [
                 {
                     "columns": [
-                        {"column_key": "target_id", "column_label": "Unique ID"}
+                        {"column_key": "target_id", "column_label": "Target ID"}
                     ],
                     "group_label": None,
                 },
@@ -3383,7 +3383,7 @@ class TestAssignments:
                     "columns": [
                         {
                             "column_key": "last_attempt_survey_status_label",
-                            "column_label": "Interview Status",
+                            "column_label": "Last Attempt Survey Status",
                         }
                     ],
                     "group_label": None,

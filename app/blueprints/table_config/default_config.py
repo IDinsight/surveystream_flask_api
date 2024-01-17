@@ -97,7 +97,7 @@ class DefaultTableConfig:
                 "columns": [
                     {
                         "column_key": "target_id",
-                        "column_label": "Unique ID",
+                        "column_label": "Target ID",
                     },
                     {
                         "column_key": "gender",
@@ -119,7 +119,7 @@ class DefaultTableConfig:
                 "columns": [
                     {
                         "column_key": "last_attempt_survey_status_label",
-                        "column_label": "Interview Status",
+                        "column_label": "Last Attempt Survey Status",
                     },
                     {
                         "column_key": "revisit_sections",
@@ -368,7 +368,7 @@ class DefaultTableConfig:
                 "columns": [
                     {
                         "column_key": "target_id",
-                        "column_label": "Unique ID",
+                        "column_label": "Target ID",
                     }
                 ],
             },
@@ -397,7 +397,7 @@ class DefaultTableConfig:
                 "columns": [
                     {
                         "column_key": "last_attempt_survey_status_label",
-                        "column_label": "Interview Status",
+                        "column_label": "Last Attempt Survey Status",
                     },
                 ],
             },
