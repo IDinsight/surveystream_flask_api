@@ -60,6 +60,7 @@ def test_user_credentials():
             "email": settings["email"],
             "user_uid": 3933,
             "password": "asdfasdf",
+            "is_super_admin": True
         }
     }
 
@@ -144,11 +145,12 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
 
         # Set the credentials for the desired test user
         db.session.execute(
-            "UPDATE webapp.users SET email=:email, password_secure=:pw_hash WHERE user_uid=:user_uid",
+            "UPDATE webapp.users SET email=:email, password_secure=:pw_hash, is_super_admin=:is_super_admin WHERE user_uid=:user_uid",
             {
                 "email": test_user_credentials["email"],
                 "pw_hash": test_user_credentials["pw_hash"],
                 "user_uid": test_user_credentials["user_uid"],
+                "is_super_admin": test_user_credentials["is_super_admin"],
             },
         )
 
@@ -156,10 +158,11 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
 
         # Add the registration user
         db.session.execute(
-            "INSERT INTO webapp.users (email, password_secure) VALUES (:email, :pw_hash) ON CONFLICT DO NOTHING",
+            "INSERT INTO webapp.users (email, password_secure, is_super_admin) VALUES (:email, :pw_hash, :is_super_admin) ON CONFLICT DO NOTHING",
             {
                 "email": registration_user_credentials["email"],
                 "pw_hash": registration_user_credentials["pw_hash"],
+                "is_super_admin": test_user_credentials["is_super_admin"],
             },
         )
 

@@ -2,10 +2,11 @@ boto3==1.26.148
 flask-bootstrap4==4.0.2
 Flask-HTTPAuth==4.8.0
 Flask-Login==0.6.2
+Flask-Cors==3.0.10
 Flask-Mail==0.9.1
 Flask-Migrate==4.0.4
 Flask-SQLAlchemy==3.0.3
-Flask-WTF==1.1.1
+Flask-WTF==1.1.2
 flask==2.3.2
 gunicorn==20.1.0
 gevent==22.10.2
@@ -24,7 +25,7 @@ PyYAML==6.0
 sentry-sdk[flask, sqlalchemy]==1.25.0
 SQLAlchemy==1.4.41
 werkzeug==2.3.4
-wtforms[email]==2.3.3
+wtforms[email]==3.0.0
 wtforms-json==0.3.5
 
 
