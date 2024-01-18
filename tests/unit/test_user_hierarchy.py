@@ -60,9 +60,6 @@ class TestUserHierarchy:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print("surveys")
-        print(response.json)
-
         assert response.status_code == 201
         return response.json
 
@@ -73,9 +70,6 @@ class TestUserHierarchy:
         Insert new roles as a setup step for the roles tests
         """
         survey_uid = create_survey.get('data', {}).get('survey', {}).get('survey_uid', None)
-
-        print("survey_uid")
-        print(survey_uid)
 
         payload = {
             "roles": [
@@ -104,8 +98,6 @@ class TestUserHierarchy:
         assert response.status_code == 200
 
         response = client.get("/api/roles", query_string={"survey_uid": survey_uid})
-
-        print(response.json)
 
         return response.json
 

@@ -1,7 +1,8 @@
+from app.blueprints.auth.models import User
 from flask import jsonify, request
 from app.utils.utils import logged_in_active_user_required
 from flask_login import current_user
-from sqlalchemy import insert, cast, Integer, ARRAY, func, and_, distinct, or_
+from sqlalchemy import insert, cast, Integer, ARRAY, func, distinct
 from sqlalchemy.sql import case
 from sqlalchemy.exc import IntegrityError
 from app import db
@@ -10,7 +11,6 @@ from .routes import roles_bp
 from .validators import SurveyRolesQueryParamValidator, SurveyRolesPayloadValidator, UserHierarchyPayloadValidator, \
     UserHierarchyParamValidator
 from .utils import run_role_hierarchy_validations
-from ..auth.models import User
 
 
 @roles_bp.route("/roles", methods=["GET"])
@@ -36,7 +36,7 @@ def get_survey_roles():
             func.unnest(User.roles).label('role_uid'),
             User.user_uid.label('user_uid'),
         )
-        .filter(or_(User.to_delete == False, User.to_delete.is_(None)))
+        .filter(User.to_delete.isnot(True))
         .subquery()
     )
 

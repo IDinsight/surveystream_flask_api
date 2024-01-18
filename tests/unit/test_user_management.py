@@ -123,7 +123,6 @@ class TestUserManagement:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token}
         )
-        print(response.json)
         assert response.status_code == 404
         assert b"Invalid or expired invite code" in response.data
 
@@ -196,8 +195,6 @@ class TestUserManagement:
         # Check if the returned data is a list of users
         users = json.loads(response.data)
 
-        print(users)
-
         assert isinstance(users, list)
 
 
@@ -211,7 +208,6 @@ class TestUserManagement:
 
         response = client.delete(
             f'/api/users/{user_id}', headers={"X-CSRF-Token": csrf_token})
-        print(response)
         assert response.status_code == 200
         assert b'User deleted successfully' in response.data
 

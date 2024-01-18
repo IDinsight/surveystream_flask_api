@@ -6,7 +6,6 @@ from flask_wtf.csrf import generate_csrf
 from flask_login import current_user, login_user, logout_user
 from flask_mail import Message
 from passlib.pwd import genword
-from flask_cors import CORS, cross_origin
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
 from .validators import (
@@ -28,7 +27,7 @@ def set_xsrf_cookie():
     Sets CSRF-TOKEN cookie
     """
     response = make_response(jsonify({"message": "success"}), 200)
-    response.set_cookie("CSRF-TOKEN", generate_csrf(),samesite='None', secure=True)
+    response.set_cookie("CSRF-TOKEN", generate_csrf(), samesite="None", secure=True)
     return response
 
 

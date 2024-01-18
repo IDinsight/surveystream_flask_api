@@ -1,13 +1,9 @@
-
 from app import db
 from app.blueprints.auth.models import User
 from app.blueprints.surveys.models import Survey
-from flask_security import RoleMixin
-from sqlalchemy import event, inspect
 
 
-
-class Role(db.Model, RoleMixin):
+class Role(db.Model):
     """
     SQLAlchemy data model for Role
     This tables defines the supervisor roles for a given survey
@@ -33,7 +29,14 @@ class Role(db.Model, RoleMixin):
     )
 
     def __init__(
-        self, role_uid, survey_uid, role_name, reporting_role_uid, user_uid, to_delete, permissions
+        self,
+        role_uid,
+        survey_uid,
+        role_name,
+        reporting_role_uid,
+        user_uid,
+        to_delete,
+        permissions,
     ):
         self.role_uid = role_uid
         self.survey_uid = survey_uid
@@ -49,8 +52,9 @@ class Role(db.Model, RoleMixin):
             "survey_uid": self.survey_uid,
             "role_name": self.role_name,
             "reporting_role_uid": self.reporting_role_uid,
-            "permissions": self.permissions
+            "permissions": self.permissions,
         }
+
 
 class UserHierarchy(db.Model):
     __tablename__ = "user_hierarchy"
@@ -59,9 +63,11 @@ class UserHierarchy(db.Model):
         db.Integer,
         db.ForeignKey(Survey.survey_uid),
     )
-    role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete='CASCADE'))
-    user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete='CASCADE'))
-    parent_user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete='CASCADE'))
+    role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete="CASCADE"))
+    user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete="CASCADE"))
+    parent_user_uid = db.Column(
+        db.Integer, db.ForeignKey(User.user_uid, ondelete="CASCADE")
+    )
 
     __table_args__ = (
         db.PrimaryKeyConstraint("survey_uid", "user_uid", name="user_hierarchy_pk"),
@@ -92,6 +98,7 @@ class RolePermissions(db.Model):
     __table_args__ = {"schema": "webapp"}
 
     role_permissions_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
-    role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete='CASCADE'))
-    permission_uid = db.Column(db.Integer, db.ForeignKey(Permission.permission_uid, ondelete='CASCADE'))
-
+    role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete="CASCADE"))
+    permission_uid = db.Column(
+        db.Integer, db.ForeignKey(Permission.permission_uid, ondelete="CASCADE")
+    )
