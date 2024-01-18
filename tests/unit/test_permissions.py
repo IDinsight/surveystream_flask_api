@@ -1,17 +1,15 @@
 import pytest
-from app import db
-from app.blueprints.user_management.models import Invite
-from app.blueprints.user_management.utils import generate_invite_code, send_invite_email
-from app.blueprints.auth.models import User
 import jsondiff
-import json
-
 
 @pytest.mark.permissions
 class TestPermissions:
 
     @pytest.fixture
     def create_permission(self, client, login_test_user, csrf_token):
+        """
+        Tests if we can create a simple WRITE permissions
+        The permission is returned by the fixture for subsequent tests
+        """
         data = {'name': 'WRITE', 'description': 'Write permission'}
         response = client.post('/api/permissions', json=data, content_type="application/json",
                                headers={"X-CSRF-Token": csrf_token})
@@ -25,6 +23,10 @@ class TestPermissions:
         }
 
     def test_default_data_available(self, client, login_test_user, csrf_token):
+        """
+            Tests fetch permissions is working, this tests also expects that permissions are
+            already seeded to the database by the migrations
+        """
         response = client.get('/api/permissions', content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
@@ -75,6 +77,10 @@ class TestPermissions:
 
 
     def test_create_permission(self, client, login_test_user, csrf_token, create_permission):
+        """
+        Test the create_permission fixture is working
+        Using a fetch test confirm that both the default data and the new created permission are both available
+        """
         response = client.get('/api/permissions', content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
@@ -126,6 +132,10 @@ class TestPermissions:
         assert jsondiff.diff(expected_data, response_data) == {}
 
     def test_get_permission(self, client, login_test_user, csrf_token, create_permission):
+        """
+        Test single permissions fetch
+        Expect data similar to create_permission data
+        """
         response = client.get(f"/api/permissions/{create_permission['permission_uid']}", content_type="application/json",
                               headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 200
@@ -133,6 +143,10 @@ class TestPermissions:
                 'description': create_permission['description']}
 
     def test_update_permission(self, client, login_test_user, csrf_token, create_permission):
+        """
+           Test permissions update endpoint
+           Expect data from create_permission to change to new data provided
+        """
         permission_id = create_permission['permission_uid']
         data = {'name': 'UPDATED', 'description': 'Updated permission'}
         response = client.put(f'/api/permissions/{permission_id}', json=data, content_type="application/json",
@@ -148,6 +162,10 @@ class TestPermissions:
                                         'description': 'Updated permission'}
 
     def test_delete_permission(self, client, login_test_user, csrf_token, create_permission):
+        """
+            Test permissions delete endpoint
+            Expect data from create_permission to be deleted
+        """
         permission_id = create_permission['permission_uid']
         response = client.delete(f'/api/permissions/{permission_id}', content_type="application/json",
                                  headers={"X-CSRF-Token": csrf_token})

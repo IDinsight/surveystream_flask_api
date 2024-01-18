@@ -1,7 +1,5 @@
 import jsondiff
 import pytest
-
-
 @pytest.mark.roles
 class TestRoles:
     @pytest.fixture()
@@ -37,6 +35,10 @@ class TestRoles:
 
     @pytest.fixture
     def create_permission(self, client, login_test_user, csrf_token):
+        """
+            Create simple permissions
+            Expect to be used while adding roles
+        """
         data = {'name': 'WRITE', 'description': 'Write permission'}
         response = client.post('/api/permissions', json=data, content_type="application/json",
                                headers={"X-CSRF-Token": csrf_token})
@@ -98,7 +100,8 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
-                    "permissions": [create_permission['permission_uid']]
+                    "permissions": [create_permission['permission_uid']],
+                    "user_count": 0
 
                 },
                 {
@@ -106,7 +109,8 @@ class TestRoles:
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
-                    "permissions": [create_permission['permission_uid']]
+                    "permissions": [create_permission['permission_uid']],
+                    "user_count": 0
                 },
             ],
             "success": True,
@@ -150,7 +154,7 @@ class TestRoles:
 
         response = client.get("/api/roles", query_string={"survey_uid": 1})
 
-        print(response)
+    
 
         expected_response = {
             "data": [
@@ -159,14 +163,16 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
-                    "permissions": []
+                    "permissions": [],
+                    "user_count": 0
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
-                    "permissions": []
+                    "permissions": [],
+                    "user_count": 0
                 },
             ],
             "success": True,
@@ -219,7 +225,8 @@ class TestRoles:
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
-                    "permissions": []
+                    "permissions": [],
+                    "user_count": 0
 
                 },
                 {
@@ -227,7 +234,8 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
-                    "permissions": []
+                    "permissions": [],
+                    "user_count": 0
 
                 },
             ],
@@ -308,7 +316,8 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
-                    "permissions": []
+                    "permissions": [],
+                    "user_count": 0
                 },
             ],
             "success": True,

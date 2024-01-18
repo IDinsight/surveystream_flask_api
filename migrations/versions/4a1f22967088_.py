@@ -1,4 +1,6 @@
-"""empty message
+"""
+Add default permissions to the permissions table,
+these are the permissions recognized by the system and will be used to validate access
 
 Revision ID: 4a1f22967088
 Revises: d1d10486ab0a

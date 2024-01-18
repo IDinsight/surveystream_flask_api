@@ -258,9 +258,10 @@ def get_enumerators():
 
     # Check if the logged in user has permission to access the given form
 
-    survey_uid = ParentForm.query.filter_by(form_uid=form_uid).first().survey_uid
-
     # This will be used to join in the locations hierarchy for each enumerator
+
+    ## TODO handle cases where these are None
+    survey_uid = ParentForm.query.filter_by(form_uid=form_uid).first().survey_uid
     prime_geo_level_uid = (
         Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
     )
@@ -469,8 +470,8 @@ def update_enumerator(enumerator_uid):
             keys_in_payload = custom_fields_in_payload.keys()
 
         for payload_key in keys_in_payload:
-            # exclude column_mapping from these checks
-            if payload_key not in keys_in_db and payload_key != "column_mapping":
+            #exclude column_mapping from these checks
+            if payload_key not in keys_in_db and payload_key != 'column_mapping':
                 return (
                     jsonify(
                         {
@@ -482,7 +483,7 @@ def update_enumerator(enumerator_uid):
                 )
         for db_key in keys_in_db:
             # exclude column_mapping from these checks
-            if db_key not in keys_in_payload and db_key != "column_mapping":
+            if db_key not in keys_in_payload and db_key != 'column_mapping':
                 return (
                     jsonify(
                         {
@@ -493,9 +494,9 @@ def update_enumerator(enumerator_uid):
                     422,
                 )
 
-            if db_key == "column_mapping":
-                # add column mapping to custom_fields from db
-                payload["custom_fields"]["column_mapping"] = custom_fields_in_db[db_key]
+            if db_key == 'column_mapping':
+                #add column mapping to custom_fields from db
+                payload["custom_fields"]['column_mapping']  = custom_fields_in_db[db_key]
 
         try:
             Enumerator.query.filter_by(enumerator_uid=enumerator_uid).update(
@@ -863,7 +864,7 @@ def update_enumerator_role(enumerator_uid):
                 location_uid=payload_validator.location_uid.data,
             )
             .on_conflict_do_update(
-                constraint=f"pkey_{payload_validator.enumerator_type.data}_location",
+                constraint=f"{payload_validator.enumerator_type.data}_location_pkey",
                 set_={
                     "location_uid": payload_validator.location_uid.data,
                 },
