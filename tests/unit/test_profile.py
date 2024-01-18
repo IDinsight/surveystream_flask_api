@@ -165,7 +165,6 @@ class TestProfile:
         reference_data = load_reference_data("profile.json")
         reference_data["email"] = test_user_credentials["email"]
         reference_data["user_uid"] = test_user_credentials["user_uid"]
-        reference_data["is_super_admin"] = True
 
         checkdiff = jsondiff.diff(reference_data, response.json)
 
@@ -191,7 +190,7 @@ class TestProfile:
             response.json,
         )
 
-        assert checkdiff == {"email": new_email, 'is_super_admin': True}
+        assert checkdiff == {"email": new_email}
 
     def test_profile_update_invalid_email(self, client, login_test_user, csrf_token):
         """

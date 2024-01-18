@@ -1,20 +1,11 @@
-from app.blueprints.surveys.models import Survey
 from . import user_management_bp
 from flask import jsonify, request, current_app
 from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
-<<<<<<< HEAD
 from sqlalchemy.orm import aliased, subqueryload
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
-=======
-from sqlalchemy import func
-
-from app import db, mail
-from app.blueprints.auth.models import ResetPasswordToken, User
-from app.blueprints.roles.models import Role
->>>>>>> dev
 from .models import Invite
 from .utils import generate_invite_code, send_invite_email
 from .validators import (
@@ -23,16 +14,10 @@ from .validators import (
     RegisterValidator,
     WelcomeUserValidator,
     EditUserValidator,
-<<<<<<< HEAD
     CheckUserValidator
 )
 from app.utils.utils import logged_in_active_user_required
 from sqlalchemy import or_
-=======
-    CheckUserValidator,
-)
-from app.utils.utils import logged_in_active_user_required
->>>>>>> dev
 
 
 @user_management_bp.route("/register", methods=["POST"])
@@ -63,11 +48,7 @@ def register():
                     last_name="",
                     password=form.password.data,
                     roles=[],
-<<<<<<< HEAD
                     is_super_admin=True
-=======
-                    is_super_admin=True,
->>>>>>> dev
                 )
                 db.session.add(new_user)
                 db.session.commit()
@@ -134,10 +115,6 @@ def welcome_user():
     else:
         return jsonify(message=form.errors), 422
 
-<<<<<<< HEAD
-=======
-
->>>>>>> dev
 ##############################################################################
 # INVITE / REGISTRATION / USER MANAGEMENT
 ##############################################################################
@@ -163,14 +140,7 @@ def check_user():
         if not user_with_email:
             return jsonify(message="User not found"), 404
         else:
-<<<<<<< HEAD
             return jsonify(message="User already exists", user=user_with_email.to_dict()), 200
-=======
-            return (
-                jsonify(message="User already exists", user=user_with_email.to_dict()),
-                200,
-            )
->>>>>>> dev
     else:
         return jsonify(message=form.errors), 422
 
@@ -207,25 +177,16 @@ def add_user():
                 last_name=form.last_name.data,
                 password=None,
                 roles=form.roles.data,
-<<<<<<< HEAD
                 is_super_admin=form.is_super_admin.data  # No password for invited users
             )
 
             # Add logic to assign roles based on the form input
-=======
-                is_super_admin=form.is_super_admin.data,
-            )
-
->>>>>>> dev
             db.session.add(new_user)
             db.session.commit()
 
             invite_code = generate_invite_code()
 
-<<<<<<< HEAD
             # Create an invite record
-=======
->>>>>>> dev
             invite = Invite(
                 invite_code=invite_code,
                 email=form.email.data,
@@ -233,28 +194,14 @@ def add_user():
                 is_active=True,
             )
 
-<<<<<<< HEAD
             # Commit changes to the database
-=======
->>>>>>> dev
             db.session.add(invite)
             db.session.commit()
 
             # send an invitation email to the user
             send_invite_email(form.email.data, invite_code)
 
-<<<<<<< HEAD
             return jsonify(message="Success: user invited", user=new_user.to_dict(), invite=invite.to_dict()), 200
-=======
-            return (
-                jsonify(
-                    message="Success: user invited",
-                    user=new_user.to_dict(),
-                    invite=invite.to_dict(),
-                ),
-                200,
-            )
->>>>>>> dev
         else:
             return jsonify(message="User already exists with email"), 422
     else:
@@ -279,7 +226,6 @@ def complete_registration():
     else:
         return jsonify(message="X-CSRF-Token required in header"), 403
 
-<<<<<<< HEAD
     if form.validate():
         invite_code = form.invite_code.data
         new_password = form.new_password.data
@@ -308,44 +254,6 @@ def complete_registration():
 @logged_in_active_user_required
 def edit_user(user_id):
     print(user_id)
-=======
-    try:
-        if form.validate():
-            invite_code = form.invite_code.data
-            new_password = form.new_password.data
-
-            # Find the invite with the provided invite code
-            invite = Invite.query.filter_by(
-                invite_code=invite_code, is_active=True
-            ).first()
-
-            if not invite:
-                return jsonify(message="Invalid or expired invite code"), 404
-
-            # Update user password and set invite status to inactive
-            user = User.query.get(invite.user_uid)
-            # update user in case it was deleted
-            user.to_delete = False
-            user.active = True
-            user.change_password(new_password)
-
-            # Update invite status to inactive
-            invite.is_active = False
-            db.session.commit()
-
-            return jsonify(message="Success: registration completed"), 200
-        else:
-            error_messages = {field: form.errors[field][0] for field in form.errors}
-            return jsonify(errors=error_messages), 422
-    except Exception as e:
-        db.session.rollback()
-        return jsonify(message="An error occurred while processing your request"), 500
-
-
-@user_management_bp.route("/users/<int:user_uid>", methods=["PUT"])
-@logged_in_active_user_required
-def edit_user(user_uid):
->>>>>>> dev
     """
     Endpoint to edit a user's information.
 
@@ -355,10 +263,7 @@ def edit_user(user_uid):
     - last_name
     - roles
     - is_super_admin
-<<<<<<< HEAD
     - permissions
-=======
->>>>>>> dev
 
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
@@ -369,11 +274,7 @@ def edit_user(user_uid):
         return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
-<<<<<<< HEAD
         user_to_edit = User.query.get(user_id)
-=======
-        user_to_edit = User.query.get(user_uid)
->>>>>>> dev
 
         if user_to_edit:
             # Update user information based on the form input
@@ -382,48 +283,26 @@ def edit_user(user_uid):
             user_to_edit.last_name = form.last_name.data
             user_to_edit.roles = form.roles.data
             user_to_edit.is_super_admin = form.is_super_admin.data
-<<<<<<< HEAD
             user_to_edit.permissions = form.permissions.data
 
             db.session.commit()
             user_data = user_to_edit.to_dict()
             print(user_data)
-=======
-            user_to_edit.to_delete = False
-            user_to_edit.active = True
-
-            db.session.commit()
-            user_data = user_to_edit.to_dict()
->>>>>>> dev
             return jsonify(message="User updated", user_data=user_data), 200
         else:
             return jsonify(message="User not found"), 404
     else:
-<<<<<<< HEAD
         return jsonify(message="Unauthorized"), 401
 
 
 @user_management_bp.route("/users/<int:user_id>", methods=["GET"])
 @logged_in_active_user_required
 def get_user(user_id):
-=======
-        return jsonify(message=form.errors), 422
-
-
-@user_management_bp.route("/users/<int:user_uid>", methods=["GET"])
-@logged_in_active_user_required
-def get_user(user_uid):
->>>>>>> dev
     """
     Endpoint to get information for a single user.
     """
     user = User.query.filter(
-<<<<<<< HEAD
         (User.user_uid == user_id) & ((User.to_delete == False) | (User.to_delete.is_(None)))
-=======
-        (User.user_uid == user_uid)
-        & (User.to_delete.isnot(True))
->>>>>>> dev
     ).first()
 
     if user:
@@ -433,11 +312,7 @@ def get_user(user_uid):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "roles": user.roles,
-<<<<<<< HEAD
             "is_super_admin": user.is_super_admin
-=======
-            "is_super_admin": user.is_super_admin,
->>>>>>> dev
         }
         return jsonify(user_data), 200
     else:
@@ -451,27 +326,16 @@ def get_all_users():
     Endpoint to get information for all users.
     """
 
-<<<<<<< HEAD
     # Get the survey_id from the query parameters
     subquery = (
         db.session.query(Invite)
         .filter(Invite.user_uid == User.user_uid)
         # Assuming you have a timestamp column like created_at
-=======
-    survey_uid = request.args.get("survey_uid")
-    if survey_uid is None and not current_user.is_super_admin:
-        return jsonify(message="Survey UID is required for non-super-admin users"), 400
-
-    invite_subquery = (
-        db.session.query(Invite)
-        .filter(Invite.user_uid == User.user_uid)
->>>>>>> dev
         .order_by(Invite.invite_uid.desc())
         .limit(1)
         .subquery()
     )
 
-<<<<<<< HEAD
     # Check if the user is a super admin
     if current_user.is_super_admin:
         users = (
@@ -499,63 +363,14 @@ def get_all_users():
     user_list = []
 
     for user, invite_is_active in users:
-=======
-    roles_subquery = (
-        db.session.query(
-            Role.role_name,
-            Role.role_uid,
-            Role.survey_uid,
-        )
-        .distinct()
-        .subquery()
-    )
-
-    user_query = (
-        db.session.query(
-            User,
-            invite_subquery.c.is_active.label("invite_is_active"),
-            func.array_agg(roles_subquery.c.role_name.distinct()).label(
-                "user_role_names"
-            ),
-            func.array_agg(Survey.survey_name.distinct()).label("user_survey_names"),
-        )
-        .filter(User.to_delete.isnot(True))
-        .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
-        .outerjoin(roles_subquery, roles_subquery.c.role_uid == func.any(User.roles))
-        .outerjoin(Survey, Survey.survey_uid == roles_subquery.c.survey_uid)
-        .group_by(
-            User.user_uid,
-            invite_subquery.c.is_active,
-        )
-    )
-
-    # Apply conditions based on current_user.is_super_admin
-    if current_user.is_super_admin and survey_uid is None:
-        users = user_query.all()
-    else:
-        users = user_query.filter(roles_subquery.c.survey_uid == survey_uid).all()
-
-    user_list = []
-
-    for user, invite_is_active, user_role_names, user_survey_names in users:
->>>>>>> dev
         user_data = {
             "user_id": user.user_uid,
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "roles": user.roles,
-<<<<<<< HEAD
             "is_super_admin": user.is_super_admin,
             "status": "Active" if user.active else ("Invite pending" if invite_is_active else "Deactivated"),
-=======
-            "user_survey_names": user_survey_names,
-            "user_role_names": user_role_names,
-            "is_super_admin": user.is_super_admin,
-            "status": "Active"
-            if user.active
-            else ("Invite pending" if invite_is_active else "Deactivated"),
->>>>>>> dev
         }
 
         user_list.append(user_data)
@@ -563,7 +378,6 @@ def get_all_users():
     return jsonify(user_list), 200
 
 
-<<<<<<< HEAD
 @user_management_bp.route("/users/<int:user_id>", methods=["DELETE"])
 @logged_in_active_user_required
 def delete_user(user_id):
@@ -576,15 +390,6 @@ def delete_user(user_id):
         Endpoint to delete a user.
         """
     user = User.query.get(user_id)
-=======
-@user_management_bp.route("/users/<int:user_uid>", methods=["DELETE"])
-@logged_in_active_user_required
-def delete_user(user_uid):
-    """
-    Endpoint to delete a user.
-    """
-    user = User.query.get(user_uid)
->>>>>>> dev
     if user:
         try:
             # Set user as deleted and update active field
@@ -594,13 +399,7 @@ def delete_user(user_uid):
             return jsonify(message="User deleted successfully"), 200
         except Exception as e:
             db.session.rollback()
-<<<<<<< HEAD
             print(e)
             return jsonify(message=f"Error deleting user: {str(e)}"), 500
     else:
         return jsonify(message="User not found"), 404
-=======
-            return jsonify(message=f"Error deleting user: {str(e)}"), 500
-    else:
-        return jsonify(message="User not found"), 404
->>>>>>> dev

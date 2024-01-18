@@ -1,5 +1,3 @@
-import json
-
 from utils import set_user_active_status, logout, get_csrf_token, delete_user
 from app import db
 import pytest
@@ -7,32 +5,6 @@ import pytest
 
 @pytest.mark.auth
 class TestAuth:
-    @pytest.fixture
-    def added_user(self, client, login_test_user, csrf_token):
-        # Add a user for testing and return it
-        response = client.post(
-            "/api/users",
-            json={
-                "email": "newuser1@example.com",
-                "first_name": "John",
-                "last_name": "Doe",
-                "roles": [],
-            },
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token}
-        )
-
-        assert response.status_code == 200
-        assert b"Success: user invited" in response.data
-        response_data = json.loads(response.data)
-        user_object = response_data.get("user")
-
-        return {"user": user_object}
-
-    @pytest.fixture
-    def sample_user(self, added_user):
-        # Return the user added by added_user fixture as the sample_user
-        return added_user.get('user')
     def test_login_active_logged_out_user_correct_password(
         self, app, client, csrf_token, test_user_credentials
     ):
@@ -52,24 +24,6 @@ class TestAuth:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
-
-    def test_login_active_none_password(
-        self, app, client, csrf_token, sample_user
-    ):
-        """
-        Test login of added user with password as None
-        Expect 422 fail
-        """
-        response = client.post(
-            "/api/login",
-            json={
-                "email": sample_user["email"],
-                "password": None,
-            },
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        print(response)
-        assert response.status_code == 422
 
     def test_login_active_logged_in_user_correct_password(
         self, app, test_user_credentials, client, csrf_token

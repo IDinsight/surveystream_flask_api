@@ -33,18 +33,7 @@ class Role(db.Model, RoleMixin):
     )
 
     def __init__(
-<<<<<<< HEAD
         self, role_uid, survey_uid, role_name, reporting_role_uid, user_uid, to_delete, permissions
-=======
-        self,
-        role_uid,
-        survey_uid,
-        role_name,
-        reporting_role_uid,
-        user_uid,
-        to_delete,
-        permissions,
->>>>>>> dev
     ):
         self.role_uid = role_uid
         self.survey_uid = survey_uid
@@ -60,16 +49,9 @@ class Role(db.Model, RoleMixin):
             "survey_uid": self.survey_uid,
             "role_name": self.role_name,
             "reporting_role_uid": self.reporting_role_uid,
-<<<<<<< HEAD
             "permissions": self.permissions
         }
 
-=======
-            "permissions": self.permissions,
-        }
-
-
->>>>>>> dev
 class UserHierarchy(db.Model):
     __tablename__ = "user_hierarchy"
 
@@ -77,34 +59,15 @@ class UserHierarchy(db.Model):
         db.Integer,
         db.ForeignKey(Survey.survey_uid),
     )
-<<<<<<< HEAD
     role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete='CASCADE'))
     user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete='CASCADE'))
     parent_user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete='CASCADE'))
-=======
-    role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete="CASCADE"))
-    user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete="CASCADE"))
-    parent_user_uid = db.Column(
-        db.Integer, db.ForeignKey(User.user_uid, ondelete="CASCADE")
-    )
->>>>>>> dev
 
     __table_args__ = (
         db.PrimaryKeyConstraint("survey_uid", "user_uid", name="user_hierarchy_pk"),
         {"schema": "webapp"},
     )
 
-<<<<<<< HEAD
-=======
-    def to_dict(self):
-        return {
-            "role_uid": self.role_uid,
-            "survey_uid": self.survey_uid,
-            "parent_user_uid": self.parent_user_uid,
-            "user_uid": self.user_uid,
-        }
-
->>>>>>> dev
 
 class Permission(db.Model):
     __tablename__ = "permissions"
@@ -121,13 +84,6 @@ class RolePermissions(db.Model):
     __table_args__ = {"schema": "webapp"}
 
     role_permissions_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
-<<<<<<< HEAD
     role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete='CASCADE'))
     permission_uid = db.Column(db.Integer, db.ForeignKey(Permission.permission_uid, ondelete='CASCADE'))
 
-=======
-    role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete="CASCADE"))
-    permission_uid = db.Column(
-        db.Integer, db.ForeignKey(Permission.permission_uid, ondelete="CASCADE")
-    )
->>>>>>> dev

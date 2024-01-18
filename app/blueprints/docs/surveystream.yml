@@ -6,20 +6,20 @@ info:
 
     ### Context
 
-    SurveyStream is a survey management software application developed under
-    IDinsight’s DataDelta initiative.  SurveyStream is the centralized hub for
-    managing DataDelta’s survey operations in real time enabling fast,  cheap,
-    high quality data collection.
+    SurveyStream is a survey management software application developed under IDinsight’s
+    DataDelta initiative.  SurveyStream is the centralized hub for managing
+    DataDelta’s survey operations in real time enabling fast,  cheap, high quality
+    data collection.
 
 
     The SurveyStream web application enables survey supervisors to view survey
     targets, view and manage enumerator information, and make assignments
     between targets and enumerators.
-  version: "1.0"
+  version: '1.0'
 servers:
-  - url: "https://surveystream.idinsight.io/api"
+  - url: 'https://surveystream.idinsight.io/api'
     description: Production server
-  - url: "https://stg.surveystream.idinsight.io/api"
+  - url: 'https://stg.surveystream.idinsight.io/api'
     description: Staging server
 components:
   securitySchemes:
@@ -76,18 +76,12 @@ tags:
     description: Endpoints related to user roles
   - name: Locations
     description: Endpoints related to locations
-  - name: Permissions
-    description: Endpoints related to permissions
-  - name: User Hierarchy
-    description: Endpoints related to user hierarchy
 x-tagGroups:
   - name: User Management
     tags:
       - User Authentication
       - Password Management
       - User Registration
-      - User Invite
-      - User Management
   - name: Profile
     tags:
       - Profile
@@ -119,8 +113,6 @@ x-tagGroups:
   - name: Roles
     tags:
       - Roles
-      - Permissions
-      - User Hierarchy
   - name: Locations
     tags:
       - Locations
@@ -128,14 +120,13 @@ paths:
   /healthcheck:
     get:
       summary: Test database connection
-      description: Check if api is running and connected
       security: []
       tags:
         - Misc
       responses:
-        "200":
+        '200':
           description: Healthy
-        "500":
+        '500':
           description: Failed DB connection
   /get-csrf:
     get:
@@ -147,7 +138,7 @@ paths:
       tags:
         - User Authentication
       responses:
-        "200":
+        '200':
           description: Success
   /login:
     post:
@@ -178,15 +169,15 @@ paths:
                 - email
                 - password
       responses:
-        "200":
-          description: "Success: logged in"
-        "400":
+        '200':
+          description: 'Success: logged in'
+        '400':
           description: User must not be already logged in
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /logout:
     get:
@@ -195,8 +186,8 @@ paths:
       tags:
         - User Authentication
       responses:
-        "200":
-          description: "Success: logged out"
+        '200':
+          description: 'Success: logged out'
   /register:
     post:
       summary: Create new user
@@ -225,13 +216,13 @@ paths:
                 - email
                 - password
       responses:
-        "200":
-          description: "Success: registered"
-        "401":
+        '200':
+          description: 'Success: registered'
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors | User already exists
   /change-password:
     post:
@@ -267,16 +258,15 @@ paths:
                 - new_password
                 - confirm
       responses:
-        "200":
-          description: "Success: password changed"
-        "403":
+        '200':
+          description: 'Success: password changed'
+        '403':
           description: Wrong password | X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /forgot-password:
     post:
       summary: Trigger password reset email
-      description: send a password reset email to a user
       security: []
       tags:
         - Password Management
@@ -299,13 +289,13 @@ paths:
               required:
                 - email
       responses:
-        "200":
+        '200':
           description: Request processed
-        "400":
+        '400':
           description: Already logged in - use /change-password
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /welcome-user:
     post:
@@ -334,17 +324,17 @@ paths:
               required:
                 - email
       responses:
-        "200":
+        '200':
           description: Request processed
-        "400":
+        '400':
           description: Already logged in - use /change-password
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Record not found
-        "422":
+        '422':
           description: Form errors
   /reset-password:
     post:
@@ -385,15 +375,15 @@ paths:
                 - new_password
                 - confirm
       responses:
-        "200":
-          description: "Success: password reset"
-        "400":
+        '200':
+          description: 'Success: password reset'
+        '400':
           description: Already logged in - use /change-password
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Invalid link
-        "422":
+        '422':
           description: Form errors
   /profile:
     get:
@@ -402,7 +392,7 @@ paths:
       tags:
         - Profile
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -433,9 +423,6 @@ paths:
                   home_district_name:
                     type: string
                     description: The home district of the user
-                  is_super_admin:
-                    type: boolean
-                    description: Super admin status for the user
   /profile/avatar:
     get:
       summary: Get avatar URL
@@ -443,7 +430,7 @@ paths:
       tags:
         - Profile
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -479,11 +466,11 @@ paths:
               type: string
               format: binary
       responses:
-        "200":
+        '200':
           description: Success
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /profile/avatar/remove:
     post:
@@ -499,382 +486,12 @@ paths:
             type: string
           required: true
       responses:
-        "200":
+        '200':
           description: Success
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
-  /users/check-email-availability:
-    post:
-      tags:
-        - User Management
-      summary: Endpoint to check a user by email
-      description: Requires JSON body with email.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-              required:
-                - email
-      responses:
-        "200":
-          description: User already exists
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  user:
-                    type: object
-        "403":
-          description: X-CSRF-Token required in header
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "404":
-          description: User not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-  "/users":
-    post:
-      tags:
-        - User Management
-      summary: Endpoint to invite a user by email
-      description: >-
-        Requires JSON body with email, first name, last name, role, and
-        is_super_admin.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                first_name:
-                  type: string
-                last_name:
-                  type: string
-                role:
-                  type: string
-                is_super_admin:
-                  type: boolean
-              required:
-                - email
-                - first_name
-                - last_name
-                - role
-                - is_super_admin
-      responses:
-        "200":
-          description: user invited
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  user:
-                    type: object
-                  invite:
-                    type: object
-        "403":
-          description: X-CSRF-Token required in header
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "422":
-          description: User already exists with email
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-    get:
-      tags:
-        - User Management
-      summary: Endpoint to get information for all users
-      description: Get all users for a super admin, use survey_uid for non admins to get users per survey
-      parameters:
-        - in: query
-          name: survey_uid
-          schema:
-             type: integer
-          required: false
-          description: survey_uid to filter users 
-      responses:
-        "200":
-          description: User information for all users retrieved
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    user_id:
-                      type: integer
-                    email:
-                      type: string
-                    first_name:
-                      type: string
-                    last_name:
-                      type: string
-                    roles:
-                      type: string
-                    user_survey_names:
-                      type: string
-                    user_role_names:
-                      type: string
-                    is_super_admin:
-                      type: boolean
-                    status:
-                      type: string
-        "400":
-          description: Survey ID is required for non-super-admin users
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-  "/users/complete-registration":
-    post:
-      tags:
-        - User Management
-      summary: Endpoint to complete user registration using an invite code
-      description: "Requires JSON body with invite_code, new_password, and confirm_password."
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                invite_code:
-                  type: string
-                new_password:
-                  type: string
-                confirm_password:
-                  type: string
-              required:
-                - invite_code
-                - new_password
-                - confirm_password
-      responses:
-        "200":
-          description: registration completed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "403":
-          description: X-CSRF-Token required in header
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "404":
-          description: Invalid or expired invite code
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "422":
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-
-  "/users/{user_uid}":
-    get:
-      tags:
-        - User Management
-      summary: Endpoint to get information for a single user
-      description: get user details for a single user
-      parameters:
-        - in: path
-          name: user_uid
-          schema:
-            type: integer
-          required: true
-          description: Unique ID of the user
-      responses:
-        "200":
-          description: User information retrieved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user_uid:
-                    type: integer
-                  email:
-                    type: string
-                  first_name:
-                    type: string
-                  last_name:
-                    type: string
-                  roles:
-                    type: array
-                  is_super_admin:
-                    type: boolean
-        "404":
-          description: User not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-    
-    put:
-      tags:
-        - User Management
-      summary: Endpoint to edit a user's information
-      description: >-
-        Requires JSON body with email, first name, last name, roles, and
-        is_super_admin.
-      parameters:
-        - in: path
-          name: user_uid
-          schema:
-            type: integer
-          required: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                first_name:
-                  type: string
-                last_name:
-                  type: string
-                roles:
-                  type: array
-                is_super_admin:
-                  type: boolean
-              required:
-                - email
-                - first_name
-                - last_name
-                - roles
-                - is_super_admin
-      responses:
-        "200":
-          description: User updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  user_data:
-                    type: object
-        "403":
-          description: X-CSRF-Token required in header
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "404":
-          description: User not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "422":
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-    delete:
-      tags:
-        - User Management
-      summary: Endpoint to delete a user
-      description: delete a single user
-      parameters:
-        - in: path
-          name: user_uid
-          schema:
-            type: integer
-          required: true
-          description: Unique ID of the user
-
-      responses:
-        "200":
-          description: User deleted successfully
-          content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-        "404":
-          description: User not found
-          content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
   /surveys:
     get:
       summary: Get surveys
@@ -882,7 +499,7 @@ paths:
       tags:
         - Surveys
       responses:
-        "200":
+        '200':
           description: Successful response
           content:
             application/json:
@@ -891,7 +508,8 @@ paths:
                 properties:
                   data:
                     type: array
-                    description: An array of surveys associated with the logged in user.
+                    description: >-
+                      An array of surveys associated with the logged in user.
                     items:
                       type: object
                       properties:
@@ -912,9 +530,7 @@ paths:
                           description: A description of the survey.
                         surveying_method:
                           type: string
-                          description: >-
-                            The method of surveying, e.g. in-person, phone,
-                            mixed-mode.
+                          description: 'The method of surveying, e.g. in-person, phone, mixed-mode.'
                         irb_approval:
                           type: string
                           description: >-
@@ -932,7 +548,7 @@ paths:
                             format.
                         state:
                           type: string
-                          description: "The state of the survey, e.g. Draft, Active, Past."
+                          description: 'The state of the survey, e.g. Draft, Active, Past.'
                         last_updated_at:
                           type: string
                           description: >-
@@ -941,7 +557,7 @@ paths:
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
-        "404":
+        '404':
           description: No surveys found for the specified user or all users.
           content:
             application/json:
@@ -958,9 +574,8 @@ paths:
       summary: Create a new survey
       tags:
         - Surveys
-      description: >-
-        Create a new survey with the basic information details. The survey_id
-        must be unique.
+      description: Create a new survey with the basic information details. The survey_id must be
+        unique.
       requestBody:
         required: true
         content:
@@ -982,7 +597,7 @@ paths:
                   description: The name of the project the survey belongs to
                 survey_description:
                   type: string
-                  example: "AgriFieldnet survey starting on 1st Jan, 2023"
+                  example: 'AgriFieldnet survey starting on 1st Jan, 2023'
                   description: A description of the survey
                 surveying_method:
                   type: string
@@ -995,10 +610,12 @@ paths:
                 irb_approval:
                   type: string
                   example: Pending
-                  description: The status of the Institutional Review Board (IRB) approval
+                  description: >-
+                    The status of the Institutional Review Board (IRB)
+                    approval
                   enum:
-                    - "Yes"
-                    - "No"
+                    - 'Yes'
+                    - 'No'
                     - Pending
                 planned_start_date:
                   type: string
@@ -1037,7 +654,7 @@ paths:
                 - config_status
                 - state
       responses:
-        "201":
+        '201':
           description: The survey was created successfully
           content:
             application/json:
@@ -1059,9 +676,7 @@ paths:
                           survey_uid:
                             type: integer
                             example: 19
-                            description: >-
-                              The database-assigned unique identifier for the
-                              survey
+                            description: The database-assigned unique identifier for the survey
                           survey_id:
                             type: string
                             example: AgriFieldnet
@@ -1076,7 +691,7 @@ paths:
                             description: The name of the project the survey belongs to
                           survey_description:
                             type: string
-                            example: "AgriFieldnet survey starting on 1st Jan, 2023"
+                            example: 'AgriFieldnet survey starting on 1st Jan, 2023'
                             description: A description
                           surveying_method:
                             type: string
@@ -1088,8 +703,8 @@ paths:
                           irb_approval:
                             type: string
                             enum:
-                              - "Yes"
-                              - "No"
+                              - 'Yes'
+                              - 'No'
                               - Pending
                             example: Pending
                           planned_start_date:
@@ -1118,7 +733,7 @@ paths:
                             type: string
                             format: date-time
                             example: 2023-04-18T00:00:00.000Z
-        "400":
+        '400':
           description: A survey with the same survey_id already exists
           content:
             application/json:
@@ -1131,9 +746,9 @@ paths:
                   error:
                     type: string
                     example: survey_id already exists
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
   /surveys/<survey_uid>/basic-information:
     get:
@@ -1142,7 +757,7 @@ paths:
       tags:
         - Surveys
       responses:
-        "200":
+        '200':
           description: Successful response
           content:
             application/json:
@@ -1172,9 +787,7 @@ paths:
                           description: A description of the survey.
                         surveying_method:
                           type: string
-                          description: >-
-                            The method of surveying, e.g. in-person, phone,
-                            mixed-mode.
+                          description: 'The method of surveying, e.g. in-person, phone, mixed-mode.'
                         irb_approval:
                           type: string
                           description: >-
@@ -1192,7 +805,7 @@ paths:
                             format.
                         state:
                           type: string
-                          description: "The state of the survey, e.g. Draft, Active, Past."
+                          description: 'The state of the survey, e.g. Draft, Active, Past.'
                         last_updated_at:
                           type: string
                           description: >-
@@ -1201,7 +814,7 @@ paths:
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
-        "404":
+        '404':
           description: No surveys found for the specified user or all users.
           content:
             application/json:
@@ -1221,7 +834,7 @@ paths:
       tags:
         - Surveys
       responses:
-        "200":
+        '200':
           description: Successful response
           content:
             application/json:
@@ -1242,27 +855,19 @@ paths:
                             properties:
                               status:
                                 type: string
-                                description: >-
-                                  Configration Status (Not started/ In progress/
-                                  Done)
+                                description: Configration Status (Not started/ In progress/ Done)
                         Survey information:
                           type: array
-                          description: >-
-                            Status of modules in the survey information section
-                            of the survey
+                          description: Status of modules in the survey information section of the survey
                           items:
                             type: object
                             properties:
                               name:
                                 type: string
-                                description: >-
-                                  Name of the module like SurveyCTO information,
-                                  Field supervisor roles etc.
+                                description: Name of the module like SurveyCTO information, Field supervisor roles etc.
                               status:
                                 type: string
-                                description: >-
-                                  Configration Status (Not started/ In progress/
-                                  Done)
+                                description: Configration Status (Not started/ In progress/ Done)
                         Module selection:
                           type: object
                           description: Status of module selection for the survey
@@ -1271,18 +876,14 @@ paths:
                             properties:
                               status:
                                 type: string
-                                description: >-
-                                  Configration Status (Not started/ In progress/
-                                  Done)
+                                description: Configration Status (Not started/ In progress/ Done)
                         overall_status:
                           type: string
-                          description: >-
-                            Overall Status (In progress - Configuration/ In
-                            Progress - Backend Setup/ Done)
+                          description: Overall Status (In progress - Configuration/ In Progress - Backend Setup/ Done)
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
-        "404":
+        '404':
           description: No surveys found for the specified user or all users.
           content:
             application/json:
@@ -1302,7 +903,7 @@ paths:
       summary: Get all modules
       description: Get a list of all modules
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -1327,7 +928,7 @@ paths:
                         optional:
                           type: boolean
                           description: Indicates if the module is optional
-        "404":
+        '404':
           description: Not Found
           content:
             application/json:
@@ -1343,9 +944,7 @@ paths:
       tags:
         - Module Selection
       summary: Add selected modules for a particular survey
-      description: >-
-        Add selected modules for a particular survey, with a default
-        config_status of `not started`.
+      description: Add selected modules for a particular survey, with a default config_status of `not started`.
       requestBody:
         description: JSON object containing survey ID and list of module IDs
         required: true
@@ -1360,12 +959,9 @@ paths:
                 modules:
                   type: array
                   description: List of module IDs
-                  example:
-                    - 1
-                    - 2
-                    - 3
+                  example: [ 1,2,3 ]
       responses:
-        "200":
+        '200':
           description: Module added successfully
           content:
             application/json:
@@ -1379,8 +975,8 @@ paths:
                   message:
                     type: string
                     description: Module status added successfully
-                    example: {}
-        "400":
+                    example: { }
+        '400':
           description: Invalid request body or missing required fields
           content:
             application/json:
@@ -1394,17 +990,16 @@ paths:
                   message:
                     type: string
                     description: Error message
-                    example: Both survey_id and modules are required.
-        "403":
+                    example: "Both survey_id and modules are required."
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
-  "/modules/{module_id}/status/{survey_uid}":
+  /modules/{module_id}/status/{survey_uid}:
     put:
       tags:
         - Module Selection
       summary: Update status of a module for a specific survey
-      description: Update status of a module for a specific survey
       parameters:
         - in: path
           name: module_id
@@ -1427,13 +1022,9 @@ paths:
               properties:
                 config_status:
                   type: string
-                  enum:
-                    - Done
-                    - In Progress
-                    - Not Started
-                    - Error
+                  enum: [ Done, In Progress, Not Started, Error ]
       responses:
-        "200":
+        '200':
           description: Successfully updated module status for survey
           content:
             application/json:
@@ -1449,10 +1040,8 @@ paths:
                       survey_uid: 1
                       module_id: 2
                       config_status: Done
-        "400":
-          description: >-
-            Bad request. Either module_id or survey_uid or status missing in the
-            request
+        '400':
+          description: Bad request. Either module_id or survey_uid or status missing in the request
           content:
             application/json:
               schema:
@@ -1464,7 +1053,7 @@ paths:
                   message:
                     type: string
                     example: Both module_id and survey_uid and status are required.
-        "404":
+        '404':
           description: The requested module or survey was not found
           content:
             application/json:
@@ -1477,7 +1066,7 @@ paths:
                   message:
                     type: string
                     example: The requested module or survey was not found
-  "/module-status/{survey_uid}":
+  /module-status/{survey_uid}:
     get:
       tags:
         - Module Selection
@@ -1493,8 +1082,9 @@ paths:
           required: true
           schema:
             type: integer
+
       responses:
-        "200":
+        '200':
           description: Returns the completion status of all modules for a given survey.
           content:
             application/json:
@@ -1506,9 +1096,7 @@ paths:
                     description: Indicates whether the request was successful
                   data:
                     type: array
-                    description: >-
-                      List of modules and their completion status for the given
-                      survey
+                    description: List of modules and their completion status for the given survey
                     items:
                       type: object
                       properties:
@@ -1521,12 +1109,8 @@ paths:
                         config_status:
                           type: string
                           description: Completion status of the module for the given survey
-                          enum:
-                            - Done
-                            - In Progress
-                            - Not Started
-                            - Error
-        "404":
+                          enum: [ 'Done', 'In Progress', 'Not Started', 'Error' ]
+        '404':
           description: The specified survey ID was not found.
           content:
             application/json:
@@ -1538,9 +1122,7 @@ paths:
                     description: Indicates whether the request was successful
                   message:
                     type: string
-                    description: >-
-                      Error message indicating that the specified survey ID was
-                      not found.
+                    description: Error message indicating that the specified survey ID was not found.
   /forms:
     post:
       summary: Create a new form
@@ -1565,33 +1147,28 @@ paths:
                   description: The form's SurveyCTO form ID
                 tz_name:
                   type: string
-                  description: >-
-                    The timezone in which data collection will happen for the
-                    form
+                  description: The timezone in which data collection will happen for the form
                 scto_server_name:
                   type: string
                   description: The SurveyCTO server name for the form
                 encryption_key_shared:
                   type: boolean
-                  description: >-
-                    Whether the encryption key for the form has been shared with
-                    the SurveyStream team
+                  description:
+                    Whether the encryption key for the form has been shared with the SurveyStream team
                 server_access_role_granted:
                   type: boolean
-                  description: >-
-                    Whether the SurveyStream team has been granted access to the
-                    SurveyCTO server for the form
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                 server_access_allowed:
                   type: boolean
-                  description: >-
-                    Whether the SurveyStream team has been granted access to the
-                    SurveyCTO server for the form
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
               required:
                 - survey_uid
                 - scto_form_id
                 - form_name
       responses:
-        "201":
+        '201':
           description: OK
           content:
             application/json:
@@ -1612,36 +1189,29 @@ paths:
                     description: The form's SurveyCTO form ID
                   tz_name:
                     type: string
-                    description: >-
-                      The timezone in which data collection will happen for the
-                      form
+                    description: The timezone in which data collection will happen for the form
                   scto_server_name:
                     type: string
                     description: The SurveyCTO server name for the form
                   encryption_key_shared:
                     type: boolean
-                    description: >-
-                      Whether the encryption key for the form has been shared
-                      with the SurveyStream team
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
                   server_access_role_granted:
                     type: boolean
-                    description: >-
-                      Whether the SurveyStream team has been granted access to
-                      the SurveyCTO server for the form
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                   server_access_allowed:
                     type: boolean
-                    description: >-
-                      Whether the SurveyStream team has been granted access to
-                      the SurveyCTO server for the form
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                   last_ingested_at:
                     type: string
                     description: >-
                       Date when form submissions were last ingested from
                       SurveyCTO in isoformat
-        "400":
-          description: >-
-            A form with the same survey_uid and scto_form_id already exists, or
-            a form with the same survey_uid and form_name already exists.
+        '400':
+          description: A form with the same survey_uid and scto_form_id already exists, or a form with the same survey_uid and form_name already exists.
           content:
             application/json:
               schema:
@@ -1652,19 +1222,14 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: >-
-                      Error message indicating that the form could not be
-                      created.
-        "403":
+                    description: Error message indicating that the form could not be created.
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
     get:
       summary: Get forms for a user
-      description: >-
-        Get the forms for the logged in user. Optionally, a
-        `?survey_uid=<survey_uid>` query parameter can be provided to return
-        forms for a specific survey.
+      description: Get the forms for the logged in user. Optionally, a `?survey_uid=<survey_uid>` query parameter can be provided to return forms for a specific survey.
       tags:
         - Forms
       parameters:
@@ -1675,7 +1240,7 @@ paths:
           required: false
           description: Unique ID of the survey to return forms for.
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -1698,38 +1263,31 @@ paths:
                       description: The form's SurveyCTO form ID
                     tz_name:
                       type: string
-                      description: >-
-                        The timezone in which data collection will happen for
-                        the form
+                      description: The timezone in which data collection will happen for the form
                     scto_server_name:
                       type: string
                       description: The SurveyCTO server name for the form
                     encryption_key_shared:
                       type: boolean
-                      description: >-
-                        Whether the encryption key for the form has been shared
-                        with the SurveyStream team
+                      description:
+                        Whether the encryption key for the form has been shared with the SurveyStream team
                     server_access_role_granted:
                       type: boolean
-                      description: >-
-                        Whether the SurveyStream team has been granted access to
-                        the SurveyCTO server for the form
+                      description:
+                        Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                     server_access_allowed:
                       type: boolean
-                      description: >-
-                        Whether the SurveyStream team has been granted access to
-                        the SurveyCTO server for the form
+                      description:
+                        Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                     last_ingested_at:
                       type: string
                       description: >-
                         Date when form submissions were last ingested from
                         SurveyCTO in isoformat
-  "/forms/{form_uid}":
+  /forms/{form_uid}:
     get:
       summary: Get forms
-      description: >-
-        Return the information for the requested form. If path parameter is not
-        provided, return all forms for the logged in user.
+      description: Return the information for the requested form. If path parameter is not provided, return all forms for the logged in user.
       tags:
         - Forms
       parameters:
@@ -1744,11 +1302,9 @@ paths:
           schema:
             type: integer
           required: false
-          description: >-
-            Unique ID of the survey to return forms for. Cannot be used in
-            conjuction with the `form_uid` path parameter.
+          description: Unique ID of the survey to return forms for. Cannot be used in conjuction with the `form_uid` path parameter.
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -1769,33 +1325,28 @@ paths:
                     description: The form's SurveyCTO form ID
                   tz_name:
                     type: string
-                    description: >-
-                      The timezone in which data collection will happen for the
-                      form
+                    description: The timezone in which data collection will happen for the form
                   scto_server_name:
                     type: string
                     description: The SurveyCTO server name for the form
                   encryption_key_shared:
                     type: boolean
-                    description: >-
-                      Whether the encryption key for the form has been shared
-                      with the SurveyStream team
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
                   server_access_role_granted:
                     type: boolean
-                    description: >-
-                      Whether the SurveyStream team has been granted access to
-                      the SurveyCTO server for the form
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                   server_access_allowed:
                     type: boolean
-                    description: >-
-                      Whether the SurveyStream team has been granted access to
-                      the SurveyCTO server for the form
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                   last_ingested_at:
                     type: string
                     description: >-
                       Date when form submissions were last ingested from
                       SurveyCTO in isoformat
-        "404":
+        '404':
           description: The specified form ID was not found.
           content:
             application/json:
@@ -1807,9 +1358,7 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: >-
-                      Error message indicating that the specified form ID was
-                      not found.
+                    description: Error message indicating that the specified form ID was not found.
     put:
       summary: Update an existing form
       tags:
@@ -1843,33 +1392,28 @@ paths:
                   description: The form's SurveyCTO form ID
                 tz_name:
                   type: string
-                  description: >-
-                    The timezone in which data collection will happen for the
-                    form
+                  description: The timezone in which data collection will happen for the form
                 scto_server_name:
                   type: string
                   description: The SurveyCTO server name for the form
                 encryption_key_shared:
                   type: boolean
-                  description: >-
-                    Whether the encryption key for the form has been shared with
-                    the SurveyStream team
+                  description:
+                    Whether the encryption key for the form has been shared with the SurveyStream team
                 server_access_role_granted:
                   type: boolean
-                  description: >-
-                    Whether the SurveyStream team has been granted access to the
-                    SurveyCTO server for the form
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                 server_access_allowed:
                   type: boolean
-                  description: >-
-                    Whether the SurveyStream team has been granted access to the
-                    SurveyCTO server for the form
+                  description:
+                    Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
               required:
                 - survey_uid
                 - scto_form_id
                 - form_name
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -1890,67 +1434,30 @@ paths:
                     description: The form's SurveyCTO form ID
                   tz_name:
                     type: string
-                    description: >-
-                      The timezone in which data collection will happen for the
-                      form
+                    description: The timezone in which data collection will happen for the form
                   scto_server_name:
                     type: string
                     description: The SurveyCTO server name for the form
                   encryption_key_shared:
                     type: boolean
-                    description: >-
-                      Whether the encryption key for the form has been shared
-                      with the SurveyStream team
+                    description:
+                      Whether the encryption key for the form has been shared with the SurveyStream team
                   server_access_role_granted:
                     type: boolean
-                    description: >-
-                      Whether the SurveyStream team has been granted access to
-                      the SurveyCTO server for the form
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                   server_access_allowed:
                     type: boolean
-                    description: >-
-                      Whether the SurveyStream team has been granted access to
-                      the SurveyCTO server for the form
+                    description:
+                      Whether the SurveyStream team has been granted access to the SurveyCTO server for the form
                   last_ingested_at:
                     type: string
                     description: >-
                       Date when form submissions were last ingested from
                       SurveyCTO in isoformat
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
-          description: The specified form ID was not found.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    description: Indicates whether the request was successful
-                  error:
-                    type: string
-                    description: >-
-                      Error message indicating that the specified form ID was
-                      not found.
-        "422":
-          description: Form errors
-    delete:
-      summary: Delete a form
-      description: Delete a form
-      tags:
-        - Forms
-      parameters:
-        - in: path
-          name: form_uid
-          schema:
-            type: integer
-          required: true
-          description: Unique ID of the form
-      responses:
-        "200":
-          description: OK
-        "404":
+        '404':
           description: The specified form ID was not found.
           content:
             application/json:
@@ -1963,14 +1470,43 @@ paths:
                   error:
                     type: string
                     description: Error message indicating that the specified form ID was not found.
-  
-  "/forms/{form_uid}/scto-question-mapping":
+        '422':
+          description: Form errors
+
+    delete:
+      summary: Delete a form
+      tags:
+        - Forms
+      description: Delete a form
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the form
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: The specified form ID was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: Error message indicating that the specified form ID was not found.
+  /forms/{form_uid}/scto-question-mapping:
     get:
       summary: Get SurveyCTO question mapping for a form
       description: >-
-        Return the SurveyCTO question mapping information for the requested
-        form.  The SurveyCTO question mapping information is used to map
-        SurveyStream variables to SurveyCTO questions.
+        Return the SurveyCTO question mapping information for the requested form. 
+        The SurveyCTO question mapping information is used to map SurveyStream variables to SurveyCTO questions.
       tags:
         - Forms
       parameters:
@@ -1981,7 +1517,7 @@ paths:
           required: true
           description: Unique ID of the form
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -2005,10 +1541,9 @@ paths:
                     description: The form's target ID
                   locations:
                     type: object
-                    description: >-
-                      The mapping of SurveyStream variables to SurveyCTO
-                      questions for the form locations
-        "404":
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+        '404':
           description: The specified form ID was not found.
           content:
             application/json:
@@ -2020,9 +1555,7 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: >-
-                      Error message indicating that the specified form ID was
-                      not found.
+                    description: Error message indicating that the specified form ID was not found.
     post:
       summary: Create a SurveyCTO question mapping
       tags:
@@ -2059,9 +1592,8 @@ paths:
                   description: The form's target ID
                 locations:
                   type: object
-                  description: >-
-                    The mapping of SurveyStream variables to SurveyCTO questions
-                    for the form locations
+                  description:
+                    The mapping of SurveyStream variables to SurveyCTO questions for the form locations
               required:
                 - form_uid
                 - survey_status
@@ -2069,17 +1601,17 @@ paths:
                 - enumerator_id
                 - target_id
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
+                  "success":
                     type: boolean
                     description: Indicates whether the request was successful
-        "404":
+        '404':
           description: The specified form ID was not found.
           content:
             application/json:
@@ -2091,9 +1623,7 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: >-
-                      Error message indicating that the specified form ID was
-                      not found.
+                    description: Error message indicating that the specified form ID was not found.
     put:
       summary: Update an existing SurveyCTO question mapping
       tags:
@@ -2130,9 +1660,8 @@ paths:
                   description: The form's target ID
                 locations:
                   type: object
-                  description: >-
-                    The mapping of SurveyStream variables to SurveyCTO questions
-                    for the form locations
+                  description:
+                    The mapping of SurveyStream variables to SurveyCTO questions for the form locations
               required:
                 - form_uid
                 - survey_status
@@ -2140,7 +1669,7 @@ paths:
                 - enumerator_id
                 - target_id
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -2164,10 +1693,9 @@ paths:
                     description: The form's target ID
                   locations:
                     type: object
-                    description: >-
-                      The mapping of SurveyStream variables to SurveyCTO
-                      questions for the form locations
-        "404":
+                    description:
+                      The mapping of SurveyStream variables to SurveyCTO questions for the form locations
+        '404':
           description: The specified form ID was not found.
           content:
             application/json:
@@ -2179,9 +1707,7 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: >-
-                      Error message indicating that the specified form ID was
-                      not found.
+                    description: Error message indicating that the specified form ID was not found.
     delete:
       summary: Delete an existing SurveyCTO question mapping
       tags:
@@ -2195,17 +1721,17 @@ paths:
           description: Unique ID of the form
       description: Delete an existing SurveyCTO question mapping
       responses:
-        "204":
+        '204':
           description: OK
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
+                  "success":
                     type: boolean
                     description: Indicates whether the request was successful
-        "404":
+        '404':
           description: The specified form ID was not found.
           content:
             application/json:
@@ -2217,18 +1743,15 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: >-
-                      Error message indicating that the specified form ID was
-                      not found.
-  "/forms/{form_uid}/scto-form-definition/refresh":
+                    description: Error message indicating that the specified form ID was not found.
+  /forms/{form_uid}/scto-form-definition/refresh:
     post:
       summary: Refresh the SurveyCTO form definition
       tags:
         - Forms
       description: >-
-        Refresh the SurveyCTO form definition from the SurveyCTO server and
-        store it in the database.  The old form definition will be deleted and a
-        new one created, which will increment the `question_uid` and `list_uid`.
+        Refresh the SurveyCTO form definition from the SurveyCTO server and store it in the database. 
+        The old form definition will be deleted and a new one created, which will increment the `question_uid` and `list_uid`.
       parameters:
         - in: path
           name: form_uid
@@ -2237,9 +1760,9 @@ paths:
           required: true
           description: Unique ID of the form
       responses:
-        "200":
+        '200':
           description: OK
-        "404":
+        '404':
           description: The specified form ID was not found.
           content:
             application/json:
@@ -2251,10 +1774,8 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: >-
-                      Error message indicating that the specified form ID was
-                      not found.
-  "/forms/{form_uid}/scto-form-definition":
+                    description: Error message indicating that the specified form ID was not found.
+  /forms/{form_uid}/scto-form-definition:
     get:
       summary: Get the SurveyCTO form definition for a form
       tags:
@@ -2268,7 +1789,7 @@ paths:
           required: true
           description: Unique ID of the form
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -2283,7 +1804,8 @@ paths:
                     description: The SurveyCTO form definition for the form
                     properties:
                       questions:
-                        description: The SurveyCTO form questions from the `Survey` tab
+                        description: >-
+                          The SurveyCTO form questions from the `Survey` tab
                         type: array
                         items:
                           type: object
@@ -2328,7 +1850,7 @@ paths:
                           default_language:
                             type: string
                             description: The form's default language
-        "404":
+        '404':
           description: The specified form ID was not found.
           content:
             application/json:
@@ -2340,9 +1862,7 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: >-
-                      Error message indicating that the specified form ID was
-                      not found.
+                    description: Error message indicating that the specified form ID was not found.
     delete:
       summary: Delete an existing SurveyCTO form definition
       tags:
@@ -2356,17 +1876,17 @@ paths:
           description: Unique ID of the form
       description: Delete an existing SurveyCTO form definition
       responses:
-        "204":
+        '204':
           description: OK
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
+                  "success":
                     type: boolean
                     description: Indicates whether the request was successful
-        "404":
+        '404':
           description: The specified form ID was not found.
           content:
             application/json:
@@ -2378,9 +1898,7 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: >-
-                      Error message indicating that the specified form ID was
-                      not found.
+                    description: Error message indicating that the specified form ID was not found.
   /enumerators:
     get:
       summary: Get enumerators
@@ -2398,20 +1916,18 @@ paths:
           name: enumerator_type
           schema:
             type: string
-            enum:
-              - monitor
-              - supervisor
+            enum: [monitor, supervisor]
           description: Type of enumerators to return
           required: false
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
+                  success: 
                     type: boolean
                     description: Indicates whether the request was successful
                   data:
@@ -2444,36 +1960,26 @@ paths:
                           type: object
                           description: >-
                             The custom fields of the enumerator. Each key is the
-                            user-defined label of the custom field and each
-                            value is the value of the custom field.
+                            user-defined label of the custom field and each value is the
+                            value of the custom field.
                         form_uid:
                           type: integer
-                          description: >-
-                            The unique ID of the form that the enumerator was
-                            uploaded to
+                          description: The unique ID of the form that the enumerator was uploaded to
                         surveyor_status:
                           type: string
                           enum:
                             - Active
                             - Temp. inactive
                             - Dropout
-                          description: >-
-                            The working status of the enumerator if they are a
-                            surveyor on the form
+                          description: The working status of the enumerator if they are a surveyor on the form
                         surveyor_locations:
                           type: array
                           description: >-
-                            The working geography of the enumerator if they are
-                            a surveyor on the form.  Each array item is an
-                            object of the form {`location_id`: _location_id_,
-                            `location_name`:  _location_name_, `location_uid`:
-                            __location_uid__, `geo_level_name`:
-                            __geo_level_name__, `geo_level_uid`:
-                            __geo_level_uid__} in descending order from highest 
-                            to lowest level location down to the level of the
-                            prime geo level the surveyor is mapped to. Will be
-                            null if the surveyor is not mapped to a prime geo
-                            level.
+                            The working geography of the enumerator if they are a surveyor on the form. 
+                            Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                            _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
+                            to lowest level location down to the level of the prime geo level the surveyor is mapped to.
+                            Will be null if the surveyor is not mapped to a prime geo level.
                           items:
                             type: object
                             properties:
@@ -2492,23 +1998,15 @@ paths:
                             - Active
                             - Temp. inactive
                             - Dropout
-                          description: >-
-                            The working status of the enumerator if they are a
-                            monitor on the form
+                          description: The working status of the enumerator if they are a monitor on the form
                         monitor_locations:
                           type: array
                           description: >-
-                            The working geography of the enumerator if they are
-                            a monitor on the form.  Each array item is an object
-                            of the form {`location_id`: _location_id_,
-                            `location_name`:  _location_name_, `location_uid`:
-                            __location_uid__, `geo_level_name`:
-                            __geo_level_name__, `geo_level_uid`:
-                            __geo_level_uid__} in descending order from highest 
-                            to lowest level location down to the level of the
-                            prime geo level the monitor is mapped to. Will be
-                            null if the monitor is not mapped to a prime geo
-                            level.
+                            The working geography of the enumerator if they are a monitor on the form. 
+                            Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                            _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
+                            to lowest level location down to the level of the prime geo level the monitor is mapped to.
+                            Will be null if the monitor is not mapped to a prime geo level.
                           items:
                             type: object
                             properties:
@@ -2521,11 +2019,11 @@ paths:
                               geo_level_name:
                                 type: string
                                 description: The name of the geo level
-        "400":
+        '400':
           description: Form ID is required
     post:
       summary: Upload a csv of new enumerators
-      description: |
+      description: >
         Upload a csv of new enumerators to be added to the given form
       tags:
         - Enumerators
@@ -2569,9 +2067,7 @@ paths:
                       description: The column name of the enumerator's email
                     mobile_primary:
                       type: string
-                      description: >-
-                        The column name of the enumerator's primary mobile
-                        number
+                      description: The column name of the enumerator's primary mobile number
                     language:
                       type: string
                       description: The column name of the enumerator's primary language
@@ -2583,10 +2079,7 @@ paths:
                       description: The column name of the enumerator's gender
                     location_id_column:
                       type: string
-                      description: >-
-                        The column name of the enumerator's location ID. This is
-                        the prime geo level location that the enumerator is
-                        mapped to.
+                      description: The column name of the enumerator's location ID. This is the prime geo level location that the enumerator is mapped to.
                     custom_fields:
                       type: array
                       description: >-
@@ -2619,7 +2112,8 @@ paths:
                     The csv must have a header row with the column names
                     specified in the `column_mapping` object.
 
-                    **Notes**:  - The `enumerator_type` field can take values of
+                    **Notes**: 
+                    - The `enumerator_type` field can take values of
                       `monitor` or `supervisor`. If the enumerator is to be
                       assigned to multiple types, separate the values with a
                       semi-colon, e.g. `monitor;supervisor`.
@@ -2634,26 +2128,26 @@ paths:
                     - overwrite
                     - merge
                   description: >-
-                    The mode of the upload. In 'overwrite' mode, all enumerators
-                    with the provided form_uid from  the query parameter will be
-                    removed and replaced with the new enumerators from  the CSV
-                    file. In 'merge' mode, the new enumerators from the CSV will
-                    be added to the existing ones.  Any existing records
-                    included in the upload will also be updated.
+                    The mode of the upload.
+                    In 'overwrite' mode, all enumerators with the provided form_uid from 
+                    the query parameter will be removed and replaced with the new enumerators from 
+                    the CSV file.
+                    In 'merge' mode, the new enumerators from the CSV will be added to the existing ones. 
+                    Any existing records included in the upload will also be updated.
               required:
                 - column_mapping
                 - file
                 - mode
       responses:
-        "200":
+        '200':
           description: Records added successfully
-        "400":
+        '400':
           description: Query parameter errors
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Form not found
-        "422":
+        '422':
           description: Form errors
           content:
             application/json:
@@ -2663,26 +2157,24 @@ paths:
                   errors:
                     type: object
                     description: >-
-                      An object with information on errors related to the csv
-                      file upload. Each key will only be present if there are
-                      errors of that type.
-
-                      In addition to the errors listed below, the `errors`
-                      object may also contain errors related to an incorrectly
-                      specified payload.
+                      An object with information on errors related to the csv file upload.
+                      Each key will only be present if there are errors of that type.
+                      
+                      In addition to the errors listed below, the `errors` object may also contain
+                      errors related to an incorrectly specified payload.
                     properties:
                       file_structure_errors:
                         type: array
                         description: >-
-                          An array of errors in the file structure. Each array
-                          item is a string containing the error message related
-                          to an individual error.
+                          An array of errors in the file structure. Each
+                          array item is a string containing the error message
+                          related to an individual error.
                       column_mapping:
                         type: array
                         description: >-
-                          An array of errors in the column. Each array item is a
-                          string containing the error message related to an
-                          individual error.
+                          An array of errors in the column. Each
+                          array item is a string containing the error message
+                          related to an individual error.
                       geo_level_hierarchy:
                         type: array
                         description: >-
@@ -2692,44 +2184,35 @@ paths:
                       record_errors:
                         type: object
                         description: >-
-                          An object with information on validation errors in the
-                          csv records.
+                          An object with information on validation errors in the csv records.
                         properties:
                           summary:
                             type: object
                             description: >-
-                              A summary of the validation errors in the csv
-                              records
+                              A summary of the validation errors in the csv records
                             properties:
                               error_count:
                                 type: integer
                                 description: The total number of errors in the csv records
                               total_correct_rows:
                                 type: integer
-                                description: >-
-                                  The total number of correct rows in the csv
-                                  records
+                                description: The total number of correct rows in the csv records
                               total_rows:
                                 type: integer
                                 description: The total number of rows in the csv records
                               total_rows_with_errors:
                                 type: integer
-                                description: >-
-                                  The total number of rows with errors in the
-                                  csv records
+                                description: The total number of rows with errors in the csv records                            
                           summary_by_error_type:
                             type: array
                             description: >-
-                              An array of objects with information on validation
-                              errors by error type in the csv records.
+                              An array of objects with information on validation errors by error type in the csv records.
                             items:
                               type: object
                               properties:
                                 error_count:
                                   type: integer
-                                  description: >-
-                                    The total number of errors of this type in
-                                    the csv records
+                                  description: The total number of errors of this type in the csv records
                                 error_message:
                                   type: string
                                   description: The error message for this error type
@@ -2739,40 +2222,27 @@ paths:
                                 row_numbers_with_errors:
                                   type: array
                                   description: >-
-                                    An array of row numbers with errors of this
-                                    type in the csv records
+                                    An array of row numbers with errors of this type in the csv records
                                   items:
                                     type: integer
-                                    description: >-
-                                      The row number with an error of this type
-                                      in the csv records
+                                    description: The row number with an error of this type in the csv records
                           invalid_records:
                             type: object
                             description: >-
-                              An object with information on validation errors by
-                              record in the csv records. This can be used to
-                              identify the specific errors in each record and to
-                              let users download a csv with the errors.
+                              An object with information on validation errors by record in the csv records.
+                              This can be used to identify the specific errors in each record and to let users download a csv with the errors.
                             properties:
                               records:
                                 type: array
                                 description: >-
-                                  An array of objects that represent the
-                                  original records in the csv with the
-                                  validation errors. A new `errors` field is
-                                  added to each record that contains a
-                                  semicolon-separated list of the validation
-                                  errors for that record. A new `row_number`
-                                  field is also added to each record that
-                                  contains the row number of the record in the
-                                  original csv.
+                                  An array of objects that represent the original records in the csv with the validation errors.
+                                  A new `errors` field is added to each record that contains a semicolon-separated list of the validation errors for that record.
+                                  A new `row_number` field is also added to each record that contains the row number of the record in the original csv.
                               ordered_columns:
                                 type: array
                                 description: >-
-                                  An array of strings that represent the column
-                                  names in the `records` array of objects in the
-                                  order that they should  appear in a table or
-                                  downloadable csv file.
+                                  An array of strings that represent the column names in the `records` array of objects in the order that they should 
+                                  appear in a table or downloadable csv file.
                                 items:
                                   type: string
                                   description: The column name in the csv
@@ -2782,17 +2252,13 @@ paths:
     patch:
       summary: Bulk update enumerators for a provided set of fields
       description: >
-        Bulk update enumerators for a provided set of fields. The enumerators to
-        be updated are specified by their enumerator IDs. Only the fields
-        specified in the request body will be updated. If a field is not
-        specified, it will not be updated. Only personal details and custom
-        fields can be updated can be updated through this endpoint. To bulk
-        update enumerators' locations, use the `PUT
-        /enumerators/roles/locations` endpoint.
+        Bulk update enumerators for a provided set of fields. The enumerators to be updated are specified by their enumerator IDs.
+        Only the fields specified in the request body will be updated. If a field is not specified, it will not be updated.
+        Only personal details and custom fields can be updated can be updated through this endpoint. To bulk update enumerators'
+        locations, use the `PUT /enumerators/roles/locations` endpoint.
 
-        **Note:** Only fields that are defined in the enumerators column config
-        table and set as `bulk_editable` can be updated via this endpoint. See
-        the `PUT /enumerators/column-config` endpoint for more details.
+        **Note:** Only fields that are defined in the enumerators column config table and set as `bulk_editable` can be updated via
+        this endpoint. See the `PUT /enumerators/column-config` endpoint for more details.
       tags:
         - Enumerators
       parameters:
@@ -2811,43 +2277,38 @@ paths:
               properties:
                 enumerator_uids:
                   type: array
-                  description: An array of enumerator UIDs of the enumerators to be updated
+                  description: >-
+                    An array of enumerator UIDs of the enumerators to be updated
                   items:
                     type: integer
                     description: The enumerator UID of the enumerator to be updated
                 form_uid:
                   type: integer
-                  description: The form UID of the enumerators to be updated.
+                  description: >-
+                    The form UID of the enumerators to be updated.
                 patch_key_example:
                   description: >-
-                    An example of the field name and value to be updated for the
-                    enumerators. Multiple fields to be updated can be specified
-                    in the same object. The field name must be the same as the
-                    field name in the enumerator column config for the form and
-                    set as `bulk_editable.` See the `PUT
-                    /enumerators/column-config` for more details on defining the
-                    column config for a form.
+                    An example of the field name and value to be updated for the enumerators. Multiple fields to be updated can be specified in the same object. The field name must be the same as the field name in the enumerator column config for the form and set as `bulk_editable.` See the `PUT /enumerators/column-config` for more details on defining the column config for a form.
               required:
                 - enumerator_uids
                 - form_uid
       responses:
-        "200":
+        '200':
           description: Enumerators updated successfully
-        "400":
+        '400':
           description: Request errors
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Form not found
-        "422":
+        '422':
           description: Form errors
   /enumerators/column-config:
     put:
       summary: Update the enumerators column config for a form
       description: >
-        Update the column config for enumerators for a form. The column config
-        defines the fields that are available for bulk editing via the `PATCH
-        /enumerators` and `PUT /enumerators/roles/locations`` endpoints.
+        Update the column config for enumerators for a form. The column config defines the fields that are available for bulk editing via the `PATCH /enumerators`
+        and `PUT /enumerators/roles/locations`` endpoints.
       tags:
         - Enumerators
       parameters:
@@ -2866,26 +2327,18 @@ paths:
               properties:
                 form_uid:
                   type: integer
-                  description: The form UID of the enumerators to be updated.
+                  description: >-
+                    The form UID of the enumerators to be updated.
                 column_config:
                   type: array
                   description: >-
-                    An array of column config objects for the enumerators data.
-                    Each object defines the column name, its type, and whether
-                    it is bulk editable or not.
+                    An array of column config objects for the enumerators data. Each object defines the column name, its type, and whether it is bulk editable or not.
+                    
+                    The location mapping column must be named `prime_geo_level_location` and its enumerator_type must be `location`.
 
-                    The location mapping column must be named
-                    `prime_geo_level_location` and its enumerator_type must be
-                    `location`.
-
-                    The personal details columns must be named `enumerator_id`,
-                    `name`, `email`, `mobile_primary`, `home_address`,
-                    `language` and `gender` and their enumerator_types must be
-                    `personal_details`.
-
-                    The custom fields columns must match their corresponding
-                    json keys in the `custom_fields` column of the `enumerators`
-                    table and their enumerator_types must be `custom_field`.
+                    The personal details columns must be named `enumerator_id`, `name`, `email`, `mobile_primary`, `home_address`, `language` and `gender` and their enumerator_types must be `personal_details`.
+                  
+                    The custom fields columns must match their corresponding json keys in the `custom_fields` column of the `enumerators` table and their enumerator_types must be `custom_field`.
                   items:
                     type: object
                     properties:
@@ -2894,9 +2347,7 @@ paths:
                         description: The field name of the column
                       column_type:
                         type: string
-                        description: >-
-                          The field type of the column. Can be one of
-                          `personal_details`, `custom_field`, or `location`.
+                        description: The field type of the column. Can be one of `personal_details`, `custom_field`, or `location`.
                       bulk_editable:
                         type: boolean
                         description: Whether the field is bulk editable or not
@@ -2908,22 +2359,21 @@ paths:
                 - form_uid
                 - column_config
       responses:
-        "200":
+        '200':
           description: Column config updated successfully
-        "400":
+        '400':
           description: Request errors
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Form not found
-        "422":
+        '422':
           description: Form errors
     get:
       summary: Get the enumerators column config for a form
       description: >
-        Get the enumerators column config for a form. The column config defines
-        the fields that are available for bulk editing via the `PATCH
-        /enumerators` and `PUT /enumerators/roles/locations`` endpoints.
+        Get the enumerators column config for a form. The column config defines the fields that are available for bulk editing via the `PATCH /enumerators`
+        and `PUT /enumerators/roles/locations`` endpoints.
       tags:
         - Enumerators
       parameters:
@@ -2931,19 +2381,18 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: The form UID of the enumerator column config to be updated.
+          description: >-
+            The form UID of the enumerator column config to be updated.
           required: true
       responses:
-        "200":
+        '200':
           description: Column config retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 description: >-
-                  An array of column config objects for the enumerators data.
-                  Each object defines the column name, its type, and whether it
-                  is bulk editable or not.
+                  An array of column config objects for the enumerators data. Each object defines the column name, its type, and whether it is bulk editable or not.
                 items:
                   type: object
                   properties:
@@ -2952,37 +2401,25 @@ paths:
                       description: The field name of the column
                     column_type:
                       type: string
-                      description: >-
-                        The field type of the column. Can be one of
-                        `personal_details`, `custom_field`, or `location`.
+                      description: The field type of the column. Can be one of `personal_details`, `custom_field`, or `location`.
                     bulk_editable:
                       type: boolean
                       description: Whether the field is bulk editable or not
-        "400":
+        '400':
           description: Request errors
-        "404":
+        '404':
           description: Form not found
   /enumerators/roles/locations:
     put:
       summary: Bulk update the location mapping for enumerators for a form
       description: >
-        Bulk update the location mapping for enumerators of a specific
-        enumerator_type for a form. The location mapping defines the
-        prime_geo_level location(s) that the enumerator is mapped to for a form.
+        Bulk update the location mapping for enumerators of a specific enumerator_type for a form. The location mapping defines the prime_geo_level location(s) that the enumerator is mapped to for a form.
 
-        This method will replace the existing location mapping for the
-        enumerators with the new location mapping provided in the request body.
-        The existing location mapping for the enumerators can be dropped by
-        providing `None` or an empty array as the `location_uids` value in the
-        request body.
-
-        In order for the location mapping to be bulk editable, the enumerators
-        column configuration must have a `column_name` entry
-        `prime_geo_level_location` with `column_type` of `location` and its
-        `bulk_editable` value set to `True`. See the `PUT
-        /enumerators/column-config` endpiont for more details on defining the
-        enumerators column config for a form.
+        This method will replace the existing location mapping for the enumerators with the new location mapping provided in the request body. The existing location mapping for the enumerators can be dropped by providing `None` or an empty array as the `location_uids` value in the request body.
+      
+        In order for the location mapping to be bulk editable, the enumerators column configuration must have a `column_name` entry `prime_geo_level_location` with `column_type` of `location` and its `bulk_editable` value set to `True`. See the `PUT /enumerators/column-config` endpiont for more details on defining the enumerators column config for a form.
       tags:
+
         - Enumerators
       parameters:
         - in: header
@@ -3000,24 +2437,23 @@ paths:
               properties:
                 form_uid:
                   type: integer
-                  description: The form UID of the enumerators to be updated.
+                  description: >-
+                    The form UID of the enumerators to be updated.
                 enumerator_type:
                   type: string
                   description: >-
-                    The enumerator_type of the enumerators to be updated. Can be
-                    one of `monitor` or `surveyor`.
+                    The enumerator_type of the enumerators to be updated. Can be one of `monitor` or `surveyor`.
                 enumerator_uids:
                   type: array
-                  description: An array of enumerator UIDs of the enumerators to be updated
+                  description: >-
+                    An array of enumerator UIDs of the enumerators to be updated
                   items:
                     type: integer
                     description: The enumerator UID of the enumerator to be updated
                 location_uids:
                   type: array
                   description: >-
-                    An array of location UIDs of the locations to be mapped to
-                    the enumerators. Enumerators can be mapped to 0, 1, or many
-                    locations.
+                    An array of location UIDs of the locations to be mapped to the enumerators. Enumerators can be mapped to 0, 1, or many locations.
                   items:
                     type: integer
                     description: The location UID of the location to be mapped
@@ -3027,27 +2463,23 @@ paths:
                 - enumerator_type
                 - location_uids
       responses:
-        "200":
+        '200':
           description: Location mapping updated successfully
-        "400":
+        '400':
           description: Request errors
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Form not found
-        "422":
+        '422':
           description: Form errors
-  "/enumerators/{enumerator_uid}":
+  /enumerators/{enumerator_uid}:
     get:
       summary: Get details of an enumerator
       description: >
         Get details of an enumerator by their unique ID.
 
-        **Note**: This endpoint does not return information related to the
-        enumerator's role (like surveyor, monitor, etc.) on different forms or
-        the enumerator's mapping information for different forms. To get this
-        information, use the `GET /enumerators` endpoint or the `GET
-        /enumerators/{enumerator_uid}/roles` endpoint.
+        **Note**: This endpoint does not return information related to the enumerator's role (like surveyor, monitor, etc.) on different forms or the enumerator's mapping information for different forms. To get this information, use the `GET /enumerators` endpoint or the `GET /enumerators/{enumerator_uid}/roles` endpoint.
       tags:
         - Enumerators
       parameters:
@@ -3058,7 +2490,7 @@ paths:
           description: Unique ID of the enumerator
           required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -3098,19 +2530,15 @@ paths:
                       custom_fields:
                         type: object
                         description: >-
-                          Any non-standard fields that should be displayed for
-                          the enumerator. The keys are the user-defined labels
-                          of the custom fields.
-    put:
+                          Any non-standard fields that should be displayed for the
+                          enumerator. The keys are the user-defined labels of the
+                          custom fields.
+    put: 
       summary: Update an enumerator
       description: >
         Update an enumerator's details by their unique ID.
 
-        **Note**: This endpoint does not update information related to the
-        enumerator's role (like surveyor, monitor, etc.) on different forms or
-        the enumerator's mapping information for different forms. To update this
-        information, use the `/enumerators/{enumerator_uid}/roles` and
-        `/enumerators/{enumerator_uid}/roles/locations` endpoints.
+        **Note**: This endpoint does not update information related to the enumerator's role (like surveyor, monitor, etc.) on different forms or the enumerator's mapping information for different forms. To update this information, use the `/enumerators/{enumerator_uid}/roles` and `/enumerators/{enumerator_uid}/roles/locations` endpoints.
       tags:
         - Enumerators
       parameters:
@@ -3121,10 +2549,7 @@ paths:
           description: Unique ID of the enumerator
           required: true
       requestBody:
-        description: >-
-          The updated record as it should be saved in the database. Note that
-          values should be provided even if they are not being updated,
-          otherwise they will be set to null.
+        description: The updated record as it should be saved in the database. Note that values should be provided even if they are not being updated, otherwise they will be set to null.
         required: true
         content:
           application/json:
@@ -3165,13 +2590,13 @@ paths:
                 - mobile_primary
                 - gender
       responses:
-        "200":
+        '200':
           description: Successfully updated
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Enumerator not found
-        "422":
+        '422':
           description: Enumerator errors
   /assignments:
     get:
@@ -3186,7 +2611,7 @@ paths:
             type: integer
           description: Unique ID of the form
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -3419,9 +2844,9 @@ paths:
                   - target_uid
                   - enumerator_uid
       responses:
-        "200":
+        '200':
           description: Success
-        "403":
+        '403':
           description: X-CSRF-Token required in header
         '404':
           description: Enumerator or target not found
@@ -3430,7 +2855,9 @@ paths:
   /table-config:
     get:
       summary: Get table configuration
-      description: Return the web flask_app table configuration details for the given form
+      description: >-
+        Return the web flask_app table configuration details for the given
+        form
       tags:
         - Table Configuration
       parameters:
@@ -3440,7 +2867,7 @@ paths:
             type: integer
           description: Unique ID of the form
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -3587,7 +3014,7 @@ paths:
                                 description: >-
                                   The column key that can be used to access the
                                   column records in the data response
-  "/module-questionnaire/{survey_uid}":
+  '/module-questionnaire/{survey_uid}':
     get:
       tags:
         - Module Questionnaire
@@ -3601,11 +3028,10 @@ paths:
           required: true
           schema:
             type: integer
+
       responses:
-        "200":
-          description: >-
-            Returns the saved responses for module questionnaire section for a
-            given survey.
+        '200':
+          description: Returns the saved responses for module questionnaire section for a given survey.
           content:
             application/json:
               schema:
@@ -3616,9 +3042,7 @@ paths:
                     description: Indicates whether the request was successful
                   data:
                     type: array
-                    description: >-
-                      List of modules and their completion status for the given
-                      survey
+                    description: List of modules and their completion status for the given survey
                     items:
                       type: object
                       properties:
@@ -3627,42 +3051,29 @@ paths:
                           description: The unique ID of the survey.
                         target_assignment_criteria:
                           type: array
-                          description: >-
-                            Array of selected criteria for target to enumerator
-                            assignments
-                          example:
-                            - Location
-                            - Gender
+                          description: Array of selected criteria for target to enumerator assignments
+                          example: ['Location', 'Gender']
                         supervisor_assignment_criteria:
                           type: array
-                          description: >-
-                            Array of selected criteria for supervisor to
-                            enumerator assignments
-                          example:
-                            - Location
-                            - Gender
+                          description: Array of selected criteria for supervisor to enumerator assignments
+                          example: ['Location', 'Gender']
                         supervisor_hierarchy_exists:
                           type: boolean
                           description: Whether there is a hierarchy of supervisors
                         reassignment_required:
                           type: boolean
-                          description: >-
-                            Whether there will be reassignments during the
-                            survey
+                          description: Whether there will be reassignments during the survey
                         assignment_process:
                           type: string
-                          description: >-
-                            Process used to perform the assignments of targets
-                            to enumerators e.g. Random or Manual
+                          description: 'Process used to perform the assignments of targets to enumerators e.g. Random or Manual'
                         supervisor_enumerator_relation:
                           type: string
-                          description: >-
-                            Mapping of supervisors to enumerators e.g. 1:many,
-                            1:1 etc.
+                          description: 'Mapping of supervisors to enumerators e.g. 1:many, 1:1 etc.'
                         language_lacation_mapping:
                           type: boolean
                           description: Whether languages can be mapped via locations
-        "404":
+
+        '404':
           description: The specified survey ID was not found.
           content:
             application/json:
@@ -3674,23 +3085,14 @@ paths:
                     description: Indicates whether the request was successful
                   message:
                     type: string
-                    description: >-
-                      Error message indicating that the specified survey ID was
-                      not found.
+                    description: Error message indicating that the specified survey ID was not found.
     put:
       tags:
         - Module Questionnaire
       summary: Save module questionnaire responses for a survey
-      description: >
-        Saves the module questionnaire responses for a given survey to the
-        database.
-      parameters:
-      - name: survey_uid
-        in: path
-        description: The unique ID of the survey.
-        required: true
-        schema:
-          type: integer
+      description: |
+        Saves the module questionnaire responses for a given survey to the database.
+        - `survey_uid`: ID of the survey
       requestBody:
         description: JSON object containing survey ID and list of module IDs
         required: true
@@ -3704,20 +3106,12 @@ paths:
                   description: The unique ID of the survey.
                 target_assignment_criteria:
                   type: array
-                  description: >-
-                    Array of selected criteria for target to enumerator
-                    assignments
-                  example:
-                    - Location
-                    - Gender
+                  description: Array of selected criteria for target to enumerator assignments
+                  example: ['Location', 'Gender']
                 supervisor_assignment_criteria:
                   type: array
-                  description: >-
-                    Array of selected criteria for supervisor to enumerator
-                    assignments
-                  example:
-                    - Location
-                    - Gender
+                  description: Array of selected criteria for supervisor to enumerator assignments
+                  example: ['Location', 'Gender']
                 supervisor_hierarchy_exists:
                   type: boolean
                   description: Whether there is a hierarchy of supervisors
@@ -3726,23 +3120,21 @@ paths:
                   description: Whether there will be reassignments during the survey
                 assignment_process:
                   type: string
-                  description: >-
-                    Process used to perform the assignments of targets to
-                    enumerators e.g. Random or Manual
+                  description: 'Process used to perform the assignments of targets to enumerators e.g. Random or Manual'
                 supervisor_enumerator_relation:
                   type: string
-                  description: "Mapping of supervisors to enumerators e.g. 1:many, 1:1 etc."
+                  description: 'Mapping of supervisors to enumerators e.g. 1:many, 1:1 etc.'
                 language_lacation_mapping:
                   type: boolean
                   description: Whether languages can be mapped via locations
       responses:
-        "200":
+        '200':
           description: Success
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
+        '422':
           description: Form errors
-  /roles:
+  '/roles':
     get:
       tags:
         - Roles
@@ -3756,8 +3148,9 @@ paths:
           required: true
           schema:
             type: integer
+
       responses:
-        "200":
+        '200':
           description: Returns the user roles for a given survey.
           content:
             application/json:
@@ -3779,14 +3172,9 @@ paths:
                         role_name:
                           type: string
                           description: The name of the role.
-                        permissions:
-                          type: array
-                          description: An array of permissions for a role.
                         reporting_role_uid:
                           type: integer
-                          description: >-
-                            The unique role ID of role that supervises the given
-                            role.
+                          description: The unique role ID of role that supervises the given role.
                         survey_uid:
                           type: integer
                           description: The unique ID of the given survey.
@@ -3794,11 +3182,8 @@ paths:
       tags:
         - Roles
       summary: Save the user roles for a survey
-      description: >
-        Saves the user roles for a given survey to the database. If a role_uid
-        is provided, the role will be updated. If role_uid is `None`, a new role
-        will be created. Existing roles in the database that are not in the
-        payload (by `role_uid`) will be deleted.
+      description: |
+        Saves the user roles for a given survey to the database. If a role_uid is provided, the role will be updated. If role_uid is `None`, a new role will be created. Existing roles in the database that are not in the payload (by `role_uid`) will be deleted.
       parameters:
         - name: survey_uid
           in: query
@@ -3814,7 +3199,7 @@ paths:
             schema:
               type: object
               required:
-                - roles
+                  - roles
               properties:
                 roles:
                   type: array
@@ -3825,407 +3210,40 @@ paths:
                       - role_uid
                       - role_name
                       - reporting_role_uid
-                      - permissions
                     properties:
                       role_uid:
                         type: integer
                         nullable: true
-                        description: >-
-                          The unique ID of the role. If equal to None, a new
-                          role will be created.
+                        description: The unique ID of the role. If equal to None, a new role will be created. 
                       role_name:
                         type: string
                         nullable: false
-                        description: The name of the role.
+                        description: The name of the role. 
                       reporting_role_uid:
                         type: integer
                         nullable: true
-                        description: >-
-                          The unique role ID of role that supervises the given
-                          role.
-                      permissions:
-                        type: array
-                        nullable: true
-                        description: List of permission_uid's for the role.
+                        description: The unique role ID of role that supervises the given role.
                 validate_hierarchy:
                   type: boolean
-                  description: >
-                    Whether to validate the hierarchy of the roles. Set this as
-                    true when updating the reporting_role_uid fields of the
-                    roles.
-
-                    This will check that the role hierarchy is a valid tree
-                    structure.
+                  description: |
+                    Whether to validate the hierarchy of the roles. Set this as true when updating the reporting_role_uid fields of the roles.
+                    This will check that the role hierarchy is a valid tree structure.
       responses:
-        "200":
+        '200':
           description: Success
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
-          description: >-
-            Form errors Form errors When `validate_hierarchy` is set to true,
-            any validation errors will be returned as an array under the
-            `errors` key in the response.
-  "/permissions":
-    get:
-      tags:
-        - Permissions
-      description: Get all permissions
-      responses:
-        "200":
-          description: Permissions retrieved successfully
-          content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      permission_uid:
-                        type: integer
-                      name:
-                        type: string
-                      description:
-                        type: string
-    post:
-      tags:
-        - Permissions
-      summary: Create permission
-      description: Create a new permission
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                description:
-                  type: string
-              required:
-                - name
-                - description
-      responses:
-        "201":
-          description: Permission created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  permission_uid:
-                    type: integer
-                  name:
-                    type: string
-                  description:
-                    type: string
-        "400":
-          description: >-
-            Name and description are required fields or Permission with this
-            name already exists
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-        "500":
-          description: An unexpected error occurred
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-  
-  "/permissions/{permission_uid}":
-      get:
-        tags:
-          - Permissions
-        summary: Get permission details
-        description: Get details of a specific permission
-        parameters:
-          - in: path
-            name: permission_uid
-            schema:
-              type: integer
-            required: true
-            description: "Unique id for the permission"
-        responses:
-          "200":
-            description: Permission details retrieved successfully
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    permission_uid:
-                      type: integer
-                    name:
-                      type: string
-                    description:
-                      type: string
-          "404":
-            description: Permission not found
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-      put:
-        tags:
-          - Permissions
-        summary: Update permission
-        description: Update a specific permission using a specific permission unique id
-        parameters:
-          - in: path
-            name: permission_uid
-            schema:
-              type: integer
-            required: true
-            description: Unique id for the permission
-        requestBody:
-          required: true
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  description:
-                    type: string
-                required:
-                  - name
-                  - description
-        responses:
-          "200":
-            description: Permission updated successfully
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                    permission_uid:
-                      type: integer
-                    name:
-                      type: string
-                    description:
-                      type: string
-          "400":
-            description: >-
-              Name and description are required fields or Updating to this name
-              would violate uniqueness constraint
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    error:
-                      type: string
-          "404":
-            description: Permission not found
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-          "500":
-            description: An unexpected error occurred
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    error:
-                      type: string
-      delete:
-        tags:
-          - Permissions
-        summary: Delete permission
-        description: Delete a specific permission using a specific permission unique id
-        parameters:
-          - in: path
-            name: permission_uid
-            schema:
-              type: integer
-            required: true
-            description: "Unique id for ther permission"
-        responses:
-          "200":
-            description: Permission deleted successfully
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-          "404":
-            description: Permission not found
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-  "/user-hierarchy":
-    get:
-      tags:
-        - User Hierarchy
-      summary: Get user hierarchy details
-      description: Get user hierarchy details for a survey and user
-      parameters:
-        - in: query
-          name: survey_uid
-          schema:
-            type: string
-          required: true
-        - in: query
-          name: user_uid
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: User hierarchy details retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    type: object
-                  message:
-                    type: string
-        "404":
-          description: User hierarchy not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-    put:
-      tags:
-        - User Hierarchy
-      summary: Update user hierarchy
-      description: Update user hierarchy for a survey and user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                survey_uid:
-                  type: string
-                user_uid:
-                  type: string
-                role_uid:
-                  type: string
-                parent_user_uid:
-                  type: string
-                X-CSRF-Token:
-                  type: string
-              required:
-                - survey_uid
-                - user_uid
-                - role_uid
-                - parent_user_uid
-                - X-CSRF-Token
-      responses:
-        "200":
-          description: User hierarchy updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  user_hierarchy:
-                    type: object
-        "403":
-          description: X-CSRF-Token required in header
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "422":
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  errors:
-                    type: object
-    delete:
-      tags:
-        - User Hierarchy
-      summary: Delete user hierarchy
-      description: Delete user hierarchy for a survey and user
-      parameters:
-        - in: query
-          name: survey_uid
-          schema:
-            type: string
-          required: true
-          description: unique id for the survey
-        - in: query
-          name: user_uid
-          schema:
-            type: string
-          required: true
-          description: unique id for the user
-      responses:
-        "200":
-          description: User hierarchy deleted successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "404":
-          description: User hierarchy not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
+        '422':
+          description: Form errors
+            Form errors
+            When `validate_hierarchy` is set to true, any validation errors will be returned as an array under the `errors` key in the response.
   /timezones:
     get:
       summary: Get the list of postgres timezones
-      description: Get the list of postgres timezones
       tags:
         - Misc
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -4248,7 +3266,7 @@ paths:
                         utc_offset:
                           type: string
                           description: Postgres timezone UTC offset
-  /locations/geo-levels:
+  '/locations/geo-levels':
     get:
       tags:
         - Locations
@@ -4262,8 +3280,9 @@ paths:
           required: true
           schema:
             type: integer
+
       responses:
-        "200":
+        '200':
           description: Returns the geo levels for a given survey.
           content:
             application/json:
@@ -4287,9 +3306,7 @@ paths:
                           description: The name of the geo level.
                         parent_geo_level_uid:
                           type: integer
-                          description: >-
-                            The unique ID of geo level that is the parent of the
-                            given geo level.
+                          description: The unique ID of geo level that is the parent of the given geo level.
                         survey_uid:
                           type: integer
                           description: The unique ID of the given survey.
@@ -4297,12 +3314,8 @@ paths:
       tags:
         - Locations
       summary: Save the geo levels for a survey
-      description: >
-        Saves the geo levels for a given survey to the database. If a
-        geo_level_uid is provided, the geo level will be updated. If
-        geo_level_uid is `None`, a new geo level will be created. Existing geo
-        levels in the database that are not in the payload (by `geo_level_uid`)
-        will be deleted.
+      description: |
+        Saves the geo levels for a given survey to the database. If a geo_level_uid is provided, the geo level will be updated. If geo_level_uid is `None`, a new geo level will be created. Existing geo levels in the database that are not in the payload (by `geo_level_uid`) will be deleted.
       parameters:
         - name: survey_uid
           in: query
@@ -4318,7 +3331,7 @@ paths:
             schema:
               type: object
               required:
-                - geo_levels
+                  - geo_levels
               properties:
                 geo_levels:
                   type: array
@@ -4329,9 +3342,7 @@ paths:
                       geo_level_uid:
                         type: integer
                         nullable: true
-                        description: >-
-                          The unique ID of the geo level. If equal to None, a
-                          new geo level will be created.
+                        description: The unique ID of the geo level. If equal to None, a new geo level will be created.
                       geo_level_name:
                         type: string
                         nullable: false
@@ -4339,30 +3350,24 @@ paths:
                       parent_geo_level_uid:
                         type: integer
                         nullable: true
-                        description: >-
-                          The unique ID of geo level that is the parent of the
-                          given geo level.
+                        description: The unique ID of geo level that is the parent of the given geo level.
                 validate_hierarchy:
                   type: boolean
-                  description: >
-                    Whether to validate the hierarchy of the geo levels. Set
-                    this as true when updating the parent_geo_level_uid fields
-                    of the geo levels.
+                  description: |
+                    Whether to validate the hierarchy of the geo levels. Set this as true when updating the parent_geo_level_uid fields of the geo levels.
+                    This will check that the location type hierarchy is a valid tree structure.
 
-                    This will check that the location type hierarchy is a valid
-                    tree structure.
+
       responses:
-        "200":
+        '200':
           description: Success
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
-          description: >
+        '422':
+          description: |
             Form errors
-
-            When `validate_hierarchy` is set to true, any validation errors will
-            be returned as an array under the `errors` key in the response.
-  /locations:
+            When `validate_hierarchy` is set to true, any validation errors will be returned as an array under the `errors` key in the response.
+  '/locations':
     get:
       tags:
         - Locations
@@ -4377,7 +3382,7 @@ paths:
           schema:
             type: integer
       responses:
-        "200":
+        '200':
           description: Returns the locations for a given survey.
           content:
             application/json:
@@ -4392,49 +3397,29 @@ paths:
                     properties:
                       ordered_columns:
                         type: array
-                        description: >
-                          List of columns to display in the table in the correct
-                          order. 
-
-                          These will be of the form [<geo level 1 name> ID, <geo
-                          level 1 name> Name, <geo level 2 name> ID, <geo level
-                          2 name> Name, ...]. 
-
-                          For example, ["State ID", "State Name", "District ID",
-                          "District Name", "Block ID", "Block Name"].
-
-                          The order of geo levels will be descending from the
-                          top level geo level to the lowest level geo level.
-
-                          Will be empty if no geo levels have been configured
-                          for the given survey.
+                        description: |
+                          List of columns to display in the table in the correct order. 
+                          These will be of the form [<geo level 1 name> ID, <geo level 1 name> Name, <geo level 2 name> ID, <geo level 2 name> Name, ...]. 
+                          For example, ["State ID", "State Name", "District ID", "District Name", "Block ID", "Block Name"].
+                          The order of geo levels will be descending from the top level geo level to the lowest level geo level.
+                          Will be empty if no geo levels have been configured for the given survey.
                       records:
                         type: array
-                        description: >
-                          List of location objects for the given survey. Each
-                          location object contains keys corresponding to the
-                          columns in the `ordered_columns` array.
-
-                          The columns are determined by the geo levels for the
-                          given survey, so columns will vary from survey to
-                          survey.
-
-                          Will be empty of no geo levels or no locations have
-                          been configured for the given survey.
-        "500":
-          description: >
+                        description: |
+                          List of location objects for the given survey. Each location object contains keys corresponding to the columns in the `ordered_columns` array.
+                          The columns are determined by the geo levels for the given survey, so columns will vary from survey to survey.
+                          Will be empty of no geo levels or no locations have been configured for the given survey.
+        '500':
+          description: |
             Error message indicating that the locations could not be retrieved.
-
-            If the location type hierarchy is invalid, the `errors` key will
-            contain a `geo_level_hierarchy` key with an error message string.
+            If the location type hierarchy is invalid, the `errors` key will contain a `geo_level_hierarchy` key with an error message string.
+ 
     post:
       tags:
         - Locations
       summary: Upload a locations CSV file for a survey
-      description: >
-        Upload a locations CSV file for a given survey to the database. A column
-        mapping is required in the payload to map the columns in the CSV file to
-        the geo levels for the given survey.
+      description: |
+        Upload a locations CSV file for a given survey to the database. A column mapping is required in the payload to map the columns in the CSV file to the geo levels for the given survey.
       parameters:
         - name: survey_uid
           in: query
@@ -4443,9 +3428,7 @@ paths:
           schema:
             type: integer
       requestBody:
-        description: >-
-          JSON object containing locations file content and geo level column
-          mapping.
+        description: JSON object containing locations file content and geo level column mapping.
         required: true
         content:
           application/json:
@@ -4454,9 +3437,7 @@ paths:
               properties:
                 geo_level_mapping:
                   type: array
-                  description: >-
-                    An array of objects mapping the columns in the CSV file to
-                    the geo levels for the given survey.
+                  description: An array of objects mapping the columns in the CSV file to the geo levels for the given survey.
                   items:
                     type: object
                     properties:
@@ -4467,15 +3448,11 @@ paths:
                       location_id_column:
                         type: string
                         nullable: false
-                        description: >-
-                          The name of the column in the CSV file that contains
-                          the location id for the given geo level.
+                        description: The name of the column in the CSV file that contains the location id for the given geo level.
                       location_name_column:
                         type: integer
                         nullable: false
-                        description: >-
-                          The name of the column in the CSV file that contains
-                          the location name for the given geo level.
+                        description: The name of the column in the CSV file that contains the location name for the given geo level.
                     required:
                       - geo_level_uid
                       - location_id_column
@@ -4486,28 +3463,21 @@ paths:
               required:
                 - geo_level_mapping
                 - file
+
+
       responses:
-        "200":
+        '200':
           description: Success
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "422":
-          description: >
+        '422':
+          description: |
             Form errors
+            Validation errors for the geo level mapping will be returned as an array under the `geo_level_mapping` key in the `errors` key of the response.
+            Validation errors for the file will be returned as an array under the `file` key in the `errors` key of the response.
+            Validation errors for the location type hierarchy will be returned as an array under the `geo_level_hierarchy` key in the `errors` key of the response.
+            Note that the file validation will only be run if the geo level mapping is valid.
 
-            Validation errors for the geo level mapping will be returned as an
-            array under the `geo_level_mapping` key in the `errors` key of the
-            response.
-
-            Validation errors for the file will be returned as an array under
-            the `file` key in the `errors` key of the response.
-
-            Validation errors for the location type hierarchy will be returned
-            as an array under the `geo_level_hierarchy` key in the `errors` key
-            of the response.
-
-            Note that the file validation will only be run if the geo level
-            mapping is valid.
   /targets:
     get:
       summary: Get targets
@@ -4526,19 +3496,17 @@ paths:
           schema:
             type: integer
           description: >-
-            The page number of the results to return. Results will be paginated
-            only if `page` and `per_page` are both specified.\
+            The page number of the results to return. Results will be paginated only if `page` and `per_page` are both specified.\
           required: false
         - in: query
           name: per_page
           schema:
             type: integer
           description: >-
-            The number of results to return per page. Results will be paginated
-            only if `page` and `per_page` are both specified.
+            The number of results to return per page. Results will be paginated only if `page` and `per_page` are both specified.
           required: false
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -4576,15 +3544,11 @@ paths:
                         target_locations:
                           type: array
                           description: >-
-                            The geography of the target.  Each array item is an
-                            object of the form {`location_id`: _location_id_,
-                            `location_name`:  _location_name_, `location_uid`:
-                            __location_uid__, `geo_level_name`:
-                            __geo_level_name__, `geo_level_uid`:
-                            __geo_level_uid__} in descending order from highest 
+                            The geography of the target. 
+                            Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                            _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
                             to lowest level location the target is location in.
-                            Can be null if a location has not been specified for
-                            the target.
+                            Can be null if a location has not been specified for the target.
                           items:
                             type: object
                             properties:
@@ -4599,9 +3563,7 @@ paths:
                                 description: The name of the geo level
                   paginate:
                     type: object
-                    description: >-
-                      Pagination details. Will only be included if `page` and
-                      `per_page` are both specified in the query parameters.
+                    description: Pagination details. Will only be included if `page` and `per_page` are both specified in the query parameters.
                     properties:
                       page:
                         type: integer
@@ -4615,13 +3577,13 @@ paths:
                       pages:
                         type: integer
                         description: The total number of pages
-        "400":
+        '400':
           description: Form ID is required
-        "404":
+        '404':
           description: Invalid values for `page` or `per_page` query parameters
     post:
       summary: Upload a csv of targets
-      description: |
+      description: >
         Upload a csv of new targets to be added to the given form
       tags:
         - Targets
@@ -4662,9 +3624,7 @@ paths:
                       description: The column name of the target's gender
                     location_id_column:
                       type: string
-                      description: >-
-                        The column name of the target's location ID. This is the
-                        bottom geo level location that the target is mapped to.
+                      description: The column name of the target's location ID. This is the bottom geo level location that the target is mapped to.
                     custom_fields:
                       type: array
                       description: >-
@@ -4692,32 +3652,35 @@ paths:
 
                     The csv must have a header row with the column names
                     specified in the `column_mapping` object.
+
                 mode:
                   type: string
                   enum:
                     - overwrite
-                    - merge
+                    - append
                   description: >-
-                    The mode of the upload. In 'overwrite' mode, all targets
-                    with the provided form_uid from  the query parameter will be
-                    removed and replaced with the new targets from  the CSV
-                    file. In 'merge' mode, the new targets from the CSV will
-                    be added to the existing ones.  Any existing records
-                    included in the upload will also be updated.
+                    The mode of the upload. If `overwrite`, all targets
+                    with the given form_uid (from the query parameter) will be 
+                    deleted and replaced with the new targets in the csv. If `append`, 
+                    the new targets in the csv will be added to the existing targets.
+
+                    **Note:** If the `append` mode is used, the targets in the csv
+                    may have target IDs that are not already in the database for the form and those will be inserted. 
+                    Also updates to on new and existing columns will be made if this mode is used.
               required:
                 - column_mapping
                 - file
                 - mode
       responses:
-        "200":
+        '200':
           description: Records added successfully
-        "400":
+        '400':
           description: Query parameter errors
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Form not found
-        "422":
+        '422':
           description: Form errors
           content:
             application/json:
@@ -4727,26 +3690,24 @@ paths:
                   errors:
                     type: object
                     description: >-
-                      An object with information on errors related to the csv
-                      file upload. Each key will only be present if there are
-                      errors of that type.
-
-                      In addition to the errors listed below, the `errors`
-                      object may also contain errors related to an incorrectly
-                      specified payload.
+                      An object with information on errors related to the csv file upload.
+                      Each key will only be present if there are errors of that type.
+                      
+                      In addition to the errors listed below, the `errors` object may also contain
+                      errors related to an incorrectly specified payload.
                     properties:
                       file_structure_errors:
                         type: array
                         description: >-
-                          An array of errors in the file structure. Each array
-                          item is a string containing the error message related
-                          to an individual error.
+                          An array of errors in the file structure. Each
+                          array item is a string containing the error message
+                          related to an individual error.
                       column_mapping:
                         type: array
                         description: >-
-                          An array of errors in the column. Each array item is a
-                          string containing the error message related to an
-                          individual error.
+                          An array of errors in the column. Each
+                          array item is a string containing the error message
+                          related to an individual error.
                       geo_level_hierarchy:
                         type: array
                         description: >-
@@ -4756,44 +3717,35 @@ paths:
                       record_errors:
                         type: object
                         description: >-
-                          An object with information on validation errors in the
-                          csv records.
+                          An object with information on validation errors in the csv records.
                         properties:
                           summary:
                             type: object
                             description: >-
-                              A summary of the validation errors in the csv
-                              records
+                              A summary of the validation errors in the csv records
                             properties:
                               error_count:
                                 type: integer
                                 description: The total number of errors in the csv records
                               total_correct_rows:
                                 type: integer
-                                description: >-
-                                  The total number of correct rows in the csv
-                                  records
+                                description: The total number of correct rows in the csv records
                               total_rows:
                                 type: integer
                                 description: The total number of rows in the csv records
                               total_rows_with_errors:
                                 type: integer
-                                description: >-
-                                  The total number of rows with errors in the
-                                  csv records
+                                description: The total number of rows with errors in the csv records                            
                           summary_by_error_type:
                             type: array
                             description: >-
-                              An array of objects with information on validation
-                              errors by error type in the csv records.
+                              An array of objects with information on validation errors by error type in the csv records.
                             items:
                               type: object
                               properties:
                                 error_count:
                                   type: integer
-                                  description: >-
-                                    The total number of errors of this type in
-                                    the csv records
+                                  description: The total number of errors of this type in the csv records
                                 error_message:
                                   type: string
                                   description: The error message for this error type
@@ -4803,40 +3755,27 @@ paths:
                                 row_numbers_with_errors:
                                   type: array
                                   description: >-
-                                    An array of row numbers with errors of this
-                                    type in the csv records
+                                    An array of row numbers with errors of this type in the csv records
                                   items:
                                     type: integer
-                                    description: >-
-                                      The row number with an error of this type
-                                      in the csv records
+                                    description: The row number with an error of this type in the csv records
                           invalid_records:
                             type: object
                             description: >-
-                              An object with information on validation errors by
-                              record in the csv records. This can be used to
-                              identify the specific errors in each record and to
-                              let users download a csv with the errors.
+                              An object with information on validation errors by record in the csv records.
+                              This can be used to identify the specific errors in each record and to let users download a csv with the errors.
                             properties:
                               records:
                                 type: array
                                 description: >-
-                                  An array of objects that represent the
-                                  original records in the csv with the
-                                  validation errors. A new `errors` field is
-                                  added to each record that contains a
-                                  semicolon-separated list of the validation
-                                  errors for that record. A new `row_number`
-                                  field is also added to each record that
-                                  contains the row number of the record in the
-                                  original csv.
+                                  An array of objects that represent the original records in the csv with the validation errors.
+                                  A new `errors` field is added to each record that contains a semicolon-separated list of the validation errors for that record.
+                                  A new `row_number` field is also added to each record that contains the row number of the record in the original csv.
                               ordered_columns:
                                 type: array
                                 description: >-
-                                  An array of strings that represent the column
-                                  names in the `records` array of objects in the
-                                  order that they should  appear in a table or
-                                  downloadable csv file.
+                                  An array of strings that represent the column names in the `records` array of objects in the order that they should 
+                                  appear in a table or downloadable csv file.
                                 items:
                                   type: string
                                   description: The column name in the csv
@@ -4846,16 +3785,13 @@ paths:
     patch:
       summary: Bulk update targets for a provided set of fields
       description: >
-        Bulk update targets for a provided set of fields. The targets to be
-        updated are specified by their target IDs. Only the fields specified in
-        the request body will be updated. If a field is not specified, it will
-        not be updated. Only personal details and custom fields can be updated
-        can be updated through this endpoint. To bulk update targets' locations,
-        use the `PUT /targets/roles/locations` endpoint.
+        Bulk update targets for a provided set of fields. The targets to be updated are specified by their target IDs.
+        Only the fields specified in the request body will be updated. If a field is not specified, it will not be updated.
+        Only personal details and custom fields can be updated can be updated through this endpoint. To bulk update targets'
+        locations, use the `PUT /targets/roles/locations` endpoint.
 
-        **Note:** Only fields that are defined in the targets column config
-        table and set as `bulk_editable` can be updated via this endpoint. See
-        the `PUT /targets/column-config` endpoint for more details.
+        **Note:** Only fields that are defined in the targets column config table and set as `bulk_editable` can be updated via
+        this endpoint. See the `PUT /targets/column-config` endpoint for more details.
       tags:
         - Targets
       parameters:
@@ -4874,42 +3810,38 @@ paths:
               properties:
                 target_uids:
                   type: array
-                  description: An array of target UIDs of the targets to be updated
+                  description: >-
+                    An array of target UIDs of the targets to be updated
                   items:
                     type: integer
                     description: The target UID of the target to be updated
                 form_uid:
                   type: integer
-                  description: The form UID of the targets to be updated.
+                  description: >-
+                    The form UID of the targets to be updated.
                 patch_key_example:
                   description: >-
-                    An example of the field name and value to be updated for the
-                    targets. Multiple fields to be updated can be specified in
-                    the same object. The field name must be the same as the
-                    field name in the target column config for the form and set
-                    as `bulk_editable.` See the `PUT /targets/column-config` for
-                    more details on defining the column config for a form.
+                    An example of the field name and value to be updated for the targets. Multiple fields to be updated can be specified in the same object. The field name must be the same as the field name in the target column config for the form and set as `bulk_editable.` See the `PUT /targets/column-config` for more details on defining the column config for a form.
               required:
                 - target_uids
                 - form_uid
       responses:
-        "200":
+        '200':
           description: Targets updated successfully
-        "400":
+        '400':
           description: Request errors
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Form not found
-        "422":
+        '422':
           description: Form errors
   /targets/column-config:
     put:
       summary: Update the targets column config for a form
       description: >
-        Update the column config for targets for a form. The column config
-        defines the fields that are available for bulk editing via the `PATCH
-        /targets` endpoint  and specifies whether fields contain PII.
+        Update the column config for targets for a form. The column config defines the fields that are available for bulk editing via the `PATCH /targets` endpoint 
+        and specifies whether fields contain PII.
       tags:
         - Targets
       parameters:
@@ -4928,25 +3860,18 @@ paths:
               properties:
                 form_uid:
                   type: integer
-                  description: The form UID of the targets to be updated.
+                  description: >-
+                    The form UID of the targets to be updated.
                 column_config:
                   type: array
                   description: >-
-                    An array of column config objects for the targets data. Each
-                    object defines the column name, its type, and whether it is
-                    bulk editable or not.
+                    An array of column config objects for the targets data. Each object defines the column name, its type, and whether it is bulk editable or not.
+                    
+                    The location mapping column must be named `bottom_geo_level_location` and its column_types must be `location`.
 
-                    The location mapping column must be named
-                    `bottom_geo_level_location` and its column_types must be
-                    `location`.
-
-                    The basic details columns must be named `target_id`,
-                    `language` and `gender` and their column_types must be
-                    `basic_details`.
-
-                    The custom fields columns must match their corresponding
-                    json keys in the `custom_fields` column of the `targets`
-                    table and their column_types must be `custom_field`.
+                    The basic details columns must be named `target_id`, `language` and `gender` and their column_types must be `basic_details`.
+                  
+                    The custom fields columns must match their corresponding json keys in the `custom_fields` column of the `targets` table and their column_types must be `custom_field`.
                   items:
                     type: object
                     properties:
@@ -4955,9 +3880,7 @@ paths:
                         description: The field name of the column
                       column_type:
                         type: string
-                        description: >-
-                          The field type of the column. Can be one of
-                          `basic_details`, `custom_field`, or `location`.
+                        description: The field type of the column. Can be one of `basic_details`, `custom_field`, or `location`.
                       bulk_editable:
                         type: boolean
                         description: Whether the field is bulk editable or not
@@ -4969,21 +3892,20 @@ paths:
                 - form_uid
                 - column_config
       responses:
-        "200":
+        '200':
           description: Column config updated successfully
-        "400":
+        '400':
           description: Request errors
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Form not found
-        "422":
+        '422':
           description: Form errors
     get:
       summary: Get the targets column config for a form
       description: >
-        Get the targets column config for a form. The column config defines the
-        fields that are available for bulk editing via the `PATCH /targets`
+        Get the targets column config for a form. The column config defines the fields that are available for bulk editing via the `PATCH /targets`
         endpoint.
       tags:
         - Targets
@@ -4992,19 +3914,18 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: The form UID of the target column config to be updated.
+          description: >-
+            The form UID of the target column config to be updated.
           required: true
       responses:
-        "200":
+        '200':
           description: Column config retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 description: >-
-                  An array of column config objects for the targets data. Each
-                  object defines the column name, its type, whether it is bulk
-                  editable or not, and whether it contains PII.
+                  An array of column config objects for the targets data. Each object defines the column name, its type, whether it is bulk editable or not, and whether it contains PII.
                 items:
                   type: object
                   properties:
@@ -5013,23 +3934,21 @@ paths:
                       description: The field name of the column
                     column_type:
                       type: string
-                      description: >-
-                        The field type of the column. Can be one of
-                        `basic_details`, `custom_field`, or `location`.
+                      description: The field type of the column. Can be one of `basic_details`, `custom_field`, or `location`.
                     bulk_editable:
                       type: boolean
                       description: Whether the field is bulk editable or not
                     contains_pii:
                       type: boolean
                       description: Whether the field contains PII or not
-        "400":
+        '400':
           description: Request errors
-        "404":
+        '404':
           description: Form not found
-  "/targets/{target_uid}":
+  /targets/{target_uid}:
     get:
       summary: Get details of an target
-      description: |
+      description: >
         Get details of an target by their unique ID.
       tags:
         - Targets
@@ -5041,14 +3960,14 @@ paths:
           description: Unique ID of the target
           required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
+                  success: 
                     type: boolean
                     description: Indicates whether the request was successful
                   data:
@@ -5072,16 +3991,12 @@ paths:
                       target_locations:
                         type: array
                         description: >-
-                          The geography of the target.  Each array item is an
-                          object of the form {`location_id`: _location_id_,
-                          `location_name`:  _location_name_, `location_uid`:
-                          __location_uid__, `geo_level_name`:
-                          __geo_level_name__, `geo_level_uid`:
-                          __geo_level_uid__} in descending order from highest 
+                          The geography of the target. 
+                          Each array item is an object of the form {`location_id`: _location_id_, `location_name`: 
+                          _location_name_, `location_uid`: __location_uid__, `geo_level_name`: __geo_level_name__, `geo_level_uid`: __geo_level_uid__} in descending order from highest 
                           to lowest level location the target is located in.
 
-                          Can be null if a location has not been specified for
-                          the target.
+                          Can be null if a location has not been specified for the target.
                         items:
                           type: object
                           properties:
@@ -5097,12 +4012,12 @@ paths:
                       custom_fields:
                         type: object
                         description: >-
-                          Any non-standard fields that should be displayed for
-                          the target. The keys are the user-defined labels of
-                          the custom fields.
-    put:
+                          Any non-standard fields that should be displayed for the
+                          target. The keys are the user-defined labels of the
+                          custom fields.
+    put: 
       summary: Update an target
-      description: |
+      description: >
         Update a target's details by their unique ID.
       tags:
         - Targets
@@ -5114,10 +4029,7 @@ paths:
           description: Unique ID of the target
           required: true
       requestBody:
-        description: >-
-          The updated record as it should be saved in the database. Note that
-          values should be provided even if they are not being updated,
-          otherwise they will be set to null.
+        description: The updated record as it should be saved in the database. Note that values should be provided even if they are not being updated, otherwise they will be set to null.
         required: true
         content:
           application/json:
@@ -5140,8 +4052,8 @@ paths:
                   type: object
                   description: >-
                     Any non-standard fields that should be displayed for the
-                    target. The keys are the user-defined labels of the custom
-                    fields.
+                    target. The keys are the user-defined labels of the
+                    custom fields.
               required:
                 - target_id
                 - language
@@ -5149,11 +4061,11 @@ paths:
                 - location_uid
                 - custom_fields
       responses:
-        "200":
+        '200':
           description: Successfully updated
-        "403":
+        '403':
           description: X-CSRF-Token required in header
-        "404":
+        '404':
           description: Target not found
-        "422":
+        '422':
           description: Target errors
