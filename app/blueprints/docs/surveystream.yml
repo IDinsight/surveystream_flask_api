@@ -128,6 +128,7 @@ paths:
   /healthcheck:
     get:
       summary: Test database connection
+      description: Check if api is running and connected
       security: []
       tags:
         - Misc
@@ -275,6 +276,7 @@ paths:
   /forgot-password:
     post:
       summary: Trigger password reset email
+      description: send a password reset email to a user
       security: []
       tags:
         - Password Management
@@ -617,6 +619,7 @@ paths:
       tags:
         - User Management
       summary: Endpoint to get information for all users
+      description: Get all users for a super admin, use survey_uid for non admins to get users per survey
       parameters:
         - in: query
           name: survey_uid
@@ -727,6 +730,7 @@ paths:
       tags:
         - User Management
       summary: Endpoint to get information for a single user
+      description: get user details for a single user
       parameters:
         - in: path
           name: user_uid
@@ -843,6 +847,7 @@ paths:
       tags:
         - User Management
       summary: Endpoint to delete a user
+      description: delete a single user
       parameters:
         - in: path
           name: user_uid
@@ -1399,6 +1404,7 @@ paths:
       tags:
         - Module Selection
       summary: Update status of a module for a specific survey
+      description: Update status of a module for a specific survey
       parameters:
         - in: path
           name: module_id
@@ -1718,7 +1724,7 @@ paths:
                       description: >-
                         Date when form submissions were last ingested from
                         SurveyCTO in isoformat
-  /forms/{form_uid}:
+  "/forms/{form_uid}":
     get:
       summary: Get forms
       description: >-
@@ -1930,12 +1936,12 @@ paths:
         "422":
           description: Form errors
     delete:
-      tags:
-        - Forms
       summary: Delete a form
       description: Delete a form
+      tags:
+        - Forms
       parameters:
-        - in: query
+        - in: path
           name: form_uid
           schema:
             type: integer
@@ -3874,7 +3880,8 @@ paths:
     get:
       tags:
         - Permissions
-      summary: Get all permissions
+      description: Get permissions
+      description: Get all permissions
       responses:
         "200":
           description: Permissions retrieved successfully
@@ -3894,7 +3901,8 @@ paths:
     post:
       tags:
         - Permissions
-      summary: Create a new permission
+      summary: Create permission
+      description: Create a new permission
       requestBody:
         required: true
         content:
@@ -3950,7 +3958,8 @@ paths:
       get:
         tags:
           - Permissions
-        summary: Get details of a specific permission
+        summary: Get permission details
+        description: Get details of a specific permission
         parameters:
           - in: path
             name: permission_uid
@@ -3984,7 +3993,8 @@ paths:
       put:
         tags:
           - Permissions
-        summary: Update a specific permission
+        summary: Update permission
+        description: Update a specific permission using a specific permission unique id
         parameters:
           - in: path
             name: permission_uid
@@ -3992,19 +4002,20 @@ paths:
               type: integer
             required: true
             description: Unique id for the permission
-          - in: body
-            name: body
-            required: true
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                description:
-                  type: string
-              required:
-                - name
-                - description
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  description:
+                    type: string
+                required:
+                  - name
+                  - description
         responses:
           "200":
             description: Permission updated successfully
@@ -4053,7 +4064,8 @@ paths:
       delete:
         tags:
           - Permissions
-        summary: Delete a specific permission
+        summary: Delete permission
+        description: Delete a specific permission using a specific permission unique id
         parameters:
           - in: path
             name: permission_uid
@@ -4080,11 +4092,12 @@ paths:
                   properties:
                     message:
                       type: string
-  /user-hierarchy:
+  "/user-hierarchy":
     get:
       tags:
         - User Hierarchy
       summary: Get user hierarchy details
+      description: Get user hierarchy details for a survey and user
       parameters:
         - in: query
           name: survey_uid
@@ -4123,29 +4136,30 @@ paths:
       tags:
         - User Hierarchy
       summary: Update user hierarchy
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              survey_uid:
-                type: string
-              user_uid:
-                type: string
-              role_uid:
-                type: string
-              parent_user_uid:
-                type: string
-              X-CSRF-Token:
-                type: string
-            required:
-              - survey_uid
-              - user_uid
-              - role_uid
-              - parent_user_uid
-              - X-CSRF-Token
+      description: Update user hierarchy for a survey and user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: string
+                user_uid:
+                  type: string
+                role_uid:
+                  type: string
+                parent_user_uid:
+                  type: string
+                X-CSRF-Token:
+                  type: string
+              required:
+                - survey_uid
+                - user_uid
+                - role_uid
+                - parent_user_uid
+                - X-CSRF-Token
       responses:
         "200":
           description: User hierarchy updated successfully
@@ -4182,6 +4196,7 @@ paths:
       tags:
         - User Hierarchy
       summary: Delete user hierarchy
+      description: Delete user hierarchy for a survey and user
       parameters:
         - in: query
           name: survey_uid
@@ -4217,6 +4232,7 @@ paths:
   /timezones:
     get:
       summary: Get the list of postgres timezones
+      description: Get the list of postgres timezones
       tags:
         - Misc
       responses:
