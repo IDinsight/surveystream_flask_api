@@ -33,10 +33,6 @@ class User(db.Model):
     ## rbac fields
     roles = db.Column(db.ARRAY(db.Integer), default=[], nullable=True)
     is_super_admin = db.Column(db.Boolean, default=False, nullable=True)
-<<<<<<< HEAD
-    
-    to_delete = db.Column(db.Boolean(), default=False, nullable=True)
-=======
 
     to_delete = db.Column(db.Boolean(), default=False, nullable=True)
 
@@ -76,7 +72,6 @@ class User(db.Model):
             "is_super_admin": self.is_super_admin,
             "active": self.active,
         }
->>>>>>> dev
 
 
     def __init__(self, email, first_name, last_name, active=True, password=None, is_super_admin=False, roles=None, to_delete=False):
