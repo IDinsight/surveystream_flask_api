@@ -608,7 +608,7 @@ paths:
       summary: Endpoint to get information for all users
       parameters:
         - in: query
-          name: survey_id
+          name: survey_uid
           type: string
           required: false
       responses:
@@ -697,7 +697,7 @@ paths:
             properties:
               message:
                 type: string
-  "/users/{user_id}":
+  "/users/{user_uid}":
     put:
       tags:
         - User Management
@@ -707,7 +707,7 @@ paths:
         is_super_admin.
       parameters:
         - in: path
-          name: user_id
+          name: user_uid
           type: integer
           required: true
         - in: body
@@ -769,7 +769,7 @@ paths:
       summary: Endpoint to get information for a single user
       parameters:
         - in: path
-          name: user_id
+          name: user_uid
           type: integer
           required: true
       responses:
@@ -778,7 +778,7 @@ paths:
           schema:
             type: object
             properties:
-              user_id:
+              user_uid:
                 type: integer
               email:
                 type: string
@@ -803,7 +803,7 @@ paths:
       summary: Endpoint to delete a user
       parameters:
         - in: path
-          name: user_id
+          name: user_uid
           type: integer
           required: true
       responses:
