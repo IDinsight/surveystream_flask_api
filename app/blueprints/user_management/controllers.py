@@ -1,5 +1,4 @@
 from app.blueprints.surveys.models import Survey
-from app.blueprints.surveys.models import Survey
 from . import user_management_bp
 from flask import jsonify, request, current_app
 from flask_login import current_user
