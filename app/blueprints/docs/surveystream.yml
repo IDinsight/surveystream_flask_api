@@ -509,42 +509,48 @@ paths:
         - User Management
       summary: Endpoint to check a user by email
       description: Requires JSON body with email.
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              email:
-                type: string
-            required:
-              - email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+              required:
+                - email
       responses:
         "200":
           description: User already exists
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-              user:
+          content:
+            application/json:
+              schema:
                 type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    type: object
         "403":
           description: X-CSRF-Token required in header
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "404":
           description: User not found
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-  /users:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  "/users":
     post:
       tags:
         - User Management
@@ -552,56 +558,61 @@ paths:
       description: >-
         Requires JSON body with email, first name, last name, role, and
         is_super_admin.
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              email:
-                type: string
-              first_name:
-                type: string
-              last_name:
-                type: string
-              role:
-                type: string
-              is_super_admin:
-                type: boolean
-            required:
-              - email
-              - first_name
-              - last_name
-              - role
-              - is_super_admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                role:
+                  type: string
+                is_super_admin:
+                  type: boolean
+              required:
+                - email
+                - first_name
+                - last_name
+                - role
+                - is_super_admin
       responses:
         "200":
-          description:
-            Success: user invited
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-              user:
+          description: user invited
+          content:
+            application/json:
+              schema:
                 type: object
-              invite:
-                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    type: object
+                  invite:
+                    type: object
         "403":
           description: X-CSRF-Token required in header
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "422":
           description: User already exists with email
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
     get:
       tags:
         - User Management
@@ -609,95 +620,150 @@ paths:
       parameters:
         - in: query
           name: survey_uid
-          type: string
+          schema:
+             type: integer
           required: false
+          description: survey_uid to filter users 
       responses:
         "200":
           description: User information for all users retrieved
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                user_id:
-                  type: integer
-                email:
-                  type: string
-                first_name:
-                  type: string
-                last_name:
-                  type: string
-                roles:
-                  type: string
-                user_survey_names:
-                  type: string
-                user_role_names:
-                  type: string
-                is_super_admin:
-                  type: boolean
-                status:
-                  type: string
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id:
+                      type: integer
+                    email:
+                      type: string
+                    first_name:
+                      type: string
+                    last_name:
+                      type: string
+                    roles:
+                      type: string
+                    user_survey_names:
+                      type: string
+                    user_role_names:
+                      type: string
+                    is_super_admin:
+                      type: boolean
+                    status:
+                      type: string
         "400":
           description: Survey ID is required for non-super-admin users
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-  /users/complete-registration:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  "/users/complete-registration":
     post:
       tags:
         - User Management
       summary: Endpoint to complete user registration using an invite code
       description: "Requires JSON body with invite_code, new_password, and confirm_password."
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              invite_code:
-                type: string
-              new_password:
-                type: string
-              confirm_password:
-                type: string
-            required:
-              - invite_code
-              - new_password
-              - confirm_password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                invite_code:
+                  type: string
+                new_password:
+                  type: string
+                confirm_password:
+                  type: string
+              required:
+                - invite_code
+                - new_password
+                - confirm_password
       responses:
         "200":
-          description:
-            Success: registration completed
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          description: registration completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "403":
           description: X-CSRF-Token required in header
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "404":
           description: Invalid or expired invite code
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "422":
           description: Validation error
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
   "/users/{user_uid}":
+    get:
+      tags:
+        - User Management
+      summary: Endpoint to get information for a single user
+      parameters:
+        - in: path
+          name: user_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the user
+      responses:
+        "200":
+          description: User information retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_uid:
+                    type: integer
+                  email:
+                    type: string
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  roles:
+                    type: array
+                  is_super_admin:
+                    type: boolean
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+    
     put:
       tags:
         - User Management
@@ -708,95 +774,71 @@ paths:
       parameters:
         - in: path
           name: user_uid
-          type: integer
-          required: true
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              email:
-                type: string
-              first_name:
-                type: string
-              last_name:
-                type: string
-              roles:
-                type: array
-              is_super_admin:
-                type: boolean
-            required:
-              - email
-              - first_name
-              - last_name
-              - roles
-              - is_super_admin
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                roles:
+                  type: array
+                is_super_admin:
+                  type: boolean
+              required:
+                - email
+                - first_name
+                - last_name
+                - roles
+                - is_super_admin
       responses:
         "200":
           description: User updated
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-              user_data:
+          content:
+            application/json:
+              schema:
                 type: object
+                properties:
+                  message:
+                    type: string
+                  user_data:
+                    type: object
         "403":
           description: X-CSRF-Token required in header
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "404":
           description: User not found
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "422":
           description: Validation error
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-    get:
-      tags:
-        - User Management
-      summary: Endpoint to get information for a single user
-      parameters:
-        - in: path
-          name: user_uid
-          type: integer
-          required: true
-      responses:
-        "200":
-          description: User information retrieved
-          schema:
-            type: object
-            properties:
-              user_uid:
-                type: integer
-              email:
-                type: string
-              first_name:
-                type: string
-              last_name:
-                type: string
-              roles:
-                type: array
-              is_super_admin:
-                type: boolean
-        "404":
-          description: User not found
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
     delete:
       tags:
         - User Management
@@ -804,23 +846,30 @@ paths:
       parameters:
         - in: path
           name: user_uid
-          type: integer
+          schema:
+            type: integer
           required: true
+          description: Unique ID of the user
+
       responses:
         "200":
           description: User deleted successfully
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
         "404":
           description: User not found
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
   /surveys:
     get:
       summary: Get surveys
@@ -1669,7 +1718,7 @@ paths:
                       description: >-
                         Date when form submissions were last ingested from
                         SurveyCTO in isoformat
-  "/forms/{form_uid}":
+  /forms/{form_uid}:
     get:
       summary: Get forms
       description: >-
@@ -1881,9 +1930,9 @@ paths:
         "422":
           description: Form errors
     delete:
-      summary: Delete a form
       tags:
         - Forms
+      summary: Delete a form
       description: Delete a form
       parameters:
         - in: query
@@ -1907,9 +1956,8 @@ paths:
                     description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: >-
-                      Error message indicating that the specified form ID was
-                      not found.
+                    description: Error message indicating that the specified form ID was not found.
+  
   "/forms/{form_uid}/scto-question-mapping":
     get:
       summary: Get SurveyCTO question mapping for a form
@@ -3640,8 +3688,13 @@ paths:
       description: >
         Saves the module questionnaire responses for a given survey to the
         database.
-
-        - `survey_uid`: ID of the survey
+      parameters:
+      - name: survey_uid
+        in: path
+        description: The unique ID of the survey.
+        required: true
+        schema:
+          type: integer
       requestBody:
         description: JSON object containing survey ID and list of module IDs
         required: true
@@ -3817,7 +3870,7 @@ paths:
             Form errors Form errors When `validate_hierarchy` is set to true,
             any validation errors will be returned as an array under the
             `errors` key in the response.
-  /permissions:
+  "/permissions":
     get:
       tags:
         - Permissions
@@ -3825,66 +3878,75 @@ paths:
       responses:
         "200":
           description: Permissions retrieved successfully
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                permission_uid:
-                  type: integer
-                name:
-                  type: string
-                description:
-                  type: string
+          content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      permission_uid:
+                        type: integer
+                      name:
+                        type: string
+                      description:
+                        type: string
     post:
       tags:
         - Permissions
       summary: Create a new permission
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-              description:
-                type: string
-            required:
-              - name
-              - description
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              required:
+                - name
+                - description
       responses:
         "201":
           description: Permission created successfully
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-              permission_uid:
-                type: integer
-              name:
-                type: string
-              description:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  permission_uid:
+                    type: integer
+                  name:
+                    type: string
+                  description:
+                    type: string
         "400":
           description: >-
             Name and description are required fields or Permission with this
             name already exists
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         "500":
           description: An unexpected error occurred
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-    "/permissions/{permission_uid}":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  
+  "/permissions/{permission_uid}":
       get:
         tags:
           - Permissions
@@ -3892,27 +3954,33 @@ paths:
         parameters:
           - in: path
             name: permission_uid
-            type: integer
+            schema:
+              type: integer
             required: true
+            description: "Unique id for the permission"
         responses:
           "200":
             description: Permission details retrieved successfully
-            schema:
-              type: object
-              properties:
-                permission_uid:
-                  type: integer
-                name:
-                  type: string
-                description:
-                  type: string
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    permission_uid:
+                      type: integer
+                    name:
+                      type: string
+                    description:
+                      type: string
           "404":
             description: Permission not found
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
       put:
         tags:
           - Permissions
@@ -3920,8 +3988,10 @@ paths:
         parameters:
           - in: path
             name: permission_uid
-            type: integer
+            schema:
+              type: integer
             required: true
+            description: Unique id for the permission
           - in: body
             name: body
             required: true
@@ -3938,40 +4008,48 @@ paths:
         responses:
           "200":
             description: Permission updated successfully
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-                permission_uid:
-                  type: integer
-                name:
-                  type: string
-                description:
-                  type: string
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                    permission_uid:
+                      type: integer
+                    name:
+                      type: string
+                    description:
+                      type: string
           "400":
             description: >-
               Name and description are required fields or Updating to this name
               would violate uniqueness constraint
-            schema:
-              type: object
-              properties:
-                error:
-                  type: string
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
           "404":
             description: Permission not found
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
           "500":
             description: An unexpected error occurred
-            schema:
-              type: object
-              properties:
-                error:
-                  type: string
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
       delete:
         tags:
           - Permissions
@@ -3979,23 +4057,29 @@ paths:
         parameters:
           - in: path
             name: permission_uid
-            type: integer
+            schema:
+              type: integer
             required: true
+            description: "Unique id for ther permission"
         responses:
           "200":
             description: Permission deleted successfully
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
           "404":
             description: Permission not found
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
   /user-hierarchy:
     get:
       tags:
@@ -4004,31 +4088,37 @@ paths:
       parameters:
         - in: query
           name: survey_uid
-          type: string
+          schema:
+            type: string
           required: true
         - in: query
           name: user_uid
-          type: string
+          schema:
+            type: string
           required: true
       responses:
         "200":
           description: User hierarchy details retrieved successfully
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-              data:
+          content:
+            application/json:
+              schema:
                 type: object
-              message:
-                type: string
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                  message:
+                    type: string
         "404":
           description: User hierarchy not found
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
     put:
       tags:
         - User Hierarchy
@@ -4059,29 +4149,35 @@ paths:
       responses:
         "200":
           description: User hierarchy updated successfully
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-              user_hierarchy:
+          content:
+            application/json:
+              schema:
                 type: object
+                properties:
+                  message:
+                    type: string
+                  user_hierarchy:
+                    type: object
         "403":
           description: X-CSRF-Token required in header
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "422":
           description: Validation error
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-              errors:
+          content:
+            application/json:
+              schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  errors:
+                    type: object
     delete:
       tags:
         - User Hierarchy
@@ -4089,27 +4185,35 @@ paths:
       parameters:
         - in: query
           name: survey_uid
-          type: string
+          schema:
+            type: string
           required: true
+          description: unique id for the survey
         - in: query
           name: user_uid
-          type: string
+          schema:
+            type: string
           required: true
+          description: unique id for the user
       responses:
         "200":
           description: User hierarchy deleted successfully
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "404":
           description: User hierarchy not found
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
   /timezones:
     get:
       summary: Get the list of postgres timezones
@@ -4587,18 +4691,14 @@ paths:
                   type: string
                   enum:
                     - overwrite
-                    - append
+                    - merge
                   description: >-
-                    The mode of the upload. If `overwrite`, all targets with the
-                    given form_uid (from the query parameter) will be  deleted
-                    and replaced with the new targets in the csv. If `append`, 
-                    the new targets in the csv will be added to the existing
-                    targets.
-
-                    **Note:** If the `append` mode is used, the targets in the
-                    csv may have target IDs that are not already in the database
-                    for the form and those will be inserted.  Also updates to on
-                    new and existing columns will be made if this mode is used.
+                    The mode of the upload. In 'overwrite' mode, all targets
+                    with the provided form_uid from  the query parameter will be
+                    removed and replaced with the new targets from  the CSV
+                    file. In 'merge' mode, the new targets from the CSV will
+                    be added to the existing ones.  Any existing records
+                    included in the upload will also be updated.
               required:
                 - column_mapping
                 - file
