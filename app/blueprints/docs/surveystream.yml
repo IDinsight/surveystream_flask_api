@@ -3880,7 +3880,6 @@ paths:
     get:
       tags:
         - Permissions
-      description: Get permissions
       description: Get all permissions
       responses:
         "200":
