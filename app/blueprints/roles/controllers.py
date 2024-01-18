@@ -16,6 +16,7 @@ from .utils import run_role_hierarchy_validations
 @roles_bp.route("/roles", methods=["GET"])
 @logged_in_active_user_required
 def get_survey_roles():
+    """Function to get roles per survey"""
     query_param_validator = SurveyRolesQueryParamValidator.from_json(request.args)
     if not query_param_validator.validate():
         return (
@@ -70,6 +71,7 @@ def get_survey_roles():
 @roles_bp.route("/roles", methods=["PUT"])
 @logged_in_active_user_required
 def update_survey_roles():
+    """Function to update roles per survey"""
     query_param_validator = SurveyRolesQueryParamValidator.from_json(request.args)
     if not query_param_validator.validate():
         return (
@@ -216,6 +218,7 @@ def update_survey_roles():
 @roles_bp.route('/permissions', methods=['GET'])
 @logged_in_active_user_required
 def get_permissions():
+    """Function to get permissions"""
     permissions = Permission.query.all()
     permission_list = [{'permission_uid': permission.permission_uid, 'name': permission.name, 'description': permission.description}
                        for permission in permissions]
@@ -226,6 +229,7 @@ def get_permissions():
 @roles_bp.route('/permissions', methods=['POST'])
 @logged_in_active_user_required
 def create_permission():
+    """Function to create permissions"""
     data = request.get_json()
 
     # Validate input data
@@ -259,6 +263,7 @@ def create_permission():
 @roles_bp.route('/permissions/<int:permission_uid>', methods=['GET'])
 @logged_in_active_user_required
 def get_permission(permission_uid):
+    """Function to get single permission"""
     permission = Permission.query.get(permission_uid)
     if not permission:
         return jsonify(message='Permission not found'), 404
@@ -276,6 +281,7 @@ def get_permission(permission_uid):
 @roles_bp.route('/permissions/<int:permission_uid>', methods=['PUT'])
 @logged_in_active_user_required
 def update_permission(permission_uid):
+    """Function to update permission"""
     permission = Permission.query.get(permission_uid)
     if not permission:
         return jsonify(message='Permission not found'), 404
@@ -313,6 +319,7 @@ def update_permission(permission_uid):
 @roles_bp.route('/permissions/<int:permission_uid>', methods=['DELETE'])
 @logged_in_active_user_required
 def delete_permission(permission_uid):
+    """Function to delete permission"""
     permission = Permission.query.get(permission_uid)
     if not permission:
         return jsonify(message='Permission not found'), 404
@@ -320,9 +327,6 @@ def delete_permission(permission_uid):
     db.session.delete(permission)
     db.session.commit()
 
-<<<<<<< HEAD
-    return jsonify(message='Permission deleted successfully'), 200
-=======
     return jsonify(message='Permission deleted successfully'), 200
 
 ### UserHierarchy
@@ -330,6 +334,7 @@ def delete_permission(permission_uid):
 @roles_bp.route("/user-hierarchy", methods=["GET"])
 @logged_in_active_user_required
 def get_user_hierarchy():
+    """Function to get user hierarchy"""
     query_param_validator = UserHierarchyParamValidator.from_json(request.args)
     if not query_param_validator.validate():
         return (
@@ -361,6 +366,8 @@ def get_user_hierarchy():
 @roles_bp.route("/user-hierarchy", methods=["PUT"])
 @logged_in_active_user_required
 def update_user_hierarchy():
+    """Function to update user hierarchy"""
+
     payload = request.get_json()
     payload_validator = UserHierarchyPayloadValidator.from_json(payload)
 
@@ -396,6 +403,7 @@ def update_user_hierarchy():
 @roles_bp.route("/user-hierarchy", methods=["DELETE"])
 @logged_in_active_user_required
 def delete_user_hierarchy():
+    """Function to delete user hierarchy"""
     query_param_validator = UserHierarchyParamValidator.from_json(request.args)
     if not query_param_validator.validate():
         return (
