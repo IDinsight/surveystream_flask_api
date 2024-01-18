@@ -3,12 +3,15 @@ from app.utils.utils import logged_in_active_user_required
 from flask import jsonify, request
 from flask_login import current_user
 from .models import TableConfig
+from .validators import UpdateTableConfigValidator
 from .default_config import DefaultTableConfig
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.locations.utils import GeoLevelHierarchy
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.forms.models import ParentForm
 from app.blueprints.surveys.models import Survey
+from app import db
+from sqlalchemy.exc import IntegrityError
 
 
 @table_config_bp.route("", methods=["GET"])
@@ -143,5 +146,63 @@ def get_table_config():
                             "column_label": row.column_label,
                         }
                     )
+
+    return jsonify(table_config)
+
+
+# Create a PUT route to update the table config
+@table_config_bp.route("", methods=["PUT"])
+@logged_in_active_user_required
+def update_table_config():
+    """
+    Updates the table definition for the specified assignments module table
+    """
+
+    form = UpdateTableConfigValidator.from_json(request.get_json())
+
+    if "X-CSRF-Token" in request.headers:
+        form.csrf_token.data = request.headers.get("X-CSRF-Token")
+    else:
+        return jsonify(message="X-CSRF-Token required in header"), 403
+
+    if not form.validate():
+        return jsonify(message=form.errors), 422
+
+    user_uid = current_user.user_uid
+    form_uid = form.form_uid.data
+    table_name = form.table_name.data
+    table_config = form.table_config.data
+
+    # Get the survey UID from the form UID
+    form = ParentForm.query.filter_by(form_uid=form_uid).first()
+
+    if form is None:
+        return (
+            jsonify(message=f"The form 'form_uid={form_uid}' could not be found."),
+            404,
+        )
+
+    # Delete the existing table config for the given form and table name
+    TableConfig.query.filter(
+        TableConfig.form_uid == form_uid, TableConfig.table_name == table_name
+    ).delete()
+
+    # Add the new table config
+    for column in table_config:
+        table_config_row = TableConfig(
+            form_uid=form_uid,
+            table_name=table_name,
+            group_label=column["group_label"],
+            column_key=column["column_key"],
+            column_label=column["column_label"],
+            column_order=column["column_order"],
+        )
+        db.session.add(table_config_row)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
 
     return jsonify(table_config)
