@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 from app import db
 from passlib.hash import pbkdf2_sha256
+from flask_security import UserMixin
 
-class User(db.Model):
+
+class User(db.Model, UserMixin):
     """
     SQLAlchemy data model for User
     """
@@ -27,23 +29,14 @@ class User(db.Model):
     ## rbac fields
     roles = db.Column(db.ARRAY(db.Integer), default=[], nullable=True)
     is_super_admin = db.Column(db.Boolean, default=False, nullable=True)
-
+    
     to_delete = db.Column(db.Boolean(), default=False, nullable=True)
 
-    def __init__(
-        self,
-        email,
-        first_name,
-        last_name,
-        active=True,
-        password=None,
-        is_super_admin=False,
-        roles=None,
-        to_delete=False,
-    ):
+
+    def __init__(self, email, first_name, last_name, active=True, password=None, is_super_admin=False, roles=None, to_delete=False):
         if roles is None:
             roles = []
-
+        
         self.email = email
         self.first_name = first_name
         self.last_name = last_name
@@ -56,17 +49,17 @@ class User(db.Model):
         self.active = active
         self.to_delete = to_delete if to_delete is not None else False
 
+
     def to_dict(self):
         return {
-            "user_uid": self.user_uid,
-            "email": self.email,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "roles": self.roles,
-            "is_super_admin": self.is_super_admin,
-            "active": self.active,
+            'user_uid': self.user_uid,
+            'email': self.email,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'roles': self.roles,
+            'is_super_admin': self.is_super_admin,
+            'active': self.active
         }
-
     def verify_password(self, password):
         return pbkdf2_sha256.verify(password, self.password_secure)
 

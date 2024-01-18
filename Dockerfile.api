@@ -14,8 +14,7 @@ ARG HOME_DIR=/usr/src/${NAME}
 # rely on dependencies) is practical for development and testing
 # but not suitable for production
 RUN apt-get update
-RUN apt-get -y install python3-dev postgresql postgresql-contrib python3-psycopg2 libpq-dev gcc g++ jq wget 
-RUN apt-get -y install curl
+RUN apt-get -y install python3-dev postgresql postgresql-contrib python3-psycopg2 libpq-dev gcc g++ jq wget curl
 
 ARG DOCKERIZE_VERSION=v0.6.0
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz \

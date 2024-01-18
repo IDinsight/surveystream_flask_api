@@ -1,6 +1,4 @@
-"""
-Update the users table to contain a to_delete column
-This will be used to mark users as deleted
+"""empty message
 
 Revision ID: 8eec90719523
 Revises: 4a1f22967088

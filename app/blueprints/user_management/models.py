@@ -1,7 +1,6 @@
 from app import db
 from app.blueprints.auth.models import User
 
-
 class Invite(db.Model):
     __tablename__ = "invites"
     __table_args__ = {"schema": "webapp"}
@@ -20,8 +19,8 @@ class Invite(db.Model):
 
     def to_dict(self):
         return {
-            "invite_code": self.invite_code,
-            "email": self.email,
-            "user_uid": self.user_uid,
-            "is_active": self.is_active,
+            'invite_code': self.invite_code,
+            'email': self.email,
+            'user_uid': self.user_uid,
+            'is_active': self.is_active,
         }
