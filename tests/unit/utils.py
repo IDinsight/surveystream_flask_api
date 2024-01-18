@@ -54,27 +54,23 @@ def set_user_active_status(app, db, email, active):
         db.session.commit()
 
 
-def delete_assignments(app, db, form_uid):
+def set_target_assignable_status(app, db, target_uid, assignable):
     """
-    Delete all assignments directly in the database. Required as setup for certain tests.
+    Set a target's assignable status directly in the database. Needed to set up certain tests.
     """
+    if assignable is True or assignable is False:
+        pass
+    else:
+        raise Exception("A non-boolean value was provided for 'assignable' parameter")
+    if assignable:
+        assignable_value = "t"
+    else:
+        assignable_value = "f"
+
     with app.app_context():
         db.session.execute(
-            "DELETE FROM surveyor_assignments WHERE target_uid IN (SELECT target_uid FROM targets WHERE form_uid=:form_uid);",
-            {"form_uid": form_uid},
-        )
-        db.session.commit()
-
-
-def reset_surveyor_status(app, db, enumerator_uid, form_uid, status):
-    """
-    Set a surveyor's status directly in the database. Required as setup for certain tests.
-    """
-    with app.app_context():
-        # Set the credentials for the desired test user
-        db.session.execute(
-            "UPDATE surveyor_forms SET status=:status WHERE enumerator_uid=:enumerator_uid AND form_uid=:form_uid",
-            {"status": status, "enumerator_uid": enumerator_uid, "form_uid": form_uid},
+            "INSERT INTO webapp.target_status (target_uid, target_assignable) VALUES (:target_uid, :assignable_value) ON CONFLICT (target_uid) DO UPDATE SET target_assignable=:assignable_value",
+            {"assignable_value": assignable_value, "target_uid": target_uid},
         )
         db.session.commit()
 

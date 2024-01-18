@@ -1,4 +1,5 @@
 from app.blueprints.auth.models import User
+from app.blueprints.auth.models import User
 from flask import jsonify, request
 from app.utils.utils import logged_in_active_user_required
 from flask_login import current_user
@@ -320,6 +321,9 @@ def delete_permission(permission_uid):
     db.session.delete(permission)
     db.session.commit()
 
+<<<<<<< HEAD
+    return jsonify(message='Permission deleted successfully'), 200
+=======
     return jsonify(message='Permission deleted successfully'), 200
 
 ### UserHierarchy

@@ -2,6 +2,7 @@ from app import db
 from app.blueprints.auth.models import User
 
 
+
 class Invite(db.Model):
     __tablename__ = "invites"
     __table_args__ = {"schema": "webapp"}
