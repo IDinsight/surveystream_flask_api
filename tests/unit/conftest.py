@@ -143,6 +143,21 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
             open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
         )
 
+        # check if permissions exist
+        permissions_exist = db.session.execute(
+            """
+            SELECT EXISTS(SELECT 1 FROM webapp.permissions LIMIT 1)
+            """
+        ).fetchone()[0]
+
+        if not permissions_exist:
+            # Load permissions data
+            db.session.execute(
+                open(
+                    f"{filepath}/tests/data/launch_local_db/load_permissions.sql", "r"
+                ).read()
+            )
+
         # Set the credentials for the desired test user
         db.session.execute(
             "UPDATE webapp.users SET email=:email, password_secure=:pw_hash, is_super_admin=:is_super_admin WHERE user_uid=:user_uid",
