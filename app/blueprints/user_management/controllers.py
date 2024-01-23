@@ -19,7 +19,7 @@ from .validators import (
     EditUserValidator,
     CheckUserValidator,
 )
-from app.utils.utils import logged_in_active_user_required
+from app.utils.utils import custom_permissions_required, logged_in_active_user_required
 
 
 @user_management_bp.route("/register", methods=["POST"])
@@ -151,6 +151,7 @@ def check_user():
 
 @user_management_bp.route("/users", methods=["POST"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def add_user():
     """
     Endpoint to invite a user by email, The endpoint will create a user without a password and send the user an email
@@ -337,6 +338,7 @@ def get_user(user_uid):
 
 @user_management_bp.route("/users", methods=["GET"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def get_all_users():
     """
     Endpoint to get information for all users.
@@ -413,6 +415,7 @@ def get_all_users():
 
 @user_management_bp.route("/users/<int:user_uid>", methods=["DELETE"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def delete_user(user_uid):
     """
     Endpoint to delete a user.

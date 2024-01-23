@@ -1,3 +1,4 @@
+from app.utils.utils import custom_permissions_required
 from flask import jsonify, request
 from .models import db, Module, ModuleStatus
 from .routes import module_selection_bp
@@ -13,6 +14,7 @@ def list_modules():
 
 
 @module_selection_bp.route('/module-status', methods=['POST'])
+@custom_permissions_required("ADMIN")
 def add_module_status():
     validator = AddModuleStatusValidator.from_json(request.get_json())
 
@@ -57,6 +59,7 @@ def get_module_status(survey_uid):
 
 
 @module_selection_bp.route('/modules/<int:module_id>/status/<int:survey_uid>', methods=['PUT'])
+@custom_permissions_required("ADMIN")
 def update_module_status(module_id, survey_uid):
     module_status = ModuleStatus.query.filter_by(module_id=module_id, survey_uid=survey_uid).first()
     validator = UpdateModuleStatusValidator.from_json(request.get_json())

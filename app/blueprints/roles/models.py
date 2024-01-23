@@ -2,12 +2,10 @@
 from app import db
 from app.blueprints.auth.models import User
 from app.blueprints.surveys.models import Survey
-from flask_security import RoleMixin
-from sqlalchemy import event, inspect
 
 
 
-class Role(db.Model, RoleMixin):
+class Role(db.Model):
     """
     SQLAlchemy data model for Role
     This tables defines the supervisor roles for a given survey

@@ -79,6 +79,7 @@ class TestUserManagement:
             "last_name": sample_user.get("last_name"),
             "roles": sample_user.get("roles"),
             "is_super_admin": sample_user.get("is_super_admin"),
+            "is_survey_admin": False,
             "active": True,
         }
         assert response.json["user"] == expected_data
@@ -189,6 +190,7 @@ class TestUserManagement:
             "last_name": "User",
             "roles": [],
             "is_super_admin": True,
+            "is_survey_admin": False,
             "active": True,
         }
         assert jsondiff.diff(expected_data, updated_user) == {}

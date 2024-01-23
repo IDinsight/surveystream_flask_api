@@ -32,6 +32,7 @@ import binascii
 
 @locations_bp.route("/geo-levels", methods=["GET"])
 @logged_in_active_user_required
+@custom_permissions_required('READ Survey Locations')
 def get_survey_geo_levels():
     """
     Get the geo levels for a given survey
@@ -76,6 +77,7 @@ def get_survey_geo_levels():
 
 @locations_bp.route("/geo-levels", methods=["PUT"])
 @logged_in_active_user_required
+@custom_permissions_required('WRITE Survey Locations')
 def update_survey_geo_levels():
     # Validate the query parameter
     query_param_validator = SurveyGeoLevelsQueryParamValidator.from_json(request.args)

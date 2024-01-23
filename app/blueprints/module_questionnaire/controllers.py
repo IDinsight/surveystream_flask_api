@@ -1,3 +1,4 @@
+from app.utils.utils import custom_permissions_required
 from flask import jsonify, request
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from app import db
@@ -22,6 +23,7 @@ def get_survey_module_questionnaire(survey_uid):
 
 
 @module_questionnaire_bp.route("/<int:survey_uid>", methods=["PUT"])
+@custom_permissions_required("ADMIN")
 def update_survey_module_questionnaire(survey_uid):
     validator = ModuleQuestionnaireForm.from_json(request.get_json())
 

@@ -35,7 +35,9 @@ class TestSurveys:
 
         yield
 
-    def test_create_survey(self, client, login_test_user, create_survey):
+    def test_create_survey(
+        self, client, login_test_user, create_survey, test_user_credentials
+    ):
         """
         Test that the survey is inserted correctly
         """
@@ -60,6 +62,7 @@ class TestSurveys:
                     "prime_geo_level_uid": None,
                     "config_status": "In Progress - Configuration",
                     "last_updated_at": "2023-05-30 00:00:00",
+                    "created_by_user_uid": test_user_credentials["user_uid"],
                 }
             ],
             "success": True,
@@ -79,7 +82,9 @@ class TestSurveys:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_update_survey(self, client, login_test_user, create_survey, csrf_token):
+    def test_update_survey(
+        self, client, login_test_user, create_survey, csrf_token, test_user_credentials
+    ):
         """
         Test that an existing survey can be updated
         """
@@ -124,6 +129,7 @@ class TestSurveys:
             "prime_geo_level_uid": None,
             "config_status": "In Progress - Backend Setup",
             "last_updated_at": "2023-05-30 00:00:00",
+            "created_by_user_uid": test_user_credentials["user_uid"],
         }
 
         # Assert that the last_updated_at field is a valid datetime

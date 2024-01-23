@@ -1,5 +1,6 @@
 from . import assignments_bp
 from app.utils.utils import (
+    custom_permissions_required,
     logged_in_active_user_required,
 )
 from flask import jsonify, request
@@ -34,6 +35,7 @@ from app.blueprints.enumerators.queries import (
 
 @assignments_bp.route("", methods=["GET"])
 @logged_in_active_user_required
+@custom_permissions_required("READ Assignments")
 def view_assignments():
     """
     Returns assignment information for a form and user
@@ -191,6 +193,7 @@ def view_assignments():
 
 @assignments_bp.route("/enumerators", methods=["GET"])
 @logged_in_active_user_required
+@custom_permissions_required("READ Assignments")
 def view_assignments_enumerators():
     """
     Returns enumerators eligible to be assigned for a form and user
@@ -300,6 +303,7 @@ def view_assignments_enumerators():
 
 @assignments_bp.route("", methods=["PUT"])
 @logged_in_active_user_required
+@custom_permissions_required("WRITE Assignments")
 def update_assignments():
     """
     Updates assignment mapping

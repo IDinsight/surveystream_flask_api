@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from sqlalchemy.exc import IntegrityError
+from flask_login import current_user
 from app import db
 from .models import Survey
 from app.blueprints.roles.models import Role
@@ -10,7 +11,7 @@ from .validators import (
     CreateSurveyValidator,
     UpdateSurveyValidator,
 )
-from app.utils.utils import logged_in_active_user_required
+from app.utils.utils import custom_permissions_required, logged_in_active_user_required
 
 
 @surveys_bp.route("", methods=["GET"])
@@ -28,6 +29,7 @@ def get_all_surveys():
 
 @surveys_bp.route("", methods=["POST"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def create_survey():
     payload = request.get_json()
 
@@ -54,6 +56,7 @@ def create_survey():
             config_status=payload_validator.config_status.data,
             state=payload_validator.state.data,
             prime_geo_level_uid=payload_validator.prime_geo_level_uid.data,
+            created_by_user_uid=current_user.user_uid,
         )
         try:
             db.session.add(survey)
@@ -184,6 +187,7 @@ def get_survey(survey_uid):
 
 @surveys_bp.route("/<int:survey_uid>/basic-information", methods=["PUT"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def update_survey(survey_uid):
     payload = request.get_json()
 
@@ -228,6 +232,7 @@ def update_survey(survey_uid):
 
 @surveys_bp.route("/<int:survey_uid>", methods=["DELETE"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def delete_survey(survey_uid):
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     if survey is None:

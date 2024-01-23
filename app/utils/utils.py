@@ -10,7 +10,6 @@ import boto3
 import base64
 
 
-
 def concat_names(name_tuple):
     """
     Function to concatenate first, middle, last name parts,
@@ -141,14 +140,32 @@ def get_sts_assume_role_response(admin_global_secrets_role_arn):
 
     return sts_response
 
+
 def custom_permissions_required(permission_name):
     from app.blueprints.roles.models import Permission, RolePermissions, Role
+
     """
     Function to check if current user has the required permissions
     """
+
     def decorator(fn):
         @wraps(fn)
         def decorated_function(*args, **kwargs):
+            # exclusively handle admin permission checks
+            # these are necessary for creating roles and permissions, survey updates and creation
+            if permission_name == "ADMIN":
+                if (
+                    current_user.get_is_super_admin()
+                    or current_user.get_is_survey_admin()
+                ):
+                    return fn(*args, **kwargs)
+                else:
+                    error_message = (
+                        f"User does not have the required permission: {permission_name}"
+                    )
+                    response = {"success": False, "error": error_message}
+                    return jsonify(response), 403
+
             # Handle super admins
             if current_user.get_is_super_admin():
                 return fn(*args, **kwargs)
@@ -162,16 +179,25 @@ def custom_permissions_required(permission_name):
 
             role_permissions = (
                 db.session.query(Permission)
-                .join(RolePermissions, Permission.permission_uid == RolePermissions.permission_uid)
+                .join(
+                    RolePermissions,
+                    Permission.permission_uid == RolePermissions.permission_uid,
+                )
                 .join(Role, Role.role_uid == RolePermissions.role_uid)
-                .filter(and_(Role.role_uid == func.any(user_roles), Permission.name == permission_name))
+                .filter(
+                    and_(
+                        Role.role_uid == func.any(user_roles),
+                        Permission.name == permission_name,
+                    )
+                )
                 .all()
             )
 
-
             # Check if the current user has the specified permission
             if not len(role_permissions) > 0:
-                error_message = f"User does not have the required permission: {permission_name}"
+                error_message = (
+                    f"User does not have the required permission: {permission_name}"
+                )
                 response = {"success": False, "error": error_message}
                 return jsonify(response), 403
 

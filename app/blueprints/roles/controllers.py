@@ -1,6 +1,6 @@
 from app.blueprints.auth.models import User
 from flask import jsonify, request
-from app.utils.utils import logged_in_active_user_required
+from app.utils.utils import custom_permissions_required, logged_in_active_user_required
 from flask_login import current_user
 from sqlalchemy import insert, cast, Integer, ARRAY, func, distinct
 from sqlalchemy.sql import case
@@ -71,6 +71,7 @@ def get_survey_roles():
 
 @roles_bp.route("/roles", methods=["PUT"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def update_survey_roles():
     """Function to update roles per survey"""
     query_param_validator = SurveyRolesQueryParamValidator.from_json(request.args)
@@ -229,6 +230,7 @@ def get_permissions():
 # POST create a new permission
 @roles_bp.route('/permissions', methods=['POST'])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def create_permission():
     """Function to create permissions"""
     data = request.get_json()
@@ -281,6 +283,7 @@ def get_permission(permission_uid):
 # PUT update a specific permission
 @roles_bp.route('/permissions/<int:permission_uid>', methods=['PUT'])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def update_permission(permission_uid):
     """Function to update permission"""
     permission = Permission.query.get(permission_uid)
@@ -319,6 +322,7 @@ def update_permission(permission_uid):
 # DELETE a specific permission
 @roles_bp.route('/permissions/<int:permission_uid>', methods=['DELETE'])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def delete_permission(permission_uid):
     """Function to delete permission"""
     permission = Permission.query.get(permission_uid)
@@ -366,6 +370,7 @@ def get_user_hierarchy():
 
 @roles_bp.route("/user-hierarchy", methods=["PUT"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def update_user_hierarchy():
     """Function to update user hierarchy"""
 
@@ -403,6 +408,7 @@ def update_user_hierarchy():
         return jsonify(message='User hierarchy created successfully', user_hierarchy=new_user_hierarchy.to_dict()), 200
 @roles_bp.route("/user-hierarchy", methods=["DELETE"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def delete_user_hierarchy():
     """Function to delete user hierarchy"""
     query_param_validator = UserHierarchyParamValidator.from_json(request.args)

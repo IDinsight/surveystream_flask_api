@@ -49,6 +49,9 @@ class Survey(db.Model):
     last_updated_at = db.Column(
         db.TIMESTAMP, nullable=False, default=db.func.current_timestamp()
     )
+    created_by_user_uid = db.Column(
+        db.Integer(), db.ForeignKey(User.user_uid), default=None, nullable=True
+    )
 
     def __init__(
         self,
@@ -63,6 +66,7 @@ class Survey(db.Model):
         config_status,
         state,
         prime_geo_level_uid,
+        created_by_user_uid,
     ):
         self.survey_id = survey_id
         self.survey_name = survey_name
@@ -76,6 +80,7 @@ class Survey(db.Model):
         self.state = state
         self.prime_geo_level_uid = prime_geo_level_uid
         self.last_updated_at = datetime.datetime.now()
+        self.created_by_user_uid = created_by_user_uid
 
     def to_dict(self):
         return {
@@ -92,4 +97,5 @@ class Survey(db.Model):
             "state": self.state,
             "prime_geo_level_uid": self.prime_geo_level_uid,
             "last_updated_at": str(self.last_updated_at),
+            "created_by_user_uid": self.created_by_user_uid,
         }
