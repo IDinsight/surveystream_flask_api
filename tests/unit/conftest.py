@@ -1,7 +1,6 @@
 import pytest
 from app import create_app, db
 from passlib.hash import pbkdf2_sha256
-from sqlalchemy.exc import IntegrityError
 import yaml
 from werkzeug.http import parse_cookie
 from pathlib import Path
@@ -140,27 +139,9 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
         else:
             db.create_all()
 
-        # Load general data
         db.session.execute(
             open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
         )
-
-        # Check if permissions data already exists
-        permissions_exist = db.session.execute(
-            """
-            SELECT EXISTS(SELECT 1 FROM webapp.permissions LIMIT 1)
-            """
-        ).fetchone()[0]
-
-        if not permissions_exist:
-            # Load permissions data with exception handling for duplicate errors
-            db.session.execute(
-                open(
-                    f"{filepath}/tests/data/launch_local_db/load_permissions.sql", "r"
-                ).read()
-            )
-        
-        db.session.commit()
 
         # Set the credentials for the desired test user
         db.session.execute(
