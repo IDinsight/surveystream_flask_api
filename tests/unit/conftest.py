@@ -60,7 +60,7 @@ def test_user_credentials():
             "email": settings["email"],
             "user_uid": 3933,
             "password": "asdfasdf",
-            "is_super_admin": True
+            "is_super_admin": True,
         }
     }
 
