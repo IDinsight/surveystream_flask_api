@@ -5,13 +5,16 @@ from flask_login import current_user
 from .models import TableConfig
 from .validators import UpdateTableConfigValidator
 from .default_config import DefaultTableConfig
+from .utils import validate_table_config
+from .errors import InvalidTableConfigError
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.locations.utils import GeoLevelHierarchy
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.forms.models import ParentForm
 from app.blueprints.surveys.models import Survey
+from app.blueprints.enumerators.models import EnumeratorColumnConfig
+from app.blueprints.targets.models import TargetColumnConfig
 from app import db
-from sqlalchemy.exc import IntegrityError
 
 
 @table_config_bp.route("", methods=["GET"])
@@ -56,27 +59,78 @@ def get_table_config():
     # survey_query = build_survey_query(form_uid)
     # user_level = build_user_level_query(user_uid, survey_query).first().level # TODO: Add this back in once we have the supervisor hierarchy in place
 
-    # Get the geo levels for the survey
-    geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+    # Figure out if we need to handle location columns
 
-    try:
-        geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
-    except InvalidGeoLevelHierarchyError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "geo_level_hierarchy": e.geo_level_hierarchy_errors,
-                    },
-                }
-            ),
-            422,
+    enumerator_location_configured = False
+    target_location_configured = False
+
+    result = TargetColumnConfig.query.filter(
+        TargetColumnConfig.form_uid == form_uid,
+        TargetColumnConfig.column_type == "location",
+    ).first()
+
+    if result is not None:
+        target_location_configured = True
+
+    result = EnumeratorColumnConfig.query.filter(
+        EnumeratorColumnConfig.form_uid == form_uid,
+        EnumeratorColumnConfig.column_type == "location",
+    ).first()
+
+    if result is not None:
+        enumerator_location_configured = True
+
+    geo_level_hierarchy = None
+    prime_geo_level_uid = None
+
+    if enumerator_location_configured or target_location_configured:
+        # Get the geo levels for the survey
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+        try:
+            geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+        except InvalidGeoLevelHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "geo_level_hierarchy": e.geo_level_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+
+    if enumerator_location_configured:
+        prime_geo_level_uid = (
+            Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
         )
 
-    prime_geo_level_uid = (
-        Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
-    )
+        if prime_geo_level_uid is None:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": "The prime_geo_level_uid is not configured for this survey but is found as a column in the enumerator_column_config table.",
+                    }
+                ),
+                422,
+            )
+
+        if prime_geo_level_uid not in [
+            geo_level.geo_level_uid
+            for geo_level in geo_level_hierarchy.ordered_geo_levels
+        ]:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": f"The prime_geo_level_uid '{prime_geo_level_uid}' is not in the geo level hierarchy for this survey.",
+                    }
+                ),
+                422,
+            )
 
     table_config = {
         "surveyors": [],
@@ -99,7 +153,12 @@ def get_table_config():
         if table_result is None or len(table_result) == 0:
             if default_table_config is None:
                 default_table_config = DefaultTableConfig(
-                    form_uid, geo_level_hierarchy, prime_geo_level_uid
+                    form_uid,
+                    survey_uid,
+                    geo_level_hierarchy,
+                    prime_geo_level_uid,
+                    enumerator_location_configured,
+                    target_location_configured,
                 )
             table_config[key] = getattr(default_table_config, key)
 
@@ -182,20 +241,111 @@ def update_table_config():
             404,
         )
 
+    survey_uid = form.survey_uid
+
+    # Figure out if we need to handle location columns
+
+    enumerator_location_configured = False
+    target_location_configured = False
+
+    result = TargetColumnConfig.query.filter(
+        TargetColumnConfig.form_uid == form_uid,
+        TargetColumnConfig.column_type == "location",
+    ).first()
+
+    if result is not None:
+        target_location_configured = True
+
+    result = EnumeratorColumnConfig.query.filter(
+        EnumeratorColumnConfig.form_uid == form_uid,
+        EnumeratorColumnConfig.column_type == "location",
+    ).first()
+
+    if result is not None:
+        enumerator_location_configured = True
+
+    geo_level_hierarchy = None
+    prime_geo_level_uid = None
+
+    if enumerator_location_configured or target_location_configured:
+        # Get the geo levels for the survey
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+        try:
+            geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+        except InvalidGeoLevelHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "geo_level_hierarchy": e.geo_level_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+
+    if enumerator_location_configured:
+        prime_geo_level_uid = (
+            Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
+        )
+
+        if prime_geo_level_uid is None:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": "The prime_geo_level_uid is not configured for this survey but is found as a column in the enumerator_column_config table.",
+                    }
+                ),
+                422,
+            )
+
+        if prime_geo_level_uid not in [
+            geo_level.geo_level_uid
+            for geo_level in geo_level_hierarchy.ordered_geo_levels
+        ]:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": f"The prime_geo_level_uid '{prime_geo_level_uid}' is not in the geo level hierarchy for this survey.",
+                    }
+                ),
+                422,
+            )
+
+    # Validate the table config
+    try:
+        validate_table_config(
+            table_config,
+            table_name,
+            geo_level_hierarchy,
+            prime_geo_level_uid,
+            enumerator_location_configured,
+            target_location_configured,
+        )
+    except InvalidTableConfigError as e:
+        return (
+            jsonify(success=False, errors=e.invalid_column_errors),
+            422,
+        )
+
     # Delete the existing table config for the given form and table name
     TableConfig.query.filter(
         TableConfig.form_uid == form_uid, TableConfig.table_name == table_name
     ).delete()
 
     # Add the new table config
-    for column in table_config:
+    for i, column in enumerate(table_config):
         table_config_row = TableConfig(
             form_uid=form_uid,
             table_name=table_name,
             group_label=column["group_label"],
             column_key=column["column_key"],
             column_label=column["column_label"],
-            column_order=column["column_order"],
+            column_order=i + 1,
         )
         db.session.add(table_config_row)
 
@@ -203,6 +353,14 @@ def update_table_config():
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        return jsonify(message=str(e)), 500
+        return jsonify({"success": False, "errors": str(e)}), 500
 
-    return jsonify(table_config)
+    return (
+        jsonify(
+            {
+                "success": True,
+                "message": f"Successfully updated the table config for the {table_name} table.",
+            }
+        ),
+        200,
+    )

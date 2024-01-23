@@ -10,7 +10,6 @@ class TableConfigValidator(FlaskForm):
     group_label = StringField()
     column_label = StringField(validators=[DataRequired()])
     column_key = StringField(validators=[DataRequired()])
-    column_order = StringField(validators=[DataRequired()])
 
 
 class UpdateTableConfigValidator(FlaskForm):
