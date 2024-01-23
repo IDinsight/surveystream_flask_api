@@ -1,6 +1,7 @@
 import pytest
 from app import create_app, db
 from passlib.hash import pbkdf2_sha256
+from sqlalchemy.exc import IntegrityError
 import yaml
 from werkzeug.http import parse_cookie
 from pathlib import Path
@@ -139,9 +140,21 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
         else:
             db.create_all()
 
+        # Load general data
         db.session.execute(
             open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
         )
+        db.session.commit()
+
+        # Load permissions data with exception handling for duplicate errors
+        try:
+            with open(f"{filepath}/tests/data/launch_local_db/load_permissions.sql", "r") as sql_file:
+                db.session.execute(sql_file.read())
+            db.session.commit()
+        except IntegrityError as e:
+            # Handle duplicate errors gracefully
+            db.session.rollback()
+            print(f"Duplicate data detected. Error: {e}")
 
         # Set the credentials for the desired test user
         db.session.execute(

@@ -2,7 +2,6 @@ COPY webapp.users (user_uid,email,password_secure,first_name,middle_name,last_na
 SELECT setval('webapp.users_user_uid_seq', MAX(user_uid)) FROM webapp.users;
 
 COPY webapp.modules (module_id,name,optional) FROM '/docker-entrypoint-initdb.d/data/webapp.modules.csv' DELIMITER ',' CSV HEADER;
-COPY webapp.permissions (name,description,active) FROM '/docker-entrypoint-initdb.d/data/permissions.csv' DELIMITER ',' CSV HEADER;
 
 -- These are for models that we haven't migrated from web app 1.0 to Callisto yet and are not currently supporting
 -- COPY sampling_frames (sampling_frame_uid,sampling_frame_name,description) FROM '/docker-entrypoint-initdb.d/data/sampling_frames.csv' DELIMITER ',' CSV HEADER;
