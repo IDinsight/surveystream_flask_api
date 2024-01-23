@@ -144,23 +144,23 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
         db.session.execute(
             open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
         )
-        db.session.commit()
 
         # Check if permissions data already exists
-        permissions_exist = db.session.query(db.exists().where(
-            db.text("SELECT * FROM webapp.permissions LIMIT 1")
-        )).scalar()
+        permissions_exist = db.session.execute(
+            """
+            SELECT EXISTS(SELECT 1 FROM webapp.permissions LIMIT 1)
+            """
+        ).fetchone()[0]
 
         if not permissions_exist:
             # Load permissions data with exception handling for duplicate errors
-            try:
-                with open(f"{filepath}/tests/data/launch_local_db/load_permissions.sql", "r") as sql_file:
-                    db.session.execute(sql_file.read())
-                db.session.commit()
-            except IntegrityError as e:
-                # Handle duplicate errors gracefully
-                db.session.rollback()
-                print(f"Duplicate data detected. Error: {e}")
+            db.session.execute(
+                open(
+                    f"{filepath}/tests/data/launch_local_db/load_permissions.sql", "r"
+                ).read()
+            )
+        
+        db.session.commit()
 
         # Set the credentials for the desired test user
         db.session.execute(

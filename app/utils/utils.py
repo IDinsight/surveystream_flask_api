@@ -166,11 +166,11 @@ def custom_permissions_required(permission_name):
                     response = {"success": False, "error": error_message}
                     return jsonify(response), 403
 
-            # Handle super admins
+            # Handle super admins on non-admin requests
             if current_user.get_is_super_admin():
                 return fn(*args, **kwargs)
 
-            # Handle survey admins
+            # Handle survey admins on non-admin requests
             if current_user.get_is_survey_admin():
                 return fn(*args, **kwargs)
 
