@@ -14,6 +14,7 @@ def validate_table_config(
     enumerator_location_configured,
     target_location_configured,
     survey_uid,
+    form_uid,
 ):
     """
     Validates the table config
@@ -96,9 +97,8 @@ def validate_table_config(
 
     location_keys = ["target_locations", "surveyor_locations"]
 
+    invalid_column_errors = []
     for column in table_config:
-        invalid_column_errors = []
-
         location_key = None
         for item in location_keys:
             if column["column_key"].startswith(item):
@@ -187,10 +187,9 @@ def validate_table_config(
 
             if table_name == "assignments_main" or table_name == "targets":
                 custom_field_config = (
-                    TargetColumnConfig.query.filter_by(
-                        custom_field_name=custom_field_name
-                    )
-                    .filter_by(form_id=column["form_id"])
+                    TargetColumnConfig.query.filter_by(column_name=custom_field_name)
+                    .filter_by(column_type="custom_fields")
+                    .filter_by(form_uid=form_uid)
                     .first()
                 )
 
@@ -202,9 +201,10 @@ def validate_table_config(
             if table_name == "assignments_surveyors" or table_name == "surveyors":
                 custom_field_config = (
                     EnumeratorColumnConfig.query.filter_by(
-                        custom_field_name=custom_field_name
+                        column_name=custom_field_name
                     )
-                    .filter_by(form_id=column["form_id"])
+                    .filter_by(column_type="custom_fields")
+                    .filter_by(form_uid=form_uid)
                     .first()
                 )
 
@@ -214,21 +214,21 @@ def validate_table_config(
                     )
 
         elif table_name == "assignments_main" and column["column_key"].startswith(
-            "enumerator_custom_fields"
+            "assigned_enumerator_custom_fields"
         ):
-            if "enumerator_custom_fields" not in allowed_columns[table_name]:
+            if "assigned_enumerator_custom_fields" not in allowed_columns[table_name]:
                 invalid_column_errors.append(
-                    f"enumerator_custom_fields not an allowed key for the {table_name} table configuration"
+                    f"assigned_enumerator_custom_fields not an allowed key for the {table_name} table configuration"
                 )
 
                 raise InvalidTableConfigError(invalid_column_errors)
 
             # Custom fields must follow the format enumerator_custom_fields['<custom_field_name>']
             if not re.match(
-                r"^enumerator_custom_fields\[\'.+\'\]$", column["column_key"]
+                r"^assigned_enumerator_custom_fields\[\'.+\'\]$", column["column_key"]
             ):
                 invalid_column_errors.append(
-                    f'{column["column_key"]} is not in the correct format. It should follow the pattern enumerator_custom_fields[\'<custom_field_name>\']'
+                    f'{column["column_key"]} is not in the correct format. It should follow the pattern assigned_enumerator_custom_fields[\'<custom_field_name>\']'
                 )
 
                 raise InvalidTableConfigError(invalid_column_errors)
@@ -236,14 +236,13 @@ def validate_table_config(
             # Check that the custom field is defined in the target or enumerator column config table
 
             custom_field_name = column["column_key"].split(
-                "enumerator_custom_fields['"
+                "assigned_enumerator_custom_fields['"
             )[1][0:-2]
 
             custom_field_config = (
-                EnumeratorColumnConfig.query.filter_by(
-                    custom_field_name=custom_field_name
-                )
-                .filter_by(form_id=column["form_id"])
+                EnumeratorColumnConfig.query.filter_by(column_name=custom_field_name)
+                .filter_by(column_type="custom_fields")
+                .filter_by(form_uid=form_uid)
                 .first()
             )
 
@@ -255,7 +254,7 @@ def validate_table_config(
         elif column["column_key"].startswith("form_productivity"):
             # Check that the string is in the correct format
             if not re.match(
-                r"^form_productivity.[a-zA-z0-9_-]+.(total_assigned_target|total_completed_targets|total_pending_targets)$",
+                r"^form_productivity.[a-zA-z0-9_-]+.(total_assigned_targets|total_completed_targets|total_pending_targets)$",
                 column["column_key"],
             ):
                 invalid_column_errors.append(

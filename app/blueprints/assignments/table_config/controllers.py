@@ -326,6 +326,7 @@ def update_table_config():
             enumerator_location_configured,
             target_location_configured,
             survey_uid,
+            form_uid,
         )
     except InvalidTableConfigError as e:
         return (
