@@ -325,6 +325,7 @@ def update_table_config():
             prime_geo_level_uid,
             enumerator_location_configured,
             target_location_configured,
+            survey_uid,
         )
     except InvalidTableConfigError as e:
         return (
