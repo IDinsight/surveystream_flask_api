@@ -3592,7 +3592,6 @@ paths:
                                 description: >-
                                   The column key that can be used to access the
                                   column records in the data response
-<<<<<<< HEAD
     put:
       summary: Update table configuration
       description: >-
@@ -3756,9 +3755,6 @@ paths:
         '422':
           description: Form errors
   '/module-questionnaire/{survey_uid}':
-=======
-  "/module-questionnaire/{survey_uid}":
->>>>>>> SS-1376-migrate-assignments
     get:
       tags:
         - Module Questionnaire
