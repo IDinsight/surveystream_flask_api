@@ -3013,6 +3013,168 @@ paths:
                                 description: >-
                                   The column key that can be used to access the
                                   column records in the data response
+    put:
+      summary: Update table configuration
+      description: >-
+        Update the assignments module table configuration details for the given form
+      tags:
+        - Assignments Table Configuration
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique ID of the form
+                table_name:
+                  type: string
+                  enum:
+                    - assignments_main
+                    - assignments_surveyors
+                    - assignments_review
+                    - surveyors
+                    - targets
+                  description: Name of the table to be updated
+                table_config:
+                  type: array
+                  description: >
+                    List of column groups and columns with labels and data
+                    access keys
+                  items:
+                    type: object
+                    properties:
+                      group_label:
+                        type: string
+                        description: The label for the column group
+                      column_label:
+                        type: string
+                        description: The label for the column
+                      column_key:
+                        type: string
+                        description: >-
+                          The column key that can be used to access the
+                          column records in the data response
+
+                          Allowed values for `column_key` are:
+
+
+                          "assignments_main": [
+                              "target_uid",
+                              "target_id",
+                              "language",
+                              "gender",
+                              "custom_fields",
+                              "assigned_enumerator_uid",
+                              "assigned_enumerator_id",
+                              "assigned_enumerator_name",
+                              "assigned_enumerator_home_address",
+                              "assigned_enumerator_language",
+                              "assigned_enumerator_gender",
+                              "assigned_enumerator_email",
+                              "assigned_enumerator_mobile_primary",
+                              "assigned_enumerator_custom_fields",
+                              "completed_flag",
+                              "refusal_flag",
+                              "num_attempts",
+                              "last_attempt_survey_status",
+                              "last_attempt_survey_status_label",
+                              "target_assignable",
+                              "revisit_sections",
+                              "target_locations",
+                          ]
+
+                          "assignments_surveyors": [
+                              "enumerator_uid",
+                              "enumerator_id",
+                              "name",
+                              "email",
+                              "mobile_primary",
+                              "language",
+                              "home_address",
+                              "gender",
+                              "custom_fields",
+                              "surveyor_status",
+                              "surveyor_locations",
+                              "form_productivity",
+                          ]
+
+                          "assignments_review": [
+                              "assigned_enumerator_name",
+                              "prev_assigned_to",
+                              "target_id",
+                              "target_status",
+                          ]
+
+                          "surveyors": [
+                              "enumerator_uid",
+                              "enumerator_id",
+                              "name",
+                              "email",
+                              "mobile_primary",
+                              "language",
+                              "gender",
+                              "home_address",
+                              "custom_fields",
+                              "surveyor_status",
+                              "surveyor_locations",
+                          ]
+
+                          "targets": [
+                              "target_uid",
+                              "target_id",
+                              "language",
+                              "gender",
+                              "custom_fields",
+                              "completed_flag",
+                              "refusal_flag",
+                              "num_attempts",
+                              "last_attempt_survey_status",
+                              "last_attempt_survey_status_label",
+                              "target_assignable",
+                              "revisit_sections",
+                              "target_locations",
+                          ]
+
+                          Note that the following "special" column keys must be formatted as follows
+
+                          *Custom Fields*
+                          custom_fields['<custom_field_label>'] e.g. custom_fields['Mobile No. Primary']
+                          assigned_enumerator_custom_fields['<custom_field_label>'] e.g. assigned_enumerator_custom_fields['Mobile No. Primary']
+                          
+                          *Locations*
+                          surveyor_locations[<geo_level_index>].location_id or surveyor_locations[<geo_level_index>].location_name
+                          target_locations[<geo_level_index>].location_id or target_locations[<geo_level_index>].location_name
+
+                          Note that <geo_level_index> is the index (starting at zero) of the geo level in descending order. Take an example where 
+                          the geo levels for the survey are District, Mandal, and Polling Station. The geo level index for District is 0, Mandal is 1, and Polling Station is 2.
+                          So if you want to show the Mandal ID column in the surveyors table, you would set the column_key to surveyor_locations[1].location_id.
+
+                          *Form Productivity*
+                          form_productivity.<scto_form_id>.total_assigned_targets
+                          form_productivity.<scto_form_id>.total_pending_targets
+                          form_productivity.<scto_form_id>.total_completed_targets
+
+                          Note that <scto_form_id> is the SurveyCTO form ID of the form. This needs to be provided because productivity metrics are provided for each form in the given survey.
+
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: X-CSRF-Token required in header
+        '404':
+          description: Enumerator or target not found
+        '422':
+          description: Form errors
   '/module-questionnaire/{survey_uid}':
     get:
       tags:
