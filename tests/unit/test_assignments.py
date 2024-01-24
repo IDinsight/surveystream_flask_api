@@ -4326,6 +4326,300 @@ class TestAssignments:
 
         assert checkdiff == {}
 
+    def test_table_config_validations_no_locations_configured(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config_no_locations,
+        create_target_column_config_no_locations,
+        csrf_token,
+    ):
+        """
+        Test creating invalid table configs to trigger each type of validation error
+        This test is for when no locations are configured in the target/enumerator column configs but the table config contains locations
+        """
 
-# Test a default table config with location column configured but no geo levels
-# Test a default table config with location column configured but prime geo level
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_surveyors",
+            "table_config": [
+                {
+                    "group_label": "Locations",
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "State",
+                }
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": [
+                "The column_key 'surveyor_locations[0].location_name' is invalid. Location is not defined in the enumerator_column_config table for this form."
+            ],
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_main",
+            "table_config": [
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "State",
+                }
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": [
+                "The column_key 'target_locations[0].location_name' is invalid. Location is not defined in the target_column_config table for this form."
+            ],
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_validations(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test creating invalid table configs to trigger each type of validation error
+
+        Add a not allowed key
+        Use surveyor_locations key in assignments_main where it is not allowed
+        Try different incorrect formats for target_locations
+        Check for out of range index in target_locations
+        Check for out of range index in surveyor_locations
+        Try different incorrect formats for custom_fields and assigned_enumerator_custom_fields
+        Try non-existent keys for custom_fields and assigned_enumerator_custom_fields
+        Check for non-existent keys in assignments_surveyors custom fields
+        Try different incorrect formats for form productivity
+        Check for non-existent scto_form_id in form productivity
+        """
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_main",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_id_asdf",
+                    "column_label": "Enumerator id",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Target Mobile no.",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "assigned_enumerator_custom_fields['Age']",
+                    "column_label": "Enumerator Age",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations_asdf[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[-1].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[asf].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name_asdf",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0]",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[10].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "District",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields_asdf['Hotel']",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields[Hotel]",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Hotel']asdf",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "assigned_enumerator_custom_fields_asdf['Hotel']asdf",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Hotel']",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "assigned_enumerator_custom_fields['Hotel']",
+                    "column_label": "Hotel",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": [
+                "'assigned_enumerator_id_asdf' is not an allowed key for the assignments_main table configuration",
+                "'target_locations_asdf[0].location_name' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "'target_locations[-1].location_name' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "'target_locations[].location_name' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "'target_locations[asf].location_name' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "'target_locations[0].location_name_asdf' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "'target_locations[0]' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "The location index of 10 for target_locations[10].location_name is invalid. It must be in the range [0:2] because there are 3 geo levels defined for the survey.",
+                "'surveyor_locations' is not an allowed key for the assignments_main table configuration",
+                "custom_fields_asdf['Hotel'] is not in the correct format. It should follow the pattern custom_fields['<custom_field_name>']",
+                "custom_fields[Hotel] is not in the correct format. It should follow the pattern custom_fields['<custom_field_name>']",
+                "custom_fields['Hotel']asdf is not in the correct format. It should follow the pattern custom_fields['<custom_field_name>']",
+                "assigned_enumerator_custom_fields_asdf['Hotel']asdf is not in the correct format. It should follow the pattern assigned_enumerator_custom_fields['<custom_field_name>']",
+                "The custom field 'Hotel' is not defined in the target_column_config table for this form.",
+                "The enumerator custom field 'Hotel' is not defined in the enumerator_column_config table for this form.",
+            ],
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_surveyors",
+            "table_config": [
+                {
+                    "group_label": "Locations",
+                    "column_key": "surveyor_locations[10].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Hotel']",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": "Form productivity",
+                    "column_key": "form_productivity.test_scto_input_output.total_assigned",
+                    "column_label": "Total Assigned",
+                },
+                {
+                    "group_label": "Form productivity",
+                    "column_key": "form_productivity.total_assigned_targets",
+                    "column_label": "Total Assigned",
+                },
+                {
+                    "group_label": "Form productivity",
+                    "column_key": "form_productivity.fake_scto_form.total_assigned_targets",
+                    "column_label": "Total Assigned",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": [
+                "The location index of 10 for surveyor_locations[10].location_name is invalid. It must be in the range [0:0] because 0 is the index of the prime geo level defined for the survey.",
+                "The custom field 'Hotel' is not defined in the enumerator_column_config table for this form.",
+                "form_productivity.test_scto_input_output.total_assigned is not in the correct format. It should follow the pattern form_productivity.<surveycto_form_id>.<total_assigned_target|total_completed_targets|total_pending_targets>",
+                "form_productivity.total_assigned_targets is not in the correct format. It should follow the pattern form_productivity.<surveycto_form_id>.<total_assigned_target|total_completed_targets|total_pending_targets>",
+                "The surveycto_form_id 'fake_scto_form' is not found in the forms defined for this survey.",
+            ],
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
