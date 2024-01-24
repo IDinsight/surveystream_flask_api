@@ -3,6 +3,7 @@ from app import db
 from app.blueprints.targets.models import TargetColumnConfig
 from app.blueprints.enumerators.models import EnumeratorColumnConfig
 from app.blueprints.assignments.table_config.errors import InvalidTableConfigError
+from app.blueprints.forms.models import ParentForm
 
 
 def validate_table_config(
@@ -12,6 +13,7 @@ def validate_table_config(
     prime_geo_level_uid,
     enumerator_location_configured,
     target_location_configured,
+    survey_uid,
 ):
     """
     Validates the table config
@@ -248,6 +250,29 @@ def validate_table_config(
             if custom_field_config is None:
                 invalid_column_errors.append(
                     f"The enumerator custom field {custom_field_name} is not defined in the enumerator_column_config table for this form."
+                )
+
+        elif column["column_key"].startswith("form_productivity"):
+            # Check that the string is in the correct format
+            if not re.match(
+                r"^form_productivity.[a-zA-z0-9_-]+.(total_assigned_target|total_completed_targets|total_pending_targets)$",
+                column["column_key"],
+            ):
+                invalid_column_errors.append(
+                    f'{column["column_key"]} is not in the correct format. It should follow the pattern form_productivity.<surveycto_form_id>.<total_assigned_target|total_completed_targets|total_pending_targets>'
+                )
+
+            # Check that the surveycto_form_id is valid
+            surveycto_form_id = column["column_key"].split(".")[1].split(".")[0]
+            if (
+                ParentForm.query.filter(
+                    ParentForm.scto_form_id == surveycto_form_id,
+                    ParentForm.survey_uid == survey_uid,
+                ).first()
+                is None
+            ):
+                invalid_column_errors.append(
+                    f"The surveycto_form_id {surveycto_form_id} is not found in the forms defined for this survey."
                 )
 
         elif column["column_key"] not in allowed_columns[table_name]:
