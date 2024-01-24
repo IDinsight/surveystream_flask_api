@@ -126,7 +126,7 @@ def get_table_config():
                 jsonify(
                     {
                         "success": False,
-                        "errors": f"The prime_geo_level_uid '{prime_geo_level_uid}' is not in the geo level hierarchy for this survey.",
+                        "errors": f"The prime_geo_level_uid '{prime_geo_level_uid}' is not in the location type hierarchy for this survey.",
                     }
                 ),
                 422,

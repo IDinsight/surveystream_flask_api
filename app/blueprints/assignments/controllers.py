@@ -266,7 +266,7 @@ def view_assignments_enumerators():
                 {
                     **enumerator.to_dict(),
                     "surveyor_status": surveyor_form.status,
-                    "enumerator_locations": locations,
+                    "surveyor_locations": locations,
                     "form_productivity": form_productivity,
                 }
                 for enumerator, surveyor_form, locations, form_productivity in assignment_enumerators_query.all()

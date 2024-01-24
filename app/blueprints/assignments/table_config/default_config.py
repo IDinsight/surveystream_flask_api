@@ -49,13 +49,13 @@ class DefaultTableConfig:
             for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
                 enumerator_location_columns.append(
                     {
-                        "column_key": f"enumerator_locations[{i}].location_id",
+                        "column_key": f"surveyor_locations[{i}].location_id",
                         "column_label": f"{geo_level.geo_level_name} ID",
                     }
                 )
                 enumerator_location_columns.append(
                     {
-                        "column_key": f"enumerator_locations[{i}].location_name",
+                        "column_key": f"surveyor_locations[{i}].location_name",
                         "column_label": f"{geo_level.geo_level_name} Name",
                     }
                 )
@@ -223,7 +223,7 @@ class DefaultTableConfig:
         )
 
         self.assignments_surveyors = self.replace_form_productivity_placeholder(
-            self.assignments_surveyors, survey_uid
+            self.assignments_surveyors, survey_uid, form_uid
         )
 
         self.assignments_review = [
@@ -433,13 +433,14 @@ class DefaultTableConfig:
         )
         return table_config
 
-    def replace_form_productivity_placeholder(self, table_config, survey_uid):
+    def replace_form_productivity_placeholder(self, table_config, survey_uid, form_uid):
         """
         Add the form productivity columns to the table config
         """
 
         forms = ParentForm.query.filter(ParentForm.survey_uid == survey_uid).all()
         placeholder_index = table_config.index("form_productivity_placeholder")
+
         table_config = (
             table_config[0:placeholder_index]
             + [
@@ -461,6 +462,28 @@ class DefaultTableConfig:
                     ],
                 }
                 for form in forms
+                if form.form_uid == form_uid
+            ]
+            + [
+                {
+                    "group_label": f"Form Productivity ({form.form_name})",
+                    "columns": [
+                        {
+                            "column_key": f"form_productivity.{form.scto_form_id}.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": f"form_productivity.{form.scto_form_id}.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": f"form_productivity.{form.scto_form_id}.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                    ],
+                }
+                for form in forms
+                if form.form_uid != form_uid
             ]
             + table_config[placeholder_index + 1 :]
         )

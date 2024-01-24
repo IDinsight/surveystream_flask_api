@@ -53,7 +53,7 @@ def validate_table_config(
             "gender",
             "custom_fields",
             "surveyor_status",
-            "enumerator_locations",
+            "surveyor_locations",
             "form_productivity",
         ],
         "assignments_review": [
@@ -73,7 +73,7 @@ def validate_table_config(
             "home_address",
             "custom_fields",
             "surveyor_status",
-            "enumerator_locations",
+            "surveyor_locations",
         ],
         "targets": [
             "target_uid",
@@ -92,7 +92,7 @@ def validate_table_config(
         ],
     }
 
-    location_keys = ["target_locations", "enumerator_locations"]
+    location_keys = ["target_locations", "surveyor_locations"]
 
     for column in table_config:
         invalid_column_errors = []
@@ -112,7 +112,7 @@ def validate_table_config(
                 )
 
             elif (
-                location_key == "enumerator_locations"
+                location_key == "surveyor_locations"
                 and enumerator_location_configured is False
             ):
                 invalid_column_errors.append(
@@ -145,7 +145,7 @@ def validate_table_config(
             if location_key == "target_locations":
                 max_location_index = len(geo_level_hierarchy.ordered_geo_levels) - 1
 
-            elif location_key == "enumerator_locations":
+            elif location_key == "surveyor_locations":
                 for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
                     if geo_level.geo_level_uid == prime_geo_level_uid:
                         max_location_index = i
@@ -158,7 +158,7 @@ def validate_table_config(
                     invalid_column_errors.append(
                         f'The location index of {column["column_key"].split("[")[1].split("]")[0]} is invalid. It cannot be greater than {max_location_index} because there are {max_location_index + 1} geo levels defined for the survey.'
                     )
-                elif location_key == "enumerator_locations":
+                elif location_key == "surveyor_locations":
                     invalid_column_errors.append(
                         f'The location index of {column["column_key"].split("[")[1].split("]")[0]} is invalid. It cannot be greater than {max_location_index} which is the index of the prime geo level defined for the survey.'
                     )

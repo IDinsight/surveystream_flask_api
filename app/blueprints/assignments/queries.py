@@ -141,7 +141,8 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
     surveyor_formwise_productivity_subquery = (
         db.session.query(
             SurveyorForm.enumerator_uid,
-            func.array_agg(
+            func.jsonb_object_agg(
+                ParentForm.scto_form_id,
                 func.jsonb_build_object(
                     "form_name",
                     ParentForm.form_name,
@@ -171,7 +172,7 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
                         ),
                         0,
                     ),
-                )
+                ),
             ).label("form_productivity"),
         )
         .join(ParentForm, SurveyorForm.form_uid == ParentForm.form_uid)
