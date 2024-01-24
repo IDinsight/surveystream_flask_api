@@ -1,7 +1,5 @@
 import jsondiff
 import pytest
-
-
 @pytest.mark.roles
 class TestRoles:
     @pytest.fixture()
@@ -37,20 +35,26 @@ class TestRoles:
 
     @pytest.fixture
     def create_permission(self, client, login_test_user, csrf_token):
+        """
+            Create simple permissions
+            Expect to be used while adding roles
+        """
         data = {'name': 'WRITE', 'description': 'Write permission'}
         response = client.post('/api/permissions', json=data, content_type="application/json",
                                headers={"X-CSRF-Token": csrf_token})
         assert response.status_code == 201
-        assert response.json['message'] == 'Permission created successfully'
+        assert response.json["message"] == "Permission created successfully"
 
         return {
-            'permission_uid': response.json['permission_uid'],
-            'name': response.json['name'],
-            'description': response.json['description']
+            "permission_uid": response.json["permission_uid"],
+            "name": response.json["name"],
+            "description": response.json["description"],
         }
 
     @pytest.fixture()
-    def create_roles(self, client, login_test_user, csrf_token, create_survey, create_permission):
+    def create_roles(
+        self, client, login_test_user, csrf_token, create_survey, create_permission
+    ):
         """
         Insert new roles as a setup step for the roles tests
         """
@@ -61,13 +65,13 @@ class TestRoles:
                     "role_uid": None,
                     "role_name": "Core User",
                     "reporting_role_uid": None,
-                    "permissions": [create_permission['permission_uid']]
+                    "permissions": [create_permission["permission_uid"]],
                 },
                 {
                     "role_uid": None,
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": 1,
-                    "permissions": [create_permission['permission_uid']]
+                    "permissions": [create_permission["permission_uid"]],
                 },
             ]
         }
@@ -83,7 +87,9 @@ class TestRoles:
 
         yield
 
-    def test_insert_roles(self, client, login_test_user, create_roles, create_permission):
+    def test_insert_roles(
+        self, client, login_test_user, create_roles, create_permission
+    ):
         """
         Test that the roles are inserted correctly
         The order of the roles in the payload should be reflected in the assignment of the role_uid
@@ -98,7 +104,8 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
-                    "permissions": [create_permission['permission_uid']]
+                    "permissions": [create_permission['permission_uid']],
+                    "user_count": 0
 
                 },
                 {
@@ -106,7 +113,8 @@ class TestRoles:
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
-                    "permissions": [create_permission['permission_uid']]
+                    "permissions": [create_permission['permission_uid']],
+                    "user_count": 0
                 },
             ],
             "success": True,
@@ -127,14 +135,13 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core User",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
-                    "permissions": []
+                    "permissions": [],
                 },
             ]
         }
@@ -150,7 +157,7 @@ class TestRoles:
 
         response = client.get("/api/roles", query_string={"survey_uid": 1})
 
-        print(response)
+    
 
         expected_response = {
             "data": [
@@ -159,14 +166,16 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
-                    "permissions": []
+                    "permissions": [],
+                    "user_count": 0
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
-                    "permissions": []
+                    "permissions": [],
+                    "user_count": 0
                 },
             ],
             "success": True,
@@ -189,13 +198,13 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": None,
-                    "permissions": []
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "Core User",
                     "reporting_role_uid": 1,
-                    "permissions": []
+                    "permissions": [],
                 },
             ]
         }
@@ -219,7 +228,8 @@ class TestRoles:
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
-                    "permissions": []
+                    "permissions": [],
+                    "user_count": 0
 
                 },
                 {
@@ -227,7 +237,8 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
-                    "permissions": []
+                    "permissions": [],
+                    "user_count": 0
 
                 },
             ],
@@ -251,15 +262,13 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core User",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "Core User",
                     "reporting_role_uid": 1,
-                    "permissions": []
-
+                    "permissions": [],
                 },
             ]
         }
@@ -308,7 +317,8 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
-                    "permissions": []
+                    "permissions": [],
+                    "user_count": 0
                 },
             ],
             "success": True,
@@ -357,21 +367,19 @@ class TestRoles:
                     "role_uid": None,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
-                    "permissions": []
+                    "permissions": [],
                 },
                 {
                     "role_uid": None,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": None,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
             ]
         }
@@ -393,22 +401,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 1,
-                    "permissions": []
-
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -437,22 +442,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": 3,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 2,
-                    "permissions": []
-
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -481,22 +483,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 2,
-                    "permissions": []
-
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -525,22 +524,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 3,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 2,
-                    "permissions": []
-
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -569,22 +565,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 2,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 5,
-                    "permissions": []
-
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -614,22 +607,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 1,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 2,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 5,
-                    "permissions": []
-
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -663,22 +653,19 @@ class TestRoles:
                     "role_uid": None,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": None,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": None,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
             ]
         }
@@ -699,22 +686,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
-                    "permissions": []
-
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 2,
-                    "permissions": []
-
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,

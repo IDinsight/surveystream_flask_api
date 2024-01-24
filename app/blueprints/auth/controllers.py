@@ -26,8 +26,8 @@ def set_xsrf_cookie():
     """
     Sets CSRF-TOKEN cookie
     """
-    response = make_response(jsonify({"message": "Success"}), 200)
-    response.set_cookie("CSRF-TOKEN", generate_csrf())
+    response = make_response(jsonify({"message": "success"}), 200)
+    response.set_cookie("CSRF-TOKEN", generate_csrf(), samesite="None", secure=True)
     return response
 
 
