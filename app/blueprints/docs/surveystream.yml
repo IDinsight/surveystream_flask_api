@@ -3145,7 +3145,7 @@ paths:
                               "target_locations",
                           ]
 
-                          Note that the following "special" column keys must be formatted as follows
+                          Note that the following "special" column keys must be formatted as follows:
 
                           *Custom Fields*
                           custom_fields['<custom_field_label>'] e.g. custom_fields['Mobile No. Primary']
