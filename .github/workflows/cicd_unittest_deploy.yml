@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Load .env file
-        uses: xom9ikk/dotenv@v1.0.2
+        uses: xom9ikk/dotenv@v2
         with:
           path: ./.github/workflows
           mode: variables
@@ -70,7 +70,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Load .env file
-        uses: xom9ikk/dotenv@v1.0.2
+        uses: xom9ikk/dotenv@v2
         with:
           path: ./.github/workflows
           mode: variables
@@ -146,7 +146,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Load .env file
-        uses: xom9ikk/dotenv@v1.0.2
+        uses: xom9ikk/dotenv@v2
         with:
           path: ./.github/workflows
           mode: variables
@@ -192,11 +192,27 @@ jobs:
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        timeout-minutes: 3
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: backend
           cluster: web-callisto-cluster
           wait-for-service-stability: true
+      # We need to wait for the application to start we can check if it was successful. The value of 1 minute is arbitrary and can be changed
+      - name: Wait for Application to start
+        id: deployment-complete
+        run: sleep 1m
+        shell: bash
+
+      - name: Check if deployment was successful
+        id: check-deployment
+        run: |
+          RUNNING_TASKS=$(aws ecs describe-services --cluster web-callisto-cluster --services backend --query services[0].deployments[0].runningCount | jq -r ".")
+              
+          if [ "$RUNNING_TASKS" -eq "0" ]; then
+            echo "Deployment failed."
+            exit 1
+          fi
 
   Deploy-Production:
     if: github.event_name == 'push' &&  github.ref == 'refs/heads/production'
@@ -211,7 +227,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Load .env file
-        uses: xom9ikk/dotenv@v1.0.2
+        uses: xom9ikk/dotenv@v2
         with:
           path: ./.github/workflows
           mode: variables
@@ -257,8 +273,24 @@ jobs:
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        timeout-minutes: 3
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: backend
           cluster: web-callisto-cluster
           wait-for-service-stability: true
+      # We need to wait for the application to start we can check if it was successful. The value of 1 minute is arbitrary and can be changed
+      - name: Wait for Application to start
+        id: deployment-complete
+        run: sleep 1m
+        shell: bash
+
+      - name: Check if deployment was successful
+        id: check-deployment
+        run: |
+          RUNNING_TASKS=$(aws ecs describe-services --cluster web-callisto-cluster --services backend --query services[0].deployments[0].runningCount | jq -r ".")
+              
+          if [ "$RUNNING_TASKS" -eq "0" ]; then
+            echo "Deployment failed."
+            exit 1
+          fi
