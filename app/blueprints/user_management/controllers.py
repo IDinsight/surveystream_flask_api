@@ -162,6 +162,7 @@ def add_user():
     - last_name
     - role
     - is_super_admin
+    - is_survey_admin
 
     This will not require a password
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
@@ -183,6 +184,7 @@ def add_user():
                 password=None,
                 roles=form.roles.data,
                 is_super_admin=form.is_super_admin.data,
+                is_survey_admin=form.is_survey_admin.data,
             )
 
             db.session.add(new_user)
@@ -280,6 +282,7 @@ def edit_user(user_uid):
     - last_name
     - roles
     - is_super_admin
+    - is_survey_admin
 
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
@@ -299,6 +302,7 @@ def edit_user(user_uid):
             user_to_edit.last_name = form.last_name.data
             user_to_edit.roles = form.roles.data
             user_to_edit.is_super_admin = form.is_super_admin.data
+            user_to_edit.is_survey_admin = form.is_survey_admin.data
             user_to_edit.to_delete = False
             user_to_edit.active = True
 
@@ -318,8 +322,7 @@ def get_user(user_uid):
     Endpoint to get information for a single user.
     """
     user = User.query.filter(
-        (User.user_uid == user_uid)
-        & (User.to_delete.isnot(True))
+        (User.user_uid == user_uid) & (User.to_delete.isnot(True))
     ).first()
 
     if user:
@@ -330,6 +333,7 @@ def get_user(user_uid):
             "last_name": user.last_name,
             "roles": user.roles,
             "is_super_admin": user.is_super_admin,
+            "is_survey_admin": user.is_survey_admin,
         }
         return jsonify(user_data), 200
     else:
@@ -403,6 +407,7 @@ def get_all_users():
             "user_survey_names": user_survey_names,
             "user_role_names": user_role_names,
             "is_super_admin": user.is_super_admin,
+            "is_survey_admin": user.is_survey_admin,
             "status": "Active"
             if user.active
             else ("Invite pending" if invite_is_active else "Deactivated"),

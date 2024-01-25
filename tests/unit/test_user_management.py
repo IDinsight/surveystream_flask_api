@@ -155,6 +155,7 @@ class TestUserManagement:
             "last_name": "Doe",
             "roles": [],
             "is_super_admin": False,
+            "is_survey_admin": False
         }
         assert jsondiff.diff(expected_data, json.loads(response.data)) == {}
 

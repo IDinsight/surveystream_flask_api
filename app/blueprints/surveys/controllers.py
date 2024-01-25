@@ -1,6 +1,7 @@
 from flask import jsonify, request
 from sqlalchemy.exc import IntegrityError
 from flask_login import current_user
+from sqlalchemy import func
 from app import db
 from .models import Survey
 from app.blueprints.roles.models import Role
@@ -18,8 +19,27 @@ from app.utils.utils import custom_permissions_required, logged_in_active_user_r
 @logged_in_active_user_required
 def get_all_surveys():
     # /surveys will return all surveys
-
-    surveys = Survey.query.all()
+    if current_user.get_is_super_admin():
+        # return all surveys for the super admin users
+        surveys = Survey.query.all()
+    elif current_user.get_is_survey_admin():
+        # filter surveys created by the user admin
+        surveys = Survey.query.filter_by(
+            created_by_user_uid=current_user.user_uid
+        ).all()
+    else:
+        # get user roles and then filter for surveys with those roles
+        user_roles = current_user.get_roles()
+        # Assuming user_roles is a list of role names or role objects
+        surveys = (
+            Survey.query
+            .join(Role, Survey.survey_uid == Role.survey_uid)
+            .filter(
+                Role.role_uid.in_(user_roles),
+            )
+            .distinct()
+            .all()
+        )
 
     data = [survey.to_dict() for survey in surveys]
     response = {"success": True, "data": data}
