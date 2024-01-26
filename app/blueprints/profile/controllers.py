@@ -29,6 +29,7 @@ def get_profile():
         "phone_primary": current_user.phone_primary,
         "home_state_name": current_user.home_state,
         "home_district_name": current_user.home_district,
+        "is_super_admin": current_user.is_super_admin,
     }
 
     return jsonify(final_result)

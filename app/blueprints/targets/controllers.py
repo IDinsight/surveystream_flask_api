@@ -277,11 +277,10 @@ def get_targets():
 
     # Check if the logged in user has permission to access the given form
 
-    # This will be used to join in the locations hierarchy for each target
-
     ## TODO handle cases where these are None
     survey_uid = ParentForm.query.filter_by(form_uid=form_uid).first().survey_uid
 
+    # We need to get the bottom level geo level UID for the survey in order to join in the location information
     if (
         Target.query.filter(
             Target.form_uid == form_uid, Target.location_uid.isnot(None)
@@ -348,33 +347,27 @@ def get_targets():
                 "data": [
                     {
                         **target.to_dict(),
-                        **{
-                            "completed_flag": getattr(
-                                target_status, "completed_flag", None
-                            ),
-                            "refusal_flag": getattr(
-                                target_status, "refusal_flag", None
-                            ),
-                            "num_attempts": getattr(
-                                target_status, "num_attempts", None
-                            ),
-                            "last_attempt_survey_status": getattr(
-                                target_status, "last_attempt_survey_status", None
-                            ),
-                            "last_attempt_survey_status_label": getattr(
-                                target_status, "last_attempt_survey_status_label", None
-                            ),
-                            "target_assignable": getattr(
-                                target_status, "target_assignable", None
-                            ),
-                            "webapp_tag_color": getattr(
-                                target_status, "webapp_tag_color", None
-                            ),
-                            "revisit_sections": getattr(
-                                target_status, "revisit_sections", None
-                            ),
-                        },
-                        **{"target_locations": target_locations},
+                        "completed_flag": getattr(
+                            target_status, "completed_flag", None
+                        ),
+                        "refusal_flag": getattr(target_status, "refusal_flag", None),
+                        "num_attempts": getattr(target_status, "num_attempts", None),
+                        "last_attempt_survey_status": getattr(
+                            target_status, "last_attempt_survey_status", None
+                        ),
+                        "last_attempt_survey_status_label": getattr(
+                            target_status, "last_attempt_survey_status_label", None
+                        ),
+                        "target_assignable": getattr(
+                            target_status, "target_assignable", None
+                        ),
+                        "webapp_tag_color": getattr(
+                            target_status, "webapp_tag_color", None
+                        ),
+                        "revisit_sections": getattr(
+                            target_status, "revisit_sections", None
+                        ),
+                        "target_locations": target_locations,
                     }
                     for target, target_status, target_locations in targets_query.items
                 ],
@@ -625,7 +618,7 @@ def update_target(target_uid):
             keys_in_payload = custom_fields_in_payload.keys()
 
         for payload_key in keys_in_payload:
-            if payload_key not in keys_in_db and payload_key != 'column_mapping':
+            if payload_key not in keys_in_db and payload_key != "column_mapping":
                 return (
                     jsonify(
                         {
@@ -636,7 +629,7 @@ def update_target(target_uid):
                     422,
                 )
         for db_key in keys_in_db:
-            if db_key not in keys_in_payload and db_key != 'column_mapping':
+            if db_key not in keys_in_payload and db_key != "column_mapping":
                 return (
                     jsonify(
                         {
@@ -646,9 +639,9 @@ def update_target(target_uid):
                     ),
                     422,
                 )
-            if db_key == 'column_mapping':
+            if db_key == "column_mapping":
                 # add column mapping to custom_fields from db
-                payload["custom_fields"]['column_mapping'] = custom_fields_in_db[db_key]
+                payload["custom_fields"]["column_mapping"] = custom_fields_in_db[db_key]
 
         try:
             Target.query.filter_by(target_uid=target_uid).update(

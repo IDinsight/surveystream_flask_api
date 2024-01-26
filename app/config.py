@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import os
-
-
 class Config:
     """
     Base configuration class. Contains default configuration settings + configuration settings applicable to all environments.
@@ -73,6 +71,9 @@ class Config:
     }
 
     SENTRY_CONFIG = {"dsn": ""}
+    ORIGINS = ['http://localhost:*']
+    SESSION_COOKIE_HTTPONLY = False
+    REMEMBER_COOKIE_HTTPONLY = False
 
 
 class LocalDevelopmentConfig(Config):
@@ -87,6 +88,12 @@ class LocalDevelopmentConfig(Config):
     )
 
     PROTECT_DOCS_ENDPOINT = False
+
+    ORIGINS = ['http://localhost:*']
+
+    SESSION_COOKIE_HTTPONLY = False
+    REMEMBER_COOKIE_HTTPONLY = False
+
 
 class MigrationConfig(Config):
     DEBUG = True
@@ -164,6 +171,8 @@ class StagingConfig(Config):
         "environment": "staging-callisto",
     }
 
+    ORIGINS = ['https://*.idinsight.io']
+
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False
 
@@ -184,6 +193,8 @@ class ProductionConfig(Config):
         "traces_sample_rate": "1.0",
         "environment": "production",
     }
+
+    ORIGINS = ['https://*.idinsight.io']
 
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False
