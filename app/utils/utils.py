@@ -1,10 +1,10 @@
-from flask import jsonify, session, current_app
+from flask import jsonify, session, current_app, request
 from flask_login import login_required, logout_user, current_user
 from botocore.exceptions import ClientError
 from functools import wraps
 from app import db
 from app.blueprints.auth.models import User
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, func, or_, text
 
 import boto3
 import base64
@@ -142,22 +142,23 @@ def get_sts_assume_role_response(admin_global_secrets_role_arn):
 
 
 def custom_permissions_required(permission_name):
-    from app.blueprints.roles.models import Permission, RolePermissions, Role
-
     """
     Function to check if current user has the required permissions
     """
+    from app.blueprints.roles.models import Permission, RolePermissions, Role
+    from app.blueprints.surveys.models import Survey
 
     def decorator(fn):
         @wraps(fn)
         def decorated_function(*args, **kwargs):
-            # exclusively handle admin permission checks
-            # these are necessary for creating roles and permissions, survey updates and creation
+            # Handle super admins requests
+            if current_user.get_is_super_admin():
+                return fn(*args, **kwargs)
+
+            # Handle other admin requests
             if permission_name == "ADMIN":
-                if (
-                    current_user.get_is_super_admin()
-                    or current_user.get_is_survey_admin()
-                ):
+                # use this to validate actions like creating survey
+                if current_user.get_is_survey_admin():
                     return fn(*args, **kwargs)
                 else:
                     error_message = (
@@ -166,35 +167,76 @@ def custom_permissions_required(permission_name):
                     response = {"success": False, "error": error_message}
                     return jsonify(response), 403
 
-            # Handle super admins on non-admin requests
-            if current_user.get_is_super_admin():
-                return fn(*args, **kwargs)
+            # Handle non-admin crequests
+            # Get survey_uid from request args
+            survey_uid = request.args.get("survey_uid")
+            if not survey_uid and request.args.get("form_uid"):
+                # Attempt using form_uid
+                form_uid = request.args.get("form_uid")
+                survey_uid = db.engine.execute(
+                    text(
+                        "SELECT survey_uid FROM webapp.parent_forms WHERE form_uid = :form_uid"
+                    ),
+                    form_uid=form_uid,
+                ).scalar()
+
+            if not survey_uid:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "message": "Permission denied, survey_uid is required",
+                        }
+                    ),
+                    403,
+                )
 
             # Handle survey admins on non-admin requests
             if current_user.get_is_survey_admin():
-                return fn(*args, **kwargs)
+                survey = Survey.query.filter_by(survey_uid=survey_uid).first()
+                if survey and survey.created_by_user_uid == current_user.user_uid:
+                    return fn(*args, **kwargs)
+                else:
+                    error_message = (
+                        "Permission denied, survey not created by the current user"
+                    )
+                    response = {"success": False, "error": error_message}
+                    return jsonify(response), 403
 
             # Get all permissions associated with the user's roles
             user_roles = current_user.get_roles()
 
+            # Split permission_name into action and resource
+            action, resource = permission_name.split(maxsplit=1)
+
+            # Query to get role_permissions
             role_permissions = (
                 db.session.query(Permission)
                 .join(
                     RolePermissions,
                     Permission.permission_uid == RolePermissions.permission_uid,
                 )
-                .join(Role, Role.role_uid == RolePermissions.role_uid)
+                .join(
+                    Role,
+                    and_(Role.role_uid == RolePermissions.role_uid),
+                    Role.survey_uid == survey_uid,
+                )
                 .filter(
                     and_(
                         Role.role_uid == func.any(user_roles),
-                        Permission.name == permission_name,
+                        or_(
+                            Permission.name == permission_name,
+                            and_(
+                                action == "READ", Permission.name == f"WRITE {resource}"
+                            ),
+                        ),
                     )
                 )
                 .all()
             )
 
             # Check if the current user has the specified permission
-            if not len(role_permissions) > 0:
+            if not role_permissions:
                 error_message = (
                     f"User does not have the required permission: {permission_name}"
                 )
