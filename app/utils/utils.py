@@ -141,6 +141,44 @@ def get_sts_assume_role_response(admin_global_secrets_role_arn):
     return sts_response
 
 
+def get_survey_uid_from_form_uid(form_uid):
+    return db.engine.execute(
+        text("SELECT survey_uid FROM webapp.parent_forms WHERE form_uid = :form_uid"),
+        form_uid=form_uid,
+    ).scalar()
+
+
+def get_survey_uid_from_target_uid(target_uid):
+    form_uid = db.engine.execute(
+        text("SELECT form_uid FROM webapp.targets WHERE target_uid = :target_uid"),
+        target_uid=target_uid,
+    ).scalar()
+
+    if form_uid:
+        return get_survey_uid_from_form_uid(form_uid)
+
+
+def get_survey_uid():
+    # Attempt to get survey_uid from request args
+    survey_uid = request.args.get("survey_uid")
+
+    # Attempt using form_uid
+    if not survey_uid:
+        form_uid = request.args.get("form_uid") or request.json.get("form_uid")
+        if form_uid:
+            survey_uid = get_survey_uid_from_form_uid(form_uid)
+
+    # Attempt using target_uid
+    if not survey_uid:
+        target_uid = request.args.get("target_uid") or request.view_args.get(
+            "target_uid"
+        )
+        if target_uid:
+            survey_uid = get_survey_uid_from_target_uid(target_uid)
+
+    return survey_uid
+
+
 def custom_permissions_required(permission_name):
     """
     Function to check if current user has the required permissions
@@ -169,16 +207,7 @@ def custom_permissions_required(permission_name):
 
             # Handle non-admin crequests
             # Get survey_uid from request args
-            survey_uid = request.args.get("survey_uid")
-            if not survey_uid and request.args.get("form_uid"):
-                # Attempt using form_uid
-                form_uid = request.args.get("form_uid")
-                survey_uid = db.engine.execute(
-                    text(
-                        "SELECT survey_uid FROM webapp.parent_forms WHERE form_uid = :form_uid"
-                    ),
-                    form_uid=form_uid,
-                ).scalar()
+            survey_uid = get_survey_uid()
 
             if not survey_uid:
                 return (
