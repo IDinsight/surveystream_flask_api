@@ -142,20 +142,30 @@ def get_sts_assume_role_response(admin_global_secrets_role_arn):
 
 
 def get_survey_uid_from_form_uid(form_uid):
-    return db.engine.execute(
-        text("SELECT survey_uid FROM webapp.parent_forms WHERE form_uid = :form_uid"),
-        form_uid=form_uid,
-    ).scalar()
+    try:
+        return db.engine.execute(
+            text(
+                "SELECT survey_uid FROM webapp.parent_forms WHERE form_uid = :form_uid"
+            ),
+            form_uid=form_uid,
+        ).scalar()
+    except Exception as e:
+        print("Error retrieving survey_uid from form_uid: %s", e)
+        return None
 
 
 def get_survey_uid_from_target_uid(target_uid):
-    form_uid = db.engine.execute(
-        text("SELECT form_uid FROM webapp.targets WHERE target_uid = :target_uid"),
-        target_uid=target_uid,
-    ).scalar()
+    try:
+        form_uid = db.engine.execute(
+            text("SELECT form_uid FROM webapp.targets WHERE target_uid = :target_uid"),
+            target_uid=target_uid,
+        ).scalar()
 
-    if form_uid:
-        return get_survey_uid_from_form_uid(form_uid)
+        if form_uid:
+            return get_survey_uid_from_form_uid(form_uid)
+    except Exception as e:
+        print("Error retrieving survey_uid from target_uid: %s", e)
+        return None
 
 
 def get_survey_uid():
@@ -238,26 +248,34 @@ def custom_permissions_required(permission_name):
             # Split permission_name into action and resource
             action, resource = permission_name.split(maxsplit=1)
 
-            # Query to get role_permissions
-            role_permissions = (
-                db.session.query(Permission)
-                .join(
-                    Role,
-                    Role.survey_uid == survey_uid,
-                )
-                .filter(
-                    and_(
-                        Role.role_uid == func.any(user_roles),
-                        or_(
-                            Permission.name == permission_name,
-                            and_(
-                                action == "READ", Permission.name == f"WRITE {resource}"
-                            ),
-                        ),
+            try:
+                # Query to get role_permissions
+                role_permissions = (
+                    db.session.query(Permission)
+                    .join(
+                        Role,
+                        Role.survey_uid == survey_uid,
                     )
+                    .filter(
+                        and_(
+                            Role.role_uid == func.any(user_roles),
+                            or_(
+                                Permission.name == permission_name,
+                                and_(
+                                    action == "READ",
+                                    Permission.name == f"WRITE {resource}",
+                                ),
+                            ),
+                        )
+                    )
+                    .all()
                 )
-                .all()
-            )
+            except Exception as e:
+                print("Error querying role_permissions: %s", e)
+                return (
+                    jsonify({"success": False, "error": "Error checking permissions"}),
+                    500,
+                )
 
             # Check if the current user has the specified permission
             if not role_permissions:
