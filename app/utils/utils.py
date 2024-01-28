@@ -145,7 +145,7 @@ def custom_permissions_required(permission_name):
     """
     Function to check if current user has the required permissions
     """
-    from app.blueprints.roles.models import Permission, RolePermissions, Role
+    from app.blueprints.roles.models import Permission, Role
     from app.blueprints.surveys.models import Survey
 
     def decorator(fn):
@@ -213,12 +213,7 @@ def custom_permissions_required(permission_name):
             role_permissions = (
                 db.session.query(Permission)
                 .join(
-                    RolePermissions,
-                    Permission.permission_uid == RolePermissions.permission_uid,
-                )
-                .join(
                     Role,
-                    and_(Role.role_uid == RolePermissions.role_uid),
                     Role.survey_uid == survey_uid,
                 )
                 .filter(
