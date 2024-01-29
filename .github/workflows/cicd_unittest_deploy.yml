@@ -21,7 +21,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Load .env file
         uses: xom9ikk/dotenv@v2
@@ -67,7 +67,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Load .env file
         uses: xom9ikk/dotenv@v2
@@ -144,7 +144,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Load .env file
         uses: xom9ikk/dotenv@v2
         with:
@@ -225,7 +225,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Load .env file
         uses: xom9ikk/dotenv@v2
         with:
