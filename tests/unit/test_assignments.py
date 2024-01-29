@@ -271,6 +271,145 @@ class TestAssignments:
         yield
 
     @pytest.fixture()
+    def create_enumerator_column_config_no_locations(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Create the enumerators column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "enumerator_id",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "name",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "email",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "mobile_primary",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "personal_details",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "home_address",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "Mobile (Secondary)",
+                    "column_type": "custom_fields",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "Age",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/enumerators/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_enumerator_column_config_no_custom_fields(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Create the enumerators column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "enumerator_id",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "name",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "email",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "mobile_primary",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "personal_details",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "home_address",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "prime_geo_level_location",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/enumerators/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
     def upload_enumerators_csv(
         self, client, login_test_user, create_locations, csrf_token
     ):
@@ -601,6 +740,120 @@ class TestAssignments:
                     "column_name": "Address",
                     "column_type": "custom_fields",
                     "bulk_editable": True,
+                    "contains_pii": True,
+                },
+                {
+                    "column_name": "bottom_geo_level_location",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/targets/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_target_column_config_no_locations(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Upload the targets column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "target_id",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": False,
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "basic_details",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                },
+                {
+                    "column_name": "Name",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                },
+                {
+                    "column_name": "Mobile no.",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                },
+                {
+                    "column_name": "Address",
+                    "column_type": "custom_fields",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/targets/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_target_column_config_no_custom_fields(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Upload the targets column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "target_id",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": False,
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "basic_details",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
                     "contains_pii": True,
                 },
                 {
@@ -2399,7 +2652,7 @@ class TestAssignments:
                     },
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
-                    "enumerator_locations": [
+                    "surveyor_locations": [
                         {
                             "geo_level_name": "District",
                             "geo_level_uid": 1,
@@ -2409,15 +2662,21 @@ class TestAssignments:
                         }
                     ],
                     "enumerator_uid": 1,
+                    "form_productivity": {
+                        "test_scto_input_output": {
+                            "form_name": "Agrifieldnet Main Form",
+                            "scto_form_id": "test_scto_input_output",
+                            "total_assigned_targets": 1,
+                            "total_completed_targets": 0,
+                            "total_pending_targets": 1,
+                        }
+                    },
                     "gender": "Male",
                     "home_address": "my house",
                     "language": "English",
                     "mobile_primary": "0123456789",
                     "name": "Eric Dodge",
                     "surveyor_status": "Active",
-                    "total_assigned_targets": 1,
-                    "total_completed_targets": 0,
-                    "total_pending_targets": 1,
                 },
                 {
                     "custom_fields": {
@@ -2444,7 +2703,7 @@ class TestAssignments:
                     },
                     "email": "jahnavi.meher@idinsight.org",
                     "enumerator_id": "0294613",
-                    "enumerator_locations": [
+                    "surveyor_locations": [
                         {
                             "geo_level_name": "District",
                             "geo_level_uid": 1,
@@ -2454,15 +2713,21 @@ class TestAssignments:
                         }
                     ],
                     "enumerator_uid": 2,
+                    "form_productivity": {
+                        "test_scto_input_output": {
+                            "form_name": "Agrifieldnet Main Form",
+                            "scto_form_id": "test_scto_input_output",
+                            "total_assigned_targets": 1,
+                            "total_completed_targets": 1,
+                            "total_pending_targets": 0,
+                        }
+                    },
                     "gender": "Female",
                     "home_address": "my house",
                     "language": "Telugu",
                     "mobile_primary": "0123456789",
                     "name": "Jahnavi Meher",
                     "surveyor_status": "Active",
-                    "total_assigned_targets": 1,
-                    "total_completed_targets": 1,
-                    "total_pending_targets": 0,
                 },
                 {
                     "custom_fields": {
@@ -2489,7 +2754,7 @@ class TestAssignments:
                     },
                     "email": "griffin.muteti@idinsight.org",
                     "enumerator_id": "0294615",
-                    "enumerator_locations": [
+                    "surveyor_locations": [
                         {
                             "geo_level_name": "District",
                             "geo_level_uid": 1,
@@ -2499,15 +2764,21 @@ class TestAssignments:
                         }
                     ],
                     "enumerator_uid": 4,
+                    "form_productivity": {
+                        "test_scto_input_output": {
+                            "form_name": "Agrifieldnet Main Form",
+                            "scto_form_id": "test_scto_input_output",
+                            "total_assigned_targets": 0,
+                            "total_completed_targets": 0,
+                            "total_pending_targets": 0,
+                        }
+                    },
                     "gender": "Male",
                     "home_address": "my house",
                     "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "name": "Griffin Muteti",
                     "surveyor_status": "Active",
-                    "total_assigned_targets": 0,
-                    "total_completed_targets": 0,
-                    "total_pending_targets": 0,
                 },
             ],
             "success": True,
@@ -2520,4 +2791,1835 @@ class TestAssignments:
         print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_table_config_default(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test the default response from the table config endpoint
+        """
+
+        response = client.get(
+            "/api/assignments/table-config", query_string={"form_uid": 1}
+        )
+
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                        {"column_key": "gender", "column_label": "Gender"},
+                        {"column_key": "language", "column_label": "Language"},
+                    ],
+                    "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Last Attempt Survey Status",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Total Attempts",
+                        },
+                    ],
+                    "group_label": "Target Status Details",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "prev_assigned_to",
+                            "column_label": "Previously Assigned To",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Target Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                    ],
+                    "group_label": "Form Productivity (Agrifieldnet Main Form)",
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [{"column_key": "name", "column_label": "Name"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "enumerator_id", "column_label": "ID"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [{"column_key": "email", "column_label": "Email"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "mobile_primary", "column_label": "Mobile"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Last Attempt Survey Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "num_attempts", "column_label": "Total Attempts"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_no_locations(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config_no_locations,
+        create_target_column_config_no_locations,
+        csrf_token,
+    ):
+        """
+        Test the default response from the table config endpoint
+        """
+
+        response = client.get(
+            "/api/assignments/table-config", query_string={"form_uid": 1}
+        )
+
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                        {"column_key": "gender", "column_label": "Gender"},
+                        {"column_key": "language", "column_label": "Language"},
+                    ],
+                    "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Last Attempt Survey Status",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Total Attempts",
+                        },
+                    ],
+                    "group_label": "Target Status Details",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "prev_assigned_to",
+                            "column_label": "Previously Assigned To",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Target Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                    ],
+                    "group_label": "Form Productivity (Agrifieldnet Main Form)",
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [{"column_key": "name", "column_label": "Name"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "enumerator_id", "column_label": "ID"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "email", "column_label": "Email"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "mobile_primary", "column_label": "Mobile"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Last Attempt Survey Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "num_attempts", "column_label": "Total Attempts"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_no_custom_fields(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv_no_custom_fields,
+        upload_targets_csv_no_custom_fields,
+        create_enumerator_column_config_no_custom_fields,
+        create_target_column_config_no_custom_fields,
+        csrf_token,
+    ):
+        """
+        Test the default response from the table config endpoint when no custom fields are present
+        """
+
+        response = client.get(
+            "/api/assignments/table-config", query_string={"form_uid": 1}
+        )
+
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                        {"column_key": "gender", "column_label": "Gender"},
+                        {"column_key": "language", "column_label": "Language"},
+                    ],
+                    "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Last Attempt Survey Status",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Total Attempts",
+                        },
+                    ],
+                    "group_label": "Target Status Details",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "prev_assigned_to",
+                            "column_label": "Previously Assigned To",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Target Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                    ],
+                    "group_label": "Form Productivity (Agrifieldnet Main Form)",
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [{"column_key": "name", "column_label": "Name"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "enumerator_id", "column_label": "ID"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [{"column_key": "email", "column_label": "Email"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "mobile_primary", "column_label": "Mobile"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "last_attempt_survey_status_label",
+                            "column_label": "Last Attempt Survey Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "num_attempts", "column_label": "Total Attempts"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_create_table_config(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test creating a new table config for each table type
+        """
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_main",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_id",
+                    "column_label": "Enumerator id",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Target Mobile no.",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "assigned_enumerator_custom_fields['Age']",
+                    "column_label": "Enumerator Age",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "District",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_surveyors",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "enumerator_id",
+                    "column_label": "Enumerator id",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Age']",
+                    "column_label": "Enumerator Age",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Form productivity",
+                    "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                    "column_label": "Total Assigned",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_review",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "target_id",
+                    "column_label": "Target ID",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "surveyors",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "enumerator_id",
+                    "column_label": "Enumerator id",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Age']",
+                    "column_label": "Enumerator Age",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "State",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "targets",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "target_id",
+                    "column_label": "Target id",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Target Mobile no.",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "District",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        response = client.get(
+            "/api/assignments/table-config",
+            query_string={"form_uid": 1, "table_name": "assignments_main"},
+        )
+
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_id",
+                            "column_label": "Enumerator id",
+                        },
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Enumerator name",
+                        },
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Target Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_custom_fields['Age']",
+                            "column_label": "Enumerator Age",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "State",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "District",
+                        },
+                    ],
+                    "group_label": "Locations",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Enumerator name",
+                        },
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                    ],
+                    "group_label": "Details",
+                }
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "enumerator_id",
+                            "column_label": "Enumerator id",
+                        },
+                        {"column_key": "name", "column_label": "Enumerator name"},
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Age']",
+                            "column_label": "Enumerator Age",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "State",
+                        }
+                    ],
+                    "group_label": "Locations",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned",
+                        }
+                    ],
+                    "group_label": "Form productivity",
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "enumerator_id",
+                            "column_label": "Enumerator id",
+                        },
+                        {"column_key": "name", "column_label": "Enumerator name"},
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Age']",
+                            "column_label": "Enumerator Age",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "State",
+                        }
+                    ],
+                    "group_label": "Locations",
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target id"}
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Target Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "State",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "District",
+                        },
+                    ],
+                    "group_label": "Locations",
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_no_geo_levels_error(
+        self,
+        client,
+        login_test_user,
+        create_form,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test that an error is raised when the column configs contain locations but the survey has no geo levels
+        """
+
+        response = client.get(
+            "/api/assignments/table-config", query_string={"form_uid": 1}
+        )
+
+        assert response.status_code == 422
+
+        print(response.json)
+
+        expected_response = {
+            "errors": {
+                "geo_level_hierarchy": [
+                    "Cannot create the location type hierarchy because no location types have been defined for the survey."
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_no_prime_geo_level_error(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that an error is raised when the column configs contain locations but the survey has no prime geo level defined
+        """
+
+        # Update the survey
+        payload = payload = {
+            "survey_uid": 1,
+            "survey_id": "test_survey",
+            "survey_name": "Test Survey",
+            "survey_description": "A test survey",
+            "project_name": "Test Project",
+            "surveying_method": "in-person",
+            "irb_approval": "Yes",
+            "planned_start_date": "2021-01-01",
+            "planned_end_date": "2021-12-31",
+            "state": "Draft",
+            "prime_geo_level_uid": None,
+            "config_status": "In Progress - Configuration",
+            "created_by_user_uid": test_user_credentials["user_uid"],
+        }
+
+        response = client.put(
+            "/api/surveys/1/basic-information",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        response = client.get(
+            "/api/assignments/table-config", query_string={"form_uid": 1}
+        )
+
+        assert response.status_code == 422
+
+        print(response.json)
+
+        expected_response = {
+            "errors": "The prime_geo_level_uid is not configured for this survey but is found as a column in the enumerator_column_config table.",
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_prime_geo_level_not_in_geo_levels_error(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that an error is raised when the column configs contain locations but the prime geo level is not in the geo levels
+        """
+
+        # Update the survey
+        payload = payload = {
+            "survey_uid": 1,
+            "survey_id": "test_survey",
+            "survey_name": "Test Survey",
+            "survey_description": "A test survey",
+            "project_name": "Test Project",
+            "surveying_method": "in-person",
+            "irb_approval": "Yes",
+            "planned_start_date": "2021-01-01",
+            "planned_end_date": "2021-12-31",
+            "state": "Draft",
+            "prime_geo_level_uid": 20,
+            "config_status": "In Progress - Configuration",
+            "created_by_user_uid": test_user_credentials["user_uid"],
+        }
+
+        response = client.put(
+            "/api/surveys/1/basic-information",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        response = client.get(
+            "/api/assignments/table-config", query_string={"form_uid": 1}
+        )
+
+        assert response.status_code == 422
+
+        print(response.json)
+
+        expected_response = {
+            "errors": "The prime_geo_level_uid '20' is not in the location type hierarchy for this survey.",
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_validations_no_locations_configured(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config_no_locations,
+        create_target_column_config_no_locations,
+        csrf_token,
+    ):
+        """
+        Test creating invalid table configs to trigger each type of validation error
+        This test is for when no locations are configured in the target/enumerator column configs but the table config contains locations
+        """
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_surveyors",
+            "table_config": [
+                {
+                    "group_label": "Locations",
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "State",
+                }
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": [
+                "The column_key 'surveyor_locations[0].location_name' is invalid. Location is not defined in the enumerator_column_config table for this form."
+            ],
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_main",
+            "table_config": [
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "State",
+                }
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": [
+                "The column_key 'target_locations[0].location_name' is invalid. Location is not defined in the target_column_config table for this form."
+            ],
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_validations(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test creating invalid table configs to trigger each type of validation error
+
+        Add a not allowed key
+        Use surveyor_locations key in assignments_main where it is not allowed
+        Try different incorrect formats for target_locations
+        Check for out of range index in target_locations
+        Check for out of range index in surveyor_locations
+        Try different incorrect formats for custom_fields and assigned_enumerator_custom_fields
+        Try non-existent keys for custom_fields and assigned_enumerator_custom_fields
+        Check for non-existent keys in assignments_surveyors custom fields
+        Try different incorrect formats for form productivity
+        Check for non-existent scto_form_id in form productivity
+        """
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_main",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_id_asdf",
+                    "column_label": "Enumerator id",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Target Mobile no.",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "assigned_enumerator_custom_fields['Age']",
+                    "column_label": "Enumerator Age",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations_asdf[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[-1].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[asf].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name_asdf",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0]",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[10].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "District",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields_asdf['Hotel']",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields[Hotel]",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Hotel']asdf",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "assigned_enumerator_custom_fields_asdf['Hotel']asdf",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Hotel']",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "assigned_enumerator_custom_fields['Hotel']",
+                    "column_label": "Hotel",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": [
+                "'assigned_enumerator_id_asdf' is not an allowed key for the assignments_main table configuration",
+                "'target_locations_asdf[0].location_name' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "'target_locations[-1].location_name' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "'target_locations[].location_name' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "'target_locations[asf].location_name' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "'target_locations[0].location_name_asdf' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "'target_locations[0]' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
+                "The location index of 10 for target_locations[10].location_name is invalid. It must be in the range [0:2] because there are 3 geo levels defined for the survey.",
+                "'surveyor_locations' is not an allowed key for the assignments_main table configuration",
+                "custom_fields_asdf['Hotel'] is not in the correct format. It should follow the pattern custom_fields['<custom_field_name>']",
+                "custom_fields[Hotel] is not in the correct format. It should follow the pattern custom_fields['<custom_field_name>']",
+                "custom_fields['Hotel']asdf is not in the correct format. It should follow the pattern custom_fields['<custom_field_name>']",
+                "assigned_enumerator_custom_fields_asdf['Hotel']asdf is not in the correct format. It should follow the pattern assigned_enumerator_custom_fields['<custom_field_name>']",
+                "The custom field 'Hotel' is not defined in the target_column_config table for this form.",
+                "The enumerator custom field 'Hotel' is not defined in the enumerator_column_config table for this form.",
+            ],
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_surveyors",
+            "table_config": [
+                {
+                    "group_label": "Locations",
+                    "column_key": "surveyor_locations[10].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Hotel']",
+                    "column_label": "Hotel",
+                },
+                {
+                    "group_label": "Form productivity",
+                    "column_key": "form_productivity.test_scto_input_output.total_assigned",
+                    "column_label": "Total Assigned",
+                },
+                {
+                    "group_label": "Form productivity",
+                    "column_key": "form_productivity.total_assigned_targets",
+                    "column_label": "Total Assigned",
+                },
+                {
+                    "group_label": "Form productivity",
+                    "column_key": "form_productivity.fake_scto_form.total_assigned_targets",
+                    "column_label": "Total Assigned",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": [
+                "The location index of 10 for surveyor_locations[10].location_name is invalid. It must be in the range [0:0] because 0 is the index of the prime geo level defined for the survey.",
+                "The custom field 'Hotel' is not defined in the enumerator_column_config table for this form.",
+                "form_productivity.test_scto_input_output.total_assigned is not in the correct format. It should follow the pattern form_productivity.<surveycto_form_id>.<total_assigned_target|total_completed_targets|total_pending_targets>",
+                "form_productivity.total_assigned_targets is not in the correct format. It should follow the pattern form_productivity.<surveycto_form_id>.<total_assigned_target|total_completed_targets|total_pending_targets>",
+                "The surveycto_form_id 'fake_scto_form' is not found in the forms defined for this survey.",
+            ],
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
         assert checkdiff == {}

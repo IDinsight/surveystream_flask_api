@@ -6,8 +6,6 @@ from flask import jsonify, request
 from flask_login import current_user
 from app import db
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.sql.functions import func
-from sqlalchemy import cast
 from sqlalchemy.exc import IntegrityError
 from .models import SurveyorAssignment
 from .validators import (
@@ -15,7 +13,7 @@ from .validators import (
     UpdateSurveyorAssignmentsValidator,
 )
 from .queries import (
-    build_assignment_status_subquery,
+    build_surveyor_formwise_productivity_subquery,
 )
 from app.blueprints.surveys.models import Survey
 from app.blueprints.forms.models import ParentForm
@@ -227,34 +225,16 @@ def view_assignments_enumerators():
         )
     )
 
-    assignment_status_subquery = build_assignment_status_subquery(form_uid)
+    surveyor_formwise_productivity_subquery = (
+        build_surveyor_formwise_productivity_subquery(survey_uid)
+    )
 
     assignment_enumerators_query = (
         db.session.query(
             Enumerator,
             SurveyorForm,
             prime_locations_with_location_hierarchy_subquery.c.locations,
-            func.coalesce(
-                cast(
-                    assignment_status_subquery.c.total_assigned_targets,
-                    db.Integer(),
-                ),
-                0,
-            ).label("total_assigned_targets"),
-            func.coalesce(
-                cast(
-                    assignment_status_subquery.c.total_pending_targets,
-                    db.Integer(),
-                ),
-                0,
-            ).label("total_pending_targets"),
-            func.coalesce(
-                cast(
-                    assignment_status_subquery.c.total_completed_targets,
-                    db.Integer(),
-                ),
-                0,
-            ).label("total_completed_targets"),
+            surveyor_formwise_productivity_subquery.c.form_productivity,
         )
         .join(SurveyorForm, Enumerator.enumerator_uid == SurveyorForm.enumerator_uid)
         .outerjoin(
@@ -268,8 +248,9 @@ def view_assignments_enumerators():
             == prime_locations_with_location_hierarchy_subquery.c.location_uid,
         )
         .outerjoin(
-            assignment_status_subquery,
-            Enumerator.enumerator_uid == assignment_status_subquery.c.enumerator_uid,
+            surveyor_formwise_productivity_subquery,
+            Enumerator.enumerator_uid
+            == surveyor_formwise_productivity_subquery.c.enumerator_uid,
         )
         .filter(
             SurveyorForm.form_uid == form_uid,
@@ -285,12 +266,10 @@ def view_assignments_enumerators():
                 {
                     **enumerator.to_dict(),
                     "surveyor_status": surveyor_form.status,
-                    "enumerator_locations": locations,
-                    "total_assigned_targets": total_assigned_targets,
-                    "total_pending_targets": total_pending_targets,
-                    "total_completed_targets": total_completed_targets,
+                    "surveyor_locations": locations,
+                    "form_productivity": form_productivity,
                 }
-                for enumerator, surveyor_form, locations, total_assigned_targets, total_pending_targets, total_completed_targets, in assignment_enumerators_query.all()
+                for enumerator, surveyor_form, locations, form_productivity in assignment_enumerators_query.all()
             ],
         }
     )
