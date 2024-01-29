@@ -144,26 +144,40 @@ def get_sts_assume_role_response(admin_global_secrets_role_arn):
 def get_survey_uid():
     """
     Function to get survey_uid before the request;
-    this is required on all non-admin requests but not always provided on request params
+    this is required on all non-admin requests but not always provided in request params
     """
     # Attempt to get survey_uid from request args
     survey_uid = request.args.get("survey_uid")
 
     if not survey_uid:
-        # Attempt using target_uid
-
-        target_uid = request.args.get("target_uid") or request.view_args.get(
-            "target_uid"
+        # Attempt using enumerator_uid
+        enumerator_uid = request.args.get("enumerator_uid") or request.view_args.get(
+            "enumerator_uid"
         )
-        if target_uid:
+        if enumerator_uid:
             survey_uid = db.engine.execute(
                 text(
-                    "SELECT parent_forms.survey_uid FROM webapp.targets "
-                    "JOIN webapp.parent_forms ON targets.form_uid = parent_forms.form_uid "
-                    "WHERE targets.target_uid = :target_uid"
+                    "SELECT parent_forms.survey_uid FROM webapp.enumerators "
+                    "JOIN webapp.parent_forms ON enumerators.form_uid = parent_forms.form_uid "
+                    "WHERE enumerators.enumerator_uid = :enumerator_uid"
                 ),
-                target_uid=target_uid,
+                enumerator_uid=enumerator_uid,
             ).scalar()
+
+        # Attempt using target_uid
+        if not survey_uid:
+            target_uid = request.args.get("target_uid") or request.view_args.get(
+                "target_uid"
+            )
+            if target_uid:
+                survey_uid = db.engine.execute(
+                    text(
+                        "SELECT parent_forms.survey_uid FROM webapp.targets "
+                        "JOIN webapp.parent_forms ON targets.form_uid = parent_forms.form_uid "
+                        "WHERE targets.target_uid = :target_uid"
+                    ),
+                    target_uid=target_uid,
+                ).scalar()
 
         # Attempt using form_uid
         if not survey_uid:
@@ -177,6 +191,7 @@ def get_survey_uid():
                 ).scalar()
 
     return survey_uid if survey_uid is not None else None
+
 
 def custom_permissions_required(permission_name):
     """
