@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Load .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.2.0
         with:
           path: ./.github/workflows
           mode: variables
@@ -33,7 +33,7 @@ jobs:
         run: docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: "arn:aws:iam::${{ env.DEV_ACCOUNT }}:role/github-actions-role-flask-unittest"
           role-session-name: testingrolesession
@@ -70,12 +70,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Load .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.2.0
         with:
           path: ./.github/workflows
           mode: variables
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: "arn:aws:iam::${{ env.DEV_ACCOUNT }}:role/github-actions-role-flask-unittest"
           role-session-name: testingrolesession
@@ -146,7 +146,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Load .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.2.0
         with:
           path: ./.github/workflows
           mode: variables
@@ -227,7 +227,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Load .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.2.0
         with:
           path: ./.github/workflows
           mode: variables
