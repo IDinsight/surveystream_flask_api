@@ -11,7 +11,6 @@ from .routes import roles_bp
 from .validators import SurveyRolesQueryParamValidator, SurveyRolesPayloadValidator, UserHierarchyPayloadValidator, \
     UserHierarchyParamValidator
 from .utils import run_role_hierarchy_validations
-from ..auth.models import User
 
 
 @roles_bp.route("/roles", methods=["GET"])
