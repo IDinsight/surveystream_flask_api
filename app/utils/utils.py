@@ -141,53 +141,42 @@ def get_sts_assume_role_response(admin_global_secrets_role_arn):
     return sts_response
 
 
-def get_survey_uid_from_form_uid(form_uid):
-    try:
-        return db.engine.execute(
-            text(
-                "SELECT survey_uid FROM webapp.parent_forms WHERE form_uid = :form_uid"
-            ),
-            form_uid=form_uid,
-        ).scalar()
-    except Exception as e:
-        print("Error retrieving survey_uid from form_uid: %s", e)
-        return None
-
-
-def get_survey_uid_from_target_uid(target_uid):
-    try:
-        form_uid = db.engine.execute(
-            text("SELECT form_uid FROM webapp.targets WHERE target_uid = :target_uid"),
-            target_uid=target_uid,
-        ).scalar()
-
-        if form_uid:
-            return get_survey_uid_from_form_uid(form_uid)
-    except Exception as e:
-        print("Error retrieving survey_uid from target_uid: %s", e)
-        return None
-
-
 def get_survey_uid():
+    """
+    Function to get survey_uid before the request;
+    this is required on all non-admin requests but not always provided on request params
+    """
     # Attempt to get survey_uid from request args
     survey_uid = request.args.get("survey_uid")
 
-    # Attempt using form_uid
     if not survey_uid:
-        form_uid = request.args.get("form_uid") or request.json.get("form_uid")
-        if form_uid:
-            survey_uid = get_survey_uid_from_form_uid(form_uid)
+        # Attempt using target_uid
 
-    # Attempt using target_uid
-    if not survey_uid:
         target_uid = request.args.get("target_uid") or request.view_args.get(
             "target_uid"
         )
         if target_uid:
-            survey_uid = get_survey_uid_from_target_uid(target_uid)
+            survey_uid = db.engine.execute(
+                text(
+                    "SELECT parent_forms.survey_uid FROM webapp.targets "
+                    "JOIN webapp.parent_forms ON targets.form_uid = parent_forms.form_uid "
+                    "WHERE targets.target_uid = :target_uid"
+                ),
+                target_uid=target_uid,
+            ).scalar()
 
-    return survey_uid
+        # Attempt using form_uid
+        if not survey_uid:
+            form_uid = request.args.get("form_uid") or request.json.get("form_uid")
+            if form_uid:
+                survey_uid = db.engine.execute(
+                    text(
+                        "SELECT survey_uid FROM webapp.parent_forms WHERE form_uid = :form_uid"
+                    ),
+                    form_uid=form_uid,
+                ).scalar()
 
+    return survey_uid if survey_uid is not None else None
 
 def custom_permissions_required(permission_name):
     """
@@ -220,15 +209,11 @@ def custom_permissions_required(permission_name):
             survey_uid = get_survey_uid()
 
             if not survey_uid:
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "message": "Permission denied, survey_uid is required",
-                        }
-                    ),
-                    403,
+                error_message = (
+                    f"Permission denied, survey_uid for permissions required not found"
                 )
+                response = {"success": False, "error": error_message}
+                return jsonify(response), 403
 
             # Handle survey admins on non-admin requests
             if current_user.get_is_survey_admin():

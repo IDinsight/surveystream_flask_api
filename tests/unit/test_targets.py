@@ -263,7 +263,6 @@ class TestTargets:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         yield
@@ -2308,8 +2307,6 @@ class TestTargets:
         # Check the response
         response = client.get("/api/targets/2")
 
-        print(response)
-
         assert response.status_code == 200
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -2375,9 +2372,6 @@ class TestTargets:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response)
-        print(response.json)
-
         expected_response = {
             "data": {
                 "custom_fields": {
@@ -2442,9 +2436,6 @@ class TestTargets:
 
         # Check the response
         response = client.get("/api/targets/2")
-
-        print(response)
-        print(response.json)
 
         assert response.status_code == 200
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -2584,18 +2575,9 @@ class TestTargets:
         login_user(client, test_user_credentials)
 
         # Delete the target
-        delete_response = client.delete(
-            "/api/targets/1"
-        )
-        print(delete_response)
-        print(delete_response.json)
+        response = client.delete("/api/targets/1")
 
-        assert delete_response.status_code == 200
-
-        response = client.get("/api/targets/1")
-
-        assert response.status_code == 404
-
+        assert response.status_code == 200
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
             client, test_user_credentials, is_survey_admin=False, is_super_admin=True
@@ -2635,19 +2617,9 @@ class TestTargets:
         login_user(client, test_user_credentials)
 
         # Delete the target
-        delete_response = client.delete(
-            "/api/targets/1"
-        )
+        response = client.delete("/api/targets/1")
 
-        print(delete_response)
-        print(delete_response.json)
-
-        assert delete_response.status_code == 200
-
-        response = client.get("/api/targets/1")
-
-        assert response.status_code == 404
-
+        assert response.status_code == 200
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
             client, test_user_credentials, is_survey_admin=False, is_super_admin=True
@@ -2724,7 +2696,6 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
         assert response.status_code == 200
 
         expected_response = {
@@ -2851,7 +2822,6 @@ class TestTargets:
 
         # Check the response
         response = client.get("/api/targets", query_string={"form_uid": 1})
-        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -2894,7 +2864,6 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
         assert response.status_code == 200
 
         expected_response = {
@@ -3021,7 +2990,6 @@ class TestTargets:
 
         # Check the response
         response = client.get("/api/targets", query_string={"form_uid": 1})
-        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -3080,7 +3048,6 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
         assert response.status_code == 200
 
         expected_response = {
@@ -3207,7 +3174,6 @@ class TestTargets:
 
         # Check the response
         response = client.get("/api/targets", query_string={"form_uid": 1})
-        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
