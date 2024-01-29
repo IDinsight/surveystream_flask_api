@@ -41,14 +41,14 @@ wtforms_json.init()
 ### Application Factory ###
 def create_app():
     app = Flask(__name__)
-   
+
     # Configure the flask app instance
     CONFIG_TYPE = os.getenv("CONFIG_TYPE", default="app.config.DevelopmentConfig")
     app.config.from_object(CONFIG_TYPE)
-   
-    #initialize cors per environment
-    CORS(app, origins=app.config['ORIGINS'], supports_credentials=True)
-   
+
+    if app.config["ENABLE_CORS"]:
+        # initialize cors per environment
+        CORS(app, origins=app.config["ORIGINS"], supports_credentials=True)
 
     # Configure logging
     logging.config.dictConfig(app.config["LOGGING_CONFIG"])

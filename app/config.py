@@ -70,6 +70,7 @@ class Config:
         "root": {"handlers": ["stream"], "level": "INFO"},
     }
 
+    ENABLE_CORS = True
     SENTRY_CONFIG = {"dsn": ""}
     ORIGINS = ['http://localhost:*']
     SESSION_COOKIE_HTTPONLY = False
@@ -88,6 +89,8 @@ class LocalDevelopmentConfig(Config):
     )
 
     PROTECT_DOCS_ENDPOINT = False
+
+    ENABLE_CORS = True
 
     ORIGINS = ['http://localhost:*']
 
@@ -173,6 +176,8 @@ class StagingConfig(Config):
 
     ORIGINS = ['https://*.idinsight.io']
 
+    ENABLE_CORS = False
+
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False
 
@@ -195,6 +200,8 @@ class ProductionConfig(Config):
     }
 
     ORIGINS = ['https://*.idinsight.io']
+
+    ENABLE_CORS = False
 
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False

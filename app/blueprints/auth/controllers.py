@@ -6,7 +6,6 @@ from flask_wtf.csrf import generate_csrf
 from flask_login import current_user, login_user, logout_user
 from flask_mail import Message
 from passlib.pwd import genword
-from flask_cors import CORS, cross_origin
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
 from .validators import (
