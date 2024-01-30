@@ -2944,7 +2944,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "assigned_enumerator_name",
+                            "column_key": "name",
                             "column_label": "Surveyor Name",
                         }
                     ],
@@ -3305,7 +3305,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "assigned_enumerator_name",
+                            "column_key": "name",
                             "column_label": "Surveyor Name",
                         }
                     ],
@@ -3616,7 +3616,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "assigned_enumerator_name",
+                            "column_key": "name",
                             "column_label": "Surveyor Name",
                         }
                     ],

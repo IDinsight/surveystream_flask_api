@@ -171,7 +171,7 @@ class DefaultTableConfig:
                 "group_label": None,
                 "columns": [
                     {
-                        "column_key": "assigned_enumerator_name",
+                        "column_key": "name",
                         "column_label": "Surveyor Name",
                     },
                 ],
