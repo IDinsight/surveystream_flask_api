@@ -5104,7 +5104,8 @@ class TestEnumerators:
 
         print(response.json)
 
-        assert response.status_code == 200
+        #language is required
+        assert response.status_code == 422
 
     def test_incorrect_enumerator_types(
         self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
