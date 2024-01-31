@@ -114,7 +114,7 @@ def upload_enumerators():
         Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
     )
 
-    optional_hardcoded_fields = ["language", "gender", "home_address"]
+    optional_hardcoded_fields = ["gender", "home_address"]
 
     try:
         column_mapping = EnumeratorColumnMapping(
