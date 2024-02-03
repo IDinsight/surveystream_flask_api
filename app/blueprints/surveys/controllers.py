@@ -32,8 +32,7 @@ def get_all_surveys():
         user_roles = current_user.get_roles()
         # Assuming user_roles is a list of role names or role objects
         surveys = (
-            Survey.query
-            .join(Role, Survey.survey_uid == Role.survey_uid)
+            Survey.query.join(Role, Survey.survey_uid == Role.survey_uid)
             .filter(
                 Role.role_uid.in_(user_roles),
             )
@@ -55,12 +54,6 @@ def create_survey():
 
     # Import the request body payload validator
     payload_validator = CreateSurveyValidator.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     # Validate the request body payload
     if payload_validator.validate():
@@ -213,12 +206,6 @@ def update_survey(survey_uid):
 
     # Import the request body payload validator
     payload_validator = UpdateSurveyValidator.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     # Validate the request body payload
     if payload_validator.validate():

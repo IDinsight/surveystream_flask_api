@@ -31,10 +31,6 @@ class UpdateParentFormValidator(FlaskForm):
     server_access_allowed = BooleanField()
 
 
-class DeleteParentFormValidator(FlaskForm):
-    pass
-
-
 class LocationQuestionMappingValidator(FlaskForm):
     class Meta:
         csrf = False
@@ -58,13 +54,5 @@ class UpdateSCTOQuestionMappingValidator(FlaskForm):
     locations = FormField(LocationQuestionMappingValidator)
 
 
-class DeleteSCTOQuestionMappingValidator(FlaskForm):
-    pass
-
-
 class IngestSCTOFormDefinitionValidator(FlaskForm):
-    pass
-
-
-class DeleteSCTOFormDefinitionValidator(FlaskForm):
     pass

@@ -91,12 +91,6 @@ def upload_enumerators():
     payload = request.get_json()
     payload_validator = EnumeratorsFileUploadValidator.from_json(payload)
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     # Validate the request body payload
     if not payload_validator.validate():
         return (
@@ -447,12 +441,6 @@ def update_enumerator(enumerator_uid):
     payload = request.get_json()
     payload_validator = UpdateEnumerator.from_json(payload)
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     if payload_validator.validate():
         enumerator = Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first()
         if enumerator is None:
@@ -559,12 +547,6 @@ def delete_enumerator(enumerator_uid):
 #     """
 
 #     payload_validator = CreateEnumeratorRole.from_json(request.get_json())
-
-#     # Add the CSRF token to be checked by the validator
-#     if "X-CSRF-Token" in request.headers:
-#         payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-#     else:
-#         return jsonify(message="X-CSRF-Token required in header"), 403
 
 #     if not payload_validator.validate():
 #         return jsonify({"success": False, "errors": payload_validator.errors}), 422
@@ -776,12 +758,6 @@ def update_enumerator_role(enumerator_uid):
 
     payload_validator = UpdateEnumeratorRole.from_json(request.get_json())
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     if not payload_validator.validate():
         return jsonify({"success": False, "errors": payload_validator.errors}), 422
 
@@ -903,12 +879,6 @@ def update_enumerator_role(enumerator_uid):
 
 #     payload_validator = DeleteEnumeratorRole.from_json(request.get_json())
 
-#     # Add the CSRF token to be checked by the validator
-#     if "X-CSRF-Token" in request.headers:
-#         payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-#     else:
-#         return jsonify(message="X-CSRF-Token required in header"), 403
-
 #     if not payload_validator.validate():
 #         return jsonify({"success": False, "errors": payload_validator.errors}), 422
 
@@ -982,12 +952,6 @@ def update_enumerator_status(enumerator_uid):
     """
 
     payload_validator = UpdateEnumeratorRoleStatus.from_json(request.get_json())
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if not payload_validator.validate():
         return jsonify({"success": False, "errors": payload_validator.errors}), 422
@@ -1156,12 +1120,6 @@ def bulk_update_enumerators_custom_fields():
     payload = request.get_json()
     payload_validator = BulkUpdateEnumeratorsValidator.from_json(payload)
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     if not payload_validator.validate():
         return jsonify({"success": False, "errors": payload_validator.errors}), 422
 
@@ -1291,12 +1249,6 @@ def bulk_update_enumerators_role_locations():
         request.get_json()
     )
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     if not payload_validator.validate():
         return jsonify({"success": False, "errors": payload_validator.errors}), 422
 
@@ -1409,12 +1361,6 @@ def update_enumerator_column_config():
 
     payload = request.get_json()
     payload_validator = UpdateEnumeratorsColumnConfig.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if not payload_validator.validate():
         return jsonify({"success": False, "errors": payload_validator.errors}), 422

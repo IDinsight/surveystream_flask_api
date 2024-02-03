@@ -32,7 +32,7 @@ import binascii
 
 @locations_bp.route("/geo-levels", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required('READ Survey Locations')
+@custom_permissions_required("READ Survey Locations")
 def get_survey_geo_levels():
     """
     Get the geo levels for a given survey
@@ -77,7 +77,7 @@ def get_survey_geo_levels():
 
 @locations_bp.route("/geo-levels", methods=["PUT"])
 @logged_in_active_user_required
-@custom_permissions_required('WRITE Survey Locations')
+@custom_permissions_required("WRITE Survey Locations")
 def update_survey_geo_levels():
     # Validate the query parameter
     query_param_validator = SurveyGeoLevelsQueryParamValidator.from_json(request.args)
@@ -101,12 +101,6 @@ def update_survey_geo_levels():
     # Import the request body payload validator
     payload = request.get_json()
     payload_validator = SurveyGeoLevelsPayloadValidator.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     # Validate the request body payload
     if payload_validator.validate():
@@ -227,7 +221,7 @@ def update_survey_geo_levels():
 
 @locations_bp.route("", methods=["POST"])
 @logged_in_active_user_required
-@custom_permissions_required('WRITE Survey Locations')
+@custom_permissions_required("WRITE Survey Locations")
 def upload_locations():
     """
     Method to validate the uploaded locations file and save it
@@ -251,12 +245,6 @@ def upload_locations():
     survey_uid = request.args.get("survey_uid")
 
     payload_validator = LocationsFileUploadValidator.from_json(request.get_json())
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     # Validate the request body payload
     if not payload_validator.validate():
@@ -458,7 +446,7 @@ def upload_locations():
 
 @locations_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required('READ Survey Locations')
+@custom_permissions_required("READ Survey Locations")
 def get_locations():
     """
     Method to retrieve the locations information from the database

@@ -14,7 +14,7 @@ class Config:
     WTF_CSRF_ENABLED = True
     WTF_CSRF_CHECK_DEFAULT = False
     WTF_CSRF_HEADERS = ["X-CSRF-Token"]
-    WTF_CSRF_METHODS = ["POST", "PUT", "PATCH"]
+    WTF_CSRF_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
 
     # AWS region
     AWS_REGION = os.getenv("AWS_REGION")

@@ -1435,8 +1435,8 @@ class TestEnumerators:
 
         login_user(client, test_user_credentials)
         filepath = (
-                Path(__file__).resolve().parent
-                / f"data/file_uploads/sample_enumerators_small.csv"
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_small.csv"
         )
 
         # Read the enumerators.csv file and convert it to base64
@@ -1714,8 +1714,8 @@ class TestEnumerators:
 
         login_user(client, test_user_credentials)
         filepath = (
-                Path(__file__).resolve().parent
-                / f"data/file_uploads/sample_enumerators_small.csv"
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_small.csv"
         )
 
         # Read the enumerators.csv file and convert it to base64
@@ -3735,14 +3735,16 @@ class TestEnumerators:
         login_user(client, test_user_credentials)
 
     def test_delete_enumerator_for_super_admin_user(
-        self, client, login_test_user, upload_enumerators_csv
+        self, client, login_test_user, upload_enumerators_csv, csrf_token
     ):
         """
         Test that an individual enumerator can be deleted by a super admin user
         """
 
         # Delete the enumerator
-        response = client.delete("/api/enumerators/1")
+        response = client.delete(
+            "/api/enumerators/1", headers={"X-CSRF-Token": csrf_token}
+        )
 
         assert response.status_code == 200
 
@@ -3751,7 +3753,12 @@ class TestEnumerators:
         assert response.status_code == 404
 
     def test_delete_enumerator_for_survey_admin_user(
-        self, client, login_test_user, upload_enumerators_csv, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        test_user_credentials,
+        csrf_token,
     ):
         """
         Test that an individual enumerator can be deleted by a super admin user
@@ -3763,7 +3770,9 @@ class TestEnumerators:
         login_user(client, test_user_credentials)
 
         # Delete the enumerator
-        response = client.delete("/api/enumerators/1")
+        response = client.delete(
+            "/api/enumerators/1", headers={"X-CSRF-Token": csrf_token}
+        )
 
         assert response.status_code == 200
 
@@ -3774,7 +3783,12 @@ class TestEnumerators:
         login_user(client, test_user_credentials)
 
     def test_delete_enumerator_for_non_admin_user_roles(
-        self, client, login_test_user, upload_enumerators_csv, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        test_user_credentials,
+        csrf_token,
     ):
         """
         Test that an individual enumerator can be deleted by a non admin user with roles
@@ -3798,7 +3812,9 @@ class TestEnumerators:
         login_user(client, test_user_credentials)
 
         # Delete the enumerator
-        response = client.delete("/api/enumerators/1")
+        response = client.delete(
+            "/api/enumerators/1", headers={"X-CSRF-Token": csrf_token}
+        )
 
         assert response.status_code == 200
 
@@ -3809,7 +3825,12 @@ class TestEnumerators:
         login_user(client, test_user_credentials)
 
     def test_delete_enumerator_for_non_admin_user_no_roles(
-        self, client, login_test_user, upload_enumerators_csv, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        test_user_credentials,
+        csrf_token,
     ):
         """
         Test that an individual enumerator cannot be deleted by a non admin user without roles
@@ -3826,7 +3847,9 @@ class TestEnumerators:
         login_user(client, test_user_credentials)
 
         # Delete the enumerator
-        response = client.delete("/api/enumerators/1")
+        response = client.delete(
+            "/api/enumerators/1", headers={"X-CSRF-Token": csrf_token}
+        )
 
         assert response.status_code == 403
 
@@ -5104,7 +5127,7 @@ class TestEnumerators:
 
         print(response.json)
 
-        #language is required
+        # language is required
         assert response.status_code == 422
 
     def test_incorrect_enumerator_types(

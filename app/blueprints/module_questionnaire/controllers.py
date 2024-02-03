@@ -27,11 +27,6 @@ def get_survey_module_questionnaire(survey_uid):
 def update_survey_module_questionnaire(survey_uid):
     validator = ModuleQuestionnaireForm.from_json(request.get_json())
 
-    if "X-CSRF-Token" in request.headers:
-        validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     if validator.validate():
         # do upsert
         statement = (

@@ -2538,14 +2538,14 @@ class TestTargets:
         assert response.status_code == 422
 
     def test_delete_target_for_super_admin_user(
-        self, client, login_test_user, upload_targets_csv
+        self, client, login_test_user, upload_targets_csv, csrf_token
     ):
         """
         Test that an individual target can be deleted
         """
 
         # Delete the target
-        response = client.delete("/api/targets/1")
+        response = client.delete("/api/targets/1", headers={"X-CSRF-Token": csrf_token})
 
         assert response.status_code == 200
 
@@ -2575,7 +2575,7 @@ class TestTargets:
         login_user(client, test_user_credentials)
 
         # Delete the target
-        response = client.delete("/api/targets/1")
+        response = client.delete("/api/targets/1", headers={"X-CSRF-Token": csrf_token})
 
         assert response.status_code == 200
         # revert user to super admin
@@ -2617,7 +2617,7 @@ class TestTargets:
         login_user(client, test_user_credentials)
 
         # Delete the target
-        response = client.delete("/api/targets/1")
+        response = client.delete("/api/targets/1", headers={"X-CSRF-Token": csrf_token})
 
         assert response.status_code == 200
         # revert user to super admin
@@ -2651,7 +2651,7 @@ class TestTargets:
         login_user(client, test_user_credentials)
 
         # Delete the target
-        response = client.delete("/api/targets/1")
+        response = client.delete("/api/targets/1", headers={"X-CSRF-Token": csrf_token})
 
         assert response.status_code == 403
 
