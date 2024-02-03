@@ -44,10 +44,6 @@ def login():
     """
 
     form = LoginValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
         user = User.query.filter_by(email=form.email.data).first()
@@ -94,10 +90,6 @@ def change_password():
     Requires X-CSRF-Token in header, obtained from cookie set by /get-csrf
     """
     form = ChangePasswordValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
         if current_user.verify_password(form.cur_password.data):
@@ -124,10 +116,6 @@ def forgot_password():
         return jsonify(message="Already logged in - use /change-password"), 400
 
     form = ForgotPasswordValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
         user = User.query.filter_by(email=form.email.data).first()
@@ -175,10 +163,6 @@ def reset_password():
         return jsonify(message="Already logged in - use /change-password"), 400
 
     form = ResetPasswordValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
         rpt_to_check = ResetPasswordToken.query.get(form.rpt_id.data)
