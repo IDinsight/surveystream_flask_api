@@ -5229,3 +5229,25 @@ class TestEnumerators:
         checkdiff = jsondiff.diff(expected_response, response.json)
 
         assert checkdiff == {}
+
+    def test_get_enumerator_incorrect_query_params(
+        self, client, login_test_user, upload_enumerators_csv
+    ):
+        """
+        Test that enumerators can be retrieved with incorrect query params
+        """
+
+        # Try to get the enumerators with incorrect query params
+        response = client.get("/api/enumerators", query_string={"form_id": 1})
+        print(response.json)
+        assert response.status_code == 400
+
+        # Try to get the enumerators with incorrect query params
+        response = client.get("/api/enumerators", query_string={"form_uid": "Hi"})
+        print(response.json)
+        assert response.status_code == 400
+
+        # Try to get the enumerators with incorrect query params
+        response = client.get("/api/enumerators", query_string={"form_uid": None})
+        print(response.json)
+        assert response.status_code == 400

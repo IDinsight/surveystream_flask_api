@@ -42,7 +42,7 @@ components:
         ### CSRF Token
 
         - To prevent CSRF attacks, a CSRF token must be included in the
-        `X-CSRF-TOKEN` header for all POST, PUT, and PATCH requests
+        `X-CSRF-TOKEN` header for all POST, PUT, PATCH and DELETE requests
 
         - The token can be obtained from the CSRF-TOKEN cookie set by the `GET
         /get-csrf` action
@@ -854,6 +854,12 @@ paths:
       summary: Endpoint to delete a user
       description: delete a single user
       parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
         - in: path
           name: user_uid
           schema:
@@ -1946,6 +1952,12 @@ paths:
       tags:
         - Forms
       parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
         - in: path
           name: form_uid
           schema:
@@ -2192,6 +2204,12 @@ paths:
       tags:
         - Forms
       parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
         - in: path
           name: form_uid
           schema:
@@ -2353,6 +2371,12 @@ paths:
       tags:
         - Forms
       parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
         - in: path
           name: form_uid
           schema:
@@ -4224,12 +4248,18 @@ paths:
         summary: Delete permission
         description: Delete a specific permission using a specific permission unique id
         parameters:
-          - in: path
-            name: permission_uid
-            schema:
-              type: integer
-            required: true
-            description: "Unique id for ther permission"
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: permission_uid
+          schema:
+            type: integer
+          required: true
+          description: "Unique id for ther permission"
         responses:
           "200":
             description: Permission deleted successfully
@@ -4355,6 +4385,12 @@ paths:
       summary: Delete user hierarchy
       description: Delete user hierarchy for a survey and user
       parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
         - in: query
           name: survey_uid
           schema:

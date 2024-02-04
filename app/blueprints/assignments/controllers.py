@@ -2,6 +2,7 @@ from . import assignments_bp
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    validate_query_params,
 )
 from flask import jsonify, request
 from flask_login import current_user
@@ -33,27 +34,14 @@ from app.blueprints.enumerators.queries import (
 
 @assignments_bp.route("", methods=["GET"])
 @logged_in_active_user_required
+@validate_query_params(AssignmentsQueryParamValidator)
 @custom_permissions_required("READ Assignments")
-def view_assignments():
+def view_assignments(validated_query_params):
     """
     Returns assignment information for a form and user
     """
 
-    # Validate the query parameter
-    query_param_validator = AssignmentsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    form_uid = request.args.get("form_uid")
+    form_uid = validated_query_params.form_uid.data
     user_uid = current_user.user_uid
 
     # TODO: Check if the logged in user has permission to access the given form

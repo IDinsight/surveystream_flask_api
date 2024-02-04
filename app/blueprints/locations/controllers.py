@@ -1,5 +1,9 @@
 from flask import jsonify, request
-from app.utils.utils import logged_in_active_user_required, custom_permissions_required
+from app.utils.utils import (
+    logged_in_active_user_required,
+    custom_permissions_required,
+    validate_query_params,
+)
 from flask_login import current_user
 from sqlalchemy import insert, cast, Integer
 from sqlalchemy.sql import case
@@ -32,27 +36,14 @@ import binascii
 
 @locations_bp.route("/geo-levels", methods=["GET"])
 @logged_in_active_user_required
+@validate_query_params(SurveyGeoLevelsQueryParamValidator)
 @custom_permissions_required("READ Survey Locations")
-def get_survey_geo_levels():
+def get_survey_geo_levels(validated_query_params):
     """
     Get the geo levels for a given survey
     """
 
-    # Validate the query parameter
-    query_param_validator = SurveyGeoLevelsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    survey_uid = request.args.get("survey_uid")
+    survey_uid = validated_query_params.survey_uid.data
     user_uid = current_user.user_uid
 
     # Check if the logged in user has permission to access the given survey
@@ -77,23 +68,10 @@ def get_survey_geo_levels():
 
 @locations_bp.route("/geo-levels", methods=["PUT"])
 @logged_in_active_user_required
+@validate_query_params(SurveyGeoLevelsQueryParamValidator)
 @custom_permissions_required("WRITE Survey Locations")
-def update_survey_geo_levels():
-    # Validate the query parameter
-    query_param_validator = SurveyGeoLevelsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    survey_uid = request.args.get("survey_uid")
+def update_survey_geo_levels(validated_query_params):
+    survey_uid = validated_query_params.survey_uid.data
     user_uid = current_user.user_uid
 
     # Check if the logged in user has permission to access the given survey

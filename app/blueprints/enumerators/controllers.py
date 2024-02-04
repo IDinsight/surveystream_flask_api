@@ -1,5 +1,9 @@
 from flask import jsonify, request
-from app.utils.utils import custom_permissions_required, logged_in_active_user_required
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_query_params,
+)
 from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.dialects.postgresql import insert as pg_insert, JSONB
@@ -53,27 +57,14 @@ import binascii
 
 @enumerators_bp.route("", methods=["POST"])
 @logged_in_active_user_required
+@validate_query_params(EnumeratorsQueryParamValidator)
 @custom_permissions_required("WRITE Enumerators")
-def upload_enumerators():
+def upload_enumerators(validated_query_params):
     """
     Method to validate the uploaded enumerators file and save it to the database
     """
 
-    # Validate the query parameter
-    query_param_validator = EnumeratorsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    form_uid = request.args.get("form_uid")
+    form_uid = validated_query_params.form_uid.data
 
     # Get the survey UID from the form UID
     form = ParentForm.query.filter_by(form_uid=form_uid).first()
@@ -228,28 +219,15 @@ def upload_enumerators():
 
 @enumerators_bp.route("", methods=["GET"])
 @logged_in_active_user_required
+@validate_query_params(GetEnumeratorsQueryParamValidator)
 @custom_permissions_required("READ Enumerators")
-def get_enumerators():
+def get_enumerators(validated_query_params):
     """
     Method to retrieve the enumerators information from the database
     """
 
-    # Validate the query parameter
-    query_param_validator = GetEnumeratorsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    form_uid = request.args.get("form_uid")
-    enumerator_type = request.args.get("enumerator_type")
+    form_uid = validated_query_params.form_uid.data
+    enumerator_type = validated_query_params.enumerator_type.data
     user_uid = current_user.user_uid
 
     # Check if the logged in user has permission to access the given form
@@ -1002,26 +980,22 @@ def update_enumerator_status(enumerator_uid):
 
 @enumerators_bp.route("/<int:enumerator_uid>/roles", methods=["GET"])
 @logged_in_active_user_required
+@validate_query_params(GetEnumeratorRolesQueryParamValidator)
 @custom_permissions_required("READ Enumerators")
-def get_enumerator_roles(enumerator_uid):
+def get_enumerator_roles(enumerator_uid, validated_query_params):
     """
     Method to get an enumerator's roles from the database
     """
 
-    payload_validator = GetEnumeratorRolesQueryParamValidator.from_json(request.args)
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    enumerator_type = validated_query_params.enumerator_type.data
+    form_uid = validated_query_params.form_uid.data
 
     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
         return jsonify({"error": "Enumerator not found"}), 404
 
     roles = []
 
-    if (
-        payload_validator.enumerator_type.data == "surveyor"
-        or payload_validator.enumerator_type.data is None
-    ):
+    if enumerator_type == "surveyor" or enumerator_type is None:
         surveyor_result = (
             db.session.query(SurveyorForm, SurveyorLocation)
             .join(
@@ -1032,7 +1006,7 @@ def get_enumerator_roles(enumerator_uid):
             )
             .filter(
                 SurveyorForm.enumerator_uid == enumerator_uid,
-                SurveyorForm.form_uid == payload_validator.form_uid.data,
+                SurveyorForm.form_uid == form_uid,
             )
             .all()
         )
@@ -1056,10 +1030,7 @@ def get_enumerator_roles(enumerator_uid):
         if len(surveyor_nested_result) > 0:
             roles.append(surveyor_nested_result)
 
-    if (
-        payload_validator.enumerator_type.data == "monitor"
-        or payload_validator.enumerator_type.data is None
-    ):
+    if enumerator_type == "monitor" or enumerator_type is None:
         monitor_result = (
             db.session.query(MonitorForm, MonitorLocation)
             .join(
@@ -1070,7 +1041,7 @@ def get_enumerator_roles(enumerator_uid):
             )
             .filter(
                 MonitorForm.enumerator_uid == enumerator_uid,
-                MonitorForm.form_uid == payload_validator.form_uid.data,
+                MonitorForm.form_uid == form_uid,
             )
             .all()
         )
@@ -1099,7 +1070,7 @@ def get_enumerator_roles(enumerator_uid):
             {
                 "success": True,
                 "data": {
-                    "form_uid": payload_validator.form_uid.data,
+                    "form_uid": form_uid,
                     "roles": roles,
                 },
             }
@@ -1419,19 +1390,17 @@ def update_enumerator_column_config():
 
 @enumerators_bp.route("/column-config", methods=["GET"])
 @logged_in_active_user_required
+@validate_query_params(EnumeratorColumnConfigQueryParamValidator)
 @custom_permissions_required("READ Enumerators")
-def get_enumerator_column_config():
+def get_enumerator_column_config(validated_query_params):
     """
     Method to get enumerators' column configuration
     """
 
-    payload_validator = EnumeratorColumnConfigQueryParamValidator(request.args)
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    form_uid = validated_query_params.form_uid.data
 
     column_config = EnumeratorColumnConfig.query.filter(
-        EnumeratorColumnConfig.form_uid == payload_validator.form_uid.data,
+        EnumeratorColumnConfig.form_uid == form_uid,
     ).all()
 
     return jsonify(

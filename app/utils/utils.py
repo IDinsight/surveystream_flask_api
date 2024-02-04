@@ -290,3 +290,34 @@ def custom_permissions_required(permission_name):
         return decorated_function
 
     return decorator
+
+
+def validate_query_params(validator):
+    """
+    Decorator to validate query params
+    """
+
+    def decorator(fn):
+        @wraps(fn)
+        def decorated_function(*args, **kwargs):
+            query_param_validator = validator.from_json(request.args)
+
+            if not query_param_validator.validate():
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "data": None,
+                            "message": query_param_validator.errors,
+                        }
+                    ),
+                    400,
+                )
+
+            kwargs["validated_query_params"] = query_param_validator
+
+            return fn(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator

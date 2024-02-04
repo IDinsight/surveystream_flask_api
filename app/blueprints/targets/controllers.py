@@ -1,5 +1,9 @@
 from flask import jsonify, request
-from app.utils.utils import custom_permissions_required, logged_in_active_user_required
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_query_params,
+)
 from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.dialects.postgresql import JSONB
@@ -954,19 +958,17 @@ def update_target_column_config():
 
 @targets_bp.route("/column-config", methods=["GET"])
 @logged_in_active_user_required
+@validate_query_params(TargetsQueryParamValidator)
 @custom_permissions_required("READ Targets")
-def get_target_column_config():
+def get_target_column_config(validated_query_params):
     """
     Method to get targets' column configuration
     """
 
-    payload_validator = TargetsQueryParamValidator(request.args)
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    form_uid = validated_query_params.form_uid.data
 
     column_config = TargetColumnConfig.query.filter(
-        TargetColumnConfig.form_uid == payload_validator.form_uid.data,
+        TargetColumnConfig.form_uid == form_uid,
     ).all()
 
     return jsonify(
