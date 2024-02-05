@@ -12,7 +12,3 @@ class UploadUserAvatarValidator(FlaskForm):
     image = FileField(
         validators=[FileRequired(), FileAllowed(["jpg", "png"], "Images only!")]
     )
-
-
-class RemoveUserAvatarValidator(FlaskForm):
-    pass

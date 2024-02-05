@@ -2,13 +2,12 @@ from . import profile_bp
 import os
 from app.utils.utils import logged_in_active_user_required, validate_payload
 from werkzeug.utils import secure_filename
-from flask import jsonify, request, current_app
+from flask import jsonify, current_app
 from flask_login import current_user
 from app import db
 from .validators import (
     UpdateUserProfileValidator,
     UploadUserAvatarValidator,
-    RemoveUserAvatarValidator,
 )
 import boto3
 
@@ -81,6 +80,7 @@ def update_profile_avatar():
     Updates the profile avatar image of the logged in user
     """
 
+    # This method uses an HTML form to upload the image so we don't use the validate_payload decorator here (which is for JSON payloads)
     form = UploadUserAvatarValidator()
 
     if not form.validate_on_submit():
@@ -106,10 +106,6 @@ def remove_profile_avatar():
     """
     Removes the profile avatar image of the logged in user
     """
-
-    form = RemoveUserAvatarValidator()
-    if not form.validate():
-        return jsonify(errors=form.errors), 422
 
     boto3.client("s3", current_app.config["AWS_REGION"]).delete_object(
         Bucket=current_app.config["S3_BUCKET_NAME"],
