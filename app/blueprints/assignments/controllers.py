@@ -3,8 +3,9 @@ from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
     validate_query_params,
+    validate_payload,
 )
-from flask import jsonify, request
+from flask import jsonify
 from flask_login import current_user
 from app import db
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -179,27 +180,14 @@ def view_assignments(validated_query_params):
 
 @assignments_bp.route("/enumerators", methods=["GET"])
 @logged_in_active_user_required
+@validate_query_params(AssignmentsQueryParamValidator)
 @custom_permissions_required("READ Assignments")
-def view_assignments_enumerators():
+def view_assignments_enumerators(validated_query_params):
     """
     Returns enumerators eligible to be assigned for a form and user
     """
 
-    # Validate the query parameter
-    query_param_validator = AssignmentsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    form_uid = request.args.get("form_uid")
+    form_uid = validated_query_params.form_uid.data
     user_uid = current_user.user_uid
 
     # TODO: Check if the logged in user has permission to access the given form
@@ -270,15 +258,14 @@ def view_assignments_enumerators():
 
 @assignments_bp.route("", methods=["PUT"])
 @logged_in_active_user_required
+@validate_payload(UpdateSurveyorAssignmentsValidator)
 @custom_permissions_required("WRITE Assignments")
-def update_assignments():
+def update_assignments(validated_payload):
     """
     Updates assignment mapping
     """
-    form = UpdateSurveyorAssignmentsValidator.from_json(request.get_json())
-
-    if not form.validate():
-        return jsonify(message=form.errors), 422
+    form_uid = validated_payload.form_uid.data
+    assignments = validated_payload.assignments.data
 
     # TODO: Check if the user has permission to make assignments for this form
 
@@ -287,7 +274,7 @@ def update_assignments():
     not_found_enumerator_uids = []
     not_found_target_uids = []
     unassignable_target_uids = []
-    for assignment in form.assignments.data:
+    for assignment in assignments:
         if assignment["enumerator_uid"] is not None:
             enumerator_result = (
                 db.session.query(Enumerator, SurveyorForm)
@@ -297,7 +284,7 @@ def update_assignments():
                 )
                 .filter(
                     Enumerator.enumerator_uid == assignment["enumerator_uid"],
-                    SurveyorForm.form_uid == form.form_uid.data,
+                    SurveyorForm.form_uid == form_uid,
                 )
                 .first()
             )
@@ -311,7 +298,7 @@ def update_assignments():
             .outerjoin(TargetStatus, Target.target_uid == TargetStatus.target_uid)
             .filter(
                 Target.target_uid == assignment["target_uid"],
-                Target.form_uid == form.form_uid.data,
+                Target.form_uid == form_uid,
             )
             .first()
         )
@@ -356,7 +343,7 @@ def update_assignments():
             404,
         )
 
-    for assignment in form.assignments.data:
+    for assignment in assignments:
         if assignment["enumerator_uid"] is not None:
             # do upsert
             statement = (

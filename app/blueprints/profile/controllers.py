@@ -1,14 +1,13 @@
 from . import profile_bp
 import os
-from app.utils.utils import logged_in_active_user_required
+from app.utils.utils import logged_in_active_user_required, validate_payload
 from werkzeug.utils import secure_filename
-from flask import jsonify, request, current_app
+from flask import jsonify, current_app
 from flask_login import current_user
 from app import db
 from .validators import (
     UpdateUserProfileValidator,
     UploadUserAvatarValidator,
-    RemoveUserAvatarValidator,
 )
 import boto3
 
@@ -37,20 +36,15 @@ def get_profile():
 
 @profile_bp.route("", methods=["PATCH"])
 @logged_in_active_user_required
-def update_profile():
+@validate_payload(UpdateUserProfileValidator)
+def update_profile(validated_payload):
     """
     Updates the profile of the logged in user
     """
-    form = UpdateUserProfileValidator.from_json(request.get_json())
+    current_user.email = validated_payload.new_email.data
+    db.session.commit()
 
-    if form.validate():
-        current_user.email = form.new_email.data
-        db.session.commit()
-
-        return jsonify(message="Profile updated"), 200
-
-    else:
-        return jsonify(message=form.errors), 422
+    return jsonify(message="Profile updated"), 200
 
 
 @profile_bp.route("/avatar", methods=["GET"])
@@ -85,25 +79,25 @@ def update_profile_avatar():
     """
     Updates the profile avatar image of the logged in user
     """
+
+    # This method uses an HTML form to upload the image so we don't use the validate_payload decorator here (which is for JSON payloads)
     form = UploadUserAvatarValidator()
 
-    if form.validate_on_submit():
-        f = form.image.data
-        user_provided_filename = secure_filename(f.filename)
-        extension = os.path.splitext(user_provided_filename)[1]
-        s3_filekey = "images/avatars/" + str(current_user.user_uid) + extension
+    if not form.validate_on_submit():
+        return jsonify(errors=form.errors), 422
+    f = form.image.data
+    user_provided_filename = secure_filename(f.filename)
+    extension = os.path.splitext(user_provided_filename)[1]
+    s3_filekey = "images/avatars/" + str(current_user.user_uid) + extension
 
-        boto3.client("s3", current_app.config["AWS_REGION"]).upload_fileobj(
-            f, current_app.config["S3_BUCKET_NAME"], s3_filekey
-        )
+    boto3.client("s3", current_app.config["AWS_REGION"]).upload_fileobj(
+        f, current_app.config["S3_BUCKET_NAME"], s3_filekey
+    )
 
-        current_user.avatar_s3_filekey = s3_filekey
-        db.session.commit()
+    current_user.avatar_s3_filekey = s3_filekey
+    db.session.commit()
 
-        return jsonify(message="Success"), 200
-
-    else:
-        return jsonify(message=form.errors), 422
+    return jsonify(message="Success"), 200
 
 
 @profile_bp.route("/avatar/remove", methods=["POST"])
@@ -112,18 +106,13 @@ def remove_profile_avatar():
     """
     Removes the profile avatar image of the logged in user
     """
-    form = RemoveUserAvatarValidator()
 
-    if form.validate():
-        boto3.client("s3", current_app.config["AWS_REGION"]).delete_object(
-            Bucket=current_app.config["S3_BUCKET_NAME"],
-            Key=current_user.avatar_s3_filekey,
-        )
+    boto3.client("s3", current_app.config["AWS_REGION"]).delete_object(
+        Bucket=current_app.config["S3_BUCKET_NAME"],
+        Key=current_user.avatar_s3_filekey,
+    )
 
-        current_user.avatar_s3_filekey = None
-        db.session.commit()
+    current_user.avatar_s3_filekey = None
+    db.session.commit()
 
-        return jsonify(message="Success"), 200
-
-    else:
-        return jsonify(message=form.errors), 422
+    return jsonify(message="Success"), 200

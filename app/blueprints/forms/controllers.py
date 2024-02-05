@@ -7,6 +7,7 @@ from app.utils.utils import (
     logged_in_active_user_required,
     get_aws_secret,
     validate_query_params,
+    validate_payload,
 )
 from . import forms_bp
 from .models import (
@@ -66,90 +67,74 @@ def get_parent_form(form_uid):
 
 @forms_bp.route("", methods=["POST"])
 @logged_in_active_user_required
-def create_parent_form():
+@validate_payload(CreateParentFormValidator)
+def create_parent_form(validated_payload):
     """
     Create a parent form
     """
-    payload = request.get_json()
-
-    # Import the request body payload validator
-    payload_validator = CreateParentFormValidator.from_json(payload)
 
     # Check if the logged in user has access to the survey
 
-    # Validate the request body payload
-    if payload_validator.validate():
-        parent_form = ParentForm(
-            survey_uid=payload_validator.survey_uid.data,
-            scto_form_id=payload_validator.scto_form_id.data,
-            form_name=payload_validator.form_name.data,
-            tz_name=payload_validator.tz_name.data,
-            scto_server_name=payload_validator.scto_server_name.data,
-            encryption_key_shared=payload_validator.encryption_key_shared.data,
-            server_access_role_granted=payload_validator.server_access_role_granted.data,
-            server_access_allowed=payload_validator.server_access_allowed.data,
-        )
-        try:
-            db.session.add(parent_form)
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            return (
-                jsonify(
-                    {
-                        "error": "A form already exists for this survey with the same form_name or scto_form_id"
-                    }
-                ),
-                400,
-            )
+    parent_form = ParentForm(
+        survey_uid=validated_payload.survey_uid.data,
+        scto_form_id=validated_payload.scto_form_id.data,
+        form_name=validated_payload.form_name.data,
+        tz_name=validated_payload.tz_name.data,
+        scto_server_name=validated_payload.scto_server_name.data,
+        encryption_key_shared=validated_payload.encryption_key_shared.data,
+        server_access_role_granted=validated_payload.server_access_role_granted.data,
+        server_access_allowed=validated_payload.server_access_allowed.data,
+    )
+    try:
+        db.session.add(parent_form)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
         return (
             jsonify(
                 {
-                    "success": True,
-                    "data": {"message": "success", "survey": parent_form.to_dict()},
+                    "error": "A form already exists for this survey with the same form_name or scto_form_id"
                 }
             ),
-            201,
+            400,
         )
-
-    else:
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": {"message": "success", "survey": parent_form.to_dict()},
+            }
+        ),
+        201,
+    )
 
 
 @forms_bp.route("/<int:form_uid>", methods=["PUT"])
 @logged_in_active_user_required
-def update_parent_form(form_uid):
+@validate_payload(UpdateParentFormValidator)
+def update_parent_form(form_uid, validated_payload):
     """
     Update a parent form
     """
-    payload = request.get_json()
 
-    # Import the request body payload validator
-    payload_validator = UpdateParentFormValidator.from_json(payload)
+    if ParentForm.query.filter_by(form_uid=form_uid).first() is None:
+        return jsonify({"error": "Parent form not found"}), 404
 
-    # Validate the request body payload
-    if payload_validator.validate():
-        if ParentForm.query.filter_by(form_uid=form_uid).first() is None:
-            return jsonify({"error": "Parent form not found"}), 404
-
-        ParentForm.query.filter_by(form_uid=form_uid).update(
-            {
-                ParentForm.scto_form_id: payload_validator.scto_form_id.data,
-                ParentForm.form_name: payload_validator.form_name.data,
-                ParentForm.tz_name: payload_validator.tz_name.data,
-                ParentForm.scto_server_name: payload_validator.scto_server_name.data,
-                ParentForm.encryption_key_shared: payload_validator.encryption_key_shared.data,
-                ParentForm.server_access_role_granted: payload_validator.server_access_role_granted.data,
-                ParentForm.server_access_allowed: payload_validator.server_access_allowed.data,
-            },
-            synchronize_session="fetch",
-        )
-        db.session.commit()
-        parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
-        return jsonify(parent_form.to_dict()), 200
-
-    else:
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    ParentForm.query.filter_by(form_uid=form_uid).update(
+        {
+            ParentForm.scto_form_id: validated_payload.scto_form_id.data,
+            ParentForm.form_name: validated_payload.form_name.data,
+            ParentForm.tz_name: validated_payload.tz_name.data,
+            ParentForm.scto_server_name: validated_payload.scto_server_name.data,
+            ParentForm.encryption_key_shared: validated_payload.encryption_key_shared.data,
+            ParentForm.server_access_role_granted: validated_payload.server_access_role_granted.data,
+            ParentForm.server_access_allowed: validated_payload.server_access_allowed.data,
+        },
+        synchronize_session="fetch",
+    )
+    db.session.commit()
+    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    return jsonify(parent_form.to_dict()), 200
 
 
 @forms_bp.route("/<int:form_uid>", methods=["DELETE"])
@@ -172,91 +157,77 @@ def delete_form(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["POST"])
 @logged_in_active_user_required
-def create_scto_question_mapping(form_uid):
+@validate_payload(CreateSCTOQuestionMappingValidator)
+def create_scto_question_mapping(form_uid, validated_payload):
     """
     Create a SurveyCTO question mapping for a parent form
     """
 
     payload = request.get_json()
 
-    # Import the request body payload validator
-    payload_validator = CreateSCTOQuestionMappingValidator.from_json(payload)
-
     # Check if the logged in user has access to the survey
 
-    # Validate the request body payload
-    if payload_validator.validate():
-        parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
-        if parent_form is None:
-            return jsonify({"error": "Form not found"}), 404
-        scto_question_mapping = SCTOQuestionMapping(
-            form_uid=form_uid,
-            survey_status=payload_validator.survey_status.data,
-            revisit_section=payload_validator.revisit_section.data,
-            target_id=payload_validator.target_id.data,
-            enumerator_id=payload_validator.enumerator_id.data,
-            locations=payload["locations"] if "locations" in payload else None,
-        )
-        try:
-            db.session.add(scto_question_mapping)
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            return (
-                jsonify({"error": "A question mapping already exists for this form"}),
-                400,
-            )
+    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    if parent_form is None:
+        return jsonify({"error": "Form not found"}), 404
+    scto_question_mapping = SCTOQuestionMapping(
+        form_uid=form_uid,
+        survey_status=validated_payload.survey_status.data,
+        revisit_section=validated_payload.revisit_section.data,
+        target_id=validated_payload.target_id.data,
+        enumerator_id=validated_payload.enumerator_id.data,
+        locations=payload["locations"] if "locations" in payload else None,
+    )
+    try:
+        db.session.add(scto_question_mapping)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
         return (
-            jsonify(
-                {
-                    "success": True,
-                }
-            ),
-            201,
+            jsonify({"error": "A question mapping already exists for this form"}),
+            400,
         )
-
-    else:
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    return (
+        jsonify(
+            {
+                "success": True,
+            }
+        ),
+        201,
+    )
 
 
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["PUT"])
 @logged_in_active_user_required
-def update_scto_question_mapping(form_uid):
+@validate_payload(UpdateSCTOQuestionMappingValidator)
+def update_scto_question_mapping(form_uid, validated_payload):
     """
     Update the SCTO question mapping for a parent form
     """
     payload = request.get_json()
 
-    # Import the request body payload validator
-    payload_validator = UpdateSCTOQuestionMappingValidator.from_json(payload)
+    if SCTOQuestionMapping.query.filter_by(form_uid=form_uid).first() is None:
+        return jsonify({"error": "Question mapping for form not found"}), 404
 
-    # Validate the request body payload
-    if payload_validator.validate():
-        if SCTOQuestionMapping.query.filter_by(form_uid=form_uid).first() is None:
-            return jsonify({"error": "Question mapping for form not found"}), 404
+    try:
+        SCTOQuestionMapping.query.filter_by(form_uid=form_uid).update(
+            {
+                SCTOQuestionMapping.survey_status: validated_payload.survey_status.data,
+                SCTOQuestionMapping.revisit_section: validated_payload.revisit_section.data,
+                SCTOQuestionMapping.target_id: validated_payload.target_id.data,
+                SCTOQuestionMapping.enumerator_id: validated_payload.enumerator_id.data,
+                SCTOQuestionMapping.locations: payload["locations"]
+                if "locations" in payload
+                else None,
+            },
+            synchronize_session="fetch",
+        )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
-        try:
-            SCTOQuestionMapping.query.filter_by(form_uid=form_uid).update(
-                {
-                    SCTOQuestionMapping.survey_status: payload_validator.survey_status.data,
-                    SCTOQuestionMapping.revisit_section: payload_validator.revisit_section.data,
-                    SCTOQuestionMapping.target_id: payload_validator.target_id.data,
-                    SCTOQuestionMapping.enumerator_id: payload_validator.enumerator_id.data,
-                    SCTOQuestionMapping.locations: payload["locations"]
-                    if "locations" in payload
-                    else None,
-                },
-                synchronize_session="fetch",
-            )
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"error": str(e)}), 500
-
-        return jsonify({"success": True}), 200
-
-    else:
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    return jsonify({"success": True}), 200
 
 
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["GET"])

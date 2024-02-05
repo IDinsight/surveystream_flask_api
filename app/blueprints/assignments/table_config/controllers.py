@@ -1,9 +1,13 @@
 from . import table_config_bp
-from app.utils.utils import logged_in_active_user_required
-from flask import jsonify, request
+from app.utils.utils import (
+    logged_in_active_user_required,
+    validate_query_params,
+    validate_payload,
+)
+from flask import jsonify
 from flask_login import current_user
 from .models import TableConfig
-from .validators import UpdateTableConfigValidator
+from .validators import UpdateTableConfigValidator, TableConfigQueryParamValidator
 from .default_config import DefaultTableConfig
 from .utils import validate_table_config
 from .errors import InvalidTableConfigError
@@ -19,7 +23,8 @@ from app import db
 
 @table_config_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-def get_table_config():
+@validate_query_params(TableConfigQueryParamValidator)
+def get_table_config(validated_query_params):
     """
     Returns the table definitions for the assignments module tables
     """
@@ -43,7 +48,7 @@ def get_table_config():
         return is_excluded_supervisor
 
     user_uid = current_user.user_uid
-    form_uid = request.args.get("form_uid")
+    form_uid = validated_query_params.form_uid.data
 
     # Get the survey UID from the form UID
     form = ParentForm.query.filter_by(form_uid=form_uid).first()
@@ -212,20 +217,16 @@ def get_table_config():
 # Create a PUT route to update the table config
 @table_config_bp.route("", methods=["PUT"])
 @logged_in_active_user_required
-def update_table_config():
+@validate_payload(UpdateTableConfigValidator)
+def update_table_config(validated_payload):
     """
     Updates the table definition for the specified assignments module table
     """
 
-    form = UpdateTableConfigValidator.from_json(request.get_json())
-
-    if not form.validate():
-        return jsonify(message=form.errors), 422
-
     user_uid = current_user.user_uid
-    form_uid = form.form_uid.data
-    table_name = form.table_name.data
-    table_config = form.table_config.data
+    form_uid = validated_payload.form_uid.data
+    table_name = validated_payload.table_name.data
+    table_config = validated_payload.table_config.data
 
     # Get the survey UID from the form UID
     form = ParentForm.query.filter_by(form_uid=form_uid).first()
