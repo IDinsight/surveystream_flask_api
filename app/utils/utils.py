@@ -321,3 +321,25 @@ def validate_query_params(validator):
         return decorated_function
 
     return decorator
+
+
+def validate_payload(validator):
+    """
+    Decorator to validate query params
+    """
+
+    def decorator(fn):
+        @wraps(fn)
+        def decorated_function(*args, **kwargs):
+            payload_validator = validator.from_json(request.get_json())
+
+            if not payload_validator.validate():
+                return jsonify(message=payload_validator.errors, success=False), 422
+
+            kwargs["validated_payload"] = payload_validator
+
+            return fn(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator

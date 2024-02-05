@@ -148,7 +148,7 @@ class TestLocations:
         assert checkdiff == {}
 
     def test_insert_geo_levels_for_survey_admin_user(
-        self, client, login_test_user, test_user_credentials, csrf_token,create_survey
+        self, client, login_test_user, test_user_credentials, csrf_token, create_survey
     ):
         """
         Test that survey admins can insert geo levels
@@ -309,7 +309,7 @@ class TestLocations:
         login_user(client, test_user_credentials)
 
     def test_insert_geo_levels_for_non_admin_user_no_roles(
-        self, client, login_test_user, test_user_credentials, csrf_token,create_survey
+        self, client, login_test_user, test_user_credentials, csrf_token, create_survey
     ):
         """
         Test that non-admins without permissions cannot insert geo_levels
@@ -1638,8 +1638,9 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 422
-        assert "file" in response.json["errors"]
-        assert response.json["errors"]["file"] == ["This field is required."]
+        print(response.json)
+        assert "file" in response.json["message"]
+        assert response.json["message"]["file"] == ["This field is required."]
 
     def test_locations_validations_file_errors_invalid_base64_length(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token

@@ -4,6 +4,7 @@ from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
     validate_query_params,
+    validate_payload,
 )
 from flask_login import current_user
 from sqlalchemy import insert, cast, Integer, ARRAY, func, distinct
@@ -17,6 +18,7 @@ from .validators import (
     SurveyRolesPayloadValidator,
     UserHierarchyPayloadValidator,
     UserHierarchyParamValidator,
+    CreatePermissionPayloadValidator,
 )
 from .utils import run_role_hierarchy_validations
 
@@ -71,149 +73,123 @@ def get_survey_roles(validated_query_params):
 
 @roles_bp.route("/roles", methods=["PUT"])
 @logged_in_active_user_required
+@validate_query_params(SurveyRolesQueryParamValidator)
+@validate_payload(SurveyRolesPayloadValidator)
 @custom_permissions_required("ADMIN")
-def update_survey_roles():
-    """Function to update roles per survey"""
-    query_param_validator = SurveyRolesQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
+def update_survey_roles(validated_query_params, validated_payload):
+    """
+    Function to update roles per survey
+    """
 
-    survey_uid = request.args.get("survey_uid")
+    survey_uid = validated_query_params.survey_uid.data
     user_uid = current_user.user_uid
 
     payload = request.get_json()
-    payload_validator = SurveyRolesPayloadValidator.from_json(payload)
+    roles = validated_payload.roles.data
 
-    if payload_validator.validate():
-        if payload.get("validate_hierarchy"):
-            roles = payload_validator.roles.data
+    if payload.get("validate_hierarchy"):
+        if len(roles) > 0:
+            role_hierarchy_errors = run_role_hierarchy_validations(roles)
 
-            if len(roles) > 0:
-                role_hierarchy_errors = run_role_hierarchy_validations(roles)
+            if len(role_hierarchy_errors) > 0:
+                return (
+                    jsonify({"success": False, "errors": role_hierarchy_errors}),
+                    422,
+                )
 
-                if len(role_hierarchy_errors) > 0:
-                    return (
-                        jsonify({"success": False, "errors": role_hierarchy_errors}),
-                        422,
-                    )
+    existing_roles = Role.query.filter_by(survey_uid=survey_uid).all()
 
-        existing_roles = Role.query.filter_by(survey_uid=survey_uid).all()
-
-        for existing_role in existing_roles:
-            if existing_role.role_uid not in [
-                role.get("role_uid") for role in payload_validator.roles.data
-            ]:
-                try:
-                    Role.query.filter(Role.role_uid == existing_role.role_uid).update(
-                        {
-                            Role.user_uid: user_uid,
-                            Role.to_delete: 1,
-                        },
-                        synchronize_session=False,
-                    )
-
-                    Role.query.filter(Role.role_uid == existing_role.role_uid).delete()
-
-                    db.session.commit()
-                except IntegrityError as e:
-                    db.session.rollback()
-                    return jsonify(message=str(e)), 500
-
-        roles_to_update = [
-            role
-            for role in payload_validator.roles.data
-            if role["role_uid"] is not None
-        ]
-        if len(roles_to_update) > 0:
+    for existing_role in existing_roles:
+        if existing_role.role_uid not in [role.get("role_uid") for role in roles]:
             try:
-                Role.query.filter(
-                    Role.role_uid.in_([role["role_uid"] for role in roles_to_update])
-                ).update(
+                Role.query.filter(Role.role_uid == existing_role.role_uid).update(
                     {
-                        Role.role_name: case(
-                            {
-                                role["role_uid"]: role["role_name"]
-                                for role in roles_to_update
-                            },
-                            value=Role.role_uid,
-                        ),
-                        Role.reporting_role_uid: case(
-                            {
-                                role["role_uid"]: cast(
-                                    role["reporting_role_uid"], Integer
-                                )
-                                for role in roles_to_update
-                            },
-                            value=Role.role_uid,
-                        ),
                         Role.user_uid: user_uid,
-                        Role.permissions: case(
-                            {
-                                role["role_uid"]: cast(
-                                    role["permissions"], ARRAY(Integer)
-                                )
-                                for role in roles_to_update
-                            },
-                            value=Role.role_uid,
-                        ),
+                        Role.to_delete: 1,
                     },
                     synchronize_session=False,
                 )
+
+                Role.query.filter(Role.role_uid == existing_role.role_uid).delete()
+
                 db.session.commit()
-
-                for role in roles_to_update:
-                    RolePermissions.query.filter_by(role_uid=role["role_uid"]).delete()
-
-                    for permission_uid in role["permissions"]:
-                        permissions_statement = insert(RolePermissions).values(
-                            role_uid=role["role_uid"],
-                            permission_uid=permission_uid,
-                        )
-                        db.session.execute(permissions_statement)
-                db.session.commit()
-
             except IntegrityError as e:
                 db.session.rollback()
                 return jsonify(message=str(e)), 500
 
-        roles_to_insert = [
-            role for role in payload_validator.roles.data if role["role_uid"] is None
-        ]
-        if len(roles_to_insert) > 0:
-            for role in roles_to_insert:
-                statement = insert(Role).values(
-                    role_name=role["role_name"],
-                    survey_uid=survey_uid,
-                    reporting_role_uid=role["reporting_role_uid"],
-                    user_uid=user_uid,
-                    permissions=role["permissions"],
-                )
+    roles_to_update = [role for role in roles if role["role_uid"] is not None]
+    if len(roles_to_update) > 0:
+        try:
+            Role.query.filter(
+                Role.role_uid.in_([role["role_uid"] for role in roles_to_update])
+            ).update(
+                {
+                    Role.role_name: case(
+                        {
+                            role["role_uid"]: role["role_name"]
+                            for role in roles_to_update
+                        },
+                        value=Role.role_uid,
+                    ),
+                    Role.reporting_role_uid: case(
+                        {
+                            role["role_uid"]: cast(role["reporting_role_uid"], Integer)
+                            for role in roles_to_update
+                        },
+                        value=Role.role_uid,
+                    ),
+                    Role.user_uid: user_uid,
+                    Role.permissions: case(
+                        {
+                            role["role_uid"]: cast(role["permissions"], ARRAY(Integer))
+                            for role in roles_to_update
+                        },
+                        value=Role.role_uid,
+                    ),
+                },
+                synchronize_session=False,
+            )
+            db.session.commit()
 
-                result = db.session.execute(statement)
-                role_uid = result.inserted_primary_key[0]
+            for role in roles_to_update:
+                RolePermissions.query.filter_by(role_uid=role["role_uid"]).delete()
 
                 for permission_uid in role["permissions"]:
                     permissions_statement = insert(RolePermissions).values(
-                        role_uid=role_uid,
+                        role_uid=role["role_uid"],
                         permission_uid=permission_uid,
                     )
                     db.session.execute(permissions_statement)
+            db.session.commit()
 
-                db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            return jsonify(message=str(e)), 500
 
-        return jsonify(message="Success"), 200
+    roles_to_insert = [role for role in roles if role["role_uid"] is None]
+    if len(roles_to_insert) > 0:
+        for role in roles_to_insert:
+            statement = insert(Role).values(
+                role_name=role["role_name"],
+                survey_uid=survey_uid,
+                reporting_role_uid=role["reporting_role_uid"],
+                user_uid=user_uid,
+                permissions=role["permissions"],
+            )
 
-    else:
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+            result = db.session.execute(statement)
+            role_uid = result.inserted_primary_key[0]
+
+            for permission_uid in role["permissions"]:
+                permissions_statement = insert(RolePermissions).values(
+                    role_uid=role_uid,
+                    permission_uid=permission_uid,
+                )
+                db.session.execute(permissions_statement)
+
+            db.session.commit()
+
+    return jsonify(message="Success"), 200
 
 
 ### PERMISSIONS
@@ -237,17 +213,16 @@ def get_permissions():
 # POST create a new permission
 @roles_bp.route("/permissions", methods=["POST"])
 @logged_in_active_user_required
+@validate_payload(CreatePermissionPayloadValidator)
 @custom_permissions_required("ADMIN")
-def create_permission():
+def create_permission(validated_payload):
     """Function to create permissions"""
-    data = request.get_json()
 
-    # Validate input data
-    if "name" not in data or "description" not in data:
-        return jsonify({"error": "Name and description are required fields"}), 400
+    name = validated_payload.name.data
+    description = validated_payload.description.data
 
     try:
-        new_permission = Permission(name=data["name"], description=data["description"])
+        new_permission = Permission(name=name, description=description)
         db.session.add(new_permission)
         db.session.commit()
 
@@ -290,22 +265,20 @@ def get_permission(permission_uid):
 # PUT update a specific permission
 @roles_bp.route("/permissions/<int:permission_uid>", methods=["PUT"])
 @logged_in_active_user_required
+@validate_payload(CreatePermissionPayloadValidator)
 @custom_permissions_required("ADMIN")
-def update_permission(permission_uid):
+def update_permission(permission_uid, validated_payload):
     """Function to update permission"""
     permission = Permission.query.get(permission_uid)
     if not permission:
         return jsonify(message="Permission not found"), 404
 
-    data = request.get_json()
-
-    # Validate input data
-    if "name" not in data or "description" not in data:
-        return jsonify({"error": "Name and description are required fields"}), 400
+    name = validated_payload.name.data
+    description = validated_payload.description.data
 
     try:
-        permission.name = data["name"]
-        permission.description = data["description"]
+        permission.name = name
+        permission.description = description
         db.session.commit()
 
         result = {
@@ -379,26 +352,23 @@ def get_user_hierarchy(validated_query_params):
 
 @roles_bp.route("/user-hierarchy", methods=["PUT"])
 @logged_in_active_user_required
+@validate_payload(UserHierarchyPayloadValidator)
 @custom_permissions_required("ADMIN")
-def update_user_hierarchy():
+def update_user_hierarchy(validated_payload):
     """Function to update user hierarchy"""
 
-    payload = request.get_json()
-    payload_validator = UserHierarchyPayloadValidator.from_json(payload)
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
-
-    survey_uid = payload["survey_uid"]
-    user_uid = payload["user_uid"]
+    survey_uid = validated_payload.survey_uid.data
+    user_uid = validated_payload.user_uid.data
+    role_uid = validated_payload.role_uid.data
+    parent_user_uid = validated_payload.parent_user_uid.data
 
     existing_user_hierarchy = UserHierarchy.query.filter_by(
         survey_uid=survey_uid, user_uid=user_uid
     ).first()
 
     if existing_user_hierarchy:
-        existing_user_hierarchy.role_uid = payload["role_uid"]
-        existing_user_hierarchy.parent_user_uid = payload["parent_user_uid"]
+        existing_user_hierarchy.role_uid = role_uid
+        existing_user_hierarchy.parent_user_uid = parent_user_uid
         db.session.commit()
         return (
             jsonify(
@@ -411,8 +381,8 @@ def update_user_hierarchy():
         new_user_hierarchy = UserHierarchy(
             survey_uid=survey_uid,
             user_uid=user_uid,
-            role_uid=payload["role_uid"],
-            parent_user_uid=payload["parent_user_uid"],
+            role_uid=role_uid,
+            parent_user_uid=parent_user_uid,
         )
 
         db.session.add(new_user_hierarchy)
@@ -428,24 +398,13 @@ def update_user_hierarchy():
 
 @roles_bp.route("/user-hierarchy", methods=["DELETE"])
 @logged_in_active_user_required
+@validate_query_params(UserHierarchyParamValidator)
 @custom_permissions_required("ADMIN")
-def delete_user_hierarchy():
+def delete_user_hierarchy(validated_query_params):
     """Function to delete user hierarchy"""
-    query_param_validator = UserHierarchyParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
 
-    survey_uid = request.args.get("survey_uid")
-    user_uid = request.args.get("user_uid")
+    survey_uid = validated_query_params.survey_uid.data
+    user_uid = validated_query_params.user_uid.data
 
     user_hierarchy = UserHierarchy.query.filter_by(
         survey_uid=survey_uid, user_uid=user_uid

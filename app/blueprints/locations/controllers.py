@@ -3,6 +3,7 @@ from app.utils.utils import (
     logged_in_active_user_required,
     custom_permissions_required,
     validate_query_params,
+    validate_payload,
 )
 from flask_login import current_user
 from sqlalchemy import insert, cast, Integer
@@ -69,8 +70,13 @@ def get_survey_geo_levels(validated_query_params):
 @locations_bp.route("/geo-levels", methods=["PUT"])
 @logged_in_active_user_required
 @validate_query_params(SurveyGeoLevelsQueryParamValidator)
+@validate_payload(SurveyGeoLevelsPayloadValidator)
 @custom_permissions_required("WRITE Survey Locations")
-def update_survey_geo_levels(validated_query_params):
+def update_survey_geo_levels(validated_query_params, validated_payload):
+    """
+    Method to update the geo levels for a given survey
+    """
+
     survey_uid = validated_query_params.survey_uid.data
     user_uid = current_user.user_uid
 
@@ -78,163 +84,126 @@ def update_survey_geo_levels(validated_query_params):
 
     # Import the request body payload validator
     payload = request.get_json()
-    payload_validator = SurveyGeoLevelsPayloadValidator.from_json(payload)
 
-    # Validate the request body payload
-    if payload_validator.validate():
-        # If validate_hierarchy is true, validate the hierarchy of the geo levels
-        if payload.get("validate_hierarchy"):
-            geo_levels = [
-                GeoLevelPayloadItem(item) for item in payload_validator.geo_levels.data
-            ]
-
-            if len(geo_levels) > 0:
-                try:
-                    GeoLevelHierarchy(geo_levels)
-                except InvalidGeoLevelHierarchyError as e:
-                    return (
-                        jsonify(
-                            {"success": False, "errors": e.geo_level_hierarchy_errors}
-                        ),
-                        422,
-                    )
-
-        # Get the geo level data in the db for the given survey
-        existing_geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
-
-        # Find existing geo levels that need to be deleted because they are not in the payload
-        for existing_geo_level in existing_geo_levels:
-            if existing_geo_level.geo_level_uid not in [
-                geo_level.get("geo_level_uid")
-                for geo_level in payload_validator.geo_levels.data
-            ]:
-                try:
-                    # Update the geo level record so its deletion gets captured by the table logging triggers
-                    GeoLevel.query.filter(
-                        GeoLevel.geo_level_uid == existing_geo_level.geo_level_uid
-                    ).update(
-                        {
-                            GeoLevel.user_uid: user_uid,
-                            GeoLevel.to_delete: 1,
-                        },
-                        synchronize_session=False,
-                    )
-
-                    # Delete the geo level record
-                    GeoLevel.query.filter(
-                        GeoLevel.geo_level_uid == existing_geo_level.geo_level_uid
-                    ).delete()
-
-                    db.session.commit()
-                except IntegrityError as e:
-                    db.session.rollback()
-                    return jsonify(message=str(e)), 500
-
-        # Get the geo levels that need to be updated
-        geo_levels_to_update = [
-            geo_level
-            for geo_level in payload_validator.geo_levels.data
-            if geo_level["geo_level_uid"] is not None
+    # If validate_hierarchy is true, validate the hierarchy of the geo levels
+    if payload.get("validate_hierarchy"):
+        geo_levels = [
+            GeoLevelPayloadItem(item) for item in validated_payload.geo_levels.data
         ]
-        if len(geo_levels_to_update) > 0:
+
+        if len(geo_levels) > 0:
             try:
+                GeoLevelHierarchy(geo_levels)
+            except InvalidGeoLevelHierarchyError as e:
+                return (
+                    jsonify({"success": False, "errors": e.geo_level_hierarchy_errors}),
+                    422,
+                )
+
+    # Get the geo level data in the db for the given survey
+    existing_geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+    # Find existing geo levels that need to be deleted because they are not in the payload
+    for existing_geo_level in existing_geo_levels:
+        if existing_geo_level.geo_level_uid not in [
+            geo_level.get("geo_level_uid")
+            for geo_level in validated_payload.geo_levels.data
+        ]:
+            try:
+                # Update the geo level record so its deletion gets captured by the table logging triggers
                 GeoLevel.query.filter(
-                    GeoLevel.geo_level_uid.in_(
-                        [
-                            geo_level["geo_level_uid"]
-                            for geo_level in geo_levels_to_update
-                        ]
-                    )
+                    GeoLevel.geo_level_uid == existing_geo_level.geo_level_uid
                 ).update(
                     {
-                        GeoLevel.geo_level_name: case(
-                            {
-                                geo_level["geo_level_uid"]: geo_level["geo_level_name"]
-                                for geo_level in geo_levels_to_update
-                            },
-                            value=GeoLevel.geo_level_uid,
-                        ),
-                        GeoLevel.parent_geo_level_uid: case(
-                            {
-                                geo_level["geo_level_uid"]: cast(
-                                    geo_level["parent_geo_level_uid"], Integer
-                                )
-                                for geo_level in geo_levels_to_update
-                            },
-                            value=GeoLevel.geo_level_uid,
-                        ),
                         GeoLevel.user_uid: user_uid,
+                        GeoLevel.to_delete: 1,
                     },
                     synchronize_session=False,
                 )
+
+                # Delete the geo level record
+                GeoLevel.query.filter(
+                    GeoLevel.geo_level_uid == existing_geo_level.geo_level_uid
+                ).delete()
 
                 db.session.commit()
             except IntegrityError as e:
                 db.session.rollback()
                 return jsonify(message=str(e)), 500
 
-        # Get the geo levels that need to be created
-        geo_levels_to_insert = [
-            geo_level
-            for geo_level in payload_validator.geo_levels.data
-            if geo_level["geo_level_uid"] is None
-        ]
-        if len(geo_levels_to_insert) > 0:
-            for geo_level in geo_levels_to_insert:
-                statement = insert(GeoLevel).values(
-                    geo_level_name=geo_level["geo_level_name"],
-                    survey_uid=survey_uid,
-                    parent_geo_level_uid=geo_level["parent_geo_level_uid"],
-                    user_uid=user_uid,
+    # Get the geo levels that need to be updated
+    geo_levels_to_update = [
+        geo_level
+        for geo_level in validated_payload.geo_levels.data
+        if geo_level["geo_level_uid"] is not None
+    ]
+    if len(geo_levels_to_update) > 0:
+        try:
+            GeoLevel.query.filter(
+                GeoLevel.geo_level_uid.in_(
+                    [geo_level["geo_level_uid"] for geo_level in geo_levels_to_update]
                 )
+            ).update(
+                {
+                    GeoLevel.geo_level_name: case(
+                        {
+                            geo_level["geo_level_uid"]: geo_level["geo_level_name"]
+                            for geo_level in geo_levels_to_update
+                        },
+                        value=GeoLevel.geo_level_uid,
+                    ),
+                    GeoLevel.parent_geo_level_uid: case(
+                        {
+                            geo_level["geo_level_uid"]: cast(
+                                geo_level["parent_geo_level_uid"], Integer
+                            )
+                            for geo_level in geo_levels_to_update
+                        },
+                        value=GeoLevel.geo_level_uid,
+                    ),
+                    GeoLevel.user_uid: user_uid,
+                },
+                synchronize_session=False,
+            )
 
-                db.session.execute(statement)
-                db.session.commit()
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            return jsonify(message=str(e)), 500
 
-        return jsonify(message="Success"), 200
+    # Get the geo levels that need to be created
+    geo_levels_to_insert = [
+        geo_level
+        for geo_level in validated_payload.geo_levels.data
+        if geo_level["geo_level_uid"] is None
+    ]
+    if len(geo_levels_to_insert) > 0:
+        for geo_level in geo_levels_to_insert:
+            statement = insert(GeoLevel).values(
+                geo_level_name=geo_level["geo_level_name"],
+                survey_uid=survey_uid,
+                parent_geo_level_uid=geo_level["parent_geo_level_uid"],
+                user_uid=user_uid,
+            )
 
-    else:
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+            db.session.execute(statement)
+            db.session.commit()
+
+    return jsonify(message="Success"), 200
 
 
 @locations_bp.route("", methods=["POST"])
 @logged_in_active_user_required
+@validate_query_params(LocationsQueryParamValidator)
+@validate_payload(LocationsFileUploadValidator)
 @custom_permissions_required("WRITE Survey Locations")
-def upload_locations():
+def upload_locations(validated_query_params, validated_payload):
     """
     Method to validate the uploaded locations file and save it
     to the database
     """
 
-    # Validate the query parameter
-    query_param_validator = LocationsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    survey_uid = request.args.get("survey_uid")
-
-    payload_validator = LocationsFileUploadValidator.from_json(request.get_json())
-
-    # Validate the request body payload
-    if not payload_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": payload_validator.errors,
-                }
-            ),
-            422,
-        )
+    survey_uid = validated_query_params.survey_uid.data
 
     # Get the geo levels for the survey
     geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
@@ -258,7 +227,7 @@ def upload_locations():
 
     try:
         column_mapping = LocationColumnMapping(
-            geo_levels, payload_validator.geo_level_mapping.data
+            geo_levels, validated_payload.geo_level_mapping.data
         )
     except InvalidGeoLevelMappingError as e:
         return (
@@ -287,7 +256,7 @@ def upload_locations():
     try:
         locations_upload = LocationsUpload(
             csv_string=base64.b64decode(
-                payload_validator.file.data, validate=True
+                validated_payload.file.data, validate=True
             ).decode("utf-8")
         )
     except binascii.Error:
@@ -424,27 +393,14 @@ def upload_locations():
 
 @locations_bp.route("", methods=["GET"])
 @logged_in_active_user_required
+@validate_query_params(SurveyGeoLevelsQueryParamValidator)
 @custom_permissions_required("READ Survey Locations")
-def get_locations():
+def get_locations(validated_query_params):
     """
     Method to retrieve the locations information from the database
     """
 
-    # Validate the query parameter
-    query_param_validator = SurveyGeoLevelsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    survey_uid = request.args.get("survey_uid")
+    survey_uid = validated_query_params.survey_uid.data
     user_uid = current_user.user_uid
 
     # Check if the logged in user has permission to access the given survey

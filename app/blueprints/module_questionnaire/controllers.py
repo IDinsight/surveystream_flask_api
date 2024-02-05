@@ -1,4 +1,4 @@
-from app.utils.utils import custom_permissions_required
+from app.utils.utils import custom_permissions_required, validate_payload
 from flask import jsonify, request
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from app import db
@@ -23,42 +23,37 @@ def get_survey_module_questionnaire(survey_uid):
 
 
 @module_questionnaire_bp.route("/<int:survey_uid>", methods=["PUT"])
+@validate_payload(ModuleQuestionnaireForm)
 @custom_permissions_required("ADMIN")
-def update_survey_module_questionnaire(survey_uid):
-    validator = ModuleQuestionnaireForm.from_json(request.get_json())
-
-    if validator.validate():
-        # do upsert
-        statement = (
-            pg_insert(ModuleQuestionnaire)
-            .values(
-                survey_uid=validator.survey_uid.data,
-                target_assignment_criteria=validator.target_assignment_criteria.data,
-                supervisor_assignment_criteria=validator.supervisor_assignment_criteria.data,
-                supervisor_hierarchy_exists=validator.supervisor_hierarchy_exists.data,
-                reassignment_required=validator.reassignment_required.data,
-                assignment_process=validator.assignment_process.data,
-                supervisor_surveyor_relation=validator.supervisor_surveyor_relation.data,
-                language_location_mapping=validator.language_location_mapping.data,
-            )
-            .on_conflict_do_update(
-                constraint="pk_module_questionnaire",
-                set_={
-                    "target_assignment_criteria": validator.target_assignment_criteria.data,
-                    "supervisor_assignment_criteria": validator.supervisor_assignment_criteria.data,
-                    "supervisor_hierarchy_exists": validator.supervisor_hierarchy_exists.data,
-                    "reassignment_required": validator.reassignment_required.data,
-                    "assignment_process": validator.assignment_process.data,
-                    "supervisor_surveyor_relation": validator.supervisor_surveyor_relation.data,
-                    "language_location_mapping": validator.language_location_mapping.data,
-                },
-            )
+def update_survey_module_questionnaire(survey_uid, validated_payload):
+    # do upsert
+    statement = (
+        pg_insert(ModuleQuestionnaire)
+        .values(
+            survey_uid=survey_uid,
+            target_assignment_criteria=validated_payload.target_assignment_criteria.data,
+            supervisor_assignment_criteria=validated_payload.supervisor_assignment_criteria.data,
+            supervisor_hierarchy_exists=validated_payload.supervisor_hierarchy_exists.data,
+            reassignment_required=validated_payload.reassignment_required.data,
+            assignment_process=validated_payload.assignment_process.data,
+            supervisor_surveyor_relation=validated_payload.supervisor_surveyor_relation.data,
+            language_location_mapping=validated_payload.language_location_mapping.data,
         )
+        .on_conflict_do_update(
+            constraint="pk_module_questionnaire",
+            set_={
+                "target_assignment_criteria": validated_payload.target_assignment_criteria.data,
+                "supervisor_assignment_criteria": validated_payload.supervisor_assignment_criteria.data,
+                "supervisor_hierarchy_exists": validated_payload.supervisor_hierarchy_exists.data,
+                "reassignment_required": validated_payload.reassignment_required.data,
+                "assignment_process": validated_payload.assignment_process.data,
+                "supervisor_surveyor_relation": validated_payload.supervisor_surveyor_relation.data,
+                "language_location_mapping": validated_payload.language_location_mapping.data,
+            },
+        )
+    )
 
-        db.session.execute(statement)
-        db.session.commit()
+    db.session.execute(statement)
+    db.session.commit()
 
-        return jsonify(message="Success"), 200
-
-    else:
-        return jsonify({"success": False, "errors": validator.errors}), 422
+    return jsonify(message="Success"), 200

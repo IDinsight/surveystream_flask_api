@@ -12,6 +12,7 @@ class SurveyRolesQueryParamValidator(FlaskForm):
 
     survey_uid = IntegerField(validators=[DataRequired()])
 
+
 class SurveyRoleValidator(FlaskForm):
     class Meta:
         csrf = False
@@ -20,7 +21,6 @@ class SurveyRoleValidator(FlaskForm):
     role_name = StringField(validators=[DataRequired()])
     reporting_role_uid = IntegerField()
     permissions = FieldList(IntegerField(validators=[DataRequired()]))
-
 
     def validate_permissions(form, field):
         # Ensure that field.data is a list
@@ -122,3 +122,8 @@ class UserHierarchyPayloadValidator(FlaskForm):
         user = User.query.get(field.data)
         if not user:
             raise ValidationError(f"User with ID {field.data} does not exist.")
+
+
+class CreatePermissionPayloadValidator(FlaskForm):
+    name = StringField(validators=[DataRequired()])
+    description = StringField(validators=[DataRequired()])

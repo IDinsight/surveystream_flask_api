@@ -1,4 +1,4 @@
-from app.utils.utils import custom_permissions_required
+from app.utils.utils import custom_permissions_required, validate_payload
 from flask import jsonify, request
 from .models import db, Module, ModuleStatus
 from .routes import module_selection_bp
@@ -17,15 +17,11 @@ def list_modules():
 
 
 @module_selection_bp.route("/module-status", methods=["POST"])
+@validate_payload(AddModuleStatusValidator)
 @custom_permissions_required("ADMIN")
-def add_module_status():
-    validator = AddModuleStatusValidator.from_json(request.get_json())
-
-    if not validator.validate():
-        return jsonify({"success": False, "errors": validator.errors}), 422
-
-    survey_uid = validator.survey_uid.data
-    modules = validator.modules.data
+def add_module_status(validated_payload):
+    survey_uid = validated_payload.survey_uid.data
+    modules = validated_payload.modules.data
     existing_modules_status = ModuleStatus.query.filter_by(survey_uid=survey_uid).all()
     deselected_modules_status = filter(
         lambda module: str(module.module_id) not in modules, existing_modules_status
@@ -91,17 +87,14 @@ def get_module_status(survey_uid):
 @module_selection_bp.route(
     "/modules/<int:module_id>/status/<int:survey_uid>", methods=["PUT"]
 )
+@validate_payload(UpdateModuleStatusValidator)
 @custom_permissions_required("ADMIN")
-def update_module_status(module_id, survey_uid):
+def update_module_status(module_id, survey_uid, validated_payload):
     module_status = ModuleStatus.query.filter_by(
         module_id=module_id, survey_uid=survey_uid
     ).first()
-    validator = UpdateModuleStatusValidator.from_json(request.get_json())
 
-    if not validator.validate(module_status):
-        return jsonify({"success": False, "message": validator.errors}), 422
-
-    module_status.config_status = validator.config_status.data
+    module_status.config_status = validated_payload.config_status.data
 
     db.session.commit()
 
