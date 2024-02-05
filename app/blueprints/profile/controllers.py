@@ -43,11 +43,6 @@ def update_profile():
     """
     form = UpdateUserProfileValidator.from_json(request.get_json())
 
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     if form.validate():
         current_user.email = form.new_email.data
         db.session.commit()
@@ -92,11 +87,6 @@ def update_profile_avatar():
     """
     form = UploadUserAvatarValidator()
 
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     if form.validate_on_submit():
         f = form.image.data
         user_provided_filename = secure_filename(f.filename)
@@ -123,11 +113,6 @@ def remove_profile_avatar():
     Removes the profile avatar image of the logged in user
     """
     form = RemoveUserAvatarValidator()
-
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
         boto3.client("s3", current_app.config["AWS_REGION"]).delete_object(

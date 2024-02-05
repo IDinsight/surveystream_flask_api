@@ -219,11 +219,6 @@ def update_table_config():
 
     form = UpdateTableConfigValidator.from_json(request.get_json())
 
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     if not form.validate():
         return jsonify(message=form.errors), 422
 

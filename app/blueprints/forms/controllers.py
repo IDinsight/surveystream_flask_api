@@ -17,13 +17,10 @@ from .models import (
 from .validators import (
     CreateParentFormValidator,
     UpdateParentFormValidator,
-    DeleteParentFormValidator,
     GetParentFormQueryParamValidator,
     CreateSCTOQuestionMappingValidator,
     UpdateSCTOQuestionMappingValidator,
-    DeleteSCTOQuestionMappingValidator,
     IngestSCTOFormDefinitionValidator,
-    DeleteSCTOFormDefinitionValidator,
 )
 from sqlalchemy.exc import IntegrityError
 
@@ -89,12 +86,6 @@ def create_parent_form():
 
     # Check if the logged in user has access to the survey
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     # Validate the request body payload
     if payload_validator.validate():
         parent_form = ParentForm(
@@ -145,12 +136,6 @@ def update_parent_form(form_uid):
     # Import the request body payload validator
     payload_validator = UpdateParentFormValidator.from_json(payload)
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     # Validate the request body payload
     if payload_validator.validate():
         if ParentForm.query.filter_by(form_uid=form_uid).first() is None:
@@ -183,27 +168,15 @@ def delete_form(form_uid):
     Delete a parent form
     """
 
-    # Import the request body payload validator
-    csrf_validator = DeleteParentFormValidator.from_json({})
-
     # Check if the logged in user has access to the survey
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        csrf_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
+    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    if parent_form is None:
+        return jsonify({"error": "Form not found"}), 404
 
-    if csrf_validator.validate():
-        parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
-        if parent_form is None:
-            return jsonify({"error": "Form not found"}), 404
-
-        db.session.delete(parent_form)
-        db.session.commit()
-        return "", 204
-    else:
-        return jsonify({"success": False, "errors": csrf_validator.errors}), 422
+    db.session.delete(parent_form)
+    db.session.commit()
+    return "", 204
 
 
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["POST"])
@@ -219,12 +192,6 @@ def create_scto_question_mapping(form_uid):
     payload_validator = CreateSCTOQuestionMappingValidator.from_json(payload)
 
     # Check if the logged in user has access to the survey
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     # Validate the request body payload
     if payload_validator.validate():
@@ -271,12 +238,6 @@ def update_scto_question_mapping(form_uid):
 
     # Import the request body payload validator
     payload_validator = UpdateSCTOQuestionMappingValidator.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     # Validate the request body payload
     if payload_validator.validate():
@@ -332,29 +293,17 @@ def delete_scto_question_mapping(form_uid):
     Delete the question mapping for a parent form
     """
 
-    # Import the request body payload validator
-    csrf_validator = DeleteSCTOQuestionMappingValidator.from_json({})
-
     # Check if the logged in user has access to the survey
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        csrf_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
+    scto_question_mapping = SCTOQuestionMapping.query.filter_by(
+        form_uid=form_uid
+    ).first()
+    if scto_question_mapping is None:
+        return jsonify({"error": "Question mapping not found for form"}), 404
 
-    if csrf_validator.validate():
-        scto_question_mapping = SCTOQuestionMapping.query.filter_by(
-            form_uid=form_uid
-        ).first()
-        if scto_question_mapping is None:
-            return jsonify({"error": "Question mapping not found for form"}), 404
-
-        db.session.delete(scto_question_mapping)
-        db.session.commit()
-        return "", 204
-    else:
-        return jsonify({"success": False, "errors": csrf_validator.errors}), 422
+    db.session.delete(scto_question_mapping)
+    db.session.commit()
+    return "", 204
 
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition/refresh", methods=["POST"])
@@ -365,10 +314,6 @@ def ingest_scto_form_definition(form_uid):
     """
 
     csrf_validator = IngestSCTOFormDefinitionValidator.from_json({})
-    if "X-CSRF-Token" in request.headers:
-        csrf_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if csrf_validator.validate():
         parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
@@ -481,7 +426,9 @@ def ingest_scto_form_definition(form_uid):
 
                 for choice_label in choice_labels:
                     # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
-                    choice_value = choices_dict.get("value", choices_dict.get("name", None))
+                    choice_value = choices_dict.get(
+                        "value", choices_dict.get("name", None)
+                    )
                     language = "default"
                     if len(choice_label.split(":")) > 1:
                         language = choice_label.split(":")[1]
@@ -596,28 +543,19 @@ def delete_scto_form_definition(form_uid):
     Delete the SuveyCTO form definition for a parent form
     """
 
-    csrf_validator = DeleteSCTOFormDefinitionValidator.from_json({})
-    if "X-CSRF-Token" in request.headers:
-        csrf_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
+    scto_questions = SCTOQuestion.query.filter_by(form_uid=form_uid).first()
+    if scto_questions is None:
+        return (
+            jsonify({"error": "SurveyCTO form definition not found for form"}),
+            404,
+        )
 
-    if csrf_validator.validate():
-        scto_questions = SCTOQuestion.query.filter_by(form_uid=form_uid).first()
-        if scto_questions is None:
-            return (
-                jsonify({"error": "SurveyCTO form definition not found for form"}),
-                404,
-            )
+    SCTOFormSettings.query.filter(SCTOFormSettings.form_uid == form_uid).delete()
+    SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).delete()
+    SCTOChoiceList.query.filter(SCTOChoiceList.form_uid == form_uid).delete()
 
-        SCTOFormSettings.query.filter(SCTOFormSettings.form_uid == form_uid).delete()
-        SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).delete()
-        SCTOChoiceList.query.filter(SCTOChoiceList.form_uid == form_uid).delete()
-
-        db.session.commit()
-        return "", 204
-    else:
-        return jsonify({"success": False, "errors": csrf_validator.errors}), 422
+    db.session.commit()
+    return "", 204
 
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition", methods=["GET"])

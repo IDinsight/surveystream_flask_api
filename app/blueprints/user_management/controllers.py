@@ -34,10 +34,6 @@ def register():
     """
 
     form = RegisterValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
         if current_user.email == "registration_user":
@@ -75,10 +71,6 @@ def welcome_user():
     """
 
     form = WelcomeUserValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
         if current_user.email == "registration_user":
@@ -131,10 +123,6 @@ def check_user():
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
     form = CheckUserValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
         user_with_email = User.query.filter_by(email=form.email.data).first()
@@ -168,10 +156,6 @@ def add_user():
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
     form = AddUserValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
         user_with_email = User.query.filter_by(email=form.email.data).first()
@@ -231,12 +215,6 @@ def complete_registration():
     """
     form = CompleteRegistrationValidator.from_json(request.get_json())
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     try:
         if form.validate():
             invite_code = form.invite_code.data
@@ -287,10 +265,6 @@ def edit_user(user_uid):
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
     form = EditUserValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if form.validate():
         user_to_edit = User.query.get(user_uid)

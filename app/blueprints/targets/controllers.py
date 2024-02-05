@@ -79,12 +79,6 @@ def upload_targets():
     payload = request.get_json()
     payload_validator = TargetsFileUploadValidator.from_json(payload)
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     # Validate the request body payload
     if not payload_validator.validate():
         return (
@@ -551,12 +545,6 @@ def update_target(target_uid):
     payload = request.get_json()
     payload_validator = UpdateTarget.from_json(payload)
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
     if payload_validator.validate():
         target = Target.query.filter_by(target_uid=target_uid).first()
         if target is None:
@@ -702,12 +690,6 @@ def bulk_update_targets():
 
     payload = request.get_json()
     payload_validator = BulkUpdateTargetsValidator.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if not payload_validator.validate():
         return jsonify({"success": False, "errors": payload_validator.errors}), 422
@@ -903,12 +885,6 @@ def update_target_column_config():
 
     payload = request.get_json()
     payload_validator = UpdateTargetsColumnConfig.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     if not payload_validator.validate():
         return jsonify({"success": False, "errors": payload_validator.errors}), 422
