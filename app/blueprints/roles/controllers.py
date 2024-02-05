@@ -1,6 +1,10 @@
 from app.blueprints.auth.models import User
 from flask import jsonify, request
-from app.utils.utils import custom_permissions_required, logged_in_active_user_required
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_query_params,
+)
 from flask_login import current_user
 from sqlalchemy import insert, cast, Integer, ARRAY, func, distinct
 from sqlalchemy.sql import case
@@ -19,22 +23,11 @@ from .utils import run_role_hierarchy_validations
 
 @roles_bp.route("/roles", methods=["GET"])
 @logged_in_active_user_required
-def get_survey_roles():
+@validate_query_params(SurveyRolesQueryParamValidator)
+def get_survey_roles(validated_query_params):
     """Function to get roles per survey"""
-    query_param_validator = SurveyRolesQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
 
-    survey_uid = request.args.get("survey_uid")
+    survey_uid = validated_query_params.survey_uid.data
 
     user_subquery = (
         db.session.query(
@@ -359,22 +352,11 @@ def delete_permission(permission_uid):
 
 @roles_bp.route("/user-hierarchy", methods=["GET"])
 @logged_in_active_user_required
-def get_user_hierarchy():
+@validate_query_params(UserHierarchyParamValidator)
+def get_user_hierarchy(validated_query_params):
     """Function to get user hierarchy"""
-    query_param_validator = UserHierarchyParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
 
-    survey_uid = request.args.get("survey_uid")
+    survey_uid = validated_query_params.survey_uid.data
     user_uid = request.args.get("user_uid")
 
     user_hierarchy = UserHierarchy.query.filter_by(

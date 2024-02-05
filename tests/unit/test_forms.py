@@ -127,6 +127,7 @@ class TestForms:
 
         # Get the form without a filter
         response = client.get("/api/forms")
+        print(response.json)
         assert response.status_code == 200
 
         checkdiff = jsondiff.diff(expected_response, response.json)
