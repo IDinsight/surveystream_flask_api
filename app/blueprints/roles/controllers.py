@@ -192,6 +192,7 @@ def update_survey_roles(validated_query_params, validated_payload):
     return jsonify(message="Success"), 200
 
 
+
 ### PERMISSIONS
 # GET all permissions
 @roles_bp.route("/permissions", methods=["GET"])
