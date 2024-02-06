@@ -1,5 +1,9 @@
-from app.utils.utils import custom_permissions_required, validate_payload
-from flask import jsonify, request
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_payload,
+)
+from flask import jsonify
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from app import db
 from .models import ModuleQuestionnaire
@@ -8,6 +12,7 @@ from .validators import ModuleQuestionnaireForm
 
 
 @module_questionnaire_bp.route("/<int:survey_uid>", methods=["GET"])
+@logged_in_active_user_required
 def get_survey_module_questionnaire(survey_uid):
     module_questionnaire = ModuleQuestionnaire.query.filter_by(
         survey_uid=survey_uid
@@ -23,6 +28,7 @@ def get_survey_module_questionnaire(survey_uid):
 
 
 @module_questionnaire_bp.route("/<int:survey_uid>", methods=["PUT"])
+@logged_in_active_user_required
 @validate_payload(ModuleQuestionnaireForm)
 @custom_permissions_required("ADMIN")
 def update_survey_module_questionnaire(survey_uid, validated_payload):

@@ -38,7 +38,7 @@ import binascii
 @locations_bp.route("/geo-levels", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(SurveyGeoLevelsQueryParamValidator)
-@custom_permissions_required("READ Survey Locations")
+@custom_permissions_required("READ Survey Locations", "query", "survey_uid")
 def get_survey_geo_levels(validated_query_params):
     """
     Get the geo levels for a given survey
@@ -71,7 +71,7 @@ def get_survey_geo_levels(validated_query_params):
 @logged_in_active_user_required
 @validate_query_params(SurveyGeoLevelsQueryParamValidator)
 @validate_payload(SurveyGeoLevelsPayloadValidator)
-@custom_permissions_required("WRITE Survey Locations")
+@custom_permissions_required("WRITE Survey Locations", "query", "survey_uid")
 def update_survey_geo_levels(validated_query_params, validated_payload):
     """
     Method to update the geo levels for a given survey
@@ -196,7 +196,7 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
 @logged_in_active_user_required
 @validate_query_params(LocationsQueryParamValidator)
 @validate_payload(LocationsFileUploadValidator)
-@custom_permissions_required("WRITE Survey Locations")
+@custom_permissions_required("WRITE Survey Locations", "query", "survey_uid")
 def upload_locations(validated_query_params, validated_payload):
     """
     Method to validate the uploaded locations file and save it
@@ -394,7 +394,7 @@ def upload_locations(validated_query_params, validated_payload):
 @locations_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(SurveyGeoLevelsQueryParamValidator)
-@custom_permissions_required("READ Survey Locations")
+@custom_permissions_required("READ Survey Locations", "query", "survey_uid")
 def get_locations(validated_query_params):
     """
     Method to retrieve the locations information from the database

@@ -36,7 +36,7 @@ from app.blueprints.enumerators.queries import (
 @assignments_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(AssignmentsQueryParamValidator)
-@custom_permissions_required("READ Assignments")
+@custom_permissions_required("READ Assignments", "query", "form_uid")
 def view_assignments(validated_query_params):
     """
     Returns assignment information for a form and user
@@ -181,7 +181,7 @@ def view_assignments(validated_query_params):
 @assignments_bp.route("/enumerators", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(AssignmentsQueryParamValidator)
-@custom_permissions_required("READ Assignments")
+@custom_permissions_required("READ Assignments", "query", "form_uid")
 def view_assignments_enumerators(validated_query_params):
     """
     Returns enumerators eligible to be assigned for a form and user
@@ -259,7 +259,7 @@ def view_assignments_enumerators(validated_query_params):
 @assignments_bp.route("", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateSurveyorAssignmentsValidator)
-@custom_permissions_required("WRITE Assignments")
+@custom_permissions_required("WRITE Assignments", "body", "form_uid")
 def update_assignments(validated_payload):
     """
     Updates assignment mapping

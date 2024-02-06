@@ -141,59 +141,68 @@ def get_sts_assume_role_response(admin_global_secrets_role_arn):
     return sts_response
 
 
-def get_survey_uid():
+def get_survey_uid(param_location, param_name):
     """
-    Function to get survey_uid before the request;
-    this is required on all non-admin requests but not always provided in request params
-    """
-    # Attempt to get survey_uid from request args
-    survey_uid = request.args.get("survey_uid")
+    Function to get the survey UID based on the provided parameter location and name.
+    Requires:
+        param_location (str): Location from which to retrieve the parameter value ("query", "path", or "body").
+        param_name (str): Name of the parameter to retrieve.
+    Returns: The survey UID if found, otherwise None.
 
-    if not survey_uid:
-        # Attempt using enumerator_uid
-        enumerator_uid = request.args.get("enumerator_uid") or request.view_args.get(
-            "enumerator_uid"
-        )
-        if enumerator_uid:
-            survey_uid = db.engine.execute(
-                text(
+    """
+    if param_location == "query":
+        param_value = request.args.get(param_name)
+    elif param_location == "path":
+        param_value = request.view_args.get(param_name)
+    elif param_location == "body":
+        param_value = request.json.get(param_name)
+    else:
+        raise ValueError("Invalid param location specified")
+
+    print("param_location")
+    print(param_location)
+
+    print("param_name")
+    print(param_name)
+
+    print("param_value")
+    print(param_value)
+
+    if param_value:
+        # survey_uid
+        if param_name == "survey_uid":
+            survey_uid = param_value
+            return survey_uid
+
+        else:
+            query_map = {
+                "enumerator_uid": (
                     "SELECT parent_forms.survey_uid FROM webapp.enumerators "
                     "JOIN webapp.parent_forms ON enumerators.form_uid = parent_forms.form_uid "
-                    "WHERE enumerators.enumerator_uid = :enumerator_uid"
+                    "WHERE enumerators.enumerator_uid = :param_value"
                 ),
-                enumerator_uid=enumerator_uid,
+                "target_uid": (
+                    "SELECT parent_forms.survey_uid FROM webapp.targets "
+                    "JOIN webapp.parent_forms ON targets.form_uid = parent_forms.form_uid "
+                    "WHERE targets.target_uid = :param_value"
+                ),
+                "form_uid": (
+                    "SELECT survey_uid FROM webapp.parent_forms WHERE form_uid = :param_value"
+                ),
+            }
+            query = query_map.get(param_name)
+        if query:
+            survey_uid = db.engine.execute(
+                text(query), param_value=param_value
             ).scalar()
+            return survey_uid
 
-        # Attempt using target_uid
-        if not survey_uid:
-            target_uid = request.args.get("target_uid") or request.view_args.get(
-                "target_uid"
-            )
-            if target_uid:
-                survey_uid = db.engine.execute(
-                    text(
-                        "SELECT parent_forms.survey_uid FROM webapp.targets "
-                        "JOIN webapp.parent_forms ON targets.form_uid = parent_forms.form_uid "
-                        "WHERE targets.target_uid = :target_uid"
-                    ),
-                    target_uid=target_uid,
-                ).scalar()
-
-        # Attempt using form_uid
-        if not survey_uid:
-            form_uid = request.args.get("form_uid") or request.json.get("form_uid")
-            if form_uid:
-                survey_uid = db.engine.execute(
-                    text(
-                        "SELECT survey_uid FROM webapp.parent_forms WHERE form_uid = :form_uid"
-                    ),
-                    form_uid=form_uid,
-                ).scalar()
-
-    return survey_uid if survey_uid is not None else None
+    return None
 
 
-def custom_permissions_required(permission_name):
+def custom_permissions_required(
+    permission_name, survey_uid_param_location=None, survey_uid_param_name=None
+):
     """
     Function to check if current user has the required permissions
     """
@@ -221,7 +230,9 @@ def custom_permissions_required(permission_name):
 
             # Handle non-admin crequests
             # Get survey_uid from request args
-            survey_uid = get_survey_uid()
+            survey_uid = get_survey_uid(
+                survey_uid_param_location, survey_uid_param_name
+            )
 
             if not survey_uid:
                 error_message = (

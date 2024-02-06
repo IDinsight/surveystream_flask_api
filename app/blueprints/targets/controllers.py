@@ -48,7 +48,7 @@ import binascii
 @logged_in_active_user_required
 @validate_query_params(TargetsQueryParamValidator)
 @validate_payload(TargetsFileUploadValidator)
-@custom_permissions_required("WRITE Targets")
+@custom_permissions_required("WRITE Targets", "query", "form_uid")
 def upload_targets(validated_query_params, validated_payload):
     """
     Method to validate the uploaded targets file and save it to the database
@@ -227,7 +227,7 @@ def upload_targets(validated_query_params, validated_payload):
 @targets_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(TargetsQueryParamValidator)
-@custom_permissions_required("READ Targets")
+@custom_permissions_required("READ Targets", "query", "form_uid")
 def get_targets(validated_query_params):
     """
     Method to retrieve the targets information from the database
@@ -386,7 +386,7 @@ def get_targets(validated_query_params):
 
 @targets_bp.route("/<int:target_uid>", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required("READ Targets")
+@custom_permissions_required("READ Targets", "path", "target_uid")
 def get_target(target_uid):
     """
     Method to retrieve a target from the database
@@ -502,7 +502,7 @@ def get_target(target_uid):
 @targets_bp.route("/<int:target_uid>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateTarget)
-@custom_permissions_required("WRITE Targets")
+@custom_permissions_required("WRITE Targets", "path", "target_uid")
 def update_target(target_uid, validated_payload):
     """
     Method to update a target in the database
@@ -620,7 +620,7 @@ def update_target(target_uid, validated_payload):
 
 @targets_bp.route("/<int:target_uid>", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required("WRITE Targets")
+@custom_permissions_required("WRITE Targets", "path", "target_uid")
 def delete_target(target_uid):
     """
     Method to delete a target from the database
@@ -644,7 +644,7 @@ def delete_target(target_uid):
 @targets_bp.route("", methods=["PATCH"])
 @logged_in_active_user_required
 @validate_payload(BulkUpdateTargetsValidator)
-@custom_permissions_required("WRITE Targets")
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
 def bulk_update_targets(validated_payload):
     """
     Method to bulk update targets
@@ -833,7 +833,7 @@ def bulk_update_targets(validated_payload):
 @targets_bp.route("/column-config", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateTargetsColumnConfig)
-@custom_permissions_required("WRITE Targets")
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
 def update_target_column_config(validated_payload):
     """
     Method to update targets' column configuration
@@ -908,7 +908,7 @@ def update_target_column_config(validated_payload):
 @targets_bp.route("/column-config", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(TargetsQueryParamValidator)
-@custom_permissions_required("READ Targets")
+@custom_permissions_required("READ Targets", "query", "form_uid")
 def get_target_column_config(validated_query_params):
     """
     Method to get targets' column configuration

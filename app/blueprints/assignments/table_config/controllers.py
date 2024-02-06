@@ -3,6 +3,7 @@ from app.utils.utils import (
     logged_in_active_user_required,
     validate_query_params,
     validate_payload,
+    custom_permissions_required,
 )
 from flask import jsonify
 from flask_login import current_user
@@ -24,6 +25,7 @@ from app import db
 @table_config_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(TableConfigQueryParamValidator)
+@custom_permissions_required("READ Assignments", "query", "form_uid")
 def get_table_config(validated_query_params):
     """
     Returns the table definitions for the assignments module tables
@@ -218,6 +220,7 @@ def get_table_config(validated_query_params):
 @table_config_bp.route("", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateTableConfigValidator)
+@custom_permissions_required("WRITE Assignments", "body", "form_uid")
 def update_table_config(validated_payload):
     """
     Updates the table definition for the specified assignments module table

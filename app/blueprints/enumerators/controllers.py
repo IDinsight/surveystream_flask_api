@@ -57,7 +57,7 @@ import binascii
 @logged_in_active_user_required
 @validate_query_params(EnumeratorsQueryParamValidator)
 @validate_payload(EnumeratorsFileUploadValidator)
-@custom_permissions_required("WRITE Enumerators")
+@custom_permissions_required("WRITE Enumerators", "query", "form_uid")
 def upload_enumerators(validated_query_params, validated_payload):
     """
     Method to validate the uploaded enumerators file and save it to the database
@@ -204,7 +204,7 @@ def upload_enumerators(validated_query_params, validated_payload):
 @enumerators_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(GetEnumeratorsQueryParamValidator)
-@custom_permissions_required("READ Enumerators")
+@custom_permissions_required("READ Enumerators", "query", "form_uid")
 def get_enumerators(validated_query_params):
     """
     Method to retrieve the enumerators information from the database
@@ -365,7 +365,7 @@ def get_enumerators(validated_query_params):
 
 @enumerators_bp.route("/<int:enumerator_uid>", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required("READ Enumerators")
+@custom_permissions_required("READ Enumerators", "path", "enumerator_uid")
 def get_enumerator(enumerator_uid):
     """
     Method to retrieve an enumerator from the database
@@ -395,7 +395,7 @@ def get_enumerator(enumerator_uid):
 @enumerators_bp.route("/<int:enumerator_uid>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateEnumerator)
-@custom_permissions_required("WRITE Enumerators")
+@custom_permissions_required("WRITE Enumerators", "path", "enumerator_uid")
 def update_enumerator(enumerator_uid, validated_payload):
     """
     Method to update an enumerator in the database
@@ -474,7 +474,7 @@ def update_enumerator(enumerator_uid, validated_payload):
 
 @enumerators_bp.route("/<int:enumerator_uid>", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required("WRITE Enumerators")
+@custom_permissions_required("WRITE Enumerators", "path", "enumerator_uid")
 def delete_enumerator(enumerator_uid):
     """
     Method to delete an enumerator from the database
@@ -708,7 +708,7 @@ def delete_enumerator(enumerator_uid):
 @enumerators_bp.route("/<int:enumerator_uid>/roles/locations", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateEnumeratorRole)
-@custom_permissions_required("WRITE Enumerators")
+@custom_permissions_required("WRITE Enumerators", "path", "enumerator_uid")
 def update_enumerator_role(enumerator_uid, validated_payload):
     """
     Method to update an existing enumerator's role-location in the database
@@ -898,7 +898,7 @@ def update_enumerator_role(enumerator_uid, validated_payload):
 @enumerators_bp.route("/<int:enumerator_uid>/roles/status", methods=["PATCH"])
 @logged_in_active_user_required
 @validate_payload(UpdateEnumeratorRoleStatus)
-@custom_permissions_required("WRITE Enumerators")
+@custom_permissions_required("WRITE Enumerators", "path", "enumerator_uid")
 def update_enumerator_status(enumerator_uid, validated_payload):
     """
     Method to update an enumerator's status
@@ -950,7 +950,7 @@ def update_enumerator_status(enumerator_uid, validated_payload):
 @enumerators_bp.route("/<int:enumerator_uid>/roles", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(GetEnumeratorRolesQueryParamValidator)
-@custom_permissions_required("READ Enumerators")
+@custom_permissions_required("READ Enumerators", "path", "enumerator_uid")
 def get_enumerator_roles(enumerator_uid, validated_query_params):
     """
     Method to get an enumerator's roles from the database
@@ -1052,7 +1052,7 @@ def get_enumerator_roles(enumerator_uid, validated_query_params):
 @enumerators_bp.route("", methods=["PATCH"])
 @logged_in_active_user_required
 @validate_payload(BulkUpdateEnumeratorsValidator)
-@custom_permissions_required("WRITE Enumerators")
+@custom_permissions_required("WRITE Enumerators", "body", "form_uid")
 def bulk_update_enumerators_custom_fields(validated_payload):
     """
     Method to bulk update enumerators
@@ -1174,7 +1174,7 @@ def bulk_update_enumerators_custom_fields(validated_payload):
 @enumerators_bp.route("/roles/locations", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(BulkUpdateEnumeratorsRoleLocationValidator)
-@custom_permissions_required("WRITE Enumerators")
+@custom_permissions_required("WRITE Enumerators", "body", "form_uid")
 def bulk_update_enumerators_role_locations(validated_payload):
     """
     Method to bulk update enumerators' locations for a given role
@@ -1283,7 +1283,7 @@ def bulk_update_enumerators_role_locations(validated_payload):
 @enumerators_bp.route("/column-config", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateEnumeratorsColumnConfig)
-@custom_permissions_required("WRITE Enumerators")
+@custom_permissions_required("WRITE Enumerators", "body", "form_uid")
 def update_enumerator_column_config(validated_payload):
     """
     Method to update enumerators' column configuration
@@ -1347,7 +1347,7 @@ def update_enumerator_column_config(validated_payload):
 @enumerators_bp.route("/column-config", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(EnumeratorColumnConfigQueryParamValidator)
-@custom_permissions_required("READ Enumerators")
+@custom_permissions_required("READ Enumerators", "query", "form_uid")
 def get_enumerator_column_config(validated_query_params):
     """
     Method to get enumerators' column configuration
