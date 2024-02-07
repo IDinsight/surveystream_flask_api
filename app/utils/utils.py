@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 from functools import wraps
 from app import db
 from app.blueprints.auth.models import User
-from sqlalchemy import and_, func, or_, text
+from sqlalchemy import and_, func, or_
 
 import boto3
 import base64
