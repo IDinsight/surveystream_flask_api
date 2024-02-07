@@ -2,6 +2,7 @@ import pytest
 import jsondiff
 import json
 
+
 @pytest.mark.user_management
 class TestUserManagement:
     @pytest.fixture
@@ -59,8 +60,8 @@ class TestUserManagement:
 
     def test_check_user(self, client, login_test_user, csrf_token, sample_user):
         """
-            Test checking user availability by email
-            Expect sample_user to be available , also expect similar data
+        Test checking user availability by email
+        Expect sample_user to be available , also expect similar data
         """
         response = client.post(
             "/api/users/check-email-availability",
@@ -79,14 +80,14 @@ class TestUserManagement:
             "last_name": sample_user.get("last_name"),
             "roles": sample_user.get("roles"),
             "is_super_admin": sample_user.get("is_super_admin"),
-            "is_survey_admin": False,
+            "can_create_survey": False,
             "active": True,
         }
         assert response.json["user"] == expected_data
 
     def test_check_user_nonexistent(self, client, login_test_user, csrf_token):
-        """ Test checking user availability by email
-            Expect user to be unavailable
+        """Test checking user availability by email
+        Expect user to be unavailable
         """
         response = client.post(
             "/api/users/check-email-availability",
@@ -139,32 +140,34 @@ class TestUserManagement:
         assert b"Invalid or expired invite code" in response.data
 
     def test_get_user(self, client, sample_user, login_test_user, csrf_token):
-        """  Test endpoint for fetching user data
-             Expect sample_user data
+        """Test endpoint for fetching user data
+        Expect sample_user data
         """
         response = client.get(
-            f"/api/users/{sample_user.get('user_uid')}", headers={"X-CSRF-Token": csrf_token})
+            f"/api/users/{sample_user.get('user_uid')}",
+            headers={"X-CSRF-Token": csrf_token},
+        )
 
         assert response.status_code == 200
 
         # Check if the returned user data matches the expected data
         expected_data = {
-            "user_id": sample_user.get("user_uid"),
+            "user_uid": sample_user.get("user_uid"),
             "email": "newuser1@example.com",
             "first_name": "John",
             "last_name": "Doe",
             "roles": [],
             "is_super_admin": False,
-            "is_survey_admin": False
+            "can_create_survey": False,
         }
         assert jsondiff.diff(expected_data, json.loads(response.data)) == {}
 
     def test_edit_user(self, client, login_test_user, csrf_token, sample_user):
         """
-           Test endpoint for updating user data
-           Expect sample_user data to be updated to new values
+        Test endpoint for updating user data
+        Expect sample_user data to be updated to new values
         """
-        user_uid = sample_user.get('user_uid')
+        user_uid = sample_user.get("user_uid")
         response = client.put(
             f"/api/users/{user_uid}",
             json={
@@ -191,7 +194,7 @@ class TestUserManagement:
             "last_name": "User",
             "roles": [],
             "is_super_admin": True,
-            "is_survey_admin": False,
+            "can_create_survey": False,
             "active": True,
         }
         assert jsondiff.diff(expected_data, updated_user) == {}
@@ -201,8 +204,7 @@ class TestUserManagement:
         Test endpoint for getting all users
         Expect a user list
         """
-        response = client.get("/api/users",
-                              headers={"X-CSRF-Token": csrf_token})
+        response = client.get("/api/users", headers={"X-CSRF-Token": csrf_token})
 
         assert response.status_code == 200
 
@@ -217,16 +219,17 @@ class TestUserManagement:
         the test uses the delete endpoint to delete a user
         then using the fetch endpoint checks if user is available
         """
-        user_id = sample_user.get('user_uid')
+        user_uid = sample_user.get("user_uid")
 
         response = client.delete(
-            f'/api/users/{user_id}', headers={"X-CSRF-Token": csrf_token})
+            f"/api/users/{user_uid}", headers={"X-CSRF-Token": csrf_token}
+        )
         assert response.status_code == 200
         assert b"User deleted successfully" in response.data
 
         # Check if the deleted user is not returned by the get-user endpoint
         response_get_user = client.get(
-            f"/api/users/{user_id}", headers={"X-CSRF-Token": csrf_token}
+            f"/api/users/{user_uid}", headers={"X-CSRF-Token": csrf_token}
         )
         assert response_get_user.status_code == 404
         assert b"User not found" in response_get_user.data

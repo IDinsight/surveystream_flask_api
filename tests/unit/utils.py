@@ -38,7 +38,9 @@ def update_logged_in_user_roles(
     test_user_credentials,
     roles=None,
     is_super_admin=False,
+    can_create_survey=False,
     is_survey_admin=False,
+    survey_uid=None,
 ):
     """
     Function to update the logged-in user admin status and roles
@@ -55,7 +57,9 @@ def update_logged_in_user_roles(
             "last_name": "User",
             "roles": roles,
             "is_super_admin": is_super_admin,
+            "can_create_survey": can_create_survey,
             "is_survey_admin": is_survey_admin,
+            "survey_uid": survey_uid,
         },
         content_type="application/json",
         headers={"X-CSRF-Token": csrf_token},
@@ -121,7 +125,13 @@ def create_new_survey_role_with_permissions(
     assert response.status_code == 200
 
 
-def create_new_survey_admin_user(client, is_super_admin=False, is_survey_admin=True):
+def create_new_survey_admin_user(
+    client,
+    is_super_admin=False,
+    can_create_survey=True,
+    is_survey_admin=False,
+    survey_uid=None,
+):
     csrf_token = get_csrf_token(client)
     # Add a user for testing with survey_admin roles
     response_add = client.post(
@@ -131,8 +141,10 @@ def create_new_survey_admin_user(client, is_super_admin=False, is_survey_admin=T
             "first_name": "Survey",
             "last_name": "Admin",
             "roles": [],
-            "is_survey_admin": is_survey_admin,
+            "can_create_survey": can_create_survey,
             "is_super_admin": is_super_admin,
+            "is_survey_admin": is_survey_admin,
+            "survey_uid": survey_uid,
         },
         content_type="application/json",
         headers={"X-CSRF-Token": csrf_token},

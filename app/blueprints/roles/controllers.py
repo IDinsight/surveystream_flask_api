@@ -75,7 +75,7 @@ def get_survey_roles(validated_query_params):
 @logged_in_active_user_required
 @validate_query_params(SurveyRolesQueryParamValidator)
 @validate_payload(SurveyRolesPayloadValidator)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "query", "survey_uid")
 def update_survey_roles(validated_query_params, validated_payload):
     """
     Function to update roles per survey
@@ -353,7 +353,7 @@ def get_user_hierarchy(validated_query_params):
 @roles_bp.route("/user-hierarchy", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UserHierarchyPayloadValidator)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "body", "survey_uid")
 def update_user_hierarchy(validated_payload):
     """Function to update user hierarchy"""
 
@@ -399,7 +399,7 @@ def update_user_hierarchy(validated_payload):
 @roles_bp.route("/user-hierarchy", methods=["DELETE"])
 @logged_in_active_user_required
 @validate_query_params(UserHierarchyParamValidator)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "query", "survey_uid")
 def delete_user_hierarchy(validated_query_params):
     """Function to delete user hierarchy"""
 

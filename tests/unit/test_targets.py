@@ -571,7 +571,11 @@ class TestTargets:
         """
 
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -751,7 +755,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -786,6 +794,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -967,7 +976,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -993,6 +1006,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -1053,7 +1067,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -1719,7 +1737,11 @@ class TestTargets:
         Expect Success
         """
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -1843,7 +1865,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -1875,6 +1901,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -2000,7 +2027,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2024,6 +2055,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -2097,7 +2129,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2215,6 +2251,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=True,
+            survey_uid=1,
             is_super_admin=False,
         )
 
@@ -2312,7 +2349,11 @@ class TestTargets:
         assert checkdiff == {}
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2346,6 +2387,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -2443,7 +2485,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2467,6 +2513,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -2503,7 +2550,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2569,6 +2620,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=True,
+            survey_uid=1,
             is_super_admin=False,
         )
 
@@ -2580,7 +2632,11 @@ class TestTargets:
         assert response.status_code == 200
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2610,6 +2666,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -2622,7 +2679,11 @@ class TestTargets:
         assert response.status_code == 200
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2644,6 +2705,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -2664,7 +2726,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2844,6 +2910,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=True,
+            survey_uid=1,
             is_super_admin=False,
         )
 
@@ -2996,7 +3063,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3027,6 +3098,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -3180,7 +3252,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3203,6 +3279,7 @@ class TestTargets:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -3235,7 +3312,11 @@ class TestTargets:
 
         # revert user to super admin
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)

@@ -24,7 +24,7 @@ def list_modules():
 @module_selection_bp.route("/module-status", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(AddModuleStatusValidator)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "body", "survey_uid")
 def add_module_status(validated_payload):
     survey_uid = validated_payload.survey_uid.data
     modules = validated_payload.modules.data
@@ -96,7 +96,7 @@ def get_module_status(survey_uid):
 )
 @logged_in_active_user_required
 @validate_payload(UpdateModuleStatusValidator)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "path", "survey_uid")
 def update_module_status(module_id, survey_uid, validated_payload):
     module_status = ModuleStatus.query.filter_by(
         module_id=module_id, survey_uid=survey_uid

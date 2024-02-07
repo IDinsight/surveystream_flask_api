@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from flask_login import current_user
 from app import db
 from .models import Survey
-from app.blueprints.roles.models import Role
+from app.blueprints.roles.models import Role, SurveyAdmins
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.module_selection.models import ModuleStatus, Module
 from .routes import surveys_bp
@@ -21,27 +21,46 @@ from app.utils.utils import (
 @surveys_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 def get_all_surveys():
-    # /surveys will return all surveys
     if current_user.get_is_super_admin():
-        # return all surveys for the super admin users
+        # Return all surveys for the super admin users
         surveys = Survey.query.all()
-    elif current_user.get_is_survey_admin():
-        # filter surveys created by the user admin
-        surveys = Survey.query.filter_by(
-            created_by_user_uid=current_user.user_uid
-        ).all()
     else:
-        # get user roles and then filter for surveys with those roles
+        survey_admin_check = SurveyAdmins.query.filter_by(
+            user_uid=current_user.user_uid
+        ).all()
         user_roles = current_user.get_roles()
-        # Assuming user_roles is a list of role names or role objects
-        surveys = (
-            Survey.query.join(Role, Survey.survey_uid == Role.survey_uid)
-            .filter(
-                Role.role_uid.in_(user_roles),
+
+        if survey_admin_check and user_roles:
+            # Get surveys where the user is a survey admin or associated with user's roles
+            survey_uids_admin = {entry.survey_uid for entry in survey_admin_check}
+            surveys_with_roles = (
+                Survey.query.join(Role, Survey.survey_uid == Role.survey_uid)
+                .filter(
+                    (Role.role_uid.in_(user_roles))
+                    | (Survey.survey_uid.in_(survey_uids_admin))
+                )
+                .distinct()
+                .all()
             )
-            .distinct()
-            .all()
-        )
+            surveys = surveys_with_roles
+        elif survey_admin_check:
+            # Get surveys where the user is a survey admin
+            survey_uids_admin = {entry.survey_uid for entry in survey_admin_check}
+            surveys = Survey.query.filter(
+                Survey.survey_uid.in_(survey_uids_admin)
+            ).all()
+        elif user_roles:
+            # Get surveys associated with the user's roles
+            surveys_with_roles = (
+                Survey.query.join(Role, Survey.survey_uid == Role.survey_uid)
+                .filter(Role.role_uid.in_(user_roles))
+                .distinct()
+                .all()
+            )
+            surveys = surveys_with_roles
+        else:
+            # No surveys for the user
+            surveys = []
 
     data = [survey.to_dict() for survey in surveys]
     response = {"success": True, "data": data}
@@ -52,7 +71,7 @@ def get_all_surveys():
 @surveys_bp.route("", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(CreateSurveyValidator)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("CREATE SURVEY")
 def create_survey(validated_payload):
     survey = Survey(
         survey_id=validated_payload.survey_id.data,
@@ -70,7 +89,14 @@ def create_survey(validated_payload):
     )
     try:
         db.session.add(survey)
+        db.session.commit()
 
+        # Add the current user as a survey admin for the newly created survey
+        survey_admin_entry = SurveyAdmins(
+            survey_uid=survey.survey_uid, user_uid=current_user.user_uid, active=True
+        )
+        db.session.add(survey_admin_entry)
+        db.session.commit()
         # Also populate Module Status table with default values
         module_list = Module.query.filter_by(optional=False).all()
         for module in module_list:
@@ -195,7 +221,7 @@ def get_survey(survey_uid):
 @surveys_bp.route("/<int:survey_uid>/basic-information", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateSurveyValidator)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "path", "survey_uid")
 def update_survey(survey_uid, validated_payload):
     if Survey.query.filter_by(survey_uid=survey_uid).first() is None:
         return jsonify({"error": "Survey not found"}), 404
@@ -224,7 +250,7 @@ def update_survey(survey_uid, validated_payload):
 
 @surveys_bp.route("/<int:survey_uid>", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "path", "survey_uid")
 def delete_survey(survey_uid):
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     if survey is None:

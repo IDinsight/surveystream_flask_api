@@ -1,6 +1,13 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, validators, BooleanField, FieldList
-from wtforms.validators import DataRequired, Email, Optional
+from wtforms import (
+    StringField,
+    PasswordField,
+    validators,
+    BooleanField,
+    FieldList,
+    IntegerField,
+)
+from wtforms.validators import DataRequired, Email, Optional, ValidationError
 
 
 class RegisterValidator(FlaskForm):
@@ -22,11 +29,20 @@ class AddUserValidator(FlaskForm):
     last_name = StringField("Last Name", validators=[DataRequired()])
     roles = FieldList(StringField("Roles"), default=[], validators=[Optional()])
     is_super_admin = BooleanField(
-        "Is Super Admin", default=False, validators=[Optional()]
+        "is_super_admin", default=False, validators=[Optional()]
     )
+    can_create_survey = BooleanField(
+        "can_create_survey", default=False, validators=[Optional()]
+    )
+
     is_survey_admin = BooleanField(
-        "Is Survey Admin", default=False, validators=[Optional()]
+        "is_survey_admin", default=False, validators=[Optional()]
     )
+    survey_uid = IntegerField("survey_uid", validators=[Optional()], default=None)
+
+    def validate_survey_uid(self, field):
+        if self.is_survey_admin.data and not field.data:
+            raise ValidationError("Survey UID is required if user is a survey admin.")
 
 
 class EditUserValidator(FlaskForm):
@@ -37,9 +53,18 @@ class EditUserValidator(FlaskForm):
     is_super_admin = BooleanField(
         "Is Super Admin", default=False, validators=[Optional()]
     )
-    is_survey_admin = BooleanField(
-        "Is Survey Admin", default=False, validators=[Optional()]
+    can_create_survey = BooleanField(
+        "Can Create Survey", default=False, validators=[Optional()]
     )
+
+    is_survey_admin = BooleanField(
+        "is_survey_admin", default=False, validators=[Optional()]
+    )
+    survey_uid = IntegerField("survey_uid", validators=[Optional()], default=None)
+
+    def validate_survey_uid(self, field):
+        if self.is_survey_admin.data and not field.data:
+            raise ValidationError("Survey UID is required if user is a survey admin.")
 
 
 class CompleteRegistrationValidator(FlaskForm):

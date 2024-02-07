@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from app import db
 from passlib.hash import pbkdf2_sha256
 
+
 class User(db.Model):
     """
     SQLAlchemy data model for User
@@ -27,7 +28,7 @@ class User(db.Model):
     ## rbac fields
     roles = db.Column(db.ARRAY(db.Integer), default=[], nullable=True)
     is_super_admin = db.Column(db.Boolean, default=False, nullable=True)
-    is_survey_admin = db.Column(db.Boolean, default=False, nullable=True)
+    can_create_survey = db.Column(db.Boolean, default=False, nullable=True)
     to_delete = db.Column(db.Boolean(), default=False, nullable=True)
 
     def __init__(
@@ -38,7 +39,7 @@ class User(db.Model):
         active=True,
         password=None,
         is_super_admin=False,
-        is_survey_admin = False,
+        can_create_survey=False,
         roles=None,
         to_delete=False,
     ):
@@ -54,7 +55,7 @@ class User(db.Model):
             self.password_secure = None
         self.roles = roles
         self.is_super_admin = is_super_admin
-        self.is_survey_admin = is_survey_admin
+        self.can_create_survey = can_create_survey
         self.active = active
         self.to_delete = to_delete if to_delete is not None else False
 
@@ -66,7 +67,7 @@ class User(db.Model):
             "last_name": self.last_name,
             "roles": self.roles,
             "is_super_admin": self.is_super_admin,
-            "is_survey_admin": self.is_survey_admin,
+            "can_create_survey": self.can_create_survey,
             "active": self.active,
         }
 
@@ -116,12 +117,10 @@ class User(db.Model):
         return self.roles
 
     def get_is_super_admin(self):
-
         return self.is_super_admin
 
-    def get_is_survey_admin(self):
-
-        return  self.is_survey_admin
+    def get_can_create_survey(self):
+        return self.can_create_survey
 
 
 class ResetPasswordToken(db.Model):

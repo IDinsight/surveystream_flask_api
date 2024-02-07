@@ -154,7 +154,11 @@ class TestSurveys:
         """
         # Update the logged-in user to be a non-admin
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -183,7 +187,7 @@ class TestSurveys:
 
         expected_response = {
             "success": False,
-            "error": f"User does not have the required permission: ADMIN",
+            "error": f"User does not have the required permission: CREATE SURVEY",
         }
         checkdiff = jsondiff.diff(expected_response, response.json)
 
@@ -203,7 +207,11 @@ class TestSurveys:
         """
         # set user permissions
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -274,7 +282,11 @@ class TestSurveys:
         - assign logged-in user with survey_admin status
         """
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -334,6 +346,7 @@ class TestSurveys:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -370,6 +383,7 @@ class TestSurveys:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -491,7 +505,11 @@ class TestSurveys:
 
         # Update the logged-in user to be a non-admin
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -529,7 +547,7 @@ class TestSurveys:
         assert not checkdiff
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True
+            client, test_user_credentials, is_survey_admin=True, survey_uid=1
         )
 
         login_user(client, test_user_credentials)
@@ -561,7 +579,11 @@ class TestSurveys:
         """
         # Update the logged-in user to be a non-admin
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -573,7 +595,7 @@ class TestSurveys:
         assert response.status_code == 403
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True
+            client, test_user_credentials, is_survey_admin=True, survey_uid=1
         )
 
         login_user(client, test_user_credentials)

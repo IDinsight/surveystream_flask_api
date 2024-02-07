@@ -8,7 +8,7 @@ from sqlalchemy import func
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
-from app.blueprints.roles.models import Role
+from app.blueprints.roles.models import Role, SurveyAdmins
 from .models import Invite
 from .utils import generate_invite_code, send_invite_email
 from .validators import (
@@ -148,7 +148,7 @@ def add_user(validated_payload):
     - last_name
     - role
     - is_super_admin
-    - is_survey_admin
+    - can_create_survey
 
     This will not require a password
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
@@ -164,11 +164,21 @@ def add_user(validated_payload):
             password=None,
             roles=validated_payload.roles.data,
             is_super_admin=validated_payload.is_super_admin.data,
-            is_survey_admin=validated_payload.is_survey_admin.data,
+            can_create_survey=validated_payload.can_create_survey.data,
         )
 
         db.session.add(new_user)
         db.session.commit()
+
+        # Check if user is supposed to be a survey admin and add them to the list
+        if validated_payload.is_survey_admin.data:
+            survey_admin_entry = SurveyAdmins(
+                survey_uid=validated_payload.survey_uid.data,
+                user_uid=new_user.user_uid,
+                active=True,
+            )
+            db.session.add(survey_admin_entry)
+            db.session.commit()
 
         invite_code = generate_invite_code()
 
@@ -262,9 +272,36 @@ def edit_user(user_uid, validated_payload):
         user_to_edit.last_name = validated_payload.last_name.data
         user_to_edit.roles = validated_payload.roles.data
         user_to_edit.is_super_admin = validated_payload.is_super_admin.data
-        user_to_edit.is_survey_admin = validated_payload.is_survey_admin.data
+        user_to_edit.can_create_survey = validated_payload.can_create_survey.data
         user_to_edit.to_delete = False
         user_to_edit.active = True
+
+        # Add or remove survey admin privileges based on is_survey_admin field
+        if validated_payload.is_survey_admin.data:
+            survey_uid = validated_payload.survey_uid.data
+
+            # Only proceed if survey_uid is provided
+            if survey_uid:
+                survey_admin_entry = SurveyAdmins.query.filter_by(
+                    user_uid=user_uid, survey_uid=survey_uid
+                ).first()
+                if not survey_admin_entry:
+                    survey_admin_entry = SurveyAdmins(
+                        survey_uid=survey_uid, user_uid=user_uid, active=True
+                    )
+                    db.session.add(survey_admin_entry)
+        else:
+            survey_uid = validated_payload.survey_uid.data
+
+            # Only proceed if survey_uid is provided
+            if survey_uid:
+                # Remove survey admin entry
+                survey_admin_entry = SurveyAdmins.query.filter_by(
+                    user_uid=user_uid, survey_uid=survey_uid
+                ).first()
+                if survey_admin_entry:
+                    db.session.delete(survey_admin_entry)
+                    db.session.commit()  # Commit the deletion
 
         db.session.commit()
         user_data = user_to_edit.to_dict()
@@ -285,13 +322,13 @@ def get_user(user_uid):
 
     if user:
         user_data = {
-            "user_id": user.user_uid,
+            "user_uid": user.user_uid,
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "roles": user.roles,
             "is_super_admin": user.is_super_admin,
-            "is_survey_admin": user.is_survey_admin,
+            "can_create_survey": user.can_create_survey,
         }
         return jsonify(user_data), 200
     else:
@@ -357,7 +394,7 @@ def get_all_users():
 
     for user, invite_is_active, user_role_names, user_survey_names in users:
         user_data = {
-            "user_id": user.user_uid,
+            "user_uid": user.user_uid,
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
@@ -365,7 +402,7 @@ def get_all_users():
             "user_survey_names": user_survey_names,
             "user_role_names": user_role_names,
             "is_super_admin": user.is_super_admin,
-            "is_survey_admin": user.is_survey_admin,
+            "can_create_survey": user.can_create_survey,
             "status": "Active"
             if user.active
             else ("Invite pending" if invite_is_active else "Deactivated"),

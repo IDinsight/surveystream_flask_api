@@ -1430,7 +1430,11 @@ class TestEnumerators:
         Expect success since the user created the survey
         """
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -1679,7 +1683,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -1708,6 +1716,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -1958,7 +1967,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -1980,6 +1993,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -2033,7 +2047,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2743,7 +2761,11 @@ class TestEnumerators:
         Test uploading the enumerators column config for survey_admin users
         """
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -2883,7 +2905,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2906,6 +2932,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -3047,7 +3074,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3063,6 +3094,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -3144,7 +3176,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3233,7 +3269,11 @@ class TestEnumerators:
         Test that an individual enumerator can be updated by a survey_admin user
         """
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -3304,7 +3344,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3332,6 +3376,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -3404,7 +3449,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3425,6 +3474,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -3461,7 +3511,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3555,7 +3609,11 @@ class TestEnumerators:
         """
 
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -3602,7 +3660,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3630,6 +3692,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -3678,7 +3741,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3699,6 +3766,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -3729,7 +3797,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3764,7 +3836,11 @@ class TestEnumerators:
         Test that an individual enumerator can be deleted by a super admin user
         """
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -3777,7 +3853,11 @@ class TestEnumerators:
         assert response.status_code == 200
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3805,6 +3885,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -3819,7 +3900,11 @@ class TestEnumerators:
         assert response.status_code == 200
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3840,6 +3925,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -3861,7 +3947,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -3929,6 +4019,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=True,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -3977,7 +4068,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -4005,6 +4100,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -4053,7 +4149,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -4074,6 +4174,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -4104,7 +4205,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -4557,7 +4662,11 @@ class TestEnumerators:
         Test that enumerators can be bulk updated by a survey_admin user
         """
         updated_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=True, is_super_admin=False
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
         )
 
         login_user(client, test_user_credentials)
@@ -4777,7 +4886,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -4806,6 +4919,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[1],
         )
@@ -5027,7 +5141,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -5050,6 +5168,7 @@ class TestEnumerators:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
             roles=[],
         )
@@ -5080,7 +5199,11 @@ class TestEnumerators:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)

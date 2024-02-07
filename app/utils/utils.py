@@ -159,15 +159,6 @@ def get_survey_uid(param_location, param_name):
     else:
         raise ValueError("Invalid param location specified")
 
-    print("param_location")
-    print(param_location)
-
-    print("param_name")
-    print(param_name)
-
-    print("param_value")
-    print(param_value)
-
     if param_value:
         # survey_uid
         if param_name == "survey_uid":
@@ -206,8 +197,7 @@ def custom_permissions_required(
     """
     Function to check if current user has the required permissions
     """
-    from app.blueprints.roles.models import Permission, Role
-    from app.blueprints.surveys.models import Survey
+    from app.blueprints.roles.models import Permission, Role, SurveyAdmins
 
     def decorator(fn):
         @wraps(fn)
@@ -216,10 +206,8 @@ def custom_permissions_required(
             if current_user.get_is_super_admin():
                 return fn(*args, **kwargs)
 
-            # Handle other admin requests
-            if permission_name == "ADMIN":
-                # use this to validate actions like creating survey
-                if current_user.get_is_survey_admin():
+            if permission_name == "CREATE SURVEY":
+                if current_user.get_can_create_survey():
                     return fn(*args, **kwargs)
                 else:
                     error_message = (
@@ -241,18 +229,23 @@ def custom_permissions_required(
                 response = {"success": False, "error": error_message}
                 return jsonify(response), 403
 
-            # Handle survey admins on non-admin requests
-            if current_user.get_is_survey_admin():
-                survey = Survey.query.filter_by(survey_uid=survey_uid).first()
-                if survey and survey.created_by_user_uid == current_user.user_uid:
-                    return fn(*args, **kwargs)
-                else:
-                    error_message = (
-                        "Permission denied, survey not created by the current user"
-                    )
-                    response = {"success": False, "error": error_message}
-                    return jsonify(response), 403
+            # check if current user is a survey_admin for the survey
+            survey_admin = SurveyAdmins.query.filter_by(
+                user_uid=current_user.user_uid, survey_uid=survey_uid
+            ).first()
 
+            if survey_admin:
+                # If the user is a survey admin for the survey allow all permissions
+                return fn(*args, **kwargs)
+            elif permission_name == "ADMIN":
+                # deny access if the permission_name was ADMIN
+                error_message = (
+                    f"User does not have the required permission: {permission_name}"
+                )
+                response = {"success": False, "error": error_message}
+                return jsonify(response), 403
+
+            # continue to check the roles
             # Get all permissions associated with the user's roles
             user_roles = current_user.get_roles()
 

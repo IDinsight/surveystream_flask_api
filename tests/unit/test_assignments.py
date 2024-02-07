@@ -3,8 +3,12 @@ import pytest
 import base64
 import pandas as pd
 from pathlib import Path
-from utils import set_target_assignable_status, update_logged_in_user_roles, login_user, \
-    create_new_survey_role_with_permissions
+from utils import (
+    set_target_assignable_status,
+    update_logged_in_user_roles,
+    login_user,
+    create_new_survey_role_with_permissions,
+)
 from app import db
 
 
@@ -1115,7 +1119,12 @@ class TestAssignments:
         assert checkdiff == {}
 
     def test_assignments_no_targets_for_survey_admin_user(
-        self, client, login_test_user, upload_enumerators_csv, csrf_token,test_user_credentials
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        csrf_token,
+        test_user_credentials,
     ):
         """
         Using a survey_admin
@@ -1126,6 +1135,7 @@ class TestAssignments:
             client,
             test_user_credentials,
             is_survey_admin=True,
+            survey_uid=1,
             is_super_admin=False,
         )
 
@@ -1145,13 +1155,22 @@ class TestAssignments:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
 
     def test_assignments_no_targets_for_non_admin_user_roles(
-        self, client, login_test_user, upload_enumerators_csv, csrf_token,test_user_credentials
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        csrf_token,
+        test_user_credentials,
     ):
         """
         Using a non_admin user with roles
@@ -1170,8 +1189,9 @@ class TestAssignments:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
-            roles=[1]
+            roles=[1],
         )
 
         login_user(client, test_user_credentials)
@@ -1190,13 +1210,22 @@ class TestAssignments:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
 
     def test_assignments_no_targets_for_non_admin_user_no_roles(
-            self, client, login_test_user, upload_enumerators_csv, csrf_token, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        csrf_token,
+        test_user_credentials,
     ):
         """
         Using a non_admin user without roles
@@ -1207,8 +1236,9 @@ class TestAssignments:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
-            roles=[]
+            roles=[],
         )
 
         login_user(client, test_user_credentials)
@@ -1226,10 +1256,15 @@ class TestAssignments:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
+
     def test_assignments_empty_assignment_table(
         self,
         client,
@@ -1600,7 +1635,7 @@ class TestAssignments:
         upload_enumerators_csv,
         upload_targets_csv,
         csrf_token,
-            test_user_credentials
+        test_user_credentials,
     ):
         """
         Test create an assignment between a
@@ -1610,6 +1645,7 @@ class TestAssignments:
             client,
             test_user_credentials,
             is_survey_admin=True,
+            survey_uid=1,
             is_super_admin=False,
         )
 
@@ -1801,7 +1837,11 @@ class TestAssignments:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -1813,7 +1853,7 @@ class TestAssignments:
         upload_enumerators_csv,
         upload_targets_csv,
         csrf_token,
-            test_user_credentials
+        test_user_credentials,
     ):
         """
         Test create an assignment between a
@@ -1832,10 +1872,10 @@ class TestAssignments:
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
-            roles=[1]
+            roles=[1],
         )
-
 
         login_user(client, test_user_credentials)
 
@@ -2025,7 +2065,11 @@ class TestAssignments:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)
@@ -2037,7 +2081,7 @@ class TestAssignments:
         upload_enumerators_csv,
         upload_targets_csv,
         csrf_token,
-            test_user_credentials
+        test_user_credentials,
     ):
         """
         Test create an assignment between a
@@ -2045,13 +2089,13 @@ class TestAssignments:
         Expect a 403 Fail
         """
 
-
         updated_user = update_logged_in_user_roles(
             client,
             test_user_credentials,
             is_survey_admin=False,
+            survey_uid=1,
             is_super_admin=False,
-            roles=[]
+            roles=[],
         )
         login_user(client, test_user_credentials)
 
@@ -2079,7 +2123,11 @@ class TestAssignments:
         assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
-            client, test_user_credentials, is_survey_admin=False, is_super_admin=True
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
         )
 
         login_user(client, test_user_credentials)

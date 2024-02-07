@@ -30,7 +30,7 @@ def get_survey_module_questionnaire(survey_uid):
 @module_questionnaire_bp.route("/<int:survey_uid>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(ModuleQuestionnaireForm)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "path", "survey_uid")
 def update_survey_module_questionnaire(survey_uid, validated_payload):
     # do upsert
     statement = (
