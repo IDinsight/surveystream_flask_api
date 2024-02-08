@@ -72,11 +72,10 @@ class User(db.Model):
         }
 
     def verify_password(self, password):
-        # Handle the case where password_secure is None
         if self.password_secure == None:
-            raise ValueError(
-                "Your account does not have a secure password set up. Please contact support or reset your password to continue."
-            )
+            # Handle the case where password_secure is None
+            # This will result in the user getting a 401 unauthorized
+            return False
         return pbkdf2_sha256.verify(password, self.password_secure)
 
     def change_password(self, new_password):
