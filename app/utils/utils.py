@@ -155,9 +155,9 @@ def get_survey_uids(param_location, param_name):
     from app.blueprints.targets.models import Target
     from app.blueprints.enumerators.models import SurveyorForm, MonitorForm
 
-    if param_name not in ["survey_uid", "form_uid", "target_uid"]:
+    if param_name not in ["survey_uid", "form_uid", "target_uid", "enumerator_uid"]:
         raise ValueError(
-            "'param_name' parameter must be one of survey_uid, form_uid, target_uid"
+            "'param_name' parameter must be one of survey_uid, form_uid, target_uid, enumerator_uid"
         )
     if param_location not in ["query", "path", "body"]:
         raise ValueError("'param_location' parameter must be one of query, path, body")
@@ -235,7 +235,7 @@ def custom_permissions_required(
     permission_name, survey_uid_param_location=None, survey_uid_param_name=None
 ):
     """
-    Function to check if current user has the required permissions
+    Function to check if the current user has the required permissions
     """
     from app.blueprints.roles.models import Permission, Role, SurveyAdmins
 
