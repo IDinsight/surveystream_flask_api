@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 from functools import wraps
 from app import db
 from app.blueprints.auth.models import User
-from sqlalchemy import and_, func, or_, text
+from sqlalchemy import and_, func, or_
 
 import boto3
 import base64
@@ -141,61 +141,101 @@ def get_sts_assume_role_response(admin_global_secrets_role_arn):
     return sts_response
 
 
-def get_survey_uid(param_location, param_name):
+def get_survey_uids(param_location, param_name):
     """
-    Function to get the survey UID based on the provided parameter location and name.
+    Function to get the survey UID's based on the provided parameter location and name.
     Requires:
         param_location (str): Location from which to retrieve the parameter value ("query", "path", or "body").
         param_name (str): Name of the parameter to retrieve.
-    Returns: The survey UID if found, otherwise None.
-
+    Returns: A list of applicable survey UID's.
     """
+
+    from app.blueprints.surveys.models import Survey
+    from app.blueprints.forms.models import ParentForm
+    from app.blueprints.targets.models import Target
+    from app.blueprints.enumerators.models import SurveyorForm, MonitorForm
+
+    if param_name not in ["survey_uid", "form_uid", "target_uid", "enumerator_uid"]:
+        raise ValueError(
+            "'param_name' parameter must be one of survey_uid, form_uid, target_uid, enumerator_uid"
+        )
+    if param_location not in ["query", "path", "body"]:
+        raise ValueError("'param_location' parameter must be one of query, path, body")
+
     if param_location == "query":
         param_value = request.args.get(param_name)
     elif param_location == "path":
         param_value = request.view_args.get(param_name)
     elif param_location == "body":
-        param_value = request.json.get(param_name)
-    else:
-        raise ValueError("Invalid param location specified")
+        param_value = request.get_json().get(param_name)
 
-    if param_value:
-        # survey_uid
-        if param_name == "survey_uid":
-            survey_uid = param_value
-            return survey_uid
+    if param_value is None:
+        raise ValueError(
+            f"No value for '{param_name}' was found in request {param_location}"
+        )
 
+    survey_uids = []
+
+    if param_name == "survey_uid":
+        response = Survey.query.filter(Survey.survey_uid == param_value).first()
+        if response is not None:
+            survey_uids = [response.survey_uid]
         else:
-            query_map = {
-                "enumerator_uid": (
-                    "SELECT parent_forms.survey_uid FROM webapp.enumerators "
-                    "JOIN webapp.parent_forms ON enumerators.form_uid = parent_forms.form_uid "
-                    "WHERE enumerators.enumerator_uid = :param_value"
-                ),
-                "target_uid": (
-                    "SELECT parent_forms.survey_uid FROM webapp.targets "
-                    "JOIN webapp.parent_forms ON targets.form_uid = parent_forms.form_uid "
-                    "WHERE targets.target_uid = :param_value"
-                ),
-                "form_uid": (
-                    "SELECT survey_uid FROM webapp.parent_forms WHERE form_uid = :param_value"
-                ),
-            }
-            query = query_map.get(param_name)
-        if query:
-            survey_uid = db.engine.execute(
-                text(query), param_value=param_value
-            ).scalar()
-            return survey_uid
+            raise SurveyNotFoundError(
+                f"survey_uid {param_value} not found in the database"
+            )
 
-    return None
+    elif param_name == "form_uid":
+        response = ParentForm.query.filter(ParentForm.form_uid == param_value).first()
+        if response is not None:
+            survey_uids = [response.survey_uid]
+        else:
+            raise SurveyNotFoundError(
+                f"Could not find a survey for form_uid {param_value} in the database"
+            )
+
+    elif param_name == "target_uid":
+        response = (
+            db.session.query(ParentForm)
+            .join(Target, ParentForm.form_uid == Target.form_uid)
+            .filter(Target.target_uid == param_value)
+            .first()
+        )
+        if response is not None:
+            survey_uids = [response.survey_uid]
+        else:
+            raise SurveyNotFoundError(
+                f"Could not find a survey for target_uid {param_value} in the database"
+            )
+
+    elif param_name == "enumerator_uid":
+        # create a sqlalchemy query to get the list of survey_uids for the enumerator_uid from the surveyor_forms and monitor_forms tables
+        surveyor_forms_query = (
+            db.session.query(ParentForm.survey_uid)
+            .join(SurveyorForm, SurveyorForm.form_uid == ParentForm.form_uid)
+            .filter(SurveyorForm.enumerator_uid == param_value)
+        )
+        monitor_forms_query = (
+            db.session.query(ParentForm.survey_uid)
+            .join(MonitorForm, MonitorForm.form_uid == ParentForm.form_uid)
+            .filter(MonitorForm.enumerator_uid == param_value)
+        )
+        response = surveyor_forms_query.union(monitor_forms_query).distinct()
+        if response is not None:
+            survey_uids = [survey.survey_uid for survey in response]
+        else:
+            raise SurveyNotFoundError(
+                f"enumerator_uid {param_value} not associated with any surveys in the database"
+            )
+
+    return survey_uids
 
 
 def custom_permissions_required(
     permission_name, survey_uid_param_location=None, survey_uid_param_name=None
 ):
     """
-    Function to check if current user has the required permissions
+    Function to check if the current user has the required permissions
     """
     from app.blueprints.roles.models import Permission, Role, SurveyAdmins
 
@@ -218,11 +258,11 @@ def custom_permissions_required(
 
             # Handle non-admin crequests
             # Get survey_uid from request args
-            survey_uid = get_survey_uid(
+            survey_uids = get_survey_uids(
                 survey_uid_param_location, survey_uid_param_name
             )
 
-            if not survey_uid:
+            if len(survey_uids) == 0:
                 error_message = (
                     f"Permission denied, survey_uid for permissions required not found"
                 )
@@ -230,8 +270,9 @@ def custom_permissions_required(
                 return jsonify(response), 403
 
             # check if current user is a survey_admin for the survey
-            survey_admin = SurveyAdmins.query.filter_by(
-                user_uid=current_user.user_uid, survey_uid=survey_uid
+            survey_admin = SurveyAdmins.query.filter(
+                SurveyAdmins.user_uid == current_user.user_uid,
+                SurveyAdmins.survey_uid.in_(survey_uids),
             ).first()
 
             if survey_admin:
@@ -258,7 +299,7 @@ def custom_permissions_required(
                     db.session.query(Permission)
                     .join(
                         Role,
-                        Role.survey_uid == survey_uid,
+                        Role.survey_uid.in_(survey_uids),
                     )
                     .filter(
                         and_(
@@ -347,3 +388,8 @@ def validate_payload(validator):
         return decorated_function
 
     return decorator
+
+
+class SurveyNotFoundError(Exception):
+    def __init__(self, errors):
+        self.errors = [errors]
