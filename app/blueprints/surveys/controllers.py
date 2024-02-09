@@ -93,7 +93,7 @@ def create_survey(validated_payload):
 
         # Add the current user as a survey admin for the newly created survey
         survey_admin_entry = SurveyAdmin(
-            survey_uid=survey.survey_uid, user_uid=current_user.user_uid, active=True
+            survey_uid=survey.survey_uid, user_uid=current_user.user_uid
         )
         db.session.add(survey_admin_entry)
         db.session.commit()

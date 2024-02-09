@@ -175,7 +175,6 @@ def add_user(validated_payload):
             survey_admin_entry = SurveyAdmin(
                 survey_uid=validated_payload.survey_uid.data,
                 user_uid=new_user.user_uid,
-                active=True,
             )
             db.session.add(survey_admin_entry)
             db.session.commit()
@@ -287,7 +286,7 @@ def edit_user(user_uid, validated_payload):
                 ).first()
                 if not survey_admin_entry:
                     survey_admin_entry = SurveyAdmin(
-                        survey_uid=survey_uid, user_uid=user_uid, active=True
+                        survey_uid=survey_uid, user_uid=user_uid
                     )
                     db.session.add(survey_admin_entry)
         else:
@@ -403,9 +402,11 @@ def get_all_users():
             "user_role_names": user_role_names,
             "is_super_admin": user.is_super_admin,
             "can_create_survey": user.can_create_survey,
-            "status": "Active"
-            if user.active
-            else ("Invite pending" if invite_is_active else "Deactivated"),
+            "status": (
+                "Active"
+                if user.active
+                else ("Invite pending" if invite_is_active else "Deactivated")
+            ),
         }
 
         user_list.append(user_data)
