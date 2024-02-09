@@ -8,7 +8,7 @@ from sqlalchemy import func
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
-from app.blueprints.roles.models import Role, SurveyAdmins
+from app.blueprints.roles.models import Role, SurveyAdmin
 from .models import Invite
 from .utils import generate_invite_code, send_invite_email
 from .validators import (
@@ -172,7 +172,7 @@ def add_user(validated_payload):
 
         # Check if user is supposed to be a survey admin and add them to the list
         if validated_payload.is_survey_admin.data:
-            survey_admin_entry = SurveyAdmins(
+            survey_admin_entry = SurveyAdmin(
                 survey_uid=validated_payload.survey_uid.data,
                 user_uid=new_user.user_uid,
                 active=True,
@@ -282,11 +282,11 @@ def edit_user(user_uid, validated_payload):
 
             # Only proceed if survey_uid is provided
             if survey_uid:
-                survey_admin_entry = SurveyAdmins.query.filter_by(
+                survey_admin_entry = SurveyAdmin.query.filter_by(
                     user_uid=user_uid, survey_uid=survey_uid
                 ).first()
                 if not survey_admin_entry:
-                    survey_admin_entry = SurveyAdmins(
+                    survey_admin_entry = SurveyAdmin(
                         survey_uid=survey_uid, user_uid=user_uid, active=True
                     )
                     db.session.add(survey_admin_entry)
@@ -296,7 +296,7 @@ def edit_user(user_uid, validated_payload):
             # Only proceed if survey_uid is provided
             if survey_uid:
                 # Remove survey admin entry
-                survey_admin_entry = SurveyAdmins.query.filter_by(
+                survey_admin_entry = SurveyAdmin.query.filter_by(
                     user_uid=user_uid, survey_uid=survey_uid
                 ).first()
                 if survey_admin_entry:

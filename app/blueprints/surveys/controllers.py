@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from flask_login import current_user
 from app import db
 from .models import Survey
-from app.blueprints.roles.models import Role, SurveyAdmins
+from app.blueprints.roles.models import Role, SurveyAdmin
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.module_selection.models import ModuleStatus, Module
 from .routes import surveys_bp
@@ -25,7 +25,7 @@ def get_all_surveys():
         # Return all surveys for the super admin users
         surveys = Survey.query.all()
     else:
-        survey_admin_check = SurveyAdmins.query.filter_by(
+        survey_admin_check = SurveyAdmin.query.filter_by(
             user_uid=current_user.user_uid
         ).all()
         user_roles = current_user.get_roles()
@@ -92,7 +92,7 @@ def create_survey(validated_payload):
         db.session.commit()
 
         # Add the current user as a survey admin for the newly created survey
-        survey_admin_entry = SurveyAdmins(
+        survey_admin_entry = SurveyAdmin(
             survey_uid=survey.survey_uid, user_uid=current_user.user_uid, active=True
         )
         db.session.add(survey_admin_entry)

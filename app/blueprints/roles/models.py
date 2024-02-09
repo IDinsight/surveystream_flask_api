@@ -93,7 +93,7 @@ class Permission(db.Model):
     active = db.Column(db.Boolean(), nullable=False, default=True)
 
 
-class RolePermissions(db.Model):
+class RolePermission(db.Model):
     __tablename__ = "role_permissions"
     __table_args__ = {"schema": "webapp"}
 
@@ -104,7 +104,7 @@ class RolePermissions(db.Model):
     )
 
 
-class SurveyAdmins(db.Model):
+class SurveyAdmin(db.Model):
     """
     SQLAlchemy data model for SurveyAdmin
     This tables defines the survey admins per survey
@@ -112,16 +112,12 @@ class SurveyAdmins(db.Model):
 
     __tablename__ = "survey_admins"
 
-    survey_admin_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     survey_uid = db.Column(
         db.Integer, db.ForeignKey(Survey.survey_uid, ondelete="CASCADE")
     )
     user_uid = db.Column(db.Integer(), db.ForeignKey(User.user_uid, ondelete="CASCADE"))
-    active = db.Column(db.Boolean(), nullable=False, default=True)
 
     __table_args__ = (
-        db.UniqueConstraint(
-            "survey_uid", "user_uid", name="_survey_uid_user_uid_uc", deferrable=True
-        ),
+        db.PrimaryKeyConstraint("survey_uid", "user_uid", name="_survey_uid_user_uid_uc"),
         {"schema": "webapp"},
     )

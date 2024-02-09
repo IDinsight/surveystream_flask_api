@@ -11,7 +11,7 @@ from sqlalchemy import insert, cast, Integer, ARRAY, func, distinct
 from sqlalchemy.sql import case
 from sqlalchemy.exc import IntegrityError
 from app import db
-from .models import Role, Permission, RolePermissions, UserHierarchy
+from .models import Role, Permission, RolePermission, UserHierarchy
 from .routes import roles_bp
 from .validators import (
     SurveyRolesQueryParamValidator,
@@ -152,10 +152,10 @@ def update_survey_roles(validated_query_params, validated_payload):
             db.session.commit()
 
             for role in roles_to_update:
-                RolePermissions.query.filter_by(role_uid=role["role_uid"]).delete()
+                RolePermission.query.filter_by(role_uid=role["role_uid"]).delete()
 
                 for permission_uid in role["permissions"]:
-                    permissions_statement = insert(RolePermissions).values(
+                    permissions_statement = insert(RolePermission).values(
                         role_uid=role["role_uid"],
                         permission_uid=permission_uid,
                     )
@@ -181,7 +181,7 @@ def update_survey_roles(validated_query_params, validated_payload):
             role_uid = result.inserted_primary_key[0]
 
             for permission_uid in role["permissions"]:
-                permissions_statement = insert(RolePermissions).values(
+                permissions_statement = insert(RolePermission).values(
                     role_uid=role_uid,
                     permission_uid=permission_uid,
                 )
