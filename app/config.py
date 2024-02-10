@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import os
+
+
 class Config:
     """
     Base configuration class. Contains default configuration settings + configuration settings applicable to all environments.
@@ -10,6 +12,9 @@ class Config:
     DEBUG = False
     TESTING = False
     WTF_CSRF_ENABLED = True
+    WTF_CSRF_CHECK_DEFAULT = False
+    WTF_CSRF_HEADERS = ["X-CSRF-Token"]
+    WTF_CSRF_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
 
     # AWS region
     AWS_REGION = os.getenv("AWS_REGION")
@@ -70,8 +75,9 @@ class Config:
         "root": {"handlers": ["stream"], "level": "INFO"},
     }
 
+    ENABLE_CORS = True
     SENTRY_CONFIG = {"dsn": ""}
-    ORIGINS = ['http://localhost:*']
+    ORIGINS = ["http://localhost:*"]
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False
 
@@ -89,7 +95,9 @@ class LocalDevelopmentConfig(Config):
 
     PROTECT_DOCS_ENDPOINT = False
 
-    ORIGINS = ['http://localhost:*']
+    ENABLE_CORS = True
+
+    ORIGINS = ["http://localhost:*"]
 
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False
@@ -141,6 +149,7 @@ class UnitTestConfig(Config):
     TESTING = True
     DEBUG = True
 
+
 class DBCheckConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
@@ -171,7 +180,9 @@ class StagingConfig(Config):
         "environment": "staging-callisto",
     }
 
-    ORIGINS = ['https://*.idinsight.io']
+    ORIGINS = ["https://*.idinsight.io"]
+
+    ENABLE_CORS = False
 
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False
@@ -194,7 +205,9 @@ class ProductionConfig(Config):
         "environment": "production",
     }
 
-    ORIGINS = ['https://*.idinsight.io']
+    ORIGINS = ["https://*.idinsight.io"]
+
+    ENABLE_CORS = False
 
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False

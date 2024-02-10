@@ -60,7 +60,7 @@ def test_user_credentials():
             "email": settings["email"],
             "user_uid": 3933,
             "password": "asdfasdf",
-            "is_super_admin": True
+            "is_super_admin": True,
         }
     }
 
@@ -142,6 +142,21 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
         db.session.execute(
             open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
         )
+
+        # check if permissions exist
+        permissions_exist = db.session.execute(
+            """
+            SELECT EXISTS(SELECT 1 FROM webapp.permissions LIMIT 1)
+            """
+        ).fetchone()[0]
+
+        if not permissions_exist:
+            # Load permissions data
+            db.session.execute(
+                open(
+                    f"{filepath}/tests/data/launch_local_db/load_permissions.sql", "r"
+                ).read()
+            )
 
         # Set the credentials for the desired test user
         db.session.execute(

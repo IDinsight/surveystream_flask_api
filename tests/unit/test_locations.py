@@ -3,6 +3,11 @@ import pytest
 import base64
 import pandas as pd
 from pathlib import Path
+from utils import (
+    create_new_survey_role_with_permissions,
+    login_user,
+    update_logged_in_user_roles,
+)
 
 
 @pytest.mark.locations
@@ -29,7 +34,6 @@ class TestLocations:
 
         response = client.post(
             "/api/surveys",
-            query_string={"user_uid": 3},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -110,7 +114,9 @@ class TestLocations:
 
         yield
 
-    def test_insert_geo_levels(self, client, login_test_user, create_geo_levels):
+    def test_insert_geo_levels_for_super_admin_user(
+        self, client, login_test_user, create_geo_levels
+    ):
         """
         Test that the geo levels are inserted correctly
         The order of the geo levels in the payload should be reflected in the assignment of the geo_level_uid
@@ -141,11 +147,254 @@ class TestLocations:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
+    def test_insert_geo_levels_for_survey_admin_user(
+        self, client, login_test_user, test_user_credentials, csrf_token, create_survey
+    ):
+        """
+        Test that survey admins can insert geo levels
+            - change the logged-in user to a survey_admin
+        Expect success since the same user has created the survey
+        """
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+
+        login_user(client, test_user_credentials)
+
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 1,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response)
+
+        assert response.status_code == 200
+
+        # Test the geo level were inserted correctly
+        response = client.get(
+            "/api/locations/geo-levels", query_string={"survey_uid": 1}
+        )
+        expected_response = {
+            "data": [
+                {
+                    "geo_level_uid": 1,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                    "survey_uid": 1,
+                },
+                {
+                    "geo_level_uid": 2,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 1,
+                    "survey_uid": 1,
+                },
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # revert user to super admin
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
+    def test_insert_geo_levels_for_non_admin_user_roles(
+        self, client, login_test_user, test_user_credentials, csrf_token, create_survey
+    ):
+        """
+        Test that non-admins can insert geo levels
+            - change the logged-in user to non admin
+            - add roles and permissions for WRITE Survey Locations
+        Expect success
+        """
+
+        new_role = create_new_survey_role_with_permissions(
+            # 3 - WRITE Survey Locations
+            client,
+            test_user_credentials,
+            "Survey Role",
+            [3],
+            1,
+        )
+
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 1,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response)
+
+        assert response.status_code == 200
+
+        # Test the geo level were inserted correctly
+        response = client.get(
+            "/api/locations/geo-levels", query_string={"survey_uid": 1}
+        )
+        expected_response = {
+            "data": [
+                {
+                    "geo_level_uid": 1,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                    "survey_uid": 1,
+                },
+                {
+                    "geo_level_uid": 2,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 1,
+                    "survey_uid": 1,
+                },
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # revert user to super admin
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
+    def test_insert_geo_levels_for_non_admin_user_no_roles(
+        self, client, login_test_user, test_user_credentials, csrf_token, create_survey
+    ):
+        """
+        Test that non-admins without permissions cannot insert geo_levels
+            - change the logged-in user to non admin
+            - remove all roles
+        Expect fail with a 403
+        """
+
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[],
+        )
+
+        login_user(client, test_user_credentials)
+
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 1,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response)
+
+        assert response.status_code == 403
+
+        expected_response = {
+            "success": False,
+            "error": f"User does not have the required permission: WRITE Survey Locations",
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+        # revert user to super admin
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
     def test_update_geo_levels(
         self, client, login_test_user, create_geo_levels, csrf_token
     ):
         """
         Test that existing geo levels can be updated
+        - test for a single user role since the endpoint has been tested on insert
+        Expect a 200 success with the updated values
         """
 
         # Try to update the existing geo levels
@@ -722,7 +971,7 @@ class TestLocations:
 
         assert response.status_code == 200
 
-    def test_upload_locations_csv(
+    def test_upload_locations_csv_for_super_admin_user(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
     ):
         """
@@ -803,6 +1052,329 @@ class TestLocations:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_upload_locations_csv_for_survey_admin_user(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_locations_file,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that the locations csv can be uploaded by survey admin users
+            - change current user to survey_admin
+        Expect success since the survey_admin created the survey
+        """
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+
+        login_user(client, test_user_credentials)
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            locations_csv = f.read()
+            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response)
+
+        assert response.status_code == 200
+
+        df = pd.read_csv(filepath, dtype=str)
+        df.rename(
+            columns={
+                "district_id": "District ID",
+                "district_name": "District Name",
+                "mandal_id": "Mandal ID",
+                "mandal_name": "Mandal Name",
+                "psu_id": "PSU ID",
+                "psu_name": "PSU Name",
+            },
+            inplace=True,
+        )
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": df.to_dict(orient="records"),
+            },
+            "success": True,
+        }
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # revert user to super admin
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
+    def test_upload_locations_csv_for_non_admin_user_roles(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_locations_file,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that the locations csv can be uploaded by non-admin users with roles
+            - change current user to non-admin
+            - add permissions for writing survey locations
+            - write permissions should also handle read requests
+        Expect success
+        """
+        new_role = create_new_survey_role_with_permissions(
+            # 3 - WRITE Survey Locations
+            client,
+            test_user_credentials,
+            "Survey Role",
+            [3],
+            1,
+        )
+
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            locations_csv = f.read()
+            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response)
+
+        assert response.status_code == 200
+
+        df = pd.read_csv(filepath, dtype=str)
+        df.rename(
+            columns={
+                "district_id": "District ID",
+                "district_name": "District Name",
+                "mandal_id": "Mandal ID",
+                "mandal_name": "Mandal Name",
+                "psu_id": "PSU ID",
+                "psu_name": "PSU Name",
+            },
+            inplace=True,
+        )
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": df.to_dict(orient="records"),
+            },
+            "success": True,
+        }
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # revert user to super admin
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
+    def test_upload_locations_csv_for_non_admin_user_no_roles(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_locations_file,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that the locations csv cannot be uploaded by non-admin users without roles
+            - change current user to non-admin
+            - remove all roles
+        Expect Fail with a 403
+        """
+
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[],
+        )
+
+        login_user(client, test_user_credentials)
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            locations_csv = f.read()
+            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response)
+
+        assert response.status_code == 403
+
+        expected_response = {
+            "success": False,
+            "error": f"User does not have the required permission: WRITE Survey Locations",
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+        # revert user to super admin
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
 
     def test_reupload_locations_csv(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
@@ -1102,8 +1674,9 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 422
-        assert "file" in response.json["errors"]
-        assert response.json["errors"]["file"] == ["This field is required."]
+        print(response.json)
+        assert "file" in response.json["message"]
+        assert response.json["message"]["file"] == ["This field is required."]
 
     def test_locations_validations_file_errors_invalid_base64_length(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
@@ -1193,7 +1766,7 @@ class TestLocations:
             "File data has invalid base64 encoding"
         ]
 
-    def test_get_locations_null_result(
+    def test_get_locations_null_result_for_super_admin_user(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
     ):
         """
@@ -1223,6 +1796,190 @@ class TestLocations:
         checkdiff = jsondiff.diff(expected_response, response.json)
 
         assert checkdiff == {}
+
+    def test_get_locations_null_result_for_survey_admin_user(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_locations_file,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that Survey Admins can get locations
+        Expect success
+        """
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+
+        login_user(client, test_user_credentials)
+
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        print(response)
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": [],
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+        # revert user to super admin
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
+    def test_get_locations_null_result_for_non_admin_user_roles(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_locations_file,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that non admins with READ permissions can get locations
+            - change logged-in user to non-admin
+            - assign the user only read permissions
+        Expect success
+        """
+
+        new_role = create_new_survey_role_with_permissions(
+            # 2 - READ Survey Locations
+            client,
+            test_user_credentials,
+            "Survey Role",
+            [2],
+            1,
+        )
+
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        print(response)
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": [],
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+        # revert user to super admin
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
+    def test_get_locations_null_result_for_non_admin_user_no_roles(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_locations_file,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that non admins without READ permissions cannot get locations
+            - change logged-in user to non-admin
+            - remove all roles
+        Expect Fail with a 403
+        """
+
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[],
+        )
+
+        login_user(client, test_user_credentials)
+
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        print(response)
+
+        assert response.status_code == 403
+
+        expected_response = {
+            "success": False,
+            "error": f"User does not have the required permission: READ Survey Locations",
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+        # revert user to super admin
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
 
     def test_get_locations_null_result_no_geo_levels(
         self, client, login_test_user, csrf_token

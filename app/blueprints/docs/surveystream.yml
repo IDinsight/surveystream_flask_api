@@ -42,7 +42,7 @@ components:
         ### CSRF Token
 
         - To prevent CSRF attacks, a CSRF token must be included in the
-        `X-CSRF-TOKEN` header for all POST, PUT, and PATCH requests
+        `X-CSRF-TOKEN` header for all POST, PUT, PATCH and DELETE requests
 
         - The token can be obtained from the CSRF-TOKEN cookie set by the `GET
         /get-csrf` action
@@ -128,6 +128,7 @@ x-tagGroups:
   - name: Locations
     tags:
       - Locations
+
 paths:
   /healthcheck:
     get:
@@ -581,6 +582,12 @@ paths:
                   type: string
                 is_super_admin:
                   type: boolean
+                can_create_survey:
+                  type: boolean
+                is_survey_admin:
+                  type: boolean
+                survey_uid:
+                  type: string
               required:
                 - email
                 - first_name
@@ -628,9 +635,9 @@ paths:
         - in: query
           name: survey_uid
           schema:
-             type: integer
+            type: integer
           required: false
-          description: survey_uid to filter users 
+          description: survey_uid to filter users
       responses:
         "200":
           description: User information for all users retrieved
@@ -771,7 +778,7 @@ paths:
                 properties:
                   message:
                     type: string
-    
+
     put:
       tags:
         - User Management
@@ -802,6 +809,12 @@ paths:
                   type: array
                 is_super_admin:
                   type: boolean
+                can_create_survey:
+                  type: boolean
+                is_survey_admin:
+                  type: boolean
+                survey_uid:
+                  type: string
               required:
                 - email
                 - first_name
@@ -853,6 +866,12 @@ paths:
       summary: Endpoint to delete a user
       description: delete a single user
       parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
         - in: path
           name: user_uid
           schema:
@@ -864,21 +883,21 @@ paths:
         "200":
           description: User deleted successfully
           content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "404":
           description: User not found
           content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
   /surveys:
     get:
       summary: Get surveys
@@ -1945,6 +1964,12 @@ paths:
       tags:
         - Forms
       parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
         - in: path
           name: form_uid
           schema:
@@ -1967,7 +1992,7 @@ paths:
                   error:
                     type: string
                     description: Error message indicating that the specified form ID was not found.
-  
+
   "/forms/{form_uid}/scto-question-mapping":
     get:
       summary: Get SurveyCTO question mapping for a form
@@ -2191,6 +2216,12 @@ paths:
       tags:
         - Forms
       parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
         - in: path
           name: form_uid
           schema:
@@ -2352,6 +2383,12 @@ paths:
       tags:
         - Forms
       parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
         - in: path
           name: form_uid
           schema:
@@ -3312,13 +3349,13 @@ paths:
             type: integer
           description: Unique ID of the form
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: object
-                properties:             
+                properties:
                   data:
                     type: array
                     description: >-
@@ -3427,9 +3464,9 @@ paths:
           description: Success
         "403":
           description: X-CSRF-Token required in header
-        '404':
+        "404":
           description: Enumerator or target not found
-        '422':
+        "422":
           description: Form errors. Specific errors messages will be returned if ineligible/unassignable enumerators or targets are included in the request body.
   /assignments/table-config:
     get:
@@ -3729,7 +3766,7 @@ paths:
                           *Custom Fields*
                           custom_fields['<custom_field_label>'] e.g. custom_fields['Mobile No. Primary']
                           assigned_enumerator_custom_fields['<custom_field_label>'] e.g. assigned_enumerator_custom_fields['Mobile No. Primary']
-                          
+
                           *Locations*
                           surveyor_locations[<geo_level_index>].location_id or surveyor_locations[<geo_level_index>].location_name
                           target_locations[<geo_level_index>].location_id or target_locations[<geo_level_index>].location_name
@@ -3746,15 +3783,15 @@ paths:
                           Note that <scto_form_id> is the SurveyCTO form ID of the form. This needs to be provided because productivity metrics are provided for each form in the given survey.
 
       responses:
-        '200':
+        "200":
           description: Success
-        '403':
+        "403":
           description: X-CSRF-Token required in header
-        '404':
+        "404":
           description: Enumerator or target not found
-        '422':
+        "422":
           description: Form errors
-  '/module-questionnaire/{survey_uid}':
+  "/module-questionnaire/{survey_uid}":
     get:
       tags:
         - Module Questionnaire
@@ -3852,12 +3889,12 @@ paths:
         Saves the module questionnaire responses for a given survey to the
         database.
       parameters:
-      - name: survey_uid
-        in: path
-        description: The unique ID of the survey.
-        required: true
-        schema:
-          type: integer
+        - name: survey_uid
+          in: path
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
       requestBody:
         description: JSON object containing survey ID and list of module IDs
         required: true
@@ -4042,18 +4079,18 @@ paths:
         "200":
           description: Permissions retrieved successfully
           content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      permission_uid:
-                        type: integer
-                      name:
-                        type: string
-                      description:
-                        type: string
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    permission_uid:
+                      type: integer
+                    name:
+                      type: string
+                    description:
+                      type: string
     post:
       tags:
         - Permissions
@@ -4109,145 +4146,151 @@ paths:
                 properties:
                   error:
                     type: string
-  
+
   "/permissions/{permission_uid}":
-      get:
-        tags:
-          - Permissions
-        summary: Get permission details
-        description: Get details of a specific permission
-        parameters:
-          - in: path
-            name: permission_uid
-            schema:
-              type: integer
-            required: true
-            description: "Unique id for the permission"
-        responses:
-          "200":
-            description: Permission details retrieved successfully
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    permission_uid:
-                      type: integer
-                    name:
-                      type: string
-                    description:
-                      type: string
-          "404":
-            description: Permission not found
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-      put:
-        tags:
-          - Permissions
-        summary: Update permission
-        description: Update a specific permission using a specific permission unique id
-        parameters:
-          - in: path
-            name: permission_uid
-            schema:
-              type: integer
-            required: true
-            description: Unique id for the permission
-        requestBody:
+    get:
+      tags:
+        - Permissions
+      summary: Get permission details
+      description: Get details of a specific permission
+      parameters:
+        - in: path
+          name: permission_uid
+          schema:
+            type: integer
           required: true
+          description: "Unique id for the permission"
+      responses:
+        "200":
+          description: Permission details retrieved successfully
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  permission_uid:
+                    type: integer
                   name:
                     type: string
                   description:
                     type: string
-                required:
-                  - name
-                  - description
-        responses:
-          "200":
-            description: Permission updated successfully
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                    permission_uid:
-                      type: integer
-                    name:
-                      type: string
-                    description:
-                      type: string
-          "400":
-            description: >-
-              Name and description are required fields or Updating to this name
-              would violate uniqueness constraint
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    error:
-                      type: string
-          "404":
-            description: Permission not found
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-          "500":
-            description: An unexpected error occurred
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    error:
-                      type: string
-      delete:
-        tags:
-          - Permissions
-        summary: Delete permission
-        description: Delete a specific permission using a specific permission unique id
-        parameters:
-          - in: path
-            name: permission_uid
+        "404":
+          description: Permission not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+    put:
+      tags:
+        - Permissions
+      summary: Update permission
+      description: Update a specific permission using a specific permission unique id
+      parameters:
+        - in: path
+          name: permission_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique id for the permission
+      requestBody:
+        required: true
+        content:
+          application/json:
             schema:
-              type: integer
-            required: true
-            description: "Unique id for ther permission"
-        responses:
-          "200":
-            description: Permission deleted successfully
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-          "404":
-            description: Permission not found
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              required:
+                - name
+                - description
+      responses:
+        "200":
+          description: Permission updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  permission_uid:
+                    type: integer
+                  name:
+                    type: string
+                  description:
+                    type: string
+        "400":
+          description: >-
+            Name and description are required fields or Updating to this name
+            would violate uniqueness constraint
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        "404":
+          description: Permission not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+    delete:
+      tags:
+        - Permissions
+      summary: Delete permission
+      description: Delete a specific permission using a specific permission unique id
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: permission_uid
+          schema:
+            type: integer
+          required: true
+          description: "Unique id for ther permission"
+      responses:
+        "200":
+          description: Permission deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: Permission not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
   "/user-hierarchy":
     get:
       tags:
@@ -4354,6 +4397,12 @@ paths:
       summary: Delete user hierarchy
       description: Delete user hierarchy for a survey and user
       parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
         - in: query
           name: survey_uid
           schema:

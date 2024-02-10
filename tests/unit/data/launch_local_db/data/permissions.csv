@@ -1,0 +1,20 @@
+name,description,active
+ADMIN,Admin permission,true
+READ Survey Locations,Read Survey Locations permission,true
+WRITE Survey Locations,Write Survey Locations permission,true
+READ Enumerators,Read Enumerators permission,true
+WRITE Enumerators,Write Enumerators permission,true
+READ Targets,Read Targets permission,true
+WRITE Targets,Write Targets permission,true
+READ Assignments,Read Assignments permission,true
+WRITE Assignments,Write Assignments permission,true
+READ Audio Audits,Read Audio Audits permission,true
+WRITE Audio Audits,Write Audio Audits permission,true
+READ Photo Audits,Read Photo Audits permission,true
+WRITE Photo Audits,Write Photo Audits permission,true
+READ Productivity,Read Productivity permission,true
+WRITE Productivity,Write Productivity permission,true
+READ Data Quality,Read Data Quality permission,true
+WRITE Data Quality,Write Data Quality permission,true
+READ Emails,Read Emails permission,true
+WRITE Emails,Write Emails permission,true

@@ -47,7 +47,7 @@ class ColumnMappingValidator(FlaskForm):
     name = StringField(validators=[DataRequired()])
     email = StringField(validators=[DataRequired()])
     mobile_primary = StringField(validators=[DataRequired()])
-    language = StringField()
+    language = StringField(validators=[DataRequired()])
     home_address = StringField()
     gender = StringField(validators=[DataRequired()])
     enumerator_type = StringField(validators=[DataRequired()])

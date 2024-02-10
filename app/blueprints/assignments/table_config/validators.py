@@ -16,3 +16,10 @@ class UpdateTableConfigValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     table_name = StringField(validators=[DataRequired()])
     table_config = FieldList(FormField(TableConfigValidator))
+
+
+class TableConfigQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])

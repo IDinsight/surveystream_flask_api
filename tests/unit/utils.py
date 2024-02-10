@@ -33,6 +33,148 @@ def logout(client):
     return
 
 
+def update_logged_in_user_roles(
+    client,
+    test_user_credentials,
+    roles=None,
+    is_super_admin=False,
+    can_create_survey=False,
+    is_survey_admin=False,
+    survey_uid=None,
+):
+    """
+    Function to update the logged-in user admin status and roles
+    """
+    if roles is None:
+        roles = []
+    csrf_token = get_csrf_token(client)
+    user_uid = test_user_credentials.get("user_uid")
+    response = client.put(
+        f"/api/users/{user_uid}",
+        json={
+            "email": test_user_credentials.get("email"),
+            "first_name": "Test",
+            "last_name": "User",
+            "roles": roles,
+            "is_super_admin": is_super_admin,
+            "can_create_survey": can_create_survey,
+            "is_survey_admin": is_survey_admin,
+            "survey_uid": survey_uid,
+        },
+        content_type="application/json",
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    print(response.json)
+    assert response.status_code == 200
+    response_data = json.loads(response.data)
+
+    updated_user = response_data.get("user_data")
+
+    return updated_user
+
+
+def login_user(client, test_user_credentials):
+    """
+    Log in a user with the provided test user credentials
+    """
+
+    csrf_token = get_csrf_token(client)
+
+    response = client.post(
+        "/api/login",
+        json={
+            "email": test_user_credentials["email"],
+            "password": test_user_credentials["password"],
+        },
+        content_type="application/json",
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    assert response.status_code == 200
+
+
+def create_new_survey_role_with_permissions(
+    client, test_user_credentials, role_name, permissions, survey_uid
+):
+    """
+    Function to update the logged-in user permissions
+    - create a new role with the provided permissions, use the survey_uid provided
+    - update the logged-in user with the new role
+    - return updated user
+    """
+    csrf_token = get_csrf_token(client)
+    payload = {
+        "roles": [
+            {
+                "role_uid": None,
+                "role_name": role_name,
+                "reporting_role_uid": None,
+                "permissions": permissions,
+            },
+        ]
+    }
+
+    response = client.put(
+        "/api/roles",
+        query_string={"survey_uid": survey_uid},
+        json=payload,
+        content_type="application/json",
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    print(response.json)
+
+    assert response.status_code == 200
+
+
+def create_new_survey_admin_user(
+    client,
+    is_super_admin=False,
+    can_create_survey=True,
+    is_survey_admin=False,
+    survey_uid=None,
+):
+    csrf_token = get_csrf_token(client)
+    # Add a user for testing with survey_admin roles
+    response_add = client.post(
+        "/api/users",
+        json={
+            "email": "survey_admin@example.com",
+            "first_name": "Survey",
+            "last_name": "Admin",
+            "roles": [],
+            "can_create_survey": can_create_survey,
+            "is_super_admin": is_super_admin,
+            "is_survey_admin": is_survey_admin,
+            "survey_uid": survey_uid,
+        },
+        content_type="application/json",
+        headers={"X-CSRF-Token": csrf_token},
+    )
+
+    assert response_add.status_code == 200
+    assert b"Success: user invited" in response_add.data
+    response_data_add = json.loads(response_add.data)
+    user_object = response_data_add.get("user")
+    invite_object = response_data_add.get("invite")
+
+    # Complete the registration for the added user
+    response_complete = client.post(
+        "/api/users/complete-registration",
+        json={
+            "invite_code": invite_object.get("invite_code"),
+            "new_password": "newpassword",
+            "confirm_password": "newpassword",
+        },
+        content_type="application/json",
+        headers={"X-CSRF-Token": csrf_token},
+    )
+
+    assert response_complete.status_code == 200
+    assert b"Success: registration completed" in response_complete.data
+
+    # Return email and password for later use
+    return {"email": user_object.get("email"), "password": "newpassword"}
+
+
 def set_user_active_status(app, db, email, active):
     """
     Set a user's active status directly in the database. Needed to set up certain tests.

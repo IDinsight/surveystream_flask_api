@@ -1,6 +1,9 @@
 import jsondiff
 import pytest
-import re
+from utils import (
+    login_user,
+    update_logged_in_user_roles,
+)
 
 
 @pytest.mark.module_questionnaire
@@ -65,7 +68,7 @@ class TestModuleQuestionnaire:
 
         yield
 
-    def test_create_module_questionnaire(
+    def test_create_module_questionnaire_for_super_admin_user(
         self,
         client,
         login_test_user,
@@ -73,7 +76,7 @@ class TestModuleQuestionnaire:
         test_user_credentials,
     ):
         """
-        Test that the module_questionnaire is inserted correctly
+        Test that the module_questionnaire is inserted correctly by a super admin_user
         """
 
         # Test the survey was inserted correctly
@@ -96,3 +99,123 @@ class TestModuleQuestionnaire:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_create_module_questionnaire_for_survey_admin_user(
+        self, client, login_test_user, create_survey, test_user_credentials, csrf_token
+    ):
+        """
+        Test that the module_questionnaire is inserted correctly by a survey admin_user
+        """
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+
+        login_user(client, test_user_credentials)
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "supervisor_assignment_criteria": ["Gender"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Test the survey was inserted correctly
+        response = client.get("/api/module-questionnaire/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "assignment_process": "Manual",
+                "language_location_mapping": False,
+                "reassignment_required": False,
+                "supervisor_assignment_criteria": ["Gender"],
+                "supervisor_hierarchy_exists": False,
+                "supervisor_surveyor_relation": "1:many",
+                "survey_uid": 1,
+                "target_assignment_criteria": ["Location of surveyors"],
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
+    def test_create_module_questionnaire_for_non_admin_user(
+        self, client, login_test_user, create_survey, test_user_credentials, csrf_token
+    ):
+        """
+        Test that the module_questionnaire cannot be inserted by a non_admin user
+        Expect 403 Fail
+
+        """
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+
+        login_user(client, test_user_credentials)
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "supervisor_assignment_criteria": ["Gender"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 403
+
+        expected_response = {
+            "success": False,
+            "error": f"User does not have the required permission: ADMIN",
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)

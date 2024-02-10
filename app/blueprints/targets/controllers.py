@@ -1,5 +1,10 @@
 from flask import jsonify, request
-from app.utils.utils import logged_in_active_user_required
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_query_params,
+    validate_payload,
+)
 from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.dialects.postgresql import JSONB
@@ -41,26 +46,15 @@ import binascii
 
 @targets_bp.route("", methods=["POST"])
 @logged_in_active_user_required
-def upload_targets():
+@validate_query_params(TargetsQueryParamValidator)
+@validate_payload(TargetsFileUploadValidator)
+@custom_permissions_required("WRITE Targets", "query", "form_uid")
+def upload_targets(validated_query_params, validated_payload):
     """
     Method to validate the uploaded targets file and save it to the database
     """
 
-    # Validate the query parameter
-    query_param_validator = TargetsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    form_uid = request.args.get("form_uid")
+    form_uid = validated_query_params.form_uid.data
 
     # Get the survey UID from the form UID
     form = ParentForm.query.filter_by(form_uid=form_uid).first()
@@ -75,31 +69,10 @@ def upload_targets():
 
     survey_uid = form.survey_uid
 
-    payload = request.get_json()
-    payload_validator = TargetsFileUploadValidator.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    # Validate the request body payload
-    if not payload_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": payload_validator.errors,
-                }
-            ),
-            422,
-        )
-
     # Create the column mapping object from the payload
     try:
         column_mapping = TargetColumnMapping(
-            payload_validator.column_mapping.data, form_uid, payload_validator.mode.data
+            validated_payload.column_mapping.data, form_uid, validated_payload.mode.data
         )
     except InvalidColumnMappingError as e:
         return (
@@ -151,7 +124,7 @@ def upload_targets():
     try:
         targets_upload = TargetsUpload(
             csv_string=base64.b64decode(
-                payload_validator.file.data, validate=True
+                validated_payload.file.data, validate=True
             ).decode("utf-8"),
             column_mapping=column_mapping,
             survey_uid=survey_uid,
@@ -211,7 +184,7 @@ def upload_targets():
         targets_upload.validate_records(
             column_mapping,
             bottom_level_geo_level_uid,
-            payload_validator.mode.data,
+            validated_payload.mode.data,
         )
     except InvalidFileStructureError as e:
         return (
@@ -241,7 +214,7 @@ def upload_targets():
     try:
         targets_upload.save_records(
             column_mapping,
-            payload_validator.mode.data,
+            validated_payload.mode.data,
         )
 
     except IntegrityError as e:
@@ -253,26 +226,14 @@ def upload_targets():
 
 @targets_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-def get_targets():
+@validate_query_params(TargetsQueryParamValidator)
+@custom_permissions_required("READ Targets", "query", "form_uid")
+def get_targets(validated_query_params):
     """
     Method to retrieve the targets information from the database
     """
 
-    # Validate the query parameter
-    query_param_validator = TargetsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    form_uid = request.args.get("form_uid")
+    form_uid = validated_query_params.form_uid.data
     user_uid = current_user.user_uid
 
     # Check if the logged in user has permission to access the given form
@@ -425,6 +386,7 @@ def get_targets():
 
 @targets_bp.route("/<int:target_uid>", methods=["GET"])
 @logged_in_active_user_required
+@custom_permissions_required("READ Targets", "path", "target_uid")
 def get_target(target_uid):
     """
     Method to retrieve a target from the database
@@ -539,134 +501,126 @@ def get_target(target_uid):
 
 @targets_bp.route("/<int:target_uid>", methods=["PUT"])
 @logged_in_active_user_required
-def update_target(target_uid):
+@validate_payload(UpdateTarget)
+@custom_permissions_required("WRITE Targets", "path", "target_uid")
+def update_target(target_uid, validated_payload):
     """
     Method to update a target in the database
     """
 
     payload = request.get_json()
-    payload_validator = UpdateTarget.from_json(payload)
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
+    location_uid = validated_payload.location_uid.data
 
-    if payload_validator.validate():
-        target = Target.query.filter_by(target_uid=target_uid).first()
-        if target is None:
-            return jsonify({"error": "Target not found"}), 404
+    target = Target.query.filter_by(target_uid=target_uid).first()
+    if target is None:
+        return jsonify({"error": "Target not found"}), 404
 
-        survey_uid = (
-            ParentForm.query.filter_by(form_uid=target.form_uid).first().survey_uid
-        )
+    survey_uid = ParentForm.query.filter_by(form_uid=target.form_uid).first().survey_uid
 
-        # Check if the location_uid is valid
+    # Check if the location_uid is valid
 
-        if payload_validator.location_uid.data is not None:
-            # Get the geo levels for the survey
-            geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
-
-            try:
-                geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
-            except InvalidGeoLevelHierarchyError as e:
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "errors": {
-                                "geo_level_hierarchy": e.geo_level_hierarchy_errors,
-                            },
-                        }
-                    ),
-                    422,
-                )
-
-            bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
-                -1
-            ].geo_level_uid
-
-            location = Location.query.filter_by(
-                location_uid=payload_validator.location_uid.data,
-                geo_level_uid=bottom_level_geo_level_uid,
-            ).first()
-
-            if location is None:
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "errors": f"Location UID {payload_validator.location_uid.data} not found in the database for the bottom level geo level",
-                        }
-                    ),
-                    404,
-                )
-
-        # The payload needs to pass in the same custom field keys as are in the database
-        # This is because this method is used to update values but not add/remove/modify columns
-        custom_fields_in_db = getattr(target, "custom_fields", None)
-        custom_fields_in_payload = payload.get("custom_fields")
-
-        keys_in_db = []
-        keys_in_payload = []
-
-        if custom_fields_in_db is not None:
-            keys_in_db = custom_fields_in_db.keys()
-
-        if custom_fields_in_payload is not None:
-            keys_in_payload = custom_fields_in_payload.keys()
-
-        for payload_key in keys_in_payload:
-            if payload_key not in keys_in_db and payload_key != "column_mapping":
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "errors": f"The payload has a custom key with field label {payload_key} that does not exist in the custom fields for the database record. This method can only be used to update values for existing fields, not to add/remove/modify fields",
-                        }
-                    ),
-                    422,
-                )
-        for db_key in keys_in_db:
-            if db_key not in keys_in_payload and db_key != "column_mapping":
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "errors": f"The payload is missing a custom key with field label {db_key} that exists in the database. This method can only be used to update values for existing fields, not to add/remove/modify fields",
-                        }
-                    ),
-                    422,
-                )
-            if db_key == "column_mapping":
-                # add column mapping to custom_fields from db
-                payload["custom_fields"]["column_mapping"] = custom_fields_in_db[db_key]
+    if location_uid is not None:
+        # Get the geo levels for the survey
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
 
         try:
-            Target.query.filter_by(target_uid=target_uid).update(
-                {
-                    Target.target_id: payload_validator.target_id.data,
-                    Target.language: payload_validator.language.data,
-                    Target.gender: payload_validator.gender.data,
-                    Target.location_uid: payload_validator.location_uid.data,
-                    Target.custom_fields: payload["custom_fields"],
-                },
-                synchronize_session="fetch",
+            geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+        except InvalidGeoLevelHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "geo_level_hierarchy": e.geo_level_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
             )
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"error": str(e)}), 500
 
-        return jsonify({"success": True}), 200
+        bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
+            -1
+        ].geo_level_uid
 
-    else:
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+        location = Location.query.filter_by(
+            location_uid=location_uid,
+            geo_level_uid=bottom_level_geo_level_uid,
+        ).first()
+
+        if location is None:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": f"Location UID {location_uid} not found in the database for the bottom level geo level",
+                    }
+                ),
+                404,
+            )
+
+    # The payload needs to pass in the same custom field keys as are in the database
+    # This is because this method is used to update values but not add/remove/modify columns
+    custom_fields_in_db = getattr(target, "custom_fields", None)
+    custom_fields_in_payload = payload.get("custom_fields")
+
+    keys_in_db = []
+    keys_in_payload = []
+
+    if custom_fields_in_db is not None:
+        keys_in_db = custom_fields_in_db.keys()
+
+    if custom_fields_in_payload is not None:
+        keys_in_payload = custom_fields_in_payload.keys()
+
+    for payload_key in keys_in_payload:
+        if payload_key not in keys_in_db and payload_key != "column_mapping":
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": f"The payload has a custom key with field label {payload_key} that does not exist in the custom fields for the database record. This method can only be used to update values for existing fields, not to add/remove/modify fields",
+                    }
+                ),
+                422,
+            )
+    for db_key in keys_in_db:
+        if db_key not in keys_in_payload and db_key != "column_mapping":
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": f"The payload is missing a custom key with field label {db_key} that exists in the database. This method can only be used to update values for existing fields, not to add/remove/modify fields",
+                    }
+                ),
+                422,
+            )
+        if db_key == "column_mapping":
+            # add column mapping to custom_fields from db
+            payload["custom_fields"]["column_mapping"] = custom_fields_in_db[db_key]
+
+    try:
+        Target.query.filter_by(target_uid=target_uid).update(
+            {
+                Target.target_id: validated_payload.target_id.data,
+                Target.language: validated_payload.language.data,
+                Target.gender: validated_payload.gender.data,
+                Target.location_uid: location_uid,
+                Target.custom_fields: payload["custom_fields"],
+            },
+            synchronize_session="fetch",
+        )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"success": True}), 200
 
 
 @targets_bp.route("/<int:target_uid>", methods=["DELETE"])
 @logged_in_active_user_required
+@custom_permissions_required("WRITE Targets", "path", "target_uid")
 def delete_target(target_uid):
     """
     Method to delete a target from the database
@@ -689,31 +643,20 @@ def delete_target(target_uid):
 # Patch method to bulk update target details
 @targets_bp.route("", methods=["PATCH"])
 @logged_in_active_user_required
-def bulk_update_targets():
+@validate_payload(BulkUpdateTargetsValidator)
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
+def bulk_update_targets(validated_payload):
     """
     Method to bulk update targets
     """
 
     payload = request.get_json()
-    payload_validator = BulkUpdateTargetsValidator.from_json(payload)
+    form_uid = validated_payload.form_uid.data
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
-
-    survey_uid = (
-        ParentForm.query.filter_by(form_uid=payload_validator.form_uid.data)
-        .first()
-        .survey_uid
-    )
+    survey_uid = ParentForm.query.filter_by(form_uid=form_uid).first().survey_uid
 
     column_config = TargetColumnConfig.query.filter(
-        TargetColumnConfig.form_uid == payload_validator.form_uid.data,
+        TargetColumnConfig.form_uid == form_uid,
     ).all()
 
     if len(column_config) == 0:
@@ -835,7 +778,7 @@ def bulk_update_targets():
         ].geo_level_uid
 
         location = Location.query.filter_by(
-            location_uid=payload_validator.location_uid.data,
+            location_uid=validated_payload.location_uid.data,
             geo_level_uid=bottom_level_geo_level_uid,
         ).first()
 
@@ -844,7 +787,7 @@ def bulk_update_targets():
                 jsonify(
                     {
                         "success": False,
-                        "errors": f"Location UID {payload_validator.location_uid.data} not found in the database for the bottom level geo level",
+                        "errors": f"Location UID {validated_payload.location_uid.data} not found in the database for the bottom level geo level",
                     }
                 ),
                 404,
@@ -855,7 +798,7 @@ def bulk_update_targets():
     )
     if len(basic_details_and_location_patch_keys) > 0:
         Target.query.filter(
-            Target.target_uid.in_(payload_validator.target_uids.data)
+            Target.target_uid.in_(validated_payload.target_uids.data)
         ).update(
             {key: payload[key] for key in basic_details_and_location_patch_keys},
             synchronize_session=False,
@@ -875,7 +818,7 @@ def bulk_update_targets():
                         ),
                     )
                 )
-                .where(Target.target_uid.in_(payload_validator.target_uids.data))
+                .where(Target.target_uid.in_(validated_payload.target_uids.data))
             )
 
     try:
@@ -889,26 +832,19 @@ def bulk_update_targets():
 
 @targets_bp.route("/column-config", methods=["PUT"])
 @logged_in_active_user_required
-def update_target_column_config():
+@validate_payload(UpdateTargetsColumnConfig)
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
+def update_target_column_config(validated_payload):
     """
     Method to update targets' column configuration
     """
 
     payload = request.get_json()
-    payload_validator = UpdateTargetsColumnConfig.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    form_uid = validated_payload.form_uid.data
 
     if (
         ParentForm.query.filter(
-            ParentForm.form_uid == payload_validator.form_uid.data,
+            ParentForm.form_uid == form_uid,
         ).first()
         is None
     ):
@@ -916,14 +852,14 @@ def update_target_column_config():
             jsonify(
                 {
                     "success": False,
-                    "errors": f"Form with UID {payload_validator.form_uid.data} does not exist",
+                    "errors": f"Form with UID {form_uid} does not exist",
                 }
             ),
             422,
         )
 
     TargetColumnConfig.query.filter(
-        TargetColumnConfig.form_uid == payload_validator.form_uid.data,
+        TargetColumnConfig.form_uid == form_uid,
     ).delete()
 
     db.session.flush()
@@ -952,7 +888,7 @@ def update_target_column_config():
 
         db.session.add(
             TargetColumnConfig(
-                form_uid=payload_validator.form_uid.data,
+                form_uid=form_uid,
                 column_name=column["column_name"],
                 column_type=column["column_type"],
                 bulk_editable=column["bulk_editable"],
@@ -971,18 +907,17 @@ def update_target_column_config():
 
 @targets_bp.route("/column-config", methods=["GET"])
 @logged_in_active_user_required
-def get_target_column_config():
+@validate_query_params(TargetsQueryParamValidator)
+@custom_permissions_required("READ Targets", "query", "form_uid")
+def get_target_column_config(validated_query_params):
     """
     Method to get targets' column configuration
     """
 
-    payload_validator = TargetsQueryParamValidator(request.args)
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    form_uid = validated_query_params.form_uid.data
 
     column_config = TargetColumnConfig.query.filter(
-        TargetColumnConfig.form_uid == payload_validator.form_uid.data,
+        TargetColumnConfig.form_uid == form_uid,
     ).all()
 
     return jsonify(

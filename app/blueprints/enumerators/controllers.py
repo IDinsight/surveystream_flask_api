@@ -1,5 +1,10 @@
 from flask import jsonify, request
-from app.utils.utils import logged_in_active_user_required
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_query_params,
+    validate_payload,
+)
 from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.dialects.postgresql import insert as pg_insert, JSONB
@@ -10,7 +15,7 @@ from sqlalchemy.orm import aliased
 from app import db
 from app.blueprints.surveys.models import Survey
 from app.blueprints.forms.models import ParentForm
-from app.blueprints.locations.models import Location, GeoLevel
+from app.blueprints.locations.models import Location
 from .models import (
     Enumerator,
     SurveyorForm,
@@ -27,7 +32,6 @@ from .validators import (
     UpdateEnumerator,
     CreateEnumeratorRole,
     UpdateEnumeratorRole,
-    DeleteEnumeratorRole,
     UpdateEnumeratorRoleStatus,
     GetEnumeratorRolesQueryParamValidator,
     BulkUpdateEnumeratorsValidator,
@@ -40,8 +44,6 @@ from .utils import (
     EnumeratorColumnMapping,
 )
 from .queries import build_prime_locations_with_location_hierarchy_subquery
-from app.blueprints.locations.utils import GeoLevelHierarchy
-from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from .errors import (
     HeaderRowEmptyError,
     InvalidEnumeratorRecordsError,
@@ -53,26 +55,15 @@ import binascii
 
 @enumerators_bp.route("", methods=["POST"])
 @logged_in_active_user_required
-def upload_enumerators():
+@validate_query_params(EnumeratorsQueryParamValidator)
+@validate_payload(EnumeratorsFileUploadValidator)
+@custom_permissions_required("WRITE Enumerators", "query", "form_uid")
+def upload_enumerators(validated_query_params, validated_payload):
     """
     Method to validate the uploaded enumerators file and save it to the database
     """
 
-    # Validate the query parameter
-    query_param_validator = EnumeratorsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    form_uid = request.args.get("form_uid")
+    form_uid = validated_query_params.form_uid.data
 
     # Get the survey UID from the form UID
     form = ParentForm.query.filter_by(form_uid=form_uid).first()
@@ -87,27 +78,6 @@ def upload_enumerators():
 
     survey_uid = form.survey_uid
 
-    payload = request.get_json()
-    payload_validator = EnumeratorsFileUploadValidator.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    # Validate the request body payload
-    if not payload_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": payload_validator.errors,
-                }
-            ),
-            422,
-        )
-
     # Get the prime geo level from the survey configuration
     prime_geo_level_uid = (
         Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
@@ -117,7 +87,7 @@ def upload_enumerators():
 
     try:
         column_mapping = EnumeratorColumnMapping(
-            payload_validator.column_mapping.data,
+            validated_payload.column_mapping.data,
             prime_geo_level_uid,
             optional_hardcoded_fields,
         )
@@ -138,7 +108,7 @@ def upload_enumerators():
     try:
         enumerators_upload = EnumeratorsUpload(
             csv_string=base64.b64decode(
-                payload_validator.file.data, validate=True
+                validated_payload.file.data, validate=True
             ).decode("utf-8"),
             column_mapping=column_mapping,
             survey_uid=survey_uid,
@@ -191,7 +161,7 @@ def upload_enumerators():
         enumerators_upload.validate_records(
             column_mapping,
             prime_geo_level_uid,
-            payload_validator.mode.data,
+            validated_payload.mode.data,
         )
     except InvalidFileStructureError as e:
         return (
@@ -221,7 +191,7 @@ def upload_enumerators():
     try:
         enumerators_upload.save_records(
             column_mapping,
-            payload_validator.mode.data,
+            validated_payload.mode.data,
         )
 
     except IntegrityError as e:
@@ -233,27 +203,15 @@ def upload_enumerators():
 
 @enumerators_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-def get_enumerators():
+@validate_query_params(GetEnumeratorsQueryParamValidator)
+@custom_permissions_required("READ Enumerators", "query", "form_uid")
+def get_enumerators(validated_query_params):
     """
     Method to retrieve the enumerators information from the database
     """
 
-    # Validate the query parameter
-    query_param_validator = GetEnumeratorsQueryParamValidator.from_json(request.args)
-    if not query_param_validator.validate():
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "data": None,
-                    "message": query_param_validator.errors,
-                }
-            ),
-            400,
-        )
-
-    form_uid = request.args.get("form_uid")
-    enumerator_type = request.args.get("enumerator_type")
+    form_uid = validated_query_params.form_uid.data
+    enumerator_type = validated_query_params.enumerator_type.data
     user_uid = current_user.user_uid
 
     # Check if the logged in user has permission to access the given form
@@ -407,6 +365,7 @@ def get_enumerators():
 
 @enumerators_bp.route("/<int:enumerator_uid>", methods=["GET"])
 @logged_in_active_user_required
+@custom_permissions_required("READ Enumerators", "path", "enumerator_uid")
 def get_enumerator(enumerator_uid):
     """
     Method to retrieve an enumerator from the database
@@ -435,95 +394,87 @@ def get_enumerator(enumerator_uid):
 
 @enumerators_bp.route("/<int:enumerator_uid>", methods=["PUT"])
 @logged_in_active_user_required
-def update_enumerator(enumerator_uid):
+@validate_payload(UpdateEnumerator)
+@custom_permissions_required("WRITE Enumerators", "path", "enumerator_uid")
+def update_enumerator(enumerator_uid, validated_payload):
     """
     Method to update an enumerator in the database
     """
 
     payload = request.get_json()
-    payload_validator = UpdateEnumerator.from_json(payload)
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
+    enumerator = Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first()
+    if enumerator is None:
+        return jsonify({"error": "Enumerator not found"}), 404
 
-    if payload_validator.validate():
-        enumerator = Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first()
-        if enumerator is None:
-            return jsonify({"error": "Enumerator not found"}), 404
+    # The payload needs to pass in the same custom field keys as are in the database
+    # This is because this method is used to update values but not add/remove/modify columns
+    custom_fields_in_db = getattr(enumerator, "custom_fields", None)
+    custom_fields_in_payload = payload.get("custom_fields")
 
-        # The payload needs to pass in the same custom field keys as are in the database
-        # This is because this method is used to update values but not add/remove/modify columns
-        custom_fields_in_db = getattr(enumerator, "custom_fields", None)
-        custom_fields_in_payload = payload.get("custom_fields")
+    keys_in_db = []
+    keys_in_payload = []
 
-        keys_in_db = []
-        keys_in_payload = []
+    if custom_fields_in_db is not None:
+        keys_in_db = custom_fields_in_db.keys()
 
-        if custom_fields_in_db is not None:
-            keys_in_db = custom_fields_in_db.keys()
+    if custom_fields_in_payload is not None:
+        keys_in_payload = custom_fields_in_payload.keys()
 
-        if custom_fields_in_payload is not None:
-            keys_in_payload = custom_fields_in_payload.keys()
-
-        for payload_key in keys_in_payload:
-            # exclude column_mapping from these checks
-            if payload_key not in keys_in_db and payload_key != "column_mapping":
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "errors": f"The payload has a custom key with field label {payload_key} that does not exist in the custom fields for the database record. This method can only be used to update values for existing fields, not to add/remove/modify fields",
-                        }
-                    ),
-                    422,
-                )
-        for db_key in keys_in_db:
-            # exclude column_mapping from these checks
-            if db_key not in keys_in_payload and db_key != "column_mapping":
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "errors": f"The payload is missing a custom key with field label {db_key} that exists in the database. This method can only be used to update values for existing fields, not to add/remove/modify fields",
-                        }
-                    ),
-                    422,
-                )
-
-            if db_key == "column_mapping":
-                # add column mapping to custom_fields from db
-                payload["custom_fields"]["column_mapping"] = custom_fields_in_db[db_key]
-
-        try:
-            Enumerator.query.filter_by(enumerator_uid=enumerator_uid).update(
-                {
-                    Enumerator.enumerator_id: payload_validator.enumerator_id.data,
-                    Enumerator.name: payload_validator.name.data,
-                    Enumerator.email: payload_validator.email.data,
-                    Enumerator.mobile_primary: payload_validator.mobile_primary.data,
-                    Enumerator.language: payload_validator.language.data,
-                    Enumerator.home_address: payload_validator.home_address.data,
-                    Enumerator.gender: payload_validator.gender.data,
-                    Enumerator.custom_fields: payload["custom_fields"],
-                },
-                synchronize_session="fetch",
+    for payload_key in keys_in_payload:
+        # exclude column_mapping from these checks
+        if payload_key not in keys_in_db and payload_key != "column_mapping":
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": f"The payload has a custom key with field label {payload_key} that does not exist in the custom fields for the database record. This method can only be used to update values for existing fields, not to add/remove/modify fields",
+                    }
+                ),
+                422,
             )
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"error": str(e)}), 500
+    for db_key in keys_in_db:
+        # exclude column_mapping from these checks
+        if db_key not in keys_in_payload and db_key != "column_mapping":
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": f"The payload is missing a custom key with field label {db_key} that exists in the database. This method can only be used to update values for existing fields, not to add/remove/modify fields",
+                    }
+                ),
+                422,
+            )
 
-        return jsonify({"success": True}), 200
+        if db_key == "column_mapping":
+            # add column mapping to custom_fields from db
+            payload["custom_fields"]["column_mapping"] = custom_fields_in_db[db_key]
 
-    else:
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    try:
+        Enumerator.query.filter_by(enumerator_uid=enumerator_uid).update(
+            {
+                Enumerator.enumerator_id: validated_payload.enumerator_id.data,
+                Enumerator.name: validated_payload.name.data,
+                Enumerator.email: validated_payload.email.data,
+                Enumerator.mobile_primary: validated_payload.mobile_primary.data,
+                Enumerator.language: validated_payload.language.data,
+                Enumerator.home_address: validated_payload.home_address.data,
+                Enumerator.gender: validated_payload.gender.data,
+                Enumerator.custom_fields: payload["custom_fields"],
+            },
+            synchronize_session="fetch",
+        )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"success": True}), 200
 
 
 @enumerators_bp.route("/<int:enumerator_uid>", methods=["DELETE"])
 @logged_in_active_user_required
+@custom_permissions_required("WRITE Enumerators", "path", "enumerator_uid")
 def delete_enumerator(enumerator_uid):
     """
     Method to delete an enumerator from the database
@@ -554,12 +505,6 @@ def delete_enumerator(enumerator_uid):
 #     """
 
 #     payload_validator = CreateEnumeratorRole.from_json(request.get_json())
-
-#     # Add the CSRF token to be checked by the validator
-#     if "X-CSRF-Token" in request.headers:
-#         payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-#     else:
-#         return jsonify(message="X-CSRF-Token required in header"), 403
 
 #     if not payload_validator.validate():
 #         return jsonify({"success": False, "errors": payload_validator.errors}), 422
@@ -762,27 +707,22 @@ def delete_enumerator(enumerator_uid):
 
 @enumerators_bp.route("/<int:enumerator_uid>/roles/locations", methods=["PUT"])
 @logged_in_active_user_required
-def update_enumerator_role(enumerator_uid):
+@validate_payload(UpdateEnumeratorRole)
+@custom_permissions_required("WRITE Enumerators", "path", "enumerator_uid")
+def update_enumerator_role(enumerator_uid, validated_payload):
     """
     Method to update an existing enumerator's role-location in the database
     Only the location mapping can be updated
     """
 
-    payload_validator = UpdateEnumeratorRole.from_json(request.get_json())
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    form_uid = validated_payload.form_uid.data
+    enumerator_type = validated_payload.enumerator_type.data
+    location_uid = validated_payload.location_uid.data
 
     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
         return jsonify({"error": "Enumerator not found"}), 404
 
-    form = ParentForm.query.filter_by(form_uid=payload_validator.form_uid.data).first()
+    form = ParentForm.query.filter_by(form_uid=form_uid).first()
     if form is None:
         return jsonify({"error": "Form not found"}), 404
 
@@ -793,12 +733,10 @@ def update_enumerator_role(enumerator_uid):
 
     # Check if the form-role already exists
     if (
-        db.session.query(
-            model_lookup[payload_validator.enumerator_type.data]["form_model"]
-        )
+        db.session.query(model_lookup[enumerator_type]["form_model"])
         .filter_by(
             enumerator_uid=enumerator_uid,
-            form_uid=payload_validator.form_uid.data,
+            form_uid=form_uid,
         )
         .first()
         is None
@@ -806,14 +744,14 @@ def update_enumerator_role(enumerator_uid):
         return (
             jsonify(
                 {
-                    "error": f"The enumerator is not assigned as a {payload_validator.enumerator_type.data} for the given form. Use the create endpoint to assign the enumerator as a {payload_validator.enumerator_type.data}.",
+                    "error": f"The enumerator is not assigned as a {enumerator_type} for the given form. Use the create endpoint to assign the enumerator as a {enumerator_type}.",
                     "success": False,
                 }
             ),
             409,
         )
 
-    if payload_validator.location_uid.data is not None:
+    if location_uid is not None:
         # Check if the prime geo level is configured for the survey
         prime_geo_level_uid = (
             Survey.query.filter_by(survey_uid=form.survey_uid)
@@ -824,7 +762,7 @@ def update_enumerator_role(enumerator_uid):
             return (
                 jsonify(
                     {
-                        "error": f"Prime geo level not configured for the survey. Cannot map {payload_validator.enumerator_type.data} to location"
+                        "error": f"Prime geo level not configured for the survey. Cannot map {enumerator_type} to location"
                     }
                 ),
                 400,
@@ -832,7 +770,7 @@ def update_enumerator_role(enumerator_uid):
 
         # Check if the location exists for the form's survey
         location = Location.query.filter_by(
-            location_uid=payload_validator.location_uid.data,
+            location_uid=location_uid,
             survey_uid=form.survey_uid,
         ).first()
         if location is None:
@@ -854,18 +792,16 @@ def update_enumerator_role(enumerator_uid):
 
         # Do an upsert of the surveyor location mapping
         statement = (
-            pg_insert(
-                model_lookup[payload_validator.enumerator_type.data]["location_model"]
-            )
+            pg_insert(model_lookup[enumerator_type]["location_model"])
             .values(
                 enumerator_uid=enumerator_uid,
-                form_uid=payload_validator.form_uid.data,
-                location_uid=payload_validator.location_uid.data,
+                form_uid=form_uid,
+                location_uid=location_uid,
             )
             .on_conflict_do_update(
-                constraint=f"pkey_{payload_validator.enumerator_type.data}_location",
+                constraint=f"pkey_{enumerator_type}_location",
                 set_={
-                    "location_uid": payload_validator.location_uid.data,
+                    "location_uid": location_uid,
                 },
             )
         )
@@ -873,11 +809,9 @@ def update_enumerator_role(enumerator_uid):
         db.session.execute(statement)
 
     else:
-        db.session.query(
-            model_lookup[payload_validator.enumerator_type.data]["location_model"]
-        ).filter_by(
+        db.session.query(model_lookup[enumerator_type]["location_model"]).filter_by(
             enumerator_uid=enumerator_uid,
-            form_uid=payload_validator.form_uid.data,
+            form_uid=form_uid,
         ).delete()
 
     try:
@@ -896,12 +830,6 @@ def update_enumerator_role(enumerator_uid):
 #     """
 
 #     payload_validator = DeleteEnumeratorRole.from_json(request.get_json())
-
-#     # Add the CSRF token to be checked by the validator
-#     if "X-CSRF-Token" in request.headers:
-#         payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-#     else:
-#         return jsonify(message="X-CSRF-Token required in header"), 403
 
 #     if not payload_validator.validate():
 #         return jsonify({"success": False, "errors": payload_validator.errors}), 422
@@ -969,29 +897,21 @@ def update_enumerator_role(enumerator_uid):
 # Patch method to update an enumerator's status
 @enumerators_bp.route("/<int:enumerator_uid>/roles/status", methods=["PATCH"])
 @logged_in_active_user_required
-def update_enumerator_status(enumerator_uid):
+@validate_payload(UpdateEnumeratorRoleStatus)
+@custom_permissions_required("WRITE Enumerators", "path", "enumerator_uid")
+def update_enumerator_status(enumerator_uid, validated_payload):
     """
     Method to update an enumerator's status
     """
 
-    payload_validator = UpdateEnumeratorRoleStatus.from_json(request.get_json())
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    form_uid = validated_payload.form_uid.data
+    enumerator_type = validated_payload.enumerator_type.data
+    status = validated_payload.status.data
 
     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
         return jsonify({"error": "Enumerator not found"}), 404
 
-    if (
-        ParentForm.query.filter_by(form_uid=payload_validator.form_uid.data).first()
-        is None
-    ):
+    if ParentForm.query.filter_by(form_uid=form_uid).first() is None:
         return jsonify({"error": "Form not found"}), 404
 
     model_lookup = {
@@ -1000,10 +920,8 @@ def update_enumerator_status(enumerator_uid):
     }
 
     result = (
-        db.session.query(model_lookup[payload_validator.enumerator_type.data])
-        .filter_by(
-            enumerator_uid=enumerator_uid, form_uid=payload_validator.form_uid.data
-        )
+        db.session.query(model_lookup[enumerator_type])
+        .filter_by(enumerator_uid=enumerator_uid, form_uid=form_uid)
         .first()
     )
 
@@ -1011,14 +929,14 @@ def update_enumerator_status(enumerator_uid):
         return (
             jsonify(
                 {
-                    "error": f"The enumerator is not assigned as a {payload_validator.enumerator_type.data} for the given form. Nothing to update.",
+                    "error": f"The enumerator is not assigned as a {enumerator_type} for the given form. Nothing to update.",
                     "success": False,
                 }
             ),
             404,
         )
 
-    result.status = payload_validator.status.data
+    result.status = status
 
     try:
         db.session.commit()
@@ -1031,25 +949,22 @@ def update_enumerator_status(enumerator_uid):
 
 @enumerators_bp.route("/<int:enumerator_uid>/roles", methods=["GET"])
 @logged_in_active_user_required
-def get_enumerator_roles(enumerator_uid):
+@validate_query_params(GetEnumeratorRolesQueryParamValidator)
+@custom_permissions_required("READ Enumerators", "path", "enumerator_uid")
+def get_enumerator_roles(enumerator_uid, validated_query_params):
     """
     Method to get an enumerator's roles from the database
     """
 
-    payload_validator = GetEnumeratorRolesQueryParamValidator.from_json(request.args)
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    enumerator_type = validated_query_params.enumerator_type.data
+    form_uid = validated_query_params.form_uid.data
 
     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
         return jsonify({"error": "Enumerator not found"}), 404
 
     roles = []
 
-    if (
-        payload_validator.enumerator_type.data == "surveyor"
-        or payload_validator.enumerator_type.data is None
-    ):
+    if enumerator_type == "surveyor" or enumerator_type is None:
         surveyor_result = (
             db.session.query(SurveyorForm, SurveyorLocation)
             .join(
@@ -1060,7 +975,7 @@ def get_enumerator_roles(enumerator_uid):
             )
             .filter(
                 SurveyorForm.enumerator_uid == enumerator_uid,
-                SurveyorForm.form_uid == payload_validator.form_uid.data,
+                SurveyorForm.form_uid == form_uid,
             )
             .all()
         )
@@ -1084,10 +999,7 @@ def get_enumerator_roles(enumerator_uid):
         if len(surveyor_nested_result) > 0:
             roles.append(surveyor_nested_result)
 
-    if (
-        payload_validator.enumerator_type.data == "monitor"
-        or payload_validator.enumerator_type.data is None
-    ):
+    if enumerator_type == "monitor" or enumerator_type is None:
         monitor_result = (
             db.session.query(MonitorForm, MonitorLocation)
             .join(
@@ -1098,7 +1010,7 @@ def get_enumerator_roles(enumerator_uid):
             )
             .filter(
                 MonitorForm.enumerator_uid == enumerator_uid,
-                MonitorForm.form_uid == payload_validator.form_uid.data,
+                MonitorForm.form_uid == form_uid,
             )
             .all()
         )
@@ -1127,7 +1039,7 @@ def get_enumerator_roles(enumerator_uid):
             {
                 "success": True,
                 "data": {
-                    "form_uid": payload_validator.form_uid.data,
+                    "form_uid": form_uid,
                     "roles": roles,
                 },
             }
@@ -1139,25 +1051,20 @@ def get_enumerator_roles(enumerator_uid):
 # Patch method to bulk update enumerator details
 @enumerators_bp.route("", methods=["PATCH"])
 @logged_in_active_user_required
-def bulk_update_enumerators_custom_fields():
+@validate_payload(BulkUpdateEnumeratorsValidator)
+@custom_permissions_required("WRITE Enumerators", "body", "form_uid")
+def bulk_update_enumerators_custom_fields(validated_payload):
     """
     Method to bulk update enumerators
     """
 
     payload = request.get_json()
-    payload_validator = BulkUpdateEnumeratorsValidator.from_json(payload)
 
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    form_uid = validated_payload.form_uid.data
+    enumerator_uids = validated_payload.enumerator_uids.data
 
     column_config = EnumeratorColumnConfig.query.filter(
-        EnumeratorColumnConfig.form_uid == payload_validator.form_uid.data,
+        EnumeratorColumnConfig.form_uid == form_uid,
     ).all()
 
     if len(column_config) == 0:
@@ -1233,9 +1140,7 @@ def bulk_update_enumerators_custom_fields():
     ]
 
     if len(personal_details_patch_keys) > 0:
-        Enumerator.query.filter(
-            Enumerator.enumerator_uid.in_(payload_validator.enumerator_uids.data)
-        ).update(
+        Enumerator.query.filter(Enumerator.enumerator_uid.in_(enumerator_uids)).update(
             {key: payload[key] for key in personal_details_patch_keys},
             synchronize_session=False,
         )
@@ -1254,11 +1159,7 @@ def bulk_update_enumerators_custom_fields():
                         ),
                     )
                 )
-                .where(
-                    Enumerator.enumerator_uid.in_(
-                        payload_validator.enumerator_uids.data
-                    )
-                )
+                .where(Enumerator.enumerator_uid.in_(enumerator_uids))
             )
 
     try:
@@ -1272,26 +1173,20 @@ def bulk_update_enumerators_custom_fields():
 
 @enumerators_bp.route("/roles/locations", methods=["PUT"])
 @logged_in_active_user_required
-def bulk_update_enumerators_role_locations():
+@validate_payload(BulkUpdateEnumeratorsRoleLocationValidator)
+@custom_permissions_required("WRITE Enumerators", "body", "form_uid")
+def bulk_update_enumerators_role_locations(validated_payload):
     """
     Method to bulk update enumerators' locations for a given role
     """
 
-    payload_validator = BulkUpdateEnumeratorsRoleLocationValidator.from_json(
-        request.get_json()
-    )
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    form_uid = validated_payload.form_uid.data
+    enumerator_type = validated_payload.enumerator_type.data
+    location_uids = validated_payload.data["location_uids"]
+    enumerator_uids = validated_payload.data["enumerator_uids"]
 
     column_config = EnumeratorColumnConfig.query.filter(
-        EnumeratorColumnConfig.form_uid == payload_validator.form_uid.data,
+        EnumeratorColumnConfig.form_uid == form_uid,
         EnumeratorColumnConfig.column_name == "prime_geo_level_location",
         EnumeratorColumnConfig.column_type == "location",
     ).first()
@@ -1316,18 +1211,15 @@ def bulk_update_enumerators_role_locations():
         )
 
     # Check if the location UIDs are valid
-    if (
-        payload_validator.data["location_uids"] is not None
-        and len(payload_validator.data["location_uids"]) > 0
-    ):
+    if location_uids is not None and len(location_uids) > 0:
         returned_location_uids = [
             location.location_uid
             for location in Location.query.filter(
-                Location.location_uid.in_(payload_validator.data["location_uids"])
+                Location.location_uid.in_(validated_payload.data["location_uids"])
             ).all()
         ]
 
-        for location_uid in payload_validator.data["location_uids"]:
+        for location_uid in location_uids:
             if location_uid not in returned_location_uids:
                 return (
                     jsonify(
@@ -1342,11 +1234,11 @@ def bulk_update_enumerators_role_locations():
     returned_location_uids = [
         location.location_uid
         for location in Location.query.filter(
-            Location.location_uid.in_(payload_validator.data["location_uids"])
+            Location.location_uid.in_(location_uids)
         ).all()
     ]
 
-    for location_uid in payload_validator.data["location_uids"]:
+    for location_uid in location_uids:
         if location_uid not in returned_location_uids:
             return (
                 jsonify(
@@ -1362,20 +1254,19 @@ def bulk_update_enumerators_role_locations():
         "monitor": MonitorLocation,
     }
 
-    model = model_lookup[payload_validator.enumerator_type.data]
-
+    model = model_lookup[enumerator_type]
     db.session.query(model).filter(
-        model.enumerator_uid.in_(payload_validator.data["enumerator_uids"]),
-        model.form_uid == payload_validator.form_uid.data,
+        model.enumerator_uid.in_(enumerator_uids),
+        model.form_uid == form_uid,
     ).delete()
 
-    if payload_validator.data["location_uids"] is not None:
-        for enumerator_uid in payload_validator.data["enumerator_uids"]:
-            for location_uid in payload_validator.data["location_uids"]:
+    if location_uids is not None:
+        for enumerator_uid in enumerator_uids:
+            for location_uid in location_uids:
                 db.session.add(
                     model(
                         enumerator_uid=enumerator_uid,
-                        form_uid=payload_validator.form_uid.data,
+                        form_uid=form_uid,
                         location_uid=location_uid,
                     )
                 )
@@ -1391,26 +1282,19 @@ def bulk_update_enumerators_role_locations():
 
 @enumerators_bp.route("/column-config", methods=["PUT"])
 @logged_in_active_user_required
-def update_enumerator_column_config():
+@validate_payload(UpdateEnumeratorsColumnConfig)
+@custom_permissions_required("WRITE Enumerators", "body", "form_uid")
+def update_enumerator_column_config(validated_payload):
     """
     Method to update enumerators' column configuration
     """
 
     payload = request.get_json()
-    payload_validator = UpdateEnumeratorsColumnConfig.from_json(payload)
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        payload_validator.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    form_uid = validated_payload.form_uid.data
 
     if (
         ParentForm.query.filter(
-            ParentForm.form_uid == payload_validator.form_uid.data,
+            ParentForm.form_uid == form_uid,
         ).first()
         is None
     ):
@@ -1418,14 +1302,14 @@ def update_enumerator_column_config():
             jsonify(
                 {
                     "success": False,
-                    "errors": f"Form with UID {payload_validator.form_uid.data} does not exist",
+                    "errors": f"Form with UID {form_uid} does not exist",
                 }
             ),
             422,
         )
 
     EnumeratorColumnConfig.query.filter(
-        EnumeratorColumnConfig.form_uid == payload_validator.form_uid.data,
+        EnumeratorColumnConfig.form_uid == form_uid,
     ).delete()
 
     db.session.flush()
@@ -1444,7 +1328,7 @@ def update_enumerator_column_config():
 
         db.session.add(
             EnumeratorColumnConfig(
-                form_uid=payload_validator.form_uid.data,
+                form_uid=form_uid,
                 column_name=column["column_name"],
                 column_type=column["column_type"],
                 bulk_editable=column["bulk_editable"],
@@ -1462,18 +1346,17 @@ def update_enumerator_column_config():
 
 @enumerators_bp.route("/column-config", methods=["GET"])
 @logged_in_active_user_required
-def get_enumerator_column_config():
+@validate_query_params(EnumeratorColumnConfigQueryParamValidator)
+@custom_permissions_required("READ Enumerators", "query", "form_uid")
+def get_enumerator_column_config(validated_query_params):
     """
     Method to get enumerators' column configuration
     """
 
-    payload_validator = EnumeratorColumnConfigQueryParamValidator(request.args)
-
-    if not payload_validator.validate():
-        return jsonify({"success": False, "errors": payload_validator.errors}), 422
+    form_uid = validated_query_params.form_uid.data
 
     column_config = EnumeratorColumnConfig.query.filter(
-        EnumeratorColumnConfig.form_uid == payload_validator.form_uid.data,
+        EnumeratorColumnConfig.form_uid == form_uid,
     ).all()
 
     return jsonify(

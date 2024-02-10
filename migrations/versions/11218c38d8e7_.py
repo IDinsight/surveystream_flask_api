@@ -1,7 +1,7 @@
 """Add assignments_table_config table
 
 Revision ID: 11218c38d8e7
-Revises: 477d50f4a869
+Revises: 683e16cb0795
 Create Date: 2024-01-24 01:45:47.489312
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "11218c38d8e7"
-down_revision = "477d50f4a869"
+down_revision = "683e16cb0795"
 branch_labels = None
 depends_on = None
 
