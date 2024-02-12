@@ -19,7 +19,7 @@ class Enumerator(db.Model):
     name = db.Column(db.String(), nullable=False)
     email = db.Column(db.String(), nullable=False)
     mobile_primary = db.Column(db.String(), nullable=False)
-    language = db.Column(db.String(), nullable=False)
+    language = db.Column(db.String(), nullable=True)
     home_address = db.Column(db.String(), nullable=True)
     gender = db.Column(db.String(), nullable=True)
     custom_fields = db.Column(JSONB, nullable=True)
