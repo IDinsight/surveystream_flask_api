@@ -2,7 +2,6 @@
 Add survey admins table
 Update can_create_survey on the user table
 Remove is_survey_admin from the user table
-Update language on enumerators to be required
 
 Revision ID: 0a0ad04d278a
 Revises: 11218c38d8e7
@@ -30,11 +29,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('survey_uid', 'user_uid', name='_survey_uid_user_uid_uc'),
     schema='webapp'
     )
-    with op.batch_alter_table('enumerators', schema='webapp') as batch_op:
-        batch_op.alter_column('language',
-               existing_type=sa.VARCHAR(),
-               nullable=False)
-
     with op.batch_alter_table('users', schema='webapp') as batch_op:
         batch_op.add_column(sa.Column('can_create_survey', sa.Boolean(), nullable=True))
         batch_op.drop_column('is_survey_admin')
@@ -47,11 +41,5 @@ def downgrade():
     with op.batch_alter_table('users', schema='webapp') as batch_op:
         batch_op.add_column(sa.Column('is_survey_admin', sa.BOOLEAN(), autoincrement=False, nullable=True))
         batch_op.drop_column('can_create_survey')
-
-    with op.batch_alter_table('enumerators', schema='webapp') as batch_op:
-        batch_op.alter_column('language',
-               existing_type=sa.VARCHAR(),
-               nullable=True)
-
     op.drop_table('survey_admins', schema='webapp')
     # ### end Alembic commands ###
