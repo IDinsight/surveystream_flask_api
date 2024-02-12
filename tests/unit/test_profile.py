@@ -113,7 +113,7 @@ class TestProfile:
                 "Content-Type": "multipart/form-data",
             },
         )
-
+        print(response.json)
         assert response.status_code == 200
 
         response = client.get("/api/profile/avatar")
@@ -191,7 +191,7 @@ class TestProfile:
             response.json,
         )
 
-        assert checkdiff == {"email": new_email, 'is_super_admin': True}
+        assert checkdiff == {"email": new_email, "is_super_admin": True}
 
     def test_profile_update_invalid_email(self, client, login_test_user, csrf_token):
         """

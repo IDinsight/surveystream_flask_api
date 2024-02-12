@@ -8,7 +8,7 @@ from sqlalchemy import func
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
-from app.blueprints.roles.models import Role
+from app.blueprints.roles.models import Role, SurveyAdmin
 from .models import Invite
 from .utils import generate_invite_code, send_invite_email
 from .validators import (
@@ -19,12 +19,17 @@ from .validators import (
     EditUserValidator,
     CheckUserValidator,
 )
-from app.utils.utils import logged_in_active_user_required
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_payload,
+)
 
 
 @user_management_bp.route("/register", methods=["POST"])
 @logged_in_active_user_required
-def register():
+@validate_payload(RegisterValidator)
+def register(validated_payload):
     """
     Endpoint to register users
     Requires JSON body with following keys:
@@ -33,38 +38,33 @@ def register():
     Requires X-CSRF-Token in header, obtained from cookie set by /get-csrf
     """
 
-    form = RegisterValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
+    email = validated_payload.email.data
+    password = validated_payload.password.data
 
-    if form.validate():
-        if current_user.email == "registration_user":
-            user_with_email = User.query.filter_by(email=form.email.data).first()
-            if not user_with_email:
-                new_user = User(
-                    email=form.email.data,
-                    first_name="",
-                    last_name="",
-                    password=form.password.data,
-                    roles=[],
-                    is_super_admin=True,
-                )
-                db.session.add(new_user)
-                db.session.commit()
-                return jsonify(message="Success: registered"), 200
-            else:
-                return jsonify(message="User already exists with email"), 422
+    if current_user.email == "registration_user":
+        user_with_email = User.query.filter_by(email=email).first()
+        if not user_with_email:
+            new_user = User(
+                email=email,
+                first_name="",
+                last_name="",
+                password=password,
+                roles=[],
+                is_super_admin=True,
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            return jsonify(message="Success: registered"), 200
         else:
-            return jsonify(message="Unauthorized"), 401
+            return jsonify(message="User already exists with email"), 422
     else:
-        return jsonify(message=form.errors), 422
+        return jsonify(message="Unauthorized"), 401
 
 
 @user_management_bp.route("/welcome-user", methods=["POST"])
 @logged_in_active_user_required
-def welcome_user():
+@validate_payload(WelcomeUserValidator)
+def welcome_user(validated_payload):
     """
     Endpoint to send welcome email with password reset to new user
 
@@ -74,46 +74,38 @@ def welcome_user():
     Requires X-CSRF-Token in header, obtained from cookie set by /get-csrf
     """
 
-    form = WelcomeUserValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
+    email = validated_payload.email.data
 
-    if form.validate():
-        if current_user.email == "registration_user":
-            user = User.query.filter_by(email=form.email.data).first()
+    if current_user.email == "registration_user":
+        user = User.query.filter_by(email=email).first()
 
-            if user:
-                email_token = genword(length=32, charset="ascii_62")
-                rpt = ResetPasswordToken(user.user_uid, email_token)
+        if user:
+            email_token = genword(length=32, charset="ascii_62")
+            rpt = ResetPasswordToken(user.user_uid, email_token)
 
-                # Add this rpt, delete all other rpts for this user
-                ResetPasswordToken.query.filter_by(user_uid=user.user_uid).delete()
-                db.session.add(rpt)
-                db.session.commit()
+            # Add this rpt, delete all other rpts for this user
+            ResetPasswordToken.query.filter_by(user_uid=user.user_uid).delete()
+            db.session.add(rpt)
+            db.session.commit()
 
-                rp_message = Message(
-                    subject="Welcome to SurveyStream - Password Reset Required",
-                    html="Welcome to SurveyStream! Your login email is %s. Please reset your password by clicking <a href='%s/reset-password/%s/%s'>here</a>.<br><br>The link will expire in 24 hours."
-                    % (
-                        user.email,
-                        current_app.config["REACT_BASE_URL"],
-                        rpt.reset_uid,
-                        email_token,
-                    ),
-                    recipients=[user.email],
-                )
-                mail.send(rp_message)
-                return jsonify(message="Request processed"), 200
-            else:
-                return jsonify(message="Record not found"), 404
-
+            rp_message = Message(
+                subject="Welcome to SurveyStream - Password Reset Required",
+                html="Welcome to SurveyStream! Your login email is %s. Please reset your password by clicking <a href='%s/reset-password/%s/%s'>here</a>.<br><br>The link will expire in 24 hours."
+                % (
+                    user.email,
+                    current_app.config["REACT_BASE_URL"],
+                    rpt.reset_uid,
+                    email_token,
+                ),
+                recipients=[user.email],
+            )
+            mail.send(rp_message)
+            return jsonify(message="Request processed"), 200
         else:
-            return jsonify(message="Unauthorized"), 401
+            return jsonify(message="Record not found"), 404
 
     else:
-        return jsonify(message=form.errors), 422
+        return jsonify(message="Unauthorized"), 401
 
 
 ##############################################################################
@@ -123,35 +115,30 @@ def welcome_user():
 
 @user_management_bp.route("/users/check-email-availability", methods=["POST"])
 @logged_in_active_user_required
-def check_user():
+@validate_payload(CheckUserValidator)
+def check_user(validated_payload):
     """
     Endpoint to check a user by email, The endpoint will check if a user exists and then return the user details
     Requires JSON body with the following keys:
     - email
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
-    form = CheckUserValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
-    if form.validate():
-        user_with_email = User.query.filter_by(email=form.email.data).first()
-        if not user_with_email:
-            return jsonify(message="User not found"), 404
-        else:
-            return (
-                jsonify(message="User already exists", user=user_with_email.to_dict()),
-                200,
-            )
+    user_with_email = User.query.filter_by(email=validated_payload.email.data).first()
+    if not user_with_email:
+        return jsonify(message="User not found"), 404
     else:
-        return jsonify(message=form.errors), 422
+        return (
+            jsonify(message="User already exists", user=user_with_email.to_dict()),
+            200,
+        )
 
 
 @user_management_bp.route("/users", methods=["POST"])
 @logged_in_active_user_required
-def add_user():
+@validate_payload(AddUserValidator)
+@custom_permissions_required("ADMIN")
+def add_user(validated_payload):
     """
     Endpoint to invite a user by email, The endpoint will create a user without a password and send the user an email
 
@@ -161,63 +148,67 @@ def add_user():
     - last_name
     - role
     - is_super_admin
+    - can_create_survey
 
     This will not require a password
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
-    form = AddUserValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
-    if form.validate():
-        user_with_email = User.query.filter_by(email=form.email.data).first()
-        if not user_with_email:
-            # Create the user without a password
-            new_user = User(
-                email=form.email.data,
-                first_name=form.first_name.data,
-                last_name=form.last_name.data,
-                password=None,
-                roles=form.roles.data,
-                is_super_admin=form.is_super_admin.data,
-            )
+    user_with_email = User.query.filter_by(email=validated_payload.email.data).first()
+    if not user_with_email:
+        # Create the user without a password
+        new_user = User(
+            email=validated_payload.email.data,
+            first_name=validated_payload.first_name.data,
+            last_name=validated_payload.last_name.data,
+            password=None,
+            roles=validated_payload.roles.data,
+            is_super_admin=validated_payload.is_super_admin.data,
+            can_create_survey=validated_payload.can_create_survey.data,
+        )
 
-            db.session.add(new_user)
-            db.session.commit()
+        db.session.add(new_user)
+        db.session.commit()
 
-            invite_code = generate_invite_code()
-
-            invite = Invite(
-                invite_code=invite_code,
-                email=form.email.data,
+        # Check if user is supposed to be a survey admin and add them to the list
+        if validated_payload.is_survey_admin.data:
+            survey_admin_entry = SurveyAdmin(
+                survey_uid=validated_payload.survey_uid.data,
                 user_uid=new_user.user_uid,
-                is_active=True,
             )
-
-            db.session.add(invite)
+            db.session.add(survey_admin_entry)
             db.session.commit()
 
-            # send an invitation email to the user
-            send_invite_email(form.email.data, invite_code)
+        invite_code = generate_invite_code()
 
-            return (
-                jsonify(
-                    message="Success: user invited",
-                    user=new_user.to_dict(),
-                    invite=invite.to_dict(),
-                ),
-                200,
-            )
-        else:
-            return jsonify(message="User already exists with email"), 422
+        invite = Invite(
+            invite_code=invite_code,
+            email=validated_payload.email.data,
+            user_uid=new_user.user_uid,
+            is_active=True,
+        )
+
+        db.session.add(invite)
+        db.session.commit()
+
+        # send an invitation email to the user
+        send_invite_email(validated_payload.email.data, invite_code)
+
+        return (
+            jsonify(
+                message="Success: user invited",
+                user=new_user.to_dict(),
+                invite=invite.to_dict(),
+            ),
+            200,
+        )
     else:
-        return jsonify(message=form.errors), 422
+        return jsonify(message="User already exists with email"), 422
 
 
 @user_management_bp.route("/users/complete-registration", methods=["POST"])
-def complete_registration():
+@validate_payload(CompleteRegistrationValidator)
+def complete_registration(validated_payload):
     """
     Endpoint to complete user registration using an invite code.
 
@@ -226,42 +217,29 @@ def complete_registration():
     - new_password
     - confirm_password
     """
-    form = CompleteRegistrationValidator.from_json(request.get_json())
-
-    # Add the CSRF token to be checked by the validator
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
 
     try:
-        if form.validate():
-            invite_code = form.invite_code.data
-            new_password = form.new_password.data
+        invite_code = validated_payload.invite_code.data
+        new_password = validated_payload.new_password.data
 
-            # Find the invite with the provided invite code
-            invite = Invite.query.filter_by(
-                invite_code=invite_code, is_active=True
-            ).first()
+        # Find the invite with the provided invite code
+        invite = Invite.query.filter_by(invite_code=invite_code, is_active=True).first()
 
-            if not invite:
-                return jsonify(message="Invalid or expired invite code"), 404
+        if not invite:
+            return jsonify(message="Invalid or expired invite code"), 404
 
-            # Update user password and set invite status to inactive
-            user = User.query.get(invite.user_uid)
-            # update user in case it was deleted
-            user.to_delete = False
-            user.active = True
-            user.change_password(new_password)
+        # Update user password and set invite status to inactive
+        user = User.query.get(invite.user_uid)
+        # update user in case it was deleted
+        user.to_delete = False
+        user.active = True
+        user.change_password(new_password)
 
-            # Update invite status to inactive
-            invite.is_active = False
-            db.session.commit()
+        # Update invite status to inactive
+        invite.is_active = False
+        db.session.commit()
 
-            return jsonify(message="Success: registration completed"), 200
-        else:
-            error_messages = {field: form.errors[field][0] for field in form.errors}
-            return jsonify(errors=error_messages), 422
+        return jsonify(message="Success: registration completed"), 200
     except Exception as e:
         db.session.rollback()
         return jsonify(message="An error occurred while processing your request"), 500
@@ -269,7 +247,8 @@ def complete_registration():
 
 @user_management_bp.route("/users/<int:user_uid>", methods=["PUT"])
 @logged_in_active_user_required
-def edit_user(user_uid):
+@validate_payload(EditUserValidator)
+def edit_user(user_uid, validated_payload):
     """
     Endpoint to edit a user's information.
 
@@ -279,35 +258,55 @@ def edit_user(user_uid):
     - last_name
     - roles
     - is_super_admin
+    - is_survey_admin
 
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
-    form = EditUserValidator.from_json(request.get_json())
-    if "X-CSRF-Token" in request.headers:
-        form.csrf_token.data = request.headers.get("X-CSRF-Token")
-    else:
-        return jsonify(message="X-CSRF-Token required in header"), 403
+    user_to_edit = User.query.get(user_uid)
 
-    if form.validate():
-        user_to_edit = User.query.get(user_uid)
+    if user_to_edit:
+        # Update user information based on the form input
+        user_to_edit.email = validated_payload.email.data
+        user_to_edit.first_name = validated_payload.first_name.data
+        user_to_edit.last_name = validated_payload.last_name.data
+        user_to_edit.roles = validated_payload.roles.data
+        user_to_edit.is_super_admin = validated_payload.is_super_admin.data
+        user_to_edit.can_create_survey = validated_payload.can_create_survey.data
+        user_to_edit.to_delete = False
+        user_to_edit.active = True
 
-        if user_to_edit:
-            # Update user information based on the form input
-            user_to_edit.email = form.email.data
-            user_to_edit.first_name = form.first_name.data
-            user_to_edit.last_name = form.last_name.data
-            user_to_edit.roles = form.roles.data
-            user_to_edit.is_super_admin = form.is_super_admin.data
-            user_to_edit.to_delete = False
-            user_to_edit.active = True
+        # Add or remove survey admin privileges based on is_survey_admin field
+        if validated_payload.is_survey_admin.data:
+            survey_uid = validated_payload.survey_uid.data
 
-            db.session.commit()
-            user_data = user_to_edit.to_dict()
-            return jsonify(message="User updated", user_data=user_data), 200
+            # Only proceed if survey_uid is provided
+            if survey_uid:
+                survey_admin_entry = SurveyAdmin.query.filter_by(
+                    user_uid=user_uid, survey_uid=survey_uid
+                ).first()
+                if not survey_admin_entry:
+                    survey_admin_entry = SurveyAdmin(
+                        survey_uid=survey_uid, user_uid=user_uid
+                    )
+                    db.session.add(survey_admin_entry)
         else:
-            return jsonify(message="User not found"), 404
+            survey_uid = validated_payload.survey_uid.data
+
+            # Only proceed if survey_uid is provided
+            if survey_uid:
+                # Remove survey admin entry
+                survey_admin_entry = SurveyAdmin.query.filter_by(
+                    user_uid=user_uid, survey_uid=survey_uid
+                ).first()
+                if survey_admin_entry:
+                    db.session.delete(survey_admin_entry)
+                    db.session.commit()  # Commit the deletion
+
+        db.session.commit()
+        user_data = user_to_edit.to_dict()
+        return jsonify(message="User updated", user_data=user_data), 200
     else:
-        return jsonify(message=form.errors), 422
+        return jsonify(message="User not found"), 404
 
 
 @user_management_bp.route("/users/<int:user_uid>", methods=["GET"])
@@ -317,18 +316,18 @@ def get_user(user_uid):
     Endpoint to get information for a single user.
     """
     user = User.query.filter(
-        (User.user_uid == user_uid)
-        & (User.to_delete.isnot(True))
+        (User.user_uid == user_uid) & (User.to_delete.isnot(True))
     ).first()
 
     if user:
         user_data = {
-            "user_id": user.user_uid,
+            "user_uid": user.user_uid,
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "roles": user.roles,
             "is_super_admin": user.is_super_admin,
+            "can_create_survey": user.can_create_survey,
         }
         return jsonify(user_data), 200
     else:
@@ -337,6 +336,7 @@ def get_user(user_uid):
 
 @user_management_bp.route("/users", methods=["GET"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def get_all_users():
     """
     Endpoint to get information for all users.
@@ -393,7 +393,7 @@ def get_all_users():
 
     for user, invite_is_active, user_role_names, user_survey_names in users:
         user_data = {
-            "user_id": user.user_uid,
+            "user_uid": user.user_uid,
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
@@ -401,9 +401,12 @@ def get_all_users():
             "user_survey_names": user_survey_names,
             "user_role_names": user_role_names,
             "is_super_admin": user.is_super_admin,
-            "status": "Active"
-            if user.active
-            else ("Invite pending" if invite_is_active else "Deactivated"),
+            "can_create_survey": user.can_create_survey,
+            "status": (
+                "Active"
+                if user.active
+                else ("Invite pending" if invite_is_active else "Deactivated")
+            ),
         }
 
         user_list.append(user_data)
@@ -413,6 +416,7 @@ def get_all_users():
 
 @user_management_bp.route("/users/<int:user_uid>", methods=["DELETE"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def delete_user(user_uid):
     """
     Endpoint to delete a user.

@@ -1,0 +1,1 @@
+COPY webapp.permissions (name,description,active) FROM '/docker-entrypoint-initdb.d/data/permissions.csv' DELIMITER ',' CSV HEADER;

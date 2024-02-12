@@ -7,7 +7,7 @@ class GetParentFormQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    survey_uid = IntegerField(validators=[DataRequired()])
+    survey_uid = IntegerField()
 
 
 class CreateParentFormValidator(FlaskForm):
@@ -31,10 +31,6 @@ class UpdateParentFormValidator(FlaskForm):
     server_access_allowed = BooleanField()
 
 
-class DeleteParentFormValidator(FlaskForm):
-    pass
-
-
 class LocationQuestionMappingValidator(FlaskForm):
     class Meta:
         csrf = False
@@ -56,15 +52,3 @@ class UpdateSCTOQuestionMappingValidator(FlaskForm):
     target_id = StringField(validators=[DataRequired()])
     enumerator_id = StringField(validators=[DataRequired()])
     locations = FormField(LocationQuestionMappingValidator)
-
-
-class DeleteSCTOQuestionMappingValidator(FlaskForm):
-    pass
-
-
-class IngestSCTOFormDefinitionValidator(FlaskForm):
-    pass
-
-
-class DeleteSCTOFormDefinitionValidator(FlaskForm):
-    pass

@@ -6,7 +6,7 @@ from app.blueprints.surveys.models import Survey
 class Role(db.Model):
     """
     SQLAlchemy data model for Role
-    This tables defines the supervisor roles for a given survey
+    This tables defines roles for a given survey
     """
 
     __tablename__ = "roles"
@@ -93,7 +93,7 @@ class Permission(db.Model):
     active = db.Column(db.Boolean(), nullable=False, default=True)
 
 
-class RolePermissions(db.Model):
+class RolePermission(db.Model):
     __tablename__ = "role_permissions"
     __table_args__ = {"schema": "webapp"}
 
@@ -101,4 +101,23 @@ class RolePermissions(db.Model):
     role_uid = db.Column(db.Integer, db.ForeignKey(Role.role_uid, ondelete="CASCADE"))
     permission_uid = db.Column(
         db.Integer, db.ForeignKey(Permission.permission_uid, ondelete="CASCADE")
+    )
+
+
+class SurveyAdmin(db.Model):
+    """
+    SQLAlchemy data model for SurveyAdmin
+    This tables defines the survey admins per survey
+    """
+
+    __tablename__ = "survey_admins"
+
+    survey_uid = db.Column(
+        db.Integer, db.ForeignKey(Survey.survey_uid, ondelete="CASCADE")
+    )
+    user_uid = db.Column(db.Integer(), db.ForeignKey(User.user_uid, ondelete="CASCADE"))
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("survey_uid", "user_uid", name="_survey_uid_user_uid_uc"),
+        {"schema": "webapp"},
     )

@@ -22,7 +22,6 @@ class SurveyRoleValidator(FlaskForm):
     reporting_role_uid = IntegerField()
     permissions = FieldList(IntegerField(validators=[DataRequired()]))
 
-
     def validate_permissions(form, field):
         # Ensure that field.data is a list
         if not isinstance(field.data, list):
@@ -123,3 +122,8 @@ class UserHierarchyPayloadValidator(FlaskForm):
         user = User.query.get(field.data)
         if not user:
             raise ValidationError(f"User with ID {field.data} does not exist.")
+
+
+class CreatePermissionPayloadValidator(FlaskForm):
+    name = StringField(validators=[DataRequired()])
+    description = StringField(validators=[DataRequired()])
