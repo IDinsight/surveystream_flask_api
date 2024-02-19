@@ -34,9 +34,9 @@ class Role(db.Model):
         survey_uid,
         role_name,
         reporting_role_uid,
-        user_uid,
-        to_delete,
         permissions,
+        to_delete=0,
+        user_uid=-1,
     ):
         self.role_uid = role_uid
         self.survey_uid = survey_uid
@@ -118,6 +118,8 @@ class SurveyAdmin(db.Model):
     user_uid = db.Column(db.Integer(), db.ForeignKey(User.user_uid, ondelete="CASCADE"))
 
     __table_args__ = (
-        db.PrimaryKeyConstraint("survey_uid", "user_uid", name="_survey_uid_user_uid_uc"),
+        db.PrimaryKeyConstraint(
+            "survey_uid", "user_uid", name="_survey_uid_user_uid_uc"
+        ),
         {"schema": "webapp"},
     )

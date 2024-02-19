@@ -12,7 +12,7 @@ from .validators import (
 import boto3
 from sqlalchemy import cast, ARRAY, func
 
-from app.blueprints.roles.models import Role, Permission, RolePermission
+from app.blueprints.roles.models import Role, Permission, RolePermission, SurveyAdmin
 
 
 @profile_bp.route("", methods=["GET"])
@@ -45,11 +45,21 @@ def get_profile():
         .all()
     )
 
+    admin_surveys_query = (
+        db.session.query(SurveyAdmin.survey_uid)
+        .filter(SurveyAdmin.user_uid == current_user.user_uid)
+        .all()
+    )
+
+    admin_surveys = [survey_id for (survey_id,) in admin_surveys_query]
+
+    final_result["admin_surveys"] = admin_surveys
     # Process roles data if available
     if user_permissions:
         role_data = {}
         for role, permission_name, permission_uid in user_permissions:
             if role.role_uid not in role_data:
+
                 role_data[role.role_uid] = {
                     "survey_uid": role.survey_uid,
                     "role_uid": role.survey_uid,
