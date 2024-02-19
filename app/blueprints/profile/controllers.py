@@ -10,6 +10,9 @@ from .validators import (
     UploadUserAvatarValidator,
 )
 import boto3
+from sqlalchemy import cast, ARRAY, func
+
+from app.blueprints.roles.models import Role, Permission, RolePermission
 
 
 @profile_bp.route("", methods=["GET"])
@@ -29,7 +32,36 @@ def get_profile():
         "home_state_name": current_user.home_state,
         "home_district_name": current_user.home_district,
         "is_super_admin": current_user.is_super_admin,
+        "can_create_survey": current_user.can_create_survey,
+        "roles": [],
     }
+
+    user_permissions = (
+        db.session.query(Role, Permission.name, Permission.permission_uid)
+        .filter(Role.role_uid == func.any(current_user.roles))
+        .join(RolePermission, Role.role_uid == RolePermission.role_uid)
+        .join(Permission, Permission.permission_uid == RolePermission.permission_uid)
+        .group_by(Role.role_uid, Permission.name, Permission.permission_uid)
+        .all()
+    )
+
+    # Process roles data if available
+    if user_permissions:
+        role_data = {}
+        for role, permission_name, permission_uid in user_permissions:
+            if role.role_uid not in role_data:
+                role_data[role.role_uid] = {
+                    "survey_uid": role.survey_uid,
+                    "role_uid": role.survey_uid,
+                    "role_name": role.role_name,
+                    "permission_names": [],
+                    "permission_uids": [],
+                }
+            role_data[role.role_uid]["permission_names"].append(permission_name)
+            role_data[role.role_uid]["permission_uids"].append(permission_uid)
+
+        # Convert dictionary to list of role_data
+        final_result["roles"] = list(role_data.values())
 
     return jsonify(final_result)
 
