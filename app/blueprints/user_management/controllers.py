@@ -337,7 +337,7 @@ def get_user(user_uid):
 
 @user_management_bp.route("/users", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "query", "survey_uid")
 def get_all_users():
     """
     Endpoint to get information for all users.
