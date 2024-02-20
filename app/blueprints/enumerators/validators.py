@@ -244,6 +244,7 @@ class UpdateSurveyorStats(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     surveyor_stats = FieldList(FormField(SurveyorStatsValidator))
 
+
 class SurveyorStatsQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False

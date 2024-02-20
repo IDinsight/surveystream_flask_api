@@ -186,6 +186,7 @@ class MonitorLocation(db.Model):
         {"schema": "webapp"},
     )
 
+
 class SurveyorStats(db.Model):
     """
     SQLAlchemy data model for SurveyorStats
@@ -213,7 +214,7 @@ class SurveyorStats(db.Model):
         enumerator_uid,
         form_uid,
         avg_num_submissions_per_day,
-        avg_num_completed_per_day
+        avg_num_completed_per_day,
     ):
         self.enumerator_uid = enumerator_uid
         self.form_uid = form_uid
@@ -229,7 +230,8 @@ class SurveyorStats(db.Model):
         }
 
         return result
-    
+
+
 class EnumeratorColumnConfig(db.Model):
     """
     SQLAlchemy data model for Enumerator column configuration

@@ -570,7 +570,7 @@ class TestEnumerators:
                     "enumerator_id": "0294613",
                     "avg_num_submissions_per_day": 15,
                     "avg_num_completed_per_day": 5,
-                }
+                },
             ],
         }
 
@@ -5431,7 +5431,7 @@ class TestEnumerators:
                     "enumerator_id": "0294613",
                     "avg_num_submissions_per_day": 15,
                     "avg_num_completed_per_day": 5,
-                }
+                },
             ],
         }
 
@@ -5447,7 +5447,12 @@ class TestEnumerators:
         assert checkdiff == {}
 
     def test_upload_surveyor_stats_for_survey_admin_user(
-        self, client, login_test_user, create_surveyor_stats, csrf_token, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        create_surveyor_stats,
+        csrf_token,
+        test_user_credentials,
     ):
         """
         Test uploading the surveyor stats for survey_admin users
@@ -5474,7 +5479,7 @@ class TestEnumerators:
                     "enumerator_id": "0294613",
                     "avg_num_submissions_per_day": 15,
                     "avg_num_completed_per_day": 5,
-                }
+                },
             ],
         }
 
@@ -5501,7 +5506,7 @@ class TestEnumerators:
                     "enumerator_id": "0294613",
                     "avg_num_submissions_per_day": 15,
                     "avg_num_completed_per_day": 5,
-                }
+                },
             ],
         }
 
@@ -5527,7 +5532,12 @@ class TestEnumerators:
         login_user(client, test_user_credentials)
 
     def test_upload_surveyor_stats_for_non_admin_user_roles(
-        self, client, login_test_user, create_surveyor_stats, csrf_token, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        create_surveyor_stats,
+        csrf_token,
+        test_user_credentials,
     ):
         """
         Test uploading the surveyor stats for non_admin users with roles
@@ -5563,7 +5573,7 @@ class TestEnumerators:
                     "enumerator_id": "0294613",
                     "avg_num_submissions_per_day": 15,
                     "avg_num_completed_per_day": 5,
-                }
+                },
             ],
         }
 
@@ -5590,7 +5600,7 @@ class TestEnumerators:
                     "enumerator_id": "0294613",
                     "avg_num_submissions_per_day": 15,
                     "avg_num_completed_per_day": 5,
-                }
+                },
             ],
         }
 
@@ -5616,7 +5626,12 @@ class TestEnumerators:
         login_user(client, test_user_credentials)
 
     def test_upload_surveyor_stats_for_non_admin_user_no_roles(
-        self, client, login_test_user, create_surveyor_stats, csrf_token, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        create_surveyor_stats,
+        csrf_token,
+        test_user_credentials,
     ):
         """
         Test uploading the surveyor stats for non_admin users without roles
@@ -5645,7 +5660,7 @@ class TestEnumerators:
                     "enumerator_id": "0294613",
                     "avg_num_submissions_per_day": 15,
                     "avg_num_completed_per_day": 5,
-                }
+                },
             ],
         }
 

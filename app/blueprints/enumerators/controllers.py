@@ -1412,7 +1412,6 @@ def update_surveyor_stats(validated_payload):
     db.session.flush()
 
     for surveyor in payload["surveyor_stats"]:
-
         enumerator_id = surveyor["enumerator_id"]
         enumerator = Enumerator.query.filter(
             Enumerator.form_uid == form_uid,
@@ -1435,6 +1434,7 @@ def update_surveyor_stats(validated_payload):
         return jsonify(message=str(e)), 500
 
     return jsonify({"success": True}), 200
+
 
 @enumerators_bp.route("/surveyor-stats", methods=["GET"])
 @logged_in_active_user_required
