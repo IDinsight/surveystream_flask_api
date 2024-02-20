@@ -113,7 +113,6 @@ class TestProfile:
                 "Content-Type": "multipart/form-data",
             },
         )
-        print(response.json)
         assert response.status_code == 200
 
         response = client.get("/api/profile/avatar")

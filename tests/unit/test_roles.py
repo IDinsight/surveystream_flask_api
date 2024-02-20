@@ -133,9 +133,6 @@ class TestRoles:
             "success": True,
         }
 
-        print(response.json)
-        print(expected_response)
-
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
