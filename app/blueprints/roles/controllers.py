@@ -11,7 +11,7 @@ from sqlalchemy import insert, cast, Integer, ARRAY, func, distinct
 from sqlalchemy.sql import case
 from sqlalchemy.exc import IntegrityError
 from app import db
-from .models import Role, Permission, RolePermission, UserHierarchy
+from .models import Role, Permission, RolePermission, UserHierarchy, SurveyAdmin
 from .routes import roles_bp
 from .validators import (
     SurveyRolesQueryParamValidator,
@@ -53,18 +53,51 @@ def get_survey_roles(validated_query_params):
         .order_by(Role.role_uid)
     )
 
-    # Execute the query and fetch the results
     roles_with_count = query.all()
+
+    # Include SurveyAdmin in the roles list
+    # This is necessary since it helps show the number of survey_admins in a survey
+    # Survey Admins are treated like roles by the frontend necessitating this
+    survey_admin_count = (
+        db.session.query(func.count(SurveyAdmin.user_uid))
+        .filter(SurveyAdmin.survey_uid == survey_uid)
+        .scalar()
+    )
+
+    survey_admin_role = {
+        "role_uid": None,
+        "role_name": "Survey Admin",
+        "survey_uid": survey_uid,
+        "permissions": [],
+        "reporting_role_uid": None,
+    }
+    # Append SurveyAdmin to the roles list with the count of survey_admin users
+    roles_with_count.append((survey_admin_role, survey_admin_count))
+
+    response_data = []
+    for role_info, user_count in roles_with_count:
+        if isinstance(role_info, dict):
+            role = Role(**role_info).to_dict()
+        else:
+            role = {
+                "role_uid": role_info.role_uid,
+                "role_name": role_info.role_name,
+                "reporting_role_uid": role_info.reporting_role_uid,
+                "survey_uid": role_info.survey_uid,
+                "permissions": role_info.permissions,
+            }
+
+        response_data.append(
+            {
+                **role,
+                "user_count": user_count if user_count is not None else 0,
+            }
+        )
+
     response = jsonify(
         {
             "success": True,
-            "data": [
-                {
-                    **role.to_dict(),
-                    "user_count": user_count if user_count is not None else 0,
-                }
-                for role, user_count in roles_with_count
-            ],
+            "data": response_data,
         }
     )
     response.add_etag()

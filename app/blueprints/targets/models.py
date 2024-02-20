@@ -4,6 +4,7 @@ from app.blueprints.locations.models import Location
 from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import backref
+from sqlalchemy.ext.mutable import MutableDict
 
 
 class Target(db.Model):
@@ -83,6 +84,7 @@ class TargetStatus(db.Model):
     target_assignable = db.Column(db.Boolean())
     webapp_tag_color = db.Column(db.String())
     revisit_sections = db.Column(ARRAY(db.String()))
+    scto_fields = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
 
     __table_args__ = ({"schema": "webapp"},)
 
@@ -97,6 +99,7 @@ class TargetStatus(db.Model):
         target_assignable,
         webapp_tag_color,
         revisit_sections,
+        scto_fields=None,
     ):
         self.target_uid = target_uid
         self.completed_flag = completed_flag
@@ -107,6 +110,9 @@ class TargetStatus(db.Model):
         self.target_assignable = target_assignable
         self.webapp_tag_color = webapp_tag_color
         self.revisit_sections = revisit_sections
+        if self.scto_fields is None:
+            scto_fields = {}
+        self.scto_fields = scto_fields
 
     def to_dict(self):
         result = {
@@ -119,6 +125,7 @@ class TargetStatus(db.Model):
             "target_assignable": self.target_assignable,
             "webapp_tag_color": self.webapp_tag_color,
             "revisit_sections": self.revisit_sections,
+            "scto_fields": self.scto_fields,
         }
 
         return result
