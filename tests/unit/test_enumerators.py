@@ -550,6 +550,43 @@ class TestEnumerators:
         print(response.json)
         assert response.status_code == 200
 
+    @pytest.fixture()
+    def create_surveyor_stats(
+        self, client, login_test_user, upload_enumerators_csv, csrf_token
+    ):
+        """
+        Insert data for surveyor stats
+        """
+
+        payload = {
+            "form_uid": 1,
+            "surveyor_stats": [
+                {
+                    "enumerator_id": "0294612",
+                    "avg_num_submissions_per_day": 20,
+                    "avg_num_completed_per_day": 7,
+                },
+                {
+                    "enumerator_id": "0294613",
+                    "avg_num_submissions_per_day": 15,
+                    "avg_num_completed_per_day": 5,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/enumerators/surveyor-stats",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
     def test_upload_merge_update_enumerators_csv(
         self, client, create_form, login_test_user, csrf_token, upload_enumerators_csv
     ):
@@ -5374,3 +5411,283 @@ class TestEnumerators:
         response = client.get("/api/enumerators", query_string={"form_uid": None})
         print(response.json)
         assert response.status_code == 400
+
+    def test_upload_surveyor_stats_for_super_admin_user(
+        self, client, login_test_user, create_surveyor_stats, csrf_token
+    ):
+        """
+        Test uploading the surveyor stats for super_admin users
+        """
+
+        expected_response = {
+            "success": True,
+            "data": [
+                {
+                    "enumerator_id": "0294612",
+                    "avg_num_submissions_per_day": 20,
+                    "avg_num_completed_per_day": 7,
+                },
+                {
+                    "enumerator_id": "0294613",
+                    "avg_num_submissions_per_day": 15,
+                    "avg_num_completed_per_day": 5,
+                },
+            ],
+        }
+
+        # Check the response
+        response = client.get(
+            "/api/enumerators/surveyor-stats",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_surveyor_stats_for_survey_admin_user(
+        self,
+        client,
+        login_test_user,
+        create_surveyor_stats,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test uploading the surveyor stats for survey_admin users
+        """
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+
+        login_user(client, test_user_credentials)
+
+        payload = {
+            "form_uid": 1,
+            "surveyor_stats": [
+                {
+                    "enumerator_id": "0294612",
+                    "avg_num_submissions_per_day": 20,
+                    "avg_num_completed_per_day": 7,
+                },
+                {
+                    "enumerator_id": "0294613",
+                    "avg_num_submissions_per_day": 15,
+                    "avg_num_completed_per_day": 5,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/enumerators/surveyor-stats",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "success": True,
+            "data": [
+                {
+                    "enumerator_id": "0294612",
+                    "avg_num_submissions_per_day": 20,
+                    "avg_num_completed_per_day": 7,
+                },
+                {
+                    "enumerator_id": "0294613",
+                    "avg_num_submissions_per_day": 15,
+                    "avg_num_completed_per_day": 5,
+                },
+            ],
+        }
+
+        # Check the response
+        response = client.get(
+            "/api/enumerators/surveyor-stats",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
+    def test_upload_surveyor_stats_for_non_admin_user_roles(
+        self,
+        client,
+        login_test_user,
+        create_surveyor_stats,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test uploading the surveyor stats for non_admin users with roles
+        """
+        new_role = create_new_survey_role_with_permissions(
+            # 5 - WRITE Enumerators
+            client,
+            test_user_credentials,
+            "Survey Role",
+            [5],
+            1,
+        )
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+        payload = {
+            "form_uid": 1,
+            "surveyor_stats": [
+                {
+                    "enumerator_id": "0294612",
+                    "avg_num_submissions_per_day": 20,
+                    "avg_num_completed_per_day": 7,
+                },
+                {
+                    "enumerator_id": "0294613",
+                    "avg_num_submissions_per_day": 15,
+                    "avg_num_completed_per_day": 5,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/enumerators/surveyor-stats",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "success": True,
+            "data": [
+                {
+                    "enumerator_id": "0294612",
+                    "avg_num_submissions_per_day": 20,
+                    "avg_num_completed_per_day": 7,
+                },
+                {
+                    "enumerator_id": "0294613",
+                    "avg_num_submissions_per_day": 15,
+                    "avg_num_completed_per_day": 5,
+                },
+            ],
+        }
+
+        # Check the response
+        response = client.get(
+            "/api/enumerators/surveyor-stats",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
+    def test_upload_surveyor_stats_for_non_admin_user_no_roles(
+        self,
+        client,
+        login_test_user,
+        create_surveyor_stats,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test uploading the surveyor stats for non_admin users without roles
+        Expect Fail 403
+        """
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[],
+        )
+
+        login_user(client, test_user_credentials)
+
+        payload = {
+            "form_uid": 1,
+            "surveyor_stats": [
+                {
+                    "enumerator_id": "0294612",
+                    "avg_num_submissions_per_day": 20,
+                    "avg_num_completed_per_day": 7,
+                },
+                {
+                    "enumerator_id": "0294613",
+                    "avg_num_submissions_per_day": 15,
+                    "avg_num_completed_per_day": 5,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/enumerators/surveyor-stats",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 403
+
+        expected_response = {
+            "success": False,
+            "error": f"User does not have the required permission: WRITE Enumerators",
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)

@@ -229,3 +229,24 @@ class EnumeratorColumnConfigQueryParamValidator(FlaskForm):
         csrf = False
 
     form_uid = IntegerField(validators=[DataRequired()])
+
+
+class SurveyorStatsValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    enumerator_id = StringField(validators=[DataRequired()])
+    avg_num_submissions_per_day = IntegerField()
+    avg_num_completed_per_day = IntegerField()
+
+
+class UpdateSurveyorStats(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
+    surveyor_stats = FieldList(FormField(SurveyorStatsValidator))
+
+
+class SurveyorStatsQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])

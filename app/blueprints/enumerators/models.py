@@ -187,6 +187,51 @@ class MonitorLocation(db.Model):
     )
 
 
+class SurveyorStats(db.Model):
+    """
+    SQLAlchemy data model for SurveyorStats
+    This table contains the stats for each surveyor per form
+    """
+
+    __tablename__ = "surveyor_stats"
+
+    enumerator_uid = db.Column(
+        db.Integer(), db.ForeignKey(Enumerator.enumerator_uid), nullable=False
+    )
+    form_uid = db.Column(
+        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
+    )
+    avg_num_submissions_per_day = db.Column(db.Integer())
+    avg_num_completed_per_day = db.Column(db.Integer())
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("form_uid", "enumerator_uid"),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self,
+        enumerator_uid,
+        form_uid,
+        avg_num_submissions_per_day,
+        avg_num_completed_per_day,
+    ):
+        self.enumerator_uid = enumerator_uid
+        self.form_uid = form_uid
+        self.avg_num_submissions_per_day = avg_num_submissions_per_day
+        self.avg_num_completed_per_day = avg_num_completed_per_day
+
+    def to_dict(self):
+        result = {
+            "enumerator_uid": self.enumerator_uid,
+            "form_uid": self.form_uid,
+            "avg_num_submissions_per_day": self.avg_num_submissions_per_day,
+            "avg_num_completed_per_day": self.avg_num_completed_per_day,
+        }
+
+        return result
+
+
 class EnumeratorColumnConfig(db.Model):
     """
     SQLAlchemy data model for Enumerator column configuration
