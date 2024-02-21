@@ -4,7 +4,7 @@ from flask import jsonify, request, current_app
 from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
-from sqlalchemy import func
+from sqlalchemy import func, case, or_
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
@@ -281,6 +281,7 @@ def edit_user(user_uid, validated_payload):
 
             # Only proceed if survey_uid is provided
             if survey_uid:
+                user_to_edit.can_create_survey = True
                 survey_admin_entry = SurveyAdmin.query.filter_by(
                     user_uid=user_uid, survey_uid=survey_uid
                 ).first()
@@ -336,7 +337,7 @@ def get_user(user_uid):
 
 @user_management_bp.route("/users", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "query", "survey_uid")
 def get_all_users():
     """
     Endpoint to get information for all users.
@@ -364,6 +365,18 @@ def get_all_users():
         .subquery()
     )
 
+    survey_admin_subquery = (
+        db.session.query(
+            SurveyAdmin,
+            SurveyAdmin.user_uid,
+            SurveyAdmin.survey_uid,
+            Survey.survey_name,
+        )
+        .join(Survey, SurveyAdmin.survey_uid == Survey.survey_uid)
+        .distinct()
+        .subquery()
+    )
+
     user_query = (
         db.session.query(
             User,
@@ -372,9 +385,17 @@ def get_all_users():
                 "user_role_names"
             ),
             func.array_agg(Survey.survey_name.distinct()).label("user_survey_names"),
+            func.array_agg(survey_admin_subquery.c.survey_uid.distinct()).label(
+                "user_admin_surveys"
+            ),
+            func.array_agg(survey_admin_subquery.c.survey_name.distinct())
+            .label("user_admin_survey_names"),
         )
         .filter(User.to_delete.isnot(True))
         .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
+        .outerjoin(
+            survey_admin_subquery, survey_admin_subquery.c.user_uid == User.user_uid
+        )
         .outerjoin(roles_subquery, roles_subquery.c.role_uid == func.any(User.roles))
         .outerjoin(Survey, Survey.survey_uid == roles_subquery.c.survey_uid)
         .group_by(
@@ -387,11 +408,23 @@ def get_all_users():
     if current_user.is_super_admin and survey_uid is None:
         users = user_query.all()
     else:
-        users = user_query.filter(roles_subquery.c.survey_uid == survey_uid).all()
+        users = user_query.filter(
+            or_(
+                roles_subquery.c.survey_uid == survey_uid,
+                survey_admin_subquery.c.survey_uid == survey_uid,
+            )
+        ).all()
 
     user_list = []
 
-    for user, invite_is_active, user_role_names, user_survey_names in users:
+    for (
+        user,
+        invite_is_active,
+        user_role_names,
+        user_survey_names,
+        user_admin_surveys,
+        user_admin_survey_names,
+    ) in users:
         user_data = {
             "user_uid": user.user_uid,
             "email": user.email,
@@ -400,6 +433,16 @@ def get_all_users():
             "roles": user.roles,
             "user_survey_names": user_survey_names,
             "user_role_names": user_role_names,
+            "user_admin_surveys": [
+                survey_uid
+                for survey_uid in user_admin_surveys
+                if survey_uid is not None
+            ],
+            "user_admin_survey_names": [
+                survey_name
+                for survey_name in user_admin_survey_names
+                if survey_name is not None
+            ],
             "is_super_admin": user.is_super_admin,
             "can_create_survey": user.can_create_survey,
             "status": (
