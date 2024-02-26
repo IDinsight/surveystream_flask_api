@@ -159,7 +159,7 @@ def view_assignments(validated_query_params):
                             target_status, "last_attempt_survey_status_label", None
                         ),
                         "target_assignable": getattr(
-                            target_status, "target_assignable", None
+                            target_status, "target_assignable", True # If the target_status is None, the target is new and hence, assignable
                         ),
                         "webapp_tag_color": getattr(
                             target_status, "webapp_tag_color", None
@@ -307,7 +307,7 @@ def update_assignments(validated_payload):
         elif (
             len(target_result) == 2
             and target_result[1] is not None
-            and target_result[1].target_assignable is not True
+            and getattr(target_result[1], "target_assignable", True) is not True
         ):
             unassignable_target_uids.append(assignment["target_uid"])
 
