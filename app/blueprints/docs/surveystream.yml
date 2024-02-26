@@ -66,6 +66,8 @@ tags:
     description: Endpoints related to the user's forms
   - name: Enumerators
     description: Endpoints related to the user's enumerators
+  - name: Surveyor Stats
+    description: Endpoints related to the surveyor stats
   - name: Targets
     description: Endpoints related to the user's targets
   - name: Assignments
