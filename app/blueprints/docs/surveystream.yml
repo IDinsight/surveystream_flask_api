@@ -107,6 +107,9 @@ x-tagGroups:
   - name: Enumerators
     tags:
       - Enumerators
+  - name: Surveyor Stats
+    tags:
+      - Surveyor Stats
   - name: Targets
     tags:
       - Targets
