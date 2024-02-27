@@ -1418,14 +1418,15 @@ def update_surveyor_stats(validated_payload):
             Enumerator.enumerator_id == enumerator_id,
         ).first()
 
-        db.session.add(
-            SurveyorStats(
-                form_uid=form_uid,
-                enumerator_uid=enumerator.enumerator_uid,
-                avg_num_submissions_per_day=surveyor["avg_num_submissions_per_day"],
-                avg_num_completed_per_day=surveyor["avg_num_completed_per_day"],
+        if enumerator is not None:
+            db.session.add(
+                SurveyorStats(
+                    form_uid=form_uid,
+                    enumerator_uid=enumerator.enumerator_uid,
+                    avg_num_submissions_per_day=surveyor["avg_num_submissions_per_day"],
+                    avg_num_completed_per_day=surveyor["avg_num_completed_per_day"],
+                )
             )
-        )
 
     try:
         db.session.commit()
