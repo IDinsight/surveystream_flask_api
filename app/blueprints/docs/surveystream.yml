@@ -66,6 +66,8 @@ tags:
     description: Endpoints related to the user's forms
   - name: Enumerators
     description: Endpoints related to the user's enumerators
+  - name: Surveyor Stats
+    description: Endpoints related to the surveyor stats
   - name: Targets
     description: Endpoints related to the user's targets
   - name: Assignments
@@ -105,6 +107,9 @@ x-tagGroups:
   - name: Enumerators
     tags:
       - Enumerators
+  - name: Surveyor Stats
+    tags:
+      - Surveyor Stats
   - name: Targets
     tags:
       - Targets
@@ -3214,6 +3219,94 @@ paths:
           description: Enumerator not found
         "422":
           description: Enumerator errors
+  /enumerators/surveyor-stats:
+    get:
+      summary: Get surveyor level productivity stats
+      description: >-
+        Return surveyor level productivity stats for a given form 
+      tags:
+        - Surveyor Stats
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    description: List of all surveyors and their productivity stats
+                    items:
+                      type: object
+                      properties:
+                        enumerator_id:
+                          type: string
+                          description: The ID of the surveyor
+                        avg_num_submissions_per_day:
+                          type: integer
+                          description: The average number of submissions per day for the surveyor 
+                        avg_num_completed_per_day:
+                          type: integer
+                          description: The average number of completed submissions per day for the surveyor
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+    put:
+      summary: Update surveyor productivity stats
+      description: >-
+        Update the surveyor productivity stats for the given form
+      tags:
+        - Surveyor Stats
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique ID of the form
+                surveyor_stats:
+                  type: array
+                  description: >
+                    List of all surveyors and their productivity stats
+                  items:
+                    type: object
+                    properties:
+                      enumerator_id:
+                        type: string
+                        description: The ID of the surveyor.
+                      avg_num_submissions_per_day:
+                        type: integer
+                        description: The average number of submissions per day for the surveyor 
+                      avg_num_completed_per_day:
+                        type: integer
+                        description: The average number of completed submissions per day for the surveyor
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred 
+  
   /assignments:
     get:
       summary: Get assignments

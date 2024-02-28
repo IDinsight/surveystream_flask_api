@@ -23,6 +23,7 @@ from .models import (
     MonitorForm,
     MonitorLocation,
     EnumeratorColumnConfig,
+    SurveyorStats,
 )
 from .routes import enumerators_bp
 from .validators import (
@@ -38,6 +39,8 @@ from .validators import (
     BulkUpdateEnumeratorsRoleLocationValidator,
     UpdateEnumeratorsColumnConfig,
     EnumeratorColumnConfigQueryParamValidator,
+    UpdateSurveyorStats,
+    SurveyorStatsQueryParamValidator,
 )
 from .utils import (
     EnumeratorsUpload,
@@ -1369,6 +1372,108 @@ def get_enumerator_column_config(validated_query_params):
                     "bulk_editable": column.bulk_editable,
                 }
                 for column in column_config
+            ],
+        }
+    )
+
+
+@enumerators_bp.route("/surveyor-stats", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(UpdateSurveyorStats)
+@custom_permissions_required("WRITE Enumerators", "body", "form_uid")
+def update_surveyor_stats(validated_payload):
+    """
+    Method to update surveyor stats
+    """
+
+    payload = request.get_json()
+    form_uid = validated_payload.form_uid.data
+
+    if (
+        ParentForm.query.filter(
+            ParentForm.form_uid == form_uid,
+        ).first()
+        is None
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": f"Form with UID {form_uid} does not exist",
+                }
+            ),
+            422,
+        )
+
+    SurveyorStats.query.filter(
+        SurveyorStats.form_uid == form_uid,
+    ).delete()
+
+    db.session.flush()
+
+    for surveyor in payload["surveyor_stats"]:
+        enumerator_id = surveyor["enumerator_id"]
+        enumerator = Enumerator.query.filter(
+            Enumerator.form_uid == form_uid,
+            Enumerator.enumerator_id == enumerator_id,
+        ).first()
+
+        if enumerator is not None:
+            db.session.add(
+                SurveyorStats(
+                    form_uid=form_uid,
+                    enumerator_uid=enumerator.enumerator_uid,
+                    avg_num_submissions_per_day=surveyor["avg_num_submissions_per_day"],
+                    avg_num_completed_per_day=surveyor["avg_num_completed_per_day"],
+                )
+            )
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return jsonify({"success": True}), 200
+
+
+@enumerators_bp.route("/surveyor-stats", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(SurveyorStatsQueryParamValidator)
+@custom_permissions_required("READ Enumerators", "query", "form_uid")
+def get_surveyor_stats(validated_query_params):
+    """
+    Method to get surveyor stats
+    """
+
+    form_uid = validated_query_params.form_uid.data
+
+    surveyor_stats = (
+        db.session.query(Enumerator, SurveyorStats)
+        .join(
+            SurveyorForm,
+            (SurveyorForm.enumerator_uid == Enumerator.enumerator_uid)
+            & (SurveyorForm.form_uid == Enumerator.form_uid),
+            isouter=True,
+        )
+        .filter(
+            Enumerator.enumerator_uid == SurveyorStats.enumerator_uid,
+            Enumerator.form_uid == SurveyorStats.form_uid,
+            SurveyorStats.form_uid == form_uid,
+        )
+        .all()
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "data": [
+                {
+                    "enumerator_id": each_enumerator.enumerator_id,
+                    "avg_num_submissions_per_day": each_surveyor_stats.avg_num_submissions_per_day,
+                    "avg_num_completed_per_day": each_surveyor_stats.avg_num_completed_per_day,
+                }
+                for each_enumerator, each_surveyor_stats in surveyor_stats
             ],
         }
     )

@@ -1321,7 +1321,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "1",
                     "target_locations": [
                         {
@@ -1391,7 +1391,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "2",
                     "target_locations": [
                         {
@@ -1521,7 +1521,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "1",
                     "target_locations": [
                         {
@@ -1588,7 +1588,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "2",
                     "target_locations": [
                         {
@@ -1729,7 +1729,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "1",
                     "target_locations": [
                         {
@@ -1796,7 +1796,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "2",
                     "target_locations": [
                         {
@@ -1957,7 +1957,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "1",
                     "target_locations": [
                         {
@@ -2024,7 +2024,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "2",
                     "target_locations": [
                         {
@@ -2219,7 +2219,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "1",
                     "target_locations": None,
                     "target_uid": 1,
@@ -2263,7 +2263,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "2",
                     "target_locations": None,
                     "target_uid": 2,
@@ -2374,7 +2374,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "1",
                     "target_locations": [
                         {
@@ -2462,7 +2462,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "2",
                     "target_locations": [
                         {
@@ -2613,7 +2613,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "1",
                     "target_locations": [
                         {
@@ -2680,7 +2680,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "2",
                     "target_locations": [
                         {
@@ -2831,7 +2831,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "1",
                     "target_locations": [
                         {
@@ -2919,7 +2919,7 @@ class TestAssignments:
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
-                    "target_assignable": None,
+                    "target_assignable": True,
                     "target_id": "2",
                     "target_locations": [
                         {
