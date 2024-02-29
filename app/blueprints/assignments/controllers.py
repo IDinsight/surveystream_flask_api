@@ -234,7 +234,6 @@ def view_assignments_enumerators(validated_query_params):
         .filter(
             SurveyorForm.form_uid == form_uid,
             SurveyorForm.status.in_(["Active", "Temp. Inactive"]),
-            SurveyorLocation.form_uid == form_uid,
         )
     )
 
