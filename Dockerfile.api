@@ -9,10 +9,6 @@ ARG NAME
 ARG PORT
 ARG HOME_DIR=/usr/src/${NAME}
 
-# Install psycopg2 dependencies
-# This is the proper way to do it; psycopg2-binary (Python package that doesn't
-# rely on dependencies) is practical for development and testing
-# but not suitable for production
 RUN apt-get update
 RUN apt-get -y install libpq-dev gcc jq wget
 
