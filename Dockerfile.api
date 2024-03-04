@@ -19,8 +19,7 @@ ENV VIRTUAL_ENV=/usr/local
 ADD --chmod=755 https://astral.sh/uv/install.sh /install.sh
 RUN /install.sh && rm /install.sh
 
-RUN set -ex apt-get autoremove -y --purge wget \\
-    && rm -rf /var/lib/apt/lists/*
+RUN set -ex apt-get autoremove -y --purge wget && rm -rf /var/lib/apt/lists/*
 
 RUN /root/.cargo/bin/uv pip install --upgrade pip
 
