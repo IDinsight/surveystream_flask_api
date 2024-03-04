@@ -20,7 +20,7 @@ RUN /install.sh && rm /install.sh
 
 RUN set -ex apt-get autoremove -y --purge wget && rm -rf /var/lib/apt/lists/*
 
-RUN /root/.cargo/bin/uv pip install --upgrade pip
+RUN /root/.cargo/bin/uv pip install --system --upgrade pip
 
 COPY requirements.txt /requirements.txt
 RUN /root/.cargo/bin/uv pip install --system --no-cache -r /requirements.txt
