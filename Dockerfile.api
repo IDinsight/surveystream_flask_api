@@ -9,17 +9,18 @@ ARG NAME
 ARG PORT
 ARG HOME_DIR=/usr/src/${NAME}
 
-RUN apt-get update
-RUN apt-get -y install libpq-dev gcc jq wget
+RUN apt-get update && apt-get -y install libpq-dev gcc jq wget
 
 ENV DOCKERIZE_VERSION v0.7.0
 
-RUN wget -O - https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz | tar xzf - -C /usr/local/bin \
-    && rm -rf /var/lib/apt/lists/*
+RUN wget -O - https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz | tar xzf - -C /usr/local/bin
 
 ENV VIRTUAL_ENV=/usr/local
 ADD --chmod=755 https://astral.sh/uv/install.sh /install.sh
-RUN /install.sh && rm /install.sh && apt-get autoremove -yqq --purge wget
+RUN /install.sh && rm /install.sh
+
+RUN set -ex apt-get autoremove -y --purge wget \\
+    && rm -rf /var/lib/apt/lists/*
 
 RUN /root/.cargo/bin/uv pip install --upgrade pip
 
