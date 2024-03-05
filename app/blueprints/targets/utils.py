@@ -498,21 +498,15 @@ class TargetsUpload:
                     )
                 if "custom_fields" in record:
                     for field_name, field_value in record["custom_fields"].items():
-                        db.session.execute(
-                            update(Target)
-                            .values(
-                                custom_fields=func.jsonb_set(
-                                    Target.custom_fields,
-                                    "{%s}" % field_name,
-                                    cast(field_value, JSONB),
-                                    True  #add true to overwrite existing keys
-                                )
-                            )
-                            .where(
-                                Target.target_id == record["target_id"],
-                                Target.form_uid == record["form_uid"],
-                            )
-                        )
+                        # Query the target record
+                        target_record = Target.query.filter_by(
+                            target_id=record["target_id"],
+                            form_uid=record["form_uid"]
+                        ).first()
+
+                        if target_record:
+                            # Update the custom_fields dictionary
+                            target_record.custom_fields[field_name] = field_value
             if records_to_insert:
                # Insert records in chunks to the database
                 chunk_size = 1000
