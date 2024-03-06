@@ -1,7 +1,7 @@
 # DESCRIPTION: Dockerfile for surveystream_backend
 # BUILD: make image
 
-FROM python:3.9.6-slim-bullseye
+FROM python:3.9.18-slim-bullseye
 LABEL maintainer="IDinsight"
 LABEL org.opencontainers.image.source="https://github.com/IDinsight/surveystream_flask_api"
 
@@ -9,23 +9,21 @@ ARG NAME
 ARG PORT
 ARG HOME_DIR=/usr/src/${NAME}
 
-# Install psycopg2 dependencies
-# This is the proper way to do it; psycopg2-binary (Python package that doesn't
-# rely on dependencies) is practical for development and testing
-# but not suitable for production
-RUN apt-get update --fix-missing
-RUN apt-get -y install python3-dev postgresql postgresql-contrib python3-psycopg2 libpq-dev gcc g++ jq wget curl
+RUN apt-get update && apt-get -y install libpq-dev gcc jq wget
 
-ARG DOCKERIZE_VERSION=v0.6.0
-RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz \
-    && tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz \
-    && rm dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz
+ENV DOCKERIZE_VERSION v0.7.0
 
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir awscli
+RUN wget -O - https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz | tar xzf - -C /usr/local/bin
+
+ADD --chmod=755 https://astral.sh/uv/install.sh /install.sh
+RUN /install.sh && rm /install.sh
+
+RUN set -ex apt-get autoremove -y --purge wget && rm -rf /var/lib/apt/lists/*
+
+RUN /root/.cargo/bin/uv pip install --system --upgrade pip
 
 COPY requirements.txt /requirements.txt
-RUN pip install -r /requirements.txt
+RUN /root/.cargo/bin/uv pip install --system --no-cache -r /requirements.txt
 
 RUN useradd -ms /bin/bash -d ${HOME_DIR} container_user
 RUN chown -R container_user: ${HOME_DIR}
