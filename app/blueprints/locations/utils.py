@@ -360,6 +360,35 @@ class LocationsUpload:
                         f"Location type {geo_level.geo_level_name} has location id's that are mapped to more than one parent location in column {parent_geo_level_id_column_name}. A location (defined by the location id column) cannot be assigned to multiple parents. Make sure to use a unique location id for each location. The following rows have location id's that are mapped to more than one parent location:\n{self.locations_df[self.locations_df.drop_duplicates(subset=[parent_geo_level_id_column_name, geo_level_id_column_name]).duplicated(subset=[geo_level_id_column_name], keep=False).reindex(self.locations_df.index, fill_value=False)].to_string()}"
                     )
 
+        # A location (defined by location_id) cannot have multiple location names
+        for geo_level in reversed(ordered_geo_levels):
+            geo_level_id_column_name = geo_level_mapping_lookup[
+                geo_level.geo_level_uid
+            ]["location_id_column"]
+
+            geo_level_name_column_name = geo_level_mapping_lookup[
+                geo_level.geo_level_uid
+            ]["location_name_column"]
+
+            # If we deduplicate on the location id column and the location name column, the number of rows should be the same as just deduplicating on the location id column
+            # If this check fails we know that the location id column is being reused for different location names
+            if len(
+                self.locations_df[
+                    self.locations_df.duplicated(
+                        subset=[geo_level_id_column_name, geo_level_name_column_name],
+                    )
+                ]
+            ) != len(
+                self.locations_df[
+                    self.locations_df.duplicated(
+                        subset=[geo_level_id_column_name],
+                    )
+                ]
+            ):
+                file_errors.append(
+                    f"Location type {geo_level.geo_level_name} has location id's that have more than one location name. Make sure to use a unique location name for each location id. The following rows have location id's that have more than one location name:\n{self.locations_df[self.locations_df.drop_duplicates(subset=[geo_level_id_column_name, geo_level_name_column_name]).duplicated(subset=[geo_level_id_column_name], keep=False).reindex(self.locations_df.index, fill_value=False)].to_string()}"
+                )
+
         if len(file_errors) > 0:
             raise InvalidLocationsError(file_errors)
 

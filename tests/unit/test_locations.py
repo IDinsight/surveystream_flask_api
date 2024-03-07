@@ -1004,11 +1004,13 @@ class TestLocations:
         )
         assert response.status_code == 422
         assert "file" in response.json["errors"]
+        print(response.json["errors"]["file"])
         assert response.json["errors"]["file"] == [
             "Column name 'district_id' from the column mapping appears 2 times in the uploaded file. It should appear exactly once.",
             "The file contains 3 blank fields. Blank fields are not allowed. Blank fields are found in the following columns and rows:\n'column': psu_name, 'row': 3\n'column': mandal_id, 'row': 5\n'column': psu_id, 'row': 10",
             "The file has 2 duplicate rows. Duplicate rows are not allowed. The following rows are duplicates:\n           district_id district_name mandal_id     mandal_name psu_name    psu_id district_id extra_column\nrow_number                                                                                                \n8                    1      ADILABAD      1101  ADILABAD RURAL   RAMPUR  17101147           1         asdf\n9                    1      ADILABAD      1101  ADILABAD RURAL   RAMPUR  17101147           1         asdf",
             "Location type PSU has location id's that are mapped to more than one parent location in column mandal_id. A location (defined by the location id column) cannot be assigned to multiple parents. Make sure to use a unique location id for each location. The following rows have location id's that are mapped to more than one parent location:\n           district_id district_name mandal_id     mandal_name psu_name    psu_id district_id extra_column\nrow_number                                                                                                \n2                    1      ADILABAD      1101  ADILABAD RURAL   ANKOLI  17101102           1         asdf\n12                   1      ADILABAD      1102  ADILABAD URBAN   ANKOLI  17101102           1         asdf",
+            "Location type District has location id's that have more than one location name. Make sure to use a unique location name for each location id. The following rows have location id's that have more than one location name:\n           district_id    district_name mandal_id            mandal_name  psu_name    psu_id district_id extra_column\nrow_number                                                                                                           \n13                   2  TEST DISTRICT 2      1103  TEST DISTRICT 2 URBAN      ASDF  17101103           1         asdf\n14                   2  TEST DISTRICT 3      1103  TEST DISTRICT 2 URBAN  ASDFASDF  17101104           1         asdf",
         ]
 
     def test_locations_validations_file_errors_first_row_blank(
