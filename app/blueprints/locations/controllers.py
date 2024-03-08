@@ -1,3 +1,4 @@
+from app.blueprints.surveys.models import Survey
 from flask import jsonify, request
 from app.utils.utils import (
     logged_in_active_user_required,
@@ -19,6 +20,7 @@ from .validators import (
     SurveyGeoLevelsPayloadValidator,
     LocationsFileUploadValidator,
     LocationsQueryParamValidator,
+    SurveyPrimeGeoLevelValidator,
 )
 from .utils import (
     LocationsUpload,
@@ -190,6 +192,25 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
             db.session.commit()
 
     return jsonify(message="Success"), 200
+
+
+@locations_bp.route("/<int:survey_uid>/prime-geo-level", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(SurveyPrimeGeoLevelValidator)
+@custom_permissions_required("WRITE Survey Locations", "path", "survey_uid")
+def update_prime_geo_level(survey_uid, validated_payload):
+    if Survey.query.filter_by(survey_uid=survey_uid).first() is None:
+        return jsonify({"error": "Survey not found"}), 404
+
+    Survey.query.filter_by(survey_uid=survey_uid).update(
+        {
+            Survey.prime_geo_level_uid: validated_payload.prime_geo_level_uid.data,
+        },
+        synchronize_session="fetch",
+    )
+    db.session.commit()
+    survey = Survey.query.filter_by(survey_uid=survey_uid).first()
+    return jsonify(survey.to_dict()), 200
 
 
 @locations_bp.route("", methods=["POST"])
