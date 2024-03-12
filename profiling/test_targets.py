@@ -4,13 +4,6 @@ import base64
 import pandas as pd
 from pathlib import Path
 
-from .utils import (
-    create_new_survey_role_with_permissions,
-    login_user,
-    update_logged_in_user_roles,
-)
-
-
 @pytest.mark.targets
 class TestTargets:
     @pytest.fixture()

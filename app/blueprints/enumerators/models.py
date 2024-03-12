@@ -4,6 +4,7 @@ from app.blueprints.locations.models import Location
 from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import backref
+from sqlalchemy.ext.mutable import MutableDict
 
 
 class Enumerator(db.Model):
@@ -22,7 +23,7 @@ class Enumerator(db.Model):
     language = db.Column(db.String(), nullable=True)
     home_address = db.Column(db.String(), nullable=True)
     gender = db.Column(db.String(), nullable=True)
-    custom_fields = db.Column(JSONB, nullable=True)
+    custom_fields = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
     form_uid = db.Column(
         db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
     )

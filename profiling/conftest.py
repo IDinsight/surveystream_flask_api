@@ -39,7 +39,7 @@ def test_user_credentials():
         settings = yaml.safe_load(file)
 
     users = {
-         "core": {
+        "core": {
             "email": settings["email"],
             "user_uid": 3933,
             "password": "asdfasdf",
@@ -147,17 +147,21 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
             },
         )
 
-        db.session.commit()
+        registration_exist = db.session.execute(
+            "SELECT EXISTS(SELECT 1 FROM webapp.users WHERE email = :email LIMIT 1)",
+            {"email": registration_user_credentials["email"]},
+        ).fetchone()[0]
 
-        # Add the registration user
-        db.session.execute(
-            "INSERT INTO webapp.users (email, password_secure, is_super_admin) VALUES (:email, :pw_hash, :is_super_admin) ON CONFLICT DO NOTHING",
-            {
-                "email": registration_user_credentials["email"],
-                "pw_hash": registration_user_credentials["pw_hash"],
-                "is_super_admin": test_user_credentials["is_super_admin"],
-            },
-        )
+        if not registration_exist:
+            # Add the registration user
+            db.session.execute(
+                "INSERT INTO webapp.users (email, password_secure, is_super_admin) VALUES (:email, :pw_hash, :is_super_admin) ON CONFLICT DO NOTHING",
+                {
+                    "email": registration_user_credentials["email"],
+                    "pw_hash": registration_user_credentials["pw_hash"],
+                    "is_super_admin": test_user_credentials["is_super_admin"],
+                },
+            )
 
         db.session.commit()
 
@@ -168,4 +172,3 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
         db.session.remove()
         db.drop_all()
         db.engine.execute("DROP TABLE IF EXISTS alembic_version;")
-

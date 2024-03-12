@@ -3,11 +3,6 @@ import pytest
 import base64
 import pandas as pd
 from pathlib import Path
-from .utils import (
-    create_new_survey_role_with_permissions,
-    login_user,
-    update_logged_in_user_roles,
-)
 
 
 @pytest.mark.enumerators
@@ -124,7 +119,7 @@ class TestEnumerators:
         """
 
         filepath = (
-            Path(__file__).resolve().parent / f"assets/sample_locations_large.csv"
+            Path(__file__).resolve().parent / f"assets/sample_locations_small.csv"
         )
 
         # Read the locations.csv file and convert it to base64
