@@ -72,7 +72,7 @@ run-unit-tests:
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
 	docker-compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml rm -fsv
 
-profile-locations:
+profile:
 	mkdir -p profiling/outputs
 	
 	@BACKEND_NAME=${BACKEND_NAME} \

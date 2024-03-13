@@ -3223,7 +3223,7 @@ paths:
     get:
       summary: Get surveyor level productivity stats
       description: >-
-        Return surveyor level productivity stats for a given form 
+        Return surveyor level productivity stats for a given form
       tags:
         - Surveyor Stats
       parameters:
@@ -3251,7 +3251,7 @@ paths:
                           description: The ID of the surveyor
                         avg_num_submissions_per_day:
                           type: integer
-                          description: The average number of submissions per day for the surveyor 
+                          description: The average number of submissions per day for the surveyor
                         avg_num_completed_per_day:
                           type: integer
                           description: The average number of completed submissions per day for the surveyor
@@ -3293,7 +3293,7 @@ paths:
                         description: The ID of the surveyor.
                       avg_num_submissions_per_day:
                         type: integer
-                        description: The average number of submissions per day for the surveyor 
+                        description: The average number of submissions per day for the surveyor
                       avg_num_completed_per_day:
                         type: integer
                         description: The average number of completed submissions per day for the surveyor
@@ -3305,8 +3305,8 @@ paths:
         "422":
           description: Form errors
         "500":
-          description: An unexpected error occurred 
-  
+          description: An unexpected error occurred
+
   /assignments:
     get:
       summary: Get assignments
@@ -4557,6 +4557,46 @@ paths:
                         utc_offset:
                           type: string
                           description: Postgres timezone UTC offset
+  /locations/<survey_uid>/prime-geo-level:
+    put:
+      tags:
+        - Locations
+      summary: Save the prime geo level for a survey
+      description: >
+        Saves the prime geo levels for a given survey to the database.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: JSON object containing the prime geo level for a survey
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - prime_geo_level_uid
+              properties:
+                prime_geo_level_uid:
+                  type: integer
+                  nullable: false
+                  description: Unique Id of the location set as the prime geo level
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: >
+            Form errors
+
+            When `validate_hierarchy` is set to true, any validation errors will
+            be returned as an array under the `errors` key in the response.
+
   /locations/geo-levels:
     get:
       tags:
