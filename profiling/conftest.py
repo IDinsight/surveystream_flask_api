@@ -5,6 +5,8 @@ from passlib.hash import pbkdf2_sha256
 import yaml
 from werkzeug.http import parse_cookie
 from pathlib import Path
+import flask_migrate
+import os
 
 
 @pytest.fixture()
@@ -41,6 +43,7 @@ def test_user_credentials():
             "email": settings["email"],
             "user_uid": 3933,
             "password": "asdfasdf",
+            "is_super_admin": True,
         }
     }
 
@@ -112,33 +115,60 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
 
     filepath = Path(__file__).resolve().parent.parent
     with app.app_context():
-        db.session.execute(open(f"{filepath}/db/3-web-app-schema.sql", "r").read())
-        db.session.execute(open(f"{filepath}/db/1-config-schema.sql", "r").read())
+        db.engine.execute("CREATE SCHEMA IF NOT EXISTS webapp;")
+        db.create_all()
         db.session.execute(
             open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
         )
 
+        # check if permissions exist
+        permissions_exist = db.session.execute(
+            """
+            SELECT EXISTS(SELECT 1 FROM webapp.permissions LIMIT 1)
+            """
+        ).fetchone()[0]
+
+        if not permissions_exist:
+            # Load permissions data
+            db.session.execute(
+                open(
+                    f"{filepath}/tests/data/launch_local_db/load_permissions.sql", "r"
+                ).read()
+            )
+
         # Set the credentials for the desired test user
         db.session.execute(
-            "UPDATE users SET email=:email, password_secure=:pw_hash WHERE user_uid=:user_uid",
+            "UPDATE webapp.users SET email=:email, password_secure=:pw_hash, is_super_admin=:is_super_admin WHERE user_uid=:user_uid",
             {
                 "email": test_user_credentials["email"],
                 "pw_hash": test_user_credentials["pw_hash"],
                 "user_uid": test_user_credentials["user_uid"],
+                "is_super_admin": test_user_credentials["is_super_admin"],
             },
         )
 
-        db.session.commit()
+        registration_exist = db.session.execute(
+            "SELECT EXISTS(SELECT 1 FROM webapp.users WHERE email = :email LIMIT 1)",
+            {"email": registration_user_credentials["email"]},
+        ).fetchone()[0]
 
-        # Add the registration user
-        db.session.execute(
-            "INSERT INTO users (email, password_secure) VALUES (:email, :pw_hash) ON CONFLICT DO NOTHING",
-            {
-                "email": registration_user_credentials["email"],
-                "pw_hash": registration_user_credentials["pw_hash"],
-            },
-        )
+        if not registration_exist:
+            # Add the registration user
+            db.session.execute(
+                "INSERT INTO webapp.users (email, password_secure, is_super_admin) VALUES (:email, :pw_hash, :is_super_admin) ON CONFLICT DO NOTHING",
+                {
+                    "email": registration_user_credentials["email"],
+                    "pw_hash": registration_user_credentials["pw_hash"],
+                    "is_super_admin": test_user_credentials["is_super_admin"],
+                },
+            )
 
         db.session.commit()
 
     yield
+
+    # Clean up the database after each test
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
+        db.engine.execute("DROP TABLE IF EXISTS alembic_version;")

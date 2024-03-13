@@ -22,7 +22,7 @@ class Target(db.Model):
     location_uid = db.Column(
         db.Integer(), db.ForeignKey(Location.location_uid), nullable=True
     )
-    custom_fields = db.Column(JSONB, nullable=True)
+    custom_fields = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
     form_uid = db.Column(
         db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
     )

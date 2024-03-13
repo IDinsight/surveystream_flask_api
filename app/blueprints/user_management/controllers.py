@@ -137,7 +137,7 @@ def check_user(validated_payload):
 @user_management_bp.route("/users", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(AddUserValidator)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("ADMIN", "body", "survey_uid")
 def add_user(validated_payload):
     """
     Endpoint to invite a user by email, The endpoint will create a user without a password and send the user an email
@@ -168,8 +168,7 @@ def add_user(validated_payload):
         )
 
         db.session.add(new_user)
-        db.session.commit()
-
+        db.session.flush()
         # Check if user is supposed to be a survey admin and add them to the list
         if validated_payload.is_survey_admin.data:
             survey_admin_entry = SurveyAdmin(
@@ -177,7 +176,8 @@ def add_user(validated_payload):
                 user_uid=new_user.user_uid,
             )
             db.session.add(survey_admin_entry)
-            db.session.commit()
+
+        db.session.commit()
 
         invite_code = generate_invite_code()
 

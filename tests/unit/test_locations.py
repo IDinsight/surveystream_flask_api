@@ -1053,6 +1053,61 @@ class TestLocations:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
+    def test_update_survey_prime_geo_level(
+        self, client, login_test_user, test_user_credentials, csrf_token, create_survey
+    ):
+        """
+        Test that non-admins can update prime_geo_level
+            - this is done on the locations flow therefore Location permissions are required
+            - change the logged-in user to non admin
+            - add roles and permissions for WRITE Survey Locations
+        Expect success
+        """
+
+        new_role = create_new_survey_role_with_permissions(
+            # 3 - WRITE Survey Locations
+            client,
+            test_user_credentials,
+            "Survey Role",
+            [3],
+            1,
+        )
+
+        updated_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+        payload = {"prime_geo_level_uid": 1}
+
+        response = client.put(
+            "/api/locations/1/prime-geo-level",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response)
+
+        assert response.status_code == 200
+
+        # revert user to super admin
+        revert_user = update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+
+        login_user(client, test_user_credentials)
+
     def test_upload_locations_csv_for_survey_admin_user(
         self,
         client,

@@ -42,3 +42,7 @@ class LocationsQueryParamValidator(FlaskForm):
         csrf = False
 
     survey_uid = IntegerField(validators=[DataRequired()])
+
+
+class SurveyPrimeGeoLevelValidator(FlaskForm):
+    prime_geo_level_uid = IntegerField(validators=[DataRequired()])

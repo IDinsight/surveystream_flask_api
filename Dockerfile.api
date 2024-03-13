@@ -9,7 +9,7 @@ ARG NAME
 ARG PORT
 ARG HOME_DIR=/usr/src/${NAME}
 
-RUN apt-get update && apt-get -y install libpq-dev gcc jq wget
+RUN apt-get update && apt-get -y install libpq-dev gcc jq wget curl
 
 ENV DOCKERIZE_VERSION v0.7.0
 

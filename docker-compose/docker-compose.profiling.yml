@@ -32,5 +32,6 @@ services:
        . /bootstrap.sh
        dockerize -wait tcp://postgres:5433 -timeout 15m -wait-retry-interval 10s 
        pyinstrument --outfile=/usr/src/${BACKEND_NAME}/profiling/outputs/profile_locations.html -m pytest -m locations profiling/test_locations.py::TestLocations
-       
+       pyinstrument --outfile=/usr/src/${BACKEND_NAME}/profiling/outputs/profile_targets.html -m pytest -m targets profiling/test_targets.py::TestTargets
+       pyinstrument --outfile=/usr/src/${BACKEND_NAME}/profiling/outputs/profile_enumerators.html -m pytest -m enumerators profiling/test_enumerators.py::TestEnumerators
       
