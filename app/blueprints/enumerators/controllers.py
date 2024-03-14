@@ -1139,7 +1139,7 @@ def bulk_update_enumerators_custom_fields(validated_payload):
         key
         for key in payload.keys()
         if key not in ("enumerator_uids", "form_uid", "csrf_token")
-           and key in bulk_editable_fields["custom_fields"]
+        and key in bulk_editable_fields["custom_fields"]
     ]
 
     if len(personal_details_patch_keys) > 0:
@@ -1150,15 +1150,20 @@ def bulk_update_enumerators_custom_fields(validated_payload):
 
     if len(custom_fields_patch_keys) > 0:
         for custom_field in custom_fields_patch_keys:
-            for enumerator_uid in enumerator_uids:
-                # Query the enumerator record
-                enumerator_record = Enumerator.query.filter_by(
-                    enumerator_uid=enumerator_uid
-                ).first()
-
-                if enumerator_record:
-                    # Update the custom_fields dictionary
-                    enumerator_record.custom_fields[custom_field] = payload[custom_field]
+            db.session.execute(
+                update(Enumerator)
+                .values(
+                    custom_fields=func.jsonb_set(
+                        Enumerator.custom_fields,
+                        "{%s}" % custom_field,
+                        cast(
+                            payload[custom_field],
+                            JSONB,
+                        ),
+                    )
+                )
+                .where(Enumerator.enumerator_uid.in_(enumerator_uids))
+            )
 
     # Commit changes
     try:
