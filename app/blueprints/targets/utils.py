@@ -2,17 +2,15 @@ import io
 import pandas as pd
 import numpy as np
 from app import db
-from sqlalchemy import insert, update, func, cast
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import insert
 from csv import DictReader
 from app.blueprints.locations.models import Location
-from .models import Target, TargetColumnConfig
+from .models import Target
 from .errors import (
     HeaderRowEmptyError,
     InvalidTargetRecordsError,
     InvalidColumnMappingError,
     InvalidFileStructureError,
-    InvalidNewColumnError,
 )
 
 
@@ -486,30 +484,26 @@ class TargetsUpload:
                     records_to_insert.append(target_dict)
 
             for record in records_to_update:
-                if any(
-                    key
+                update_values = {
+                    key: record[key]
                     for key in record
                     if key not in ["target_id", "form_uid", "custom_fields"]
-                ):
+                }
+
+                if update_values:
                     Target.query.filter(
                         Target.target_id == record["target_id"],
                         Target.form_uid == self.form_uid,
-                    ).update(
-                        {
-                            key: record[key]
-                            for key in record
-                            if key not in ["target_id", "form_uid", "custom_fields"]
-                        },
-                        synchronize_session=False,
-                    )
+                    ).update(update_values, synchronize_session=False)
+
                 if "custom_fields" in record:
+                    target_record = Target.query.filter_by(
+                        target_id=record["target_id"], form_uid=record["form_uid"]
+                    ).first()
+
                     for field_name, field_value in record["custom_fields"].items():
-                        target_record = Target.query.filter_by(
-                            target_id=record["target_id"], form_uid=record["form_uid"]
-                        ).first()
-                        if target_record:
-                            target_record.custom_fields[field_name] = field_value
-                    
+                        target_record.custom_fields[field_name] = field_value
+
             if records_to_insert:
                 # Insert records in chunks to the database
                 chunk_size = 1000

@@ -132,6 +132,18 @@ jobs:
             echo "DB is not up to date";\
             exit 1;\
           fi
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-post-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: web-callisto-ecr-repository
+          IMAGE_TAG: PostMigration
+
+        run: |
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
+          docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   Deploy-Staging:
     if: github.event_name == 'push' &&  github.ref == 'refs/heads/staging'
