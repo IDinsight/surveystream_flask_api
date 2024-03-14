@@ -1150,20 +1150,16 @@ def bulk_update_enumerators_custom_fields(validated_payload):
 
     if len(custom_fields_patch_keys) > 0:
         for custom_field in custom_fields_patch_keys:
-            db.session.execute(
-                update(Enumerator)
-                .values(
-                    custom_fields=func.jsonb_set(
-                        Enumerator.custom_fields,
-                        "{%s}" % custom_field,
-                        cast(
-                            payload[custom_field],
-                            JSONB,
-                        ),
-                    )
-                )
-                .where(Enumerator.enumerator_uid.in_(enumerator_uids))
-            )
+            enumerator_records = Enumerator.query.filter(
+                Enumerator.enumerator_uid.in_(enumerator_uids)
+            ).all()
+
+            for enumerator_record in enumerator_records:
+                for custom_field in custom_fields_patch_keys:
+                    # Update the custom_fields dictionary
+                    enumerator_record.custom_fields[custom_field] = payload[
+                        custom_field
+                    ]
 
     # Commit changes
     try:
