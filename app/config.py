@@ -202,7 +202,7 @@ class ProductionConfig(Config):
     SENTRY_CONFIG = {
         "dsn": "https://c320e08cbf204069afb2cc62ee498018@o564222.ingest.sentry.io/4505070237319168",
         "traces_sample_rate": "1.0",
-        "environment": "production",
+        "environment": "production-callisto",
     }
 
     ORIGINS = ["https://*.idinsight.io"]
