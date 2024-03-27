@@ -31,6 +31,8 @@ from app.blueprints.enumerators.models import Enumerator, SurveyorForm, Surveyor
 from app.blueprints.enumerators.queries import (
     build_prime_locations_with_location_hierarchy_subquery,
 )
+from app.blueprints.emails.models import ManualEmailTrigger
+from app.blueprints.emails.validators import ManualEmailTriggerValidator
 
 
 @assignments_bp.route("", methods=["GET"])
@@ -384,3 +386,24 @@ def update_assignments(validated_payload):
         return jsonify(message=str(e)), 500
 
     return jsonify(message="Success"), 200
+
+
+
+@assignments_bp.route("/schedule-email", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(ManualEmailTriggerValidator)
+@custom_permissions_required("WRITE Assignments", "body", "form_uid")
+
+def schedule_assignments_email(validated_payload):
+    data = validated_payload
+    new_trigger = ManualEmailTrigger(
+        form_uid=data["form_uid"],
+        date=data["date"],
+        time=data["time"],
+        recipients=data["recipients"],
+        template_uid=data["template_uid"],
+        status=data["status"],
+    )
+    db.session.add(new_trigger)
+    db.session.commit()
+    return jsonify({"message": "Manual email trigger created successfully"}), 201
