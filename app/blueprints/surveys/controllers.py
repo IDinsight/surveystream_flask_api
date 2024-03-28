@@ -240,10 +240,15 @@ def get_survey_config_status(survey_uid):
         elif item["name"] == "Targets":
             if targets is not None:
                 item["status"] = "In Progress"
-    for item in data["Module configuration"]:
-        if item["name"] == "Assignments":
-            if assignments is not None:
-                item["status"] = "In Progress"
+    if "Module configuration" in data:
+        for item in data["Module configuration"]:
+            if (
+                isinstance(item, dict)
+                and "name" in item
+                and item["name"] == "Assignments"
+            ):
+                if assignments is not None:
+                    item["status"] = "In Progress"
 
     response = {"success": True, "data": data}
     return jsonify(response), 200

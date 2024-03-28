@@ -1,4 +1,3 @@
-from app.blueprints.emails.models import ManualEmailTriggers
 from flask_wtf import FlaskForm
 from wtforms import FieldList, FormField, IntegerField, StringField
 from wtforms.validators import DataRequired, ValidationError

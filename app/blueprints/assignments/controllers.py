@@ -161,7 +161,9 @@ def view_assignments(validated_query_params):
                             target_status, "last_attempt_survey_status_label", None
                         ),
                         "target_assignable": getattr(
-                            target_status, "target_assignable", True # If the target_status is None, the target is new and hence, assignable
+                            target_status,
+                            "target_assignable",
+                            True,  # If the target_status is None, the target is new and hence, assignable
                         ),
                         "webapp_tag_color": getattr(
                             target_status, "webapp_tag_color", None
@@ -344,7 +346,30 @@ def update_assignments(validated_payload):
             404,
         )
 
+    re_assignments = 0
+    new_assignments = 0
+
     for assignment in assignments:
+        # query reassignments
+        if "enumerator_uid" in assignment and "target_uid" in assignment:
+            assignment_res = (
+                db.session.query(SurveyorAssignment)
+                .filter(
+                    SurveyorAssignment.enumerator_uid == assignment["enumerator_uid"],
+                    SurveyorAssignment.target_uid == assignment["target_uid"],
+                )
+                .first()
+            )
+
+            if assignment_res:
+                # update re_assignments
+                re_assignments += 1
+            else:
+                # update new_assignments
+                new_assignments += 1
+        else:
+            new_assignments += 1
+
         if assignment["enumerator_uid"] is not None:
             # do upsert
             statement = (
@@ -379,22 +404,32 @@ def update_assignments(validated_payload):
                 SurveyorAssignment.target_uid == assignment["target_uid"]
             ).delete()
 
+
+
+    #get email scheduled time for the next dispatch
+    
+
     try:
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
-    return jsonify(message="Success"), 200
-
+    return (
+        jsonify(
+            message="Success",
+            data={"re-assignments": re_assignments, "new-assignments": new_assignments},
+        ),
+        200,
+    )
 
 
 @assignments_bp.route("/schedule-email", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(ManualEmailTriggerValidator)
 @custom_permissions_required("WRITE Assignments", "body", "form_uid")
-
 def schedule_assignments_email(validated_payload):
+    """Function to schedule assignment emails"""
     data = validated_payload
     new_trigger = ManualEmailTrigger(
         form_uid=data["form_uid"],
