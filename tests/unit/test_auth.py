@@ -10,7 +10,9 @@ import jsondiff
 class TestAuth:
     @pytest.fixture
     def added_user(self, client, login_test_user, csrf_token):
-        # Add a user for testing and return it
+        """
+        Add a user for testing and return it
+        """
         response = client.post(
             "/api/users",
             json={
@@ -32,7 +34,9 @@ class TestAuth:
 
     @pytest.fixture
     def sample_user(self, added_user):
-        # Return the user added by added_user fixture as the sample_user
+        """
+        Return the user added by added_user fixture as the sample_user
+        """
         return added_user.get("user")
 
     def test_login_active_logged_out_user_correct_password(
@@ -352,7 +356,7 @@ class TestAuth:
 
     def test_forgot_password_email(self, test_user_credentials, client, csrf_token):
         """
-        Checking whether email is being sent. Will use the forgot password endpoint
+        Check whether email is being sent. Will use the forgot password endpoint
         Expecting 200 but need to manually verify if email is received
         """
 

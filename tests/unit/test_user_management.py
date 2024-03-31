@@ -7,7 +7,10 @@ import json
 class TestUserManagement:
     @pytest.fixture
     def added_user(self, client, login_test_user, csrf_token):
-        # Add a user for testing and return it
+        """
+        Add a user for testing and return it
+        """
+
         response = client.post(
             "/api/users",
             json={
@@ -30,12 +33,16 @@ class TestUserManagement:
 
     @pytest.fixture
     def sample_user(self, added_user):
-        # Return the user added by added_user fixture as the sample_user
+        """
+        Return the user added by added_user fixture as the sample_user
+        """
         return added_user.get("user")
 
     @pytest.fixture
     def sample_invite(self, added_user):
-        # Return the user added by added_user fixture as the sample_user
+        """
+        Return the user added by added_user fixture as the sample_user
+        """
         return added_user.get("invite")
 
     @pytest.fixture
@@ -86,7 +93,8 @@ class TestUserManagement:
         assert response.json["user"] == expected_data
 
     def test_check_user_nonexistent(self, client, login_test_user, csrf_token):
-        """Test checking user availability by email
+        """
+        Test checking user availability by email
         Expect user to be unavailable
         """
         response = client.post(
@@ -101,7 +109,9 @@ class TestUserManagement:
     def test_complete_registration_invalid_invite(
         self, client, login_test_user, csrf_token
     ):
-        """Test completing registration with an invalid invite code."""
+        """
+        Test completing registration with an invalid invite code.
+        """
         response = client.post(
             "/api/users/complete-registration",
             json={
@@ -123,7 +133,9 @@ class TestUserManagement:
         complete_registration_active_invite,
         sample_invite,
     ):
-        """Test completing registration with an inactive invite."""
+        """
+        Test completing registration with an inactive invite.
+        """
 
         response = client.post(
             "/api/users/complete-registration",
@@ -140,7 +152,8 @@ class TestUserManagement:
         assert b"Invalid or expired invite code" in response.data
 
     def test_get_user(self, client, sample_user, login_test_user, csrf_token):
-        """Test endpoint for fetching user data
+        """
+        Test endpoint for fetching user data
         Expect sample_user data
         """
         response = client.get(
