@@ -1,0 +1,2 @@
+COPY webapp.modules (module_id,name,optional) FROM '/docker-entrypoint-initdb.d/data/modules.csv' DELIMITER ',' CSV HEADER;
+COPY webapp.permissions (name,description,active) FROM '/docker-entrypoint-initdb.d/data/permissions.csv' DELIMITER ',' CSV HEADER;

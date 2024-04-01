@@ -378,7 +378,7 @@ class TestTargets:
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
     ):
         """
-        Upload the targets csv with no custmo fields
+        Upload the targets csv with no custom fields
         """
 
         filepath = (

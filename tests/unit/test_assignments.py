@@ -280,7 +280,7 @@ class TestAssignments:
         self, client, login_test_user, create_form, csrf_token
     ):
         """
-        Create the enumerators column config
+        Create the enumerators column config without a location column type
         """
 
         payload = {
@@ -352,7 +352,7 @@ class TestAssignments:
         self, client, login_test_user, create_form, csrf_token
     ):
         """
-        Create the enumerators column config
+        Create the enumerators column config without custom fields
         """
 
         payload = {
@@ -774,7 +774,7 @@ class TestAssignments:
         self, client, login_test_user, create_form, csrf_token
     ):
         """
-        Upload the targets column config
+        Upload the targets column config without a location column type
         """
 
         payload = {
@@ -837,7 +837,7 @@ class TestAssignments:
         self, client, login_test_user, create_form, csrf_token
     ):
         """
-        Upload the targets column config
+        Upload the targets column config without custom fields
         """
 
         payload = {
@@ -993,7 +993,7 @@ class TestAssignments:
         self, client, login_test_user, create_locations, csrf_token
     ):
         """
-        Upload the targets csv with no custmo fields
+        Upload the targets csv with no custom fields
         """
 
         filepath = (
@@ -1027,6 +1027,10 @@ class TestAssignments:
         )
 
         assert response.status_code == 200
+
+    ####################################################
+    ## FIXTURES END HERE
+    ####################################################
 
     def test_assignments_no_enumerators_no_targets_no_geo_levels(
         self, client, login_test_user, create_form, csrf_token
@@ -3850,7 +3854,7 @@ class TestAssignments:
         csrf_token,
     ):
         """
-        Test the default response from the table config endpoint
+        Test the default response from the table config endpoint when no locations are in the enumerator and target column configs
         """
 
         response = client.get(
