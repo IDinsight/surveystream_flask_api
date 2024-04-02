@@ -7,7 +7,10 @@ import json
 class TestUserManagement:
     @pytest.fixture
     def added_user(self, client, login_test_user, csrf_token):
-        # Add a user for testing and return it
+        """
+        Add a user for testing and return it
+        """
+
         response = client.post(
             "/api/users",
             json={
@@ -30,12 +33,16 @@ class TestUserManagement:
 
     @pytest.fixture
     def sample_user(self, added_user):
-        # Return the user added by added_user fixture as the sample_user
+        """
+        Return the user added by added_user fixture as the sample_user
+        """
         return added_user.get("user")
 
     @pytest.fixture
     def sample_invite(self, added_user):
-        # Return the user added by added_user fixture as the sample_user
+        """
+        Return the user added by added_user fixture as the sample_user
+        """
         return added_user.get("invite")
 
     @pytest.fixture
@@ -86,7 +93,8 @@ class TestUserManagement:
         assert response.json["user"] == expected_data
 
     def test_check_user_nonexistent(self, client, login_test_user, csrf_token):
-        """Test checking user availability by email
+        """
+        Test checking user availability by email
         Expect user to be unavailable
         """
         response = client.post(
@@ -101,7 +109,9 @@ class TestUserManagement:
     def test_complete_registration_invalid_invite(
         self, client, login_test_user, csrf_token
     ):
-        """Test completing registration with an invalid invite code."""
+        """
+        Test completing registration with an invalid invite code.
+        """
         response = client.post(
             "/api/users/complete-registration",
             json={
@@ -123,7 +133,9 @@ class TestUserManagement:
         complete_registration_active_invite,
         sample_invite,
     ):
-        """Test completing registration with an inactive invite."""
+        """
+        Test completing registration with an inactive invite.
+        """
 
         response = client.post(
             "/api/users/complete-registration",
@@ -140,7 +152,8 @@ class TestUserManagement:
         assert b"Invalid or expired invite code" in response.data
 
     def test_get_user(self, client, sample_user, login_test_user, csrf_token):
-        """Test endpoint for fetching user data
+        """
+        Test endpoint for fetching user data
         Expect sample_user data
         """
         response = client.get(
@@ -159,6 +172,7 @@ class TestUserManagement:
             "roles": [],
             "is_super_admin": False,
             "can_create_survey": False,
+            "active": True,
         }
         assert jsondiff.diff(expected_data, json.loads(response.data)) == {}
 
@@ -176,6 +190,7 @@ class TestUserManagement:
                 "last_name": "User",
                 "roles": [],
                 "is_super_admin": True,
+                "active": True,
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -213,10 +228,10 @@ class TestUserManagement:
 
         assert isinstance(users, list)
 
-    def test_delete_user(self, client, login_test_user, csrf_token, sample_user):
+    def test_deactivate_user(self, client, login_test_user, csrf_token, sample_user):
         """
-        Test endpoint for deleting users
-        the test uses the delete endpoint to delete a user
+        Test endpoint for deactivating users
+        the test uses the deactivate endpoint to deactivate a user
         then using the fetch endpoint checks if user is available
         """
         user_uid = sample_user.get("user_uid")
@@ -225,11 +240,22 @@ class TestUserManagement:
             f"/api/users/{user_uid}", headers={"X-CSRF-Token": csrf_token}
         )
         assert response.status_code == 200
-        assert b"User deleted successfully" in response.data
+        assert b"User deactivated successfully" in response.data
 
-        # Check if the deleted user is not returned by the get-user endpoint
+        # Check if the deactivated user is returned by the get-user endpoint
         response_get_user = client.get(
             f"/api/users/{user_uid}", headers={"X-CSRF-Token": csrf_token}
         )
-        assert response_get_user.status_code == 404
-        assert b"User not found" in response_get_user.data
+        assert response_get_user.status_code == 200
+        expected_response = {
+            "active": False,
+            "can_create_survey": False,
+            "email": "newuser1@example.com",
+            "first_name": "John",
+            "is_super_admin": False,
+            "last_name": "Doe",
+            "roles": [],
+            "user_uid": 3,
+        }
+        checkdiff = jsondiff.diff(expected_response, response_get_user.json)
+        assert checkdiff == {}

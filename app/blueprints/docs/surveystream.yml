@@ -774,6 +774,8 @@ paths:
                     type: array
                   is_super_admin:
                     type: boolean
+                  active:
+                    type: boolean
         "404":
           description: User not found
           content:
@@ -789,7 +791,7 @@ paths:
         - User Management
       summary: Endpoint to edit a user's information
       description: >-
-        Requires JSON body with email, first name, last name, roles, and
+        Requires JSON body with email, first name, last name, roles, active and
         is_super_admin.
       parameters:
         - in: path
@@ -820,12 +822,15 @@ paths:
                   type: boolean
                 survey_uid:
                   type: string
+                active:
+                  type: boolean
               required:
                 - email
                 - first_name
                 - last_name
                 - roles
                 - is_super_admin
+                - active
       responses:
         "200":
           description: User updated

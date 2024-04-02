@@ -211,6 +211,9 @@ class TestRoles:
         """
 
         # Try to update the existing roles
+        # role_uid==1 will have its name changed from "Core User" to "Regional Coordinator"
+        # role_uid==2 will have its name changed from "Regional Coordinator" to "Core User"
+        # This causes a temporary constraint violation during the transaction
         payload = {
             "roles": [
                 {
@@ -277,7 +280,7 @@ class TestRoles:
         self, client, login_test_user, create_roles, csrf_token
     ):
         """
-        Test that updating roles with a temporary unique constraint violation succeeds
+        Test that updating roles with a non-temporary unique constraint violation fails
         """
 
         # Try to update the existing roles with a unique constraint violation on `role_name`
@@ -391,7 +394,7 @@ class TestRoles:
         self, client, login_test_user, create_survey, csrf_token
     ):
         """
-        Test that existing roles can be updated
+        Test the hierarchy validations for an invalid hierarchy
         """
 
         payload = {
@@ -677,7 +680,7 @@ class TestRoles:
         self, client, login_test_user, create_survey, csrf_token
     ):
         """
-        Test that existing roles can be updated
+        Test that a valid hierarchy passes the validations
         """
 
         payload = {

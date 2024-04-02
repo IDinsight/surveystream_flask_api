@@ -1,0 +1,15 @@
+"module_id","name","optional"
+1,"Basic information",False
+2,"Module selection",False
+3,"SurveyCTO information",False
+4,"Field supervisor roles",False
+5,"Survey locations",False
+6,"SurveyStream users",False
+7,"Enumerators",False
+8,"Targets",False
+9,"Assignments",True
+10,"Productivity tracker",True
+11,"Data quality",True
+12,"Audio audits",True
+13,"Surveyor hiring",True
+14,"Photo audits",True

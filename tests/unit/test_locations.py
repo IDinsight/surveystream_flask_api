@@ -642,7 +642,7 @@ class TestLocations:
         self, client, login_test_user, create_survey, csrf_token
     ):
         """
-        Test that existing geo levels can be updated
+        Test the different cases of an invalid geo level hierarchy
         """
 
         payload = {
@@ -907,7 +907,7 @@ class TestLocations:
         self, client, login_test_user, create_survey, csrf_token
     ):
         """
-        Test that existing geo levels can be updated
+        Test that the validations pass for a valid geo level hierarchy
         """
 
         payload = {
@@ -1525,7 +1525,7 @@ class TestLocations:
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
     ):
         """
-        Test that the locations csv can be uploaded
+        Test uploading locations with geo level mapping errors
         """
 
         filepath = (
@@ -1587,7 +1587,7 @@ class TestLocations:
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
     ):
         """
-        Test that the locations csv can be uploaded
+        Test uploading locations with location file errors
         """
 
         filepath = (
@@ -1644,7 +1644,8 @@ class TestLocations:
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
     ):
         """
-        Test that the locations csv can be uploaded
+        Test uploading a locations file with the first row blank
+        Should return an error
         """
 
         filepath = (
@@ -2042,7 +2043,7 @@ class TestLocations:
         self, client, login_test_user, csrf_token
     ):
         """
-        Test that the locations  can be fetched when there are no geo levels and no location data uploaded
+        Test that the locations can be fetched when there are no geo levels and no location data uploaded
         """
 
         # Check the response

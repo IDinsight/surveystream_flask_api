@@ -60,6 +60,7 @@ def update_logged_in_user_roles(
             "can_create_survey": can_create_survey,
             "is_survey_admin": is_survey_admin,
             "survey_uid": survey_uid,
+            "active": True,
         },
         content_type="application/json",
         headers={"X-CSRF-Token": csrf_token},

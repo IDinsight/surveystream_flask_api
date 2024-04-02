@@ -81,8 +81,8 @@ class TestSurveys:
         self, client, login_test_user, create_surveys, test_user_credentials
     ):
         """
-        Test that the create_surveys fixture
-        Expect super admin to ger all created surveys
+        Test that the create_surveys fixture updloads the data correctly
+        Expect super admin to get all created surveys
         """
 
         # Test the survey was inserted correctly
@@ -109,7 +109,7 @@ class TestSurveys:
                 },
                 {
                     "config_status": "In Progress - Configuration",
-                    "created_by_user_uid": 5444,
+                    "created_by_user_uid": 3,
                     "irb_approval": "Yes",
                     "last_updated_at": "2024-01-25 12:38:41.277939",
                     "planned_end_date": "2021-12-31",
@@ -240,7 +240,7 @@ class TestSurveys:
                 },
                 {
                     "config_status": "In Progress - Configuration",
-                    "created_by_user_uid": 5444,
+                    "created_by_user_uid": 3,
                     "irb_approval": "Yes",
                     "last_updated_at": "2024-01-25 12:38:41.277939",
                     "planned_end_date": "2021-12-31",
