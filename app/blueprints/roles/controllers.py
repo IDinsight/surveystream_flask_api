@@ -36,7 +36,7 @@ def get_survey_roles(validated_query_params):
             func.unnest(User.roles).label("role_uid"),
             User.user_uid.label("user_uid"),
         )
-        .filter(User.active.isnot(True))
+        .filter(User.active.is_(True))
         .subquery()
     )
 
