@@ -258,6 +258,7 @@ def edit_user(user_uid, validated_payload):
     - roles
     - is_super_admin
     - is_survey_admin
+    - active
 
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
@@ -271,7 +272,7 @@ def edit_user(user_uid, validated_payload):
         user_to_edit.roles = validated_payload.roles.data
         user_to_edit.is_super_admin = validated_payload.is_super_admin.data
         user_to_edit.can_create_survey = validated_payload.can_create_survey.data
-        user_to_edit.active = validated_payload.active
+        user_to_edit.active = validated_payload.active.data
 
         # Add or remove survey admin privileges based on is_survey_admin field
         if validated_payload.is_survey_admin.data:

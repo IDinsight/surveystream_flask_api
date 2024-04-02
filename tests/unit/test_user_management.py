@@ -228,10 +228,10 @@ class TestUserManagement:
 
         assert isinstance(users, list)
 
-    def test_delete_user(self, client, login_test_user, csrf_token, sample_user):
+    def test_deactivate_user(self, client, login_test_user, csrf_token, sample_user):
         """
-        Test endpoint for deleting users
-        the test uses the delete endpoint to delete a user
+        Test endpoint for deactivating users
+        the test uses the deactivate endpoint to deactivate a user
         then using the fetch endpoint checks if user is available
         """
         user_uid = sample_user.get("user_uid")
@@ -242,9 +242,20 @@ class TestUserManagement:
         assert response.status_code == 200
         assert b"User deactivated successfully" in response.data
 
-        # Check if the deleted user is not returned by the get-user endpoint
+        # Check if the deactivated user is returned by the get-user endpoint
         response_get_user = client.get(
             f"/api/users/{user_uid}", headers={"X-CSRF-Token": csrf_token}
         )
-        assert response_get_user.status_code == 404
-        assert b"User not found" in response_get_user.data
+        assert response_get_user.status_code == 200
+        expected_response = {
+            "active": False,
+            "can_create_survey": False,
+            "email": "newuser1@example.com",
+            "first_name": "John",
+            "is_super_admin": False,
+            "last_name": "Doe",
+            "roles": [],
+            "user_uid": 3,
+        }
+        checkdiff = jsondiff.diff(expected_response, response_get_user.json)
+        assert checkdiff == {}
