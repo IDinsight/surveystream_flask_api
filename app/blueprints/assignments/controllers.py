@@ -407,7 +407,6 @@ def update_assignments(validated_payload):
 
 
     #get email scheduled time for the next dispatch
-    
 
     try:
         db.session.commit()
