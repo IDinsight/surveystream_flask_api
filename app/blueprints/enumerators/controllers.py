@@ -1,4 +1,5 @@
 from flask import jsonify, request
+from app.blueprints.assignments.models import SurveyorAssignment
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
@@ -940,6 +941,26 @@ def update_enumerator_status(enumerator_uid, validated_payload):
         )
 
     result.status = status
+
+    # Releasing the assignment on suryeyor dropout
+    if status == "Dropout":
+        subquery = (
+            db.session.query(SurveyorAssignment.target_uid)
+            .join(
+                SurveyorForm,
+                SurveyorForm.enumerator_uid == SurveyorAssignment.enumerator_uid,
+            )
+            .filter(
+                SurveyorForm.form_uid == form_uid,
+                SurveyorAssignment.enumerator_uid == enumerator_uid,
+            )
+            .subquery()
+        )
+
+        # Use the subquery to delete the assignment
+        db.session.query(SurveyorAssignment).filter(
+            SurveyorAssignment.target_uid.in_(subquery)
+        ).delete(synchronize_session=False)
 
     try:
         db.session.commit()
