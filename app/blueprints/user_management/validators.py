@@ -61,6 +61,7 @@ class EditUserValidator(FlaskForm):
         "is_survey_admin", default=False, validators=[Optional()]
     )
     survey_uid = IntegerField("survey_uid", validators=[Optional()], default=None)
+    active = BooleanField()
 
     def validate_survey_uid(self, field):
         if self.is_survey_admin.data and not field.data:

@@ -230,8 +230,7 @@ def complete_registration(validated_payload):
 
         # Update user password and set invite status to inactive
         user = User.query.get(invite.user_uid)
-        # update user in case it was deleted
-        user.to_delete = False
+        # update user in case it was deactivated
         user.active = True
         user.change_password(new_password)
 
@@ -259,6 +258,7 @@ def edit_user(user_uid, validated_payload):
     - roles
     - is_super_admin
     - is_survey_admin
+    - active
 
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
@@ -272,8 +272,7 @@ def edit_user(user_uid, validated_payload):
         user_to_edit.roles = validated_payload.roles.data
         user_to_edit.is_super_admin = validated_payload.is_super_admin.data
         user_to_edit.can_create_survey = validated_payload.can_create_survey.data
-        user_to_edit.to_delete = False
-        user_to_edit.active = True
+        user_to_edit.active = validated_payload.active.data
 
         # Add or remove survey admin privileges based on is_survey_admin field
         if validated_payload.is_survey_admin.data:
@@ -316,9 +315,7 @@ def get_user(user_uid):
     """
     Endpoint to get information for a single user.
     """
-    user = User.query.filter(
-        (User.user_uid == user_uid) & (User.to_delete.isnot(True))
-    ).first()
+    user = User.query.filter(User.user_uid == user_uid).first()
 
     if user:
         user_data = {
@@ -329,6 +326,7 @@ def get_user(user_uid):
             "roles": user.roles,
             "is_super_admin": user.is_super_admin,
             "can_create_survey": user.can_create_survey,
+            "active": user.active,
         }
         return jsonify(user_data), 200
     else:
@@ -388,10 +386,10 @@ def get_all_users():
             func.array_agg(survey_admin_subquery.c.survey_uid.distinct()).label(
                 "user_admin_surveys"
             ),
-            func.array_agg(survey_admin_subquery.c.survey_name.distinct())
-            .label("user_admin_survey_names"),
+            func.array_agg(survey_admin_subquery.c.survey_name.distinct()).label(
+                "user_admin_survey_names"
+            ),
         )
-        .filter(User.to_delete.isnot(True))
         .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
         .outerjoin(
             survey_admin_subquery, survey_admin_subquery.c.user_uid == User.user_uid
@@ -460,20 +458,19 @@ def get_all_users():
 @user_management_bp.route("/users/<int:user_uid>", methods=["DELETE"])
 @logged_in_active_user_required
 @custom_permissions_required("ADMIN")
-def delete_user(user_uid):
+def deactivate_user(user_uid):
     """
-    Endpoint to delete a user.
+    Endpoint to deactivate a user.
     """
     user = User.query.get(user_uid)
     if user:
         try:
-            # Set user as deleted and update active field
-            user.to_delete = True
+            # Set user as deactivated
             user.active = False
             db.session.commit()
-            return jsonify(message="User deleted successfully"), 200
+            return jsonify(message="User deactivated successfully"), 200
         except Exception as e:
             db.session.rollback()
-            return jsonify(message=f"Error deleting user: {str(e)}"), 500
+            return jsonify(message=f"Error deactivating user: {str(e)}"), 500
     else:
         return jsonify(message="User not found"), 404
