@@ -172,6 +172,7 @@ class TestUserManagement:
             "roles": [],
             "is_super_admin": False,
             "can_create_survey": False,
+            "active": True,
         }
         assert jsondiff.diff(expected_data, json.loads(response.data)) == {}
 
@@ -189,6 +190,7 @@ class TestUserManagement:
                 "last_name": "User",
                 "roles": [],
                 "is_super_admin": True,
+                "active": True,
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -238,7 +240,7 @@ class TestUserManagement:
             f"/api/users/{user_uid}", headers={"X-CSRF-Token": csrf_token}
         )
         assert response.status_code == 200
-        assert b"User deleted successfully" in response.data
+        assert b"User deactivated successfully" in response.data
 
         # Check if the deleted user is not returned by the get-user endpoint
         response_get_user = client.get(

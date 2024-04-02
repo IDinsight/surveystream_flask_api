@@ -29,7 +29,6 @@ class User(db.Model):
     roles = db.Column(db.ARRAY(db.Integer), default=[], nullable=True)
     is_super_admin = db.Column(db.Boolean, default=False, nullable=True)
     can_create_survey = db.Column(db.Boolean, default=False, nullable=True)
-    to_delete = db.Column(db.Boolean(), default=False, nullable=True)
 
     def __init__(
         self,
@@ -41,7 +40,6 @@ class User(db.Model):
         is_super_admin=False,
         can_create_survey=False,
         roles=None,
-        to_delete=False,
     ):
         if roles is None:
             roles = []
@@ -57,7 +55,6 @@ class User(db.Model):
         self.is_super_admin = is_super_admin
         self.can_create_survey = can_create_survey
         self.active = active
-        self.to_delete = to_delete if to_delete is not None else False
 
     def to_dict(self):
         return {
