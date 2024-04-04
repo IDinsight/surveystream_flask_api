@@ -39,9 +39,6 @@ def upgrade():
         batch_op.execute(
             "ALTER SEQUENCE webapp.forms_form_uid_seq OWNED BY webapp.forms.form_uid;"
         )
-        batch_op.execute(
-            "ALTER SEQUENCE webapp.forms_form_uid_seq RESTART WITH (SELECT MAX(form_uid) + 1 FROM webapp.forms);"
-        )
         batch_op.alter_column(
             "form_uid",
             server_default=sa.text("nextval('webapp.forms_form_uid_seq'::regclass)"),
@@ -449,9 +446,6 @@ def downgrade():
         )
         batch_op.execute(
             "ALTER SEQUENCE webapp.parent_forms_form_uid_seq OWNED BY webapp.parent_forms.form_uid;"
-        )
-        batch_op.execute(
-            "ALTER SEQUENCE webapp.parent_forms_form_uid_seq RESTART WITH (SELECT MAX(form_uid) + 1 FROM webapp.parent_forms);"
         )
         batch_op.alter_column(
             "form_uid",
