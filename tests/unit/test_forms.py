@@ -76,8 +76,8 @@ class TestForms:
 
         payload = {
             "survey_uid": 1,
-            "scto_form_id": "test_scto_input_output",
-            "form_name": "Agrifieldnet Main Form",
+            "scto_form_id": "test_scto_dq",
+            "form_name": "Agrifieldnet AA Form",
             "tz_name": "Asia/Kolkata",
             "scto_server_name": "dod",
             "encryption_key_shared": True,
@@ -581,16 +581,16 @@ class TestForms:
         """
 
         # Test the form was inserted correctly
-        response = client.get("/api/forms?survey_uid=1")
+        response = client.get("/api/forms?survey_uid=1&form_type=dq")
         assert response.status_code == 200
 
         expected_response = {
             "data": [
                 {
-                    "form_uid": 1,
+                    "form_uid": 2,
                     "survey_uid": 1,
-                    "scto_form_id": "test_scto_input_output",
-                    "form_name": "Agrifieldnet Main Form",
+                    "scto_form_id": "test_scto_dq",
+                    "form_name": "Agrifieldnet AA Form",
                     "tz_name": "Asia/Kolkata",
                     "scto_server_name": "dod",
                     "encryption_key_shared": True,
