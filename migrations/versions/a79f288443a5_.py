@@ -22,15 +22,15 @@ def upgrade():
 
     op.rename_table("parent_forms", "forms", schema="webapp")
     with op.batch_alter_table("forms", schema="webapp") as batch_op:
-        batch_op.add_column("form_type", sa.String(), nullable=False)
+        batch_op.add_column(sa.Column("form_type", sa.String(), nullable=False))
         batch_op.create_check_constraint(
             "ck_forms_form_type",
             "forms",
             sa.text("form_type IN ('parent', 'dq')"),
             schema="webapp",
         )
-        batch_op.add_column("dq_form_type", sa.String(), nullable=True)
-        batch_op.add_column("parent_form_uid", sa.Integer(), nullable=True)
+        batch_op.add_column(sa.Column("dq_form_type", sa.String(), nullable=True))
+        batch_op.add_column(sa.Column("parent_form_uid", sa.Integer(), nullable=True))
 
         batch_op.drop_constraint("pk_parent_forms", type_="primary")
         batch_op.create_primary_key("pk_forms", ["form_uid"])
@@ -439,9 +439,9 @@ def downgrade():
 
     op.rename_table("parent_forms", "forms", schema="webapp")
     with op.batch_alter_table("forms", schema="webapp") as batch_op:
-        batch_op.drop_column("form_type", sa.String(), nullable=False)
-        batch_op.drop_column("dq_form_type", sa.String(), nullable=True)
-        batch_op.drop_column("parent_form_uid", sa.Integer(), nullable=True)
+        batch_op.drop_column("form_type")
+        batch_op.drop_column("dq_form_type")
+        batch_op.drop_column("parent_form_uid")
 
         batch_op.drop_constraint("pk_forms", type_="primary")
         batch_op.create_primary_key("pk_parent_forms", ["form_uid"])
