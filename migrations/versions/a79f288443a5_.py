@@ -34,7 +34,7 @@ def upgrade():
 
         # Rename the primary key sequence
         batch_op.execute(
-            "ALTER SEQUENCE webapp.parent_forms_form_uid_seq RENAME TO webapp.forms_form_uid_seq;"
+            "ALTER SEQUENCE webapp.parent_forms_form_uid_seq RENAME TO forms_form_uid_seq;"
         )
         batch_op.execute(
             "ALTER SEQUENCE webapp.forms_form_uid_seq OWNED BY webapp.forms.form_uid;"
