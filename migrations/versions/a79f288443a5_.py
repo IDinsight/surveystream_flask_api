@@ -445,7 +445,7 @@ def downgrade():
 
         # Rename the primary key sequence
         batch_op.execute(
-            "ALTER SEQUENCE webapp.forms_form_uid_seq RENAME TO webapp.parent_forms_form_uid_seq;"
+            "ALTER SEQUENCE webapp.forms_form_uid_seq RENAME TO parent_forms_form_uid_seq;"
         )
         batch_op.execute(
             "ALTER SEQUENCE webapp.parent_forms_form_uid_seq OWNED BY webapp.parent_forms.form_uid;"
