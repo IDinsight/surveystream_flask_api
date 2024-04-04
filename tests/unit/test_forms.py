@@ -51,6 +51,9 @@ class TestForms:
             "encryption_key_shared": True,
             "server_access_role_granted": True,
             "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
         }
 
         response = client.post(
@@ -85,6 +88,9 @@ class TestForms:
                     "server_access_role_granted": True,
                     "server_access_allowed": True,
                     "last_ingested_at": None,
+                    "form_type": "parent",
+                    "parent_form_uid": None,
+                    "dq_form_type": None,
                 }
             ],
             "success": True,
@@ -113,6 +119,9 @@ class TestForms:
                     "server_access_role_granted": True,
                     "server_access_allowed": True,
                     "last_ingested_at": None,
+                    "form_type": "parent",
+                    "parent_form_uid": None,
+                    "dq_form_type": None,
                 }
             ],
             "success": True,
@@ -155,6 +164,9 @@ class TestForms:
             "encryption_key_shared": False,
             "server_access_role_granted": False,
             "server_access_allowed": False,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
         }
 
         response = client.put(
@@ -180,6 +192,9 @@ class TestForms:
                 "server_access_role_granted": False,
                 "server_access_allowed": False,
                 "last_ingested_at": None,
+                "form_type": "parent",
+                "parent_form_uid": None,
+                "dq_form_type": None,
             },
             "success": True,
         }

@@ -15,7 +15,7 @@ from .errors import InvalidTableConfigError
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.locations.utils import GeoLevelHierarchy
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from app.blueprints.surveys.models import Survey
 from app.blueprints.enumerators.models import EnumeratorColumnConfig
 from app.blueprints.targets.models import TargetColumnConfig
@@ -53,7 +53,7 @@ def get_table_config(validated_query_params):
     form_uid = validated_query_params.form_uid.data
 
     # Get the survey UID from the form UID
-    form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    form = Form.query.filter_by(form_uid=form_uid).first()
 
     if form is None:
         return (
@@ -232,7 +232,7 @@ def update_table_config(validated_payload):
     table_config = validated_payload.table_config.data
 
     # Get the survey UID from the form UID
-    form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    form = Form.query.filter_by(form_uid=form_uid).first()
 
     if form is None:
         return (

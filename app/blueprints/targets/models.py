@@ -1,5 +1,5 @@
 from app import db
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
 from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
@@ -23,9 +23,7 @@ class Target(db.Model):
         db.Integer(), db.ForeignKey(Location.location_uid), nullable=True
     )
     custom_fields = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
 
     __table_args__ = (
         # We need this because we don't have a user-friendly way of enforcing teams to create unique targets_id's across forms
@@ -138,9 +136,7 @@ class TargetColumnConfig(db.Model):
 
     __tablename__ = "target_column_config"
 
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
     column_name = db.Column(db.String(), nullable=False)
     column_type = db.Column(
         db.String(),

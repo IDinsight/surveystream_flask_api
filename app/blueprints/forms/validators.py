@@ -1,16 +1,22 @@
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, IntegerField, StringField, FormField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, AnyOf
 
 
-class GetParentFormQueryParamValidator(FlaskForm):
+class GetFormQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
     survey_uid = IntegerField()
+    form_type = StringField(
+        AnyOf(
+            ["parent", "dq"],
+            message="Value must be one of %(values)s",
+        )
+    )
 
 
-class CreateParentFormValidator(FlaskForm):
+class CreateFormValidator(FlaskForm):
     survey_uid = IntegerField(validators=[DataRequired()])
     scto_form_id = StringField(validators=[DataRequired()])
     form_name = StringField(validators=[DataRequired()])
@@ -19,9 +25,18 @@ class CreateParentFormValidator(FlaskForm):
     encryption_key_shared = BooleanField()
     server_access_role_granted = BooleanField()
     server_access_allowed = BooleanField()
+    form_type = StringField(
+        AnyOf(
+            ["parent", "dq"],
+            message="Value must be one of %(values)s",
+        ),
+        validators=[DataRequired()],
+    )
+    parent_form_uid = IntegerField()
+    dq_form_type = StringField()
 
 
-class UpdateParentFormValidator(FlaskForm):
+class UpdateFormValidator(FlaskForm):
     scto_form_id = StringField(validators=[DataRequired()])
     form_name = StringField(validators=[DataRequired()])
     tz_name = StringField()
@@ -29,6 +44,15 @@ class UpdateParentFormValidator(FlaskForm):
     encryption_key_shared = BooleanField()
     server_access_role_granted = BooleanField()
     server_access_allowed = BooleanField()
+    form_type = StringField(
+        AnyOf(
+            ["parent", "dq"],
+            message="Value must be one of %(values)s",
+        ),
+        validators=[DataRequired()],
+    )
+    parent_form_uid = IntegerField()
+    dq_form_type = StringField()
 
 
 class LocationQuestionMappingValidator(FlaskForm):
