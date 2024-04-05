@@ -198,7 +198,6 @@ class TestTargetStatusMapping:
 
         response = client.put(
             "/api/target-status-mapping",
-            query_string={"form_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -246,7 +245,6 @@ class TestTargetStatusMapping:
 
         response = client.put(
             "/api/target-status-mapping",
-            query_string={"form_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -347,7 +345,6 @@ class TestTargetStatusMapping:
 
         response = client.put(
             "/api/target-status-mapping",
-            query_string={"form_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -467,7 +464,6 @@ class TestTargetStatusMapping:
 
         response = client.put(
             "/api/target-status-mapping",
-            query_string={"form_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -580,7 +576,6 @@ class TestTargetStatusMapping:
 
         response = client.put(
             "/api/target-status-mapping",
-            query_string={"form_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
