@@ -1,4 +1,4 @@
-"""empty message
+"""Add target status mapping tables
 
 Revision ID: b8318c6eb036
 Revises: 702360394ae3
