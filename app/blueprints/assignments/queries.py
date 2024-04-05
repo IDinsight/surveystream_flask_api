@@ -2,7 +2,7 @@ from app import db
 from .models import SurveyorAssignment
 from app.blueprints.targets.models import TargetStatus
 from app.blueprints.enumerators.models import SurveyorForm
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from sqlalchemy.sql.functions import func
 from sqlalchemy import case, or_, cast
 
@@ -58,8 +58,8 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
             ).label("total_assigned_targets"),
         )
         .join(
-            ParentForm,
-            SurveyorForm.form_uid == ParentForm.form_uid,
+            Form,
+            SurveyorForm.form_uid == Form.form_uid,
         )
         .join(
             SurveyorAssignment,
@@ -68,7 +68,7 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
         .outerjoin(
             TargetStatus, SurveyorAssignment.target_uid == TargetStatus.target_uid
         )
-        .filter(ParentForm.survey_uid == survey_uid)
+        .filter(Form.survey_uid == survey_uid)
         .group_by(SurveyorForm.enumerator_uid, SurveyorForm.form_uid)
         .subquery()
     )
@@ -78,12 +78,12 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
         db.session.query(
             SurveyorForm.enumerator_uid,
             func.jsonb_object_agg(
-                ParentForm.scto_form_id,
+                Form.scto_form_id,
                 func.jsonb_build_object(
                     "form_name",
-                    ParentForm.form_name,
+                    Form.form_name,
                     "scto_form_id",
-                    ParentForm.scto_form_id,
+                    Form.scto_form_id,
                     "total_assigned_targets",
                     func.coalesce(
                         cast(
@@ -111,13 +111,13 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
                 ),
             ).label("form_productivity"),
         )
-        .join(ParentForm, SurveyorForm.form_uid == ParentForm.form_uid)
+        .join(Form, SurveyorForm.form_uid == Form.form_uid)
         .outerjoin(
             assignment_status_subquery,
             (SurveyorForm.enumerator_uid == assignment_status_subquery.c.enumerator_uid)
             & (SurveyorForm.form_uid == assignment_status_subquery.c.form_uid),
         )
-        .filter(ParentForm.survey_uid == survey_uid)
+        .filter(Form.survey_uid == survey_uid)
         .group_by(SurveyorForm.enumerator_uid)
         .subquery()
     )

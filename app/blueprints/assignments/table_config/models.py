@@ -1,5 +1,5 @@
 from app import db
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from sqlalchemy import CheckConstraint
 
 
@@ -11,9 +11,7 @@ class TableConfig(db.Model):
 
     __tablename__ = "assignments_table_config"
 
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
     table_name = db.Column(
         db.String(),
         CheckConstraint(
