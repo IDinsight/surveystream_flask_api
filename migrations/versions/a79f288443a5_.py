@@ -99,6 +99,10 @@ def upgrade():
         )
         batch_op.add_column(sa.Column("dq_form_type", sa.String(), nullable=True))
         batch_op.add_column(sa.Column("parent_form_uid", sa.Integer(), nullable=True))
+        batch_op.create_check_constraint(
+            "ck_forms_dq_form_type",
+            sa.text("dq_form_type IN ('audioaudit', 'backcheck', 'spotcheck')"),
+        )
 
         batch_op.drop_constraint("pk_parent_forms", type_="primary")
         batch_op.create_primary_key("pk_forms", ["form_uid"])
