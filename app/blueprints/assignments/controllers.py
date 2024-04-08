@@ -10,6 +10,7 @@ from flask_login import current_user
 from app import db
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
 from .models import SurveyorAssignment
 from .validators import (
     AssignmentsQueryParamValidator,
@@ -31,7 +32,11 @@ from app.blueprints.enumerators.models import Enumerator, SurveyorForm, Surveyor
 from app.blueprints.enumerators.queries import (
     build_prime_locations_with_location_hierarchy_subquery,
 )
-from app.blueprints.emails.models import ManualEmailTrigger
+from app.blueprints.emails.models import (
+    ManualEmailTrigger,
+    EmailSchedule,
+    EmailTemplate,
+)
 from app.blueprints.emails.validators import ManualEmailTriggerValidator
 
 
@@ -404,9 +409,32 @@ def update_assignments(validated_payload):
                 SurveyorAssignment.target_uid == assignment["target_uid"]
             ).delete()
 
+    response_data = {
+        "re-assignments": re_assignments,
+        "new-assignments": new_assignments,
+    }
 
+    # get email scheduled time for the next dispatch
+    # query email schedule - automated emails - using form_uid
+    email_schedule = (
+        db.session.query(EmailSchedule)
+        .join(
+            EmailTemplate, EmailSchedule.template_uid == EmailTemplate.email_template_id
+        )
+        .filter(
+            EmailSchedule.form_uid == form_uid,
+            func.lower(EmailTemplate.template_name) == "assignments",
+        )
+        .first()
+    )
 
-    #get email scheduled time for the next dispatch
+    if email_schedule:
+        response_data["email_schedule"] = {
+            "form_uid": email_schedule.form_uid,
+            "template_name": email_schedule.template_name,
+            "date": email_schedule.date,
+            "time": email_schedule.time,
+        }
 
     try:
         db.session.commit()
@@ -414,13 +442,7 @@ def update_assignments(validated_payload):
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
-    return (
-        jsonify(
-            message="Success",
-            data={"re-assignments": re_assignments, "new-assignments": new_assignments},
-        ),
-        200,
-    )
+    return jsonify(message="Success", data=response_data), 200
 
 
 @assignments_bp.route("/schedule-email", methods=["POST"])

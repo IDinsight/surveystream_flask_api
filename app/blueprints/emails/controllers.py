@@ -36,14 +36,14 @@ def create_email_schedule(validated_payload):
 @custom_permissions_required("READ Email", "path", "form_uid")
 def get_email_schedules(form_uid):
     email_schedules = EmailSchedule.query.get_or_404(form_uid)
-    return jsonify(email_schedule=email_schedule.serialize())
+    return jsonify(email_schedule=email_schedules.serialize())
 
 
 @emails_bp.route("/schedule/<int:schedule_id>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(EmailScheduleValidator)
 @custom_permissions_required("WRITE Email", "body", "form_uid")
-def update_email_schedule(validated_payload):
+def update_email_schedule(schedule_id, validated_payload):
     data = validated_payload
     email_schedule = EmailSchedule.query.get_or_404(schedule_id)
     for key, value in data.items():
