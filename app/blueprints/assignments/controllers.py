@@ -158,12 +158,12 @@ def view_assignments(validated_query_params):
                             target_status, "completed_flag", None
                         ),
                         "refusal_flag": getattr(target_status, "refusal_flag", None),
-                        "num_attempts": getattr(target_status, "num_attempts", None),
+                        "num_attempts": getattr(target_status, "num_attempts", 0),
                         "last_attempt_survey_status": getattr(
                             target_status, "last_attempt_survey_status", None
                         ),
                         "last_attempt_survey_status_label": getattr(
-                            target_status, "last_attempt_survey_status_label", None
+                            target_status, "last_attempt_survey_status_label", "Not Attempted"
                         ),
                         "target_assignable": getattr(
                             target_status,
