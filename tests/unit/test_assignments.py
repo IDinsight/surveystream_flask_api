@@ -61,6 +61,9 @@ class TestAssignments:
             "encryption_key_shared": True,
             "server_access_role_granted": True,
             "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
         }
 
         response = client.post(
@@ -2959,6 +2962,200 @@ class TestAssignments:
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
         print(response.json)
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_dropout_enumerator(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        csrf_token,
+    ):
+        """
+        Test removing an assignment on a target when the enumerator is marked as Dropout
+        """
+
+        # Making the assignment
+        payload = {
+            "assignments": [
+                {"target_uid": 1, "enumerator_uid": 1},
+                {"target_uid": 2, "enumerator_uid": 1},
+            ],
+            "form_uid": 1,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        # Update an enumerator's status to Dropout
+        payload = {
+            "status": "Dropout",
+            "form_uid": 1,
+            "enumerator_type": "surveyor",
+        }
+
+        response = client.patch(
+            "/api/enumerators/1/roles/status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        # Check the response and assert that the target are released
+        expected_response = {
+            "data": [
+                {
+                    "assigned_enumerator_custom_fields": None,
+                    "assigned_enumerator_email": None,
+                    "assigned_enumerator_gender": None,
+                    "assigned_enumerator_home_address": None,
+                    "assigned_enumerator_id": None,
+                    "assigned_enumerator_language": None,
+                    "assigned_enumerator_mobile_primary": None,
+                    "assigned_enumerator_name": None,
+                    "assigned_enumerator_uid": None,
+                    "completed_flag": None,
+                    "custom_fields": {
+                        "Address": "Hyderabad",
+                        "Mobile no.": "1234567890",
+                        "Name": "Anil",
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile " "no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "location_uid": 4,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": True,
+                    "target_id": "1",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "geo_level_uid": 1,
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "geo_level_uid": 2,
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "geo_level_uid": 3,
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                        },
+                    ],
+                    "target_uid": 1,
+                    "webapp_tag_color": None,
+                },
+                {
+                    "assigned_enumerator_custom_fields": None,
+                    "assigned_enumerator_email": None,
+                    "assigned_enumerator_gender": None,
+                    "assigned_enumerator_home_address": None,
+                    "assigned_enumerator_id": None,
+                    "assigned_enumerator_language": None,
+                    "assigned_enumerator_mobile_primary": None,
+                    "assigned_enumerator_name": None,
+                    "assigned_enumerator_uid": None,
+                    "completed_flag": None,
+                    "custom_fields": {
+                        "Address": "South Delhi",
+                        "Mobile no.": "1234567891",
+                        "Name": "Anupama",
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile " "no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "location_uid": 4,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": True,
+                    "target_id": "2",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "geo_level_uid": 1,
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "geo_level_uid": 2,
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "geo_level_uid": 3,
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                        },
+                    ],
+                    "target_uid": 2,
+                    "webapp_tag_color": None,
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/assignments", query_string={"form_uid": 1})
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}

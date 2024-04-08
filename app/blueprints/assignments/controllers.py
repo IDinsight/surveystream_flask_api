@@ -19,7 +19,7 @@ from .queries import (
     build_surveyor_formwise_productivity_subquery,
 )
 from app.blueprints.surveys.models import Survey
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from app.blueprints.targets.models import Target, TargetStatus
 from app.blueprints.targets.queries import (
     build_bottom_level_locations_with_location_hierarchy_subquery,
@@ -49,7 +49,7 @@ def view_assignments(validated_query_params):
 
     # TODO: Check if the logged in user has permission to access the given form
 
-    survey_uid = ParentForm.query.filter_by(form_uid=form_uid).first().survey_uid
+    survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
     # We need to get the bottom level geo level UID for the survey in order to join in the location information
     # Only do this if the targets have locations
@@ -196,7 +196,7 @@ def view_assignments_enumerators(validated_query_params):
 
     # TODO: Check if the logged in user has permission to access the given form
 
-    survey_uid = ParentForm.query.filter_by(form_uid=form_uid).first().survey_uid
+    survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
     prime_geo_level_uid = (
         Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid

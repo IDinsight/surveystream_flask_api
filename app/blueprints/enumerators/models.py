@@ -1,5 +1,5 @@
 from app import db
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
 from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
@@ -24,9 +24,7 @@ class Enumerator(db.Model):
     home_address = db.Column(db.String(), nullable=True)
     gender = db.Column(db.String(), nullable=True)
     custom_fields = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
 
     __table_args__ = (
         # We need this because we don't have a user-friendly way of enforcing teams to create unique enumerator_id's across forms
@@ -93,9 +91,7 @@ class SurveyorForm(db.Model):
     enumerator_uid = db.Column(
         db.Integer(), db.ForeignKey(Enumerator.enumerator_uid), nullable=False
     )
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
     status = db.Column(
         db.String(),
         CheckConstraint(
@@ -121,9 +117,7 @@ class SurveyorLocation(db.Model):
 
     __tablename__ = "location_surveyor_mapping"
 
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
     enumerator_uid = db.Column(
         db.Integer(), db.ForeignKey(Enumerator.enumerator_uid), nullable=False
     )
@@ -146,9 +140,7 @@ class MonitorForm(db.Model):
     enumerator_uid = db.Column(
         db.Integer(), db.ForeignKey(Enumerator.enumerator_uid), nullable=False
     )
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
     status = db.Column(
         db.String(),
         CheckConstraint(
@@ -174,9 +166,7 @@ class MonitorLocation(db.Model):
 
     __tablename__ = "location_monitor_mapping"
 
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
     enumerator_uid = db.Column(
         db.Integer(), db.ForeignKey(Enumerator.enumerator_uid), nullable=False
     )
@@ -199,9 +189,7 @@ class SurveyorStats(db.Model):
     enumerator_uid = db.Column(
         db.Integer(), db.ForeignKey(Enumerator.enumerator_uid), nullable=False
     )
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
     avg_num_submissions_per_day = db.Column(db.Integer())
     avg_num_completed_per_day = db.Column(db.Integer())
 
@@ -240,9 +228,7 @@ class EnumeratorColumnConfig(db.Model):
 
     __tablename__ = "enumerator_column_config"
 
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
     column_name = db.Column(db.String(), nullable=False)
     column_type = db.Column(
         db.String(),

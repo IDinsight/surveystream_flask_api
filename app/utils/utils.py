@@ -151,7 +151,7 @@ def get_survey_uids(param_location, param_name):
     """
 
     from app.blueprints.surveys.models import Survey
-    from app.blueprints.forms.models import ParentForm
+    from app.blueprints.forms.models import Form
     from app.blueprints.targets.models import Target
     from app.blueprints.enumerators.models import SurveyorForm, MonitorForm
 
@@ -186,7 +186,7 @@ def get_survey_uids(param_location, param_name):
             )
 
     elif param_name == "form_uid":
-        response = ParentForm.query.filter(ParentForm.form_uid == param_value).first()
+        response = Form.query.filter(Form.form_uid == param_value).first()
         if response is not None:
             survey_uids = [response.survey_uid]
         else:
@@ -196,8 +196,8 @@ def get_survey_uids(param_location, param_name):
 
     elif param_name == "target_uid":
         response = (
-            db.session.query(ParentForm)
-            .join(Target, ParentForm.form_uid == Target.form_uid)
+            db.session.query(Form)
+            .join(Target, Form.form_uid == Target.form_uid)
             .filter(Target.target_uid == param_value)
             .first()
         )
@@ -211,13 +211,13 @@ def get_survey_uids(param_location, param_name):
     elif param_name == "enumerator_uid":
         # create a sqlalchemy query to get the list of survey_uids for the enumerator_uid from the surveyor_forms and monitor_forms tables
         surveyor_forms_query = (
-            db.session.query(ParentForm.survey_uid)
-            .join(SurveyorForm, SurveyorForm.form_uid == ParentForm.form_uid)
+            db.session.query(Form.survey_uid)
+            .join(SurveyorForm, SurveyorForm.form_uid == Form.form_uid)
             .filter(SurveyorForm.enumerator_uid == param_value)
         )
         monitor_forms_query = (
-            db.session.query(ParentForm.survey_uid)
-            .join(MonitorForm, MonitorForm.form_uid == ParentForm.form_uid)
+            db.session.query(Form.survey_uid)
+            .join(MonitorForm, MonitorForm.form_uid == Form.form_uid)
             .filter(MonitorForm.enumerator_uid == param_value)
         )
         response = surveyor_forms_query.union(monitor_forms_query).distinct()

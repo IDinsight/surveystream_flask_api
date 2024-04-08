@@ -1,4 +1,5 @@
 from flask import jsonify, request
+from app.blueprints.assignments.models import SurveyorAssignment
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
@@ -14,7 +15,7 @@ import base64
 from sqlalchemy.orm import aliased
 from app import db
 from app.blueprints.surveys.models import Survey
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
 from .models import (
     Enumerator,
@@ -69,7 +70,7 @@ def upload_enumerators(validated_query_params, validated_payload):
     form_uid = validated_query_params.form_uid.data
 
     # Get the survey UID from the form UID
-    form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    form = Form.query.filter_by(form_uid=form_uid).first()
 
     if form is None:
         return (
@@ -219,7 +220,7 @@ def get_enumerators(validated_query_params):
 
     # Check if the logged in user has permission to access the given form
 
-    survey_uid = ParentForm.query.filter_by(form_uid=form_uid).first().survey_uid
+    survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
     # This will be used to join in the locations hierarchy for each enumerator
     prime_geo_level_uid = (
@@ -515,7 +516,7 @@ def delete_enumerator(enumerator_uid):
 #     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
 #         return jsonify({"error": "Enumerator not found"}), 404
 
-#     form = ParentForm.query.filter_by(form_uid=payload_validator.form_uid.data).first()
+#     form = Form.query.filter_by(form_uid=payload_validator.form_uid.data).first()
 #     if form is None:
 #         return jsonify({"error": "Form not found"}), 404
 
@@ -725,7 +726,7 @@ def update_enumerator_role(enumerator_uid, validated_payload):
     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
         return jsonify({"error": "Enumerator not found"}), 404
 
-    form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    form = Form.query.filter_by(form_uid=form_uid).first()
     if form is None:
         return jsonify({"error": "Form not found"}), 404
 
@@ -841,7 +842,7 @@ def update_enumerator_role(enumerator_uid, validated_payload):
 #         return jsonify({"error": "Enumerator not found"}), 404
 
 #     if (
-#         ParentForm.query.filter_by(form_uid=payload_validator.form_uid.data).first()
+#         Form.query.filter_by(form_uid=payload_validator.form_uid.data).first()
 #         is None
 #     ):
 #         return jsonify({"error": "Form not found"}), 404
@@ -914,7 +915,7 @@ def update_enumerator_status(enumerator_uid, validated_payload):
     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
         return jsonify({"error": "Enumerator not found"}), 404
 
-    if ParentForm.query.filter_by(form_uid=form_uid).first() is None:
+    if Form.query.filter_by(form_uid=form_uid).first() is None:
         return jsonify({"error": "Form not found"}), 404
 
     model_lookup = {
@@ -940,6 +941,26 @@ def update_enumerator_status(enumerator_uid, validated_payload):
         )
 
     result.status = status
+
+    # Releasing the assignment on suryeyor dropout
+    if status == "Dropout":
+        subquery = (
+            db.session.query(SurveyorAssignment.target_uid)
+            .join(
+                SurveyorForm,
+                SurveyorForm.enumerator_uid == SurveyorAssignment.enumerator_uid,
+            )
+            .filter(
+                SurveyorForm.form_uid == form_uid,
+                SurveyorAssignment.enumerator_uid == enumerator_uid,
+            )
+            .subquery()
+        )
+
+        # Use the subquery to delete the assignment
+        db.session.query(SurveyorAssignment).filter(
+            SurveyorAssignment.target_uid.in_(subquery)
+        ).delete(synchronize_session=False)
 
     try:
         db.session.commit()
@@ -1293,8 +1314,8 @@ def update_enumerator_column_config(validated_payload):
     form_uid = validated_payload.form_uid.data
 
     if (
-        ParentForm.query.filter(
-            ParentForm.form_uid == form_uid,
+        Form.query.filter(
+            Form.form_uid == form_uid,
         ).first()
         is None
     ):
@@ -1387,8 +1408,8 @@ def update_surveyor_stats(validated_payload):
     form_uid = validated_payload.form_uid.data
 
     if (
-        ParentForm.query.filter(
-            ParentForm.form_uid == form_uid,
+        Form.query.filter(
+            Form.form_uid == form_uid,
         ).first()
         is None
     ):
