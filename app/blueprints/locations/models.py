@@ -22,7 +22,7 @@ class GeoLevel(db.Model):
     user_uid = db.Column(db.Integer(), default=-1)
     to_delete = db.Column(db.Integer(), default=0, nullable=False)
     surveys = db.relationship(
-        Survey, backref=backref("geo_levels_parent_forms", passive_deletes=True)
+        Survey, backref=backref("geo_levels_surveys", passive_deletes=True)
     )
 
     __table_args__ = (

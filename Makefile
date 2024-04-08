@@ -37,7 +37,7 @@ web-db-tunnel:
 web-db-tunnel-staging:
 	# Open a connection to the remote db via the bastion host
 	@aws ssm start-session \
-	--target i-086ac1c9a4efc19d6 \
+	--target i-0614fb2b49be9943d \
 	--profile surveystream_staging \
 	--region ap-south-1 \
 	--document-name AWS-StartPortForwardingSession \

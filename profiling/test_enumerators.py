@@ -54,6 +54,9 @@ class TestEnumerators:
             "encryption_key_shared": True,
             "server_access_role_granted": True,
             "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
         }
 
         response = client.post(

@@ -1624,10 +1624,23 @@ paths:
                   description: >-
                     Whether the SurveyStream team has been granted access to the
                     SurveyCTO server for the form
+                form_type:
+                  type: string
+                  description: >-
+                    The type of form. Allowed values are 'parent' and 'dq'
+                parent_form_uid:
+                  type: integer
+                  description: >-
+                    The form_uid of the parent form. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                dq_form_type:
+                  type: string
+                  description: >-
+                    The type of DQ form. Allowed values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
               required:
                 - survey_uid
                 - scto_form_id
                 - form_name
+                - form_type
       responses:
         "201":
           description: OK
@@ -1676,6 +1689,18 @@ paths:
                     description: >-
                       Date when form submissions were last ingested from
                       SurveyCTO in isoformat
+                  form_type:
+                    type: string
+                    description: >-
+                      The type of form. Allowed values are 'parent' and 'dq'
+                  parent_form_uid:
+                    type: integer
+                    description: >-
+                      The form_uid of the parent form. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                  dq_form_type:
+                    type: string
+                    description: >-
+                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
         "400":
           description: >-
             A form with the same survey_uid and scto_form_id already exists, or
@@ -1712,6 +1737,13 @@ paths:
             type: integer
           required: false
           description: Unique ID of the survey to return forms for.
+        - in: query
+          name: form_type
+          schema:
+            type: string
+          required: false
+          description: >-
+            The type of form. Allowed values are 'parent' and 'dq'
       responses:
         "200":
           description: OK
@@ -1762,6 +1794,18 @@ paths:
                       description: >-
                         Date when form submissions were last ingested from
                         SurveyCTO in isoformat
+                    form_type:
+                      type: string
+                      description: >-
+                        The type of form. Allowed values are 'parent' and 'dq'
+                    parent_form_uid:
+                      type: integer
+                      description: >-
+                        The form_uid of the parent form. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                    dq_form_type:
+                      type: string
+                      description: >-
+                        The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
   "/forms/{form_uid}":
     get:
       summary: Get forms
@@ -1833,6 +1877,18 @@ paths:
                     description: >-
                       Date when form submissions were last ingested from
                       SurveyCTO in isoformat
+                  form_type:
+                    type: string
+                    description: >-
+                      The type of form. Allowed values are 'parent' and 'dq'
+                  parent_form_uid:
+                    type: integer
+                    description: >-
+                      The form_uid of the parent form. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                  dq_form_type:
+                    type: string
+                    description: >-
+                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
         "404":
           description: The specified form ID was not found.
           content:
@@ -1902,10 +1958,23 @@ paths:
                   description: >-
                     Whether the SurveyStream team has been granted access to the
                     SurveyCTO server for the form
+                form_type:
+                  type: string
+                  description: >-
+                    The type of form. Allowed values are 'parent' and 'dq'
+                parent_form_uid:
+                  type: integer
+                  description: >-
+                    The form_uid of the parent form. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                dq_form_type:
+                  type: string
+                  description: >-
+                    The type of DQ form. Allowed values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
               required:
                 - survey_uid
                 - scto_form_id
                 - form_name
+                - form_type
       responses:
         "200":
           description: OK
@@ -1954,6 +2023,19 @@ paths:
                     description: >-
                       Date when form submissions were last ingested from
                       SurveyCTO in isoformat
+                  form_type:
+                    type: string
+                    description: >-
+                      The type of form. Allowed values are 'parent' and 'dq'
+                  parent_form_uid:
+                    type: integer
+                    description: >-
+                      The form_uid of the parent form. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                  dq_form_type:
+                    type: string
+                    description: >-
+                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
+
         "403":
           description: X-CSRF-Token required in header
         "404":

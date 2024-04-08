@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify
 from sqlalchemy.exc import IntegrityError
 from flask_login import current_user
 from app import db
@@ -103,9 +103,11 @@ def create_survey(validated_payload):
             default_config_status = ModuleStatus(
                 survey_uid=survey.survey_uid,
                 module_id=module.module_id,
-                config_status="In Progress"
-                if module.name == "Basic information"
-                else "Not Started",
+                config_status=(
+                    "In Progress"
+                    if module.name == "Basic information"
+                    else "Not Started"
+                ),
             )
             db.session.add(default_config_status)
 
@@ -182,10 +184,10 @@ def get_survey_config_status(survey_uid):
 
     # Temp: Update module status based on whether data is present in the corresponding backend
     # table because we aren't updating the module status table from each module currently
-    from app.blueprints.forms.models import ParentForm
+    from app.blueprints.forms.models import Form
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
-    scto_information = ParentForm.query.filter_by(survey_uid=survey_uid).first()
+    scto_information = Form.query.filter_by(survey_uid=survey_uid).first()
     roles = Role.query.filter_by(survey_uid=survey_uid).first()
     locations = GeoLevel.query.filter_by(survey_uid=survey_uid).first()
 
