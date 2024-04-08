@@ -19,7 +19,7 @@ image:
 data-db-tunnel:
 	# Open a connection to the remote db via the bastion host
 	@aws ssm start-session \
-	--target i-0ddd10471f2a098be \
+	--target i-01d07622aafe22350 \
 	--profile surveystream_dev \
 	--region ap-south-1 \
 	--document-name AWS-StartPortForwardingSession \
@@ -28,7 +28,7 @@ data-db-tunnel:
 web-db-tunnel:
 	# Open a connection to the remote db via the bastion host
 	@aws ssm start-session \
-	--target i-0ddd10471f2a098be \
+	--target i-01d07622aafe22350 \
 	--profile surveystream_dev \
 	--region ap-south-1 \
 	--document-name AWS-StartPortForwardingSession \
