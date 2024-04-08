@@ -59,6 +59,9 @@ class TestTargetStatusMapping:
             "encryption_key_shared": True,
             "server_access_role_granted": True,
             "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
         }
 
         response = client.post(
@@ -192,7 +195,7 @@ class TestTargetStatusMapping:
                     "refusal_flag": False,
                     "target_assignable": True,
                     "webapp_tag_color": "gold",
-                }
+                },
             ],
         }
 
@@ -204,7 +207,6 @@ class TestTargetStatusMapping:
         )
         print(response.json)
         assert response.status_code == 200
-
 
     def test_upload_target_status_mapping_for_super_admin_user(
         self, client, login_test_user, create_form, csrf_token
@@ -239,7 +241,7 @@ class TestTargetStatusMapping:
                     "refusal_flag": True,
                     "target_assignable": False,
                     "webapp_tag_color": "red",
-                }
+                },
             ],
         }
 
@@ -276,8 +278,8 @@ class TestTargetStatusMapping:
                     "completed_flag": False,
                     "refusal_flag": True,
                     "target_assignable": False,
-                    "webapp_tag_color": "red"
-                }
+                    "webapp_tag_color": "red",
+                },
             ],
         }
 
@@ -339,7 +341,7 @@ class TestTargetStatusMapping:
                     "refusal_flag": True,
                     "target_assignable": False,
                     "webapp_tag_color": "red",
-                }
+                },
             ],
         }
 
@@ -376,8 +378,8 @@ class TestTargetStatusMapping:
                     "completed_flag": False,
                     "refusal_flag": True,
                     "target_assignable": False,
-                    "webapp_tag_color": "red"
-                }
+                    "webapp_tag_color": "red",
+                },
             ],
         }
 
@@ -458,7 +460,7 @@ class TestTargetStatusMapping:
                     "refusal_flag": True,
                     "target_assignable": False,
                     "webapp_tag_color": "red",
-                }
+                },
             ],
         }
 
@@ -495,8 +497,8 @@ class TestTargetStatusMapping:
                     "completed_flag": False,
                     "refusal_flag": True,
                     "target_assignable": False,
-                    "webapp_tag_color": "red"
-                }
+                    "webapp_tag_color": "red",
+                },
             ],
         }
 
@@ -570,7 +572,7 @@ class TestTargetStatusMapping:
                     "refusal_flag": True,
                     "target_assignable": False,
                     "webapp_tag_color": "red",
-                }
+                },
             ],
         }
 
