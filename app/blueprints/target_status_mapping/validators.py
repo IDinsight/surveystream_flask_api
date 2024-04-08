@@ -7,7 +7,6 @@ class TargetStatusMappingQueryParamValidator(FlaskForm):
         csrf = False
 
     form_uid = IntegerField(validators=[DataRequired()])
-    surveying_method = StringField(validators=[DataRequired()])
 
 
 class TargetStatusMappingValidator(FlaskForm):

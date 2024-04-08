@@ -162,7 +162,7 @@ class TestTargetStatusMapping:
         # Check the response
         response = client.get(
             "/api/target-status-mapping",
-            query_string={"form_uid": 1, "surveying_method": "in-person"},
+            query_string={"form_uid": 1},
             content_type="application/json",
         )
 
@@ -286,7 +286,7 @@ class TestTargetStatusMapping:
         # Check the response
         response = client.get(
             "/api/target-status-mapping",
-            query_string={"form_uid": 1, "surveying_method": "in-person"},
+            query_string={"form_uid": 1},
             content_type="application/json",
         )
 
@@ -386,7 +386,7 @@ class TestTargetStatusMapping:
         # Check the response
         response = client.get(
             "/api/target-status-mapping",
-            query_string={"form_uid": 1, "surveying_method": "in-person"},
+            query_string={"form_uid": 1},
             content_type="application/json",
         )
 
@@ -505,7 +505,7 @@ class TestTargetStatusMapping:
         # Check the response
         response = client.get(
             "/api/target-status-mapping",
-            query_string={"form_uid": 1, "surveying_method": "in-person"},
+            query_string={"form_uid": 1},
             content_type="application/json",
         )
 
