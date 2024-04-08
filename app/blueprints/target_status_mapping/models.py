@@ -1,5 +1,5 @@
 from app import db
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from sqlalchemy import CheckConstraint
 
 
@@ -74,7 +74,7 @@ class TargetStatusMapping(db.Model):
     __tablename__ = "target_status_mapping"
 
     form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
+        db.Integer(), db.ForeignKey(Form.form_uid), nullable=False
     )
     survey_status = db.Column(db.Integer(), nullable=False)
     survey_status_label = db.Column(db.String(), nullable=False)

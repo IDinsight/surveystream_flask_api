@@ -7,7 +7,7 @@ from app.utils.utils import (
 )
 from sqlalchemy.exc import IntegrityError
 from app import db
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from .models import (
     TargetStatusMapping,
     DefaultTargetStatusMapping,
@@ -94,8 +94,8 @@ def update_target_status_mapping(validated_payload):
 
     print(form_uid)
     if (
-        ParentForm.query.filter(
-            ParentForm.form_uid == form_uid,
+        Form.query.filter(
+            Form.form_uid == form_uid,
         ).first()
         is None
     ):
