@@ -1,0 +1,25 @@
+surveying_method,survey_status,survey_status_label,completed_flag,refusal_flag,target_assignable,webapp_tag_color
+in-person,1,Fully complete,TRUE,FALSE,FALSE,green
+in-person,2,Partially complete - revisit,FALSE,FALSE,TRUE,gold
+in-person,3,Partially complete - no revisit,FALSE,FALSE,FALSE,green
+in-person,4,Appointment,FALSE,FALSE,TRUE,blue
+in-person,5,Refusal,FALSE,TRUE,FALSE,red
+in-person,6,Not found - revisit,FALSE,FALSE,TRUE,gold
+in-person,7,Not found - no revisit,FALSE,FALSE,FALSE,red
+in-person,8,Not attempted,FALSE,FALSE,TRUE,gold
+in-person,9,Ineligible household,FALSE,FALSE,FALSE,cyan
+phone,1,Fully Complete,TRUE,FALSE,FALSE,green
+phone,2,Partially complete - call got cut midway,FALSE,FALSE,TRUE,gold
+phone,3,Partially complete - respondent cut call without reason,FALSE,FALSE,TRUE,gold
+phone,4,Partially complete - respondent refused midway,FALSE,TRUE,FALSE,green
+phone,5,Number unreachable,FALSE,FALSE,TRUE,gold
+phone,6,Number invalid,FALSE,FALSE,FALSE,red
+phone,7,Incoming calls not available,FALSE,FALSE,TRUE,gold
+phone,8,Nobody picked up,FALSE,FALSE,TRUE,gold
+phone,9,Wrong household called,FALSE,FALSE,FALSE,red
+phone,10,Call failed due to network issues,FALSE,FALSE,TRUE,gold
+phone,11,Number switched off,FALSE,FALSE,TRUE,gold
+phone,12,Specific respondent not available,FALSE,FALSE,TRUE,gold
+phone,13,Intended respondent does not exist,FALSE,FALSE,FALSE,red
+phone,14,Appointment,FALSE,FALSE,TRUE,blue
+phone,15,Respondent refused,FALSE,TRUE,FALSE,red
