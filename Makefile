@@ -56,7 +56,7 @@ container-down:
 	BACKEND_PORT=${BACKEND_PORT} \
 	VERSION=${VERSION} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.remote-dev-db.yml -f docker-compose/docker-compose.override.yml down
+	docker-compose -f docker-compose/docker-compose.remote-dev-db.yml -f docker-compose/docker-compose.override.yml down -v
 
 run-unit-tests:
 	@BACKEND_NAME=${BACKEND_NAME} \
