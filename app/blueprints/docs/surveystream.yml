@@ -68,6 +68,8 @@ tags:
     description: Endpoints related to the user's enumerators
   - name: Surveyor Stats
     description: Endpoints related to the surveyor stats
+  - name: Target Status Mapping
+    description: Endpoints related to the target status mapping
   - name: Targets
     description: Endpoints related to the user's targets
   - name: Assignments
@@ -110,6 +112,9 @@ x-tagGroups:
   - name: Surveyor Stats
     tags:
       - Surveyor Stats
+  - name: Target Status Mapping
+    tags:
+      - Target Status Mapping
   - name: Targets
     tags:
       - Targets
@@ -4944,6 +4949,129 @@ paths:
 
             Note that the file validation will only be run if the geo level
             mapping is valid.
+  /target-status-mapping:
+    get:
+      tags:
+        - Target Status Mapping
+      summary: Get target status mapping
+      description: |
+        Returns the target status mapping for a given form.
+      parameters:
+        - name: form_uid
+          in: query
+          description: The unique ID of a parent form.
+          required: true
+          schema:
+            type: integer
+        - name: surveying_method
+          in: query
+          description: The surveying method for the survey.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returns the target status mapping for a given form.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of target status mapping for the given survey
+                    items:
+                      type: object
+                      properties:
+                        survey_status:
+                          type: integer
+                          description: The unique ID of the survey status.
+                        survey_status_label:
+                          type: string
+                          description: Label corresponding to the survey status.
+                        completed_flag:
+                          type: boolean
+                          description: Boolean indicating if the survey status means survey for the target is complete.
+                        refusal_flag:
+                          type: boolean
+                          description: Boolean indicating if the survey status means survey for the target has been refused.
+                        target_assignable:
+                          type: boolean
+                          description: Boolean indicating if the survey status means target is assignable.
+                        webapp_tag_color:
+                          type: string
+                          description: The color of the label tag when displayed on the webapp.
+
+    put:
+      tags:
+        - Target Status Mapping
+      summary: Save the target status mapping for a form
+      description: >
+        Saves the target status mapping for a given form to the database.
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: JSON object containing the target status mapping for the form.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target_status_mapping
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique ID of the form
+                target_status_mapping:
+                  type: array
+                  description: Full list of target status mapping for the given survey
+                  items:
+                    type: object
+                    properties:
+                      survey_status:
+                        type: integer
+                        nullable: true
+                        description: >-
+                          The unique ID of the survey status. 
+                      survey_status_label:
+                        type: string
+                        nullable: false
+                        description: Label corresponding to the survey status.
+                      completed_flag:
+                        type: boolean
+                        nullable: false
+                        description: Boolean indicating if the survey status means survey for the target is complete.
+                      refusal_flag:
+                        type: boolean
+                        nullable: false
+                        description: Boolean indicating if the survey status means survey for the target has been refused.
+                      target_assignable:
+                        type: boolean
+                        nullable: false
+                        description: Boolean indicating if the survey status means target is assignable.
+                      webapp_tag_color:
+                        type: string
+                        nullable: false
+                        description: The color of the label tag when displayed on the webapp.
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+
   /targets:
     get:
       summary: Get targets

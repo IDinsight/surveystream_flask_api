@@ -123,6 +123,16 @@ class TestPermissions:
                 "name": "WRITE Emails",
                 "permission_uid": 19,
             },
+            {
+                "description": "Read Target Status permission",
+                "name": "READ Target Status",
+                "permission_uid": 20,
+            },
+            {
+                "description": "Write Target Status permission",
+                "name": "WRITE Target Status",
+                "permission_uid": 21,
+            },
         ]
 
         assert jsondiff.diff(expected_data, response_data) == {}
@@ -229,6 +239,16 @@ class TestPermissions:
                 "description": "Write Emails permission",
                 "name": "WRITE Emails",
                 "permission_uid": 19,
+            },
+            {
+                "description": "Read Target Status permission",
+                "name": "READ Target Status",
+                "permission_uid": 20,
+            },
+            {
+                "description": "Write Target Status permission",
+                "name": "WRITE Target Status",
+                "permission_uid": 21,
             },
             {
                 "permission_uid": create_permission["permission_uid"],
