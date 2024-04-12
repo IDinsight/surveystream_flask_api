@@ -1,7 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
 import io
-from multiprocessing import current_process
-import queue
 import pandas as pd
 import numpy as np
 from app import db
@@ -15,80 +12,6 @@ from .errors import (
     InvalidColumnMappingError,
     InvalidFileStructureError,
 )
-
-class RecordProcessor:
-    def __init__(self, form_uid, write_mode, records):
-        self.form_uid = form_uid
-        self.write_mode = write_mode
-        self.records = records
-        self.executor = ThreadPoolExecutor(max_workers=4)
-        self.records_queue = queue.Queue()
-
-    # TODO: Threads are not working correctly - leaving this code here to fix later
-    # def process_records(self):
-    #     # Enqueue records for processing
-    #     for record in self.records:
-    #         self.records_queue.put(record)
-
-    #     # Start worker threads
-    #     num_workers = 4  # Number of worker threads
-    #     workers = []
-    #     for _ in range(num_workers):
-    #         worker = threading.Thread(target=self.worker)
-    #         worker.start()
-    #         workers.append(worker)
-
-    #     # Wait for all workers to finish
-    #     for worker in workers:
-    #         worker.join()
-
-    # def process_records(self):
-    #     futures = [self.executor.submit(self.worker, record) for record in self.records]
-    #     for future in futures:
-    #         future.result()
-
-    # def worker(self):
-    #     with current_app.app_context():
-    #         while True:
-    #             try:
-    #                 record = self.records_queue.get_nowait()
-    #             except queue.Empty:
-    #                 break
-    #             if self.write_mode == "insert":
-    #                 self.chunked_insert([record])
-    #             elif self.write_mode == "update":
-    #                 self.chunked_update([record])
-
-    # def worker(self, record):
-    #     with current_app.app_context():
-    #         if self.write_mode == "insert":
-    #             self.chunked_insert([record])
-    #         elif self.write_mode == "update":
-    #             self.chunked_update([record])
-
-    def process_records(self):
-        for record in self.records:
-            self.process_record(record)
-
-    def process_record(self, record):
-        with current_process.app_context():
-            if self.write_mode == "insert":
-                self.chunked_insert([record])
-            elif self.write_mode == "update":
-                self.chunked_update([record])
-
-    def chunked_insert(self, records):
-        chunk_size = 1000
-        for pos in range(0, len(records), chunk_size):
-            db.session.bulk_insert_mappings(Target, records[pos : pos + chunk_size])
-            db.session.flush()
-
-    def chunked_update(self, records):
-        chunk_size = 1000
-        for pos in range(0, len(records), chunk_size):
-            for record in records[pos : pos + chunk_size]:
-                db.session.merge(Target(**record))
-
 
 class TargetColumnMapping:
     """
