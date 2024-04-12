@@ -163,7 +163,9 @@ def view_assignments(validated_query_params):
                             target_status, "last_attempt_survey_status", None
                         ),
                         "last_attempt_survey_status_label": getattr(
-                            target_status, "last_attempt_survey_status_label", "Not Attempted"
+                            target_status,
+                            "last_attempt_survey_status_label",
+                            "Not Attempted",
                         ),
                         "target_assignable": getattr(
                             target_status,
@@ -451,15 +453,25 @@ def update_assignments(validated_payload):
 @custom_permissions_required("WRITE Assignments", "body", "form_uid")
 def schedule_assignments_email(validated_payload):
     """Function to schedule assignment emails"""
-    data = validated_payload
     new_trigger = ManualEmailTrigger(
-        form_uid=data["form_uid"],
-        date=data["date"],
-        time=data["time"],
-        recipients=data["recipients"],
-        template_uid=data["template_uid"],
-        status=data["status"],
+        form_uid=validated_payload.form_uid.data,
+        date=validated_payload.date.data,
+        time=validated_payload.date.data,
+        recipients=validated_payload.recipients.data,
+        template_uid=validated_payload.template_uid.data,
+        status=validated_payload.status.data,
     )
-    db.session.add(new_trigger)
-    db.session.commit()
-    return jsonify({"message": "Manual email trigger created successfully"}), 201
+
+    try:
+        db.session.add(new_trigger)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return (
+        jsonify(
+            {"message": "Manual email trigger created successfully", "success": True}
+        ),
+        201,
+    )

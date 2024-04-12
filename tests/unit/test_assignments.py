@@ -10,6 +10,7 @@ from utils import (
     create_new_survey_role_with_permissions,
 )
 from app import db
+from datetime import datetime, timedelta
 
 
 @pytest.mark.assignments
@@ -1077,6 +1078,45 @@ class TestAssignments:
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
+        print(response.json)
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+
+    def test_schedule_assignments_email(
+        self, client, login_test_user, create_geo_levels, csrf_token
+    ):
+        """
+        Test the assignments endpoint for scheduling emails
+       
+        """
+
+        expected_response = {
+            "message": "Manual email trigger created successfully",
+            "success": True,
+        }
+
+        current_datetime = datetime.now()
+
+        future_date = (current_datetime + timedelta(1)).strftime("%Y-%m-%d")
+
+        payload = {
+            "form_uid": 1,
+            "date": future_date,
+            "time": "08:00",
+            "recipients": [1, 2, 3],  # there are supposed to be enumerator ids
+            "template_uid": 1,
+            "status": "queued",
+        }
+
+        # Check the response
+        response = client.post(
+            f"/api/assignments/schedule-email",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
         print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)

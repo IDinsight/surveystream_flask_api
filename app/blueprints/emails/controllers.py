@@ -3,6 +3,7 @@ from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
     validate_payload,
+    validate_query_params,
 )
 from flask import jsonify
 from app import db
@@ -10,105 +11,317 @@ from .validators import (
     EmailScheduleValidator,
     ManualEmailTriggerValidator,
     EmailTemplateValidator,
+    ManualEmailTriggerQueryParamValidator,
 )
 from .models import EmailSchedule, ManualEmailTrigger, EmailTemplate
+from datetime import datetime, time
 
 
 @emails_bp.route("/schedule", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(EmailScheduleValidator)
-@custom_permissions_required("WRITE Email", "body", "form_uid")
+@custom_permissions_required("WRITE Emails", "body", "form_uid")
 def create_email_schedule(validated_payload):
-    data = validated_payload
+    """
+    Function to create a new email schedule
+    """
+
+    time_str = validated_payload.time.data
+    time_obj = datetime.strptime(time_str, "%H:%M").time()
+
+    payload = {
+        "form_uid": validated_payload.form_uid.data,
+        "dates": validated_payload.dates.data,
+        "time": time_obj,
+        "template_uid": validated_payload.template_uid.data,
+    }
+
+    print(payload)
+
     new_schedule = EmailSchedule(
-        form_uid=data["form_uid"],
-        date=data["date"],
-        time=data["time"],
-        template_uid=data["template_uid"],
+        **payload,
     )
-    db.session.add(new_schedule)
-    db.session.commit()
-    return jsonify({"message": "Email schedule created successfully"}), 201
+
+    try:
+        db.session.add(new_schedule)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return (
+        jsonify(
+            {
+                "message": "Email schedule created successfully",
+                "data": new_schedule.to_dict(),
+            }
+        ),
+        201,
+    )
 
 
-@emails_bp.route("/schedule/<int:form_uid>", methods=["GET"])
+@emails_bp.route("/schedules", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required("READ Email", "path", "form_uid")
-def get_email_schedules(form_uid):
-    email_schedules = EmailSchedule.query.get_or_404(form_uid)
-    return jsonify(email_schedule=email_schedules.serialize())
+@validate_query_params(ManualEmailTriggerQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "form_uid")
+def get_email_schedules(validated_query_params):
+    """Function to get email schedules  per form"""
+    form_uid = validated_query_params.form_uid.data
+
+    email_schedules = EmailSchedule.query.filter_by(form_uid=form_uid).all()
+
+    if email_schedules is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Email schedules not found",
+                }
+            ),
+            404,
+        )
+
+    schedule_data = []
+    for email_schedule in email_schedules:
+        schedule_data.append(list(email_schedule.to_dict().keys()))
+
+    response = jsonify(
+        {
+            "success": True,
+            "data": schedule_data,
+        }
+    )
+
+    return response, 200
+
+
+@emails_bp.route("/schedule/<int:email_schedule_uid>", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(ManualEmailTriggerQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "form_uid")
+def get_email_schedule(email_schedule_uid, validated_query_params):
+    """Function to get a particular email schedule given the email schedule uid"""
+    email_schedule = EmailSchedule.query.filter_by(
+        email_schedule_uid=email_schedule_uid
+    ).first()
+
+    if email_schedule is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Email schedule not found",
+                }
+            ),
+            404,
+        )
+
+    response = jsonify(
+        {
+            "success": True,
+            "data": email_schedule.to_dict(),
+        }
+    )
+
+    return response, 200
 
 
 @emails_bp.route("/schedule/<int:schedule_id>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(EmailScheduleValidator)
-@custom_permissions_required("WRITE Email", "body", "form_uid")
+@custom_permissions_required("WRITE Emails", "body", "form_uid")
 def update_email_schedule(schedule_id, validated_payload):
-    data = validated_payload
+    time_str = validated_payload.time.data
+    time_obj = datetime.strptime(time_str, "%H:%M").time()
+
     email_schedule = EmailSchedule.query.get_or_404(schedule_id)
-    for key, value in data.items():
-        setattr(email_schedule, key, value)
-    db.session.commit()
-    return jsonify(message="Email schedule updated successfully")
+
+    email_schedule.form_uid = validated_payload.form_uid.data
+    email_schedule.dates = validated_payload.dates.data
+    email_schedule.time = time_obj
+    email_schedule.template_uid = validated_payload.template_uid.data
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    response = jsonify(
+        {
+            "success": True,
+            "message": "Email schedule updated successfully",
+            "data": email_schedule.to_dict(),
+        }
+    )
+    return response, 200
 
 
 @emails_bp.route("/schedule/<int:schedule_id>", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required("WRITE Email", "body", "schedule_id")
-def delete_email_schedule(schedule_id):
+@validate_query_params(ManualEmailTriggerQueryParamValidator)
+@custom_permissions_required("WRITE Emails", "query", "form_uid")
+def delete_email_schedule(schedule_id, validated_query_params):
     email_schedule = EmailSchedule.query.get_or_404(schedule_id)
-    db.session.delete(email_schedule)
-    db.session.commit()
+
+    try:
+        db.session.delete(email_schedule)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
     return jsonify(message="Email schedule deleted successfully")
 
 
 @emails_bp.route("/manual-trigger", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(ManualEmailTriggerValidator)
-@custom_permissions_required("WRITE Email", "body", "form_uid")
+@custom_permissions_required("WRITE Emails", "body", "form_uid")
 def create_manual_email_trigger(validated_payload):
-    data = validated_payload
-    new_trigger = ManualEmailTrigger(
-        form_uid=data["form_uid"],
-        date=data["date"],
-        time=data["time"],
-        recipients=data["recipients"],
-        template_uid=data["template_uid"],
-        status=data["status"],
+    time_str = validated_payload.time.data
+    time_obj = datetime.strptime(time_str, "%H:%M").time()
+
+    payload = {
+        "form_uid": validated_payload.form_uid.data,
+        "date": validated_payload.date.data,
+        "time": time_obj,
+        "recipients": validated_payload.recipients.data,
+        "template_uid": validated_payload.template_uid.data,
+        "status": validated_payload.status.data,
+    }
+
+    new_trigger = ManualEmailTrigger(**payload)
+
+    try:
+        db.session.add(new_trigger)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return (
+        jsonify(
+            {
+                "message": "Manual email trigger created successfully",
+                "data": new_trigger.to_dict(),
+            }
+        ),
+        201,
     )
-    db.session.add(new_trigger)
-    db.session.commit()
-    return jsonify({"message": "Manual email trigger created successfully"}), 201
 
 
-@emails_bp.route("/manual-triggers/<int:form_uid>", methods=["GET"])
+@emails_bp.route("/manual-triggers", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required("READ Email", "body", "form_uid")
-def get_manual_email_trigger(form_uid):
-    manual_email_trigger = ManualEmailTrigger.query.get_or_404(form_uid)
-    return jsonify(manual_email_trigger=manual_email_trigger.serialize())
+@validate_query_params(ManualEmailTriggerQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "form_uid")
+def get_manual_email_triggers(validated_query_params):
+    form_uid = validated_query_params.form_uid.data
+    manual_email_triggers = ManualEmailTrigger.query.filter_by(form_uid=form_uid).all()
+
+    if manual_email_triggers is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Manual email triggers not found",
+                }
+            ),
+            404,
+        )
+
+    trigger_data = []
+    for manual_trigger in manual_email_triggers:
+        trigger_data.append(list(manual_trigger.to_dict().keys()))
+
+    response = jsonify(
+        {
+            "success": True,
+            "data": trigger_data,
+        }
+    )
+
+    return response, 200
 
 
-@emails_bp.route("/manual-trigger/<int:trigger_id>", methods=["PUT"])
+@emails_bp.route("/manual-trigger/<int:manual_email_trigger_uid>", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(ManualEmailTriggerQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "form_uid")
+def get_manual_email_trigger(manual_email_trigger_uid, validated_query_params):
+    manual_email_trigger = ManualEmailTrigger.query.filter_by(
+        manual_email_trigger_uid=manual_email_trigger_uid
+    ).first()
+
+    if manual_email_trigger is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Manual email trigger not found",
+                }
+            ),
+            404,
+        )
+
+    response = jsonify(
+        {
+            "success": True,
+            "data": manual_email_trigger.to_dict(),
+        }
+    )
+
+    return response, 200
+
+
+@emails_bp.route("/manual-trigger/<int:manual_email_trigger_uid>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(ManualEmailTriggerValidator)
-@custom_permissions_required("WRITE Email", "body", "schedule_id")
-def update_manual_email_trigger(trigger_id, validated_payload):
-    data = validated_payload
-    manual_email_trigger = ManualEmailTrigger.query.get_or_404(trigger_id)
-    for key, value in data.items():
-        setattr(manual_email_trigger, key, value)
-    db.session.commit()
-    return jsonify(message="Manual email trigger updated successfully")
+@custom_permissions_required("WRITE Emails", "body", "form_uid")
+def update_manual_email_trigger(manual_email_trigger_uid, validated_payload):
+    time_str = validated_payload.time.data
+    time_obj = datetime.strptime(time_str, "%H:%M").time()
+
+    manual_email_trigger = ManualEmailTrigger.query.get_or_404(manual_email_trigger_uid)
+    manual_email_trigger.form_uid = validated_payload.form_uid.data
+    manual_email_trigger.date = validated_payload.date.data
+    manual_email_trigger.time = time_obj
+    manual_email_trigger.recipients = validated_payload.recipients.data
+    manual_email_trigger.status = validated_payload.status.data
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return (
+        jsonify(
+            message="Manual email trigger updated successfully",
+            data=manual_email_trigger.to_dict(),
+        ),
+        200,
+    )
 
 
 @emails_bp.route("/manual-trigger/<int:trigger_id>", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required("WRITE Email", "body", "trigger_id")
-def delete_manual_email_trigger(trigger_id):
+@validate_query_params(ManualEmailTriggerQueryParamValidator)
+@custom_permissions_required("WRITE Emails", "query", "form_uid")
+def delete_manual_email_trigger(trigger_id, validated_query_params):
     manual_email_trigger = ManualEmailTrigger.query.get_or_404(trigger_id)
-    db.session.delete(manual_email_trigger)
-    db.session.commit()
+
+    try:
+        db.session.delete(manual_email_trigger)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
     return jsonify(message="Manual email trigger deleted successfully")
 
 
@@ -117,32 +330,61 @@ def delete_manual_email_trigger(trigger_id):
 @validate_payload(EmailTemplateValidator)
 @custom_permissions_required("ADMIN")
 def create_email_template(validated_payload):
-    data = validated_payload
-    new_template = EmailTemplate(
-        template_name=data["template_name"],
-        subject=data["subject"],
-        sender_email=data["sender_email"],
-        content=data["content"],
+    payload = {
+        "template_name": validated_payload.template_name.data,
+        "subject": validated_payload.subject.data,
+        "sender_email": validated_payload.sender_email.data,
+        "content": validated_payload.content.data,
+    }
+    new_template = EmailTemplate(**payload)
+
+    try:
+        db.session.add(new_template)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return (
+        jsonify(
+            {
+                "message": "Email template created successfully",
+                "data": new_template.to_dict(),
+            }
+        ),
+        201,
     )
-    db.session.add(new_template)
-    db.session.commit()
-    return jsonify({"message": "Email template created successfully"}), 201
 
 
 @emails_bp.route("/templates", methods=["GET"])
 @logged_in_active_user_required
 def get_all_email_templates():
     templates = EmailTemplate.query.all()
-    return jsonify([template.serialize() for template in templates])
 
+    template_data = []
+    for template in templates:
+        template_data.append(list(template.to_dict().keys()))
+
+    response = jsonify(
+        {
+            "success": True,
+            "data": template_data,
+        }
+    )
+    return response, 200
 
 
 @emails_bp.route("/template/<int:template_id>", methods=["GET"])
 @logged_in_active_user_required
 def get_email_template(template_id):
     template = EmailTemplate.query.get_or_404(template_id)
-    return jsonify(template.serialize())
-
+    response = jsonify(
+        {
+            "success": True,
+            "data": template.to_dict(),
+        }
+    )
+    return response, 200
 
 
 @emails_bp.route("/template/<int:template_id>", methods=["PUT"])
@@ -151,14 +393,26 @@ def get_email_template(template_id):
 @custom_permissions_required("ADMIN")
 def update_email_template(template_id, validated_payload):
     template = EmailTemplate.query.get_or_404(template_id)
-    data = validated_payload
-    template.template_name = data.get("template_name", template.template_name)
-    template.subject = data.get("subject", template.subject)
-    template.sender_email = data.get("sender_email", template.sender_email)
-    template.content = data.get("content", template.content)
-    db.session.commit()
-    return jsonify({"message": "Email template updated successfully"})
 
+    template.template_name = validated_payload.template_name.data
+    template.subject = validated_payload.subject.data
+    template.sender_email = validated_payload.sender_email.data
+    template.content = validated_payload.content.data
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    response = jsonify(
+        {
+            "success": True,
+            "message": "Email template updated successfully",
+            "data": template.to_dict(),
+        }
+    )
+    return response, 200
 
 
 @emails_bp.route("/template/<int:template_id>", methods=["DELETE"])
@@ -166,6 +420,14 @@ def update_email_template(template_id, validated_payload):
 @custom_permissions_required("ADMIN")
 def delete_email_template(template_id):
     template = EmailTemplate.query.get_or_404(template_id)
-    db.session.delete(template)
-    db.session.commit()
-    return jsonify({"message": "Email template deleted successfully"})
+    try:
+        db.session.delete(template)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return (
+        jsonify({"success": True, "message": "Email template deleted successfully"}),
+        200,
+    )
