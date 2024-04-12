@@ -76,7 +76,7 @@ class TestEmails:
         self, client, login_test_user, csrf_token, test_user_credentials
     ):
         """
-        Test fixture for creating an email template.
+        Insert email template as a setup for emails tests
         """
         payload = {
             "template_name": "Assignments",
@@ -176,6 +176,10 @@ class TestEmails:
         test_user_credentials,
         create_email_template,
     ):
+        """
+        Test fetching a specific emails template
+        Expect the newly created email template to be found
+        """
         email_template_uid = create_email_template["email_template_uid"]
         response = client.get(
             f"api/emails/template/{email_template_uid}",
@@ -192,6 +196,11 @@ class TestEmails:
         test_user_credentials,
         create_email_template,
     ):
+        """
+        Test fetching all email templates
+        Expect the newly created email template to be found
+        """
+
         response = client.get(
             f"api/emails/templates",
             content_type="application/json",
@@ -207,6 +216,11 @@ class TestEmails:
         test_user_credentials,
         create_email_template,
     ):
+        """
+        Test updating a specific email template
+        Expect the email template to be updated
+        """
+
         payload = {
             "template_name": "Assignments",
             "subject": "Test Update Email",
@@ -246,11 +260,26 @@ class TestEmails:
         test_user_credentials,
         create_email_template,
     ):
+        """
+        Test deleting a specific email template
+        Expect the email template to be 404 after deleting
+        """
+
         response = client.delete(
             f"/api/emails/template/{create_email_template['email_template_uid']}",
             headers={"X-CSRF-Token": csrf_token},
         )
+
         assert response.status_code == 200
+
+        email_template_uid = create_email_template["email_template_uid"]
+        get_response = client.get(
+            f"api/emails/template/{email_template_uid}",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert get_response.status_code == 404
 
     def test_get_email_schedule_for_admin_user(
         self,
@@ -260,6 +289,11 @@ class TestEmails:
         test_user_credentials,
         create_email_schedule,
     ):
+        """
+        Test getting a specific form email schedules
+        Expect the email schedules
+        """
+
         response = client.get(
             f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?form_uid=1",
             content_type="application/json",
@@ -275,6 +309,10 @@ class TestEmails:
         test_user_credentials,
         create_email_schedule,
     ):
+        """
+        Test getting a specific form email schedules with user roles permissions
+        Expect the email schedules
+        """
         new_role = create_new_survey_role_with_permissions(
             # 19 - WRITE Emails
             client,
@@ -321,6 +359,10 @@ class TestEmails:
         create_email_template,
         create_email_schedule,
     ):
+        """
+        Test updating emails schedule for a super admin user
+        Expect newly created email schedule to be updated
+        """
         current_datetime = datetime.now()
 
         future_dates = [
@@ -378,6 +420,10 @@ class TestEmails:
         create_email_template,
         create_email_schedule,
     ):
+        """
+        Test updating emails schedule for a user with email permissions
+        Expect newly created email schedule to be updated
+        """
         new_role = create_new_survey_role_with_permissions(
             # 19 - WRITE Emails
             client,
@@ -464,12 +510,24 @@ class TestEmails:
         test_user_credentials,
         create_email_schedule,
     ):
+        """
+        Test deleting emails schedule for an admin user
+        Expect schedule to be missing on fetch
+        """
+
         response = client.delete(
             f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?form_uid=1",
             headers={"X-CSRF-Token": csrf_token},
         )
 
         assert response.status_code == 200
+
+        get_response = client.get(
+            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?form_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert get_response.status_code == 404
 
     def test_delete_email_schedule_for_user_roles(
         self,
@@ -479,6 +537,10 @@ class TestEmails:
         test_user_credentials,
         create_email_schedule,
     ):
+        """
+        Test deleting emails schedule for a user with email permissions
+        Expect schedule to be missing on fetch
+        """
         new_role = create_new_survey_role_with_permissions(
             # 19 - WRITE Emails
             client,
@@ -505,6 +567,13 @@ class TestEmails:
 
         assert response.status_code == 200
 
+        get_response = client.get(
+            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?form_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert get_response.status_code == 404
+
         revert_user = update_logged_in_user_roles(
             client,
             test_user_credentials,
@@ -524,6 +593,11 @@ class TestEmails:
         create_manual_email_trigger,
         create_form,
     ):
+        """
+        Test fetching email manual triggers for an admin user
+        Expect newly created manual triggers
+        """
+
         response = client.get(
             f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?form_uid=1",
             content_type="application/json",
@@ -541,6 +615,11 @@ class TestEmails:
         create_manual_email_trigger,
         create_form,
     ):
+        """
+        Test fetching email manual triggers for a user with roles
+        Expect newly created manual triggers
+        """
+
         new_role = create_new_survey_role_with_permissions(
             # 19 - WRITE Emails
             client,
@@ -587,7 +666,10 @@ class TestEmails:
         create_manual_email_trigger,
         create_email_template,
     ):
-
+        """
+        Test updating email manual triggers for an admin user
+        Expect newly created manual trigger to be updated
+        """
         current_datetime = datetime.now()
 
         future_date = (current_datetime + timedelta(1)).strftime("%Y-%m-%d")
@@ -608,6 +690,31 @@ class TestEmails:
         )
         assert response.status_code == 200
 
+        get_response = client.get(
+            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?form_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert get_response.status_code == 200
+
+        print(get_response.json)
+
+        checkdiff = jsondiff.diff(
+            {
+                "data": {
+                    **data,
+                    "time": get_response.json["data"]["time"],
+                    "date": get_response.json["data"]["date"],
+                    "manual_email_trigger_uid": create_manual_email_trigger[
+                        "manual_email_trigger_uid"
+                    ],
+                },
+                "success": True,
+            },
+            get_response.json,
+        )
+        assert checkdiff == {}
+
     def test_update_manual_email_trigger_for_user_roles(
         self,
         client,
@@ -617,6 +724,11 @@ class TestEmails:
         create_manual_email_trigger,
         create_email_template,
     ):
+        """
+        Test updating email manual triggers for a user with roles
+        Expect newly created manual trigger to be updated
+        """
+
         new_role = create_new_survey_role_with_permissions(
             # 19 - WRITE Emails
             client,
@@ -655,6 +767,31 @@ class TestEmails:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
+
+        get_response = client.get(
+            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?form_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert get_response.status_code == 200
+
+        print(get_response.json)
+
+        checkdiff = jsondiff.diff(
+            {
+                "data": {
+                    **data,
+                    "date": get_response.json["data"]["date"],
+                    "time": get_response.json["data"]["time"],
+                    "manual_email_trigger_uid": create_manual_email_trigger[
+                        "manual_email_trigger_uid"
+                    ],
+                },
+                "success": True,
+            },
+            get_response.json,
+        )
+        assert checkdiff == {}
 
         revert_user = update_logged_in_user_roles(
             client,
@@ -674,11 +811,22 @@ class TestEmails:
         test_user_credentials,
         create_manual_email_trigger,
     ):
+        """
+        Test deleting email manual triggers for an admin user
+        Expect newly created manual trigger to be missing after delete
+        """
         response = client.delete(
             f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?form_uid={1}",
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
+
+        get_response = client.get(
+            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?form_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert get_response.status_code == 404
 
     def test_delete_manual_email_trigger_for_user_roles(
         self,
@@ -688,6 +836,11 @@ class TestEmails:
         test_user_credentials,
         create_manual_email_trigger,
     ):
+        """
+        Test deleting email manual triggers for a user with roles
+        Expect newly created manual trigger to be missing after delete
+        """
+
         new_role = create_new_survey_role_with_permissions(
             # 19 - WRITE Emails
             client,
@@ -712,6 +865,13 @@ class TestEmails:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
+
+        get_response = client.get(
+            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?form_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert get_response.status_code == 404
 
         revert_user = update_logged_in_user_roles(
             client,
