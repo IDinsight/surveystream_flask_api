@@ -321,10 +321,19 @@ class TestEmails:
         create_email_template,
         create_email_schedule,
     ):
+        current_datetime = datetime.now()
+
+        future_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(4)
+        ]
+
+        # add today
+        future_dates.append(current_datetime.strftime("%Y-%m-%d")),
 
         payload = {
             "form_uid": 1,
-            "dates": create_email_schedule["dates"],
+            "dates": future_dates,
             "time": "08:00",
             "template_uid": create_email_template["email_template_uid"],
         }
@@ -349,12 +358,15 @@ class TestEmails:
             {
                 "data": {
                     **payload,
+                    "time": get_response.json["data"]["time"],
+                    "dates": get_response.json["data"]["dates"],
                     "email_schedule_uid": create_email_schedule["email_schedule_uid"],
                 },
                 "success": True,
             },
             get_response.json,
         )
+
         assert checkdiff == {}
 
     def test_update_email_schedule_for_user_roles(
@@ -385,9 +397,19 @@ class TestEmails:
 
         login_user(client, test_user_credentials)
 
+        current_datetime = datetime.now()
+
+        future_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(4)
+        ]
+
+        # add today
+        future_dates.append(current_datetime.strftime("%Y-%m-%d")),
+
         payload = {
             "form_uid": 1,
-            "dates": create_email_schedule["dates"],
+            "dates": future_dates,
             "time": "08:00",
             "template_uid": create_email_template["email_template_uid"],
         }
@@ -414,6 +436,8 @@ class TestEmails:
             {
                 "data": {
                     **payload,
+                    "time": get_response.json["data"]["time"],
+                    "dates": get_response.json["data"]["dates"],
                     "email_schedule_uid": create_email_schedule["email_schedule_uid"],
                 },
                 "success": True,

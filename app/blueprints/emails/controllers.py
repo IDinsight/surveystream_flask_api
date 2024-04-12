@@ -36,7 +36,6 @@ def create_email_schedule(validated_payload):
         "template_uid": validated_payload.template_uid.data,
     }
 
-    print(payload)
 
     new_schedule = EmailSchedule(
         **payload,
