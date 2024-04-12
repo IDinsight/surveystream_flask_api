@@ -1083,13 +1083,12 @@ class TestAssignments:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-
-    def test_schedule_assignments_email(
+    def test_assignments_schedule_email(
         self, client, login_test_user, create_geo_levels, csrf_token
     ):
         """
         Test the assignments endpoint for scheduling emails
-       
+
         """
 
         expected_response = {
@@ -1099,11 +1098,11 @@ class TestAssignments:
 
         current_datetime = datetime.now()
 
-        future_date = (current_datetime + timedelta(1)).strftime("%Y-%m-%d")
+        current_datetime = current_datetime.strftime("%Y-%m-%d")
 
         payload = {
             "form_uid": 1,
-            "date": future_date,
+            "date": current_datetime,
             "time": "08:00",
             "recipients": [1, 2, 3],  # there are supposed to be enumerator ids
             "template_uid": 1,
@@ -1118,7 +1117,7 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.json)
-
+        assert response.status_code == 201
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 

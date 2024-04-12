@@ -1,3 +1,4 @@
+from datetime import datetime
 from . import assignments_bp
 from app.utils.utils import (
     custom_permissions_required,
@@ -421,7 +422,8 @@ def update_assignments(validated_payload):
     email_schedule = (
         db.session.query(EmailSchedule)
         .join(
-            EmailTemplate, EmailSchedule.template_uid == EmailTemplate.email_template_id
+            EmailTemplate,
+            EmailSchedule.template_uid == EmailTemplate.email_template_uid,
         )
         .filter(
             EmailSchedule.form_uid == form_uid,
@@ -453,10 +455,13 @@ def update_assignments(validated_payload):
 @custom_permissions_required("WRITE Assignments", "body", "form_uid")
 def schedule_assignments_email(validated_payload):
     """Function to schedule assignment emails"""
+    time_str = validated_payload.time.data
+    time_obj = datetime.strptime(time_str, "%H:%M").time()
+
     new_trigger = ManualEmailTrigger(
         form_uid=validated_payload.form_uid.data,
         date=validated_payload.date.data,
-        time=validated_payload.date.data,
+        time=time_obj,
         recipients=validated_payload.recipients.data,
         template_uid=validated_payload.template_uid.data,
         status=validated_payload.status.data,

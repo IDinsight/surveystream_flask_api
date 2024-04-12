@@ -168,7 +168,7 @@ class TestEmails:
         assert response.status_code == 201
         return response.json["data"]
 
-    def test_get_email_template(
+    def test_emails_get_template(
         self,
         client,
         login_test_user,
@@ -188,7 +188,7 @@ class TestEmails:
         )
         assert response.status_code == 200
 
-    def test_get_email_templates(
+    def test_emails_get_templates(
         self,
         client,
         login_test_user,
@@ -208,7 +208,7 @@ class TestEmails:
         )
         assert response.status_code == 200
 
-    def test_update_email_template(
+    def test_emails_update_template(
         self,
         client,
         login_test_user,
@@ -252,7 +252,7 @@ class TestEmails:
         )
         assert checkdiff == {}
 
-    def test_delete_email_template(
+    def test_emails_delete_template(
         self,
         client,
         login_test_user,
@@ -281,7 +281,7 @@ class TestEmails:
 
         assert get_response.status_code == 404
 
-    def test_get_email_schedule_for_admin_user(
+    def test_emails_get_schedule_for_admin_user(
         self,
         client,
         login_test_user,
@@ -301,7 +301,7 @@ class TestEmails:
         )
         assert response.status_code == 200
 
-    def test_get_email_schedule_for_user_roles(
+    def test_emails_get_schedule_for_user_roles(
         self,
         client,
         login_test_user,
@@ -350,7 +350,7 @@ class TestEmails:
 
         login_user(client, test_user_credentials)
 
-    def test_update_email_schedule_for_admin_user(
+    def test_emails_update_schedule_for_admin_user(
         self,
         client,
         login_test_user,
@@ -411,7 +411,7 @@ class TestEmails:
 
         assert checkdiff == {}
 
-    def test_update_email_schedule_for_user_roles(
+    def test_emails_update_schedule_for_user_roles(
         self,
         client,
         login_test_user,
@@ -502,7 +502,7 @@ class TestEmails:
 
         login_user(client, test_user_credentials)
 
-    def test_delete_email_schedule_for_admin_user(
+    def test_emails_delete_schedule_for_admin_user(
         self,
         client,
         login_test_user,
@@ -529,7 +529,7 @@ class TestEmails:
         )
         assert get_response.status_code == 404
 
-    def test_delete_email_schedule_for_user_roles(
+    def test_emails_delete_schedule_for_user_roles(
         self,
         client,
         login_test_user,
@@ -584,7 +584,7 @@ class TestEmails:
 
         login_user(client, test_user_credentials)
 
-    def test_get_manual_email_trigger_for_admin_user(
+    def test_emails_get_manual_trigger_for_admin_user(
         self,
         client,
         login_test_user,
@@ -606,7 +606,7 @@ class TestEmails:
 
         assert response.status_code == 200
 
-    def test_get_manual_email_trigger_for_user_roles(
+    def test_emails_get_manual_trigger_for_user_roles(
         self,
         client,
         login_test_user,
@@ -657,7 +657,7 @@ class TestEmails:
 
         login_user(client, test_user_credentials)
 
-    def test_update_manual_email_trigger_for_admin_user(
+    def test_emails_update_manual_trigger_for_admin_user(
         self,
         client,
         login_test_user,
@@ -715,7 +715,7 @@ class TestEmails:
         )
         assert checkdiff == {}
 
-    def test_update_manual_email_trigger_for_user_roles(
+    def test_emails_update_manual_trigger_for_user_roles(
         self,
         client,
         login_test_user,
@@ -803,7 +803,7 @@ class TestEmails:
 
         login_user(client, test_user_credentials)
 
-    def test_delete_manual_email_trigger_for_admin_user(
+    def test_emails_delete_manual_trigger_for_admin_user(
         self,
         client,
         login_test_user,
@@ -828,7 +828,7 @@ class TestEmails:
         )
         assert get_response.status_code == 404
 
-    def test_delete_manual_email_trigger_for_user_roles(
+    def test_emails_delete_manual_trigger_for_user_roles(
         self,
         client,
         login_test_user,
