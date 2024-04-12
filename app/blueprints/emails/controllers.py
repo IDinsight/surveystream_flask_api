@@ -112,7 +112,6 @@ def delete_manual_email_trigger(trigger_id):
     return jsonify(message="Manual email trigger deleted successfully")
 
 
-# TODO: implement template endpoints here
 @emails_bp.route("/template", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(EmailTemplateValidator)
@@ -128,3 +127,45 @@ def create_email_template(validated_payload):
     db.session.add(new_template)
     db.session.commit()
     return jsonify({"message": "Email template created successfully"}), 201
+
+
+@emails_bp.route("/templates", methods=["GET"])
+@logged_in_active_user_required
+def get_all_email_templates():
+    templates = EmailTemplate.query.all()
+    return jsonify([template.serialize() for template in templates])
+
+
+
+@emails_bp.route("/template/<int:template_id>", methods=["GET"])
+@logged_in_active_user_required
+def get_email_template(template_id):
+    template = EmailTemplate.query.get_or_404(template_id)
+    return jsonify(template.serialize())
+
+
+
+@emails_bp.route("/template/<int:template_id>", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(EmailTemplateValidator)
+@custom_permissions_required("ADMIN")
+def update_email_template(template_id, validated_payload):
+    template = EmailTemplate.query.get_or_404(template_id)
+    data = validated_payload
+    template.template_name = data.get("template_name", template.template_name)
+    template.subject = data.get("subject", template.subject)
+    template.sender_email = data.get("sender_email", template.sender_email)
+    template.content = data.get("content", template.content)
+    db.session.commit()
+    return jsonify({"message": "Email template updated successfully"})
+
+
+
+@emails_bp.route("/template/<int:template_id>", methods=["DELETE"])
+@logged_in_active_user_required
+@custom_permissions_required("ADMIN")
+def delete_email_template(template_id):
+    template = EmailTemplate.query.get_or_404(template_id)
+    db.session.delete(template)
+    db.session.commit()
+    return jsonify({"message": "Email template deleted successfully"})

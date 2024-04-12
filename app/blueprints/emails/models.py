@@ -9,13 +9,13 @@ class EmailSchedule(db.Model):
 
     email_schedule_id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     form_uid = db.Column(db.Integer, db.ForeignKey(Form.form_uid), nullable=False)
-    date = db.Column(db.ARRAY(db.Date), nullable=False)
+    dates = db.Column(db.ARRAY(db.Date), nullable=False)
     time = db.Column(db.TIMESTAMP, nullable=False)
     template_uid = db.Column(db.Integer, nullable=True)
 
-    def __init__(self, form_uid, date, time, template_uid=None):
+    def __init__(self, form_uid, dates, time, template_uid=None):
         self.form_uid = form_uid
-        self.date = date
+        self.dates = dates
         self.time = time
         self.template_uid = template_uid
 
@@ -23,7 +23,7 @@ class EmailSchedule(db.Model):
         return {
             'email_schedule_id': self.email_schedule_id,
             'form_uid': self.form_uid,
-            'date': self.date,
+            'dates': self.dates,
             'time': self.time,
             'template_uid': self.template_uid
         }
