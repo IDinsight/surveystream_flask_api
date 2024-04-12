@@ -88,6 +88,9 @@ tags:
     description: Endpoints related to permissions
   - name: User Hierarchy
     description: Endpoints related to user hierarchy
+  - name: Emails
+    description: Endpoints related to emails configuration
+
 x-tagGroups:
   - name: User Management
     tags:
@@ -138,6 +141,9 @@ x-tagGroups:
   - name: Locations
     tags:
       - Locations
+  - name: Emails
+    tags:
+      - Emails
 
 paths:
   /healthcheck:
@@ -3653,6 +3659,56 @@ paths:
           description: Enumerator or target not found
         "422":
           description: Form errors. Specific errors messages will be returned if ineligible/unassignable enumerators or targets are included in the request body.
+
+  /assignments/schedule-email:
+    post:
+      summary: Schedule assignment emails
+      tags:
+        - Assignments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                date:
+                  type: string
+                  format: date
+                time:
+                  type: string
+                  format: time
+                recipients:
+                  type: array
+                  items:
+                    type: integer
+                template_uid:
+                  type: integer
+                status:
+                  type: string
+                  enum: [queued, sent, failed]
+              required:
+                - form_uid
+                - date
+                - time
+                - recipients
+                - template_uid
+                - status
+      responses:
+        "201":
+          description: Manual email trigger created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  success:
+                    type: boolean
+
   /assignments/table-config:
     get:
       summary: Get table configuration
@@ -5041,7 +5097,7 @@ paths:
                         type: integer
                         nullable: true
                         description: >-
-                          The unique ID of the survey status. 
+                          The unique ID of the survey status.
                       survey_status_label:
                         type: string
                         nullable: false
@@ -5721,3 +5777,503 @@ paths:
           description: Target not found
         "422":
           description: Target errors
+
+  /emails/schedule:
+    post:
+      summary: Create a new email schedule
+      tags:
+        - Emails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                dates:
+                  type: array
+                  items:
+                    type: string
+                    format: date
+                time:
+                  type: string
+                  format: time
+                template_uid:
+                  type: integer
+              required:
+                - form_uid
+                - dates
+                - time
+                - template_uid
+      responses:
+        "201":
+          description: Email schedule created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                  dates:
+                    type: array
+                    items:
+                      type: string
+                      format: date
+                  time:
+                    type: string
+                    format: time
+                  template_uid:
+                    type: integer
+                required:
+                  - form_uid
+                  - dates
+                  - time
+                  - template_uid
+  /emails/schedules:
+    get:
+      summary: Get email schedules for a specific form
+      tags:
+        - Emails
+      parameters:
+        - name: form_uid
+          in: query
+          description: Unique identifier for the form
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Email schedules retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    form_uid:
+                      type: integer
+                    dates:
+                      type: array
+                      items:
+                        type: string
+                        format: date
+                    time:
+                      type: string
+                      format: time
+                    template_uid:
+                      type: integer
+                  required:
+                    - form_uid
+                    - dates
+                    - time
+                    - template_uid
+  /emails/schedule/{email_schedule_uid}:
+    get:
+      summary: Get a specific email schedule
+      tags:
+        - Emails
+      parameters:
+        - name: email_schedule_uid
+          in: path
+          description: Unique identifier for the email schedule
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Email schedule retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                  dates:
+                    type: array
+                    items:
+                      type: string
+                      format: date
+                  time:
+                    type: string
+                    format: time
+                  template_uid:
+                    type: integer
+                required:
+                  - form_uid
+                  - dates
+                  - time
+                  - template_uid
+    put:
+      summary: Update a specific email schedule
+      tags:
+        - Emails
+      parameters:
+        - name: email_schedule_uid
+          in: path
+          description: Unique identifier for the email schedule
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                dates:
+                  type: array
+                  items:
+                    type: string
+                    format: date
+                time:
+                  type: string
+                  format: time
+                template_uid:
+                  type: integer
+              required:
+                - form_uid
+                - dates
+                - time
+                - template_uid
+      responses:
+        "200":
+          description: Email schedule updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                  dates:
+                    type: array
+                    items:
+                      type: string
+                      format: date
+                  time:
+                    type: string
+                    format: time
+                  template_uid:
+                    type: integer
+                required:
+                  - form_uid
+                  - dates
+                  - time
+                  - template_uid
+    delete:
+      summary: Delete a specific email schedule
+      tags:
+        - Emails
+      parameters:
+        - name: email_schedule_uid
+          in: path
+          description: Unique identifier for the email schedule
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Email schedule deleted successfully
+  /emails/manual-trigger:
+    post:
+      summary: Create a new manual email trigger
+      tags:
+        - Emails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                date:
+                  type: string
+                  format: date
+                time:
+                  type: string
+                  format: time
+                recipients:
+                  type: array
+                  items:
+                    type: integer
+                template_uid:
+                  type: integer
+                status:
+                  type: string
+                  enum:
+                    - queued
+                    - sent
+                    - failed
+              required:
+                - form_uid
+                - date
+                - time
+                - recipients
+                - template_uid
+                - status
+      responses:
+        "201":
+          description: Manual email trigger created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                  date:
+                    type: string
+                    format: date
+                  time:
+                    type: string
+                    format: time
+                  recipients:
+                    type: array
+                    items:
+                      type: integer
+                  template_uid:
+                    type: integer
+                  status:
+                    type: string
+                    enum:
+                      - queued
+                      - sent
+                      - failed
+                required:
+                  - form_uid
+                  - date
+                  - time
+                  - recipients
+                  - template_uid
+                  - status
+  /emails/manual-triggers:
+    get:
+      summary: Get manual email triggers for a specific form
+      tags:
+        - Emails
+      parameters:
+        - name: form_uid
+          in: query
+          description: Unique identifier for the form
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Manual email triggers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                description: a list of email triggers
+                items:
+                  type: object
+                  properties:
+                    form_uid:
+                      type: integer
+                    date:
+                      type: string
+                      format: date
+                    time:
+                      type: string
+                      format: time
+                    recipients:
+                      type: array
+                      items:
+                        type: integer
+                    template_uid:
+                      type: integer
+                    status:
+                      type: string
+                      enum:
+                        - queued
+                        - sent
+                        - failed
+                  required:
+                    - form_uid
+                    - date
+                    - time
+                    - recipients
+  /emails/template:
+    post:
+      summary: Create a new email template
+      tags:
+        - Emails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                template_name:
+                  type: string
+                subject:
+                  type: string
+                sender_email:
+                  type: string
+                content:
+                  type: string
+              required:
+                - template_name
+                - subject
+                - sender_email
+                - content
+      responses:
+        "201":
+          description: Email template created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  template_name:
+                    type: string
+                  subject:
+                    type: string
+                  sender_email:
+                    type: string
+                  content:
+                    type: string
+                required:
+                  - template_name
+                  - subject
+                  - sender_email
+                  - content
+  /emails/templates:
+    get:
+      summary: Get all email templates
+      tags:
+        - Emails
+      responses:
+        "200":
+          description: Email templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    template_name:
+                      type: string
+                    subject:
+                      type: string
+                    sender_email:
+                      type: string
+                    content:
+                      type: string
+                  required:
+                    - template_name
+                    - subject
+                    - sender_email
+                    - content
+  /emails/template/{template_id}:
+    get:
+      summary: Get a specific email template
+      tags:
+        - Emails
+      parameters:
+        - name: template_id
+          in: path
+          description: Unique identifier for the email template
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Email template retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  template_name:
+                    type: string
+                  subject:
+                    type: string
+                  sender_email:
+                    type: string
+                  content:
+                    type: string
+                required:
+                  - template_name
+                  - subject
+                  - sender_email
+                  - content
+    put:
+      summary: Update a specific email template
+      tags:
+        - Emails
+      parameters:
+        - name: template_id
+          in: path
+          description: Unique identifier for the email template
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                template_name:
+                  type: string
+                subject:
+                  type: string
+                sender_email:
+                  type: string
+                content:
+                  type: string
+              required:
+                - template_name
+                - subject
+                - sender_email
+                - content
+      responses:
+        "200":
+          description: Email template updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  template_name:
+                    type: string
+                  subject:
+                    type: string
+                  sender_email:
+                    type: string
+                  content:
+                    type: string
+                required:
+                  - template_name
+                  - subject
+                  - sender_email
+                  - content
+    delete:
+      summary: Delete a specific email template
+      tags:
+        - Emails
+      parameters:
+        - name: template_id
+          in: path
+          description: Unique identifier for the email template
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Email template deleted successfully

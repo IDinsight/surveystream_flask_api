@@ -36,7 +36,6 @@ def create_email_schedule(validated_payload):
         "template_uid": validated_payload.template_uid.data,
     }
 
-
     new_schedule = EmailSchedule(
         **payload,
     )
@@ -132,6 +131,9 @@ def get_email_schedule(email_schedule_uid, validated_query_params):
 @validate_payload(EmailScheduleValidator)
 @custom_permissions_required("WRITE Emails", "body", "form_uid")
 def update_email_schedule(schedule_id, validated_payload):
+    """
+    Function to update an email schedule
+    """
     time_str = validated_payload.time.data
     time_obj = datetime.strptime(time_str, "%H:%M").time()
 
@@ -163,6 +165,10 @@ def update_email_schedule(schedule_id, validated_payload):
 @validate_query_params(ManualEmailTriggerQueryParamValidator)
 @custom_permissions_required("WRITE Emails", "query", "form_uid")
 def delete_email_schedule(schedule_id, validated_query_params):
+    """
+    Function to delete an email schedule
+    """
+
     email_schedule = EmailSchedule.query.get_or_404(schedule_id)
 
     try:
@@ -180,6 +186,9 @@ def delete_email_schedule(schedule_id, validated_query_params):
 @validate_payload(ManualEmailTriggerValidator)
 @custom_permissions_required("WRITE Emails", "body", "form_uid")
 def create_manual_email_trigger(validated_payload):
+    """
+    Function to create a manual email trigger
+    """
     time_str = validated_payload.time.data
     time_obj = datetime.strptime(time_str, "%H:%M").time()
 
@@ -217,6 +226,9 @@ def create_manual_email_trigger(validated_payload):
 @validate_query_params(ManualEmailTriggerQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "form_uid")
 def get_manual_email_triggers(validated_query_params):
+    """
+    Function to get manual triggers per form
+    """
     form_uid = validated_query_params.form_uid.data
     manual_email_triggers = ManualEmailTrigger.query.filter_by(form_uid=form_uid).all()
 
@@ -251,6 +263,9 @@ def get_manual_email_triggers(validated_query_params):
 @validate_query_params(ManualEmailTriggerQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "form_uid")
 def get_manual_email_trigger(manual_email_trigger_uid, validated_query_params):
+    """
+    Function to get a specific manual trigger
+    """
     manual_email_trigger = ManualEmailTrigger.query.filter_by(
         manual_email_trigger_uid=manual_email_trigger_uid
     ).first()
@@ -282,6 +297,9 @@ def get_manual_email_trigger(manual_email_trigger_uid, validated_query_params):
 @validate_payload(ManualEmailTriggerValidator)
 @custom_permissions_required("WRITE Emails", "body", "form_uid")
 def update_manual_email_trigger(manual_email_trigger_uid, validated_payload):
+    """
+    Function to update a manual trigger
+    """
     time_str = validated_payload.time.data
     time_obj = datetime.strptime(time_str, "%H:%M").time()
 
@@ -312,6 +330,9 @@ def update_manual_email_trigger(manual_email_trigger_uid, validated_payload):
 @validate_query_params(ManualEmailTriggerQueryParamValidator)
 @custom_permissions_required("WRITE Emails", "query", "form_uid")
 def delete_manual_email_trigger(trigger_id, validated_query_params):
+    """
+    Function to delete a manual trigger
+    """
     manual_email_trigger = ManualEmailTrigger.query.get_or_404(trigger_id)
 
     try:
@@ -329,6 +350,10 @@ def delete_manual_email_trigger(trigger_id, validated_query_params):
 @validate_payload(EmailTemplateValidator)
 @custom_permissions_required("ADMIN")
 def create_email_template(validated_payload):
+    """
+    Function to create an email  template
+    Only super admins allowed
+    """
     payload = {
         "template_name": validated_payload.template_name.data,
         "subject": validated_payload.subject.data,
@@ -357,7 +382,12 @@ def create_email_template(validated_payload):
 
 @emails_bp.route("/templates", methods=["GET"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def get_all_email_templates():
+    """
+    Function to get email  templates
+    Only super admins allowed
+    """
     templates = EmailTemplate.query.all()
 
     template_data = []
@@ -375,7 +405,12 @@ def get_all_email_templates():
 
 @emails_bp.route("/template/<int:template_id>", methods=["GET"])
 @logged_in_active_user_required
+@custom_permissions_required("ADMIN")
 def get_email_template(template_id):
+    """
+    Function to get email  templates
+    Only super admins allowed
+    """
     template = EmailTemplate.query.get_or_404(template_id)
     response = jsonify(
         {
@@ -391,6 +426,10 @@ def get_email_template(template_id):
 @validate_payload(EmailTemplateValidator)
 @custom_permissions_required("ADMIN")
 def update_email_template(template_id, validated_payload):
+    """
+    Function to update an email template
+    Only super admins allowed
+    """
     template = EmailTemplate.query.get_or_404(template_id)
 
     template.template_name = validated_payload.template_name.data
@@ -418,6 +457,10 @@ def update_email_template(template_id, validated_payload):
 @logged_in_active_user_required
 @custom_permissions_required("ADMIN")
 def delete_email_template(template_id):
+    """
+    Function to delete an email template
+    Only super admins allowed
+    """
     template = EmailTemplate.query.get_or_404(template_id)
     try:
         db.session.delete(template)
