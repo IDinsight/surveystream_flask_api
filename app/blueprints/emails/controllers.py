@@ -8,19 +8,173 @@ from app.utils.utils import (
 from flask import jsonify
 from app import db
 from .validators import (
+    EmailConfigQueryParamValidator,
+    EmailConfigValidator,
+    EmailScheduleQueryParamValidator,
     EmailScheduleValidator,
     ManualEmailTriggerValidator,
     EmailTemplateValidator,
     ManualEmailTriggerQueryParamValidator,
 )
-from .models import EmailSchedule, ManualEmailTrigger, EmailTemplate
+from .models import EmailConfig, EmailSchedule, ManualEmailTrigger, EmailTemplate
 from datetime import datetime, time
+
+
+@emails_bp.route("/config", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(EmailConfigValidator)
+@custom_permissions_required("WRITE Emails", "body", "form_uid")
+def create_email_config(validated_payload):
+    """
+    Function to create a new email config
+    """
+    payload = {
+        "config_type": validated_payload.config_type.data,
+        "form_uid": validated_payload.form_uid.data,
+    }
+
+    email_config = EmailConfig(
+        **payload,
+    )
+
+    try:
+        db.session.add(email_config)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return (
+        jsonify(
+            {
+                "message": "Email schedule created successfully",
+                "data": email_config.to_dict(),
+            }
+        ),
+        201,
+    )
+
+
+@emails_bp.route("/configs", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(EmailConfigQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "form_uid")
+def get_email_configs(validated_query_params):
+    """Function to get email schedules  per form"""
+    form_uid = validated_query_params.form_uid.data
+
+    email_configs = EmailConfig.query.filter_by(form_uid=form_uid).all()
+
+    if email_configs is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Email configs not found",
+                }
+            ),
+            404,
+        )
+
+    config_data = []
+    for email_config in email_configs:
+        config_data.append(list(email_config.to_dict().keys()))
+
+    response = jsonify(
+        {
+            "success": True,
+            "data": config_data,
+        }
+    )
+
+    return response, 200
+
+
+@emails_bp.route("/config/<int:email_config_uid>", methods=["GET"])
+@logged_in_active_user_required
+@custom_permissions_required("READ Emails", "query", "email_config_uid")
+def get_email_config(email_config_uid):
+    """Function to get a particular email config given the email config uid"""
+    email_config = EmailConfig.query.filter_by(
+        email_config_uid=email_config_uid
+    ).first()
+
+    if email_config is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Email config not found",
+                }
+            ),
+            404,
+        )
+
+    response = jsonify(
+        {
+            "success": True,
+            "data": email_config.to_dict(),
+        }
+    )
+
+    return response, 200
+
+
+@emails_bp.route("/config/<int:email_config_uid>", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(EmailConfigValidator)
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
+def update_email_config(email_config_uid, validated_payload):
+    """
+    Function to update an email config
+    """
+    email_config = EmailConfig.query.get_or_404(email_config_uid)
+
+    email_config.form_uid = validated_payload.form_uid.data
+    email_config.config_type = validated_payload.config_type.data
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    response = jsonify(
+        {
+            "success": True,
+            "message": "Email config updated successfully",
+            "data": email_config.to_dict(),
+        }
+    )
+    return response, 200
+
+
+@emails_bp.route("/config/<int:email_config_uid>", methods=["DELETE"])
+@logged_in_active_user_required
+@custom_permissions_required("WRITE Emails", "query", "email_config_uid")
+def delete_email_config(email_config_uid):
+    """
+    Function to delete an email config
+    """
+
+    email_config = EmailSchedule.query.get_or_404(email_config_uid)
+
+    try:
+        db.session.delete(email_config)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify(message="Email config deleted successfully")
 
 
 @emails_bp.route("/schedule", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(EmailScheduleValidator)
-@custom_permissions_required("WRITE Emails", "body", "form_uid")
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
 def create_email_schedule(validated_payload):
     """
     Function to create a new email schedule
@@ -30,10 +184,9 @@ def create_email_schedule(validated_payload):
     time_obj = datetime.strptime(time_str, "%H:%M").time()
 
     payload = {
-        "form_uid": validated_payload.form_uid.data,
+        "email_config_uid": validated_payload.email_config_uid.data,
         "dates": validated_payload.dates.data,
         "time": time_obj,
-        "template_uid": validated_payload.template_uid.data,
     }
 
     new_schedule = EmailSchedule(
@@ -60,13 +213,15 @@ def create_email_schedule(validated_payload):
 
 @emails_bp.route("/schedules", methods=["GET"])
 @logged_in_active_user_required
-@validate_query_params(ManualEmailTriggerQueryParamValidator)
-@custom_permissions_required("READ Emails", "query", "form_uid")
+@validate_query_params(EmailScheduleQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "email_config_uid")
 def get_email_schedules(validated_query_params):
     """Function to get email schedules  per form"""
-    form_uid = validated_query_params.form_uid.data
+    email_config_uid = validated_query_params.email_config_uid.data
 
-    email_schedules = EmailSchedule.query.filter_by(form_uid=form_uid).all()
+    email_schedules = EmailSchedule.query.filter_by(
+        email_config_uid=email_config_uid
+    ).all()
 
     if email_schedules is None:
         return (
@@ -96,8 +251,8 @@ def get_email_schedules(validated_query_params):
 
 @emails_bp.route("/schedule/<int:email_schedule_uid>", methods=["GET"])
 @logged_in_active_user_required
-@validate_query_params(ManualEmailTriggerQueryParamValidator)
-@custom_permissions_required("READ Emails", "query", "form_uid")
+@validate_query_params(EmailScheduleQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "email_config_uid")
 def get_email_schedule(email_schedule_uid, validated_query_params):
     """Function to get a particular email schedule given the email schedule uid"""
     email_schedule = EmailSchedule.query.filter_by(
@@ -129,7 +284,7 @@ def get_email_schedule(email_schedule_uid, validated_query_params):
 @emails_bp.route("/schedule/<int:schedule_id>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(EmailScheduleValidator)
-@custom_permissions_required("WRITE Emails", "body", "form_uid")
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
 def update_email_schedule(schedule_id, validated_payload):
     """
     Function to update an email schedule
@@ -139,10 +294,9 @@ def update_email_schedule(schedule_id, validated_payload):
 
     email_schedule = EmailSchedule.query.get_or_404(schedule_id)
 
-    email_schedule.form_uid = validated_payload.form_uid.data
+    email_schedule.email_config_uid = validated_payload.email_config_uid.data
     email_schedule.dates = validated_payload.dates.data
     email_schedule.time = time_obj
-    email_schedule.template_uid = validated_payload.template_uid.data
 
     try:
         db.session.commit()
@@ -162,8 +316,8 @@ def update_email_schedule(schedule_id, validated_payload):
 
 @emails_bp.route("/schedule/<int:schedule_id>", methods=["DELETE"])
 @logged_in_active_user_required
-@validate_query_params(ManualEmailTriggerQueryParamValidator)
-@custom_permissions_required("WRITE Emails", "query", "form_uid")
+@validate_query_params(EmailScheduleQueryParamValidator)
+@custom_permissions_required("WRITE Emails", "query", "email_config_uid")
 def delete_email_schedule(schedule_id, validated_query_params):
     """
     Function to delete an email schedule
@@ -184,7 +338,7 @@ def delete_email_schedule(schedule_id, validated_query_params):
 @emails_bp.route("/manual-trigger", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(ManualEmailTriggerValidator)
-@custom_permissions_required("WRITE Emails", "body", "form_uid")
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
 def create_manual_email_trigger(validated_payload):
     """
     Function to create a manual email trigger
@@ -193,11 +347,10 @@ def create_manual_email_trigger(validated_payload):
     time_obj = datetime.strptime(time_str, "%H:%M").time()
 
     payload = {
-        "form_uid": validated_payload.form_uid.data,
+        "email_config_uid": validated_payload.email_config_uid.data,
         "date": validated_payload.date.data,
         "time": time_obj,
         "recipients": validated_payload.recipients.data,
-        "template_uid": validated_payload.template_uid.data,
         "status": validated_payload.status.data,
     }
 
@@ -224,13 +377,15 @@ def create_manual_email_trigger(validated_payload):
 @emails_bp.route("/manual-triggers", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(ManualEmailTriggerQueryParamValidator)
-@custom_permissions_required("READ Emails", "query", "form_uid")
+@custom_permissions_required("READ Emails", "query", "email_config_uid")
 def get_manual_email_triggers(validated_query_params):
     """
     Function to get manual triggers per form
     """
-    form_uid = validated_query_params.form_uid.data
-    manual_email_triggers = ManualEmailTrigger.query.filter_by(form_uid=form_uid).all()
+    email_config_uid = validated_query_params.email_config_uid.data
+    manual_email_triggers = ManualEmailTrigger.query.filter_by(
+        form_uid=email_config_uid
+    ).all()
 
     if manual_email_triggers is None:
         return (
@@ -261,7 +416,7 @@ def get_manual_email_triggers(validated_query_params):
 @emails_bp.route("/manual-trigger/<int:manual_email_trigger_uid>", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(ManualEmailTriggerQueryParamValidator)
-@custom_permissions_required("READ Emails", "query", "form_uid")
+@custom_permissions_required("READ Emails", "query", "email_config_uid")
 def get_manual_email_trigger(manual_email_trigger_uid, validated_query_params):
     """
     Function to get a specific manual trigger
@@ -295,7 +450,7 @@ def get_manual_email_trigger(manual_email_trigger_uid, validated_query_params):
 @emails_bp.route("/manual-trigger/<int:manual_email_trigger_uid>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(ManualEmailTriggerValidator)
-@custom_permissions_required("WRITE Emails", "body", "form_uid")
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
 def update_manual_email_trigger(manual_email_trigger_uid, validated_payload):
     """
     Function to update a manual trigger
@@ -304,7 +459,7 @@ def update_manual_email_trigger(manual_email_trigger_uid, validated_payload):
     time_obj = datetime.strptime(time_str, "%H:%M").time()
 
     manual_email_trigger = ManualEmailTrigger.query.get_or_404(manual_email_trigger_uid)
-    manual_email_trigger.form_uid = validated_payload.form_uid.data
+    manual_email_trigger.email_config_uid = validated_payload.email_config_uid.data
     manual_email_trigger.date = validated_payload.date.data
     manual_email_trigger.time = time_obj
     manual_email_trigger.recipients = validated_payload.recipients.data
@@ -328,7 +483,7 @@ def update_manual_email_trigger(manual_email_trigger_uid, validated_payload):
 @emails_bp.route("/manual-trigger/<int:trigger_id>", methods=["DELETE"])
 @logged_in_active_user_required
 @validate_query_params(ManualEmailTriggerQueryParamValidator)
-@custom_permissions_required("WRITE Emails", "query", "form_uid")
+@custom_permissions_required("WRITE Emails", "query", "email_config_uid")
 def delete_manual_email_trigger(trigger_id, validated_query_params):
     """
     Function to delete a manual trigger
@@ -355,9 +510,9 @@ def create_email_template(validated_payload):
     Only super admins allowed
     """
     payload = {
-        "template_name": validated_payload.template_name.data,
+        "email_config_uid": validated_payload.email_config_uid.data,
         "subject": validated_payload.subject.data,
-        "sender_email": validated_payload.sender_email.data,
+        "language": validated_payload.language.data,
         "content": validated_payload.content.data,
     }
     new_template = EmailTemplate(**payload)
@@ -432,9 +587,9 @@ def update_email_template(template_id, validated_payload):
     """
     template = EmailTemplate.query.get_or_404(template_id)
 
-    template.template_name = validated_payload.template_name.data
+    template.email_config_uid = validated_payload.email_config_uid.data
     template.subject = validated_payload.subject.data
-    template.sender_email = validated_payload.sender_email.data
+    template.language = validated_payload.language.data
     template.content = validated_payload.content.data
 
     try:

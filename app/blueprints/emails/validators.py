@@ -4,11 +4,15 @@ from wtforms.validators import DataRequired, ValidationError, AnyOf
 from datetime import datetime
 
 
-class EmailScheduleValidator(FlaskForm):
+class EmailConfigValidator(FlaskForm):
+    config_type = StringField(validators=[DataRequired()])
     form_uid = IntegerField(validators=[DataRequired()])
+
+
+class EmailScheduleValidator(FlaskForm):
     dates = FieldList(StringField(validators=[DataRequired()]))
     time = StringField(validators=[DataRequired()])
-    template_uid = IntegerField(validators=[DataRequired()])
+    email_config_uid = IntegerField(validators=[DataRequired()])
 
     def validate_dates(self, field):
         """
@@ -19,12 +23,12 @@ class EmailScheduleValidator(FlaskForm):
             if date_obj < datetime.now().date():
                 raise ValidationError("Date must be in the future.")
 
+
 class ManualEmailTriggerValidator(FlaskForm):
-    form_uid = IntegerField(validators=[DataRequired()])
     date = StringField(validators=[DataRequired()])
     time = StringField(validators=[DataRequired()])
     recipients = FieldList(IntegerField(validators=[DataRequired()]))
-    template_uid = IntegerField(validators=[DataRequired()])
+    email_config_uid = IntegerField(validators=[DataRequired()])
     status = StringField(
         validators=[
             DataRequired(),
@@ -46,22 +50,28 @@ class ManualEmailTriggerValidator(FlaskForm):
 
 
 class EmailTemplateValidator(FlaskForm):
-
-    template_name = StringField(validators=[DataRequired()])
     subject = StringField(validators=[DataRequired()])
-    sender_email = StringField(validators=[DataRequired()])
+    language = StringField(validators=[DataRequired()])
+    email_config_uid = IntegerField(validators=[DataRequired()])
     content = StringField(validators=[DataRequired()])
+
+
+class EmailConfigQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
 
 
 class EmailScheduleQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    form_uid = IntegerField(validators=[DataRequired()])
+    email_config_uid = IntegerField(validators=[DataRequired()])
 
 
 class ManualEmailTriggerQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    form_uid = IntegerField(validators=[DataRequired()])
+    email_config_uid = IntegerField(validators=[DataRequired()])

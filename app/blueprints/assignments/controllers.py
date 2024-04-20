@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
 from .models import SurveyorAssignment
 from .validators import (
+    AssignmentsEmailValidator,
     AssignmentsQueryParamValidator,
     UpdateSurveyorAssignmentsValidator,
 )
@@ -37,8 +38,8 @@ from app.blueprints.emails.models import (
     ManualEmailTrigger,
     EmailSchedule,
     EmailTemplate,
+    EmailConfig,
 )
-from app.blueprints.emails.validators import ManualEmailTriggerValidator
 
 
 @assignments_bp.route("", methods=["GET"])
@@ -52,8 +53,6 @@ def view_assignments(validated_query_params):
 
     form_uid = validated_query_params.form_uid.data
     user_uid = current_user.user_uid
-
-    # TODO: Check if the logged in user has permission to access the given form
 
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
@@ -202,8 +201,6 @@ def view_assignments_enumerators(validated_query_params):
     form_uid = validated_query_params.form_uid.data
     user_uid = current_user.user_uid
 
-    # TODO: Check if the logged in user has permission to access the given form
-
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
     prime_geo_level_uid = (
@@ -277,8 +274,6 @@ def update_assignments(validated_payload):
     """
     form_uid = validated_payload.form_uid.data
     assignments = validated_payload.assignments.data
-
-    # TODO: Check if the user has permission to make assignments for this form
 
     # Run database-backed validations on the assignment inputs
     dropout_enumerator_uids = []
@@ -354,29 +349,29 @@ def update_assignments(validated_payload):
             404,
         )
 
-    re_assignments = 0
-    new_assignments = 0
+    re_assignments_count = 0
+    new_assignments_count = 0
+    no_changes_count = 0
 
     for assignment in assignments:
         # query reassignments
-        if "enumerator_uid" in assignment and "target_uid" in assignment:
-            assignment_res = (
-                db.session.query(SurveyorAssignment)
-                .filter(
-                    SurveyorAssignment.enumerator_uid == assignment["enumerator_uid"],
-                    SurveyorAssignment.target_uid == assignment["target_uid"],
-                )
-                .first()
+        assignment_res = (
+            db.session.query(SurveyorAssignment)
+            .filter(
+                SurveyorAssignment.target_uid == assignment["target_uid"],
             )
+            .first()
+        )
 
-            if assignment_res:
-                # update re_assignments
-                re_assignments += 1
-            else:
-                # update new_assignments
-                new_assignments += 1
+        if assignment_res is None:
+            # update new_assignments - no record was found for the target
+            new_assignments_count += 1
+        elif assignment_res.enumerator_uid == assignment["enumerator_uid"]:
+            # update no_changes - the enumerator_uid has not changed for the target found
+            no_changes_count += 1
         else:
-            new_assignments += 1
+            # update re_assignment - the enumerator_uid has changed
+            re_assignments_count += 1
 
         if assignment["enumerator_uid"] is not None:
             # do upsert
@@ -413,31 +408,33 @@ def update_assignments(validated_payload):
             ).delete()
 
     response_data = {
-        "re-assignments": re_assignments,
-        "new-assignments": new_assignments,
+        "re_assignments_count": re_assignments_count,
+        "new_assignments_count": new_assignments_count,
+        "no_changes_count": no_changes_count,
+        "assignments_count": len(assignments),
     }
 
     # get email scheduled time for the next dispatch
     # query email schedule - automated emails - using form_uid
-    email_schedule = (
+    email_schedule_res = (
         db.session.query(EmailSchedule)
         .join(
-            EmailTemplate,
-            EmailSchedule.template_uid == EmailTemplate.email_template_uid,
+            EmailConfig,
+            EmailSchedule.email_config_uid == EmailConfig.email_config_uid,
         )
         .filter(
-            EmailSchedule.form_uid == form_uid,
-            func.lower(EmailTemplate.template_name) == "assignments",
+            EmailConfig.form_uid == form_uid,
+            func.lower(EmailConfig.config_type) == "assignments",
         )
         .first()
     )
 
-    if email_schedule:
+    if email_schedule_res:
         response_data["email_schedule"] = {
-            "form_uid": email_schedule.form_uid,
-            "template_name": email_schedule.template_name,
-            "date": email_schedule.date,
-            "time": email_schedule.time,
+            "email_config_uid": email_schedule_res.email_config_uid,
+            "config_type": email_schedule_res.config_type,
+            "dates": email_schedule_res.dates,
+            "time": email_schedule_res.time,
         }
 
     try:
@@ -451,19 +448,39 @@ def update_assignments(validated_payload):
 
 @assignments_bp.route("/schedule-email", methods=["POST"])
 @logged_in_active_user_required
-@validate_payload(ManualEmailTriggerValidator)
+@validate_payload(AssignmentsEmailValidator)
 @custom_permissions_required("WRITE Assignments", "body", "form_uid")
 def schedule_assignments_email(validated_payload):
     """Function to schedule assignment emails"""
+
+    form_uid = validated_payload.form_uid.data
+
+    # Find the assignments email_config_uid using the form_uid - if none create one
+
+    email_config = EmailConfig.query.filter(
+        func.lower(EmailConfig.config_type) == "assignments",
+        EmailConfig.form_uid == form_uid,
+    ).first()
+
+    if email_config is None:
+        try:
+            email_config = EmailConfig(config_type="assignments", form_uid=form_uid)
+            db.session.add(email_config)
+            db.session.flush()
+        except IntegrityError:
+            db.session.rollback()
+            email_config = EmailConfig.query.filter(
+                func.lower(EmailConfig.config_type) == "assignments", form_uid=form_uid
+            ).first()
+
     time_str = validated_payload.time.data
     time_obj = datetime.strptime(time_str, "%H:%M").time()
 
     new_trigger = ManualEmailTrigger(
-        form_uid=validated_payload.form_uid.data,
+        email_config_uid=email_config.email_config_uid,
         date=validated_payload.date.data,
         time=time_obj,
         recipients=validated_payload.recipients.data,
-        template_uid=validated_payload.template_uid.data,
         status=validated_payload.status.data,
     )
 
