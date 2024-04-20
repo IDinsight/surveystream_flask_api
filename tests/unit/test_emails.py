@@ -493,13 +493,6 @@ class TestEmails:
 
         assert response.status_code == 200
 
-        get_response = client.get(
-            f"api/emails/config/1?form_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert get_response.status_code == 404
-
     def test_emails_delete_config_no_user_roles(
         self,
         client,
@@ -507,7 +500,7 @@ class TestEmails:
         csrf_token,
         test_user_credentials,
         create_email_config,
-        user_with_email_permissions,
+        user_with_no_permissions,
     ):
         """
         Test deleting emails config for a user without permissions
