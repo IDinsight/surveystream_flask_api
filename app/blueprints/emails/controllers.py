@@ -93,7 +93,7 @@ def get_email_configs(validated_query_params):
 
 @emails_bp.route("/config/<int:email_config_uid>", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required("READ Emails", "query", "email_config_uid")
+@custom_permissions_required("READ Emails", "path", "email_config_uid")
 def get_email_config(email_config_uid):
     """Function to get a particular email config given the email config uid"""
     email_config = EmailConfig.query.filter_by(
@@ -125,7 +125,7 @@ def get_email_config(email_config_uid):
 @emails_bp.route("/config/<int:email_config_uid>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(EmailConfigValidator)
-@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
+@custom_permissions_required("WRITE Emails", "path", "email_config_uid")
 def update_email_config(email_config_uid, validated_payload):
     """
     Function to update an email config
@@ -153,13 +153,13 @@ def update_email_config(email_config_uid, validated_payload):
 
 @emails_bp.route("/config/<int:email_config_uid>", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required("WRITE Emails", "query", "email_config_uid")
+@custom_permissions_required("WRITE Emails", "path", "email_config_uid")
 def delete_email_config(email_config_uid):
     """
     Function to delete an email config
     """
 
-    email_config = EmailSchedule.query.get_or_404(email_config_uid)
+    email_config = EmailConfig.query.get_or_404(email_config_uid)
 
     try:
         db.session.delete(email_config)

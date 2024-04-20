@@ -3672,7 +3672,7 @@ paths:
             schema:
               type: object
               properties:
-                form_uid:
+                email_config_uid:
                   type: integer
                 date:
                   type: string
@@ -3684,17 +3684,14 @@ paths:
                   type: array
                   items:
                     type: integer
-                template_uid:
-                  type: integer
                 status:
                   type: string
                   enum: [queued, sent, failed]
               required:
-                - form_uid
+                - email_config_uid
                 - date
                 - time
                 - recipients
-                - template_uid
                 - status
       responses:
         "201":
@@ -5777,6 +5774,318 @@ paths:
           description: Target not found
         "422":
           description: Target errors
+  /emails/configs:
+    post:
+      tags:
+        - emails
+      summary: Create a new email config
+      operationId: createEmailConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config_type:
+                  type: string
+                  description: Type of the email config
+                  example: "assignments"
+                form_uid:
+                  type: integer
+                  description: UID of the form
+                  example: 123
+              required:
+                - config_type
+                - form_uid
+      responses:
+        "201":
+          description: Email schedule created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      email_config_uid:
+                        type: integer
+                        description: UID of the email config
+                        example: 123
+                      config_type:
+                        type: string
+                        description: Type of the email config
+                        example: "assignments"
+                      form_uid:
+                        type: integer
+                        description: UID of the form
+                        example: 123
+                required:
+                  - success
+                  - data
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal Server Error"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "An error occurred while creating the email config"
+                required:
+                  - error
+                  - message
+  
+    get:
+      tags:
+        - emails
+      summary: Get email schedules per form
+      operationId: getEmailConfigs
+      parameters:
+        - in: query
+          name: form_uid
+          required: true
+          description: Form UID
+          schema:
+            type: integer
+            example: 123
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        email_config_uid:
+                          type: integer
+                          description: UID of the email config
+                          example: 123
+                        config_type:
+                          type: string
+                          description: Type of the email config
+                          example: "assignments"
+                        form_uid:
+                          type: integer
+                          description: UID of the form
+                          example: 123
+                required:
+                  - success
+                  - data
+        "404":
+          description: Email configs not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Not Found"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "Email configs not found"
+                required:
+                  - error
+                  - message
+
+  /emails/config/{email_config_uid}:
+    get:
+      tags:
+        - emails
+      summary: Get a particular email config given the email config UID
+      operationId: getEmailConfig
+      parameters:
+        - in: path
+          name: email_config_uid
+          required: true
+          description: Email Config UID
+          schema:
+            type: integer
+            example: 123
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      email_config_uid:
+                        type: integer
+                        description: UID of the email config
+                        example: 123
+                      config_type:
+                        type: string
+                        description: Type of the email config
+                        example: "assignments"
+                      form_uid:
+                        type: integer
+                        description: UID of the form
+                        example: 123
+                required:
+                  - success
+                  - data
+        "404":
+          description: Email config not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Not Found"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "Email config not found"
+                required:
+                  - error
+                  - message
+    put:
+      tags:
+        - emails
+      summary: Update an email config
+      operationId: updateEmailConfig
+      parameters:
+        - in: path
+          name: email_config_uid
+          required: true
+          description: Email Config UID
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config_type:
+                  type: string
+                  description: Type of the email config
+                  example: "assignments"
+                form_uid:
+                  type: integer
+                  description: UID of the form
+                  example: 123
+              required:
+                - config_type
+                - form_uid
+      responses:
+        "200":
+          description: Email config updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Email config updated successfully"
+                  data:
+                    type: object
+                    properties:
+                      email_config_uid:
+                        type: integer
+                        description: UID of the email config
+                        example: 123
+                      config_type:
+                        type: string
+                        description: Type of the email config
+                        example: "assignments"
+                      form_uid:
+                        type: integer
+                        description: UID of the form
+                        example: 123
+                required:
+                  - success
+                  - message
+                  - data
+        "404":
+          description: Email config not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Not Found"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "Email config not found"
+                required:
+                  - error
+                  - message
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal Server Error"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "An error occurred while updating the email config"
+                required:
+                  - error
+                  - message
+    delete:
+      tags:
+        - emails
+      summary: Delete an email config
+      operationId: deleteEmailConfig
+      parameters:
+        - in: path
+          name: email_config_uid
+          required: true
+          description: Email Config UID
+          schema:
+            type: integer
+            example: 123
+      responses:
+        "200":
+          description: Email config deleted successfully
 
   /emails/schedule:
     post:
@@ -5790,7 +6099,7 @@ paths:
             schema:
               type: object
               properties:
-                form_uid:
+                email_config_uid:
                   type: integer
                 dates:
                   type: array
@@ -5800,13 +6109,10 @@ paths:
                 time:
                   type: string
                   format: time
-                template_uid:
-                  type: integer
               required:
-                - form_uid
+                - email_config_uid
                 - dates
                 - time
-                - template_uid
       responses:
         "201":
           description: Email schedule created successfully
@@ -5815,7 +6121,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  form_uid:
+                  email_config_uid:
                     type: integer
                   dates:
                     type: array
@@ -5825,22 +6131,19 @@ paths:
                   time:
                     type: string
                     format: time
-                  template_uid:
-                    type: integer
                 required:
-                  - form_uid
+                  - email_config_uid
                   - dates
                   - time
-                  - template_uid
   /emails/schedules:
     get:
-      summary: Get email schedules for a specific form
+      summary: Get email schedules for a specific config
       tags:
         - Emails
       parameters:
-        - name: form_uid
+        - name: email_config_uid
           in: query
-          description: Unique identifier for the form
+          description: Unique identifier for the config
           required: true
           schema:
             type: integer
@@ -5854,7 +6157,7 @@ paths:
                 items:
                   type: object
                   properties:
-                    form_uid:
+                    email_config_uid:
                       type: integer
                     dates:
                       type: array
@@ -5864,13 +6167,7 @@ paths:
                     time:
                       type: string
                       format: time
-                    template_uid:
-                      type: integer
-                  required:
-                    - form_uid
-                    - dates
-                    - time
-                    - template_uid
+
   /emails/schedule/{email_schedule_uid}:
     get:
       summary: Get a specific email schedule
@@ -5891,7 +6188,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  form_uid:
+                  email_config_uid:
                     type: integer
                   dates:
                     type: array
@@ -5901,13 +6198,6 @@ paths:
                   time:
                     type: string
                     format: time
-                  template_uid:
-                    type: integer
-                required:
-                  - form_uid
-                  - dates
-                  - time
-                  - template_uid
     put:
       summary: Update a specific email schedule
       tags:
@@ -5926,7 +6216,7 @@ paths:
             schema:
               type: object
               properties:
-                form_uid:
+                email_config_uid:
                   type: integer
                 dates:
                   type: array
@@ -5936,13 +6226,10 @@ paths:
                 time:
                   type: string
                   format: time
-                template_uid:
-                  type: integer
               required:
-                - form_uid
+                - email_config_uid
                 - dates
                 - time
-                - template_uid
       responses:
         "200":
           description: Email schedule updated successfully
@@ -5951,7 +6238,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  form_uid:
+                  email_config_uid:
                     type: integer
                   dates:
                     type: array
@@ -5961,13 +6248,10 @@ paths:
                   time:
                     type: string
                     format: time
-                  template_uid:
-                    type: integer
                 required:
-                  - form_uid
+                  - email_config_uid
                   - dates
                   - time
-                  - template_uid
     delete:
       summary: Delete a specific email schedule
       tags:
@@ -5994,7 +6278,7 @@ paths:
             schema:
               type: object
               properties:
-                form_uid:
+                email_config_uid:
                   type: integer
                 date:
                   type: string
@@ -6006,8 +6290,6 @@ paths:
                   type: array
                   items:
                     type: integer
-                template_uid:
-                  type: integer
                 status:
                   type: string
                   enum:
@@ -6015,11 +6297,10 @@ paths:
                     - sent
                     - failed
               required:
-                - form_uid
+                - email_config_uid
                 - date
                 - time
                 - recipients
-                - template_uid
                 - status
       responses:
         "201":
@@ -6029,7 +6310,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  form_uid:
+                  email_config_uid:
                     type: integer
                   date:
                     type: string
@@ -6041,8 +6322,6 @@ paths:
                     type: array
                     items:
                       type: integer
-                  template_uid:
-                    type: integer
                   status:
                     type: string
                     enum:
@@ -6050,11 +6329,9 @@ paths:
                       - sent
                       - failed
                 required:
-                  - form_uid
+                  - email_config_uid
                   - date
                   - time
-                  - recipients
-                  - template_uid
                   - status
   /emails/manual-triggers:
     get:
@@ -6062,7 +6339,7 @@ paths:
       tags:
         - Emails
       parameters:
-        - name: form_uid
+        - name: email_config_uid
           in: query
           description: Unique identifier for the form
           required: true
@@ -6079,7 +6356,7 @@ paths:
                 items:
                   type: object
                   properties:
-                    form_uid:
+                    email_config_uid:
                       type: integer
                     date:
                       type: string
@@ -6091,8 +6368,6 @@ paths:
                       type: array
                       items:
                         type: integer
-                    template_uid:
-                      type: integer
                     status:
                       type: string
                       enum:
@@ -6116,18 +6391,18 @@ paths:
             schema:
               type: object
               properties:
-                template_name:
+                email_config_uid:
+                  type: integer
+                language:
                   type: string
                 subject:
-                  type: string
-                sender_email:
                   type: string
                 content:
                   type: string
               required:
-                - template_name
+                - language
+                - email_config_uid
                 - subject
-                - sender_email
                 - content
       responses:
         "201":
@@ -6137,18 +6412,18 @@ paths:
               schema:
                 type: object
                 properties:
-                  template_name:
-                    type: string
+                  email_config_uid:
+                    type: integer
                   subject:
                     type: string
-                  sender_email:
+                  language:
                     type: string
                   content:
                     type: string
                 required:
-                  - template_name
+                  - email_config_uid
                   - subject
-                  - sender_email
+                  - language
                   - content
   /emails/templates:
     get:
@@ -6165,18 +6440,18 @@ paths:
                 items:
                   type: object
                   properties:
-                    template_name:
-                      type: string
+                    email_config_uid:
+                      type: integer
                     subject:
                       type: string
-                    sender_email:
+                    language:
                       type: string
                     content:
                       type: string
                   required:
-                    - template_name
+                    - email_config_uid
                     - subject
-                    - sender_email
+                    - language
                     - content
   /emails/template/{template_id}:
     get:
@@ -6198,18 +6473,18 @@ paths:
               schema:
                 type: object
                 properties:
-                  template_name:
-                    type: string
+                  email_config_uid:
+                    type: integer
                   subject:
                     type: string
-                  sender_email:
+                  language:
                     type: string
                   content:
                     type: string
                 required:
-                  - template_name
+                  - email_config_uid
                   - subject
-                  - sender_email
+                  - language
                   - content
     put:
       summary: Update a specific email template
@@ -6229,18 +6504,18 @@ paths:
             schema:
               type: object
               properties:
-                template_name:
-                  type: string
+                email_config_uid:
+                  type: integer
                 subject:
                   type: string
-                sender_email:
+                language:
                   type: string
                 content:
                   type: string
               required:
-                - template_name
+                - email_config_uid
                 - subject
-                - sender_email
+                - language
                 - content
       responses:
         "200":
@@ -6250,18 +6525,18 @@ paths:
               schema:
                 type: object
                 properties:
-                  template_name:
-                    type: string
+                  email_config_uid:
+                    type: integer
                   subject:
                     type: string
-                  sender_email:
+                  language:
                     type: string
                   content:
                     type: string
                 required:
-                  - template_name
+                  - email_config_uid
                   - subject
-                  - sender_email
+                  - language
                   - content
     delete:
       summary: Delete a specific email template
