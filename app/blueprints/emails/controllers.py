@@ -28,13 +28,13 @@ def create_email_config(validated_payload):
     """
     Function to create a new email config
     """
-    payload = {
+    config_values = {
         "config_type": validated_payload.config_type.data,
         "form_uid": validated_payload.form_uid.data,
     }
 
     email_config = EmailConfig(
-        **payload,
+        **config_values,
     )
 
     try:
@@ -183,14 +183,14 @@ def create_email_schedule(validated_payload):
     time_str = validated_payload.time.data
     time_obj = datetime.strptime(time_str, "%H:%M").time()
 
-    payload = {
+    schedule_values = {
         "email_config_uid": validated_payload.email_config_uid.data,
         "dates": validated_payload.dates.data,
         "time": time_obj,
     }
 
     new_schedule = EmailSchedule(
-        **payload,
+        **schedule_values,
     )
 
     try:
@@ -346,7 +346,7 @@ def create_manual_email_trigger(validated_payload):
     time_str = validated_payload.time.data
     time_obj = datetime.strptime(time_str, "%H:%M").time()
 
-    payload = {
+    trigger_values = {
         "email_config_uid": validated_payload.email_config_uid.data,
         "date": validated_payload.date.data,
         "time": time_obj,
@@ -354,7 +354,7 @@ def create_manual_email_trigger(validated_payload):
         "status": validated_payload.status.data,
     }
 
-    new_trigger = ManualEmailTrigger(**payload)
+    new_trigger = ManualEmailTrigger(**trigger_values)
 
     try:
         db.session.add(new_trigger)
@@ -509,13 +509,13 @@ def create_email_template(validated_payload):
     Function to create an email  template
     Only super admins allowed
     """
-    payload = {
+    template_values = {
         "email_config_uid": validated_payload.email_config_uid.data,
         "subject": validated_payload.subject.data,
         "language": validated_payload.language.data,
         "content": validated_payload.content.data,
     }
-    new_template = EmailTemplate(**payload)
+    new_template = EmailTemplate(**template_values)
 
     try:
         db.session.add(new_template)
