@@ -79,7 +79,7 @@ def get_email_configs(validated_query_params):
 
     config_data = []
     for email_config in email_configs:
-        config_data.append(list(email_config.to_dict().keys()))
+        config_data.append(email_config.to_dict())
 
     response = jsonify(
         {
@@ -237,7 +237,7 @@ def get_email_schedules(validated_query_params):
 
     schedule_data = []
     for email_schedule in email_schedules:
-        schedule_data.append(list(email_schedule.to_dict().keys()))
+        schedule_data.append(email_schedule.to_dict())
 
     response = jsonify(
         {
@@ -401,7 +401,7 @@ def get_manual_email_triggers(validated_query_params):
 
     trigger_data = []
     for manual_trigger in manual_email_triggers:
-        trigger_data.append(list(manual_trigger.to_dict().keys()))
+        trigger_data.append(manual_trigger.to_dict())
 
     response = jsonify(
         {
@@ -547,7 +547,7 @@ def get_all_email_templates():
 
     template_data = []
     for template in templates:
-        template_data.append(list(template.to_dict().keys()))
+        template_data.append(template.to_dict())
 
     response = jsonify(
         {
