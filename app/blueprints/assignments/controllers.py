@@ -417,10 +417,10 @@ def update_assignments(validated_payload):
     # get email scheduled time for the next dispatch
     # query email schedule - automated emails - using form_uid
     email_schedule_res = (
-        db.session.query(EmailSchedule)
+        db.session.query(EmailSchedule, EmailConfig)
+        .select_from(EmailSchedule)
         .join(
-            EmailConfig,
-            EmailSchedule.email_config_uid == EmailConfig.email_config_uid,
+            EmailConfig, EmailSchedule.email_config_uid == EmailConfig.email_config_uid
         )
         .filter(
             EmailConfig.form_uid == form_uid,
@@ -430,11 +430,12 @@ def update_assignments(validated_payload):
     )
 
     if email_schedule_res:
+        email_schedule, email_config = email_schedule_res
         response_data["email_schedule"] = {
-            "email_config_uid": email_schedule_res.email_config_uid,
-            "config_type": email_schedule_res.config_type,
-            "dates": email_schedule_res.dates,
-            "time": email_schedule_res.time,
+            "email_config_uid": email_config.email_config_uid,
+            "config_type": email_config.config_type,
+            "dates": email_schedule.dates,
+            "time": str(email_schedule.time),
         }
 
     try:
