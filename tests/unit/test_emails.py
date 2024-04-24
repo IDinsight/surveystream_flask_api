@@ -2,14 +2,38 @@ import jsondiff
 import pytest
 from datetime import datetime, timedelta
 from utils import (
-    create_new_survey_role_with_permissions,
-    login_user,
     update_logged_in_user_roles,
+    login_user,
+    create_new_survey_role_with_permissions,
 )
 
 
 @pytest.mark.emails
 class TestEmails:
+    @pytest.fixture
+    def user_with_super_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have super admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_survey_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have survey admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+        login_user(client, test_user_credentials)
+
     @pytest.fixture
     def user_with_email_permissions(self, client, test_user_credentials):
         # Assign new roles and permissions
@@ -22,7 +46,7 @@ class TestEmails:
             1,
         )
 
-        updated_user = update_logged_in_user_roles(
+        update_logged_in_user_roles(
             client,
             test_user_credentials,
             is_survey_admin=False,
@@ -33,23 +57,10 @@ class TestEmails:
 
         login_user(client, test_user_credentials)
 
-        yield
-
-        # revert user permissions to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
     @pytest.fixture
     def user_with_no_permissions(self, client, test_user_credentials):
         # Assign no roles and permissions
-        updated_user = update_logged_in_user_roles(
+        update_logged_in_user_roles(
             client,
             test_user_credentials,
             is_survey_admin=False,
@@ -60,18 +71,22 @@ class TestEmails:
 
         login_user(client, test_user_credentials)
 
-        yield
-
-        # revert user permissions to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
+    @pytest.fixture(
+        params=[
+            ("user_with_super_admin_permissions", True),
+            ("user_with_survey_admin_permissions", True),
+            ("user_with_email_permissions", True),
+            ("user_with_no_permissions", False),
+        ],
+        ids=[
+            "super_admin_permissions",
+            "survey_admin_permissions",
+            "email_permissions",
+            "no_permissions",
+        ],
+    )
+    def user_permissions(self, request):
+        return request.param
 
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
@@ -252,87 +267,107 @@ class TestEmails:
         assert response.status_code == 201
         return response.json["data"]
 
-    def test_emails_get_config_for_admin_user(
+    def test_emails_get_config(
         self,
         client,
-        login_test_user,
         csrf_token,
-        test_user_credentials,
         create_email_config,
+        user_permissions,
+        request,
     ):
         """
-        Test getting a specific form email configs
-        Expect the email configs list
+        Test getting a specific email config, with the different permissions
+        Expect the email configs list or permissions denied
         """
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        print("user_fixture", user_fixture)
 
         response = client.get(
-            f"api/emails/config/1?form_uid=1",
+            f"api/emails/config/1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-
         print(response.json)
 
-        assert response.status_code == 200
+        if expected_status:
+            assert response.status_code == 200
+            expected_response = {
+                "data": {
+                    "config_type": "Assignments",
+                    "email_config_uid": 1,
+                    "form_uid": 1,
+                },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
 
-    def test_emails_get_config_for_user_roles(
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_emails_get_configs(
         self,
         client,
-        login_test_user,
         csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-        user_with_email_permissions,
-    ):
-        """
-        Test getting a specific form email configs with user roles permissions
-        Expect the email configs list
-        """
-        response = client.get(
-            f"api/emails/config/1?form_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-
-        assert response.status_code == 200
-
-    def test_emails_get_config_no_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-        user_with_no_permissions,
-    ):
-        """
-        Test getting a specific form email configs without user roles permissions
-        Expect permissions denied
-        """
-        response = client.get(
-            f"api/emails/config/1?form_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-
-        assert response.status_code == 403
-
-    def test_emails_update_config_for_admin_user(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
         create_email_config,
+        user_permissions,
+        request,
     ):
         """
-        Test updating emails config for a super admin user
+        Test getting a specific form email configs, with the different permissions
+        Expect the email configs list or permissions denied
+        """
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            f"api/emails/configs?form_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        if expected_status:
+            assert response.status_code == 200
+            expected_response = {
+                "data": [
+                    {
+                        "config_type": "Assignments",
+                        "email_config_uid": 1,
+                        "form_uid": 1,
+                    }
+                ],
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_emails_update_config(
+        self, client, csrf_token, create_email_config, user_permissions, request
+    ):
+        """
+        Test updating emails config for different roles
         Expect newly created email config to be updated
         """
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
 
         payload = {"email_config_uid": 1, "config_type": "finance", "form_uid": 1}
 
@@ -345,187 +380,91 @@ class TestEmails:
 
         print(response.json)
 
-        assert response.status_code == 200
+        if expected_status:
+            assert response.status_code == 200
 
-        get_response = client.get(
-            f"api/emails/config/1?form_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
+            get_response = client.get(
+                f"api/emails/config/1?form_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
 
-        print(get_response.json)
+            print(get_response.json)
 
-        assert get_response.status_code == 200
+            assert get_response.status_code == 200
 
-        checkdiff = jsondiff.diff(
-            {
-                "data": {
-                    **payload,
+            checkdiff = jsondiff.diff(
+                {
+                    "data": {
+                        **payload,
+                    },
+                    "success": True,
                 },
-                "success": True,
-            },
-            get_response.json,
-        )
+                get_response.json,
+            )
 
-        assert checkdiff == {}
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
 
-    def test_emails_update_config_for_user_roles(
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_emails_delete_config(
         self,
         client,
-        login_test_user,
         csrf_token,
-        test_user_credentials,
+        user_permissions,
+        create_survey,
         create_email_config,
-        user_with_email_permissions,
+        request,
     ):
         """
-        Test updating emails config for a user with email permissions
-        Expect newly created email config to be updated
-        """
-
-        payload = {"email_config_uid": 1, "config_type": "finance", "form_uid": 1}
-
-        response = client.put(
-            f"api/emails/config/1",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-
-        assert response.status_code == 200
-
-        get_response = client.get(
-            f"api/emails/config/1?form_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(get_response.json)
-
-        assert get_response.status_code == 200
-
-        checkdiff = jsondiff.diff(
-            {
-                "data": {
-                    **payload,
-                },
-                "success": True,
-            },
-            get_response.json,
-        )
-
-        assert checkdiff == {}
-
-    def test_emails_update_config_no_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_config,
-        user_with_no_permissions,
-    ):
-        """
-        Test updating emails config for a user without email permissions
-        Expect permissions denied 403
-        """
-
-        payload = {"email_config_uid": 1, "config_type": "finance", "form_uid": 1}
-
-        response = client.put(
-            f"api/emails/config/1",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-
-        assert response.status_code == 403
-
-    def test_emails_delete_config_for_admin_user(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_config,
-    ):
-        """
-        Test deleting emails config for an admin user
+        Test deleting emails config for different roles
         Expect config to be missing on fetch
         """
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
 
         response = client.delete(
-            f"api/emails/config/1",
+            f"api/emails/config/{create_email_config['email_config_uid']}",
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        assert response.status_code == 200
+        print(response.json)
 
-        get_response = client.get(
-            f"api/emails/config/1?form_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert get_response.status_code == 404
+        if expected_status:
 
-    def test_emails_delete_config_for_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_config,
-        user_with_email_permissions,
+            assert response.status_code == 200
+
+            expected_response = {"message": "Email config deleted successfully"}
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_emails_get_schedule(
+        self, client, csrf_token, create_email_schedule, user_permissions, request
     ):
         """
-        Test deleting emails config for a user with permissions
-        Expect config to be missing on fetch
-        """
-
-        response = client.delete(
-            f"api/emails/config/1",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-    def test_emails_delete_config_no_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_config,
-        user_with_no_permissions,
-    ):
-        """
-        Test deleting emails config for a user without permissions
-        Expect permissions denied
-        """
-
-        response = client.delete(
-            f"api/emails/config/1",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 403
-
-    def test_emails_get_schedule_for_admin_user(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-    ):
-        """
-        Test getting a specific form email schedules
+        Test getting a specific form email schedules for different users
         Expect the email schedules
         """
+
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
 
         response = client.get(
             f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
@@ -535,66 +474,48 @@ class TestEmails:
 
         print(response.json)
 
-        assert response.status_code == 200
+        if expected_status:
+            assert response.status_code == 200
+            expected_response = {
+                "data": {
+                    "dates": response.json["data"]["dates"],
+                    "email_config_uid": 1,
+                    "email_schedule_uid": 1,
+                    "time": "20:00:00",
+                },
+                "success": True,
+            }
 
-    def test_emails_get_schedule_for_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-        user_with_email_permissions,
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+    def test_emails_update_schedule(
+        self, client, csrf_token, create_email_schedule, user_permissions, request
     ):
         """
-        Test getting a specific form email schedules with user roles permissions
-        Expect the email schedules
-        """
-        response = client.get(
-            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-
-        assert response.status_code == 200
-
-    def test_emails_get_schedule_no_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-        user_with_no_permissions,
-    ):
-        """
-        Test getting a specific form email schedules with user roles permissions
-        Expect the email schedules
-        """
-        response = client.get(
-            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-
-        assert response.status_code == 403
-
-    def test_emails_update_schedule_for_admin_user(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-    ):
-        """
-        Test updating emails schedule for a super admin user
+        Test updating emails schedule for different roles
         Expect newly created email schedule to be updated
         """
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
+
         current_datetime = datetime.now()
 
         future_dates = [
@@ -620,316 +541,183 @@ class TestEmails:
 
         print(response.json)
 
-        assert response.status_code == 200
+        if expected_status:
 
-        get_response = client.get(
-            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(get_response.json)
-
-        assert get_response.status_code == 200
-
-        checkdiff = jsondiff.diff(
-            {
+            expected_response = {
                 "data": {
                     **payload,
-                    "time": get_response.json["data"]["time"],
-                    "dates": get_response.json["data"]["dates"],
+                    "dates": response.json["data"]["dates"],
+                    "email_config_uid": 1,
+                    "time": "08:00:00",
                     "email_schedule_uid": create_email_schedule["email_schedule_uid"],
                 },
+                "message": "Email schedule updated successfully",
                 "success": True,
-            },
-            get_response.json,
-        )
+            }
 
-        assert checkdiff == {}
+            assert response.status_code == 200
 
-    def test_emails_update_schedule_for_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-        user_with_email_permissions,
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+            get_response = client.get(
+                f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            print(get_response.json)
+
+            assert get_response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                {
+                    "data": {
+                        **payload,
+                        "time": get_response.json["data"]["time"],
+                        "dates": get_response.json["data"]["dates"],
+                        "email_schedule_uid": create_email_schedule[
+                            "email_schedule_uid"
+                        ],
+                    },
+                    "success": True,
+                },
+                get_response.json,
+            )
+
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    def test_emails_delete_schedule(
+        self, client, csrf_token, user_permissions, request
     ):
         """
-        Test updating emails schedule for a user with email permissions
-        Expect newly created email schedule to be updated
+        Test deleting emails schedule for different user roles
+        Expect schedule to be missing on fetch
         """
-        current_datetime = datetime.now()
 
-        future_dates = [
-            (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
-            for i in range(4)
-        ]
+        # recreate email schedule on each run
 
-        # add today
-        future_dates.append(current_datetime.strftime("%Y-%m-%d")),
+        create_email_schedule = request.getfixturevalue("create_email_schedule")
 
-        payload = {
-            "email_config_uid": 1,
-            "dates": future_dates,
-            "time": "08:00",
-        }
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
 
-        response = client.put(
-            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-        get_response = client.get(
+        response = client.delete(
             f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+        if expected_status:
+            assert response.status_code == 200
+
+            get_response = client.get(
+                f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert get_response.status_code == 404
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    def test_emails_get_manual_trigger(
+        self,
+        client,
+        csrf_token,
+        create_manual_email_trigger,
+        create_form,
+        user_permissions,
+        request,
+    ):
+        """
+        Test fetching email manual triggers for different user roles
+        Expect newly created manual triggers
+        """
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        assert get_response.status_code == 200
 
-        print(get_response.json)
+        print(response.json)
 
-        checkdiff = jsondiff.diff(
-            {
+        if expected_status:
+            expected_response = {
                 "data": {
-                    **payload,
-                    "time": get_response.json["data"]["time"],
-                    "dates": get_response.json["data"]["dates"],
-                    "email_schedule_uid": create_email_schedule["email_schedule_uid"],
+                    "date": response.json["data"]["date"],
+                    "email_config_uid": 1,
+                    "manual_email_trigger_uid": 1,
+                    "recipients": [1, 2, 3],
+                    "status": "queued",
+                    "time": "08:00:00",
                 },
                 "success": True,
-            },
-            get_response.json,
-        )
-        assert checkdiff == {}
+            }
 
-    def test_emails_update_schedule_no_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-        user_with_no_permissions,
+            assert response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+    def test_emails_update_manual_trigger(
+        self, client, csrf_token, create_manual_email_trigger, user_permissions, request
     ):
         """
-        Test updating emails schedule for a user with email permissions
-        Expect newly created email schedule to be updated
-        """
-        current_datetime = datetime.now()
-
-        future_dates = [
-            (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
-            for i in range(4)
-        ]
-
-        # add today
-        future_dates.append(current_datetime.strftime("%Y-%m-%d")),
-
-        payload = {
-            "email_config_uid": 1,
-            "dates": future_dates,
-            "time": "08:00",
-        }
-
-        response = client.put(
-            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 403
-
-    def test_emails_delete_schedule_for_admin_user(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-    ):
-        """
-        Test deleting emails schedule for an admin user
-        Expect schedule to be missing on fetch
-        """
-
-        response = client.delete(
-            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-        get_response = client.get(
-            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert get_response.status_code == 404
-
-    def test_emails_delete_schedule_for_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-        user_with_email_permissions,
-    ):
-        """
-        Test deleting emails schedule for a user with email permissions
-        Expect schedule to be missing on fetch
-        """
-
-        response = client.delete(
-            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-        get_response = client.get(
-            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert get_response.status_code == 404
-
-    def test_emails_delete_schedule_no_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_schedule,
-        user_with_no_permissions,
-    ):
-        """
-        Test deleting emails schedule for a user with email permissions
-        Expect schedule to be missing on fetch
-        """
-
-        response = client.delete(
-            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 403
-
-    def test_emails_get_manual_trigger_for_admin_user(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_manual_email_trigger,
-        create_form,
-    ):
-        """
-        Test fetching email manual triggers for an admin user
-        Expect newly created manual triggers
-        """
-
-        response = client.get(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-    def test_emails_get_manual_trigger_for_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_manual_email_trigger,
-        create_form,
-    ):
-        """
-        Test fetching email manual triggers for a user with roles
-        Expect newly created manual triggers
-        """
-
-        new_role = create_new_survey_role_with_permissions(
-            # 19 - WRITE Emails
-            client,
-            test_user_credentials,
-            "Emails Role",
-            [19],
-            1,
-        )
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[1],
-        )
-
-        login_user(client, test_user_credentials)
-
-        response = client.get(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_emails_get_manual_trigger_no_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_manual_email_trigger,
-        create_form,
-        user_with_no_permissions,
-    ):
-        """
-        Test fetching email manual triggers for a user with roles
-        Expect newly created manual triggers
-        """
-
-        response = client.get(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 403
-
-    def test_emails_update_manual_trigger_for_admin_user(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_manual_email_trigger,
-    ):
-        """
-        Test updating email manual triggers for an admin user
+        Test updating email manual triggers for different user roles
         Expect newly created manual trigger to be updated
         """
+
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
         current_datetime = datetime.now()
 
         future_date = (current_datetime + timedelta(1)).strftime("%Y-%m-%d")
@@ -947,248 +735,221 @@ class TestEmails:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        assert response.status_code == 200
 
-        get_response = client.get(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert get_response.status_code == 200
+        print(response.json)
 
-        print(get_response.json)
+        if expected_status:
 
-        checkdiff = jsondiff.diff(
-            {
+            assert response.status_code == 200
+
+            expected_response = {
                 "data": {
-                    **data,
-                    "time": get_response.json["data"]["time"],
-                    "date": get_response.json["data"]["date"],
-                    "manual_email_trigger_uid": create_manual_email_trigger[
-                        "manual_email_trigger_uid"
-                    ],
+                    "date": response.json["data"]["date"],
+                    "email_config_uid": 1,
+                    "manual_email_trigger_uid": 1,
+                    "recipients": [1, 3, 2],
+                    "status": "sent",
+                    "time": "09:00:00",
                 },
-                "success": True,
-            },
-            get_response.json,
-        )
-        assert checkdiff == {}
+                "message": "Manual email trigger updated successfully",
+            }
 
-    def test_emails_update_manual_trigger_for_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_manual_email_trigger,
-        user_with_email_permissions,
-    ):
-        """
-        Test updating email manual triggers for a user with roles
-        Expect newly created manual trigger to be updated
-        """
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
 
-        current_datetime = datetime.now()
+            get_response = client.get(
+                f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert get_response.status_code == 200
 
-        future_date = (current_datetime + timedelta(1)).strftime("%Y-%m-%d")
-
-        data = {
-            "email_config_uid": 1,
-            "date": future_date,
-            "time": "09:00",
-            "recipients": [1, 3, 2],
-            "status": "sent",
-        }
-        response = client.put(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}",
-            json=data,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 200
-
-        get_response = client.get(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert get_response.status_code == 200
-
-        print(get_response.json)
-
-        checkdiff = jsondiff.diff(
-            {
-                "data": {
-                    **data,
-                    "date": get_response.json["data"]["date"],
-                    "time": get_response.json["data"]["time"],
-                    "manual_email_trigger_uid": create_manual_email_trigger[
-                        "manual_email_trigger_uid"
-                    ],
+            checkdiff = jsondiff.diff(
+                {
+                    "data": {
+                        **data,
+                        "time": get_response.json["data"]["time"],
+                        "date": get_response.json["data"]["date"],
+                        "manual_email_trigger_uid": create_manual_email_trigger[
+                            "manual_email_trigger_uid"
+                        ],
+                    },
+                    "success": True,
                 },
-                "success": True,
-            },
-            get_response.json,
-        )
-        assert checkdiff == {}
+                get_response.json,
+            )
+            assert checkdiff == {}
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
 
-    def test_emails_update_manual_trigger_no_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_manual_email_trigger,
-        user_with_no_permissions,
-    ):
-        """
-        Test updating email manual triggers for a user with roles
-        Expect newly created manual trigger to be updated
-        """
+            assert response.status_code == 403
 
-        current_datetime = datetime.now()
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
 
-        future_date = (current_datetime + timedelta(1)).strftime("%Y-%m-%d")
-
-        data = {
-            "email_config_uid": 1,
-            "date": future_date,
-            "time": "09:00",
-            "recipients": [1, 3, 2],
-            "status": "sent",
-        }
-        response = client.put(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}",
-            json=data,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 403
-
-    def test_emails_delete_manual_trigger_for_admin_user(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_manual_email_trigger,
+    def test_emails_delete_manual_trigger(
+        self, client, csrf_token, create_manual_email_trigger, user_permissions, request
     ):
         """
         Test deleting email manual triggers for an admin user
         Expect newly created manual trigger to be missing after delete
         """
+
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
+
         response = client.delete(
             f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid={1}",
             headers={"X-CSRF-Token": csrf_token},
         )
-        assert response.status_code == 200
+        if expected_status:
+            print(response.json)
+            assert response.status_code == 200
 
-        get_response = client.get(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert get_response.status_code == 404
+            get_response = client.get(
+                f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert get_response.status_code == 404
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
 
-    def test_emails_delete_manual_trigger_for_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_manual_email_trigger,
-        user_with_email_permissions,
-    ):
-        """
-        Test deleting email manual triggers for a user with roles
-        Expect newly created manual trigger to be missing after delete
-        """
+            assert response.status_code == 403
 
-        response = client.delete(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 200
-
-        get_response = client.get(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert get_response.status_code == 404
-
-    def test_emails_delete_manual_trigger_no_user_roles(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_manual_email_trigger,
-        user_with_no_permissions,
-    ):
-        """
-        Test deleting email manual triggers for a user with roles
-        Expect newly created manual trigger to be missing after delete
-        """
-
-        response = client.delete(
-            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 403
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
 
     def test_emails_get_template(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_template,
+        self, client, csrf_token, create_email_template, user_permissions, request
     ):
         """
-        Test fetching a specific emails template
+        Test fetching a specific emails template for different user roles
         Expect the newly created email template to be found
         """
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
+
         email_template_uid = create_email_template["email_template_uid"]
         response = client.get(
-            f"api/emails/template/{email_template_uid}",
+            f"api/emails/template/{email_template_uid}?email_config_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        assert response.status_code == 200
+        print(response.json)
+
+        if expected_status:
+            expected_response = {
+                "data": {
+                    "content": "Test Content",
+                    "email_config_uid": 1,
+                    "email_template_uid": 1,
+                    "language": "english",
+                    "subject": "Test Assignments Email",
+                },
+                "success": True,
+            }
+
+            assert response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
 
     def test_emails_get_templates(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_template,
+        self, client, csrf_token, create_email_template, user_permissions, request
     ):
         """
-        Test fetching all email templates
+        Test fetching all email templates for a specific email config
         Expect the newly created email template to be found
         """
 
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
+
         response = client.get(
-            f"api/emails/templates",
+            f"api/emails/templates?email_config_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        assert response.status_code == 200
+
+        print(response.json)
+
+        if expected_status:
+            expected_response = {
+                "data": [
+                    {
+                        "content": "Test Content",
+                        "email_config_uid": 1,
+                        "email_template_uid": 1,
+                        "language": "english",
+                        "subject": "Test Assignments Email",
+                    }
+                ],
+                "success": True,
+            }
+
+            assert response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
 
     def test_emails_update_template(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_template,
+        self, client, csrf_token, create_email_template, user_permissions, request
     ):
         """
-        Test updating a specific email template
+        Test updating a specific email template for different user roles
         Expect the email template to be updated
         """
+
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
 
         payload = {
             "subject": "Test Update Email",
@@ -1203,49 +964,90 @@ class TestEmails:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        assert response.status_code == 200
+        print(response.json)
 
-        email_template_uid = create_email_template["email_template_uid"]
-        get_response = client.get(
-            f"api/emails/template/{email_template_uid}",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
+        if expected_status:
 
-        checkdiff = jsondiff.diff(
-            {
-                "data": {**payload, "email_template_uid": email_template_uid},
-                "success": True,
-            },
-            get_response.json,
-        )
-        assert checkdiff == {}
+            assert response.status_code == 200
+
+            email_template_uid = create_email_template["email_template_uid"]
+            get_response = client.get(
+                f"api/emails/template/{email_template_uid}?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            checkdiff = jsondiff.diff(
+                {
+                    "data": {**payload, "email_template_uid": email_template_uid},
+                    "success": True,
+                },
+                get_response.json,
+            )
+            assert checkdiff == {}
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
 
     def test_emails_delete_template(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_template,
+        self, client, csrf_token, create_email_template, user_permissions, request
     ):
         """
         Test deleting a specific email template
         Expect the email template to be 404 after deleting
         """
 
+        user_fixture, expected_status = user_permissions
+        request.getfixturevalue(user_fixture)
+
         response = client.delete(
-            f"/api/emails/template/{create_email_template['email_template_uid']}",
+            f"/api/emails/template/{create_email_template['email_template_uid']}?email_config_uid=1",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
 
-        assert response.status_code == 200
+        if expected_status:
+            assert response.status_code == 200
 
-        email_template_uid = create_email_template["email_template_uid"]
-        get_response = client.get(
-            f"api/emails/template/{email_template_uid}",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
+            expected_response = {
+                "message": "Email template deleted successfully",
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
 
-        assert get_response.status_code == 404
+            assert checkdiff == {}
+
+            email_template_uid = create_email_template["email_template_uid"]
+            get_response = client.get(
+                f"api/emails/template/{email_template_uid}?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            assert get_response.status_code == 404
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}

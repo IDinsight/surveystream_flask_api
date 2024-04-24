@@ -75,3 +75,10 @@ class ManualEmailTriggerQueryParamValidator(FlaskForm):
         csrf = False
 
     email_config_uid = IntegerField(validators=[DataRequired()])
+
+
+class EmailTemplateQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    email_config_uid = IntegerField(validators=[DataRequired()])

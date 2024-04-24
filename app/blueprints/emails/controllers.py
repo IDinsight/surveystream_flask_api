@@ -15,6 +15,7 @@ from .validators import (
     ManualEmailTriggerValidator,
     EmailTemplateValidator,
     ManualEmailTriggerQueryParamValidator,
+    EmailTemplateQueryParamValidator,
 )
 from .models import EmailConfig, EmailSchedule, ManualEmailTrigger, EmailTemplate
 from datetime import datetime, time
@@ -503,7 +504,7 @@ def delete_manual_email_trigger(trigger_id, validated_query_params):
 @emails_bp.route("/template", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(EmailTemplateValidator)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
 def create_email_template(validated_payload):
     """
     Function to create an email  template
@@ -537,13 +538,16 @@ def create_email_template(validated_payload):
 
 @emails_bp.route("/templates", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required("ADMIN")
-def get_all_email_templates():
+@validate_query_params(EmailTemplateQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "email_config_uid")
+def get_all_email_templates(validated_query_params):
     """
     Function to get email  templates
     Only super admins allowed
     """
-    templates = EmailTemplate.query.all()
+    templates = EmailTemplate.query.filter_by(
+        email_config_uid=validated_query_params.email_config_uid.data
+    ).all()
 
     template_data = []
     for template in templates:
@@ -560,8 +564,9 @@ def get_all_email_templates():
 
 @emails_bp.route("/template/<int:template_id>", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required("ADMIN")
-def get_email_template(template_id):
+@validate_query_params(EmailTemplateQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "email_config_uid")
+def get_email_template(template_id, validated_query_params):
     """
     Function to get email  templates
     Only super admins allowed
@@ -579,7 +584,7 @@ def get_email_template(template_id):
 @emails_bp.route("/template/<int:template_id>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(EmailTemplateValidator)
-@custom_permissions_required("ADMIN")
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
 def update_email_template(template_id, validated_payload):
     """
     Function to update an email template
@@ -610,8 +615,9 @@ def update_email_template(template_id, validated_payload):
 
 @emails_bp.route("/template/<int:template_id>", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required("ADMIN")
-def delete_email_template(template_id):
+@validate_query_params(EmailTemplateQueryParamValidator)
+@custom_permissions_required("WRITE Emails", "query", "email_config_uid")
+def delete_email_template(template_id, validated_query_params):
     """
     Function to delete an email template
     Only super admins allowed
