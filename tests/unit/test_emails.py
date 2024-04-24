@@ -793,6 +793,92 @@ class TestEmails:
             )
             assert checkdiff == {}
 
+    def test_emails_update_manual_email_trigger_status(
+        self, client, csrf_token, create_manual_email_trigger, user_permissions, request
+    ):
+        """
+        Test updating email manual triggers for different user roles
+        Expect newly created manual trigger to be updated
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+        current_datetime = datetime.now()
+
+        future_date = (current_datetime + timedelta(1)).strftime("%Y-%m-%d")
+
+        data = {
+            "email_config_uid": 1,
+            "status": "running",
+        }
+        response = client.patch(
+            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}",
+            json=data,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+        if expected_permission:
+
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "date": response.json["data"]["date"],
+                    "email_config_uid": 1,
+                    "manual_email_trigger_uid": 1,
+                    "recipients": [1, 2, 3],
+                    "status": "running",
+                    "time": "08:00:00",
+                },
+                "message": "Manual email trigger status updated successfully",
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+            get_response = client.get(
+                f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert get_response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                {
+                    "data": {
+                        **data,
+                        "time": get_response.json["data"]["time"],
+                        "recipients": [1, 2, 3],
+                        "date": get_response.json["data"]["date"],
+                        "manual_email_trigger_uid": create_manual_email_trigger[
+                            "manual_email_trigger_uid"
+                        ],
+                    },
+                    "success": True,
+                },
+                get_response.json,
+            )
+            assert checkdiff == {}
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
     def test_emails_delete_manual_trigger(
         self, client, csrf_token, create_manual_email_trigger, user_permissions, request
     ):

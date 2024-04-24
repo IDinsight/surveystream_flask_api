@@ -12,6 +12,7 @@ from .validators import (
     EmailConfigValidator,
     EmailScheduleQueryParamValidator,
     EmailScheduleValidator,
+    ManualEmailTriggerPatchValidator,
     ManualEmailTriggerValidator,
     EmailTemplateValidator,
     ManualEmailTriggerQueryParamValidator,
@@ -475,6 +476,34 @@ def update_manual_email_trigger(manual_email_trigger_uid, validated_payload):
     return (
         jsonify(
             message="Manual email trigger updated successfully",
+            data=manual_email_trigger.to_dict(),
+        ),
+        200,
+    )
+
+
+@emails_bp.route("/manual-trigger/<int:manual_email_trigger_uid>", methods=["PATCH"])
+@logged_in_active_user_required
+@validate_payload(ManualEmailTriggerPatchValidator)
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
+def update_manual_email_trigger_status(manual_email_trigger_uid, validated_payload):
+    """
+    Function to update a manual trigger status
+    Requires the email_config_uid for permission reasons
+    """
+   
+    manual_email_trigger = ManualEmailTrigger.query.get_or_404(manual_email_trigger_uid)
+    manual_email_trigger.status = validated_payload.status.data
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return (
+        jsonify(
+            message="Manual email trigger status updated successfully",
             data=manual_email_trigger.to_dict(),
         ),
         200,

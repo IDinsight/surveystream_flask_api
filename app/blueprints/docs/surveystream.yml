@@ -5845,7 +5845,7 @@ paths:
                 required:
                   - error
                   - message
-  
+
     get:
       tags:
         - emails
@@ -6296,6 +6296,8 @@ paths:
                     - queued
                     - sent
                     - failed
+                    - running
+                    - progress
               required:
                 - email_config_uid
                 - date
@@ -6305,6 +6307,132 @@ paths:
       responses:
         "201":
           description: Manual email trigger created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email_config_uid:
+                    type: integer
+                  date:
+                    type: string
+                    format: date
+                  time:
+                    type: string
+                    format: time
+                  recipients:
+                    type: array
+                    items:
+                      type: integer
+                  status:
+                    type: string
+                    enum:
+                      - queued
+                      - sent
+                      - failed
+                      - running
+                      - progress
+                required:
+                  - email_config_uid
+                  - date
+                  - time
+                  - status
+  /emails/manual-trigger/{manual_email_trigger_uid}:
+    patch:
+      summary: Update an email trigger status
+      tags:
+        - Emails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_config_uid:
+                  type: integer
+                status:
+                  type: string
+                  enum:
+                    - queued
+                    - sent
+                    - failed
+                    - running
+                    - progress
+              required:
+                - email_config_uid
+                - status
+      responses:
+        "201":
+          description: Manual email trigger status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email_config_uid:
+                    type: integer
+                  date:
+                    type: string
+                    format: date
+                  time:
+                    type: string
+                    format: time
+                  recipients:
+                    type: array
+                    items:
+                      type: integer
+                  status:
+                    type: string
+                    enum:
+                      - queued
+                      - sent
+                      - failed
+                      - running
+                      - progress
+                required:
+                  - email_config_uid
+                  - status
+    put:
+      summary: Update an email trigger
+      tags:
+        - Emails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_config_uid:
+                  type: integer
+                date:
+                  type: string
+                  format: date
+                time:
+                  type: string
+                  format: time
+                recipients:
+                  type: array
+                  items:
+                    type: integer
+                status:
+                  type: string
+                  enum:
+                    - queued
+                    - sent
+                    - failed
+                    - running
+                    - progress
+              required:
+                - email_config_uid
+                - date
+                - time
+                - recipients
+                - status
+      responses:
+        "201":
+          description: Manual email trigger updated successfully
           content:
             application/json:
               schema:
@@ -6430,6 +6558,13 @@ paths:
       summary: Get all email templates
       tags:
         - Emails
+      parameters:
+        - name: email_config_uid
+          in: path
+          description: Unique identifier for the email config associated with the template
+          required: true
+          schema:
+            type: integer
       responses:
         "200":
           description: Email templates retrieved successfully
@@ -6465,6 +6600,12 @@ paths:
           required: true
           schema:
             type: integer
+        - name: email_config_uid
+          in: path
+          description: Unique identifier for the email config associated with the template
+          required: true
+          schema:
+            type: integer
       responses:
         "200":
           description: Email template retrieved successfully
@@ -6494,6 +6635,12 @@ paths:
         - name: template_id
           in: path
           description: Unique identifier for the email template
+          required: true
+          schema:
+            type: integer
+        - name: email_config_uid
+          in: path
+          description: Unique identifier for the email config associated with the template
           required: true
           schema:
             type: integer
@@ -6546,6 +6693,12 @@ paths:
         - name: template_id
           in: path
           description: Unique identifier for the email template
+          required: true
+          schema:
+            type: integer
+        - name: email_config_uid
+          in: path
+          description: Unique identifier for the email config associated with the template
           required: true
           schema:
             type: integer

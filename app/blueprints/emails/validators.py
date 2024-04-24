@@ -27,7 +27,7 @@ class EmailScheduleValidator(FlaskForm):
 class ManualEmailTriggerValidator(FlaskForm):
     date = StringField(validators=[DataRequired()])
     time = StringField(validators=[DataRequired()])
-    recipients = FieldList(IntegerField(validators=[DataRequired()]))
+    recipients = FieldList(IntegerField(), default=[])
     email_config_uid = IntegerField(validators=[DataRequired()])
     status = StringField(
         validators=[
@@ -47,6 +47,21 @@ class ManualEmailTriggerValidator(FlaskForm):
         date_obj = datetime.strptime(field.data, "%Y-%m-%d").date()
         if date_obj < datetime.now().date():
             raise ValidationError("Date must be in the future.")
+
+
+class ManualEmailTriggerPatchValidator(FlaskForm):
+    email_config_uid = IntegerField(validators=[DataRequired()])
+
+    status = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                ["queued", "sent", "failed", "running", "progress"],
+                message="Invalid status. Must be 'queued', 'sent', 'progress', 'running', or 'failed'",
+            ),
+        ],
+        default="queued",
+    )
 
 
 class EmailTemplateValidator(FlaskForm):
