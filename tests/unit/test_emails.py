@@ -279,19 +279,16 @@ class TestEmails:
         Test getting a specific email config, with the different permissions
         Expect the email configs list or permissions denied
         """
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
-
-        print("user_fixture", user_fixture)
 
         response = client.get(
             f"api/emails/config/1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
 
-        if expected_status:
+        if expected_permission:
             assert response.status_code == 200
             expected_response = {
                 "data": {
@@ -326,7 +323,7 @@ class TestEmails:
         Test getting a specific form email configs, with the different permissions
         Expect the email configs list or permissions denied
         """
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         response = client.get(
@@ -334,7 +331,7 @@ class TestEmails:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        if expected_status:
+        if expected_permission:
             assert response.status_code == 200
             expected_response = {
                 "data": [
@@ -366,7 +363,7 @@ class TestEmails:
         Test updating emails config for different roles
         Expect newly created email config to be updated
         """
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         payload = {"email_config_uid": 1, "config_type": "finance", "form_uid": 1}
@@ -380,7 +377,7 @@ class TestEmails:
 
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
             assert response.status_code == 200
 
             get_response = client.get(
@@ -427,7 +424,7 @@ class TestEmails:
         Test deleting emails config for different roles
         Expect config to be missing on fetch
         """
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         response = client.delete(
@@ -437,7 +434,7 @@ class TestEmails:
 
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
 
             assert response.status_code == 200
 
@@ -463,7 +460,7 @@ class TestEmails:
         Expect the email schedules
         """
 
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         response = client.get(
@@ -474,7 +471,7 @@ class TestEmails:
 
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
             assert response.status_code == 200
             expected_response = {
                 "data": {
@@ -513,7 +510,7 @@ class TestEmails:
         Test updating emails schedule for different roles
         Expect newly created email schedule to be updated
         """
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         current_datetime = datetime.now()
@@ -541,7 +538,7 @@ class TestEmails:
 
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
 
             expected_response = {
                 "data": {
@@ -616,7 +613,7 @@ class TestEmails:
 
         create_email_schedule = request.getfixturevalue("create_email_schedule")
 
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         response = client.delete(
@@ -626,7 +623,7 @@ class TestEmails:
 
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
             assert response.status_code == 200
 
             get_response = client.get(
@@ -662,7 +659,7 @@ class TestEmails:
         Test fetching email manual triggers for different user roles
         Expect newly created manual triggers
         """
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         response = client.get(
@@ -673,7 +670,7 @@ class TestEmails:
 
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
             expected_response = {
                 "data": {
                     "date": response.json["data"]["date"],
@@ -716,7 +713,7 @@ class TestEmails:
         Expect newly created manual trigger to be updated
         """
 
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
         current_datetime = datetime.now()
 
@@ -738,7 +735,7 @@ class TestEmails:
 
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
 
             assert response.status_code == 200
 
@@ -804,14 +801,14 @@ class TestEmails:
         Expect newly created manual trigger to be missing after delete
         """
 
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         response = client.delete(
             f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}?email_config_uid={1}",
             headers={"X-CSRF-Token": csrf_token},
         )
-        if expected_status:
+        if expected_permission:
             print(response.json)
             assert response.status_code == 200
 
@@ -842,7 +839,7 @@ class TestEmails:
         Test fetching a specific emails template for different user roles
         Expect the newly created email template to be found
         """
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         email_template_uid = create_email_template["email_template_uid"]
@@ -853,7 +850,7 @@ class TestEmails:
         )
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
             expected_response = {
                 "data": {
                     "content": "Test Content",
@@ -894,7 +891,7 @@ class TestEmails:
         Expect the newly created email template to be found
         """
 
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         response = client.get(
@@ -905,7 +902,7 @@ class TestEmails:
 
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
             expected_response = {
                 "data": [
                     {
@@ -948,7 +945,7 @@ class TestEmails:
         Expect the email template to be updated
         """
 
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         payload = {
@@ -966,7 +963,7 @@ class TestEmails:
 
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
 
             assert response.status_code == 200
 
@@ -1007,7 +1004,7 @@ class TestEmails:
         Expect the email template to be 404 after deleting
         """
 
-        user_fixture, expected_status = user_permissions
+        user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         response = client.delete(
@@ -1016,7 +1013,7 @@ class TestEmails:
         )
         print(response.json)
 
-        if expected_status:
+        if expected_permission:
             assert response.status_code == 200
 
             expected_response = {
