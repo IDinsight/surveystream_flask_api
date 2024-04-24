@@ -77,7 +77,7 @@ class ManualEmailTrigger(db.Model):
     status = db.Column(
         db.String(100),
         CheckConstraint(
-            "status IN ('queued', 'sent', 'failed')",
+            "status IN ('queued', 'sent', 'failed', 'running', 'progress')",
             name="ck_manual_email_triggers_status",
         ),
         nullable=False,

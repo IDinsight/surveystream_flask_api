@@ -85,7 +85,7 @@ def upgrade():
             "status",
             sa.String(length=100),
             sa.CheckConstraint(
-                "status IN ('queued', 'sent', 'failed')",
+                "status IN ('queued', 'sent', 'failed', 'progress', 'running')",
                 name="check_status",
             ),
             nullable=False,

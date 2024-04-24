@@ -33,8 +33,8 @@ class ManualEmailTriggerValidator(FlaskForm):
         validators=[
             DataRequired(),
             AnyOf(
-                ["queued", "sent", "failed"],
-                message="Invalid status. Must be 'queued', 'sent', or 'failed'",
+                ["queued", "sent", "failed", "running", "progress"],
+                message="Invalid status. Must be 'queued', 'sent', 'progress', 'running', or 'failed'",
             ),
         ],
         default="queued",
