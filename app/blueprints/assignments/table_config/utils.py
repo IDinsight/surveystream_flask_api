@@ -3,7 +3,7 @@ from app import db
 from app.blueprints.targets.models import TargetColumnConfig
 from app.blueprints.enumerators.models import EnumeratorColumnConfig
 from app.blueprints.assignments.table_config.errors import InvalidTableConfigError
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 
 
 def validate_table_config(
@@ -277,9 +277,9 @@ def validate_table_config(
                 # Check that the surveycto_form_id is valid
                 surveycto_form_id = column["column_key"].split(".")[1].split(".")[0]
                 if (
-                    ParentForm.query.filter(
-                        ParentForm.scto_form_id == surveycto_form_id,
-                        ParentForm.survey_uid == survey_uid,
+                    Form.query.filter(
+                        Form.scto_form_id == surveycto_form_id,
+                        Form.survey_uid == survey_uid,
                     ).first()
                     is None
                 ):

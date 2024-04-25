@@ -1,7 +1,7 @@
 from app import db
 from app.blueprints.targets.models import TargetColumnConfig
 from app.blueprints.enumerators.models import EnumeratorColumnConfig
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 
 
 class DefaultTableConfig:
@@ -438,7 +438,7 @@ class DefaultTableConfig:
         Add the form productivity columns to the table config
         """
 
-        forms = ParentForm.query.filter(ParentForm.survey_uid == survey_uid).all()
+        forms = Form.query.filter(Form.survey_uid == survey_uid).all()
         placeholder_index = table_config.index("form_productivity_placeholder")
 
         table_config = (

@@ -172,7 +172,7 @@ class StagingConfig(Config):
         Config.DB_NAME,
     )
 
-    REACT_BASE_URL = "https://callisto.stg.surveystream.idinsight.io"
+    REACT_BASE_URL = "https://stg.surveystream.idinsight.io"
 
     SENTRY_CONFIG = {
         "dsn": "https://c320e08cbf204069afb2cc62ee498018@o564222.ingest.sentry.io/4505070237319168",

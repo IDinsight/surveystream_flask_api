@@ -201,26 +201,30 @@ def update_survey_roles(validated_query_params, validated_payload):
 
     roles_to_insert = [role for role in roles if role["role_uid"] is None]
     if len(roles_to_insert) > 0:
-        for role in roles_to_insert:
-            statement = insert(Role).values(
-                role_name=role["role_name"],
-                survey_uid=survey_uid,
-                reporting_role_uid=role["reporting_role_uid"],
-                user_uid=user_uid,
-                permissions=role["permissions"],
-            )
-
-            result = db.session.execute(statement)
-            role_uid = result.inserted_primary_key[0]
-
-            for permission_uid in role["permissions"]:
-                permissions_statement = insert(RolePermission).values(
-                    role_uid=role_uid,
-                    permission_uid=permission_uid,
+        try:
+            for role in roles_to_insert:
+                statement = insert(Role).values(
+                    role_name=role["role_name"],
+                    survey_uid=survey_uid,
+                    reporting_role_uid=role["reporting_role_uid"],
+                    user_uid=user_uid,
+                    permissions=role["permissions"],
                 )
-                db.session.execute(permissions_statement)
 
-            db.session.commit()
+                result = db.session.execute(statement)
+                role_uid = result.inserted_primary_key[0]
+
+                for permission_uid in role["permissions"]:
+                    permissions_statement = insert(RolePermission).values(
+                        role_uid=role_uid,
+                        permission_uid=permission_uid,
+                    )
+                    db.session.execute(permissions_statement)
+
+                db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            return jsonify(message=str(e)), 500
 
     return jsonify(message="Success"), 200
 
