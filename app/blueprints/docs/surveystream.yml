@@ -1046,12 +1046,12 @@ paths:
                     - Pending
                 planned_start_date:
                   type: string
-                  example: 2023-01-01T00:00:00.000Z
+                  example: "2023-01-01T00:00:00.000Z"
                   format: date
                   description: The planned start date for the survey
                 planned_end_date:
                   type: string
-                  example: 2023-06-30T00:00:00.000Z
+                  example: "2023-06-30T00:00:00.000Z"
                   format: date
                   description: The planned end date for the survey
                 config_status:
@@ -1139,11 +1139,11 @@ paths:
                           planned_start_date:
                             type: string
                             format: date
-                            example: 2023-01-01T00:00:00.000Z
+                            example: "2023-01-01T00:00:00.000Z"
                           planned_end_date:
                             type: string
                             format: date
-                            example: 2023-06-30T00:00:00.000Z
+                            example: "2023-06-30T00:00:00.000Z"
                           config_status:
                             type: string
                             enum:
@@ -6337,11 +6337,19 @@ paths:
                   - date
                   - time
                   - status
+
   /emails/manual-trigger/{manual_email_trigger_uid}:
     patch:
       summary: Update an email trigger status
       tags:
         - Emails
+      parameters:
+        - name: manual_email_trigger_uid
+          in: path
+          description: Unique identifier for the manual trigger
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
@@ -6397,6 +6405,13 @@ paths:
       summary: Update an email trigger
       tags:
         - Emails
+      parameters:
+        - name: manual_email_trigger_uid
+          in: path
+          description: Unique identifier for the manual trigger
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
@@ -6560,7 +6575,7 @@ paths:
         - Emails
       parameters:
         - name: email_config_uid
-          in: path
+          in: query
           description: Unique identifier for the email config associated with the template
           required: true
           schema:
@@ -6601,7 +6616,7 @@ paths:
           schema:
             type: integer
         - name: email_config_uid
-          in: path
+          in: query
           description: Unique identifier for the email config associated with the template
           required: true
           schema:
@@ -6639,7 +6654,7 @@ paths:
           schema:
             type: integer
         - name: email_config_uid
-          in: path
+          in: query
           description: Unique identifier for the email config associated with the template
           required: true
           schema:
@@ -6697,7 +6712,7 @@ paths:
           schema:
             type: integer
         - name: email_config_uid
-          in: path
+          in: query
           description: Unique identifier for the email config associated with the template
           required: true
           schema:
