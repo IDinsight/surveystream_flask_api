@@ -871,6 +871,37 @@ class TestEmails:
             )
             assert checkdiff == {}
 
+    def test_emails_create_manual_triggers_exception(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test exceptions when creating manual triggers
+        """
+        current_datetime = datetime.now()
+
+        future_date = (current_datetime + timedelta(1)).strftime("%Y-%m-%d")
+
+        payload = {
+            "date": future_date,
+            "time": "08:00",
+            "recipients": [1, 2, 3],
+            "email_config_uid": 2,  # to cause an exception
+            "status": "queued",
+        }
+
+        response = client.post(
+            "/api/emails/manual-trigger",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 500
+
     def test_emails_get_manual_triggers(
         self,
         client,
@@ -931,6 +962,36 @@ class TestEmails:
                 response.json,
             )
             assert checkdiff == {}
+
+    def test_emails_update_manual_trigger_exception(
+        self, client, csrf_token, create_manual_email_trigger, request
+    ):
+        """
+        Test updating email manual triggers exception
+        Expect 500
+        """
+
+        current_datetime = datetime.now()
+
+        future_date = (current_datetime + timedelta(1)).strftime("%Y-%m-%d")
+
+        data = {
+            "email_config_uid": 2,  # to cause exception
+            "date": future_date,
+            "time": "09:00",
+            "recipients": [1, 3, 2],
+            "status": "sent",
+        }
+        response = client.put(
+            f"api/emails/manual-trigger/{create_manual_email_trigger['manual_email_trigger_uid']}",
+            json=data,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+        assert response.status_code == 500
 
     def test_emails_update_manual_trigger(
         self, client, csrf_token, create_manual_email_trigger, user_permissions, request
@@ -1196,6 +1257,30 @@ class TestEmails:
             )
             assert checkdiff == {}
 
+    def test_emails_create_email_template_exception(
+            self,
+            client,
+            login_test_user,
+            csrf_token,
+            test_user_credentials,
+            create_email_config,
+    ):
+        """
+        Test create email templates exceptions
+        """
+        payload = {
+            "subject": "Test Assignments Email",
+            "language": "english",
+            "content": "Test Content",
+            "email_config_uid": 2,
+        }
+        response = client.post(
+            "/api/emails/template",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 500
     def test_emails_get_templates(
         self, client, csrf_token, create_email_template, user_permissions, request
     ):
@@ -1308,6 +1393,34 @@ class TestEmails:
                 response.json,
             )
             assert checkdiff == {}
+    def test_emails_update_template_exception(
+        self, client, csrf_token, create_email_template, request
+    ):
+        """
+        Test updating templates exceptions
+        Expect error
+        """
+
+
+        payload = {
+            "subject": "Test Update Email",
+            "language": "Hindi",
+            "content": "Test Content",
+            "email_config_uid": 2, #to cause exception
+        }
+        response = client.put(
+            f"/api/emails/template/{create_email_template['email_template_uid']}",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+
+        assert response.status_code == 500
+
+
 
     def test_emails_delete_template(
         self, client, csrf_token, create_email_template, user_permissions, request
