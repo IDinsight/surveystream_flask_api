@@ -416,7 +416,9 @@ def update_assignments(validated_payload):
     }
 
     current_datetime = datetime.now()
-
+    current_time = datetime.now().time()
+    # Format the current time to "HH:mm" format
+    formatted_time = current_time.strftime("%H:%M")
     # get email scheduled time for the next dispatch
     # query email schedule - automated emails - using form_uid
     email_schedule_res = (
@@ -429,6 +431,7 @@ def update_assignments(validated_payload):
             EmailConfig.form_uid == form_uid,
             func.lower(EmailConfig.config_type) == "assignments",
             func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
+            EmailSchedule.time <= formatted_time
         )
         .first()
     )

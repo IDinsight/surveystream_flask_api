@@ -1144,6 +1144,10 @@ class TestAssignments:
         """
         current_datetime = datetime.now()
 
+        current_time = datetime.now().time()
+        # Format the current time to "HH:mm" format
+        formatted_time = current_time.strftime("%H:%M")
+
         future_dates = [
             (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
             for i in range(4)
@@ -1155,7 +1159,7 @@ class TestAssignments:
 
         payload = {
             "dates": future_dates,
-            "time": "20:00",
+            "time": formatted_time,
             "email_config_uid": create_email_config["email_config_uid"],
         }
         response = client.post(
@@ -1607,7 +1611,7 @@ class TestAssignments:
                         "config_type": "Assignments",
                         "dates": response.json["data"]["email_schedule"]["dates"],
                         "email_config_uid": 1,
-                        "time": "20:00:00",
+                        "time": response.json["data"]["email_schedule"]["time"],
                     },
                 },
                 "message": "Success",
