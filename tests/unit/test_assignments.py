@@ -1110,6 +1110,63 @@ class TestAssignments:
 
         assert response.status_code == 200
 
+    @pytest.fixture
+    def create_email_config(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_form
+    ):
+        """
+        Insert an email config as a setup step for email tests
+        """
+        payload = {
+            "config_type": "Assignments",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/emails/config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+        return response.json["data"]
+
+    @pytest.fixture
+    def create_email_schedule(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_email_config,
+    ):
+        """
+        Test fixture for creating an automated email schedule.
+        """
+        current_datetime = datetime.now()
+
+        future_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(4)
+        ]
+
+        # add today
+
+        future_dates.append(current_datetime.strftime("%Y-%m-%d")),
+
+        payload = {
+            "dates": future_dates,
+            "time": "20:00",
+            "email_config_uid": create_email_config["email_config_uid"],
+        }
+        response = client.post(
+            "/api/emails/schedule",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+        return response.json["data"]
+
     ####################################################
     ## FIXTURES END HERE
     ####################################################
@@ -1513,6 +1570,8 @@ class TestAssignments:
         csrf_token,
         user_permissions,
         request,
+        create_email_config,
+        create_email_schedule,
     ):
         """
         Create an assignment between a single target and enumerator
@@ -1544,6 +1603,12 @@ class TestAssignments:
                     "new_assignments_count": 1,
                     "no_changes_count": 0,
                     "re_assignments_count": 0,
+                    "email_schedule": {
+                        "config_type": "Assignments",
+                        "dates": response.json["data"]["email_schedule"]["dates"],
+                        "email_config_uid": 1,
+                        "time": "20:00:00",
+                    },
                 },
                 "message": "Success",
             }
