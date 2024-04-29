@@ -12,6 +12,7 @@ from app import db
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
+from sqlalchemy.sql.expression import cast
 from .models import SurveyorAssignment
 from .validators import (
     AssignmentsEmailValidator,
@@ -414,6 +415,8 @@ def update_assignments(validated_payload):
         "assignments_count": len(assignments),
     }
 
+    current_datetime = datetime.now()
+
     # get email scheduled time for the next dispatch
     # query email schedule - automated emails - using form_uid
     email_schedule_res = (
@@ -425,6 +428,7 @@ def update_assignments(validated_payload):
         .filter(
             EmailConfig.form_uid == form_uid,
             func.lower(EmailConfig.config_type) == "assignments",
+            func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
         )
         .first()
     )
