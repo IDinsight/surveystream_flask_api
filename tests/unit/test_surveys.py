@@ -77,6 +77,36 @@ class TestSurveys:
 
         return response_user_survey
 
+    @pytest.fixture()
+    def create_parent_form(self, client, login_test_user, csrf_token, create_surveys):
+        """
+        Insert new form as a setup step for the form tests
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "scto_form_id": "test_scto_input_output",
+            "form_name": "Agrifieldnet Main Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": "dod",
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
+        }
+
+        response = client.post(
+            "/api/forms",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        yield
+
     def test_create_survey_for_super_admin(
         self, client, login_test_user, create_surveys, test_user_credentials
     ):
@@ -601,21 +631,22 @@ class TestSurveys:
         login_user(client, test_user_credentials)
 
     def test_get_config_status(
-        self, client, login_test_user, csrf_token, create_surveys
+        self, client, login_test_user, csrf_token, create_surveys, create_parent_form
     ):
         """
-        Test that module config status for the survey can be retreived
+        Test that module config status for the survey can be retrieved
         """
 
         response = client.get("/api/surveys/1/config-status")
         assert response.status_code == 200
 
+        print(response.json)
         expected_response = {
             "data": {
                 "Basic information": {"status": "In Progress"},
                 "Module selection": {"status": "Not Started"},
                 "Survey information": [
-                    {"name": "SurveyCTO information", "status": "Not Started"},
+                    {"name": "SurveyCTO information", "status": "In Progress"},
                     {"name": "Field supervisor roles", "status": "Not Started"},
                     {"name": "Survey locations", "status": "Not Started"},
                     {"name": "SurveyStream users", "status": "Not Started"},
@@ -624,6 +655,7 @@ class TestSurveys:
                 ],
                 "overall_status": "In Progress - Configuration",
             },
+            "success": True,
             "success": True,
         }
         checkdiff = jsondiff.diff(expected_response, response.json)
