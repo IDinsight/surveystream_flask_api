@@ -386,7 +386,7 @@ def get_manual_email_triggers(validated_query_params):
     """
     email_config_uid = validated_query_params.email_config_uid.data
     manual_email_triggers = ManualEmailTrigger.query.filter_by(
-        form_uid=email_config_uid
+        email_config_uid=email_config_uid
     ).all()
 
     if manual_email_triggers is None:

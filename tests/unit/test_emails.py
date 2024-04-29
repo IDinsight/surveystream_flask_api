@@ -456,7 +456,7 @@ class TestEmails:
         self, client, csrf_token, create_email_schedule, user_permissions, request
     ):
         """
-        Test getting a specific form email schedules for different users
+        Test getting a specific  email schedule for different users
         Expect the email schedules
         """
 
@@ -480,6 +480,60 @@ class TestEmails:
                     "email_schedule_uid": 1,
                     "time": "20:00:00",
                 },
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+    def test_emails_get_schedules(
+        self, client, csrf_token, create_email_schedule, user_permissions, request
+    ):
+        """
+        Test getting a specific config email schedules for different users
+        Expect the email schedules
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            f"api/emails/schedules?email_config_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "dates": response.json["data"][0]["dates"],
+                        "email_config_uid": 1,
+                        "email_schedule_uid": 1,
+                        "time": "20:00:00",
+                    }
+                ],
                 "success": True,
             }
 
@@ -680,6 +734,67 @@ class TestEmails:
                     "status": "queued",
                     "time": "08:00:00",
                 },
+                "success": True,
+            }
+
+            assert response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+    def test_emails_get_manual_triggers(
+        self,
+        client,
+        csrf_token,
+        create_manual_email_trigger,
+        create_form,
+        user_permissions,
+        request,
+    ):
+        """
+        Test fetching email manual triggers for different user roles
+        Expect newly created manual triggers
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            f"api/emails/manual-triggers?email_config_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+        if expected_permission:
+            expected_response = {
+                "data": [
+                    {
+                        "date": response.json["data"][0]["date"],
+                        "email_config_uid": 1,
+                        "manual_email_trigger_uid": 1,
+                        "recipients": [1, 2, 3],
+                        "status": "queued",
+                        "time": "08:00:00",
+                    }
+                ],
                 "success": True,
             }
 
