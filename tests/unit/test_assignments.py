@@ -1220,6 +1220,50 @@ class TestAssignments:
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
 
+    def test_assignments_schedule_email_past_date(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels,
+        csrf_token,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the assignments endpoint for scheduling emails past date - multiple roles
+        Expect validation error
+
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "date": "2024-02-03",
+            "time": "08:00",
+            "recipients": [1, 2, 3],  # there are supposed to be enumerator ids
+            "template_uid": 1,
+            "status": "queued",
+        }
+
+        # Check the response
+        response = client.post(
+            f"/api/assignments/schedule-email",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        expected_response = {
+            "message": {"date": ["Date must be in the future."]},
+            "success": False,
+        }
+
+        assert response.status_code == 422
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_assignments_no_enumerators_no_targets(
         self, client, login_test_user, create_locations, csrf_token
     ):
