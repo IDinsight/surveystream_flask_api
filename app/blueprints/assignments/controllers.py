@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlalchemy import or_
 from . import assignments_bp
 from app.utils.utils import (
     custom_permissions_required,
@@ -430,8 +431,10 @@ def update_assignments(validated_payload):
         .filter(
             EmailConfig.form_uid == form_uid,
             func.lower(EmailConfig.config_type) == "assignments",
-            func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
-            EmailSchedule.time <= formatted_time
+            or_(
+                func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
+                formatted_time <= EmailSchedule.time,
+            ),
         )
         .first()
     )
