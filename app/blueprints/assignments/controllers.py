@@ -436,6 +436,7 @@ def update_assignments(validated_payload):
                 formatted_time <= EmailSchedule.time,
             ),
         )
+        .order_by(func.unnest(EmailSchedule.dates).asc())
         .first()
     )
 
