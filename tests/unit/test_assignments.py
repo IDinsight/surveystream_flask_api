@@ -1144,32 +1144,48 @@ class TestAssignments:
         """
         current_datetime = datetime.now()
 
-        current_time = datetime.now().time()
-        # Format the current time to "HH:mm" format
-        formatted_time = current_time.strftime("%H:%M")
+        schedules = []
 
-        future_dates = [
-            (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
-            for i in range(4)
-        ]
+        # this will create 3 schedules with future dates starting with the current date
+        # this is helpful because it will help with create assignment tests where we check for the next possible date
+        for i in range(3):
+            # Calculate future dates
+            future_dates = [
+                (current_datetime + timedelta(days=j)).strftime("%Y-%m-%d")
+                for j in range(1 + i * 3, 4 + i * 3)
+            ]
+            # Add today's date
+            future_dates.append(current_datetime.strftime("%Y-%m-%d"))
 
-        # add today
+            # Calculate different times
+            current_time = (current_datetime + timedelta(hours=i + 2)).time()
 
-        future_dates.append(current_datetime.strftime("%Y-%m-%d")),
+            # Calculate time based on iteration
+            if i == 0:
+                current_time_past = (current_datetime - timedelta(hours=i + 2)).time()
+                formatted_time = current_time_past.strftime("%H:%M")
+            else:
+                formatted_time = current_time.strftime("%H:%M")
 
-        payload = {
-            "dates": future_dates,
-            "time": formatted_time,
-            "email_config_uid": create_email_config["email_config_uid"],
-        }
-        response = client.post(
-            "/api/emails/schedule",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 201
-        return response.json["data"]
+            # Create payload
+            payload = {
+                "dates": future_dates,
+                "time": formatted_time,
+                "email_config_uid": create_email_config["email_config_uid"],
+            }
+
+            # Send request
+            response = client.post(
+                "/api/emails/schedule",
+                json=payload,
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert response.status_code == 201
+
+            # Append schedule data to the list
+            schedules.append(response.json["data"])
+        return schedules[0]
 
     ####################################################
     ## FIXTURES END HERE
@@ -1598,6 +1614,9 @@ class TestAssignments:
 
         print(response.json)
 
+        current_datetime = datetime.now()
+        current_time = datetime.now().strftime("%H:%M")
+
         if expected_permission:
             assert response.status_code == 200
 
@@ -1610,6 +1629,9 @@ class TestAssignments:
                     "email_schedule": {
                         "config_type": "Assignments",
                         "dates": response.json["data"]["email_schedule"]["dates"],
+                        "schedule_date": current_datetime.strftime("%a, %d %b %Y")
+                        + " 00:00:00 GMT",
+                        "current_time": current_time,
                         "email_config_uid": 1,
                         "time": response.json["data"]["email_schedule"]["time"],
                     },

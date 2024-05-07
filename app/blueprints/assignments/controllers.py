@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import or_
+from sqlalchemy import and_, Date, func, alias, DateTime
 from . import assignments_bp
 from app.utils.utils import (
     custom_permissions_required,
@@ -39,7 +39,6 @@ from app.blueprints.enumerators.queries import (
 from app.blueprints.emails.models import (
     ManualEmailTrigger,
     EmailSchedule,
-    EmailTemplate,
     EmailConfig,
 )
 
@@ -416,37 +415,67 @@ def update_assignments(validated_payload):
         "assignments_count": len(assignments),
     }
 
+    # Get current datetime and current time
     current_datetime = datetime.now()
-    current_time = datetime.now().time()
-    # Format the current time to "HH:mm" format
-    formatted_time = current_time.strftime("%H:%M")
-    # get email scheduled time for the next dispatch
-    # query email schedule - automated emails - using form_uid
+    current_time = datetime.now().strftime("%H:%M")
+
+    # a subquery to unnest the array of dates and filter dates less than current datetime
+    subquery = (
+        db.session.query(
+            cast(func.unnest(EmailSchedule.dates) + EmailSchedule.time, Date).label(
+                "schedule_date"
+            ),
+            EmailSchedule.email_config_uid,
+        )
+        .filter(
+            EmailSchedule.email_config_uid == EmailConfig.email_config_uid,
+            func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
+        )
+        .correlate(EmailSchedule)
+        .subquery()
+    )
+
+    # Alias the subquery
+    schedule_dates_subquery = alias(subquery)
+
+    # join schedule_dates_subquery and filter dates only greater than current date time
     email_schedule_res = (
-        db.session.query(EmailSchedule, EmailConfig)
+        db.session.query(EmailSchedule, EmailConfig, schedule_dates_subquery)
         .select_from(EmailSchedule)
+        .join(
+            schedule_dates_subquery,
+            and_(
+                schedule_dates_subquery.c.email_config_uid
+                == EmailSchedule.email_config_uid,
+                cast(
+                    schedule_dates_subquery.c.schedule_date + EmailSchedule.time,
+                    DateTime,
+                )
+                >= current_datetime,
+            ),
+        )
         .join(
             EmailConfig, EmailSchedule.email_config_uid == EmailConfig.email_config_uid
         )
         .filter(
             EmailConfig.form_uid == form_uid,
             func.lower(EmailConfig.config_type) == "assignments",
-            or_(
-                func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
-                formatted_time <= EmailSchedule.time,
-            ),
         )
-        .order_by(func.unnest(EmailSchedule.dates).asc())
+        .order_by(schedule_dates_subquery.c.schedule_date.asc())
         .first()
     )
 
     if email_schedule_res:
-        email_schedule, email_config = email_schedule_res
+        email_schedule, email_config, schedule_date, email_config_uid = (
+            email_schedule_res
+        )
         response_data["email_schedule"] = {
             "email_config_uid": email_config.email_config_uid,
             "config_type": email_config.config_type,
             "dates": email_schedule.dates,
             "time": str(email_schedule.time),
+            "current_time": str(current_time),
+            "schedule_date": schedule_date,
         }
 
     try:
