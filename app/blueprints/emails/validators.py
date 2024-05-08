@@ -1,3 +1,4 @@
+import re
 from flask_wtf import FlaskForm
 from wtforms import FieldList, FormField, IntegerField, StringField
 from wtforms.validators import DataRequired, ValidationError, AnyOf
@@ -14,12 +15,32 @@ class EmailScheduleValidator(FlaskForm):
     time = StringField(validators=[DataRequired()])
     email_config_uid = IntegerField(validators=[DataRequired()])
 
+    def validate_time(self, field):
+        """
+        Validate that the given time is in the future.
+        """
+        time_pattern = r"^\d{2}:\d{2}$"
+
+        if not re.match(time_pattern, field.data):
+            raise ValidationError("Invalid time format. Please use HH:MM format.")
+
     def validate_dates(self, field):
         """
         Validate that the given date is in the future.
         """
         for date_str in field.data:
-            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+            date_pattern = r"^\d{4}-\d{2}-\d{2}$"
+
+            if not re.match(date_pattern, date_str):
+                raise ValidationError(
+                    "Invalid date format. Please use YYYY-MM-DD format."
+                )
+
+            try:
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                raise ValidationError("Invalid date.")
+
             if date_obj < datetime.now().date():
                 raise ValidationError("Date must be in the future.")
 
@@ -40,11 +61,29 @@ class ManualEmailTriggerValidator(FlaskForm):
         default="queued",
     )
 
+    def validate_time(self, field):
+        """
+        Validate that the given time is in the future.
+        """
+        time_pattern = r"^\d{2}:\d{2}$"
+
+        if not re.match(time_pattern, field.data):
+            raise ValidationError("Invalid time format. Please use HH:MM format.")
+
     def validate_date(self, field):
         """
         Validate that the given date is in the future.
         """
-        date_obj = datetime.strptime(field.data, "%Y-%m-%d").date()
+        date_pattern = r"^\d{4}-\d{2}-\d{2}$"
+
+        if not re.match(date_pattern, field.data):
+            raise ValidationError("Invalid date format. Please use YYYY-MM-DD format.")
+
+        try:
+            date_obj = datetime.strptime(field.data, "%Y-%m-%d").date()
+        except ValueError:
+            raise ValidationError("Invalid date.")
+
         if date_obj < datetime.now().date():
             raise ValidationError("Date must be in the future.")
 
