@@ -1620,11 +1620,13 @@ class TestAssignments:
         print(response.json)
 
         current_datetime = datetime.now()
+        formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
+
         current_time = datetime.now().strftime("%H:%M")
 
         if expected_permission:
             assert response.status_code == 200
-
+            assert response.json["data"]["email_schedule"]["schedule_date"] >= formatted_date
             expected_put_response = {
                 "data": {
                     "assignments_count": 1,
