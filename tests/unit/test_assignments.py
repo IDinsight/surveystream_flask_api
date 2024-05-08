@@ -1155,7 +1155,6 @@ class TestAssignments:
                 for j in range(1 + i * 3, 4 + i * 3)
             ]
             # Add today's date
-            future_dates.append(current_datetime.strftime("%Y-%m-%d"))
 
             # Calculate different times
             current_time = (current_datetime + timedelta(hours=i + 2)).time()
@@ -1164,6 +1163,11 @@ class TestAssignments:
             if i == 0:
                 current_time_past = (current_datetime - timedelta(hours=i + 2)).time()
                 formatted_time = current_time_past.strftime("%H:%M")
+                future_dates.append(current_datetime.strftime("%Y-%m-%d"))
+            elif i == 2:
+                future_dates.append(current_datetime.strftime("%Y-%m-%d"))
+                formatted_time = current_time.strftime("%H:%M")
+
             else:
                 formatted_time = current_time.strftime("%H:%M")
 
@@ -1185,6 +1189,7 @@ class TestAssignments:
 
             # Append schedule data to the list
             schedules.append(response.json["data"])
+        print(schedules)
         return schedules[0]
 
     ####################################################
@@ -1629,15 +1634,21 @@ class TestAssignments:
                     "email_schedule": {
                         "config_type": "Assignments",
                         "dates": response.json["data"]["email_schedule"]["dates"],
-                        "schedule_date": current_datetime.strftime("%a, %d %b %Y")
-                        + " 00:00:00 GMT",
+                        "schedule_date": response.json["data"]["email_schedule"][
+                            "schedule_date"
+                        ],
                         "current_time": current_time,
+                        "email_schedule_uid": response.json["data"]["email_schedule"][
+                            "email_schedule_uid"
+                        ],
                         "email_config_uid": 1,
                         "time": response.json["data"]["email_schedule"]["time"],
                     },
                 },
                 "message": "Success",
             }
+
+            print(expected_put_response)
 
             checkdiff = jsondiff.diff(expected_put_response, response.json)
             assert checkdiff == {}

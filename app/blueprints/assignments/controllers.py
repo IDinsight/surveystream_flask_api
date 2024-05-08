@@ -419,16 +419,15 @@ def update_assignments(validated_payload):
     current_datetime = datetime.now()
     current_time = datetime.now().strftime("%H:%M")
 
-    # a subquery to unnest the array of dates and filter dates less than current datetime
+    # a subquery to unnest the array of dates and filter dates less than current date
     subquery = (
         db.session.query(
             cast(func.unnest(EmailSchedule.dates) + EmailSchedule.time, Date).label(
                 "schedule_date"
             ),
-            EmailSchedule.email_config_uid,
+            EmailSchedule.email_schedule_uid,
         )
         .filter(
-            EmailSchedule.email_config_uid == EmailConfig.email_config_uid,
             func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
         )
         .correlate(EmailSchedule)
@@ -445,8 +444,8 @@ def update_assignments(validated_payload):
         .join(
             schedule_dates_subquery,
             and_(
-                schedule_dates_subquery.c.email_config_uid
-                == EmailSchedule.email_config_uid,
+                schedule_dates_subquery.c.email_schedule_uid
+                == EmailSchedule.email_schedule_uid,
                 cast(
                     schedule_dates_subquery.c.schedule_date + EmailSchedule.time,
                     DateTime,
@@ -466,7 +465,7 @@ def update_assignments(validated_payload):
     )
 
     if email_schedule_res:
-        email_schedule, email_config, schedule_date, email_config_uid = (
+        email_schedule, email_config, schedule_date, email_schedule_uid = (
             email_schedule_res
         )
         response_data["email_schedule"] = {
@@ -475,6 +474,7 @@ def update_assignments(validated_payload):
             "dates": email_schedule.dates,
             "time": str(email_schedule.time),
             "current_time": str(current_time),
+            "email_schedule_uid": email_schedule_uid,
             "schedule_date": schedule_date,
         }
 
