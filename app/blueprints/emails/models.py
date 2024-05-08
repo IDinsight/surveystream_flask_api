@@ -104,9 +104,6 @@ class ManualEmailTrigger(db.Model):
 
 class EmailTemplate(db.Model):
     __tablename__ = "email_templates"
-    __table_args__ = {
-        "schema": "webapp",
-    }
 
     email_template_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     subject = db.Column(db.String(255), nullable=False)
@@ -114,6 +111,16 @@ class EmailTemplate(db.Model):
     content = db.Column(db.Text(), nullable=False)
     email_config_uid = db.Column(
         db.Integer, db.ForeignKey(EmailConfig.email_config_uid), nullable=False
+    )
+
+    __table_args__ = (
+        # ensure that language templates are not duplicated per config_uid
+        db.UniqueConstraint(
+            "email_config_uid",
+            "language",
+            name="_email_templates_email_config_uid_language_uc",
+        ),
+        {"schema": "webapp"},
     )
 
     def __init__(self, subject, content, language, email_config_uid):

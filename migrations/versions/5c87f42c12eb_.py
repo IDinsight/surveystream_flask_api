@@ -70,6 +70,9 @@ def upgrade():
             name=op.f("fk_email_templates_email_config_uid_email_configs"),
         ),
         sa.PrimaryKeyConstraint("email_template_uid", name=op.f("pk_email_templates")),
+        sa.UniqueConstraint(
+            "email_config_uid", "language", name="_email_templates_email_config_uid_language_uc"
+        ),
         schema="webapp",
     )
     op.create_table(
@@ -86,7 +89,7 @@ def upgrade():
             sa.String(length=100),
             sa.CheckConstraint(
                 "status IN ('queued', 'sent', 'failed', 'progress', 'running')",
-                name="check_status",
+                name="ck_manual_email_triggers_status",
             ),
             nullable=False,
         ),
