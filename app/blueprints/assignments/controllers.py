@@ -1,3 +1,5 @@
+from datetime import datetime
+from sqlalchemy import and_, Date, func, alias, DateTime
 from . import assignments_bp
 from app.utils.utils import (
     custom_permissions_required,
@@ -10,8 +12,11 @@ from flask_login import current_user
 from app import db
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
+from sqlalchemy.sql.expression import cast
 from .models import SurveyorAssignment
 from .validators import (
+    AssignmentsEmailValidator,
     AssignmentsQueryParamValidator,
     UpdateSurveyorAssignmentsValidator,
 )
@@ -31,6 +36,11 @@ from app.blueprints.enumerators.models import Enumerator, SurveyorForm, Surveyor
 from app.blueprints.enumerators.queries import (
     build_prime_locations_with_location_hierarchy_subquery,
 )
+from app.blueprints.emails.models import (
+    ManualEmailTrigger,
+    EmailSchedule,
+    EmailConfig,
+)
 
 
 @assignments_bp.route("", methods=["GET"])
@@ -44,8 +54,6 @@ def view_assignments(validated_query_params):
 
     form_uid = validated_query_params.form_uid.data
     user_uid = current_user.user_uid
-
-    # TODO: Check if the logged in user has permission to access the given form
 
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
@@ -156,7 +164,9 @@ def view_assignments(validated_query_params):
                             target_status, "last_attempt_survey_status", None
                         ),
                         "last_attempt_survey_status_label": getattr(
-                            target_status, "last_attempt_survey_status_label", "Not Attempted"
+                            target_status,
+                            "last_attempt_survey_status_label",
+                            "Not Attempted",
                         ),
                         "target_assignable": getattr(
                             target_status,
@@ -191,8 +201,6 @@ def view_assignments_enumerators(validated_query_params):
 
     form_uid = validated_query_params.form_uid.data
     user_uid = current_user.user_uid
-
-    # TODO: Check if the logged in user has permission to access the given form
 
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
@@ -268,8 +276,6 @@ def update_assignments(validated_payload):
     form_uid = validated_payload.form_uid.data
     assignments = validated_payload.assignments.data
 
-    # TODO: Check if the user has permission to make assignments for this form
-
     # Run database-backed validations on the assignment inputs
     dropout_enumerator_uids = []
     not_found_enumerator_uids = []
@@ -344,7 +350,30 @@ def update_assignments(validated_payload):
             404,
         )
 
+    re_assignments_count = 0
+    new_assignments_count = 0
+    no_changes_count = 0
+
     for assignment in assignments:
+        # query reassignments
+        assignment_res = (
+            db.session.query(SurveyorAssignment)
+            .filter(
+                SurveyorAssignment.target_uid == assignment["target_uid"],
+            )
+            .first()
+        )
+
+        if assignment_res is None:
+            # update new_assignments - no record was found for the target
+            new_assignments_count += 1
+        elif assignment_res.enumerator_uid == assignment["enumerator_uid"]:
+            # update no_changes - the enumerator_uid has not changed for the target found
+            no_changes_count += 1
+        else:
+            # update re_assignment - the enumerator_uid has changed
+            re_assignments_count += 1
+
         if assignment["enumerator_uid"] is not None:
             # do upsert
             statement = (
@@ -379,10 +408,133 @@ def update_assignments(validated_payload):
                 SurveyorAssignment.target_uid == assignment["target_uid"]
             ).delete()
 
+    response_data = {
+        "re_assignments_count": re_assignments_count,
+        "new_assignments_count": new_assignments_count,
+        "no_changes_count": no_changes_count,
+        "assignments_count": len(assignments),
+    }
+
+    # Get current datetime and current time
+    current_datetime = datetime.now()
+    current_time = datetime.now().strftime("%H:%M")
+
+    # a subquery to unnest the array of dates and filter dates less than current date
+    subquery = (
+        db.session.query(
+            cast(func.unnest(EmailSchedule.dates) + EmailSchedule.time, Date).label(
+                "schedule_date"
+            ),
+            EmailSchedule.email_schedule_uid,
+        )
+        .filter(
+            func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
+        )
+        .correlate(EmailSchedule)
+        .subquery()
+    )
+
+    # Alias the subquery
+    schedule_dates_subquery = alias(subquery)
+
+    # join schedule_dates_subquery and filter dates only greater than current date time
+    email_schedule_res = (
+        db.session.query(EmailSchedule, EmailConfig, schedule_dates_subquery)
+        .select_from(EmailSchedule)
+        .join(
+            schedule_dates_subquery,
+            and_(
+                schedule_dates_subquery.c.email_schedule_uid
+                == EmailSchedule.email_schedule_uid,
+                cast(
+                    schedule_dates_subquery.c.schedule_date + EmailSchedule.time,
+                    DateTime,
+                )
+                >= current_datetime,
+            ),
+        )
+        .join(
+            EmailConfig, EmailSchedule.email_config_uid == EmailConfig.email_config_uid
+        )
+        .filter(
+            EmailConfig.form_uid == form_uid,
+            func.lower(EmailConfig.config_type) == "assignments",
+        )
+        .order_by(schedule_dates_subquery.c.schedule_date.asc())
+        .first()
+    )
+
+    if email_schedule_res:
+        email_schedule, email_config, schedule_date, email_schedule_uid = (
+            email_schedule_res
+        )
+        response_data["email_schedule"] = {
+            "email_config_uid": email_config.email_config_uid,
+            "config_type": email_config.config_type,
+            "dates": email_schedule.dates,
+            "time": str(email_schedule.time),
+            "current_time": str(current_time),
+            "email_schedule_uid": email_schedule_uid,
+            "schedule_date": schedule_date,
+        }
+
     try:
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
-    return jsonify(message="Success"), 200
+    return jsonify(message="Success", data=response_data), 200
+
+
+@assignments_bp.route("/schedule-email", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(AssignmentsEmailValidator)
+@custom_permissions_required("WRITE Assignments", "body", "form_uid")
+def schedule_assignments_email(validated_payload):
+    """Function to schedule assignment emails"""
+
+    form_uid = validated_payload.form_uid.data
+
+    # Find the assignments email_config_uid using the form_uid - if none create one
+
+    email_config = EmailConfig.query.filter(
+        func.lower(EmailConfig.config_type) == "assignments",
+        EmailConfig.form_uid == form_uid,
+    ).first()
+
+    if email_config is None:
+        try:
+            email_config = EmailConfig(config_type="assignments", form_uid=form_uid)
+            db.session.add(email_config)
+            db.session.flush()
+        except IntegrityError:
+            db.session.rollback()
+            email_config = EmailConfig.query.filter(
+                func.lower(EmailConfig.config_type) == "assignments", form_uid=form_uid
+            ).first()
+
+    time_str = validated_payload.time.data
+    time_obj = datetime.strptime(time_str, "%H:%M").time()
+
+    new_trigger = ManualEmailTrigger(
+        email_config_uid=email_config.email_config_uid,
+        date=validated_payload.date.data,
+        time=time_obj,
+        recipients=validated_payload.recipients.data,
+        status=validated_payload.status.data,
+    )
+
+    try:
+        db.session.add(new_trigger)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return (
+        jsonify(
+            {"message": "Manual email trigger created successfully", "success": True}
+        ),
+        201,
+    )

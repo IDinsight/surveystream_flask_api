@@ -185,11 +185,38 @@ def get_survey_config_status(survey_uid):
     # Temp: Update module status based on whether data is present in the corresponding backend
     # table because we aren't updating the module status table from each module currently
     from app.blueprints.forms.models import Form
+    from app.blueprints.enumerators.models import Enumerator
+    from app.blueprints.targets.models import Target
+    from app.blueprints.assignments.models import SurveyorAssignment
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     scto_information = Form.query.filter_by(survey_uid=survey_uid).first()
     roles = Role.query.filter_by(survey_uid=survey_uid).first()
     locations = GeoLevel.query.filter_by(survey_uid=survey_uid).first()
+
+    enumerators = None
+    targets = None
+    assignments = None
+
+    if scto_information is not None:
+        enumerators = Enumerator.query.filter_by(
+            form_uid=scto_information.form_uid
+        ).first()
+        targets = Target.query.filter_by(form_uid=scto_information.form_uid).first()
+
+    if enumerators and targets:
+        assignments = (
+            db.session.query(
+                SurveyorAssignment,
+            )
+            .join(
+                Enumerator,
+                Enumerator.enumerator_uid == SurveyorAssignment.enumerator_uid,
+            )
+            .join(Target, Target.target_uid == SurveyorAssignment.target_uid)
+            .filter(Target.form_uid == scto_information.form_uid)
+            .first()
+        )
 
     if survey is not None:
         data["Basic information"]["status"] = "In Progress"
@@ -202,10 +229,26 @@ def get_survey_config_status(survey_uid):
                 item["status"] = "In Progress"
         elif item["name"] == "Field supervisor roles":
             if roles is not None:
+                item["name"] = "User and role management"
                 item["status"] = "In Progress"
         elif item["name"] == "Survey locations":
             if locations is not None:
                 item["status"] = "In Progress"
+        elif item["name"] == "Enumerators":
+            if enumerators is not None:
+                item["status"] = "In Progress"
+        elif item["name"] == "Targets":
+            if targets is not None:
+                item["status"] = "In Progress"
+    if "Module configuration" in data:
+        for item in data["Module configuration"]:
+            if (
+                isinstance(item, dict)
+                and "name" in item
+                and item["name"] == "Assignments"
+            ):
+                if assignments is not None:
+                    item["status"] = "In Progress"
 
     response = {"success": True, "data": data}
     return jsonify(response), 200
