@@ -1,9 +1,10 @@
 from app import db
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
 from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import backref
+from sqlalchemy.ext.mutable import MutableDict
 
 
 class Target(db.Model):
@@ -21,10 +22,8 @@ class Target(db.Model):
     location_uid = db.Column(
         db.Integer(), db.ForeignKey(Location.location_uid), nullable=True
     )
-    custom_fields = db.Column(JSONB, nullable=True)
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    custom_fields = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
 
     __table_args__ = (
         # We need this because we don't have a user-friendly way of enforcing teams to create unique targets_id's across forms
@@ -83,6 +82,7 @@ class TargetStatus(db.Model):
     target_assignable = db.Column(db.Boolean())
     webapp_tag_color = db.Column(db.String())
     revisit_sections = db.Column(ARRAY(db.String()))
+    scto_fields = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
 
     __table_args__ = ({"schema": "webapp"},)
 
@@ -97,6 +97,7 @@ class TargetStatus(db.Model):
         target_assignable,
         webapp_tag_color,
         revisit_sections,
+        scto_fields=None,
     ):
         self.target_uid = target_uid
         self.completed_flag = completed_flag
@@ -107,6 +108,9 @@ class TargetStatus(db.Model):
         self.target_assignable = target_assignable
         self.webapp_tag_color = webapp_tag_color
         self.revisit_sections = revisit_sections
+        if self.scto_fields is None:
+            scto_fields = {}
+        self.scto_fields = scto_fields
 
     def to_dict(self):
         result = {
@@ -119,6 +123,7 @@ class TargetStatus(db.Model):
             "target_assignable": self.target_assignable,
             "webapp_tag_color": self.webapp_tag_color,
             "revisit_sections": self.revisit_sections,
+            "scto_fields": self.scto_fields,
         }
 
         return result
@@ -131,9 +136,7 @@ class TargetColumnConfig(db.Model):
 
     __tablename__ = "target_column_config"
 
-    form_uid = db.Column(
-        db.Integer(), db.ForeignKey(ParentForm.form_uid), nullable=False
-    )
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
     column_name = db.Column(db.String(), nullable=False)
     column_type = db.Column(
         db.String(),

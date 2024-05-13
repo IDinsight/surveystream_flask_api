@@ -1,0 +1,3 @@
+COPY webapp.modules (module_id,name,optional) FROM '/docker-entrypoint-initdb.d/data/modules.csv' DELIMITER ',' CSV HEADER;
+COPY webapp.permissions (name,description,active) FROM '/docker-entrypoint-initdb.d/data/permissions.csv' DELIMITER ',' CSV HEADER;
+COPY webapp.default_target_status_mapping (surveying_method,survey_status,survey_status_label,completed_flag,refusal_flag,target_assignable,webapp_tag_color) FROM '/docker-entrypoint-initdb.d/data/default_target_status_mapping.csv' DELIMITER ',' CSV HEADER;

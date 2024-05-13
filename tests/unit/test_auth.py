@@ -1,10 +1,44 @@
+import json
+
 from utils import set_user_active_status, logout, get_csrf_token, delete_user
 from app import db
 import pytest
+import jsondiff
 
 
 @pytest.mark.auth
 class TestAuth:
+    @pytest.fixture
+    def added_user(self, client, login_test_user, csrf_token):
+        """
+        Add a user for testing and return it
+        """
+        response = client.post(
+            "/api/users",
+            json={
+                "email": "newuser1@example.com",
+                "first_name": "John",
+                "last_name": "Doe",
+                "roles": [],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+        assert b"Success: user invited" in response.data
+        response_data = json.loads(response.data)
+        user_object = response_data.get("user")
+
+        return {"user": user_object}
+
+    @pytest.fixture
+    def sample_user(self, added_user):
+        """
+        Return the user added by added_user fixture as the sample_user
+        """
+        return added_user.get("user")
+
     def test_login_active_logged_out_user_correct_password(
         self, app, client, csrf_token, test_user_credentials
     ):
@@ -24,6 +58,22 @@ class TestAuth:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
+
+    def test_login_active_none_password(self, app, client, csrf_token, sample_user):
+        """
+        Test login of added user with password as None
+        Expect 422 fail
+        """
+        response = client.post(
+            "/api/login",
+            json={
+                "email": sample_user["email"],
+                "password": None,
+            },
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response)
+        assert response.status_code == 422
 
     def test_login_active_logged_in_user_correct_password(
         self, app, test_user_credentials, client, csrf_token
@@ -52,6 +102,9 @@ class TestAuth:
             },
             headers={"X-CSRF-Token": csrf_token},
         )
+
+        print(response.json)
+
         assert response.status_code == 200
 
     def test_login_inactive_logged_out_user_correct_password(
@@ -303,7 +356,7 @@ class TestAuth:
 
     def test_forgot_password_email(self, test_user_credentials, client, csrf_token):
         """
-        Checking whether email is being sent. Will use the forgot password endpoint
+        Check whether email is being sent. Will use the forgot password endpoint
         Expecting 200 but need to manually verify if email is received
         """
 
@@ -332,3 +385,46 @@ class TestAuth:
         response = client.get("/api/profile")
 
         assert response.status_code == 401
+
+    def test_protected_endpoint_no_csrf_token(self, client, login_test_user):
+        """
+        Try to access a protected endpoint without a CSRF token
+        """
+
+        response = client.patch("/api/profile", json={})
+        assert response.status_code == 403
+        assert "X-CSRF-Token required in header" in response.json.get("message")
+
+    def test_protected_endpoint_csrf_token_in_form(
+        self, client, login_test_user, csrf_token
+    ):
+        """
+        Try to access a protected endpoint with the CSRF token in the form instead of the header
+        """
+
+        response = client.patch(
+            "/api/profile",
+            headers={"Content-Type": "multipart/form-data"},
+            data={"csrf_token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 403
+        assert "X-CSRF-Token required in header" in response.json.get("message")
+
+    def test_protected_endpoint_invalid_csrf_token(self, client, login_test_user):
+        """
+        Try to access a protected endpoint with an invalid CSRF token
+        """
+
+        response = client.patch(
+            "/api/profile",
+            json={"new_email": "asdf@asdf.com"},
+            headers={"X-CSRF-Token": "asdf"},
+        )
+        assert response.status_code == 422
+
+        print(response.json)
+        expected_response = {"message": {"csrf_token": ["The CSRF token is invalid."]}}
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}

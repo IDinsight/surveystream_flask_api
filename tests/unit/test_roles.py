@@ -35,8 +35,32 @@ class TestRoles:
 
         yield
 
+    @pytest.fixture
+    def create_permission(self, client, login_test_user, csrf_token):
+        """
+        Create simple permissions
+        Expect to be used while adding roles
+        """
+        data = {"name": "WRITE", "description": "Write permission"}
+        response = client.post(
+            "/api/permissions",
+            json=data,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+        assert response.json["message"] == "Permission created successfully"
+
+        return {
+            "permission_uid": response.json["permission_uid"],
+            "name": response.json["name"],
+            "description": response.json["description"],
+        }
+
     @pytest.fixture()
-    def create_roles(self, client, login_test_user, csrf_token, create_survey):
+    def create_roles(
+        self, client, login_test_user, csrf_token, create_survey, create_permission
+    ):
         """
         Insert new roles as a setup step for the roles tests
         """
@@ -47,11 +71,13 @@ class TestRoles:
                     "role_uid": None,
                     "role_name": "Core User",
                     "reporting_role_uid": None,
+                    "permissions": [create_permission["permission_uid"]],
                 },
                 {
                     "role_uid": None,
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": 1,
+                    "permissions": [create_permission["permission_uid"]],
                 },
             ]
         }
@@ -67,7 +93,9 @@ class TestRoles:
 
         yield
 
-    def test_insert_roles(self, client, login_test_user, create_roles):
+    def test_insert_roles(
+        self, client, login_test_user, create_roles, create_permission
+    ):
         """
         Test that the roles are inserted correctly
         The order of the roles in the payload should be reflected in the assignment of the role_uid
@@ -82,12 +110,24 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
+                    "permissions": [create_permission["permission_uid"]],
+                    "user_count": 0,
                 },
                 {
                     "role_uid": 2,
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
+                    "permissions": [create_permission["permission_uid"]],
+                    "user_count": 0,
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "Survey Admin",
+                    "reporting_role_uid": None,
+                    "survey_uid": 1,
+                    "permissions": [],
+                    "user_count": 1,
                 },
             ],
             "success": True,
@@ -108,11 +148,13 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core User",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
+                    "permissions": [],
                 },
             ]
         }
@@ -135,12 +177,24 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
+                    "permissions": [],
+                    "user_count": 0,
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
+                    "permissions": [],
+                    "user_count": 0,
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "Survey Admin",
+                    "reporting_role_uid": None,
+                    "survey_uid": 1,
+                    "permissions": [],
+                    "user_count": 1,
                 },
             ],
             "success": True,
@@ -157,17 +211,22 @@ class TestRoles:
         """
 
         # Try to update the existing roles
+        # role_uid==1 will have its name changed from "Core User" to "Regional Coordinator"
+        # role_uid==2 will have its name changed from "Regional Coordinator" to "Core User"
+        # This causes a temporary constraint violation during the transaction
         payload = {
             "roles": [
                 {
                     "role_uid": 1,
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "Core User",
                     "reporting_role_uid": 1,
+                    "permissions": [],
                 },
             ]
         }
@@ -191,12 +250,24 @@ class TestRoles:
                     "role_name": "Regional Coordinator",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
+                    "permissions": [],
+                    "user_count": 0,
                 },
                 {
                     "role_uid": 2,
                     "role_name": "Core User",
                     "reporting_role_uid": 1,
                     "survey_uid": 1,
+                    "permissions": [],
+                    "user_count": 0,
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "Survey Admin",
+                    "reporting_role_uid": None,
+                    "survey_uid": 1,
+                    "permissions": [],
+                    "user_count": 1,
                 },
             ],
             "success": True,
@@ -209,7 +280,7 @@ class TestRoles:
         self, client, login_test_user, create_roles, csrf_token
     ):
         """
-        Test that updating roles with a temporary unique constraint violation succeeds
+        Test that updating roles with a non-temporary unique constraint violation fails
         """
 
         # Try to update the existing roles with a unique constraint violation on `role_name`
@@ -219,11 +290,13 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core User",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "Core User",
                     "reporting_role_uid": 1,
+                    "permissions": [],
                 },
             ]
         }
@@ -272,6 +345,16 @@ class TestRoles:
                     "role_name": "Core User",
                     "reporting_role_uid": None,
                     "survey_uid": 1,
+                    "permissions": [],
+                    "user_count": 0,
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "Survey Admin",
+                    "reporting_role_uid": None,
+                    "survey_uid": 1,
+                    "permissions": [],
+                    "user_count": 1,
                 },
             ],
             "success": True,
@@ -311,7 +394,7 @@ class TestRoles:
         self, client, login_test_user, create_survey, csrf_token
     ):
         """
-        Test that existing roles can be updated
+        Test the hierarchy validations for an invalid hierarchy
         """
 
         payload = {
@@ -320,16 +403,19 @@ class TestRoles:
                     "role_uid": None,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": None,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": None,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
             ]
         }
@@ -351,16 +437,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 1,
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -389,16 +478,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": 3,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 2,
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -427,16 +519,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 2,
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -465,16 +560,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 3,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 2,
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -503,16 +601,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 2,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 5,
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -542,16 +643,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 1,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 2,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 5,
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,
@@ -576,7 +680,7 @@ class TestRoles:
         self, client, login_test_user, create_survey, csrf_token
     ):
         """
-        Test that existing roles can be updated
+        Test that a valid hierarchy passes the validations
         """
 
         payload = {
@@ -585,16 +689,19 @@ class TestRoles:
                     "role_uid": None,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": None,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": None,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
             ]
         }
@@ -615,16 +722,19 @@ class TestRoles:
                     "role_uid": 1,
                     "role_name": "Core Team",
                     "reporting_role_uid": None,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 2,
                     "role_name": "State Coordinator",
                     "reporting_role_uid": 1,
+                    "permissions": [],
                 },
                 {
                     "role_uid": 3,
                     "role_name": "District Coordinator",
                     "reporting_role_uid": 2,
+                    "permissions": [],
                 },
             ],
             "validate_hierarchy": True,

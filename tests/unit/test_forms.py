@@ -37,7 +37,7 @@ class TestForms:
         yield
 
     @pytest.fixture()
-    def create_form(self, client, login_test_user, csrf_token, create_survey):
+    def create_parent_form(self, client, login_test_user, csrf_token, create_survey):
         """
         Insert new form as a setup step for the form tests
         """
@@ -51,6 +51,9 @@ class TestForms:
             "encryption_key_shared": True,
             "server_access_role_granted": True,
             "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
         }
 
         response = client.post(
@@ -63,7 +66,39 @@ class TestForms:
 
         yield
 
-    def test_create_form(self, client, login_test_user, create_form):
+    @pytest.fixture()
+    def create_dq_form(
+        self, client, login_test_user, csrf_token, create_survey, create_parent_form
+    ):
+        """
+        Insert new dq form as a setup step for the form tests
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "scto_form_id": "test_scto_dq",
+            "form_name": "Agrifieldnet AA Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": "dod",
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "dq",
+            "parent_form_uid": 1,
+            "dq_form_type": "audioaudit",
+        }
+
+        response = client.post(
+            "/api/forms",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        yield
+
+    def test_create_parent_form(self, client, login_test_user, create_parent_form):
         """
         Test that the form is inserted correctly
         """
@@ -85,6 +120,9 @@ class TestForms:
                     "server_access_role_granted": True,
                     "server_access_allowed": True,
                     "last_ingested_at": None,
+                    "form_type": "parent",
+                    "parent_form_uid": None,
+                    "dq_form_type": None,
                 }
             ],
             "success": True,
@@ -94,7 +132,7 @@ class TestForms:
         assert checkdiff == {}
 
     def test_get_forms(
-        self, client, login_test_user, create_form, test_user_credentials
+        self, client, login_test_user, create_parent_form, test_user_credentials
     ):
         """
         Test the different ways to get forms
@@ -113,6 +151,9 @@ class TestForms:
                     "server_access_role_granted": True,
                     "server_access_allowed": True,
                     "last_ingested_at": None,
+                    "form_type": "parent",
+                    "parent_form_uid": None,
+                    "dq_form_type": None,
                 }
             ],
             "success": True,
@@ -127,6 +168,7 @@ class TestForms:
 
         # Get the form without a filter
         response = client.get("/api/forms")
+        print(response.json)
         assert response.status_code == 200
 
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -141,7 +183,7 @@ class TestForms:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_update_form(self, client, login_test_user, create_form, csrf_token):
+    def test_update_form(self, client, login_test_user, create_parent_form, csrf_token):
         """
         Test that an existing form can be updated
         """
@@ -154,6 +196,9 @@ class TestForms:
             "encryption_key_shared": False,
             "server_access_role_granted": False,
             "server_access_allowed": False,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
         }
 
         response = client.put(
@@ -179,6 +224,9 @@ class TestForms:
                 "server_access_role_granted": False,
                 "server_access_allowed": False,
                 "last_ingested_at": None,
+                "form_type": "parent",
+                "parent_form_uid": None,
+                "dq_form_type": None,
             },
             "success": True,
         }
@@ -186,7 +234,7 @@ class TestForms:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_delete_form(self, client, login_test_user, create_form, csrf_token):
+    def test_delete_form(self, client, login_test_user, create_parent_form, csrf_token):
         """
         Test that a form can be deleted
         """
@@ -203,7 +251,7 @@ class TestForms:
         assert response.status_code == 404
 
     def test_delete_survey_cascade_to_form(
-        self, client, login_test_user, create_form, csrf_token
+        self, client, login_test_user, create_parent_form, csrf_token
     ):
         """
         Test that deleting the survey deletes the form
@@ -221,7 +269,7 @@ class TestForms:
         assert response.status_code == 404
 
     def test_create_scto_question_mapping(
-        self, client, csrf_token, login_test_user, create_form
+        self, client, csrf_token, login_test_user, create_parent_form
     ):
         """
         Test that the SCTO question mapping is inserted correctly
@@ -268,7 +316,7 @@ class TestForms:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_update_scto_question_mapping(self, client, csrf_token, create_form):
+    def test_update_scto_question_mapping(self, client, csrf_token, create_parent_form):
         """
         Test that the SCTO question mapping is updated correctly
         """
@@ -337,7 +385,7 @@ class TestForms:
         assert checkdiff == {}
 
     def test_delete_form_cascade_to_scto_question_mapping(
-        self, client, csrf_token, create_form
+        self, client, csrf_token, create_parent_form
     ):
         """
         Test that deleting the form deletes the SCTO question mapping
@@ -375,7 +423,7 @@ class TestForms:
         assert response.status_code == 404
 
     def test_delete_scto_question_mapping(
-        self, client, login_test_user, create_form, csrf_token
+        self, client, login_test_user, create_parent_form, csrf_token
     ):
         """
         Test that a question mapping can be deleted
@@ -415,7 +463,7 @@ class TestForms:
         assert response.status_code == 404
 
     def test_scto_form_definition(
-        self, client, login_test_user, csrf_token, create_form
+        self, client, login_test_user, csrf_token, create_parent_form
     ):
         """
         Test ingest the scto form definition from SCTO and fetching them from the database
@@ -441,7 +489,7 @@ class TestForms:
         assert checkdiff == {}
 
     def test_refresh_scto_form_definition(
-        self, client, login_test_user, csrf_token, create_form
+        self, client, login_test_user, csrf_token, create_parent_form
     ):
         """
         Test that refreshing the scto form definition from SCTO gives the same result
@@ -473,7 +521,7 @@ class TestForms:
         assert checkdiff == {}
 
     def test_delete_parent_form_cascade_to_scto_form_definition(
-        self, client, login_test_user, csrf_token, create_form
+        self, client, login_test_user, csrf_token, create_parent_form
     ):
         """
         Test that deleting the parent form deletes the scto form definition
@@ -500,7 +548,7 @@ class TestForms:
         assert response.status_code == 404
 
     def test_delete_scto_form_definition(
-        self, client, login_test_user, create_form, csrf_token
+        self, client, login_test_user, create_parent_form, csrf_token
     ):
         """
         Test that a form definition can be deleted
@@ -526,3 +574,36 @@ class TestForms:
 
         assert response.status_code == 200
         assert response.json == {"data": None, "success": True}
+
+    def test_create_dq_form(self, client, login_test_user, create_dq_form):
+        """
+        Test that the dq form is inserted correctly
+        """
+
+        # Test the form was inserted correctly
+        response = client.get("/api/forms?survey_uid=1&form_type=dq")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {
+                    "form_uid": 2,
+                    "survey_uid": 1,
+                    "scto_form_id": "test_scto_dq",
+                    "form_name": "Agrifieldnet AA Form",
+                    "tz_name": "Asia/Kolkata",
+                    "scto_server_name": "dod",
+                    "encryption_key_shared": True,
+                    "server_access_role_granted": True,
+                    "server_access_allowed": True,
+                    "last_ingested_at": None,
+                    "form_type": "dq",
+                    "parent_form_uid": 1,
+                    "dq_form_type": "audioaudit",
+                }
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}

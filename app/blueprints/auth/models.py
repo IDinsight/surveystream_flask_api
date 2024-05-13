@@ -14,7 +14,7 @@ class User(db.Model):
 
     user_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     email = db.Column(db.String(), unique=True, nullable=False)
-    password_secure = db.Column(db.String(), nullable=False)
+    password_secure = db.Column(db.String(), nullable=True)
     first_name = db.Column(db.String())
     middle_name = db.Column(db.String())
     last_name = db.Column(db.String())
@@ -25,14 +25,54 @@ class User(db.Model):
     avatar_s3_filekey = db.Column(db.String())
     active = db.Column(db.Boolean(), nullable=False, server_default="t")
 
-    def __init__(self, email, password):
+    ## rbac fields
+    roles = db.Column(db.ARRAY(db.Integer), default=[], nullable=True)
+    is_super_admin = db.Column(db.Boolean, default=False, nullable=True)
+    can_create_survey = db.Column(db.Boolean, default=False, nullable=True)
+
+    def __init__(
+        self,
+        email,
+        first_name,
+        last_name,
+        active=True,
+        password=None,
+        is_super_admin=False,
+        can_create_survey=False,
+        roles=None,
+    ):
+        if roles is None:
+            roles = []
+
         self.email = email
-        self.password_secure = pbkdf2_sha256.hash(password)
-        self.active = True
-        db.session.add(self)
-        db.session.commit()
+        self.first_name = first_name
+        self.last_name = last_name
+        if password is not None:
+            self.password_secure = pbkdf2_sha256.hash(password)
+        else:
+            self.password_secure = None
+        self.roles = roles
+        self.is_super_admin = is_super_admin
+        self.can_create_survey = can_create_survey
+        self.active = active
+
+    def to_dict(self):
+        return {
+            "user_uid": self.user_uid,
+            "email": self.email,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "roles": self.roles,
+            "is_super_admin": self.is_super_admin,
+            "can_create_survey": self.can_create_survey,
+            "active": self.active,
+        }
 
     def verify_password(self, password):
+        if self.password_secure == None:
+            # Handle the case where password_secure is None
+            # This will result in the user getting a 401 unauthorized
+            return False
         return pbkdf2_sha256.verify(password, self.password_secure)
 
     def change_password(self, new_password):
@@ -67,6 +107,21 @@ class User(db.Model):
         False, as anonymous users aren't supported.
         """
         return False
+
+    ##############################################################################
+    # RBAC
+    ##############################################################################
+    def get_roles(self):
+        """
+        Return user roles for rbac
+        """
+        return self.roles
+
+    def get_is_super_admin(self):
+        return self.is_super_admin
+
+    def get_can_create_survey(self):
+        return self.can_create_survey
 
 
 class ResetPasswordToken(db.Model):

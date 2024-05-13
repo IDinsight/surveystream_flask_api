@@ -2,19 +2,16 @@ import io
 import pandas as pd
 import numpy as np
 from app import db
-from sqlalchemy import insert, update, func, cast
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import insert
 from csv import DictReader
 from app.blueprints.locations.models import Location
-from .models import Target, TargetColumnConfig
+from .models import Target
 from .errors import (
     HeaderRowEmptyError,
     InvalidTargetRecordsError,
     InvalidColumnMappingError,
     InvalidFileStructureError,
-    InvalidNewColumnError,
 )
-
 
 class TargetColumnMapping:
     """
@@ -43,15 +40,15 @@ class TargetColumnMapping:
     def to_dict(self):
         result = {}
 
-        if hasattr(self, 'target_id') and self.target_id:
+        if hasattr(self, "target_id") and self.target_id:
             result["target_id"] = self.target_id
-        if hasattr(self, 'language') and self.language:
+        if hasattr(self, "language") and self.language:
             result["language"] = self.language
-        if hasattr(self, 'location_id_column') and self.location_id_column:
+        if hasattr(self, "location_id_column") and self.location_id_column:
             result["location_id_column"] = self.location_id_column
-        if hasattr(self, 'gender') and self.gender:
+        if hasattr(self, "gender") and self.gender:
             result["gender"] = self.gender
-        if hasattr(self, 'custom_fields') and self.custom_fields:
+        if hasattr(self, "custom_fields") and self.custom_fields:
             result["custom_fields"] = self.custom_fields
 
         return result
@@ -267,9 +264,9 @@ class TargetsUpload:
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                non_null_columns_df.at[
-                    index, "errors"
-                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                non_null_columns_df.at[index, "errors"] = (
+                    f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                )
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],
@@ -369,9 +366,9 @@ class TargetsUpload:
                     }
                 )
 
-                invalid_location_id_df[
-                    "errors"
-                ] = "Location id not found in uploaded locations data for the survey's bottom level geo level"
+                invalid_location_id_df["errors"] = (
+                    "Location id not found in uploaded locations data for the survey's bottom level geo level"
+                )
                 invalid_records_df = invalid_records_df.merge(
                     invalid_location_id_df["errors"],
                     how="left",
@@ -437,14 +434,15 @@ class TargetsUpload:
         records_to_write = []
 
         for row in self.targets_df.drop_duplicates().itertuples():
-            target_dict = self.__build_target_dict(row, column_mapping, location_uid_lookup)
+            target_dict = self.__build_target_dict(
+                row, column_mapping, location_uid_lookup
+            )
 
             # Ensure 'custom_fields' exists and add 'column_mapping'
-            custom_fields = target_dict.setdefault('custom_fields', {})
-            custom_fields.setdefault('column_mapping', column_mapping.to_dict())
+            custom_fields = target_dict.setdefault("custom_fields", {})
+            custom_fields.setdefault("column_mapping", column_mapping.to_dict())
 
             records_to_write.append(target_dict)
-
 
         if write_mode == "overwrite":
             # For the overwrite mode, delete existing records for the form and insert the records in chunks of 1000 using the fast bulk insert method
@@ -454,27 +452,28 @@ class TargetsUpload:
             chunk_size = 1000
             for pos in range(0, len(records_to_write), chunk_size):
                 db.session.execute(
-                    insert(Target).values(
-                        records_to_write[pos: pos + chunk_size])
+                    insert(Target).values(records_to_write[pos : pos + chunk_size])
                 )
                 db.session.flush()
 
         elif write_mode == "merge":
             # This mode will include new records added and update the existing records with the new data;
             # target_id columns should not be updated
-            target_ids = [item['target_id'] for item in records_to_write]
+            target_ids = [item["target_id"] for item in records_to_write]
 
             # Collect records to update separately from the records to insert, so we can perform bulk updates reducing db overhead
             records_to_insert = []
             records_to_update = []
 
-            existing_targets = db.session.query(Target.target_id).filter(
-                Target.form_uid == self.form_uid,
-                Target.target_id.in_(target_ids)
-            ).all()
+            existing_targets = (
+                db.session.query(Target.target_id)
+                .filter(
+                    Target.form_uid == self.form_uid, Target.target_id.in_(target_ids)
+                )
+                .all()
+            )
 
             existing_target_ids = [result[0] for result in existing_targets]
-
 
             for row in records_to_write:
                 target_dict = row
@@ -484,41 +483,32 @@ class TargetsUpload:
                     records_to_insert.append(target_dict)
 
             for record in records_to_update:
-                if any(key for key in record if key not in ["target_id", "form_uid", "custom_fields"]):
+                update_values = {
+                    key: record[key]
+                    for key in record
+                    if key not in ["target_id", "form_uid", "custom_fields"]
+                }
+
+                if update_values:
                     Target.query.filter(
                         Target.target_id == record["target_id"],
                         Target.form_uid == self.form_uid,
-                    ).update(
-                        {
-                            key: record[key]
-                            for key in record
-                            if key not in ["target_id", "form_uid", "custom_fields"]
-                        },
-                        synchronize_session=False,
-                    )
+                    ).update(update_values, synchronize_session=False)
+
                 if "custom_fields" in record:
+                    target_record = Target.query.filter_by(
+                        target_id=record["target_id"], form_uid=record["form_uid"]
+                    ).first()
+
                     for field_name, field_value in record["custom_fields"].items():
-                        db.session.execute(
-                            update(Target)
-                            .values(
-                                custom_fields=func.jsonb_set(
-                                    Target.custom_fields,
-                                    "{%s}" % field_name,
-                                    cast(field_value, JSONB),
-                                    True  #add true to overwrite existing keys
-                                )
-                            )
-                            .where(
-                                Target.target_id == record["target_id"],
-                                Target.form_uid == record["form_uid"],
-                            )
-                        )
+                        target_record.custom_fields[field_name] = field_value
+
             if records_to_insert:
-               # Insert records in chunks to the database
+                # Insert records in chunks to the database
                 chunk_size = 1000
                 for pos in range(0, len(records_to_insert), chunk_size):
                     db.session.execute(
-                        insert(Target).values(records_to_insert[pos: pos + chunk_size])
+                        insert(Target).values(records_to_insert[pos : pos + chunk_size])
                     )
                     db.session.flush()
         db.session.commit()

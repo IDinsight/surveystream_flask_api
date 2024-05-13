@@ -28,22 +28,19 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture()
 def app():
+    """
+    Import the app
+    """
     app = create_app()
-    # other setup can go here
-
     yield app
-
-    # clean up / reset resources here
 
 
 @pytest.fixture()
 def client(app):
+    """
+    Create the test client
+    """
     return app.test_client()
-
-
-@pytest.fixture()
-def runner(app):
-    return app.test_cli_runner()
 
 
 @pytest.fixture(scope="session")
@@ -57,9 +54,10 @@ def test_user_credentials():
 
     users = {
         "core": {
+            "user_uid": 1,
             "email": settings["email"],
-            "user_uid": 3933,
             "password": "asdfasdf",
+            "is_super_admin": True,
         }
     }
 
@@ -139,16 +137,16 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
             db.create_all()
 
         db.session.execute(
-            open(f"{filepath}/tests/data/launch_local_db/load_data.sql", "r").read()
+            open(f"{filepath}/tests/data/launch_local_db/load_seeds.sql", "r").read()
         )
 
-        # Set the credentials for the desired test user
+        # Insert the test user
         db.session.execute(
-            "UPDATE webapp.users SET email=:email, password_secure=:pw_hash WHERE user_uid=:user_uid",
+            "INSERT INTO webapp.users (email, password_secure, is_super_admin) VALUES (:email, :pw_hash, :is_super_admin) ON CONFLICT DO NOTHING",
             {
                 "email": test_user_credentials["email"],
                 "pw_hash": test_user_credentials["pw_hash"],
-                "user_uid": test_user_credentials["user_uid"],
+                "is_super_admin": test_user_credentials["is_super_admin"],
             },
         )
 
@@ -156,10 +154,11 @@ def setup_database(app, test_user_credentials, registration_user_credentials):
 
         # Add the registration user
         db.session.execute(
-            "INSERT INTO webapp.users (email, password_secure) VALUES (:email, :pw_hash) ON CONFLICT DO NOTHING",
+            "INSERT INTO webapp.users (email, password_secure, is_super_admin) VALUES (:email, :pw_hash, :is_super_admin) ON CONFLICT DO NOTHING",
             {
                 "email": registration_user_credentials["email"],
                 "pw_hash": registration_user_credentials["pw_hash"],
+                "is_super_admin": test_user_credentials["is_super_admin"],
             },
         )
 

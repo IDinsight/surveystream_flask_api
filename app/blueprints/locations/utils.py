@@ -53,6 +53,13 @@ class GeoLevelHierarchy:
 
         # Prechecks before we validate the tree
 
+        # There should be at least one geo level
+        if len(self.geo_levels) == 0:
+            errors_list.append(
+                "Cannot create the location type hierarchy because no location types have been defined for the survey."
+            )
+            raise InvalidGeoLevelHierarchyError(errors_list)
+
         # There should be no duplicates on geo_level_uid
         geo_level_uids = [geo_level.geo_level_uid for geo_level in self.geo_levels]
         for geo_level_uid in geo_level_uids:

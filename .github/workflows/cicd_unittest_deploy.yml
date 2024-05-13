@@ -21,10 +21,10 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Load .env file
-        uses: xom9ikk/dotenv@v1.0.2
+        uses: xom9ikk/dotenv@v2.2.0
         with:
           path: ./.github/workflows
           mode: variables
@@ -33,7 +33,7 @@ jobs:
         run: docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: "arn:aws:iam::${{ env.DEV_ACCOUNT }}:role/github-actions-role-flask-unittest"
           role-session-name: testingrolesession
@@ -67,15 +67,15 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Load .env file
-        uses: xom9ikk/dotenv@v1.0.2
+        uses: xom9ikk/dotenv@v2.2.0
         with:
           path: ./.github/workflows
           mode: variables
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: "arn:aws:iam::${{ env.DEV_ACCOUNT }}:role/github-actions-role-flask-unittest"
           role-session-name: testingrolesession
@@ -132,6 +132,18 @@ jobs:
             echo "DB is not up to date";\
             exit 1;\
           fi
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-post-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: web-callisto-ecr-repository
+          IMAGE_TAG: PostMigration
+
+        run: |
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
+          docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   Deploy-Staging:
     if: github.event_name == 'push' &&  github.ref == 'refs/heads/staging'
@@ -144,9 +156,9 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Load .env file
-        uses: xom9ikk/dotenv@v1.0.2
+        uses: xom9ikk/dotenv@v2.2.0
         with:
           path: ./.github/workflows
           mode: variables
@@ -192,11 +204,27 @@ jobs:
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        timeout-minutes: 3
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: backend
           cluster: web-callisto-cluster
           wait-for-service-stability: true
+      # We need to wait for the application to start we can check if it was successful. The value of 1 minute is arbitrary and can be changed
+      - name: Wait for Application to start
+        id: deployment-complete
+        run: sleep 1m
+        shell: bash
+
+      - name: Check if deployment was successful
+        id: check-deployment
+        run: |
+          RUNNING_TASKS=$(aws ecs describe-services --cluster web-callisto-cluster --services backend --query services[0].deployments[0].runningCount | jq -r ".")
+              
+          if [ "$RUNNING_TASKS" -eq "0" ]; then
+            echo "Deployment failed."
+            exit 1
+          fi
 
   Deploy-Production:
     if: github.event_name == 'push' &&  github.ref == 'refs/heads/production'
@@ -209,9 +237,9 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Load .env file
-        uses: xom9ikk/dotenv@v1.0.2
+        uses: xom9ikk/dotenv@v2.2.0
         with:
           path: ./.github/workflows
           mode: variables
@@ -257,8 +285,24 @@ jobs:
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        timeout-minutes: 3
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: backend
           cluster: web-callisto-cluster
           wait-for-service-stability: true
+      # We need to wait for the application to start we can check if it was successful. The value of 1 minute is arbitrary and can be changed
+      - name: Wait for Application to start
+        id: deployment-complete
+        run: sleep 1m
+        shell: bash
+
+      - name: Check if deployment was successful
+        id: check-deployment
+        run: |
+          RUNNING_TASKS=$(aws ecs describe-services --cluster web-callisto-cluster --services backend --query services[0].deployments[0].runningCount | jq -r ".")
+              
+          if [ "$RUNNING_TASKS" -eq "0" ]; then
+            echo "Deployment failed."
+            exit 1
+          fi

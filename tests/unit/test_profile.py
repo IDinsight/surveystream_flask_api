@@ -113,7 +113,6 @@ class TestProfile:
                 "Content-Type": "multipart/form-data",
             },
         )
-
         assert response.status_code == 200
 
         response = client.get("/api/profile/avatar")
@@ -162,15 +161,28 @@ class TestProfile:
         response = client.get("/api/profile")
         assert response.status_code == 200
 
-        reference_data = load_reference_data("profile.json")
-        reference_data["email"] = test_user_credentials["email"]
-        reference_data["user_uid"] = test_user_credentials["user_uid"]
+        expected_response = {
+            "user_uid": test_user_credentials["user_uid"],
+            "email": test_user_credentials["email"],
+            "first_name": None,
+            "home_district_name": None,
+            "home_state_name": None,
+            "last_name": None,
+            "middle_name": None,
+            "phone_primary": None,
+            "is_super_admin": True,
+            "can_create_survey": None,
+            "admin_surveys": [],
+            "roles": [],
+        }
 
-        checkdiff = jsondiff.diff(reference_data, response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
 
         assert checkdiff == {}
 
-    def test_profile_update(self, client, login_test_user, csrf_token):
+    def test_profile_update(
+        self, client, login_test_user, test_user_credentials, csrf_token
+    ):
         """
         Check updating the user's email
         """
@@ -185,12 +197,27 @@ class TestProfile:
 
         response = client.get("/api/profile")
 
+        expected_response = {
+            "user_uid": test_user_credentials["user_uid"],
+            "email": new_email,
+            "first_name": None,
+            "home_district_name": None,
+            "home_state_name": None,
+            "last_name": None,
+            "middle_name": None,
+            "phone_primary": None,
+            "is_super_admin": True,
+            "can_create_survey": None,
+            "admin_surveys": [],
+            "roles": [],
+        }
+
         checkdiff = jsondiff.diff(
-            load_reference_data("profile.json"),
+            expected_response,
             response.json,
         )
 
-        assert checkdiff == {"email": new_email}
+        assert checkdiff == {}
 
     def test_profile_update_invalid_email(self, client, login_test_user, csrf_token):
         """

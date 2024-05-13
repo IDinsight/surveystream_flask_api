@@ -12,6 +12,9 @@ class Config:
     DEBUG = False
     TESTING = False
     WTF_CSRF_ENABLED = True
+    WTF_CSRF_CHECK_DEFAULT = False
+    WTF_CSRF_HEADERS = ["X-CSRF-Token"]
+    WTF_CSRF_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
 
     # AWS region
     AWS_REGION = os.getenv("AWS_REGION")
@@ -72,7 +75,11 @@ class Config:
         "root": {"handlers": ["stream"], "level": "INFO"},
     }
 
+    ENABLE_CORS = True
     SENTRY_CONFIG = {"dsn": ""}
+    ORIGINS = ["http://localhost:*"]
+    SESSION_COOKIE_HTTPONLY = False
+    REMEMBER_COOKIE_HTTPONLY = False
 
 
 class LocalDevelopmentConfig(Config):
@@ -87,6 +94,14 @@ class LocalDevelopmentConfig(Config):
     )
 
     PROTECT_DOCS_ENDPOINT = False
+
+    ENABLE_CORS = True
+
+    ORIGINS = ["http://localhost:*"]
+
+    SESSION_COOKIE_HTTPONLY = False
+    REMEMBER_COOKIE_HTTPONLY = False
+
 
 class MigrationConfig(Config):
     DEBUG = True
@@ -134,6 +149,7 @@ class UnitTestConfig(Config):
     TESTING = True
     DEBUG = True
 
+
 class DBCheckConfig(Config):
     SQLALCHEMY_DATABASE_URI = "postgresql://%s:%s@%s:%s/%s" % (
         "test_user",
@@ -156,13 +172,17 @@ class StagingConfig(Config):
         Config.DB_NAME,
     )
 
-    REACT_BASE_URL = "https://callisto.stg.surveystream.idinsight.io"
+    REACT_BASE_URL = "https://stg.surveystream.idinsight.io"
 
     SENTRY_CONFIG = {
         "dsn": "https://c320e08cbf204069afb2cc62ee498018@o564222.ingest.sentry.io/4505070237319168",
         "traces_sample_rate": "1.0",
         "environment": "staging-callisto",
     }
+
+    ORIGINS = ["https://*.idinsight.io"]
+
+    ENABLE_CORS = False
 
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False
@@ -182,8 +202,12 @@ class ProductionConfig(Config):
     SENTRY_CONFIG = {
         "dsn": "https://c320e08cbf204069afb2cc62ee498018@o564222.ingest.sentry.io/4505070237319168",
         "traces_sample_rate": "1.0",
-        "environment": "production",
+        "environment": "production-callisto",
     }
+
+    ORIGINS = ["https://*.idinsight.io"]
+
+    ENABLE_CORS = False
 
     SESSION_COOKIE_HTTPONLY = False
     REMEMBER_COOKIE_HTTPONLY = False

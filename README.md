@@ -46,9 +46,7 @@ When running the backend locally, the docs can be accessed without logging in at
 
 The tests can be configured by updating the values found in `tests/unit/config.yml`:
 
-`email` (string) - The email address to set for the test user. Updating this value will let you customize where emails will be sent for the relevant tests (`forgot-password`, `welcome-user`, etc). You will need to manually check receipt of the emails.
-
-`run_slow_tests` (bool) - Whether to run test cases that have been marked as "slow". Setting this value to True will run the whole test suite which can take over an hour. 
+`email` (string) - The email address to set for the test user. Updating this value will let you customize where emails will be sent for the relevant tests (`forgot-password`, `welcome-user`, etc). You will need to manually check receipt of the emails. 
 
 ### Build the image
 

@@ -10,7 +10,7 @@ import logging.config
 import wtforms_json
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_login import LoginManager
 from flask_mail import Mail
 from app.config import Config
@@ -18,6 +18,8 @@ from sqlalchemy import MetaData
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from flask_cors import CORS
+from flask_wtf.csrf import CSRFProtect, CSRFError
 
 
 db = SQLAlchemy(
@@ -35,6 +37,7 @@ migrate = Migrate()
 mail = Mail()
 login_manager = LoginManager()
 wtforms_json.init()
+csrf = CSRFProtect()
 
 
 ### Application Factory ###
@@ -44,6 +47,10 @@ def create_app():
     # Configure the flask app instance
     CONFIG_TYPE = os.getenv("CONFIG_TYPE", default="app.config.DevelopmentConfig")
     app.config.from_object(CONFIG_TYPE)
+
+    if app.config["ENABLE_CORS"]:
+        # initialize cors per environment
+        CORS(app, origins=app.config["ORIGINS"], supports_credentials=True)
 
     # Configure logging
     logging.config.dictConfig(app.config["LOGGING_CONFIG"])
@@ -62,6 +69,7 @@ def create_app():
     migrate.init_app(app, db)
     mail.init_app(app)
     login_manager.init_app(app)
+    csrf.init_app(app)
 
     # Configure login manager
     from app.blueprints.auth.models import User
@@ -81,15 +89,23 @@ def create_app():
     # Register error handlers
     register_error_handlers(app)
 
+    @app.before_request
+    def check_csrf_token():
+        if request.method in app.config["WTF_CSRF_METHODS"]:
+            if "X-CSRF-Token" not in request.headers:
+                return jsonify(message="X-CSRF-Token required in header"), 403
+            else:
+                csrf.protect()
+
     return app
 
 
 ### Helper Functions ###
 def register_blueprints(app):
-    # from app.blueprints.assignments import assignments_bp
     from app.blueprints.auth import auth_bp
-    from app.blueprints.docs import docs_bp
 
+    from app.blueprints.assignments import assignments_bp
+    from app.blueprints.docs import docs_bp
     from app.blueprints.enumerators import enumerators_bp
     from app.blueprints.forms import forms_bp
     from app.blueprints.healthcheck import healthcheck_bp
@@ -99,14 +115,15 @@ def register_blueprints(app):
     from app.blueprints.roles import roles_bp
     from app.blueprints.locations import locations_bp
     from app.blueprints.surveys import surveys_bp
-
-    # from app.blueprints.table_config import table_config_bp
+    from app.blueprints.target_status_mapping import target_status_mapping_bp
     from app.blueprints.targets import targets_bp
     from app.blueprints.timezones import timezones_bp
     from app.blueprints.user_management import user_management_bp
+    from app.blueprints.emails import emails_bp
 
-    # app.register_blueprint(assignments_bp)
+    # Auth needs to be registered first to avoid circular imports
     app.register_blueprint(auth_bp)
+    app.register_blueprint(assignments_bp)
     app.register_blueprint(docs_bp)
     app.register_blueprint(enumerators_bp)
     app.register_blueprint(forms_bp)
@@ -117,10 +134,11 @@ def register_blueprints(app):
     app.register_blueprint(roles_bp)
     app.register_blueprint(locations_bp)
     app.register_blueprint(surveys_bp)
-    # app.register_blueprint(table_config_bp)
+    app.register_blueprint(target_status_mapping_bp)
     app.register_blueprint(targets_bp)
     app.register_blueprint(timezones_bp)
     app.register_blueprint(user_management_bp)
+    app.register_blueprint(emails_bp)
 
 
 def register_error_handlers(app):
@@ -136,7 +154,14 @@ def register_error_handlers(app):
     def internal_server_error(e):
         return jsonify(message=str(e)), 500
 
+    def handle_csrf_error(e):
+        return (
+            jsonify({"message": {"csrf_token": ["The CSRF token is invalid."]}}),
+            422,
+        )
+
     app.register_error_handler(401, unauthorized)
     app.register_error_handler(403, forbidden)
     app.register_error_handler(404, page_not_found)
     app.register_error_handler(500, internal_server_error)
+    app.register_error_handler(CSRFError, handle_csrf_error)
