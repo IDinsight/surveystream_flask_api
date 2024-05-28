@@ -1,25 +1,28 @@
-from . import emails_bp
+from datetime import datetime, time
+
+from flask import jsonify
+
+from app import db
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
     validate_payload,
     validate_query_params,
 )
-from flask import jsonify
-from app import db
+
+from . import emails_bp
+from .models import EmailConfig, EmailSchedule, EmailTemplate, ManualEmailTrigger
 from .validators import (
     EmailConfigQueryParamValidator,
     EmailConfigValidator,
     EmailScheduleQueryParamValidator,
     EmailScheduleValidator,
-    ManualEmailTriggerPatchValidator,
-    ManualEmailTriggerValidator,
-    EmailTemplateValidator,
-    ManualEmailTriggerQueryParamValidator,
     EmailTemplateQueryParamValidator,
+    EmailTemplateValidator,
+    ManualEmailTriggerPatchValidator,
+    ManualEmailTriggerQueryParamValidator,
+    ManualEmailTriggerValidator,
 )
-from .models import EmailConfig, EmailSchedule, ManualEmailTrigger, EmailTemplate
-from datetime import datetime, time
 
 
 @emails_bp.route("/config", methods=["POST"])
@@ -34,6 +37,19 @@ def create_email_config(validated_payload):
         "config_type": validated_payload.config_type.data,
         "form_uid": validated_payload.form_uid.data,
     }
+
+    # Check if the email config already exists
+    check_config_exists = EmailConfig.query.filter_by(
+        form_uid=validated_payload.form_uid.data,
+        config_type=validated_payload.config_type.data,
+    ).first()
+    if check_config_exists is not None:
+        return (
+            jsonify(
+                {"error": "Email Config already exists, Use PUT methood for update"}
+            ),
+            400,
+        )
 
     email_config = EmailConfig(
         **config_values,
@@ -187,6 +203,7 @@ def create_email_schedule(validated_payload):
 
     schedule_values = {
         "email_config_uid": validated_payload.email_config_uid.data,
+        "email_schedule_name": validated_payload.email_schedule_name.data,
         "dates": validated_payload.dates.data,
         "time": time_obj,
     }
@@ -213,7 +230,7 @@ def create_email_schedule(validated_payload):
     )
 
 
-@emails_bp.route("/schedules", methods=["GET"])
+@emails_bp.route("/schedule", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(EmailScheduleQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "email_config_uid")
@@ -299,6 +316,7 @@ def update_email_schedule(schedule_id, validated_payload):
     email_schedule.email_config_uid = validated_payload.email_config_uid.data
     email_schedule.dates = validated_payload.dates.data
     email_schedule.time = time_obj
+    email_schedule.email_schedule_name = validated_payload.email_schedule_name.data
 
     try:
         db.session.commit()

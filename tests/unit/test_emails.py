@@ -1,10 +1,11 @@
+from datetime import datetime, timedelta
+
 import jsondiff
 import pytest
-from datetime import datetime, timedelta
 from utils import (
-    update_logged_in_user_roles,
-    login_user,
     create_new_survey_role_with_permissions,
+    login_user,
+    update_logged_in_user_roles,
 )
 
 
@@ -223,6 +224,7 @@ class TestEmails:
             "dates": future_dates,
             "time": "20:00",
             "email_config_uid": create_email_config["email_config_uid"],
+            "email_schedule_name": "Test Schedule",
         }
         response = client.post(
             "/api/emails/schedule",
@@ -523,6 +525,7 @@ class TestEmails:
                     "email_config_uid": 1,
                     "email_schedule_uid": 1,
                     "time": "20:00:00",
+                    "email_schedule_name": "Test Schedule",
                 },
                 "success": True,
             }
@@ -559,7 +562,7 @@ class TestEmails:
         request.getfixturevalue(user_fixture)
 
         response = client.get(
-            f"api/emails/schedules?email_config_uid=1",
+            f"api/emails/schedule?email_config_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -576,6 +579,7 @@ class TestEmails:
                         "email_config_uid": 1,
                         "email_schedule_uid": 1,
                         "time": "20:00:00",
+                        "email_schedule_name": "Test Schedule",
                     }
                 ],
                 "success": True,
@@ -627,6 +631,7 @@ class TestEmails:
             "dates": future_dates,
             "time": "20:00",
             "email_config_uid": 2,
+            "email_schedule_name": "Test Schedule",
         }
         response = client.post(
             "/api/emails/schedule",
@@ -658,6 +663,7 @@ class TestEmails:
             "email_config_uid": 2,
             "dates": future_dates,
             "time": "08:00",
+            "email_schedule_name": "Test Schedule",
         }
 
         response = client.put(
@@ -693,6 +699,7 @@ class TestEmails:
             "email_config_uid": 1,
             "dates": future_dates,
             "time": "08:00",
+            "email_schedule_name": "Test Schedule",
         }
 
         response = client.put(
@@ -746,6 +753,7 @@ class TestEmails:
                         "email_schedule_uid": create_email_schedule[
                             "email_schedule_uid"
                         ],
+                        "email_schedule_name": "Test Schedule",
                     },
                     "success": True,
                 },
@@ -1258,12 +1266,12 @@ class TestEmails:
             assert checkdiff == {}
 
     def test_emails_create_email_template_exception(
-            self,
-            client,
-            login_test_user,
-            csrf_token,
-            test_user_credentials,
-            create_email_config,
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_email_config,
     ):
         """
         Test create email templates exceptions
@@ -1281,6 +1289,7 @@ class TestEmails:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 500
+
     def test_emails_get_templates(
         self, client, csrf_token, create_email_template, user_permissions, request
     ):
@@ -1393,6 +1402,7 @@ class TestEmails:
                 response.json,
             )
             assert checkdiff == {}
+
     def test_emails_update_template_exception(
         self, client, csrf_token, create_email_template, request
     ):
@@ -1401,12 +1411,11 @@ class TestEmails:
         Expect error
         """
 
-
         payload = {
             "subject": "Test Update Email",
             "language": "Hindi",
             "content": "Test Content",
-            "email_config_uid": 2, #to cause exception
+            "email_config_uid": 2,  # to cause exception
         }
         response = client.put(
             f"/api/emails/template/{create_email_template['email_template_uid']}",
@@ -1417,10 +1426,7 @@ class TestEmails:
 
         print(response.json)
 
-
         assert response.status_code == 500
-
-
 
     def test_emails_delete_template(
         self, client, csrf_token, create_email_template, user_permissions, request
