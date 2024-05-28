@@ -8,10 +8,10 @@ READ Targets,Read Targets permission,true
 WRITE Targets,Write Targets permission,true
 READ Assignments,Read Assignments permission,true
 WRITE Assignments,Write Assignments permission,true
-READ Audio Audits,Read Audio Audits permission,true
-WRITE Audio Audits,Write Audio Audits permission,true
-READ Photo Audits,Read Photo Audits permission,true
-WRITE Photo Audits,Write Photo Audits permission,true
+READ Media Files Config,Read Media Files Config permission,true
+WRITE Media Files Config,Write Media Files Config permission,true
+READ Media Files,Read Media Files permission,true
+WRITE Media Files,Write Media Files permission,true
 READ Productivity,Read Productivity permission,true
 WRITE Productivity,Write Productivity permission,true
 READ Data Quality,Read Data Quality permission,true
