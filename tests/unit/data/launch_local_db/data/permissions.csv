@@ -18,5 +18,5 @@ READ Data Quality,Read Data Quality permission,true
 WRITE Data Quality,Write Data Quality permission,true
 READ Emails,Read Emails permission,true
 WRITE Emails,Write Emails permission,true
-READ Target Status,Read Target Status permission,true
-WRITE Target Status,Write Target Status permission,true
+READ Target Status Mapping,Read Target Status Mapping permission,true
+WRITE Target Status Mapping,Write Target Status Mapping permission,true
