@@ -5774,7 +5774,7 @@ paths:
           description: Target not found
         "422":
           description: Target errors
-  /emails/configs:
+  /emails/config:
     post:
       tags:
         - emails
@@ -5827,6 +5827,19 @@ paths:
                 required:
                   - success
                   - data
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Email Config already exists, Use PUT methood for update"
+                required:
+                  - error
         "500":
           description: Server error
           content:
@@ -6135,7 +6148,6 @@ paths:
                   - email_config_uid
                   - dates
                   - time
-  /emails/schedules:
     get:
       summary: Get email schedules for a specific config
       tags:
@@ -6337,6 +6349,51 @@ paths:
                   - date
                   - time
                   - status
+    get:
+      summary: Get manual email triggers for a specific form
+      tags:
+        - Emails
+      parameters:
+        - name: email_config_uid
+          in: query
+          description: Unique identifier for the form
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Manual email triggers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                description: a list of email triggers
+                items:
+                  type: object
+                  properties:
+                    email_config_uid:
+                      type: integer
+                    date:
+                      type: string
+                      format: date
+                    time:
+                      type: string
+                      format: time
+                    recipients:
+                      type: array
+                      items:
+                        type: integer
+                    status:
+                      type: string
+                      enum:
+                        - queued
+                        - sent
+                        - failed
+                  required:
+                    - form_uid
+                    - date
+                    - time
+                    - recipients
 
   /emails/manual-trigger/{manual_email_trigger_uid}:
     patch:
@@ -6476,52 +6533,7 @@ paths:
                   - date
                   - time
                   - status
-  /emails/manual-triggers:
-    get:
-      summary: Get manual email triggers for a specific form
-      tags:
-        - Emails
-      parameters:
-        - name: email_config_uid
-          in: query
-          description: Unique identifier for the form
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Manual email triggers retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                description: a list of email triggers
-                items:
-                  type: object
-                  properties:
-                    email_config_uid:
-                      type: integer
-                    date:
-                      type: string
-                      format: date
-                    time:
-                      type: string
-                      format: time
-                    recipients:
-                      type: array
-                      items:
-                        type: integer
-                    status:
-                      type: string
-                      enum:
-                        - queued
-                        - sent
-                        - failed
-                  required:
-                    - form_uid
-                    - date
-                    - time
-                    - recipients
+    
   /emails/template:
     post:
       summary: Create a new email template
@@ -6568,7 +6580,6 @@ paths:
                   - subject
                   - language
                   - content
-  /emails/templates:
     get:
       summary: Get all email templates
       tags:

@@ -347,7 +347,7 @@ class TestEmails:
         request.getfixturevalue(user_fixture)
 
         response = client.get(
-            f"api/emails/configs?form_uid=1",
+            f"api/emails/config?form_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -927,7 +927,7 @@ class TestEmails:
         request.getfixturevalue(user_fixture)
 
         response = client.get(
-            f"api/emails/manual-triggers?email_config_uid=1",
+            f"api/emails/manual-trigger?email_config_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -1302,7 +1302,7 @@ class TestEmails:
         request.getfixturevalue(user_fixture)
 
         response = client.get(
-            f"api/emails/templates?email_config_uid=1",
+            f"api/emails/template?email_config_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )

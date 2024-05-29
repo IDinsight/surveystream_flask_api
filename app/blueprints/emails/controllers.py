@@ -73,7 +73,7 @@ def create_email_config(validated_payload):
     )
 
 
-@emails_bp.route("/configs", methods=["GET"])
+@emails_bp.route("/config", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(EmailConfigQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "form_uid")
@@ -207,6 +207,19 @@ def create_email_schedule(validated_payload):
         "dates": validated_payload.dates.data,
         "time": time_obj,
     }
+
+    # Check if the email schedule already exists
+    check_schedule_exists = EmailSchedule.query.filter_by(
+        email_config_uid=validated_payload.email_config_uid.data,
+        email_schedule_name=validated_payload.email_schedule_name.data,
+    ).first()
+    if check_schedule_exists is not None:
+        return (
+            jsonify(
+                {"error": "Email Schedule already exists, Use PUT methood for update"}
+            ),
+            400,
+        )
 
     new_schedule = EmailSchedule(
         **schedule_values,
@@ -394,7 +407,7 @@ def create_manual_email_trigger(validated_payload):
     )
 
 
-@emails_bp.route("/manual-triggers", methods=["GET"])
+@emails_bp.route("/manual-trigger", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(ManualEmailTriggerQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "email_config_uid")
@@ -562,6 +575,20 @@ def create_email_template(validated_payload):
         "language": validated_payload.language.data,
         "content": validated_payload.content.data,
     }
+
+    # Check if the email template already exists
+    check_email_template_exists = EmailTemplate.query.filter_by(
+        email_config_uid=validated_payload.email_config_uid.data,
+        language=validated_payload.language.data,
+    ).first()
+    if check_email_template_exists is not None:
+        return (
+            jsonify(
+                {"error": "Email Template already exists, Use PUT methood for update"}
+            ),
+            400,
+        )
+
     new_template = EmailTemplate(**template_values)
 
     try:
@@ -582,7 +609,7 @@ def create_email_template(validated_payload):
     )
 
 
-@emails_bp.route("/templates", methods=["GET"])
+@emails_bp.route("/template", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(EmailTemplateQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "email_config_uid")
