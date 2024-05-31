@@ -124,13 +124,13 @@ class TestPermissions:
                 "permission_uid": 19,
             },
             {
-                "description": "Read Target Status permission",
-                "name": "READ Target Status",
+                "description": "Read Target Status Mapping permission",
+                "name": "READ Target Status Mapping",
                 "permission_uid": 20,
             },
             {
-                "description": "Write Target Status permission",
-                "name": "WRITE Target Status",
+                "description": "Write Target Status Mapping permission",
+                "name": "WRITE Target Status Mapping",
                 "permission_uid": 21,
             },
         ]
@@ -241,13 +241,13 @@ class TestPermissions:
                 "permission_uid": 19,
             },
             {
-                "description": "Read Target Status permission",
-                "name": "READ Target Status",
+                "description": "Read Target Status Mapping permission",
+                "name": "READ Target Status Mapping",
                 "permission_uid": 20,
             },
             {
-                "description": "Write Target Status permission",
-                "name": "WRITE Target Status",
+                "description": "Write Target Status Mapping permission",
+                "name": "WRITE Target Status Mapping",
                 "permission_uid": 21,
             },
             {

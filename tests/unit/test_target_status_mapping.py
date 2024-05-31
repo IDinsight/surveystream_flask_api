@@ -416,7 +416,7 @@ class TestTargetStatusMapping:
         Test uploading the target status mapping for non_admin users with roles
         """
         new_role = create_new_survey_role_with_permissions(
-            # 21 - WRITE Target Status
+            # 21 - WRITE Target Status Mapping
             client,
             test_user_credentials,
             "Survey Role",
@@ -586,7 +586,7 @@ class TestTargetStatusMapping:
 
         expected_response = {
             "success": False,
-            "error": f"User does not have the required permission: WRITE Target Status",
+            "error": f"User does not have the required permission: WRITE Target Status Mapping",
         }
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
