@@ -15,9 +15,11 @@ class CreateMediaFilesConfigValidator(FlaskForm):
     file_type = StringField(validators=[DataRequired()])
     source = StringField(validators=[DataRequired()])
     scto_fields = FieldList(StringField(), validators=[DataRequired()])
+    mapping_criteria = StringField()
 
 
 class MediaFilesConfigValidator(FlaskForm):
     file_type = StringField(validators=[DataRequired()])
     source = StringField(validators=[DataRequired()])
     scto_fields = FieldList(StringField(), validators=[DataRequired()])
+    mapping_criteria = StringField()

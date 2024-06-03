@@ -214,6 +214,7 @@ class TestMedaiFiles:
                         "district_id",
                         "status",
                     ],
+                    "mapping_criteria": None,
                 },
                 "success": True,
             }
@@ -266,6 +267,7 @@ class TestMedaiFiles:
                             "district_id",
                             "status",
                         ],
+                        "mapping_criteria": None,
                     }
                 ],
                 "success": True,
@@ -303,6 +305,7 @@ class TestMedaiFiles:
                 "district_id",
                 "status",
             ],
+            "mapping_criteria": "location",
         }
 
         response = client.put(

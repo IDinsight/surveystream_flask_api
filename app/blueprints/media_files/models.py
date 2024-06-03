@@ -34,12 +34,20 @@ class MediaFilesConfig(db.Model):
         nullable=False,
     )
     scto_fields = db.Column(db.ARRAY(db.String()))
+    mapping_criteria = db.Column(
+        db.String(),
+        CheckConstraint(
+            "mapping_criteria IN ('location','language')",
+            name="ck_media_files_config_mapping_criteria",
+        ),
+    )
 
-    def __init__(self, form_uid, file_type, source, scto_fields):
+    def __init__(self, form_uid, file_type, source, scto_fields, mapping_criteria):
         self.form_uid = form_uid
         self.file_type = file_type
         self.source = source
         self.scto_fields = scto_fields
+        self.mapping_criteria = mapping_criteria
 
     def to_dict(self):
         return {
@@ -48,4 +56,5 @@ class MediaFilesConfig(db.Model):
             "file_type": self.file_type,
             "source": self.source,
             "scto_fields": self.scto_fields,
+            "mapping_criteria": self.mapping_criteria,
         }

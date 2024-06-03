@@ -33,6 +33,7 @@ def get_media_files_configs(validated_query_params):
             "file_type": config.file_type,
             "source": config.source,
             "scto_fields": config.scto_fields,
+            "mapping_criteria": config.mapping_criteria,
         }
         for config in media_files_config
     ]
@@ -84,6 +85,7 @@ def create_media_files_config(validated_payload):
         file_type=validated_payload.file_type.data,
         source=validated_payload.source.data,
         scto_fields=validated_payload.scto_fields.data,
+        mapping_criteria=validated_payload.mapping_criteria.data,
     )
 
     try:
@@ -122,6 +124,7 @@ def update_media_files_config(media_files_config_uid, validated_payload):
     media_files_config.file_type = validated_payload.file_type.data
     media_files_config.source = validated_payload.source.data
     media_files_config.scto_fields = validated_payload.scto_fields.data
+    media_files_config.mapping_criteria = validated_payload.mapping_criteria.data
 
     try:
         db.session.commit()

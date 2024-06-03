@@ -41,6 +41,14 @@ def upgrade():
         nullable=False
     ),
     sa.Column('scto_fields', sa.ARRAY(sa.String()), nullable=True),
+    sa.Column(
+        'mapping_criteria', 
+        sa.String(), 
+        sa.CheckConstraint(
+            "mapping_criteria IN ('location', 'language')",
+            name="ck_media_files_config_mapping_criteria",
+    ), nullable=True),
+
     sa.ForeignKeyConstraint(['form_uid'], ['webapp.forms.form_uid'], name=op.f('fk_media_files_config_form_uid_forms')),
     sa.PrimaryKeyConstraint('media_files_config_uid', name=op.f('pk_media_files_config')),
     schema='webapp'
