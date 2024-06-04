@@ -60,22 +60,21 @@ def create_email_config(validated_payload):
 
 @emails_bp.route("/<int:form_uid>", methods=["GET"])
 @logged_in_active_user_required
-@validate_query_params(EmailConfigQueryParamValidator)
 @custom_permissions_required("READ Emails", "path", "form_uid")
 def get_email_details(form_uid):
     """Function to get email configs per form including schedules and template details"""
 
     # Query to get email configs including related schedules and templates
     email_configs = (
-        EmailConfig.query.join(
+        EmailConfig.query.outerjoin(
             EmailSchedule,
             EmailConfig.email_config_uid == EmailSchedule.email_config_uid,
         )
-        .join(
+        .outerjoin(
             EmailTemplate,
             EmailConfig.email_config_uid == EmailTemplate.email_config_uid,
         )
-        .join(
+        .outerjoin(
             ManualEmailTrigger,
             EmailConfig.email_config_uid == ManualEmailTrigger.email_config_uid,
         )
@@ -97,16 +96,22 @@ def get_email_details(form_uid):
         )
 
     # Process and structure the config data
-    config_data = [
-        {
-            **email_config.to_dict(),
-            "schedules": [schedule.to_dict() for schedule in email_config.schedules],
-            "templates": [template.to_dict() for template in email_config.templates],
-            "manual_triggers": [manual_trigger.to_dict() for manual_trigger in email_config.manual_triggers],
-
-        }
-        for email_config in email_configs
-    ]
+    config_data = []
+    for email_config in email_configs:
+        config_data.append(
+            {
+                **email_config.to_dict(),
+                "schedules": [
+                    schedule.to_dict() for schedule in email_config.schedules
+                ],
+                "templates": [
+                    template.to_dict() for template in email_config.templates
+                ],
+                "manual_triggers": [
+                    trigger.to_dict() for trigger in email_config.manual_triggers
+                ],
+            }
+        )
 
     # Return the response
     response = jsonify(

@@ -361,6 +361,39 @@ class TestEmails:
                         "config_type": "Assignments",
                         "email_config_uid": 1,
                         "form_uid": 1,
+                        "manual_triggers": [
+                            {
+                                "date": "Wed, 05 Jun 2024 00:00:00 GMT",
+                                "email_config_uid": 1,
+                                "manual_email_trigger_uid": 1,
+                                "recipients": [1, 2, 3],
+                                "status": "queued",
+                                "time": "08:00:00",
+                            }
+                        ],
+                        "schedules": [
+                            {
+                                "dates": [
+                                    "Tue, 04 Jun 2024 00:00:00 GMT",
+                                    "Wed, 05 Jun 2024 00:00:00 GMT",
+                                    "Thu, 06 Jun 2024 00:00:00 GMT",
+                                    "Fri, 07 Jun 2024 00:00:00 GMT",
+                                    "Tue, 04 Jun 2024 00:00:00 GMT",
+                                ],
+                                "email_config_uid": 1,
+                                "email_schedule_uid": 1,
+                                "time": "20:00:00",
+                            }
+                        ],
+                        "templates": [
+                            {
+                                "content": "Test Content",
+                                "email_config_uid": 1,
+                                "email_template_uid": 1,
+                                "language": "english",
+                                "subject": "Test Assignments Email",
+                            }
+                        ],
                     }
                 ],
                 "success": True,
@@ -531,7 +564,10 @@ class TestEmails:
 
             assert response.status_code == 200
 
-            expected_response = {"message": "Email config deleted successfully"}
+            expected_response = {
+                "success": True,
+                "message": "Email config deleted successfully",
+            }
 
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
@@ -1086,6 +1122,7 @@ class TestEmails:
                     "time": "09:00:00",
                 },
                 "message": "Manual email trigger updated successfully",
+                "success": True,
             }
 
             checkdiff = jsondiff.diff(
@@ -1171,6 +1208,7 @@ class TestEmails:
                     "time": "08:00:00",
                 },
                 "message": "Manual email trigger status updated successfully",
+                "success": True,
             }
 
             checkdiff = jsondiff.diff(
