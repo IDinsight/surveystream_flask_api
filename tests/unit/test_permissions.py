@@ -74,23 +74,23 @@ class TestPermissions:
                 "permission_uid": 9,
             },
             {
-                "description": "Read Audio Audits permission",
-                "name": "READ Audio Audits",
+                "description": "Read Media Files Config permission",
+                "name": "READ Media Files Config",
                 "permission_uid": 10,
             },
             {
-                "description": "Write Audio Audits permission",
-                "name": "WRITE Audio Audits",
+                "description": "Write Media Files Config permission",
+                "name": "WRITE Media Files Config",
                 "permission_uid": 11,
             },
             {
-                "description": "Read Photo Audits permission",
-                "name": "READ Photo Audits",
+                "description": "Read Media Files permission",
+                "name": "READ Media Files",
                 "permission_uid": 12,
             },
             {
-                "description": "Write Photo Audits permission",
-                "name": "WRITE Photo Audits",
+                "description": "Write Media Files permission",
+                "name": "WRITE Media Files",
                 "permission_uid": 13,
             },
             {
@@ -124,13 +124,13 @@ class TestPermissions:
                 "permission_uid": 19,
             },
             {
-                "description": "Read Target Status permission",
-                "name": "READ Target Status",
+                "description": "Read Target Status Mapping permission",
+                "name": "READ Target Status Mapping",
                 "permission_uid": 20,
             },
             {
-                "description": "Write Target Status permission",
-                "name": "WRITE Target Status",
+                "description": "Write Target Status Mapping permission",
+                "name": "WRITE Target Status Mapping",
                 "permission_uid": 21,
             },
         ]
@@ -191,23 +191,23 @@ class TestPermissions:
                 "permission_uid": 9,
             },
             {
-                "description": "Read Audio Audits permission",
-                "name": "READ Audio Audits",
+                "description": "Read Media Files Config permission",
+                "name": "READ Media Files Config",
                 "permission_uid": 10,
             },
             {
-                "description": "Write Audio Audits permission",
-                "name": "WRITE Audio Audits",
+                "description": "Write Media Files Config permission",
+                "name": "WRITE Media Files Config",
                 "permission_uid": 11,
             },
             {
-                "description": "Read Photo Audits permission",
-                "name": "READ Photo Audits",
+                "description": "Read Media Files permission",
+                "name": "READ Media Files",
                 "permission_uid": 12,
             },
             {
-                "description": "Write Photo Audits permission",
-                "name": "WRITE Photo Audits",
+                "description": "Write Media Files permission",
+                "name": "WRITE Media Files",
                 "permission_uid": 13,
             },
             {
@@ -241,13 +241,13 @@ class TestPermissions:
                 "permission_uid": 19,
             },
             {
-                "description": "Read Target Status permission",
-                "name": "READ Target Status",
+                "description": "Read Target Status Mapping permission",
+                "name": "READ Target Status Mapping",
                 "permission_uid": 20,
             },
             {
-                "description": "Write Target Status permission",
-                "name": "WRITE Target Status",
+                "description": "Write Target Status Mapping permission",
+                "name": "WRITE Target Status Mapping",
                 "permission_uid": 21,
             },
             {
