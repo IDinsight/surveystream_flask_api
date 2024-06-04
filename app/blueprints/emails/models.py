@@ -8,7 +8,7 @@ class EmailConfig(db.Model):
 
     email_config_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     config_type = db.Column(db.String(100), nullable=False)  # assignments, #finance
-    form_uid = db.Column(db.Integer, db.ForeignKey("forms.form_uid"), nullable=False)
+    form_uid = db.Column(db.Integer, db.ForeignKey(Form.form_uid), nullable=False)
 
     schedules = db.relationship(
         "EmailSchedule",
