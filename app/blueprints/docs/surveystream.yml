@@ -6114,6 +6114,8 @@ paths:
               properties:
                 email_config_uid:
                   type: integer
+                email_schedule_name:
+                  type: string
                 dates:
                   type: array
                   items:
@@ -6136,6 +6138,8 @@ paths:
                 properties:
                   email_config_uid:
                     type: integer
+                  email_schedule_name:
+                    type: string
                   dates:
                     type: array
                     items:
@@ -6171,6 +6175,8 @@ paths:
                   properties:
                     email_config_uid:
                       type: integer
+                    email_schedule_name:
+                      type: string 
                     dates:
                       type: array
                       items:
@@ -6202,6 +6208,8 @@ paths:
                 properties:
                   email_config_uid:
                     type: integer
+                  email_schedule_name:
+                    type: string
                   dates:
                     type: array
                     items:
@@ -6230,6 +6238,8 @@ paths:
               properties:
                 email_config_uid:
                   type: integer
+                email_schedule_name:
+                  type: string
                 dates:
                   type: array
                   items:
@@ -6252,6 +6262,8 @@ paths:
                 properties:
                   email_config_uid:
                     type: integer
+                  email_schedule_name:
+                    type: string
                   dates:
                     type: array
                     items:
