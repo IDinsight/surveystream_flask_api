@@ -8,10 +8,29 @@ class EmailConfig(db.Model):
 
     email_config_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     config_type = db.Column(db.String(100), nullable=False)  # assignments, #finance
-    form_uid = db.Column(db.Integer, db.ForeignKey(Form.form_uid), nullable=False)
+    form_uid = db.Column(db.Integer, db.ForeignKey("forms.form_uid"), nullable=False)
+
+    schedules = db.relationship(
+        "EmailSchedule",
+        backref="email_config",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+    templates = db.relationship(
+        "EmailTemplate",
+        backref="email_config",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+    manual_triggers = db.relationship(
+        "ManualEmailTrigger",
+        backref="email_config",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
 
     __table_args__ = (
-        # ensure that configs are not duplicated per form
+        # Ensure that configs are not duplicated per form
         db.UniqueConstraint(
             "config_type",
             "form_uid",

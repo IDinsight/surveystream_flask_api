@@ -329,6 +329,55 @@ class TestEmails:
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
 
+    def test_emails_get_details(
+        self,
+        client,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+        create_email_template,
+        create_manual_email_trigger,
+        user_permissions,
+        request,
+    ):
+        """
+        Test getting all details about email configs for a particular form
+        Expect the email details or permissions denied
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            f"api/emails/1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 200
+            expected_response = {
+                "data": [
+                    {
+                        "config_type": "Assignments",
+                        "email_config_uid": 1,
+                        "form_uid": 1,
+                    }
+                ],
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
     def test_emails_get_configs(
         self,
         client,
@@ -1258,12 +1307,12 @@ class TestEmails:
             assert checkdiff == {}
 
     def test_emails_create_email_template_exception(
-            self,
-            client,
-            login_test_user,
-            csrf_token,
-            test_user_credentials,
-            create_email_config,
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_email_config,
     ):
         """
         Test create email templates exceptions
@@ -1281,6 +1330,7 @@ class TestEmails:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 500
+
     def test_emails_get_templates(
         self, client, csrf_token, create_email_template, user_permissions, request
     ):
@@ -1393,6 +1443,7 @@ class TestEmails:
                 response.json,
             )
             assert checkdiff == {}
+
     def test_emails_update_template_exception(
         self, client, csrf_token, create_email_template, request
     ):
@@ -1401,12 +1452,11 @@ class TestEmails:
         Expect error
         """
 
-
         payload = {
             "subject": "Test Update Email",
             "language": "Hindi",
             "content": "Test Content",
-            "email_config_uid": 2, #to cause exception
+            "email_config_uid": 2,  # to cause exception
         }
         response = client.put(
             f"/api/emails/template/{create_email_template['email_template_uid']}",
@@ -1417,10 +1467,7 @@ class TestEmails:
 
         print(response.json)
 
-
         assert response.status_code == 500
-
-
 
     def test_emails_delete_template(
         self, client, csrf_token, create_email_template, user_permissions, request

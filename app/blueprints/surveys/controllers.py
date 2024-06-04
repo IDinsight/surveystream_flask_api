@@ -227,7 +227,10 @@ def get_survey_config_status(survey_uid):
         if item["name"] == "SurveyCTO information":
             if scto_information is not None:
                 item["status"] = "In Progress"
-        elif item["name"] == "Field supervisor roles":
+        elif (
+            item["name"] == "Field supervisor roles"
+            or item["name"] == "User and role management"
+        ):
             if roles is not None:
                 item["name"] = "User and role management"
                 item["status"] = "In Progress"
@@ -241,12 +244,43 @@ def get_survey_config_status(survey_uid):
             if targets is not None:
                 item["status"] = "In Progress"
     if "Module configuration" in data:
+        # Extract the current module_ids and find the maximum
+        current_ids = [
+            item.get("module_id", 0)
+            for item in data["Module configuration"]
+            if isinstance(item, dict)
+        ]
+        next_id = max(current_ids) + 1 if current_ids else 1
+
         for item in data["Module configuration"]:
             if (
                 isinstance(item, dict)
                 and "name" in item
                 and item["name"] == "Assignments"
             ):
+                if "Emails" not in data["Module configuration"]:
+                    data["Module configuration"].append(
+                        {
+                            "module_id": next_id,
+                            "name": "Emails",
+                            "status": "Not Started",
+                        }
+                    )
+                    next_id += 1
+
+                if (
+                    "Assignments column configuration"
+                    not in data["Module configuration"]
+                ):
+                    data["Module configuration"].append(
+                        {
+                            "module_id": next_id,
+                            "name": "Assignments column configuration",
+                            "status": "Not Started",
+                        }
+                    )
+                    next_id += 1
+
                 if assignments is not None:
                     item["status"] = "In Progress"
 

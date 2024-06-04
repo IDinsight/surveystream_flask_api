@@ -49,12 +49,74 @@ def create_email_config(validated_payload):
     return (
         jsonify(
             {
+                "success": True,
                 "message": "Email schedule created successfully",
                 "data": email_config.to_dict(),
             }
         ),
         201,
     )
+
+
+@emails_bp.route("/<int:form_uid>", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(EmailConfigQueryParamValidator)
+@custom_permissions_required("READ Emails", "path", "form_uid")
+def get_email_details(form_uid):
+    """Function to get email configs per form including schedules and template details"""
+
+    # Query to get email configs including related schedules and templates
+    email_configs = (
+        EmailConfig.query.join(
+            EmailSchedule,
+            EmailConfig.email_config_uid == EmailSchedule.email_config_uid,
+        )
+        .join(
+            EmailTemplate,
+            EmailConfig.email_config_uid == EmailTemplate.email_config_uid,
+        )
+        .join(
+            ManualEmailTrigger,
+            EmailConfig.email_config_uid == ManualEmailTrigger.email_config_uid,
+        )
+        .filter(EmailConfig.form_uid == form_uid)
+        .all()
+    )
+
+    # Return 404 if no email configs found
+    if not email_configs:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Email configs not found",
+                }
+            ),
+            404,
+        )
+
+    # Process and structure the config data
+    config_data = [
+        {
+            **email_config.to_dict(),
+            "schedules": [schedule.to_dict() for schedule in email_config.schedules],
+            "templates": [template.to_dict() for template in email_config.templates],
+            "manual_triggers": [manual_trigger.to_dict() for manual_trigger in email_config.manual_triggers],
+
+        }
+        for email_config in email_configs
+    ]
+
+    # Return the response
+    response = jsonify(
+        {
+            "success": True,
+            "data": config_data,
+        }
+    )
+
+    return response, 200
 
 
 @emails_bp.route("/configs", methods=["GET"])
@@ -170,7 +232,7 @@ def delete_email_config(email_config_uid):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-    return jsonify(message="Email config deleted successfully")
+    return jsonify(success=True, message="Email config deleted successfully")
 
 
 @emails_bp.route("/schedule", methods=["POST"])
@@ -205,6 +267,7 @@ def create_email_schedule(validated_payload):
     return (
         jsonify(
             {
+                "success": True,
                 "message": "Email schedule created successfully",
                 "data": new_schedule.to_dict(),
             }
@@ -334,7 +397,7 @@ def delete_email_schedule(schedule_id, validated_query_params):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-    return jsonify(message="Email schedule deleted successfully")
+    return jsonify(success=True, message="Email schedule deleted successfully")
 
 
 @emails_bp.route("/manual-trigger", methods=["POST"])
@@ -368,6 +431,7 @@ def create_manual_email_trigger(validated_payload):
     return (
         jsonify(
             {
+                "success": True,
                 "message": "Manual email trigger created successfully",
                 "data": new_trigger.to_dict(),
             }
@@ -475,6 +539,7 @@ def update_manual_email_trigger(manual_email_trigger_uid, validated_payload):
 
     return (
         jsonify(
+            success=True,
             message="Manual email trigger updated successfully",
             data=manual_email_trigger.to_dict(),
         ),
@@ -503,6 +568,7 @@ def update_manual_email_trigger_status(manual_email_trigger_uid, validated_paylo
 
     return (
         jsonify(
+            success=True,
             message="Manual email trigger status updated successfully",
             data=manual_email_trigger.to_dict(),
         ),
@@ -527,7 +593,7 @@ def delete_manual_email_trigger(manual_email_trigger_uid, validated_query_params
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-    return jsonify(message="Manual email trigger deleted successfully")
+    return jsonify(success=True, message="Manual email trigger deleted successfully")
 
 
 @emails_bp.route("/template", methods=["POST"])
@@ -556,6 +622,7 @@ def create_email_template(validated_payload):
     return (
         jsonify(
             {
+                "success": True,
                 "message": "Email template created successfully",
                 "data": new_template.to_dict(),
             }
