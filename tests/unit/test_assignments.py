@@ -1178,7 +1178,7 @@ class TestAssignments:
                 "dates": future_dates,
                 "time": formatted_time,
                 "email_config_uid": create_email_config["email_config_uid"],
-                "email_schedule_name": "Test Schedule",
+                "email_schedule_name": "Test Schedule " + str(i),
             }
 
             # Send request
