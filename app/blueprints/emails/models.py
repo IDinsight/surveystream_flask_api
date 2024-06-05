@@ -1,6 +1,7 @@
+from sqlalchemy import TIME, CheckConstraint, Enum
+
 from app import db
 from app.blueprints.forms.models import Form
-from sqlalchemy import Enum, CheckConstraint, TIME
 
 
 class EmailConfig(db.Model):
@@ -42,18 +43,23 @@ class EmailSchedule(db.Model):
     email_config_uid = db.Column(
         db.Integer, db.ForeignKey(EmailConfig.email_config_uid), nullable=False
     )
+    email_schedule_name = db.Column(
+        db.String(255), nullable=False
+    )  # Morning, Evening, Daily, Weekly
     dates = db.Column(db.ARRAY(db.Date), nullable=False)
     time = db.Column(TIME, nullable=False)
 
-    def __init__(self, dates, time, email_config_uid):
+    def __init__(self, dates, time, email_config_uid, email_schedule_name):
         self.email_config_uid = email_config_uid
         self.dates = dates
         self.time = time
+        self.email_schedule_name = email_schedule_name
 
     def to_dict(self):
         return {
             "email_schedule_uid": self.email_schedule_uid,
             "email_config_uid": self.email_config_uid,
+            "email_schedule_name": self.email_schedule_name,
             "dates": self.dates,
             "time": str(self.time),
         }

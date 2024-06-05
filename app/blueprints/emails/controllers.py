@@ -1,25 +1,28 @@
-from . import emails_bp
+from datetime import datetime, time
+
+from flask import jsonify
+
+from app import db
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
     validate_payload,
     validate_query_params,
 )
-from flask import jsonify
-from app import db
+
+from . import emails_bp
+from .models import EmailConfig, EmailSchedule, EmailTemplate, ManualEmailTrigger
 from .validators import (
     EmailConfigQueryParamValidator,
     EmailConfigValidator,
     EmailScheduleQueryParamValidator,
     EmailScheduleValidator,
-    ManualEmailTriggerPatchValidator,
-    ManualEmailTriggerValidator,
-    EmailTemplateValidator,
-    ManualEmailTriggerQueryParamValidator,
     EmailTemplateQueryParamValidator,
+    EmailTemplateValidator,
+    ManualEmailTriggerPatchValidator,
+    ManualEmailTriggerQueryParamValidator,
+    ManualEmailTriggerValidator,
 )
-from .models import EmailConfig, EmailSchedule, ManualEmailTrigger, EmailTemplate
-from datetime import datetime, time
 
 
 @emails_bp.route("/config", methods=["POST"])
@@ -34,6 +37,19 @@ def create_email_config(validated_payload):
         "config_type": validated_payload.config_type.data,
         "form_uid": validated_payload.form_uid.data,
     }
+
+    # Check if the email config already exists
+    check_config_exists = EmailConfig.query.filter_by(
+        form_uid=validated_payload.form_uid.data,
+        config_type=validated_payload.config_type.data,
+    ).first()
+    if check_config_exists is not None:
+        return (
+            jsonify(
+                {"error": "Email Config already exists, Use PUT methood for update"}
+            ),
+            400,
+        )
 
     email_config = EmailConfig(
         **config_values,
@@ -57,7 +73,7 @@ def create_email_config(validated_payload):
     )
 
 
-@emails_bp.route("/configs", methods=["GET"])
+@emails_bp.route("/config", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(EmailConfigQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "form_uid")
@@ -187,9 +203,23 @@ def create_email_schedule(validated_payload):
 
     schedule_values = {
         "email_config_uid": validated_payload.email_config_uid.data,
+        "email_schedule_name": validated_payload.email_schedule_name.data,
         "dates": validated_payload.dates.data,
         "time": time_obj,
     }
+
+    # Check if the email schedule already exists
+    check_schedule_exists = EmailSchedule.query.filter_by(
+        email_config_uid=validated_payload.email_config_uid.data,
+        email_schedule_name=validated_payload.email_schedule_name.data,
+    ).first()
+    if check_schedule_exists is not None:
+        return (
+            jsonify(
+                {"error": "Email Schedule already exists, Use PUT methood for update"}
+            ),
+            400,
+        )
 
     new_schedule = EmailSchedule(
         **schedule_values,
@@ -213,7 +243,7 @@ def create_email_schedule(validated_payload):
     )
 
 
-@emails_bp.route("/schedules", methods=["GET"])
+@emails_bp.route("/schedule", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(EmailScheduleQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "email_config_uid")
@@ -299,6 +329,7 @@ def update_email_schedule(schedule_id, validated_payload):
     email_schedule.email_config_uid = validated_payload.email_config_uid.data
     email_schedule.dates = validated_payload.dates.data
     email_schedule.time = time_obj
+    email_schedule.email_schedule_name = validated_payload.email_schedule_name.data
 
     try:
         db.session.commit()
@@ -376,7 +407,7 @@ def create_manual_email_trigger(validated_payload):
     )
 
 
-@emails_bp.route("/manual-triggers", methods=["GET"])
+@emails_bp.route("/manual-trigger", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(ManualEmailTriggerQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "email_config_uid")
@@ -544,6 +575,20 @@ def create_email_template(validated_payload):
         "language": validated_payload.language.data,
         "content": validated_payload.content.data,
     }
+
+    # Check if the email template already exists
+    check_email_template_exists = EmailTemplate.query.filter_by(
+        email_config_uid=validated_payload.email_config_uid.data,
+        language=validated_payload.language.data,
+    ).first()
+    if check_email_template_exists is not None:
+        return (
+            jsonify(
+                {"error": "Email Template already exists, Use PUT methood for update"}
+            ),
+            400,
+        )
+
     new_template = EmailTemplate(**template_values)
 
     try:
@@ -564,7 +609,7 @@ def create_email_template(validated_payload):
     )
 
 
-@emails_bp.route("/templates", methods=["GET"])
+@emails_bp.route("/template", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(EmailTemplateQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "email_config_uid")
