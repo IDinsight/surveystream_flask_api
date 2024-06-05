@@ -10,6 +10,21 @@ class EmailConfig(db.Model):
     email_config_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     config_type = db.Column(db.String(100), nullable=False)  # assignments, #finance
     form_uid = db.Column(db.Integer, db.ForeignKey(Form.form_uid), nullable=False)
+    report_users = db.Column(db.ARRAY(db.Integer), nullable=True)
+    email_source = db.Column(
+        db.String(20),
+        CheckConstraint(
+            "email_source IN ('Google Sheet', 'SurveyStream Data')",
+            name="ck_email_configs_source",
+        ),
+        nullable=False,
+        default="SurveyStream Data",
+    )  # Gsheet/SurveyStream
+    email_source_gsheet_key = db.Column(db.String(512), nullable=True)  # Gsheet key
+    email_source_tablename = db.Column(db.String(256), nullable=True)
+    email_source_columns = db.Column(
+        db.ARRAY(db.String(128)), nullable=True
+    )  # List of columns from Gsheet or Table
 
     __table_args__ = (
         # ensure that configs are not duplicated per form
@@ -21,15 +36,34 @@ class EmailConfig(db.Model):
         {"schema": "webapp"},
     )
 
-    def __init__(self, config_type, form_uid):
+    def __init__(
+        self,
+        config_type,
+        form_uid,
+        email_source,
+        report_users=None,
+        email_source_gsheet_key=None,
+        email_source_tablename=None,
+        email_source_columns=None,
+    ):
         self.config_type = config_type
         self.form_uid = form_uid
+        self.report_users = report_users
+        self.email_source = email_source
+        self.email_source_gsheet_key = email_source_gsheet_key
+        self.email_source_tablename = email_source_tablename
+        self.email_source_columns = email_source_columns
 
     def to_dict(self):
         return {
             "email_config_uid": self.email_config_uid,
             "config_type": self.config_type,
             "form_uid": self.form_uid,
+            "report_users": self.report_users,
+            "email_source": self.email_source,
+            "email_source_gsheet_key": self.email_source_gsheet_key,
+            "email_source_tablename": self.email_source_tablename,
+            "email_source_columns": self.email_source_columns,
         }
 
 
