@@ -23,7 +23,7 @@ from .validators import (
 @target_status_mapping_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(TargetStatusMappingQueryParamValidator)
-@custom_permissions_required("READ Target Status", "query", "form_uid")
+@custom_permissions_required("READ Target Status Mapping", "query", "form_uid")
 def get_target_status_mapping(validated_query_params):
     """
     Method to get target status mapping
@@ -71,7 +71,7 @@ def get_target_status_mapping(validated_query_params):
 @target_status_mapping_bp.route("", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateTargetStatusMapping)
-@custom_permissions_required("WRITE Target Status", "body", "form_uid")
+@custom_permissions_required("WRITE Target Status Mapping", "body", "form_uid")
 def update_target_status_mapping(validated_payload):
     """
     Method to save target status mapping

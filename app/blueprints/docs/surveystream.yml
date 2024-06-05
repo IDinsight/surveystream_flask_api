@@ -90,6 +90,8 @@ tags:
     description: Endpoints related to user hierarchy
   - name: Emails
     description: Endpoints related to emails configuration
+  - name: Media Files
+    description: Endpoints related to media files
 
 x-tagGroups:
   - name: User Management
@@ -144,6 +146,9 @@ x-tagGroups:
   - name: Emails
     tags:
       - Emails
+  - name: Media Files
+    tags:
+      - Media Files
 
 paths:
   /healthcheck:
@@ -6720,3 +6725,354 @@ paths:
       responses:
         "200":
           description: Email template deleted successfully
+
+
+  /media-files:
+    post:
+      tags:
+        - Media Files
+      summary: Create a new media files config
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                file_type:
+                  type: string
+                  description: Type of media file - photo or audio
+                source:
+                  type: string
+                  description: Source of the media file - SurveyCTO or Exotel
+                scto_fields:
+                  type: array
+                  description: >-
+                    An array of SurveyCTO field names that are to be included in the media files output
+                  items:
+                    type: string
+              required:
+                - form_uid
+                - file_type
+                - source
+                - scto_fields
+      responses:
+        "201":
+          description: Media files config added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      media_files_config_uid:
+                        type: integer
+                        description: UID of the media files config
+                        example: 123
+                      form_uid:
+                        type: integer
+                        description: UID of the form
+                        example: 123
+                      file_type:
+                        type: string
+                        description: Type of media file - photo or audio
+                      source:
+                        type: string
+                        description: Source of the media file - SurveyCTO or Exotel
+                      scto_fields:
+                        type: array
+                        description: >-
+                          An array of SurveyCTO field names that are to be included in the media files output
+                        items:
+                          type: string
+                required:
+                  - success
+                  - data
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal Server Error"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "An error occurred while creating the media files config"
+                required:
+                  - error
+                  - message
+    get:
+      tags:
+        - Media Files
+      summary: Get all media files configs per form
+      parameters:
+        - in: query
+          name: form_uid
+          required: true
+          description: Unique identifier for the form
+          schema:
+            type: integer
+            example: 123
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        media_files_config_uid:
+                          type: integer
+                          description: Unique identifier of the media files config
+                          example: 123
+                        file_type:
+                          type: string
+                          description: Type of media file - photo or audio
+                        source:
+                          type: string
+                          description: Source of the media file - SurveyCTO or Exotel
+                        scto_fields:
+                          type: array
+                          description: >-
+                            An array of SurveyCTO field names that are to be included in the media files output
+                          items:
+                            type: string
+                required:
+                  - success
+                  - data
+        "404":
+          description: Media files config not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Not Found"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "Media files config not found"
+                required:
+                  - error
+                  - message
+
+  /media-files/{media_files_config_uid}:
+    get:
+      tags:
+        - Media Files
+      summary: Get a particular media files config given the media files config UID
+      parameters:
+        - in: path
+          name: media_files_config_uid
+          required: true
+          description: Unique identifier for the media files config
+          schema:
+            type: integer
+            example: 123
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      media_files_config_uid:
+                        type: integer
+                        description: Unique identifier of the media files config
+                        example: 123
+                      form_uid:
+                        type: integer
+                        description: Unique identifier of the form
+                        example: 123
+                      file_type:
+                        type: string
+                        description: Type of media file - photo or audio
+                      source:
+                        type: string
+                        description: Source of the media file - SurveyCTO or Exotel
+                      scto_fields:
+                        type: array
+                        description: >-
+                          An array of SurveyCTO field names that are to be included in the media files output
+                        items:
+                          type: string
+                required:
+                  - success
+                  - data
+        "404":
+          description: Media files config not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Not Found"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "Media files config not found"
+                required:
+                  - error
+                  - message
+    put:
+      tags:
+        - Media Files
+      summary: Update a media files config
+      parameters:
+        - in: path
+          name: media_files_config_uid
+          required: true
+          description: Unique identifier for the media files config
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file_type:
+                  type: string
+                  description: Type of media file - photo or audio
+                source:
+                  type: string
+                  description: Source of the media file - SurveyCTO or Exotel
+                scto_fields:
+                  type: array
+                  description: >-
+                    An array of SurveyCTO field names that are to be included in the media files output
+                  items:
+                    type: string
+              required:
+                - file_type
+                - source
+                - scto_fields
+      responses:
+        "200":
+          description: Media files config updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Media files config updated successfully"
+                  data:
+                    type: object
+                    properties:
+                      media_files_config_uid:
+                        type: integer
+                        description: Unique identifier of the media files config
+                        example: 123
+                      form_uid:
+                        type: integer
+                        description: Unique identifier of the form
+                        example: 123
+                      file_type:
+                        type: string
+                        description: Type of media file - photo or audio
+                      source:
+                        type: string
+                        description: Source of the media file - SurveyCTO or Exotel
+                      scto_fields:
+                        type: array
+                        description: >-
+                          An array of SurveyCTO field names that are to be included in the media files output
+                        items:
+                          type: string
+                required:
+                  - success
+                  - message
+                  - data
+        "404":
+          description: Media files config not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Not Found"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "Media files config not found"
+                required:
+                  - error
+                  - message
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal Server Error"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "An error occurred while updating the media files config"
+                required:
+                  - error
+                  - message
+    delete:
+      tags:
+        - Media Files
+      summary: Delete a media files config
+      parameters:
+        - in: path
+          name: media_files_config_uid
+          required: true
+          description: Unique identifier for the media files config
+          schema:
+            type: integer
+            example: 123
+      responses:
+        "200":
+          description: Media files config deleted successfully
