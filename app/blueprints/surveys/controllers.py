@@ -188,6 +188,8 @@ def get_survey_config_status(survey_uid):
     from app.blueprints.enumerators.models import Enumerator
     from app.blueprints.targets.models import Target
     from app.blueprints.assignments.models import SurveyorAssignment
+    from app.blueprints.target_status_mapping.models import TargetStatusMapping
+    from app.blueprints.media_files.models import MediaFilesConfig
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     scto_information = Form.query.filter_by(survey_uid=survey_uid).first()
@@ -197,12 +199,36 @@ def get_survey_config_status(survey_uid):
     enumerators = None
     targets = None
     assignments = None
+    target_status_mapping = None
+    media_files_config = None
 
     if scto_information is not None:
         enumerators = Enumerator.query.filter_by(
             form_uid=scto_information.form_uid
         ).first()
         targets = Target.query.filter_by(form_uid=scto_information.form_uid).first()
+
+        # Check if target status mapping exists for any form of the survey
+        target_status_mapping = (
+            db.session.query(
+                TargetStatusMapping
+            )
+            .join(Form, 
+                  Form.form_uid == TargetStatusMapping.form_uid)
+            .filter(Form.survey_uid == survey_uid)
+            .first()
+        )
+        
+        # Check if media files config exists for any form of the survey
+        media_files_config = (
+            db.session.query(
+                MediaFilesConfig
+            )
+            .join(Form, 
+                  Form.form_uid == MediaFilesConfig.form_uid)
+            .filter(Form.survey_uid == survey_uid)
+            .first()
+        )
 
     if enumerators and targets:
         assignments = (
@@ -240,15 +266,21 @@ def get_survey_config_status(survey_uid):
         elif item["name"] == "Targets":
             if targets is not None:
                 item["status"] = "In Progress"
+        elif item["name"] == "Target status mapping":
+            if target_status_mapping is not None:
+                item["status"] = "In Progress"
     if "Module configuration" in data:
         for item in data["Module configuration"]:
             if (
                 isinstance(item, dict)
                 and "name" in item
-                and item["name"] == "Assignments"
             ):
-                if assignments is not None:
-                    item["status"] = "In Progress"
+                if item["name"] == "Assignments":
+                    if assignments is not None:
+                        item["status"] = "In Progress"
+                elif item["name"] == "Media (Audio/Photo) audits":
+                    if media_files_config is not None:
+                        item["status"] = "In Progress"
 
     response = {"success": True, "data": data}
     return jsonify(response), 200

@@ -155,6 +155,7 @@ def get_survey_uids(param_location, param_name):
     from app.blueprints.targets.models import Target
     from app.blueprints.enumerators.models import SurveyorForm, MonitorForm
     from app.blueprints.emails.models import EmailConfig
+    from app.blueprints.media_files.models import MediaFilesConfig
 
     if param_name not in [
         "survey_uid",
@@ -162,9 +163,10 @@ def get_survey_uids(param_location, param_name):
         "target_uid",
         "enumerator_uid",
         "email_config_uid",
+        "media_files_config_uid"
     ]:
         raise ValueError(
-            "'param_name' parameter must be one of survey_uid, form_uid, target_uid, enumerator_uid, email_config_uid"
+            "'param_name' parameter must be one of survey_uid, form_uid, target_uid, enumerator_uid, email_config_uid, media_files_config_uid"
         )
     if param_location not in ["query", "path", "body"]:
         raise ValueError("'param_location' parameter must be one of query, path, body")
@@ -203,6 +205,19 @@ def get_survey_uids(param_location, param_name):
         else:
             raise SurveyNotFoundError(
                 f"Could not find a survey for email_config_uid {param_value} in the database"
+            )
+    elif param_name == "media_files_config_uid":
+        response = (
+            db.session.query(Form.survey_uid)
+            .join(MediaFilesConfig, MediaFilesConfig.form_uid == Form.form_uid)
+            .filter(MediaFilesConfig.media_files_config_uid == param_value)
+            .first()
+        )
+        if response is not None:
+            survey_uids = [response.survey_uid]
+        else:
+            raise SurveyNotFoundError(
+                f"Could not find a survey for media_file_config_uid {param_value} in the database"
             )
 
     elif param_name == "form_uid":
