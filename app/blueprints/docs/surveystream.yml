@@ -5779,6 +5779,151 @@ paths:
           description: Target not found
         "422":
           description: Target errors
+  /emails/{form_uid}:
+    get:
+      tags:
+        - emails
+      summary: Get Email Configurations
+      description: Retrieve email configurations for a specified form including related schedules and templates.
+      parameters:
+        - name: form_uid
+          in: path
+          required: true
+          description: Unique identifier for the form.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response with email configurations.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        email_config_uid:
+                          type: integer
+                          example: 123
+                        config_type:
+                          type: string
+                          example: "assignments"
+                        form_uid:
+                          type: integer
+                          example: 456
+                        report_users:
+                          type: array
+                          items:
+                            type: integer
+                          example: [ 1, 2, 3 ]
+                        email_source:
+                          type: string
+                          example: "SurveyStream Data"
+                        email_source_gsheet_key:
+                          type: string
+                          example: "some-gsheet-key"
+                        email_source_tablename:
+                          type: string
+                          example: "some_table"
+                        email_source_columns:
+                          type: array
+                          items:
+                            type: string
+                          example: [ "column1", "column2" ]
+                        schedules:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              email_schedule_uid:
+                                type: integer
+                                example: 789
+                              email_config_uid:
+                                type: integer
+                                example: 123
+                              email_schedule_name:
+                                type: string
+                                example: "Morning"
+                              dates:
+                                type: array
+                                items:
+                                  type: string
+                                  format: date
+                                example: [ "2023-06-06", "2023-06-07" ]
+                              time:
+                                type: string
+                                format: time
+                                example: "12:00:00"
+                        templates:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              email_template_uid:
+                                type: integer
+                                example: 101
+                              subject:
+                                type: string
+                                example: "Template Subject"
+                              language:
+                                type: string
+                                example: "en"
+                              content:
+                                type: string
+                                example: "Email template content here"
+                              email_config_uid:
+                                type: integer
+                                example: 123
+                        manual_triggers:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              manual_email_trigger_uid:
+                                type: integer
+                                example: 202
+                              email_config_uid:
+                                type: integer
+                                example: 123
+                              date:
+                                type: string
+                                format: date
+                                example: "2023-06-06"
+                              time:
+                                type: string
+                                format: time
+                                example: "14:00:00"
+                              recipients:
+                                type: array
+                                items:
+                                  type: integer
+                                example: [ 1, 2, 3 ]
+                              status:
+                                type: string
+                                example: "queued"
+        '404':
+          description: Email configurations not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  data:
+                    type: 'null'
+                    example: null
+                  message:
+                    type: string
+                    example: "Email configs not found"
+
   /emails/config:
     post:
       tags:
