@@ -373,15 +373,15 @@ class TestEmails:
                         "config_type": "Assignments",
                         "email_config_uid": 1,
                         "email_source": "SurveyStream Data",
-                        "email_source_columns": [
-                            "test_column"
-                        ],
+                        "email_source_columns": ["test_column"],
                         "email_source_gsheet_key": "test_key",
                         "email_source_tablename": "test_table",
                         "form_uid": 1,
                         "manual_triggers": [
                             {
-                                "date": response.json["data"][0]["manual_triggers"][0]["date"],
+                                "date": response.json["data"][0]["manual_triggers"][0][
+                                    "date"
+                                ],
                                 "email_config_uid": 1,
                                 "manual_email_trigger_uid": 1,
                                 "recipients": [1, 2, 3],
@@ -391,10 +391,13 @@ class TestEmails:
                         ],
                         "schedules": [
                             {
-                                "dates": response.json["data"][0]["schedules"][0]["dates"],
+                                "dates": response.json["data"][0]["schedules"][0][
+                                    "dates"
+                                ],
                                 "email_config_uid": 1,
                                 "email_schedule_uid": 1,
                                 "time": "20:00:00",
+                                "email_schedule_name": "Test Schedule",
                             }
                         ],
                         "templates": [
