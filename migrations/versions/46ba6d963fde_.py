@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 864755902d8d
+Revision ID: 46ba6d963fde
 Revises: 0e0c398beec2
-Create Date: 2024-06-06 12:11:12.184922
+Create Date: 2024-06-06 13:30:55.598565
 
 """
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "864755902d8d"
+revision = "46ba6d963fde"
 down_revision = "0e0c398beec2"
 branch_labels = None
 depends_on = None
@@ -31,7 +31,7 @@ def upgrade():
                     name="ck_email_configs_source",
                 ),
                 server_default="SurveyStream Data",
-                nullable=True,
+                nullable=False,
             )
         )
         batch_op.add_column(
