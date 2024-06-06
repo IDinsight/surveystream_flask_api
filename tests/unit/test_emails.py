@@ -160,6 +160,11 @@ class TestEmails:
         payload = {
             "config_type": "Assignments",
             "form_uid": 1,
+            "report_users": [1, 2, 3],
+            "email_source": "SurveyStream Data",
+            "email_source_gsheet_key": "test_key",
+            "email_source_tablename": "test_table",
+            "email_source_columns": ["test_column"],
         }
         response = client.post(
             "/api/emails/config",
@@ -315,6 +320,11 @@ class TestEmails:
                     "config_type": "Assignments",
                     "email_config_uid": 1,
                     "form_uid": 1,
+                    "report_users": [1, 2, 3],
+                    "email_source": "SurveyStream Data",
+                    "email_source_columns": ["test_column"],
+                    "email_source_gsheet_key": "test_key",
+                    "email_source_tablename": "test_table",
                 },
                 "success": True,
             }
@@ -441,6 +451,11 @@ class TestEmails:
                         "config_type": "Assignments",
                         "email_config_uid": 1,
                         "form_uid": 1,
+                        "report_users": [1, 2, 3],
+                        "email_source": "SurveyStream Data",
+                        "email_source_columns": ["test_column"],
+                        "email_source_gsheet_key": "test_key",
+                        "email_source_tablename": "test_table",
                     }
                 ],
                 "success": True,
@@ -468,7 +483,16 @@ class TestEmails:
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
-        payload = {"email_config_uid": 1, "config_type": "finance", "form_uid": 1}
+        payload = {
+            "email_config_uid": 1,
+            "config_type": "finance",
+            "form_uid": 1,
+            "report_users": [1, 2, 3],
+            "email_source": "SurveyStream Data",
+            "email_source_gsheet_key": "test_key",
+            "email_source_tablename": "test_table",
+            "email_source_columns": ["test_column"],
+        }
 
         response = client.put(
             f"api/emails/config/1",
