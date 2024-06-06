@@ -1,8 +1,9 @@
 import re
+from datetime import datetime
+
 from flask_wtf import FlaskForm
 from wtforms import FieldList, FormField, IntegerField, StringField
-from wtforms.validators import DataRequired, ValidationError, AnyOf
-from datetime import datetime
+from wtforms.validators import AnyOf, DataRequired, ValidationError
 
 
 class EmailConfigValidator(FlaskForm):
@@ -14,6 +15,7 @@ class EmailScheduleValidator(FlaskForm):
     dates = FieldList(StringField(validators=[DataRequired()]))
     time = StringField(validators=[DataRequired()])
     email_config_uid = IntegerField(validators=[DataRequired()])
+    email_schedule_name = StringField(validators=[DataRequired()])
 
     def validate_time(self, field):
         """

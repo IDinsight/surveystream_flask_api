@@ -1,16 +1,18 @@
-import jsondiff
-import pytest
 import base64
-import pandas as pd
+from datetime import datetime, timedelta
 from pathlib import Path
+
+import jsondiff
+import pandas as pd
+import pytest
 from utils import (
+    create_new_survey_role_with_permissions,
+    login_user,
     set_target_assignable_status,
     update_logged_in_user_roles,
-    login_user,
-    create_new_survey_role_with_permissions,
 )
+
 from app import db
-from datetime import datetime, timedelta
 
 
 @pytest.mark.assignments
@@ -1176,6 +1178,7 @@ class TestAssignments:
                 "dates": future_dates,
                 "time": formatted_time,
                 "email_config_uid": create_email_config["email_config_uid"],
+                "email_schedule_name": "Test Schedule " + str(i),
             }
 
             # Send request
@@ -1626,7 +1629,10 @@ class TestAssignments:
 
         if expected_permission:
             assert response.status_code == 200
-            assert response.json["data"]["email_schedule"]["schedule_date"] >= formatted_date
+            assert (
+                response.json["data"]["email_schedule"]["schedule_date"]
+                >= formatted_date
+            )
             expected_put_response = {
                 "data": {
                     "assignments_count": 1,
