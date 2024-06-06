@@ -377,6 +377,7 @@ class TestEmails:
                         "email_source_gsheet_key": "test_key",
                         "email_source_tablename": "test_table",
                         "form_uid": 1,
+                        "report_users": [1, 2, 3],
                         "manual_triggers": [
                             {
                                 "date": response.json["data"][0]["manual_triggers"][0][
