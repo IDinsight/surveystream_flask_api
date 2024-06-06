@@ -5792,17 +5792,38 @@ paths:
             schema:
               type: object
               properties:
+                form_uid:
+                  type: string
+                  description: UID of the form
+                  example: 123
                 config_type:
                   type: string
                   description: Type of the email config
                   example: "assignments"
-                form_uid:
-                  type: integer
-                  description: UID of the form
-                  example: 123
+                report_users:
+                  type: array
+                  description: List of user UIDs to send the success/failure report of email
+                  items:
+                    type: string
+                  example: [1,2,3]
+                email_source:
+                  type: string
+                  description: Source of the email data
+                  enum:
+                    - Google Sheet
+                    - SurveyStream Data
+                email_source_gsheet_key:
+                  type: string
+                  description: Google Sheet Link
+                  example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                email_source_tablename:
+                  type: string
+                  description: Tablename for emails (Redshift email table), If not provided, default to assignments data
+                  example: "survey_id_email_stats"
               required:
                 - config_type
                 - form_uid
+                - email_source
       responses:
         "201":
           description: Email schedule created successfully
@@ -5829,6 +5850,27 @@ paths:
                         type: integer
                         description: UID of the form
                         example: 123
+                      report_users:
+                        type: array
+                        description: List of user UIDs to send the success/failure report of email
+                        items:
+                          type: string
+                        example: [1,2,3]
+                      email_source:
+                        type: string
+                        description: Source of the email data
+                        enum:
+                          - Google Sheet
+                          - SurveyStream Data
+                      email_source_gsheet_key:
+                        type: string
+                        description: Google Sheet Link
+                        example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                      email_source_tablename:
+                        type: string
+                        description: Tablename for emails (Redshift email table), If not provided, default to assignments data
+                        example: "survey_id_email_stats"
+                                           
                 required:
                   - success
                   - data
@@ -5905,6 +5947,26 @@ paths:
                           type: integer
                           description: UID of the form
                           example: 123
+                        report_users:
+                          type: array
+                          description: List of user UIDs to send the success/failure report of email
+                          items:
+                            type: string
+                          example: [1,2,3]
+                        email_source:
+                          type: string
+                          description: Source of the email data
+                          enum:
+                            - Google Sheet
+                            - SurveyStream Data
+                        email_source_gsheet_key:
+                          type: string
+                          description: Google Sheet Link
+                          example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                        email_source_tablename:
+                          type: string
+                          description: Tablename for emails (Redshift email table), If not provided, default to assignments data
+                          example: "survey_id_email_stats"                
                 required:
                   - success
                   - data
@@ -5967,6 +6029,26 @@ paths:
                         type: integer
                         description: UID of the form
                         example: 123
+                      report_users:
+                        type: array
+                        description: List of user UIDs to send the success/failure report of email
+                        items:
+                          type: string
+                        example: [1,2,3]
+                      email_source:
+                        type: string
+                        description: Source of the email data
+                        enum:
+                          - Google Sheet
+                          - SurveyStream Data
+                      email_source_gsheet_key:
+                        type: string
+                        description: Google Sheet Link
+                        example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                      email_source_tablename:
+                        type: string
+                        description: Tablename for emails (Redshift email table), If not provided, default to assignments data
+                        example: "survey_id_email_stats"
                 required:
                   - success
                   - data
@@ -6016,6 +6098,26 @@ paths:
                   type: integer
                   description: UID of the form
                   example: 123
+                report_users:
+                  type: array
+                  description: List of user UIDs to send the success/failure report of email
+                  items:
+                    type: string
+                  example: [1,2,3]
+                email_source:
+                  type: string
+                  description: Source of the email data
+                  enum:
+                    - Google Sheet
+                    - SurveyStream Data
+                email_source_gsheet_key:
+                  type: string
+                  description: Google Sheet Link
+                  example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                email_source_tablename:
+                  type: string
+                  description: Tablename for emails (Redshift email table), If not provided, default to assignments data
+                  example: "survey_id_email_stats"
               required:
                 - config_type
                 - form_uid
@@ -6048,6 +6150,26 @@ paths:
                         type: integer
                         description: UID of the form
                         example: 123
+                      report_users:
+                        type: array
+                        description: List of user UIDs to send the success/failure report of email
+                        items:
+                          type: string
+                        example: [1,2,3]
+                      email_source:
+                        type: string
+                        description: Source of the email data
+                        enum:
+                          - Google Sheet
+                          - SurveyStream Data
+                      email_source_gsheet_key:
+                        type: string
+                        description: Google Sheet Link
+                        example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                      email_source_tablename:
+                        type: string
+                        description: Tablename for emails (Redshift email table), If not provided, default to assignments data
+                        example: "survey_id_email_stats"
                 required:
                   - success
                   - message
@@ -6181,7 +6303,7 @@ paths:
                     email_config_uid:
                       type: integer
                     email_schedule_name:
-                      type: string 
+                      type: string
                     dates:
                       type: array
                       items:
@@ -6550,7 +6672,7 @@ paths:
                   - date
                   - time
                   - status
-    
+
   /emails/template:
     post:
       summary: Create a new email template
@@ -6748,7 +6870,6 @@ paths:
       responses:
         "200":
           description: Email template deleted successfully
-
 
   /media-files:
     post:

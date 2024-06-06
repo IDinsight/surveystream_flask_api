@@ -1122,6 +1122,11 @@ class TestAssignments:
         payload = {
             "config_type": "Assignments",
             "form_uid": 1,
+            "report_users": [1, 2, 3],
+            "email_source": "SurveyStream Data",
+            "email_source_gsheet_key": "test_key",
+            "email_source_tablename": "test_table",
+            "email_source_columns": ["test_column"],
         }
         response = client.post(
             "/api/emails/config",

@@ -9,6 +9,20 @@ from wtforms.validators import AnyOf, DataRequired, ValidationError
 class EmailConfigValidator(FlaskForm):
     config_type = StringField(validators=[DataRequired()])
     form_uid = IntegerField(validators=[DataRequired()])
+    report_users = FieldList(IntegerField(), default=[])
+    email_source = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                ["Google Sheet", "SurveyStream Data"],
+                message="Invalid email source. Must be 'Google Sheet' or 'SurveyStream Data'",
+            ),
+        ],
+        default="SurveyStream Data",
+    )
+    email_source_gsheet_key = StringField(default=None)
+    email_source_tablename = StringField(default=None)
+    email_source_columns = FieldList(StringField(), default=[])
 
 
 class EmailScheduleValidator(FlaskForm):

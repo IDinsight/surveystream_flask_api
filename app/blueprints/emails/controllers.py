@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime
 
 from flask import jsonify
 
@@ -36,6 +36,11 @@ def create_email_config(validated_payload):
     config_values = {
         "config_type": validated_payload.config_type.data,
         "form_uid": validated_payload.form_uid.data,
+        "report_users": validated_payload.report_users.data,
+        "email_source": validated_payload.email_source.data,
+        "email_source_gsheet_key": validated_payload.email_source_gsheet_key.data,
+        "email_source_tablename": validated_payload.email_source_tablename.data,
+        "email_source_columns": validated_payload.email_source_columns.data,
     }
 
     # Check if the email config already exists
@@ -43,6 +48,7 @@ def create_email_config(validated_payload):
         form_uid=validated_payload.form_uid.data,
         config_type=validated_payload.config_type.data,
     ).first()
+
     if check_config_exists is not None:
         return (
             jsonify(
@@ -65,7 +71,7 @@ def create_email_config(validated_payload):
     return (
         jsonify(
             {
-                "message": "Email schedule created successfully",
+                "message": "Email Config created successfully",
                 "data": email_config.to_dict(),
             }
         ),
@@ -152,6 +158,13 @@ def update_email_config(email_config_uid, validated_payload):
 
     email_config.form_uid = validated_payload.form_uid.data
     email_config.config_type = validated_payload.config_type.data
+    email_config.report_users = validated_payload.report_users.data
+    email_config.email_source = validated_payload.email_source.data
+    email_config.email_source_gsheet_key = (
+        validated_payload.email_source_gsheet_key.data
+    )
+    email_config.email_source_tablename = validated_payload.email_source_tablename.data
+    email_config.email_source_columns = validated_payload.email_source_columns.data
 
     try:
         db.session.commit()
