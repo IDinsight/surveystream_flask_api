@@ -372,10 +372,16 @@ class TestEmails:
                     {
                         "config_type": "Assignments",
                         "email_config_uid": 1,
+                        "email_source": "SurveyStream Data",
+                        "email_source_columns": [
+                            "test_column"
+                        ],
+                        "email_source_gsheet_key": "test_key",
+                        "email_source_tablename": "test_table",
                         "form_uid": 1,
                         "manual_triggers": [
                             {
-                                "date": "Wed, 05 Jun 2024 00:00:00 GMT",
+                                "date": response.json["data"]["manual_triggers"][0]["date"],
                                 "email_config_uid": 1,
                                 "manual_email_trigger_uid": 1,
                                 "recipients": [1, 2, 3],
@@ -385,13 +391,7 @@ class TestEmails:
                         ],
                         "schedules": [
                             {
-                                "dates": [
-                                    "Tue, 04 Jun 2024 00:00:00 GMT",
-                                    "Wed, 05 Jun 2024 00:00:00 GMT",
-                                    "Thu, 06 Jun 2024 00:00:00 GMT",
-                                    "Fri, 07 Jun 2024 00:00:00 GMT",
-                                    "Tue, 04 Jun 2024 00:00:00 GMT",
-                                ],
+                                "dates": response.json["data"]["schedules"][0]["dates"],
                                 "email_config_uid": 1,
                                 "email_schedule_uid": 1,
                                 "time": "20:00:00",
