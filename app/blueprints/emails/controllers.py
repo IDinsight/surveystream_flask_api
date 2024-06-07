@@ -80,12 +80,13 @@ def create_email_config(validated_payload):
     )
 
 
-@emails_bp.route("/<int:form_uid>", methods=["GET"])
+@emails_bp.route("/", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required("READ Emails", "path", "form_uid")
-def get_email_details(form_uid):
+@validate_query_params(EmailConfigQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "form_uid")
+def get_email_details(validated_query_params):
     """Function to get email configs per form including schedules and template details"""
-
+    form_uid = validated_query_params.form_uid.data
     # Query to get email configs including related schedules and templates
     email_configs = (
         EmailConfig.query.outerjoin(

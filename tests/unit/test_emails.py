@@ -360,7 +360,7 @@ class TestEmails:
         request.getfixturevalue(user_fixture)
 
         response = client.get(
-            f"api/emails/1",
+            f"api/emails?form_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
