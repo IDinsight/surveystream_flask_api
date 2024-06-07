@@ -341,6 +341,92 @@ class TestEmails:
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
 
+    def test_emails_get_details(
+        self,
+        client,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+        create_email_template,
+        create_manual_email_trigger,
+        user_permissions,
+        request,
+    ):
+        """
+        Test getting all details about email configs for a particular form
+        Expect the email details or permissions denied
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            f"api/emails?form_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 200
+            expected_response = {
+                "data": [
+                    {
+                        "config_type": "Assignments",
+                        "email_config_uid": 1,
+                        "email_source": "SurveyStream Data",
+                        "email_source_columns": ["test_column"],
+                        "email_source_gsheet_key": "test_key",
+                        "email_source_tablename": "test_table",
+                        "form_uid": 1,
+                        "report_users": [1, 2, 3],
+                        "manual_triggers": [
+                            {
+                                "date": response.json["data"][0]["manual_triggers"][0][
+                                    "date"
+                                ],
+                                "email_config_uid": 1,
+                                "manual_email_trigger_uid": 1,
+                                "recipients": [1, 2, 3],
+                                "status": "queued",
+                                "time": "08:00:00",
+                            }
+                        ],
+                        "schedules": [
+                            {
+                                "dates": response.json["data"][0]["schedules"][0][
+                                    "dates"
+                                ],
+                                "email_config_uid": 1,
+                                "email_schedule_uid": 1,
+                                "time": "20:00:00",
+                                "email_schedule_name": "Test Schedule",
+                            }
+                        ],
+                        "templates": [
+                            {
+                                "content": "Test Content",
+                                "email_config_uid": 1,
+                                "email_template_uid": 1,
+                                "language": "english",
+                                "subject": "Test Assignments Email",
+                            }
+                        ],
+                    }
+                ],
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
     def test_emails_get_configs(
         self,
         client,
@@ -508,7 +594,10 @@ class TestEmails:
 
             assert response.status_code == 200
 
-            expected_response = {"message": "Email config deleted successfully"}
+            expected_response = {
+                "success": True,
+                "message": "Email config deleted successfully",
+            }
 
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
@@ -1069,6 +1158,7 @@ class TestEmails:
                     "time": "09:00:00",
                 },
                 "message": "Manual email trigger updated successfully",
+                "success": True,
             }
 
             checkdiff = jsondiff.diff(
@@ -1154,6 +1244,7 @@ class TestEmails:
                     "time": "08:00:00",
                 },
                 "message": "Manual email trigger status updated successfully",
+                "success": True,
             }
 
             checkdiff = jsondiff.diff(
