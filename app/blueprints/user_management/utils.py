@@ -14,9 +14,8 @@ def send_invite_email(email, invite_code):
     """Send an invitation email to the user with the invite code."""
     rp_message = Message(
         subject="Welcome to SurveyStream - Invitation",
-        html="Welcome to SurveyStream! Your invitation code is %s. Use it to complete your registration by clicking <a href='%s/complete-registration/%s'>here</a>.<br><br>The link will expire in 24 hours."
+        html="Welcome to SurveyStream! Your invitation link is <a href='%s/complete-registration/%s'>here</a>.<br><br>Click on the link to complete your registration. The link will expire in 24 hours."
         % (
-            invite_code,
             current_app.config["REACT_BASE_URL"],
             invite_code,
         ),

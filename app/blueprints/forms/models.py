@@ -2,25 +2,28 @@ from app import db
 from sqlalchemy.dialects.postgresql import JSONB
 from app.blueprints.surveys.models import Survey
 from sqlalchemy.orm import backref
+from sqlalchemy import CheckConstraint
 
 
-class ParentForm(db.Model):
+class Form(db.Model):
     """
-    SQLAlchemy data model for Parent Form
-    This table contains information about the parent forms
-    within the survey, which are the main forms posed to respondents
+    SQLAlchemy data model for Form
+    This table contains information about the forms
+    Forms can be of different types depending on how they are used on the survey
+    Parent forms are the main forms posed to respondents
+    DQ forms are used to enter data quality information related to a given parent form
     """
 
-    __tablename__ = "parent_forms"
+    __tablename__ = "forms"
 
     __table_args__ = (
         db.UniqueConstraint(
             "survey_uid",
             "scto_form_id",
-            name="_parent_forms_survey_uid_scto_form_id_uc",
+            name="_forms_survey_uid_scto_form_id_uc",
         ),
         db.UniqueConstraint(
-            "survey_uid", "form_name", name="_parent_forms_survey_uid_form_name_uc"
+            "survey_uid", "form_name", name="_forms_survey_uid_form_name_uc"
         ),
         {
             "schema": "webapp",
@@ -33,6 +36,27 @@ class ParentForm(db.Model):
         db.ForeignKey(Survey.survey_uid, ondelete="CASCADE"),
         nullable=False,
     )
+    form_type = db.Column(
+        db.String(),
+        CheckConstraint(
+            "form_type IN ('parent', 'dq')",
+            name="ck_forms_form_type",
+        ),
+        nullable=False,
+    )
+    dq_form_type = db.Column(
+        db.String(),
+        CheckConstraint(
+            "dq_form_type IN ('audioaudit','spotcheck','backcheck')",
+            name="ck_forms_dq_form_type",
+        ),
+        nullable=True,
+    )
+    parent_form_uid = db.Column(
+        db.Integer(),
+        db.ForeignKey(form_uid, ondelete="CASCADE"),
+        nullable=True,
+    )
     scto_form_id = db.Column(db.String(), nullable=False)
     form_name = db.Column(db.String(), nullable=False)
     tz_name = db.Column(db.String())
@@ -41,9 +65,7 @@ class ParentForm(db.Model):
     server_access_role_granted = db.Column(db.Boolean())
     server_access_allowed = db.Column(db.Boolean())
     last_ingested_at = db.Column(db.DateTime(), nullable=True)
-    surveys = db.relationship(
-        Survey, backref=backref("parent_forms", passive_deletes=True)
-    )
+    surveys = db.relationship(Survey, backref=backref("forms", passive_deletes=True))
 
     def __init__(
         self,
@@ -55,6 +77,9 @@ class ParentForm(db.Model):
         encryption_key_shared,
         server_access_role_granted,
         server_access_allowed,
+        form_type,
+        dq_form_type=None,
+        parent_form_uid=None,
     ):
         self.survey_uid = survey_uid
         self.scto_form_id = scto_form_id
@@ -64,13 +89,20 @@ class ParentForm(db.Model):
         self.encryption_key_shared = encryption_key_shared
         self.server_access_role_granted = server_access_role_granted
         self.server_access_allowed = server_access_allowed
+        self.form_type = form_type
+        self.dq_form_type = dq_form_type
+        self.parent_form_uid = parent_form_uid
 
     def to_dict(self):
+
         return {
             "form_uid": self.form_uid,
             "survey_uid": self.survey_uid,
             "scto_form_id": self.scto_form_id,
             "form_name": self.form_name,
+            "form_type": self.form_type,
+            "dq_form_type": self.dq_form_type,
+            "parent_form_uid": self.parent_form_uid,
             "tz_name": self.tz_name,
             "scto_server_name": self.scto_server_name,
             "encryption_key_shared": self.encryption_key_shared,
@@ -96,7 +128,7 @@ class SCTOFormSettings(db.Model):
 
     form_uid = db.Column(
         db.Integer(),
-        db.ForeignKey(ParentForm.form_uid, ondelete="CASCADE"),
+        db.ForeignKey(Form.form_uid, ondelete="CASCADE"),
         primary_key=True,
         nullable=False,
     )
@@ -106,7 +138,7 @@ class SCTOFormSettings(db.Model):
     submission_url = db.Column(db.String())
     default_language = db.Column(db.String())
     forms = db.relationship(
-        ParentForm, backref=backref("scto_form_settings", passive_deletes=True)
+        Form, backref=backref("scto_form_settings", passive_deletes=True)
     )
 
     def __init__(
@@ -154,7 +186,7 @@ class SCTOQuestionMapping(db.Model):
 
     form_uid = db.Column(
         db.Integer(),
-        db.ForeignKey(ParentForm.form_uid, ondelete="CASCADE"),
+        db.ForeignKey(Form.form_uid, ondelete="CASCADE"),
         primary_key=True,
         nullable=False,
     )
@@ -164,7 +196,7 @@ class SCTOQuestionMapping(db.Model):
     enumerator_id = db.Column(db.String(), nullable=False)
     locations = db.Column(JSONB)
     forms = db.relationship(
-        ParentForm, backref=backref("scto_question_mapping", passive_deletes=True)
+        Form, backref=backref("scto_question_mapping", passive_deletes=True)
     )
 
     def __init__(
@@ -214,12 +246,12 @@ class SCTOChoiceList(db.Model):
     list_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     form_uid = db.Column(
         db.Integer(),
-        db.ForeignKey(ParentForm.form_uid, ondelete="CASCADE"),
+        db.ForeignKey(Form.form_uid, ondelete="CASCADE"),
         nullable=False,
     )
     list_name = db.Column(db.String(), nullable=False)
     forms = db.relationship(
-        ParentForm, backref=backref("scto_form_choice_lists", passive_deletes=True)
+        Form, backref=backref("scto_form_choice_lists", passive_deletes=True)
     )
 
     def __init__(self, form_uid, list_name):
@@ -303,7 +335,7 @@ class SCTOQuestion(db.Model):
     question_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     form_uid = db.Column(
         db.Integer(),
-        db.ForeignKey(ParentForm.form_uid, ondelete="CASCADE"),
+        db.ForeignKey(Form.form_uid, ondelete="CASCADE"),
         nullable=False,
     )
     question_name = db.Column(db.String(), nullable=False)
@@ -311,7 +343,7 @@ class SCTOQuestion(db.Model):
     list_uid = db.Column(db.Integer(), db.ForeignKey(SCTOChoiceList.list_uid))
     is_repeat_group = db.Column(db.Boolean(), nullable=False)
     forms = db.relationship(
-        ParentForm, backref=backref("scto_form_questions", passive_deletes=True)
+        Form, backref=backref("scto_form_questions", passive_deletes=True)
     )
 
     def __init__(

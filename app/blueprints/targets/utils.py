@@ -13,7 +13,6 @@ from .errors import (
     InvalidFileStructureError,
 )
 
-
 class TargetColumnMapping:
     """
     Class to represent the target column mapping and run validations on it

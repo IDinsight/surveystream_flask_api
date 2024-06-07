@@ -11,7 +11,7 @@ from app.utils.utils import (
 )
 from . import forms_bp
 from .models import (
-    ParentForm,
+    Form,
     SCTOFormSettings,
     SCTOQuestionMapping,
     SCTOChoiceLabel,
@@ -20,9 +20,9 @@ from .models import (
     SCTOChoiceList,
 )
 from .validators import (
-    CreateParentFormValidator,
-    UpdateParentFormValidator,
-    GetParentFormQueryParamValidator,
+    CreateFormValidator,
+    UpdateFormValidator,
+    GetFormQueryParamValidator,
     CreateSCTOQuestionMappingValidator,
     UpdateSCTOQuestionMappingValidator,
 )
@@ -31,20 +31,26 @@ from sqlalchemy.exc import IntegrityError
 
 @forms_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-@validate_query_params(GetParentFormQueryParamValidator)
-def get_parent_forms(validated_query_params):
+@validate_query_params(GetFormQueryParamValidator)
+def get_forms(validated_query_params):
     """
-    Return details for a user's parent forms
-    If ?survey_uid=<int:survey_uid> is passed, return parent forms for that survey
+    Return details for a user's forms
+    If ?survey_uid=<int:survey_uid> is passed, return forms for that survey
+    If ?form_type=<str:form_type> is passed, return forms of that type (parent or dq)
     """
 
     survey_uid = validated_query_params.survey_uid.data
-    if survey_uid:
-        parent_forms = ParentForm.query.filter_by(survey_uid=survey_uid).all()
-    else:
-        parent_forms = ParentForm.query.all()
+    form_type = validated_query_params.form_type.data
 
-    data = [parent_form.to_dict() for parent_form in parent_forms]
+    filters = []
+    if survey_uid:
+        filters.append(Form.survey_uid == survey_uid)
+    if form_type:
+        filters.append(Form.form_type == form_type)
+
+    forms = Form.query.filter(*filters).all()
+
+    data = [form.to_dict() for form in forms]
     response = {"success": True, "data": data}
 
     return jsonify(response), 200
@@ -52,30 +58,41 @@ def get_parent_forms(validated_query_params):
 
 @forms_bp.route("/<int:form_uid>", methods=["GET"])
 @logged_in_active_user_required
-def get_parent_form(form_uid):
+def get_form(form_uid):
     """
-    Return details for a parent form
+    Return details for a form
     """
-    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
-    if parent_form is None:
+    form = Form.query.filter_by(form_uid=form_uid).first()
+    if form is None:
         return jsonify({"success": False, "message": "Form not found"}), 404
 
-    response = {"success": True, "data": parent_form.to_dict()}
+    response = {"success": True, "data": form.to_dict()}
 
     return jsonify(response), 200
 
 
 @forms_bp.route("", methods=["POST"])
 @logged_in_active_user_required
-@validate_payload(CreateParentFormValidator)
-def create_parent_form(validated_payload):
+@validate_payload(CreateFormValidator)
+def create_form(validated_payload):
     """
-    Create a parent form
+    Create a form
     """
 
     # Check if the logged in user has access to the survey
 
-    parent_form = ParentForm(
+    if (
+        validated_payload.form_type.data == "dq"
+        and validated_payload.parent_form_uid.data is None
+    ):
+        return jsonify({"error": "form_type=dq must have a parent form defined"}), 422
+    if (
+        validated_payload.form_type.data == "dq"
+        and validated_payload.dq_form_type.data is None
+    ):
+        return jsonify({"error": "form_type=dq must have a dq_form_type defined"}), 422
+
+    form = Form(
         survey_uid=validated_payload.survey_uid.data,
         scto_form_id=validated_payload.scto_form_id.data,
         form_name=validated_payload.form_name.data,
@@ -84,9 +101,13 @@ def create_parent_form(validated_payload):
         encryption_key_shared=validated_payload.encryption_key_shared.data,
         server_access_role_granted=validated_payload.server_access_role_granted.data,
         server_access_allowed=validated_payload.server_access_allowed.data,
+        form_type=validated_payload.form_type.data,
+        dq_form_type=validated_payload.dq_form_type.data,
+        parent_form_uid=validated_payload.parent_form_uid.data,
     )
+
     try:
-        db.session.add(parent_form)
+        db.session.add(form)
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
@@ -102,7 +123,7 @@ def create_parent_form(validated_payload):
         jsonify(
             {
                 "success": True,
-                "data": {"message": "success", "survey": parent_form.to_dict()},
+                "data": {"message": "success", "survey": form.to_dict()},
             }
         ),
         201,
@@ -111,46 +132,60 @@ def create_parent_form(validated_payload):
 
 @forms_bp.route("/<int:form_uid>", methods=["PUT"])
 @logged_in_active_user_required
-@validate_payload(UpdateParentFormValidator)
-def update_parent_form(form_uid, validated_payload):
+@validate_payload(UpdateFormValidator)
+def update_form(form_uid, validated_payload):
     """
-    Update a parent form
+    Update a form
     """
 
-    if ParentForm.query.filter_by(form_uid=form_uid).first() is None:
-        return jsonify({"error": "Parent form not found"}), 404
+    if Form.query.filter_by(form_uid=form_uid).first() is None:
+        return jsonify({"error": "Form not found"}), 404
 
-    ParentForm.query.filter_by(form_uid=form_uid).update(
+    if (
+        validated_payload.form_type.data == "dq"
+        and validated_payload.parent_form_uid.data is None
+    ):
+        return jsonify({"error": "form_type=dq must have a parent form defined"}), 422
+    if (
+        validated_payload.form_type.data == "dq"
+        and validated_payload.dq_form_type.data is None
+    ):
+        return jsonify({"error": "form_type=dq must have a dq_form_type defined"}), 422
+
+    Form.query.filter_by(form_uid=form_uid).update(
         {
-            ParentForm.scto_form_id: validated_payload.scto_form_id.data,
-            ParentForm.form_name: validated_payload.form_name.data,
-            ParentForm.tz_name: validated_payload.tz_name.data,
-            ParentForm.scto_server_name: validated_payload.scto_server_name.data,
-            ParentForm.encryption_key_shared: validated_payload.encryption_key_shared.data,
-            ParentForm.server_access_role_granted: validated_payload.server_access_role_granted.data,
-            ParentForm.server_access_allowed: validated_payload.server_access_allowed.data,
+            Form.scto_form_id: validated_payload.scto_form_id.data,
+            Form.form_name: validated_payload.form_name.data,
+            Form.tz_name: validated_payload.tz_name.data,
+            Form.scto_server_name: validated_payload.scto_server_name.data,
+            Form.encryption_key_shared: validated_payload.encryption_key_shared.data,
+            Form.server_access_role_granted: validated_payload.server_access_role_granted.data,
+            Form.server_access_allowed: validated_payload.server_access_allowed.data,
+            Form.form_type: validated_payload.form_type.data,
+            Form.dq_form_type: validated_payload.dq_form_type.data,
+            Form.parent_form_uid: validated_payload.parent_form_uid.data,
         },
         synchronize_session="fetch",
     )
     db.session.commit()
-    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
-    return jsonify(parent_form.to_dict()), 200
+    form = Form.query.filter_by(form_uid=form_uid).first()
+    return jsonify(form.to_dict()), 200
 
 
 @forms_bp.route("/<int:form_uid>", methods=["DELETE"])
 @logged_in_active_user_required
 def delete_form(form_uid):
     """
-    Delete a parent form
+    Delete a form
     """
 
     # Check if the logged in user has access to the survey
 
-    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
-    if parent_form is None:
+    form = Form.query.filter_by(form_uid=form_uid).first()
+    if form is None:
         return jsonify({"error": "Form not found"}), 404
 
-    db.session.delete(parent_form)
+    db.session.delete(form)
     db.session.commit()
     return "", 204
 
@@ -160,15 +195,15 @@ def delete_form(form_uid):
 @validate_payload(CreateSCTOQuestionMappingValidator)
 def create_scto_question_mapping(form_uid, validated_payload):
     """
-    Create a SurveyCTO question mapping for a parent form
+    Create a SurveyCTO question mapping for a form
     """
 
     payload = request.get_json()
 
     # Check if the logged in user has access to the survey
 
-    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
-    if parent_form is None:
+    form = Form.query.filter_by(form_uid=form_uid).first()
+    if form is None:
         return jsonify({"error": "Form not found"}), 404
     scto_question_mapping = SCTOQuestionMapping(
         form_uid=form_uid,
@@ -202,7 +237,7 @@ def create_scto_question_mapping(form_uid, validated_payload):
 @validate_payload(UpdateSCTOQuestionMappingValidator)
 def update_scto_question_mapping(form_uid, validated_payload):
     """
-    Update the SCTO question mapping for a parent form
+    Update the SCTO question mapping for a form
     """
     payload = request.get_json()
 
@@ -216,9 +251,9 @@ def update_scto_question_mapping(form_uid, validated_payload):
                 SCTOQuestionMapping.revisit_section: validated_payload.revisit_section.data,
                 SCTOQuestionMapping.target_id: validated_payload.target_id.data,
                 SCTOQuestionMapping.enumerator_id: validated_payload.enumerator_id.data,
-                SCTOQuestionMapping.locations: payload["locations"]
-                if "locations" in payload
-                else None,
+                SCTOQuestionMapping.locations: (
+                    payload["locations"] if "locations" in payload else None
+                ),
             },
             synchronize_session="fetch",
         )
@@ -234,7 +269,7 @@ def update_scto_question_mapping(form_uid, validated_payload):
 @logged_in_active_user_required
 def get_scto_question_mapping(form_uid):
     """
-    Get the SCTO question mapping for a parent form
+    Get the SCTO question mapping for a form
     """
 
     scto_question_mapping = SCTOQuestionMapping.query.filter_by(
@@ -252,7 +287,7 @@ def get_scto_question_mapping(form_uid):
 @logged_in_active_user_required
 def delete_scto_question_mapping(form_uid):
     """
-    Delete the question mapping for a parent form
+    Delete the question mapping for a form
     """
 
     # Check if the logged in user has access to the survey
@@ -274,13 +309,13 @@ def ingest_scto_form_definition(form_uid):
     """
     Ingest form definition from the SurveyCTO server
     """
-    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    form = Form.query.filter_by(form_uid=form_uid).first()
 
     # Verify the form exists
-    if parent_form is None:
+    if form is None:
         return jsonify({"error": f"Form with form_uid={form_uid} not found"}), 404
 
-    if parent_form.scto_server_name is None:
+    if form.scto_server_name is None:
         return (
             jsonify({"error": "SurveyCTO server name not provided for the form"}),
             404,
@@ -290,7 +325,7 @@ def ingest_scto_form_definition(form_uid):
     try:
         scto_credential_response = get_aws_secret(
             "{scto_server_name}-surveycto-server".format(
-                scto_server_name=parent_form.scto_server_name
+                scto_server_name=form.scto_server_name
             ),
             current_app.config["AWS_REGION"],
             is_global_secret=True,
@@ -303,15 +338,15 @@ def ingest_scto_form_definition(form_uid):
 
     # Initialize the SurveyCTO object
     scto = pysurveycto.SurveyCTOObject(
-        parent_form.scto_server_name,
+        form.scto_server_name,
         scto_credentials["username"],
         scto_credentials["password"],
     )
 
     # Get the form definition
     try:
-        scto_form_definition = scto.get_form_definition(parent_form.scto_form_id)
-        scto_form_version = scto.get_deployed_form_version(parent_form.scto_form_id)
+        scto_form_definition = scto.get_form_definition(form.scto_form_id)
+        scto_form_version = scto.get_deployed_form_version(form.scto_form_id)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -492,7 +527,7 @@ def ingest_scto_form_definition(form_uid):
 @logged_in_active_user_required
 def delete_scto_form_definition(form_uid):
     """
-    Delete the SuveyCTO form definition for a parent form
+    Delete the SuveyCTO form definition for a form
     """
 
     scto_questions = SCTOQuestion.query.filter_by(form_uid=form_uid).first()
@@ -518,11 +553,11 @@ def get_scto_form_definition(form_uid):
     We are filtering these based on the question types that are supported for question mapping by SurveyStream
     """
 
-    parent_form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    form = Form.query.filter_by(form_uid=form_uid).first()
 
     # Verify the form exists
-    if parent_form is None:
-        return jsonify({"error": "Parent form not found"}), 404
+    if form is None:
+        return jsonify({"error": "Form not found"}), 404
 
     scto_questions = (
         SCTOQuestion.query.filter_by(form_uid=form_uid, is_repeat_group=False)

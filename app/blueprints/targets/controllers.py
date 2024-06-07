@@ -12,7 +12,7 @@ from sqlalchemy.sql.functions import func
 from sqlalchemy import update, cast
 import base64
 from app import db
-from app.blueprints.forms.models import ParentForm
+from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location, GeoLevel
 from .models import (
     Target,
@@ -57,7 +57,7 @@ def upload_targets(validated_query_params, validated_payload):
     form_uid = validated_query_params.form_uid.data
 
     # Get the survey UID from the form UID
-    form = ParentForm.query.filter_by(form_uid=form_uid).first()
+    form = Form.query.filter_by(form_uid=form_uid).first()
 
     if form is None:
         return (
@@ -239,7 +239,7 @@ def get_targets(validated_query_params):
     # Check if the logged in user has permission to access the given form
 
     ## TODO handle cases where these are None
-    survey_uid = ParentForm.query.filter_by(form_uid=form_uid).first().survey_uid
+    survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
     # We need to get the bottom level geo level UID for the survey in order to join in the location information
     if (
@@ -409,7 +409,7 @@ def get_target(target_uid):
         )
 
     ## TODO handle cases where these are None
-    survey_uid = ParentForm.query.filter_by(form_uid=target.form_uid).first().survey_uid
+    survey_uid = Form.query.filter_by(form_uid=target.form_uid).first().survey_uid
 
     if target.location_uid is not None:
         # Get the geo levels for the survey
@@ -516,7 +516,7 @@ def update_target(target_uid, validated_payload):
     if target is None:
         return jsonify({"error": "Target not found"}), 404
 
-    survey_uid = ParentForm.query.filter_by(form_uid=target.form_uid).first().survey_uid
+    survey_uid = Form.query.filter_by(form_uid=target.form_uid).first().survey_uid
 
     # Check if the location_uid is valid
 
@@ -653,7 +653,7 @@ def bulk_update_targets(validated_payload):
     payload = request.get_json()
     form_uid = validated_payload.form_uid.data
 
-    survey_uid = ParentForm.query.filter_by(form_uid=form_uid).first().survey_uid
+    survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
     column_config = TargetColumnConfig.query.filter(
         TargetColumnConfig.form_uid == form_uid,
@@ -843,8 +843,8 @@ def update_target_column_config(validated_payload):
     form_uid = validated_payload.form_uid.data
 
     if (
-        ParentForm.query.filter(
-            ParentForm.form_uid == form_uid,
+        Form.query.filter(
+            Form.form_uid == form_uid,
         ).first()
         is None
     ):

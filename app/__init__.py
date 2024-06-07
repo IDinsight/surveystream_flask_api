@@ -115,9 +115,12 @@ def register_blueprints(app):
     from app.blueprints.roles import roles_bp
     from app.blueprints.locations import locations_bp
     from app.blueprints.surveys import surveys_bp
+    from app.blueprints.target_status_mapping import target_status_mapping_bp
     from app.blueprints.targets import targets_bp
     from app.blueprints.timezones import timezones_bp
     from app.blueprints.user_management import user_management_bp
+    from app.blueprints.emails import emails_bp
+    from app.blueprints.media_files import media_files_bp
 
     # Auth needs to be registered first to avoid circular imports
     app.register_blueprint(auth_bp)
@@ -132,9 +135,12 @@ def register_blueprints(app):
     app.register_blueprint(roles_bp)
     app.register_blueprint(locations_bp)
     app.register_blueprint(surveys_bp)
+    app.register_blueprint(target_status_mapping_bp)
     app.register_blueprint(targets_bp)
     app.register_blueprint(timezones_bp)
     app.register_blueprint(user_management_bp)
+    app.register_blueprint(emails_bp)
+    app.register_blueprint(media_files_bp)
 
 
 def register_error_handlers(app):
