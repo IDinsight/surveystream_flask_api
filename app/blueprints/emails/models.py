@@ -17,8 +17,8 @@ class EmailConfig(db.Model):
             "email_source IN ('Google Sheet', 'SurveyStream Data')",
             name="ck_email_configs_source",
         ),
+        server_default="SurveyStream Data",
         nullable=False,
-        default="SurveyStream Data",
     )  # Gsheet/SurveyStream
     email_source_gsheet_key = db.Column(db.String(512), nullable=True)  # Gsheet key
     email_source_tablename = db.Column(db.String(256), nullable=True)
