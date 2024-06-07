@@ -1659,60 +1659,92 @@ class TestTargets:
         assert checkdiff == {}
 
     def test_upload_column_config_for_super_admin_user(
-        self, client, login_test_user, create_target_column_config, csrf_token
+        self,
+        client,
+        login_test_user,
+        create_target_column_config,
+        create_geo_levels_for_targets_file,
+        csrf_token,
     ):
         """
         Test uploading the targets column config
         """
 
         expected_response = {
-            "data": [
-                {
-                    "bulk_editable": False,
-                    "column_name": "target_id",
-                    "column_type": "basic_details",
-                    "contains_pii": False,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "language",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "gender",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Name",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Mobile no.",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "Address",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "bottom_geo_level_location",
-                    "column_type": "location",
-                    "contains_pii": True,
-                },
-            ],
+            "data": {
+                "config_data": [
+                    {
+                        "bulk_editable": False,
+                        "column_name": "target_id",
+                        "column_type": "basic_details",
+                        "contains_pii": False,
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "language",
+                        "column_type": "basic_details",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "gender",
+                        "column_type": "basic_details",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "Name",
+                        "column_type": "custom_fields",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "Mobile no.",
+                        "column_type": "custom_fields",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "Address",
+                        "column_type": "custom_fields",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "bottom_geo_level_location",
+                        "column_type": "location",
+                        "contains_pii": True,
+                    },
+                ],
+                "location_columns": [
+                    {
+                        "column_key": "target_locations[0].location_id",
+                        "column_label": "District ID",
+                    },
+                    {
+                        "column_key": "target_locations[0].location_name",
+                        "column_label": "District Name",
+                    },
+                    {
+                        "column_key": "target_locations[1].location_id",
+                        "column_label": "Mandal ID",
+                    },
+                    {
+                        "column_key": "target_locations[1].location_name",
+                        "column_label": "Mandal Name",
+                    },
+                    {
+                        "column_key": "target_locations[2].location_id",
+                        "column_label": "PSU ID",
+                    },
+                    {
+                        "column_key": "target_locations[2].location_name",
+                        "column_label": "PSU Name",
+                    },
+                ],
+            },
             "success": True,
         }
-
         # Check the response
         response = client.get(
             "/api/targets/column-config",
@@ -1729,6 +1761,8 @@ class TestTargets:
         client,
         login_test_user,
         create_form,
+        create_target_column_config,
+        create_geo_levels_for_targets_file,
         csrf_token,
         test_user_credentials,
     ):
@@ -1805,50 +1839,78 @@ class TestTargets:
         assert response.status_code == 200
 
         expected_response = {
-            "data": [
-                {
-                    "bulk_editable": False,
-                    "column_name": "target_id",
-                    "column_type": "basic_details",
-                    "contains_pii": False,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "language",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "gender",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Name",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Mobile no.",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "Address",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "bottom_geo_level_location",
-                    "column_type": "location",
-                    "contains_pii": True,
-                },
-            ],
+            "data": {
+                "config_data": [
+                    {
+                        "bulk_editable": False,
+                        "column_name": "target_id",
+                        "column_type": "basic_details",
+                        "contains_pii": False,
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "language",
+                        "column_type": "basic_details",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "gender",
+                        "column_type": "basic_details",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "Name",
+                        "column_type": "custom_fields",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "Mobile no.",
+                        "column_type": "custom_fields",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "Address",
+                        "column_type": "custom_fields",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "bottom_geo_level_location",
+                        "column_type": "location",
+                        "contains_pii": True,
+                    },
+                ],
+                "location_columns": [
+                    {
+                        "column_key": "target_locations[0].location_id",
+                        "column_label": "District ID",
+                    },
+                    {
+                        "column_key": "target_locations[0].location_name",
+                        "column_label": "District Name",
+                    },
+                    {
+                        "column_key": "target_locations[1].location_id",
+                        "column_label": "Mandal ID",
+                    },
+                    {
+                        "column_key": "target_locations[1].location_name",
+                        "column_label": "Mandal Name",
+                    },
+                    {
+                        "column_key": "target_locations[2].location_id",
+                        "column_label": "PSU ID",
+                    },
+                    {
+                        "column_key": "target_locations[2].location_name",
+                        "column_label": "PSU Name",
+                    },
+                ],
+            },
             "success": True,
         }
 
@@ -1879,6 +1941,8 @@ class TestTargets:
         client,
         login_test_user,
         create_form,
+        create_target_column_config,
+        create_geo_levels_for_targets_file,
         csrf_token,
         test_user_credentials,
     ):
@@ -1967,53 +2031,80 @@ class TestTargets:
         assert response.status_code == 200
 
         expected_response = {
-            "data": [
-                {
-                    "bulk_editable": False,
-                    "column_name": "target_id",
-                    "column_type": "basic_details",
-                    "contains_pii": False,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "language",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "gender",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Name",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Mobile no.",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "Address",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "bottom_geo_level_location",
-                    "column_type": "location",
-                    "contains_pii": True,
-                },
-            ],
+            "data": {
+                "config_data": [
+                    {
+                        "bulk_editable": False,
+                        "column_name": "target_id",
+                        "column_type": "basic_details",
+                        "contains_pii": False,
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "language",
+                        "column_type": "basic_details",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "gender",
+                        "column_type": "basic_details",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "Name",
+                        "column_type": "custom_fields",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "Mobile no.",
+                        "column_type": "custom_fields",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "Address",
+                        "column_type": "custom_fields",
+                        "contains_pii": True,
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "bottom_geo_level_location",
+                        "column_type": "location",
+                        "contains_pii": True,
+                    },
+                ],
+                "location_columns": [
+                    {
+                        "column_key": "target_locations[0].location_id",
+                        "column_label": "District ID",
+                    },
+                    {
+                        "column_key": "target_locations[0].location_name",
+                        "column_label": "District Name",
+                    },
+                    {
+                        "column_key": "target_locations[1].location_id",
+                        "column_label": "Mandal ID",
+                    },
+                    {
+                        "column_key": "target_locations[1].location_name",
+                        "column_label": "Mandal Name",
+                    },
+                    {
+                        "column_key": "target_locations[2].location_id",
+                        "column_label": "PSU ID",
+                    },
+                    {
+                        "column_key": "target_locations[2].location_name",
+                        "column_label": "PSU Name",
+                    },
+                ],
+            },
             "success": True,
         }
-
         # Check the response
         response = client.get(
             "/api/targets/column-config",
@@ -2041,6 +2132,7 @@ class TestTargets:
         client,
         login_test_user,
         create_target_column_config,
+        create_geo_levels_for_targets_file,
         csrf_token,
         test_user_credentials,
     ):
