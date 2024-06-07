@@ -936,8 +936,9 @@ def get_target_column_config(validated_query_params):
     location_columns = []
 
     if location_column:
-        form = ParentForm.query.get(form_uid)
-        if not form:
+        form = Form.query.filter_by(form_uid=form_uid).first()
+
+        if form is None:
             return (
                 jsonify(
                     message=f"The form 'form_uid={form_uid}' could not be found.",
