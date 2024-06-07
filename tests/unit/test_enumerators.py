@@ -2865,66 +2865,99 @@ class TestEnumerators:
         assert checkdiff == {}
 
     def test_upload_column_config_for_super_admin_user(
-        self, client, login_test_user, create_enumerator_column_config, csrf_token
+        self,
+        client,
+        login_test_user,
+        create_enumerator_column_config,
+        create_geo_levels_for_enumerators_file,
+        csrf_token,
     ):
         """
         Test uploading the enumerators column config
         """
 
         expected_response = {
+            "data": {
+                "config_data": [
+                    {
+                        "bulk_editable": False,
+                        "column_name": "enumerator_id",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "name",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "email",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "mobile_primary",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "language",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "home_address",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "gender",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "prime_geo_level_location",
+                        "column_type": "location",
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "Mobile (Secondary)",
+                        "column_type": "custom_fields",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "Age",
+                        "column_type": "custom_fields",
+                    },
+                ],
+                "location_columns": [
+                    {
+                        "column_key": "surveyor_locations[0].location_id",
+                        "column_label": "District ID",
+                    },
+                    {
+                        "column_key": "surveyor_locations[0].location_name",
+                        "column_label": "District Name",
+                    },
+                    {
+                        "column_key": "surveyor_locations[1].location_id",
+                        "column_label": "Mandal ID",
+                    },
+                    {
+                        "column_key": "surveyor_locations[1].location_name",
+                        "column_label": "Mandal Name",
+                    },
+                    {
+                        "column_key": "surveyor_locations[2].location_id",
+                        "column_label": "PSU ID",
+                    },
+                    {
+                        "column_key": "surveyor_locations[2].location_name",
+                        "column_label": "PSU Name",
+                    },
+                ],
+            },
             "success": True,
-            "data": [
-                {
-                    "column_name": "enumerator_id",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "name",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "email",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "mobile_primary",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "personal_details",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "home_address",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "prime_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Mobile (Secondary)",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Age",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                },
-            ],
         }
 
         # Check the response
@@ -2934,12 +2967,21 @@ class TestEnumerators:
             content_type="application/json",
         )
 
+        print(response.json)
+
         assert response.status_code == 200
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
     def test_upload_column_config_for_survey_admin_user(
-        self, client, login_test_user, create_form, csrf_token, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        create_form,
+        create_enumerator_column_config,
+        create_geo_levels_for_enumerators_file,
+        csrf_token,
+        test_user_credentials,
     ):
         """
         Test uploading the enumerators column config for survey_admin users
@@ -3022,59 +3064,87 @@ class TestEnumerators:
         assert response.status_code == 200
 
         expected_response = {
+            "data": {
+                "config_data": [
+                    {
+                        "bulk_editable": False,
+                        "column_name": "enumerator_id",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "name",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "email",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "mobile_primary",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "language",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "home_address",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "gender",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "prime_geo_level_location",
+                        "column_type": "location",
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "Mobile (Secondary)",
+                        "column_type": "custom_fields",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "Age",
+                        "column_type": "custom_fields",
+                    },
+                ],
+                "location_columns": [
+                    {
+                        "column_key": "surveyor_locations[0].location_id",
+                        "column_label": "District ID",
+                    },
+                    {
+                        "column_key": "surveyor_locations[0].location_name",
+                        "column_label": "District Name",
+                    },
+                    {
+                        "column_key": "surveyor_locations[1].location_id",
+                        "column_label": "Mandal ID",
+                    },
+                    {
+                        "column_key": "surveyor_locations[1].location_name",
+                        "column_label": "Mandal Name",
+                    },
+                    {
+                        "column_key": "surveyor_locations[2].location_id",
+                        "column_label": "PSU ID",
+                    },
+                    {
+                        "column_key": "surveyor_locations[2].location_name",
+                        "column_label": "PSU Name",
+                    },
+                ],
+            },
             "success": True,
-            "data": [
-                {
-                    "column_name": "enumerator_id",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "name",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "email",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "mobile_primary",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "personal_details",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "home_address",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "prime_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Mobile (Secondary)",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Age",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                },
-            ],
         }
 
         # Check the response
@@ -3099,7 +3169,14 @@ class TestEnumerators:
         login_user(client, test_user_credentials)
 
     def test_upload_column_config_for_non_admin_user_roles(
-        self, client, login_test_user, create_form, csrf_token, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        create_form,
+        create_enumerator_column_config,
+        create_geo_levels_for_enumerators_file,
+        csrf_token,
+        test_user_credentials,
     ):
         """
         Test uploading the enumerators column config for non_admin users with roles
@@ -3191,59 +3268,87 @@ class TestEnumerators:
         assert response.status_code == 200
 
         expected_response = {
+            "data": {
+                "config_data": [
+                    {
+                        "bulk_editable": False,
+                        "column_name": "enumerator_id",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "name",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "email",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "mobile_primary",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "language",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "home_address",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "gender",
+                        "column_type": "personal_details",
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "prime_geo_level_location",
+                        "column_type": "location",
+                    },
+                    {
+                        "bulk_editable": True,
+                        "column_name": "Mobile (Secondary)",
+                        "column_type": "custom_fields",
+                    },
+                    {
+                        "bulk_editable": False,
+                        "column_name": "Age",
+                        "column_type": "custom_fields",
+                    },
+                ],
+                "location_columns": [
+                    {
+                        "column_key": "surveyor_locations[0].location_id",
+                        "column_label": "District ID",
+                    },
+                    {
+                        "column_key": "surveyor_locations[0].location_name",
+                        "column_label": "District Name",
+                    },
+                    {
+                        "column_key": "surveyor_locations[1].location_id",
+                        "column_label": "Mandal ID",
+                    },
+                    {
+                        "column_key": "surveyor_locations[1].location_name",
+                        "column_label": "Mandal Name",
+                    },
+                    {
+                        "column_key": "surveyor_locations[2].location_id",
+                        "column_label": "PSU ID",
+                    },
+                    {
+                        "column_key": "surveyor_locations[2].location_name",
+                        "column_label": "PSU Name",
+                    },
+                ],
+            },
             "success": True,
-            "data": [
-                {
-                    "column_name": "enumerator_id",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "name",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "email",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "mobile_primary",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "personal_details",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "home_address",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "prime_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Mobile (Secondary)",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Age",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                },
-            ],
         }
 
         # Check the response
@@ -3268,7 +3373,14 @@ class TestEnumerators:
         login_user(client, test_user_credentials)
 
     def test_upload_column_config_for_non_admin_user_no_roles(
-        self, client, login_test_user, create_form, csrf_token, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        create_form,
+        create_enumerator_column_config,
+        create_geo_levels_for_enumerators_file,
+        csrf_token,
+        test_user_credentials,
     ):
         """
         Test uploading the enumerators column config for non_admin users without roles

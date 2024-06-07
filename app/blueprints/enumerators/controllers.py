@@ -1,3 +1,5 @@
+from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
+from app.blueprints.locations.utils import GeoLevelHierarchy
 from flask import jsonify, request
 from app.blueprints.assignments.models import SurveyorAssignment
 from app.utils.utils import (
@@ -16,7 +18,7 @@ from sqlalchemy.orm import aliased
 from app import db
 from app.blueprints.surveys.models import Survey
 from app.blueprints.forms.models import ParentForm
-from app.blueprints.locations.models import Location
+from app.blueprints.locations.models import GeoLevel, Location
 from .models import (
     Enumerator,
     SurveyorForm,
@@ -1380,18 +1382,71 @@ def get_enumerator_column_config(validated_query_params):
         EnumeratorColumnConfig.form_uid == form_uid,
     ).all()
 
-    return jsonify(
+    config_data = [
         {
-            "success": True,
-            "data": [
-                {
-                    "column_name": column.column_name,
-                    "column_type": column.column_type,
-                    "bulk_editable": column.bulk_editable,
-                }
-                for column in column_config
-            ],
+            "column_name": column.column_name,
+            "column_type": column.column_type,
+            "bulk_editable": column.bulk_editable,
         }
+        for column in column_config
+    ]
+
+    location_column = next(
+        (column for column in config_data if column["column_type"] == "location"),
+        None,
+    )
+
+    if location_column:
+        form = ParentForm.query.get(form_uid)
+        if not form:
+            return (
+                jsonify(
+                    message=f"The form 'form_uid={form_uid}' could not be found.",
+                    success=False,
+                ),
+                404,
+            )
+
+        survey_uid = form.survey_uid
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+        location_columns = []
+
+        if geo_levels:
+            try:
+                geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+            except InvalidGeoLevelHierarchyError as e:
+                return (
+                    jsonify(
+                        {"success": False, "errors": {"geo_level_hierarchy": e.errors}}
+                    ),
+                    422,
+                )
+
+            for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
+                location_columns.extend(
+                    [
+                        {
+                            "column_key": f"surveyor_locations[{i}].location_id",
+                            "column_label": f"{geo_level.geo_level_name} ID",
+                        },
+                        {
+                            "column_key": f"surveyor_locations[{i}].location_name",
+                            "column_label": f"{geo_level.geo_level_name} Name",
+                        },
+                    ]
+                )
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": {
+                    "config_data": config_data,
+                    "location_columns": location_columns,
+                },
+            }
+        ),
+        200,
     )
 
 
