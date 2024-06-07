@@ -1,3 +1,4 @@
+from app import db
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.locations.utils import GeoLevelHierarchy
 from flask import jsonify, request
@@ -15,12 +16,9 @@ from sqlalchemy.sql.functions import func
 from sqlalchemy import update, cast
 import base64
 from sqlalchemy.orm import aliased
-from app import db
 from app.blueprints.surveys.models import Survey
-from app.blueprints.forms.models import ParentForm
 from app.blueprints.locations.models import GeoLevel, Location
 from app.blueprints.forms.models import Form
-from app.blueprints.locations.models import Location
 from .models import (
     Enumerator,
     SurveyorForm,
