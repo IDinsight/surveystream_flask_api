@@ -1,4 +1,7 @@
-"""empty message
+"""
+Modify email tables:
+- email_configs: Add email_source, email_source_gsheet, tablename, reporting users columns
+- email_schedules: Add email_schedule_name column
 
 Revision ID: 46ba6d963fde
 Revises: 0e0c398beec2
