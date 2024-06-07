@@ -80,7 +80,7 @@ def create_email_config(validated_payload):
     )
 
 
-@emails_bp.route("/", methods=["GET"])
+@emails_bp.route("", methods=["GET"]) #/emails
 @logged_in_active_user_required
 @validate_query_params(EmailConfigQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "form_uid")

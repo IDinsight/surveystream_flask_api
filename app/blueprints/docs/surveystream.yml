@@ -5779,19 +5779,20 @@ paths:
           description: Target not found
         "422":
           description: Target errors
-  /emails/{form_uid}:
+  /emails:
     get:
       tags:
         - emails
       summary: Get Email Configurations
       description: Retrieve email configurations for a specified form including related schedules and templates.
       parameters:
-        - name: form_uid
-          in: path
+        - in: query
+          name: form_uid
           required: true
-          description: Unique identifier for the form.
+          description: Form UID
           schema:
             type: integer
+            example: 123
       responses:
         '200':
           description: Successful response with email configurations.
