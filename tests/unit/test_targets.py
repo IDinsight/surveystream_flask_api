@@ -13,6 +13,85 @@ from utils import (
 
 @pytest.mark.targets
 class TestTargets:
+    
+    @pytest.fixture
+    def user_with_super_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have super admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_survey_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have survey admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_media_files_permissions(self, client, test_user_credentials):
+        # Assign new roles and permissions
+        new_role = create_new_survey_role_with_permissions(
+            # 7 - WRITE Targets
+            client,
+            test_user_credentials,
+            "Survey Role",
+            [7],
+            1,
+        )
+
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_no_permissions(self, client, test_user_credentials):
+        # Assign no roles and permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture(
+        params=[
+            ("user_with_super_admin_permissions", True),
+            ("user_with_survey_admin_permissions", True),
+            ("user_with_media_files_permissions", True),
+            ("user_with_no_permissions", False),
+        ],
+        ids=[
+            "super_admin_permissions",
+            "survey_admin_permissions",
+            "media_files_permissions",
+            "no_permissions",
+        ],
+    )
+    def user_permissions(self, request):
+        return request.param
+
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -324,6 +403,58 @@ class TestTargets:
         assert response.status_code == 200
 
     @pytest.fixture()
+    def upload_target_status(
+        self, client, login_test_user, upload_targets_csv, csrf_token
+    ):
+        """
+        Insert new target status as a setup step for the target status tests
+        """
+
+        payload = {
+            "form_uid": 1,
+            "target_status": [
+                {
+                    "target_uid": 1,
+                    "completed_flag": False,
+                    "refusal_flag": False,
+                    "num_attempts": 1,
+                    "last_attempt_survey_status": 2,
+                    "last_attempt_survey_status_label": "Partially complete - revisit",
+                    "final_survey_status": 2,
+                    "final_survey_status_label": "Partially complete - revisit",
+                    "target_assignable": True,
+                    "webapp_tag_color": "gold",
+                    "revisit_sections": ["section1", "section2"],
+                    "scto_fields": {"field1": "value1", "field2": "value2"},
+                },
+                {
+                    "target_uid": 2,
+                    "completed_flag": True,
+                    "refusal_flag": False,
+                    "num_attempts": 5,
+                    "last_attempt_survey_status": 1,
+                    "last_attempt_survey_status_label": "Fully complete",
+                    "final_survey_status": 1,
+                    "final_survey_status_label": "Fully complete",
+                    "target_assignable": False,
+                    "webapp_tag_color": "green",
+                    "revisit_sections": [],
+                    "scto_fields": {"field1": "value3", "field2": "value4"},
+                }
+            ]
+        }
+
+        response = client.post(
+            "/api/targets/target-status",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        
+    @pytest.fixture()
     def upload_targets_csv_no_locations(
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
     ):
@@ -483,6 +614,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -541,6 +674,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -682,6 +817,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -740,6 +877,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -903,6 +1042,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -961,6 +1102,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -1140,6 +1283,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -1197,6 +1342,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -1232,6 +1379,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -1339,6 +1488,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -1380,6 +1531,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -1450,6 +1603,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -1497,6 +1652,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -2223,6 +2380,8 @@ class TestTargets:
                 "completed_flag": None,
                 "last_attempt_survey_status": None,
                 "last_attempt_survey_status_label": None,
+                "final_survey_status": None,
+                "final_survey_status_label": None,
                 "num_attempts": None,
                 "refusal_flag": None,
                 "revisit_sections": None,
@@ -2335,6 +2494,8 @@ class TestTargets:
                 "completed_flag": None,
                 "last_attempt_survey_status": None,
                 "last_attempt_survey_status_label": None,
+                "final_survey_status": None,
+                "final_survey_status_label": None,
                 "num_attempts": None,
                 "refusal_flag": None,
                 "revisit_sections": None,
@@ -2470,6 +2631,8 @@ class TestTargets:
                 "completed_flag": None,
                 "last_attempt_survey_status": None,
                 "last_attempt_survey_status_label": None,
+                "final_survey_status": None,
+                "final_survey_status_label": None,
                 "num_attempts": None,
                 "refusal_flag": None,
                 "revisit_sections": None,
@@ -2821,6 +2984,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -2879,6 +3044,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -2990,6 +3157,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -3048,6 +3217,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -3179,6 +3350,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -3237,6 +3410,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -3473,6 +3648,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -3532,6 +3709,8 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
@@ -3563,6 +3742,8 @@ class TestTargets:
                     "language": "Tagalog",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "location_uid": None,
                     "num_attempts": None,
                     "refusal_flag": None,

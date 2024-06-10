@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import FieldList, FormField, IntegerField, StringField
+from wtforms import FieldList, FormField, IntegerField, StringField, BooleanField
 from wtforms.validators import DataRequired, AnyOf
 
 
@@ -74,3 +74,27 @@ class ColumnConfigValidator(FlaskForm):
 class UpdateTargetsColumnConfig(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     column_config = FieldList(FormField(ColumnConfigValidator))
+
+class TargetStatusValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    target_id = StringField(validators=[DataRequired()])
+    completed_flag = BooleanField(default=False)
+    refusal_flag = BooleanField(default=False)
+    num_attempts = IntegerField(validators=[DataRequired()])
+    last_attempt_survey_status = IntegerField(validators=[DataRequired()])
+    last_attempt_survey_status_label = StringField(validators=[DataRequired()])
+    final_survey_status = IntegerField(validators=[DataRequired()])
+    final_survey_status_label = StringField(validators=[DataRequired()])
+    target_assignable = BooleanField(default=True, validators=[DataRequired()]
+    )
+    webapp_tag_color = StringField()
+    revisit_sections = FieldList(StringField())
+    scto_fields = FieldList(FormField(CustomColumnsValidator))
+
+class UpdateTargetStatus(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
+    target_status = FieldList(FormField(TargetStatusValidator))
+
+

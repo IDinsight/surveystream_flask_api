@@ -79,6 +79,8 @@ class TargetStatus(db.Model):
     num_attempts = db.Column(db.Integer())
     last_attempt_survey_status = db.Column(db.Integer())
     last_attempt_survey_status_label = db.Column(db.String())
+    final_survey_status = db.Column(db.Integer())
+    final_survey_status_label = db.Column(db.String())
     target_assignable = db.Column(db.Boolean())
     webapp_tag_color = db.Column(db.String())
     revisit_sections = db.Column(ARRAY(db.String()))
@@ -94,6 +96,8 @@ class TargetStatus(db.Model):
         num_attempts,
         last_attempt_survey_status,
         last_attempt_survey_status_label,
+        final_survey_status,
+        final_survey_status_label,
         target_assignable,
         webapp_tag_color,
         revisit_sections,
@@ -105,6 +109,8 @@ class TargetStatus(db.Model):
         self.num_attempts = num_attempts
         self.last_attempt_survey_status = last_attempt_survey_status
         self.last_attempt_survey_status_label = last_attempt_survey_status_label
+        self.final_survey_status = final_survey_status
+        self.final_survey_status_label = final_survey_status_label
         self.target_assignable = target_assignable
         self.webapp_tag_color = webapp_tag_color
         self.revisit_sections = revisit_sections
@@ -120,6 +126,8 @@ class TargetStatus(db.Model):
             "num_attempts": self.num_attempts,
             "last_attempt_survey_status": self.last_attempt_survey_status,
             "last_attempt_survey_status_label": self.last_attempt_survey_status_label,
+            "final_survey_status": self.final_survey_status,
+            "final_survey_status_label": self.final_survey_status_label,
             "target_assignable": self.target_assignable,
             "webapp_tag_color": self.webapp_tag_color,
             "revisit_sections": self.revisit_sections,
