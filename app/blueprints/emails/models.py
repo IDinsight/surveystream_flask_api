@@ -17,8 +17,8 @@ class EmailConfig(db.Model):
             "email_source IN ('Google Sheet', 'SurveyStream Data')",
             name="ck_email_configs_source",
         ),
+        server_default="SurveyStream Data",
         nullable=False,
-        default="SurveyStream Data",
     )  # Gsheet/SurveyStream
     email_source_gsheet_key = db.Column(db.String(512), nullable=True)  # Gsheet key
     email_source_tablename = db.Column(db.String(256), nullable=True)
@@ -26,8 +26,27 @@ class EmailConfig(db.Model):
         db.ARRAY(db.String(128)), nullable=True
     )  # List of columns from Gsheet or Table
 
+    schedules = db.relationship(
+        "EmailSchedule",
+        backref="email_config",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+    templates = db.relationship(
+        "EmailTemplate",
+        backref="email_config",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+    manual_triggers = db.relationship(
+        "ManualEmailTrigger",
+        backref="email_config",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+
     __table_args__ = (
-        # ensure that configs are not duplicated per form
+        # Ensure that configs are not duplicated per form
         db.UniqueConstraint(
             "config_type",
             "form_uid",
