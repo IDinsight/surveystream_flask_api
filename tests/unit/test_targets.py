@@ -79,13 +79,13 @@ class TestTargets:
         params=[
             ("user_with_super_admin_permissions", True),
             ("user_with_survey_admin_permissions", True),
-            ("user_with_media_files_permissions", True),
+            ("user_with_targets_permissions", True),
             ("user_with_no_permissions", False),
         ],
         ids=[
             "super_admin_permissions",
             "survey_admin_permissions",
-            "media_files_permissions",
+            "targets_permissions",
             "no_permissions",
         ],
     )
@@ -414,7 +414,7 @@ class TestTargets:
             "form_uid": 1,
             "target_status": [
                 {
-                    "target_uid": 1,
+                    "target_id": "1",
                     "completed_flag": False,
                     "refusal_flag": False,
                     "num_attempts": 1,
@@ -428,7 +428,7 @@ class TestTargets:
                     "scto_fields": {"field1": "value1", "field2": "value2"},
                 },
                 {
-                    "target_uid": 2,
+                    "target_id": "2",
                     "completed_flag": True,
                     "refusal_flag": False,
                     "num_attempts": 5,
@@ -444,14 +444,14 @@ class TestTargets:
             ]
         }
 
-        response = client.post(
+        response = client.put(
             "/api/targets/target-status",
             query_string={"form_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        assert response.status_code == 201
+        assert response.status_code == 200
 
     @pytest.fixture()
     def upload_targets_csv_no_locations(
@@ -3906,5 +3906,17 @@ class TestTargets:
         # Check the response
         response = client.get("/api/targets", query_string={"form_uid": 1})
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+        if expected_permission:
+            assert response.status_code == 200
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: READ Targets",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}

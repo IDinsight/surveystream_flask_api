@@ -371,6 +371,12 @@ def get_targets(validated_query_params):
                             "last_attempt_survey_status_label": getattr(
                                 target_status, "last_attempt_survey_status_label", None
                             ),
+                            "final_survey_status": getattr(
+                                target_status, "final_survey_status", None
+                            ),
+                            "final_survey_status_label": getattr(
+                                target_status, "final_survey_status_label", None
+                            ),
                             "target_assignable": getattr(
                                 target_status, "target_assignable", None
                             ),
@@ -978,19 +984,14 @@ def update_target_status(validated_payload):
 
     subquery = (
         db.session.query(Target.target_uid)
-        .join(
-            Target,
-            TargetStatus.target_uid == Target.target_uid,
-        )
         .filter(
             Target.form_uid == form_uid
         )
-        .subquery()
     )
 
-    TargetStatus.query.filter(
-        TargetStatus.target_uid.in_(subquery),
-    ).delete()
+    db.session.query(TargetStatus).filter(
+        TargetStatus.target_uid.in_(subquery)
+    ).delete(synchronize_session=False)
 
     db.session.flush()
 
