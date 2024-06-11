@@ -335,6 +335,7 @@ def get_targets(validated_query_params):
                         "revisit_sections": getattr(
                             target_status, "revisit_sections", None
                         ),
+                        "scto_fields": getattr(target_status, "scto_fields", None),
                         "target_locations": target_locations,
                     }
                     for target, target_status, target_locations in targets_query.items
@@ -386,6 +387,7 @@ def get_targets(validated_query_params):
                             "revisit_sections": getattr(
                                 target_status, "revisit_sections", None
                             ),
+                            "scto_fields": getattr(target_status, "scto_fields", None),
                         },
                         **{"target_locations": target_locations},
                     }
@@ -507,6 +509,7 @@ def get_target(target_uid):
                         "revisit_sections": getattr(
                             target_status, "revisit_sections", None
                         ),
+                        "scto_fields": getattr(target_status, "scto_fields", None),
                     },
                     **{"target_locations": target_locations},
                 }

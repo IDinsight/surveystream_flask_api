@@ -620,6 +620,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -680,6 +681,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -823,6 +825,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -883,6 +886,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1048,6 +1052,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1108,6 +1113,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1289,6 +1295,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1348,6 +1355,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1385,6 +1393,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1494,6 +1503,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1537,6 +1547,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1609,6 +1620,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1658,6 +1670,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -2386,6 +2399,7 @@ class TestTargets:
                 "revisit_sections": None,
                 "target_assignable": None,
                 "webapp_tag_color": None,
+                "scto_fields": None,
             },
             "success": True,
         }
@@ -2500,6 +2514,7 @@ class TestTargets:
                 "revisit_sections": None,
                 "target_assignable": None,
                 "webapp_tag_color": None,
+                "scto_fields": None,
             },
             "success": True,
         }
@@ -2637,6 +2652,7 @@ class TestTargets:
                 "revisit_sections": None,
                 "target_assignable": None,
                 "webapp_tag_color": None,
+                "scto_fields": None,
             },
             "success": True,
         }
@@ -2990,6 +3006,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -3050,6 +3067,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -3163,6 +3181,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -3223,6 +3242,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -3356,6 +3376,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -3416,6 +3437,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -3654,6 +3676,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -3715,6 +3738,7 @@ class TestTargets:
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "completed_flag": None,
@@ -3752,6 +3776,7 @@ class TestTargets:
                     "target_locations": None,
                     "target_uid": 3,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -3838,6 +3863,7 @@ class TestTargets:
                     "revisit_sections": ["section1", "section2"],
                     "target_assignable": True,
                     "webapp_tag_color": "gold",
+                    "scto_fields": {"field1": "value1", "field2": "value2"},
                 },
                 {
                     "custom_fields": {
@@ -3898,6 +3924,7 @@ class TestTargets:
                     "revisit_sections": [],
                     "target_assignable": False,
                     "webapp_tag_color": "green",
+                    "scto_fields": {"field1": "value3", "field2": "value4"},
                 },
             ],
             "success": True,
@@ -3909,6 +3936,7 @@ class TestTargets:
         if expected_permission:
             assert response.status_code == 200
 
+            print(response.json)
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
         else:

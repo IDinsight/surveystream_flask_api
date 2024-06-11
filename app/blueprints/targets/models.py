@@ -101,7 +101,7 @@ class TargetStatus(db.Model):
         target_assignable,
         webapp_tag_color,
         revisit_sections,
-        scto_fields=None,
+        scto_fields,
     ):
         self.target_uid = target_uid
         self.completed_flag = completed_flag
@@ -114,8 +114,6 @@ class TargetStatus(db.Model):
         self.target_assignable = target_assignable
         self.webapp_tag_color = webapp_tag_color
         self.revisit_sections = revisit_sections
-        if self.scto_fields is None:
-            scto_fields = {}
         self.scto_fields = scto_fields
 
     def to_dict(self):
