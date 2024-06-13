@@ -5,7 +5,6 @@ from app import db
 from .models import Survey
 from app.blueprints.roles.models import Role, SurveyAdmin
 from app.blueprints.locations.models import GeoLevel
-from app.blueprints.emails.models import EmailConfig
 from app.blueprints.module_selection.models import ModuleStatus, Module
 from .routes import surveys_bp
 from .validators import (
@@ -191,6 +190,7 @@ def get_survey_config_status(survey_uid):
     from app.blueprints.assignments.models import SurveyorAssignment
     from app.blueprints.target_status_mapping.models import TargetStatusMapping
     from app.blueprints.media_files.models import MediaFilesConfig
+    from app.blueprints.emails.models import EmailConfig
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     scto_information = Form.query.filter_by(survey_uid=survey_uid).first()
