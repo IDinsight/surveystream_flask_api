@@ -7108,12 +7108,12 @@ paths:
     get:
       tags:
         - Media Files
-      summary: Get all media files configs per form
+      summary: Get all media files configs per survey
       parameters:
         - in: query
-          name: form_uid
+          name: survey_uid
           required: true
-          description: Unique identifier for the form
+          description: Unique identifier for the survey
           schema:
             type: integer
             example: 123
@@ -7137,6 +7137,13 @@ paths:
                           type: integer
                           description: Unique identifier of the media files config
                           example: 123
+                        form_uid:
+                          type: integer
+                          description: Unique identifier of the form
+                          example: 123
+                        scto_form_id:
+                          type: string
+                          description: SurveyCTO form ID
                         file_type:
                           type: string
                           description: Type of media file - photo or audio

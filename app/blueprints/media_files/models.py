@@ -7,9 +7,18 @@ from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 
 class MediaFilesConfig(db.Model):
     __tablename__ = "media_files_config"
-    __table_args__ = {
-        "schema": "webapp",
-    }
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "form_uid",
+            "file_type",
+            "source",
+            name="_media_files_config_form_uid_file_type_source_uc",
+        ),
+        {
+            "schema": "webapp",
+        },
+    )
 
     media_files_config_uid = db.Column(
         db.Integer(), primary_key=True, autoincrement=True
