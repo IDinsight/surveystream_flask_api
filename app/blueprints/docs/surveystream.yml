@@ -3070,8 +3070,8 @@ paths:
     get:
       summary: Get the enumerators column config for a form
       description: >
-        Retrieve the column configuration for enumerators data associated with a specific form. 
-        The column configuration defines the fields available for bulk editing via the `PATCH /enumerators` 
+        Retrieve the file_columns configuration and location_columns for enumerators data associated with a specific form. 
+        The file_columns defines the fields available for bulk editing via the `PATCH /enumerators` 
         and `PUT /enumerators/roles/locations` endpoints.
       tags:
         - Enumerators
@@ -3096,7 +3096,7 @@ paths:
                   data:
                     type: object
                     properties:
-                      config_data:
+                      file_columns:
                         type: array
                         description: An array of column config objects for the enumerators data.
                         items:
@@ -5648,7 +5648,7 @@ paths:
                   data:
                     type: object
                     properties:
-                      config_data:
+                      file_columns:
                         type: array
                         description: An array of column config objects for the targets data.
                         items:
