@@ -7,7 +7,7 @@ class MediaFilesConfigQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    form_uid = IntegerField(validators=[DataRequired()])
+    survey_uid = IntegerField(validators=[DataRequired()])
 
 
 class CreateMediaFilesConfigValidator(FlaskForm):
