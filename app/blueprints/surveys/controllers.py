@@ -5,6 +5,7 @@ from app import db
 from .models import Survey
 from app.blueprints.roles.models import Role, SurveyAdmin
 from app.blueprints.locations.models import GeoLevel
+from app.blueprints.emails.models import EmailConfig
 from app.blueprints.module_selection.models import ModuleStatus, Module
 from .routes import surveys_bp
 from .validators import (
@@ -224,6 +225,14 @@ def get_survey_config_status(survey_uid):
             .first()
         )
 
+        # Check if email exists
+        email_config = (
+            db.session.query(EmailConfig)
+            .join(Form, Form.form_uid == EmailConfig.form_uid)
+            .filter(Form.survey_uid == survey_uid)
+            .first()
+        )
+
     if enumerators and targets:
         assignments = (
             db.session.query(
@@ -306,6 +315,9 @@ def get_survey_config_status(survey_uid):
 
                 elif item["name"] == "Media (Audio/Photo) audits":
                     if media_files_config is not None:
+                        item["status"] = "In Progress"
+                elif item["name"] == "Emails":
+                    if email_config is not None:
                         item["status"] = "In Progress"
 
     response = {"success": True, "data": data}
