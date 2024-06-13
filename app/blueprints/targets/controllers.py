@@ -980,7 +980,7 @@ def get_target_column_config(validated_query_params):
             {
                 "success": True,
                 "data": {
-                    "config_data": config_data,
+                    "file_columns": config_data,
                     "location_columns": location_columns,
                 },
             }
