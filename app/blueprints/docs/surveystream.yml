@@ -3070,9 +3070,9 @@ paths:
     get:
       summary: Get the enumerators column config for a form
       description: >
-        Get the enumerators column config for a form. The column config defines
-        the fields that are available for bulk editing via the `PATCH
-        /enumerators` and `PUT /enumerators/roles/locations`` endpoints.
+        Retrieve the file_columns configuration and location_columns for enumerators data associated with a specific form. 
+        The file_columns defines the fields available for bulk editing via the `PATCH /enumerators` 
+        and `PUT /enumerators/roles/locations` endpoints.
       tags:
         - Enumerators
       parameters:
@@ -3080,7 +3080,7 @@ paths:
           name: form_uid
           schema:
             type: integer
-          description: The form UID of the enumerator column config to be updated.
+          description: The form UID of the enumerator column config to be retrieved.
           required: true
       responses:
         "200":
@@ -3088,25 +3088,43 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                description: >-
-                  An array of column config objects for the enumerators data.
-                  Each object defines the column name, its type, and whether it
-                  is bulk editable or not.
-                items:
-                  type: object
-                  properties:
-                    column_name:
-                      type: string
-                      description: The field name of the column
-                    column_type:
-                      type: string
-                      description: >-
-                        The field type of the column. Can be one of
-                        `personal_details`, `custom_field`, or `location`.
-                    bulk_editable:
-                      type: boolean
-                      description: Whether the field is bulk editable or not
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates if the request was successful.
+                  data:
+                    type: object
+                    properties:
+                      file_columns:
+                        type: array
+                        description: An array of column config objects for the enumerators data.
+                        items:
+                          type: object
+                          properties:
+                            column_name:
+                              type: string
+                              description: The field name of the column
+                            column_type:
+                              type: string
+                              description: >
+                                The field type of the column. Can be one of
+                                `personal_details`, `custom_field`, or `location`.
+                            bulk_editable:
+                              type: boolean
+                              description: Whether the field is bulk editable or not.
+                      location_columns:
+                        type: array
+                        description: An array of column config objects for the location columns.
+                        items:
+                          type: object
+                          properties:
+                            column_key:
+                              type: string
+                              description: The key for the location column.
+                            column_label:
+                              type: string
+                              description: The label for the location column.
         "400":
           description: Request errors
         "404":
@@ -5622,28 +5640,47 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                description: >-
-                  An array of column config objects for the targets data. Each
-                  object defines the column name, its type, whether it is bulk
-                  editable or not, and whether it contains PII.
-                items:
-                  type: object
-                  properties:
-                    column_name:
-                      type: string
-                      description: The field name of the column
-                    column_type:
-                      type: string
-                      description: >-
-                        The field type of the column. Can be one of
-                        `basic_details`, `custom_field`, or `location`.
-                    bulk_editable:
-                      type: boolean
-                      description: Whether the field is bulk editable or not
-                    contains_pii:
-                      type: boolean
-                      description: Whether the field contains PII or not
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates if the request was successful.
+                  data:
+                    type: object
+                    properties:
+                      file_columns:
+                        type: array
+                        description: An array of column config objects for the targets data.
+                        items:
+                          type: object
+                          properties:
+                            bulk_editable:
+                              type: boolean
+                              description: Whether the field is bulk editable or not.
+                            column_name:
+                              type: string
+                              description: The field name of the column.
+                            column_type:
+                              type: string
+                              description: >
+                                The field type of the column. Can be one of
+                                `basic_details`, `custom_fields`, or `location`.
+                            contains_pii:
+                              type: boolean
+                              description: Whether the field contains PII or not.
+                      location_columns:
+                        type: array
+                        description: An array of column config objects for the location columns.
+                        items:
+                          type: object
+                          properties:
+                            column_key:
+                              type: string
+                              description: The key for the location column.
+                            column_label:
+                              type: string
+                              description: The label for the location column.
+
         "400":
           description: Request errors
         "404":

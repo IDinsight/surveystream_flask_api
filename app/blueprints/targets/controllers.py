@@ -916,21 +916,74 @@ def get_target_column_config(validated_query_params):
 
     form_uid = validated_query_params.form_uid.data
 
-    column_config = TargetColumnConfig.query.filter(
-        TargetColumnConfig.form_uid == form_uid,
-    ).all()
+    column_config = TargetColumnConfig.query.filter_by(form_uid=form_uid).all()
 
-    return jsonify(
+    config_data = [
         {
-            "success": True,
-            "data": [
-                {
-                    "column_name": column.column_name,
-                    "column_type": column.column_type,
-                    "bulk_editable": column.bulk_editable,
-                    "contains_pii": column.contains_pii,
-                }
-                for column in column_config
-            ],
+            "column_name": column.column_name,
+            "column_type": column.column_type,
+            "bulk_editable": column.bulk_editable,
+            "contains_pii": column.contains_pii,
         }
+        for column in column_config
+    ]
+
+    location_column = next(
+        (column for column in config_data if column["column_type"] == "location"),
+        None,
+    )
+
+    location_columns = []
+
+    if location_column:
+        form = Form.query.filter_by(form_uid=form_uid).first()
+
+        if form is None:
+            return (
+                jsonify(
+                    message=f"The form 'form_uid={form_uid}' could not be found.",
+                    success=False,
+                ),
+                404,
+            )
+
+        survey_uid = form.survey_uid
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+        if geo_levels:
+            try:
+                geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+            except InvalidGeoLevelHierarchyError as e:
+                return (
+                    jsonify(
+                        {"success": False, "errors": {"geo_level_hierarchy": e.errors}}
+                    ),
+                    422,
+                )
+
+            for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
+                location_columns.extend(
+                    [
+                        {
+                            "column_key": f"target_locations[{i}].location_id",
+                            "column_label": f"{geo_level.geo_level_name} ID",
+                        },
+                        {
+                            "column_key": f"target_locations[{i}].location_name",
+                            "column_label": f"{geo_level.geo_level_name} Name",
+                        },
+                    ]
+                )
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": {
+                    "file_columns": config_data,
+                    "location_columns": location_columns,
+                },
+            }
+        ),
+        200,
     )
