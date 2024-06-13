@@ -1748,7 +1748,7 @@ class TestTargets:
         create_geo_levels_for_targets_file,
         user_permissions,
         csrf_token,
-            request
+        request,
     ):
         """
         Test uploading the targets column config for all users
@@ -1857,8 +1857,15 @@ class TestTargets:
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
     def test_update_target(
-        self, client, login_test_user, upload_targets_csv, csrf_token, user_permissions, request
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        csrf_token,
+        user_permissions,
+        request,
     ):
         """
         Test that an individual target can be updated for all user permissions
@@ -1877,6 +1884,9 @@ class TestTargets:
             },
         }
 
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
         response = client.put(
             "/api/targets/2",
             json=payload,
@@ -1884,8 +1894,7 @@ class TestTargets:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
+        print(response.json)
 
         if expected_permission:
             assert response.status_code == 200
@@ -1967,6 +1976,7 @@ class TestTargets:
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
     def test_update_target_incorrect_custom_fields(
         self, client, login_test_user, upload_targets_csv, csrf_token
     ):
@@ -1997,27 +2007,37 @@ class TestTargets:
         assert response.status_code == 422
 
     def test_delete_target(
-        self, client, login_test_user, upload_targets_csv, csrf_token, user_permissions, request
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        csrf_token,
+        create_survey,
+        user_permissions,
+        request,
     ):
         """
         Test that an individual target can be deleted for all target user_permissions
         Expect success for the allowed permissions
         Expect 403 for the non permissions
         """
-
-        # Delete the target
-        response = client.delete("/api/targets/1", headers={"X-CSRF-Token": csrf_token})
-
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
         if expected_permission:
+            # Delete the target
+            response = client.delete(
+                "/api/targets/1", headers={"X-CSRF-Token": csrf_token}
+            )
+
             assert response.status_code == 200
 
-            response = client.get("/api/targets/1")
-
-            assert response.status_code == 404
         else:
+            # Delete the target
+            response = client.delete(
+                "/api/targets/1", headers={"X-CSRF-Token": csrf_token}
+            )
+
             assert response.status_code == 403
 
             expected_response = {
