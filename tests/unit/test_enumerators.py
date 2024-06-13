@@ -12,7 +12,7 @@ from utils import (
 
 @pytest.mark.enumerators
 class TestEnumerators:
-    #RBAC fixtures
+    # RBAC fixtures
     @pytest.fixture
     def user_with_super_admin_permissions(self, client, test_user_credentials):
         # Set the user to have super admin permissions
@@ -2807,10 +2807,9 @@ class TestEnumerators:
         login_test_user,
         create_enumerator_column_config,
         create_geo_levels_for_enumerators_file,
-            user_permissions,
-
-            csrf_token,
-            request
+        user_permissions,
+        csrf_token,
+        request,
     ):
         """
         Test uploading the enumerators column config for all users
@@ -2913,8 +2912,6 @@ class TestEnumerators:
                 "success": True,
             }
 
-
-
             assert response.status_code == 200
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
@@ -2929,7 +2926,13 @@ class TestEnumerators:
             assert checkdiff == {}
 
     def test_update_enumerator(
-        self, client, login_test_user, upload_enumerators_csv, csrf_token, user_permissions, request
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        csrf_token,
+        user_permissions,
+        request,
     ):
         """
         Test that an individual enumerator can be updated
@@ -2947,6 +2950,9 @@ class TestEnumerators:
             "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
         }
 
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
         response = client.put(
             "/api/enumerators/1",
             json=payload,
@@ -2955,9 +2961,6 @@ class TestEnumerators:
         )
 
         print(response.json)
-
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
 
         if expected_permission:
             assert response.status_code == 200
@@ -3042,54 +3045,6 @@ class TestEnumerators:
 
         assert response.status_code == 422
 
-    def test_update_location_mapping_for_super_admin_user(
-        self, client, login_test_user, upload_enumerators_csv, csrf_token
-    ):
-        """
-        Test that a location mapping can be updated by a super admin user
-        """
-
-        # Update the enumerator
-        payload = {
-            "form_uid": 1,
-            "enumerator_type": "surveyor",
-            "location_uid": None,
-        }
-
-        response = client.put(
-            "/api/enumerators/1/roles/locations",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        print(response.json)
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": {
-                "form_uid": 1,
-                "roles": [
-                    {
-                        "enumerator_type": "surveyor",
-                        "status": "Active",
-                        "locations": None,
-                    }
-                ],
-            },
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get(
-            "/api/enumerators/1/roles",
-            query_string={"form_uid": 1, "enumerator_type": "surveyor"},
-            content_type="application/json",
-        )
-        print(response.json)
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
     def test_update_location_mapping(
         self,
         client,
@@ -3098,7 +3053,7 @@ class TestEnumerators:
         csrf_token,
         test_user_credentials,
         user_permissions,
-        request
+        request,
     ):
         """
         Test that a location mapping can be updated - for all enumerator permissions
@@ -3113,6 +3068,9 @@ class TestEnumerators:
             "location_uid": None,
         }
 
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
         response = client.put(
             "/api/enumerators/1/roles/locations",
             json=payload,
@@ -3120,9 +3078,6 @@ class TestEnumerators:
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.json)
-
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
 
         if expected_permission:
 
@@ -3162,6 +3117,7 @@ class TestEnumerators:
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
     def test_delete_enumerator_for_super_admin_user(
         self, client, login_test_user, upload_enumerators_csv, csrf_token
     ):
