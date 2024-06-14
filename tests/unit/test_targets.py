@@ -402,6 +402,58 @@ class TestTargets:
         )
         assert response.status_code == 200
 
+    
+    @pytest.fixture()
+    def upload_target_status(
+        self, client, login_test_user, upload_targets_csv, csrf_token
+    ):
+        """
+        Insert new target status as a setup step for the target status tests
+        """
+
+        payload = {
+            "form_uid": 1,
+            "target_status": [
+                {
+                    "target_id": "1",
+                    "completed_flag": False,
+                    "refusal_flag": False,
+                    "num_attempts": 1,
+                    "last_attempt_survey_status": 2,
+                    "last_attempt_survey_status_label": "Partially complete - revisit",
+                    "final_survey_status": 2,
+                    "final_survey_status_label": "Partially complete - revisit",
+                    "target_assignable": True,
+                    "webapp_tag_color": "gold",
+                    "revisit_sections": ["section1", "section2"],
+                    "scto_fields": {"field1": "value1", "field2": "value2"},
+                },
+                {
+                    "target_id": "2",
+                    "completed_flag": True,
+                    "refusal_flag": False,
+                    "num_attempts": 5,
+                    "last_attempt_survey_status": 1,
+                    "last_attempt_survey_status_label": "Fully complete",
+                    "final_survey_status": 1,
+                    "final_survey_status_label": "Fully complete",
+                    "target_assignable": False,
+                    "webapp_tag_color": "green",
+                    "revisit_sections": [],
+                    "scto_fields": {"field1": "value3", "field2": "value4"},
+                }
+            ]
+        }
+
+        response = client.put(
+            "/api/targets/target-status",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
     @pytest.fixture()
     def upload_targets_csv_no_locations(
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
@@ -562,11 +614,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -620,11 +675,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -761,11 +819,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -819,11 +880,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -982,11 +1046,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1040,11 +1107,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1219,11 +1289,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1276,11 +1349,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1311,11 +1387,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1418,11 +1497,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1459,11 +1541,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1529,11 +1614,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1576,11 +1664,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1952,11 +2043,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 "success": True,
             }
@@ -2130,11 +2224,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -2188,11 +2285,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -2299,11 +2399,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -2357,11 +2460,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -2488,11 +2594,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -2546,11 +2655,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -2782,11 +2894,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -2841,11 +2956,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "completed_flag": None,
@@ -2872,6 +2990,8 @@ class TestTargets:
                     "language": "Tagalog",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "location_uid": None,
                     "num_attempts": None,
                     "refusal_flag": None,
@@ -2881,6 +3001,7 @@ class TestTargets:
                     "target_locations": None,
                     "target_uid": 3,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -2891,3 +3012,164 @@ class TestTargets:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_upload_target_status(
+        self,
+        client,
+        csrf_token,
+        user_permissions,
+        upload_target_status,
+        request,
+    ):
+        """
+        Test that the target_status data can be updated
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "Hyderabad",
+                        "Name": "Anil",
+                        "Mobile no.": "1234567890",
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "location_uid": 4,
+                    "target_id": "1",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 1,
+                    "completed_flag": False,
+                    "last_attempt_survey_status": 2,
+                    "last_attempt_survey_status_label": "Partially complete - revisit",
+                    "final_survey_status": 2,
+                    "final_survey_status_label": "Partially complete - revisit",
+                    "num_attempts": 1,
+                    "refusal_flag": False,
+                    "revisit_sections": ["section1", "section2"],
+                    "target_assignable": True,
+                    "webapp_tag_color": "gold",
+                    "scto_fields": {"field1": "value1", "field2": "value2"},
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "South Delhi",
+                        "Name": "Anupama",
+                        "Mobile no.": "1234567891",
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "location_uid": 4,
+                    "target_id": "2",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 2,
+                    "completed_flag": True,
+                    "last_attempt_survey_status": 1,
+                    "last_attempt_survey_status_label": "Fully complete",
+                    "final_survey_status": 1,
+                    "final_survey_status_label": "Fully complete",
+                    "num_attempts": 5,
+                    "refusal_flag": False,
+                    "revisit_sections": [],
+                    "target_assignable": False,
+                    "webapp_tag_color": "green",
+                    "scto_fields": {"field1": "value3", "field2": "value4"},
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/targets", query_string={"form_uid": 1})
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            print(response.json)
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: READ Targets",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}

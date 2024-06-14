@@ -26,6 +26,7 @@ from .validators import (
     UpdateTarget,
     BulkUpdateTargetsValidator,
     UpdateTargetsColumnConfig,
+    UpdateTargetStatus,
 )
 from .utils import (
     TargetsUpload,
@@ -319,6 +320,12 @@ def get_targets(validated_query_params):
                         "last_attempt_survey_status_label": getattr(
                             target_status, "last_attempt_survey_status_label", None
                         ),
+                        "final_survey_status": getattr(
+                            target_status, "final_survey_status", None
+                        ),
+                        "final_survey_status_label": getattr(
+                            target_status, "final_survey_status_label", None
+                        ),
                         "target_assignable": getattr(
                             target_status, "target_assignable", None
                         ),
@@ -328,6 +335,7 @@ def get_targets(validated_query_params):
                         "revisit_sections": getattr(
                             target_status, "revisit_sections", None
                         ),
+                        "scto_fields": getattr(target_status, "scto_fields", None),
                         "target_locations": target_locations,
                     }
                     for target, target_status, target_locations in targets_query.items
@@ -364,6 +372,12 @@ def get_targets(validated_query_params):
                             "last_attempt_survey_status_label": getattr(
                                 target_status, "last_attempt_survey_status_label", None
                             ),
+                            "final_survey_status": getattr(
+                                target_status, "final_survey_status", None
+                            ),
+                            "final_survey_status_label": getattr(
+                                target_status, "final_survey_status_label", None
+                            ),
                             "target_assignable": getattr(
                                 target_status, "target_assignable", None
                             ),
@@ -373,6 +387,7 @@ def get_targets(validated_query_params):
                             "revisit_sections": getattr(
                                 target_status, "revisit_sections", None
                             ),
+                            "scto_fields": getattr(target_status, "scto_fields", None),
                         },
                         **{"target_locations": target_locations},
                     }
@@ -479,6 +494,12 @@ def get_target(target_uid):
                         "last_attempt_survey_status_label": getattr(
                             target_status, "last_attempt_survey_status_label", None
                         ),
+                        "final_survey_status": getattr(
+                            target_status, "final_survey_status", None
+                        ),
+                        "final_survey_status_label": getattr(
+                            target_status, "final_survey_status_label", None
+                        ),
                         "target_assignable": getattr(
                             target_status, "target_assignable", None
                         ),
@@ -488,6 +509,7 @@ def get_target(target_uid):
                         "revisit_sections": getattr(
                             target_status, "revisit_sections", None
                         ),
+                        "scto_fields": getattr(target_status, "scto_fields", None),
                     },
                     **{"target_locations": target_locations},
                 }
@@ -987,3 +1009,76 @@ def get_target_column_config(validated_query_params):
         ),
         200,
     )
+
+@targets_bp.route("/target-status", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(UpdateTargetStatus)
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
+def update_target_status(validated_payload):
+    """
+    Method to update target status
+    """
+
+    payload = request.get_json()
+    form_uid = validated_payload.form_uid.data
+
+    if (
+        Form.query.filter(
+            Form.form_uid == form_uid,
+        ).first()
+        is None
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": f"Form with UID {form_uid} does not exist",
+                }
+            ),
+            422,
+        )
+
+    subquery = (
+        db.session.query(Target.target_uid)
+        .filter(
+            Target.form_uid == form_uid
+        )
+    )
+
+    db.session.query(TargetStatus).filter(
+        TargetStatus.target_uid.in_(subquery)
+    ).delete(synchronize_session=False)
+
+    db.session.flush()
+
+    for each_target in payload["target_status"]:
+        target_id = each_target["target_id"]
+        target = Target.query.filter(
+            Target.target_id == target_id,
+            Target.form_uid == form_uid,
+        ).first()
+
+        if target is not None:
+            db.session.add(
+                TargetStatus(
+                    target_uid=target.target_uid,
+                    completed_flag=each_target["completed_flag"],
+                    refusal_flag=each_target["refusal_flag"],
+                    num_attempts=each_target["num_attempts"],
+                    last_attempt_survey_status=each_target["last_attempt_survey_status"],
+                    last_attempt_survey_status_label=each_target["last_attempt_survey_status_label"],
+                    final_survey_status=each_target["final_survey_status"],
+                    final_survey_status_label=each_target["final_survey_status_label"],
+                    target_assignable=each_target["target_assignable"],
+                    webapp_tag_color=each_target["webapp_tag_color"],
+                    revisit_sections=each_target["revisit_sections"],
+                    scto_fields=each_target["scto_fields"],
+                )
+            )
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return jsonify({"success": True}), 200
