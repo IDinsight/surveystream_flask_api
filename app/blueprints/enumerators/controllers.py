@@ -1387,6 +1387,7 @@ def get_enumerator_column_config(validated_query_params):
             ),
             404,
         )
+    survey_uid = form.survey_uid
 
     column_config = EnumeratorColumnConfig.query.filter(
         EnumeratorColumnConfig.form_uid == form_uid,
@@ -1407,7 +1408,6 @@ def get_enumerator_column_config(validated_query_params):
     )
 
     if location_column:
-        survey_uid = form.survey_uid
         geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
         location_columns = []
 
@@ -1435,31 +1435,39 @@ def get_enumerator_column_config(validated_query_params):
                         },
                     ]
                 )
-    
-    # Add surveyor productivity columns
-    productivity_columns = [
-        {
-            "column_key": f"form_productivity.{form.scto_form_id}.total_assigned_targets",
-            "column_label": "Total Assigned Targets",
-        },
-        {
-            "column_key": f"form_productivity.{form.scto_form_id}.total_pending_targets",
-            "column_label": "Total Pending Targets",
-        },
-        {
-            "column_key": f"form_productivity.{form.scto_form_id}.total_completed_targets",
-            "column_label": "Total Completed Targets",
-        },
-        {
-            "column_key": f"form_productivity.{form.scto_form_id}.avg_num_submissions_per_day",
-            "column_label": "Avg. submissions/day",
-        },
-        {
-            "column_key": f"form_productivity.{form.scto_form_id}.avg_num_completed_per_day",
-            "column_label": "Avg. completed/day",
-        },
 
-    ]
+    # Add surveyor productivity columns for all parent forms in the survey
+    forms = Form.query.filter_by(
+        survey_uid=survey_uid, 
+        form_type="parent"
+    ).all()
+
+    productivity_columns = []
+    for each_form in forms:
+        productivity_columns.extend(
+            [
+                {
+                    "column_key": f"form_productivity.{each_form.scto_form_id}.total_assigned_targets",
+                    "column_label": "Total Assigned Targets",
+                },
+                {
+                    "column_key": f"form_productivity.{each_form.scto_form_id}.total_pending_targets",
+                    "column_label": "Total Pending Targets",
+                },
+                {
+                    "column_key": f"form_productivity.{each_form.scto_form_id}.total_completed_targets",
+                    "column_label": "Total Completed Targets",
+                },
+                {
+                    "column_key": f"form_productivity.{each_form.scto_form_id}.avg_num_submissions_per_day",
+                    "column_label": "Avg. submissions/day",
+                },
+                {
+                    "column_key": f"form_productivity.{each_form.scto_form_id}.avg_num_completed_per_day",
+                    "column_label": "Avg. completed/day",
+                },
+            ]
+        )
 
     return (
         jsonify(

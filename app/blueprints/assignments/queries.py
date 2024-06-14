@@ -127,8 +127,8 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
         )
         .outerjoin(
             SurveyorStats,
-            SurveyorForm.enumerator_uid == SurveyorStats.enumerator_uid,
-            SurveyorForm.form_uid == SurveyorStats.form_uid,
+            (SurveyorForm.enumerator_uid == SurveyorStats.enumerator_uid)
+            & (SurveyorForm.form_uid == SurveyorStats.form_uid)
         )
         .filter(Form.survey_uid == survey_uid)
         .group_by(SurveyorForm.enumerator_uid)

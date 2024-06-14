@@ -3279,6 +3279,8 @@ class TestAssignments:
                             "total_assigned_targets": 1,
                             "total_completed_targets": 0,
                             "total_pending_targets": 1,
+                            "avg_num_completed_per_day": 0,
+                            "avg_num_submissions_per_day": 0,
                         }
                     },
                     "gender": "Male",
@@ -3330,6 +3332,8 @@ class TestAssignments:
                             "total_assigned_targets": 1,
                             "total_completed_targets": 1,
                             "total_pending_targets": 0,
+                            "avg_num_completed_per_day": 0,
+                            "avg_num_submissions_per_day": 0,
                         }
                     },
                     "gender": "Female",
@@ -3381,6 +3385,8 @@ class TestAssignments:
                             "total_assigned_targets": 0,
                             "total_completed_targets": 0,
                             "total_pending_targets": 0,
+                            "avg_num_completed_per_day": 0,
+                            "avg_num_submissions_per_day": 0,
                         }
                     },
                     "gender": "Male",
