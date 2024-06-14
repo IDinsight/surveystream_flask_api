@@ -1,7 +1,7 @@
 from app import db
 from .models import SurveyorAssignment
 from app.blueprints.targets.models import TargetStatus
-from app.blueprints.enumerators.models import SurveyorForm
+from app.blueprints.enumerators.models import SurveyorForm, SurveyorStats
 from app.blueprints.forms.models import Form
 from sqlalchemy.sql.functions import func
 from sqlalchemy import case, or_, cast
@@ -108,6 +108,14 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
                         ),
                         0,
                     ),
+                    "avg_num_submissions_per_day",
+                    func.coalesce(
+                        SurveyorStats.avg_num_submissions_per_day, 0
+                    ),
+                    "avg_num_completed_per_day",
+                    func.coalesce(
+                        SurveyorStats.avg_num_completed_per_day, 0
+                    ),
                 ),
             ).label("form_productivity"),
         )
@@ -116,6 +124,11 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
             assignment_status_subquery,
             (SurveyorForm.enumerator_uid == assignment_status_subquery.c.enumerator_uid)
             & (SurveyorForm.form_uid == assignment_status_subquery.c.form_uid),
+        )
+        .outerjoin(
+            SurveyorStats,
+            SurveyorForm.enumerator_uid == SurveyorStats.enumerator_uid,
+            SurveyorForm.form_uid == SurveyorStats.form_uid,
         )
         .filter(Form.survey_uid == survey_uid)
         .group_by(SurveyorForm.enumerator_uid)

@@ -974,6 +974,26 @@ def get_target_column_config(validated_query_params):
                         },
                     ]
                 )
+    
+    # Add target_status columns
+    target_status_columns = [
+        {
+            "column_key": "num_attempts",
+            "column_label": "Number of Attempts",
+        },
+        {
+            "column_key": "final_survey_status",
+            "column_label": "Final Survey Status",
+        },
+        {
+            "column_key": "final_survey_status_label",
+            "column_label": "Final Survey Status Label",
+        },
+        {
+            "column_key": "revisit_sections",
+            "column_label": "Revisit Sections",
+        },
+    ]
 
     return (
         jsonify(
@@ -982,6 +1002,7 @@ def get_target_column_config(validated_query_params):
                 "data": {
                     "file_columns": config_data,
                     "location_columns": location_columns,
+                    "target_status_columns": target_status_columns,
                 },
             }
         ),

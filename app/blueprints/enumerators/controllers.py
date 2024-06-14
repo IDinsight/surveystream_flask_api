@@ -1377,6 +1377,16 @@ def get_enumerator_column_config(validated_query_params):
     """
 
     form_uid = validated_query_params.form_uid.data
+    form = Form.query.filter_by(form_uid=form_uid).first()
+
+    if form is None:
+        return (
+            jsonify(
+                message=f"The form 'form_uid={form_uid}' could not be found.",
+                success=False,
+            ),
+            404,
+        )
 
     column_config = EnumeratorColumnConfig.query.filter(
         EnumeratorColumnConfig.form_uid == form_uid,
@@ -1397,17 +1407,6 @@ def get_enumerator_column_config(validated_query_params):
     )
 
     if location_column:
-        form = Form.query.filter_by(form_uid=form_uid).first()
-
-        if form is None:
-            return (
-                jsonify(
-                    message=f"The form 'form_uid={form_uid}' could not be found.",
-                    success=False,
-                ),
-                404,
-            )
-
         survey_uid = form.survey_uid
         geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
         location_columns = []
@@ -1436,6 +1435,31 @@ def get_enumerator_column_config(validated_query_params):
                         },
                     ]
                 )
+    
+    # Add surveyor productivity columns
+    productivity_columns = [
+        {
+            "column_key": f"form_productivity.{form.scto_form_id}.total_assigned_targets",
+            "column_label": "Total Assigned Targets",
+        },
+        {
+            "column_key": f"form_productivity.{form.scto_form_id}.total_pending_targets",
+            "column_label": "Total Pending Targets",
+        },
+        {
+            "column_key": f"form_productivity.{form.scto_form_id}.total_completed_targets",
+            "column_label": "Total Completed Targets",
+        },
+        {
+            "column_key": f"form_productivity.{form.scto_form_id}.avg_num_submissions_per_day",
+            "column_label": "Avg. submissions/day",
+        },
+        {
+            "column_key": f"form_productivity.{form.scto_form_id}.avg_num_completed_per_day",
+            "column_label": "Avg. completed/day",
+        },
+
+    ]
 
     return (
         jsonify(
@@ -1444,6 +1468,7 @@ def get_enumerator_column_config(validated_query_params):
                 "data": {
                     "file_columns": config_data,
                     "location_columns": location_columns,
+                    "productivity_columns": productivity_columns,
                 },
             }
         ),
