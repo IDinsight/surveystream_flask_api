@@ -1,8 +1,8 @@
-"""empty message
+"""Add final survey status columns in target_status table
 
-Revision ID: ef5824c38a12
-Revises: 46ba6d963fde
-Create Date: 2024-06-11 05:03:57.930806
+Revision ID: ffd697df5ae0
+Revises: 17605263ee63
+Create Date: 2024-06-14 04:59:17.951049
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'ef5824c38a12'
-down_revision = '46ba6d963fde'
+revision = 'ffd697df5ae0'
+down_revision = '17605263ee63'
 branch_labels = None
 depends_on = None
 

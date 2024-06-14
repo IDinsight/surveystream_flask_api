@@ -190,6 +190,7 @@ def get_survey_config_status(survey_uid):
     from app.blueprints.assignments.models import SurveyorAssignment
     from app.blueprints.target_status_mapping.models import TargetStatusMapping
     from app.blueprints.media_files.models import MediaFilesConfig
+    from app.blueprints.emails.models import EmailConfig
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     scto_information = Form.query.filter_by(survey_uid=survey_uid).first()
@@ -220,6 +221,14 @@ def get_survey_config_status(survey_uid):
         media_files_config = (
             db.session.query(MediaFilesConfig)
             .join(Form, Form.form_uid == MediaFilesConfig.form_uid)
+            .filter(Form.survey_uid == survey_uid)
+            .first()
+        )
+
+        # Check if email exists
+        email_config = (
+            db.session.query(EmailConfig)
+            .join(Form, Form.form_uid == EmailConfig.form_uid)
             .filter(Form.survey_uid == survey_uid)
             .first()
         )
@@ -306,6 +315,9 @@ def get_survey_config_status(survey_uid):
 
                 elif item["name"] == "Media (Audio/Photo) audits":
                     if media_files_config is not None:
+                        item["status"] = "In Progress"
+                elif item["name"] == "Emails":
+                    if email_config is not None:
                         item["status"] = "In Progress"
 
     response = {"success": True, "data": data}
