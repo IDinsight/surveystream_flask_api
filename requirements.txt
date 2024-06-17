@@ -14,6 +14,7 @@ gevent==22.10.2
 itsdangerous==2.1.2
 Jinja2==3.1.2
 jsondiff==2.0.0
+numpy==1.26.4
 pandas==2.0.2
 passlib==1.7.4
 psycopg2==2.9.6
