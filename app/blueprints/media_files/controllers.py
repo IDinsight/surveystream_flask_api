@@ -106,14 +106,9 @@ def create_media_files_config(validated_payload):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return (
-            jsonify(
-                {
+        return jsonify({
                     "error": "A config already exists for this survey with the same scto_form_id, type and source"
-                }
-            ),
-            500,
-        )
+                }), 500
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
