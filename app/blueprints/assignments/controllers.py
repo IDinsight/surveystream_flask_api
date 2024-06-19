@@ -164,6 +164,14 @@ def view_assignments(validated_query_params):
                             "last_attempt_survey_status_label",
                             "Not Attempted",
                         ),
+                        "final_survey_status": getattr(
+                            target_status, "final_survey_status", None
+                        ),
+                        "final_survey_status_label": getattr(
+                            target_status,
+                            "final_survey_status_label",
+                            "Not Attempted",
+                        ),
                         "target_assignable": getattr(
                             target_status,
                             "target_assignable",
@@ -175,6 +183,7 @@ def view_assignments(validated_query_params):
                         "revisit_sections": getattr(
                             target_status, "revisit_sections", None
                         ),
+                        "scto_fields": getattr(target_status, "scto_fields", None),
                     },
                     "target_locations": target_locations,
                 }

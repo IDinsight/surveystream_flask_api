@@ -3510,7 +3510,7 @@ paths:
                         target_assignable:
                           type: boolean
                           description: >-
-                            Grouping of last_attempt_survey_status into assignable/not assignable
+                            Grouping of final_survey_status into assignable/not assignable
                             categories. Used to determine if the target is
                             assignable.
                         last_attempt_survey_status:
@@ -3522,6 +3522,17 @@ paths:
                           type: string
                           description: >-
                             The label corresponding to the last_attempt_survey_status
+                            code
+                        final_survey_status:
+                          type: integer
+                          description: >-
+                            The final survey status of the target, calculated based on the survey status 
+                            in its most recent SurveyCTO submission and the completed and refusal flags 
+                            information
+                        final_survey_status_label:
+                          type: string
+                          description: >-
+                            The label corresponding to the final_survey_status
                             code
                         num_attempts:
                           type: integer
@@ -3542,6 +3553,11 @@ paths:
                           items:
                             type: string
                             description: Name of the revisit section for the target
+                        scto_fields:
+                          type: object
+                          description: >-
+                            The required fields from the target's most recent 
+                            SurveyCTO submission
                         target_locations:
                           type: array
                           description: >-
@@ -5237,6 +5253,62 @@ paths:
                               geo_level_name:
                                 type: string
                                 description: The name of the geo level
+                        completed_flag:
+                          type: boolean
+                          description: >-
+                            Whether the target has been marked as completed
+                        refusal_flag:
+                          type: boolean
+                          description: >-
+                            Whether the target has been flagged as a refusal
+                        num_attempts:
+                          type: integer
+                          description: >-
+                            The number of times the target has been attempted
+                        last_attempt_survey_status:
+                          type: integer
+                          description: >-
+                            The survey status from the target's most recent
+                            SurveyCTO submission
+                        last_attempt_survey_status_label:
+                          type: string
+                          description: >-
+                            The label corresponding to the last_attempt_survey_status
+                            code
+                        final_survey_status:
+                          type: integer
+                          description: >-
+                            The final survey status of the target, calculated based on the survey status 
+                            in its most recent SurveyCTO submission and the completed and refusal flags 
+                            information
+                        final_survey_status_label:
+                          type: string
+                          description: >-
+                            The label corresponding to the final_survey_status
+                            code
+                        target_assignable:
+                          type: boolean
+                          description: >-
+                            Grouping of final_survey_status into assignable/not assignable
+                            categories. Used to determine if the target is
+                            assignable.
+                        webapp_tag_color:
+                          type: string
+                          description: >-
+                            The color that should be used to color the status
+                            tag on the web flask_app
+                        revisit_sections:
+                          type: array
+                          description: The revisit sections for the target
+                          items:
+                            type: string
+                            description: Name of the revisit section for the target
+                        scto_fields:
+                          type: object
+                          description: >-
+                            The required fields from the target's most recent 
+                            SurveyCTO submission
+                        
                   paginate:
                     type: object
                     description: >-
@@ -5816,6 +5888,87 @@ paths:
           description: Target not found
         "422":
           description: Target errors
+  /targets/target-status:
+    put:
+      summary: Update target status
+      description: >-
+        Update the target status for the given form containing details from 
+        the last SurveyCTO submission for each target.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique ID of the form
+                target_status:
+                  type: array
+                  description: >
+                    List of all targets with a SurveyCTO submission and their submission stats 
+                  items:
+                    type: object
+                    properties:
+                      target_id:
+                        type: string
+                        description: The user-assigned unique ID of the target
+                      completed_flag:
+                        type: boolean
+                        description: Whether the target has been marked as completed
+                      refusal_flag:
+                        type: boolean
+                        description: Whether the target has been flagged as a refusal
+                      num_attempts:
+                        type: integer
+                        description: The number of times the target has been attempted
+                      last_attempt_survey_status:
+                        type: integer
+                        description: The survey status from the target's most recent SurveyCTO submission
+                      last_attempt_survey_status_label:
+                        type: string
+                        description: The label corresponding to the last_attempt_survey_status code
+                      final_survey_status:
+                        type: integer
+                        description: The final survey status of the target, calculated based on the survey status in its most recent SurveyCTO submission and the completed and refusal flags information
+                      final_survey_status_label:
+                        type: string
+                        description: The label corresponding to the final_survey_status code
+                      target_assignable:
+                        type: boolean
+                        description: Grouping of final_survey_status into assignable/not assignable categories. Used to determine if the target is assignable.
+                      webapp_tag_color:
+                        type: string
+                        description: The color that should be used to color the status tag on the web flask_app
+                      revisit_sections:
+                        type: array
+                        description: The revisit sections for the target
+                        items:
+                          type: string
+                          description: Name of the revisit section for the target
+                      scto_fields:
+                        type: object
+                        description: The required fields from the target's most recent SurveyCTO submission
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+
   /emails:
     get:
       tags:
