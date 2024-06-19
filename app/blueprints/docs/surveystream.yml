@@ -7278,23 +7278,21 @@ paths:
                   - success
                   - data
         "500":
-          description: Server error
+          description: >-
+            A config already exists for this survey with the same scto_form_id, type and source
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
                   error:
                     type: string
-                    description: Error message
-                    example: "Internal Server Error"
-                  message:
-                    type: string
-                    description: Description of the error
-                    example: "An error occurred while creating the media files config"
-                required:
-                  - error
-                  - message
+                    description: >-
+                      Error message indicating that the config could not be
+                      created.
     get:
       tags:
         - Media Files
