@@ -1,13 +1,16 @@
-from flask import jsonify, session, current_app, request
-from flask_login import login_required, logout_user, current_user
-from botocore.exceptions import ClientError
+import base64
+import math
+import time
 from functools import wraps
-from app import db
-from app.blueprints.auth.models import User
-from sqlalchemy import and_, func, or_
 
 import boto3
-import base64
+from botocore.exceptions import ClientError
+from flask import current_app, jsonify, request, session
+from flask_login import current_user, login_required, logout_user
+from sqlalchemy import and_, func, or_
+
+from app import db
+from app.blueprints.auth.models import User
 
 
 def concat_names(name_tuple):
@@ -150,12 +153,12 @@ def get_survey_uids(param_location, param_name):
     Returns: A list of applicable survey UID's.
     """
 
-    from app.blueprints.surveys.models import Survey
-    from app.blueprints.forms.models import Form
-    from app.blueprints.targets.models import Target
-    from app.blueprints.enumerators.models import SurveyorForm, MonitorForm
     from app.blueprints.emails.models import EmailConfig
+    from app.blueprints.enumerators.models import MonitorForm, SurveyorForm
+    from app.blueprints.forms.models import Form
     from app.blueprints.media_files.models import MediaFilesConfig
+    from app.blueprints.surveys.models import Survey
+    from app.blueprints.targets.models import Target
 
     if param_name not in [
         "survey_uid",
@@ -163,7 +166,7 @@ def get_survey_uids(param_location, param_name):
         "target_uid",
         "enumerator_uid",
         "email_config_uid",
-        "media_files_config_uid"
+        "media_files_config_uid",
     ]:
         raise ValueError(
             "'param_name' parameter must be one of survey_uid, form_uid, target_uid, enumerator_uid, email_config_uid, media_files_config_uid"
@@ -428,3 +431,97 @@ def validate_payload(validator):
 class SurveyNotFoundError(Exception):
     def __init__(self, errors):
         self.errors = [errors]
+
+
+def retry(tries, delay=3, backoff=2):
+    """
+    Retries a function or method until it returns True.
+    https://code.tutsplus.com/tutorials/professional-error-handling-with-python--cms-25950
+
+
+    Delay sets the initial delay in seconds, and backoff sets the factor by which
+    the delay should lengthen after each failure. backoff must be greater than 1,
+    or else it isn't really a backoff. Rries must be at least 0, and delay
+    greater than 0.
+    """
+
+    if backoff <= 1:
+        raise ValueError("Backoff must be greater than 1")
+
+    tries = math.floor(tries)
+
+    if tries < 0:
+        raise ValueError("Tries must be 0 or greater")
+
+    if delay <= 0:
+        raise ValueError("Delay must be greater than 0")
+
+    def deco_retry(f):
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay  # make mutable
+
+            rv = f(*args, **kwargs)  # first attempt
+
+            while mtries > 0:
+                print(mtries)
+
+                if rv is True:  # Done on success
+                    return True
+
+                mtries -= 1  # consume an attempt
+
+                time.sleep(mdelay)  # wait...
+
+                mdelay *= backoff  # make future wait longer
+
+                rv = f(*args, **kwargs)  # Try again
+
+            return False  # Ran out of tries :-(
+
+        return f_retry  # true decorator -> decorated function
+
+    return deco_retry  # @retry(arg[, ...]) -> true decorator
+
+
+def retry_on_exception(ExceptionToCheck, tries=5, delay=3, backoff=2):
+    """Retry calling the decorated function using an exponential backoff.
+
+    http://www.saltycrane.com/blog/2009/11/trying-out-retry-decorator-python/
+    original from: http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
+
+    :param ExceptionToCheck: the exception to check. may be a tuple of
+        exceptions to check
+    :type ExceptionToCheck: Exception or tuple
+    :param tries: number of times to try (not retry) before giving up
+    :type tries: int
+    :param delay: initial delay between retries in seconds
+    :type delay: int
+    :param backoff: backoff multiplier e.g. value of 2 will double the delay
+        each retry
+    :type backoff: int
+    :param logger: logger to use. If None, print
+    :type logger: logging.Logger instance
+    """
+
+    def deco_retry(f):
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return f(*args, **kwargs)
+                except ExceptionToCheck as e:
+                    f_name = f.__name__
+                    msg = (
+                        f"Error in function {f_name}(): {e}. Retrying in"
+                        f" {mdelay} seconds..."
+                    )
+                    print(msg)
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return f(*args, **kwargs)
+
+        return f_retry  # true decorator
+
+    return deco_retry

@@ -3,6 +3,10 @@ from datetime import datetime
 from flask import jsonify
 
 from app import db
+from app.utils.google_sheet_utils import (
+    google_sheet_helpers,
+    load_google_service_account_credentials,
+)
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
@@ -15,6 +19,8 @@ from .models import EmailConfig, EmailSchedule, EmailTemplate, ManualEmailTrigge
 from .validators import (
     EmailConfigQueryParamValidator,
     EmailConfigValidator,
+    EmailGsheetSourceParamValidator,
+    EmailGsheetSourcePatchParamValidator,
     EmailScheduleQueryParamValidator,
     EmailScheduleValidator,
     EmailTemplateQueryParamValidator,
@@ -38,7 +44,9 @@ def create_email_config(validated_payload):
         "form_uid": validated_payload.form_uid.data,
         "report_users": validated_payload.report_users.data,
         "email_source": validated_payload.email_source.data,
-        "email_source_gsheet_key": validated_payload.email_source_gsheet_key.data,
+        "email_source_gsheet_link": validated_payload.email_source_gsheet_link.data,
+        "email_source_gsheet_tab": validated_payload.email_source_gsheet_tab.data,
+        "email_source_gsheet_header_row": validated_payload.email_source_gsheet_header_row.data,
         "email_source_tablename": validated_payload.email_source_tablename.data,
         "email_source_columns": validated_payload.email_source_columns.data,
     }
@@ -80,7 +88,7 @@ def create_email_config(validated_payload):
     )
 
 
-@emails_bp.route("", methods=["GET"]) #/emails
+@emails_bp.route("", methods=["GET"])  # /emails
 @logged_in_active_user_required
 @validate_query_params(EmailConfigQueryParamValidator)
 @custom_permissions_required("READ Emails", "query", "form_uid")
@@ -228,11 +236,17 @@ def update_email_config(email_config_uid, validated_payload):
     email_config.config_type = validated_payload.config_type.data
     email_config.report_users = validated_payload.report_users.data
     email_config.email_source = validated_payload.email_source.data
-    email_config.email_source_gsheet_key = (
-        validated_payload.email_source_gsheet_key.data
+    email_config.email_source_gsheet_link = (
+        validated_payload.email_source_gsheet_link.data
     )
     email_config.email_source_tablename = validated_payload.email_source_tablename.data
     email_config.email_source_columns = validated_payload.email_source_columns.data
+    email_config.email_source_gsheet_tab = (
+        validated_payload.email_source_gsheet_tab.data
+    )
+    email_config.email_source_gsheet_header_row = (
+        validated_payload.email_source_gsheet_header_row.data
+    )
 
     try:
         db.session.commit()
@@ -747,7 +761,6 @@ def update_email_template(email_template_uid, validated_payload):
     Function to update an email template
     """
     template = EmailTemplate.query.get_or_404(email_template_uid)
-
     template.email_config_uid = validated_payload.email_config_uid.data
     template.subject = validated_payload.subject.data
     template.language = validated_payload.language.data
@@ -789,3 +802,127 @@ def delete_email_template(email_template_uid, validated_query_params):
         jsonify({"success": True, "message": "Email template deleted successfully"}),
         200,
     )
+
+
+@emails_bp.route("/gsheet", methods=["GET"])
+@logged_in_active_user_required
+@validate_payload(EmailGsheetSourceParamValidator)
+@custom_permissions_required("READ Emails", "body", "form_uid")
+def fetch_google_sheet_headers(validated_payload):
+    """
+    Function to fetch headers from a Google Sheet
+    """
+
+    email_source_gsheet_link = validated_payload.email_source_gsheet_link.data
+    email_source_gsheet_tab = validated_payload.email_source_gsheet_tab.data
+    email_source_gsheet_header_row = (
+        validated_payload.email_source_gsheet_header_row.data
+    )
+    google_service_account_credentials = load_google_service_account_credentials()
+
+    # Initialize the GoogleSheetUtils class to read the headers
+    try:
+        headers = google_sheet_helpers(
+            google_service_account_credentials=google_service_account_credentials,
+            google_sheet_url=email_source_gsheet_link,
+            google_sheet_tab=email_source_gsheet_tab,
+            header_index=email_source_gsheet_header_row,
+        ).read_sheet_headers()
+    except Exception as e:
+        if len(e.args) > 0 and type(e.args[0]) == dict and "code" in e.args[0]:
+            if e.args[0]["code"] == 404:
+                return (
+                    jsonify(
+                        {
+                            "error": "Google Sheet not found, kindly check sheet link and tab name"
+                        }
+                    ),
+                    404,
+                )
+            elif e.args[0]["code"] == 403:
+                return (
+                    jsonify(
+                        {
+                            "error": "Google Sheet access forbidden, kindly check sheet permissions"
+                        }
+                    ),
+                    403,
+                )
+            else:
+                return jsonify({"error": str(e)}), e.args[0]["code"]
+        else:
+            return jsonify({"error": str(e)}), 500
+
+    response = jsonify(
+        {
+            "success": True,
+            "message": "Google Sheet column Headers retrieved successfully",
+            "data": headers,
+        }
+    )
+    return response, 200
+
+
+@emails_bp.route("/gsheet", methods=["PATCH"])
+@logged_in_active_user_required
+@validate_payload(EmailGsheetSourcePatchParamValidator)
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
+def update_google_sheet_headers(validated_payload):
+    """
+    Function to update headers from a Google Sheet for a config
+    """
+
+    email_config = EmailConfig.query.filter_by(
+        email_config_uid=validated_payload.email_config_uid.data
+    ).first()
+    google_service_account_credentials = load_google_service_account_credentials()
+
+    # Initialize the GoogleSheetUtils class to read the headers
+    try:
+        headers = google_sheet_helpers(
+            google_service_account_credentials=google_service_account_credentials,
+            google_sheet_url=email_config.email_source_gsheet_link,
+            google_sheet_tab=email_config.email_source_gsheet_tab,
+            header_index=email_config.email_source_gsheet_header_row,
+        ).read_sheet_headers()
+    except Exception as e:
+        if len(e.args) > 0 and type(e.args[0]) == dict and "code" in e.args[0]:
+            if e.args[0]["code"] == 404:
+                return (
+                    jsonify(
+                        {
+                            "error": "Google Sheet not found, kindly check sheet link and tab name"
+                        }
+                    ),
+                    404,
+                )
+            elif e.args[0]["code"] == 403:
+                return (
+                    jsonify(
+                        {
+                            "error": "Google Sheet access forbidden, kindly check sheet permissions"
+                        }
+                    ),
+                    403,
+                )
+            else:
+                return jsonify({"error": str(e)}), e.args[0]["code"]
+        else:
+            return jsonify({"error": str(e)}), 500
+
+    # Update the email source columns in db
+    email_config.email_source_columns = headers
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    response = jsonify(
+        {
+            "success": True,
+            "message": "Email Source Columns updated successfully",
+            "data": headers,
+        }
+    )
+    return response, 200

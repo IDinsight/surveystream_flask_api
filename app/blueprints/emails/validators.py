@@ -20,7 +20,9 @@ class EmailConfigValidator(FlaskForm):
         ],
         default="SurveyStream Data",
     )
-    email_source_gsheet_key = StringField(default=None)
+    email_source_gsheet_link = StringField(default=None)
+    email_source_gsheet_tab = StringField(default=None)
+    email_source_gsheet_header_row = IntegerField(default=None)
     email_source_tablename = StringField(default=None)
     email_source_columns = FieldList(StringField(), default=[])
 
@@ -148,6 +150,22 @@ class ManualEmailTriggerQueryParamValidator(FlaskForm):
 
 
 class EmailTemplateQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    email_config_uid = IntegerField(validators=[DataRequired()])
+
+
+class EmailGsheetSourceParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    email_source_gsheet_link = StringField(validators=[DataRequired()])
+    email_source_gsheet_tab = StringField(validators=[DataRequired()])
+    email_source_gsheet_header_row = IntegerField(validators=[DataRequired()])
+
+
+class EmailGsheetSourcePatchParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
