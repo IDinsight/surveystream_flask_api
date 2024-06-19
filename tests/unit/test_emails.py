@@ -163,6 +163,8 @@ class TestEmails:
             "report_users": [1, 2, 3],
             "email_source": "SurveyStream Data",
             "email_source_gsheet_key": "test_key",
+            "email_source_gsheet_tab": "test_tab",
+            "email_source_gsheet_header_row": 1,
             "email_source_tablename": "test_table",
             "email_source_columns": ["test_column"],
         }
@@ -324,8 +326,98 @@ class TestEmails:
                     "email_source": "SurveyStream Data",
                     "email_source_columns": ["test_column"],
                     "email_source_gsheet_key": "test_key",
+                    "email_source_gsheet_tab": "test_tab",
+                    "email_source_gsheet_header_row": 1,
                     "email_source_tablename": "test_table",
                 },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_fetch_email_google_sheet_columns(
+        self,
+        client,
+        csrf_token,
+        create_email_config,
+        user_permissions,
+        request,
+    ):
+        """
+        Insert an email config as a setup step for email tests
+        """
+        payload = {
+            "email_source_gsheet_key": "1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU",
+            "email_source_gsheet_tab": "Test_Success",
+            "email_source_gsheet_header_row": 1,
+        }
+        response = client.get(
+            "/api/emails/gsheet",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        if expected_permission:
+            assert response.status_code == 200
+            expected_response = {
+                "data": ["column1", "column2", "column3"],
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_fetch_email_google_sheet_hpls(
+        self,
+        client,
+        csrf_token,
+        create_email_config,
+        user_permissions,
+        request,
+    ):
+        """
+        Insert an email config as a setup step for email tests
+        """
+        payload = {
+            "email_source_gsheet_key": "1he4__2T6O96B4mmVwoVHaJt3GpMwZYLj0PAIwsyJJSc",
+            "email_source_gsheet_tab": "structure_listing",
+            "email_source_gsheet_header_row": 1,
+        }
+        response = client.get(
+            "/api/emails/gsheet",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        if expected_permission:
+            assert response.status_code == 200
+            expected_response = {
+                "data": ["column1", "column2", "column3"],
                 "success": True,
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
@@ -375,6 +467,8 @@ class TestEmails:
                         "email_source": "SurveyStream Data",
                         "email_source_columns": ["test_column"],
                         "email_source_gsheet_key": "test_key",
+                        "email_source_gsheet_tab": "test_tab",
+                        "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
                         "form_uid": 1,
                         "report_users": [1, 2, 3],
@@ -459,6 +553,8 @@ class TestEmails:
                         "email_source": "SurveyStream Data",
                         "email_source_columns": ["test_column"],
                         "email_source_gsheet_key": "test_key",
+                        "email_source_gsheet_tab": "test_tab",
+                        "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
                     }
                 ],
@@ -494,6 +590,8 @@ class TestEmails:
             "report_users": [1, 2, 3],
             "email_source": "SurveyStream Data",
             "email_source_gsheet_key": "test_key",
+            "email_source_gsheet_tab": "test_tab",
+            "email_source_gsheet_header_row": 1,
             "email_source_tablename": "test_table",
             "email_source_columns": ["test_column"],
         }
