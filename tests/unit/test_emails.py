@@ -1695,6 +1695,23 @@ class TestEmails:
             "language": "Hindi",
             "content": "Test Content",
             "email_config_uid": 1,
+            "variable_list": [
+                {
+                    "variable_name": "test_variable",
+                    "variable_type": "string",
+                    "variable_expression": "UPPERCASE(test_variable)",
+                    "source_table": "test_table",
+                },
+                {
+                    "variable_name": "test_variable2",
+                    "variable_type": "table",
+                    "source_table": "test_table",
+                    "table_column_mapping": [
+                        {"test_column": "test_column2"},
+                        {"test_column3": "test_column4"},
+                    ],
+                },
+            ],
         }
         response = client.put(
             f"/api/emails/template/{create_email_template['email_template_uid']}",

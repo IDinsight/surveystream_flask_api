@@ -204,3 +204,30 @@ class EmailTemplate(db.Model):
             "content": self.content,
             "email_config_uid": self.email_config_uid,
         }
+
+
+class EmailTemplateVariable(db.Model):
+    __tablename__ = "email_template_variables"
+
+    email_template_uid = db.Column(
+        db.Integer(), db.ForeignKey(EmailTemplate.email_template_uid), nullable=False
+    )
+
+    variable_name = db.Column(db.String(100), nullable=False)
+    variable_type = db.Column(
+        db.String(32),
+        CheckConstraint(
+            "variable_type IN ('string', 'table')",
+            name="ck_email_template_variables_variable_type",
+        ),
+        nullable=False,
+    )
+    source_table = db.Column(db.String(255), nullable=True)
+    variable_description = db.Column(db.String(255), nullable=True)
+    variable_expression = db.Column(db.String(255), nullable=True)
+    table_column_mapping = db.Column(db.JSON, nullable=True)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("email_template_uid", "variable_name"),
+        {"schema": "webapp"},
+    )

@@ -15,7 +15,13 @@ from app.utils.utils import (
 )
 
 from . import emails_bp
-from .models import EmailConfig, EmailSchedule, EmailTemplate, ManualEmailTrigger
+from .models import (
+    EmailConfig,
+    EmailSchedule,
+    EmailTemplate,
+    EmailTemplateVariable,
+    ManualEmailTrigger,
+)
 from .validators import (
     EmailConfigQueryParamValidator,
     EmailConfigValidator,
@@ -697,6 +703,23 @@ def create_email_template(validated_payload):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+    # Upload Template Variables & tables
+    try:
+        for variable in validated_payload.variable_list.data:
+            variable_obj = EmailTemplateVariable(
+                variable_name=variable.variable_name,
+                variable_type=variable.variable_type,
+                variable_expression=variable.variable_expression,
+                source_table=variable.source_table,
+                table_column_mapping=variable.table_column_mapping,
+                email_template_uid=EmailTemplate.email_template_uid,
+            )
+            db.session.add(variable_obj)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
     return (
         jsonify(
             {
@@ -767,6 +790,23 @@ def update_email_template(email_template_uid, validated_payload):
     template.content = validated_payload.content.data
 
     try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    # Upload Template Variables & tables
+    try:
+        for variable in validated_payload.variable_list.data:
+            variable_obj = EmailTemplateVariable(
+                variable_type=variable.get("variable_type"),
+                variable_name=variable.get("variable_name"),
+                variable_expression=variable.get("variable_expression"),
+                source_table=variable.get("source_table"),
+                table_column_mapping=variable.get("table_column_mapping"),
+                email_template_uid=template.email_template_uid,
+            )
+            db.session.add(variable_obj)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
