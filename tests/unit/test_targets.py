@@ -2202,328 +2202,133 @@ class TestTargets:
 
             assert response.status_code == 200
 
-        expected_response = {
-            "data": [
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
+            expected_response = {
+                "data": [
+                    {
+                        "custom_fields": {
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_primary1",
+                                        "field_label": "Mobile no.",
+                                    },
+                                    {"column_name": "name1", "field_label": "Name"},
+                                    {"column_name": "address1", "field_label": "Address"},
+                                ],
+                                "gender": "gender1",
+                                "language": "language1",
+                                "location_id_column": "psu_id1",
+                                "target_id": "target_id1",
+                            },
+                            "Address": "North Delhi",
+                            "Mobile no.": "1234567890",
+                            "Name": "Anil",
                         },
-                        "Address": "North Delhi",
-                        "Mobile no.": "1234567890",
-                        "Name": "Anil",
+                        "form_uid": 1,
+                        "gender": "Male",
+                        "language": "English",
+                        "location_uid": 5,
+                        "target_id": "1",
+                        "target_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "location_id": "1101",
+                                "location_name": "ADILABAD RURAL",
+                                "geo_level_uid": 2,
+                                "location_uid": 2,
+                            },
+                            {
+                                "geo_level_name": "PSU",
+                                "location_id": "17101107",
+                                "location_name": "ANKAPUR",
+                                "geo_level_uid": 3,
+                                "location_uid": 5,
+                            },
+                        ],
+                        "target_uid": 1,
+                        "completed_flag": None,
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": None,
+                        "final_survey_status": None,
+                        "final_survey_status_label": None,
+                        "num_attempts": None,
+                        "refusal_flag": None,
+                        "revisit_sections": None,
+                        "target_assignable": None,
+                        "webapp_tag_color": None,
+                        "scto_fields": None,
                     },
-                    "form_uid": 1,
-                    "gender": "Male",
-                    "language": "English",
-                    "location_uid": 5,
-                    "target_id": "1",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
+                    {
+                        "custom_fields": {
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_primary1",
+                                        "field_label": "Mobile no.",
+                                    },
+                                    {"column_name": "name1", "field_label": "Name"},
+                                    {"column_name": "address1", "field_label": "Address"},
+                                ],
+                                "gender": "gender1",
+                                "language": "language1",
+                                "location_id_column": "psu_id1",
+                                "target_id": "target_id1",
+                            },
+                            "Address": "North Delhi",
+                            "Mobile no.": "1234567891",
+                            "Name": "Anupama",
                         },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101107",
-                            "location_name": "ANKAPUR",
-                            "geo_level_uid": 3,
-                            "location_uid": 5,
-                        },
-                    ],
-                    "target_uid": 1,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "final_survey_status": None,
-                    "final_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
-                    "scto_fields": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                        "Address": "North Delhi",
-                        "Mobile no.": "1234567891",
-                        "Name": "Anupama",
+                        "form_uid": 1,
+                        "gender": "Female",
+                        "language": "English",
+                        "location_uid": 5,
+                        "target_id": "2",
+                        "target_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "location_id": "1101",
+                                "location_name": "ADILABAD RURAL",
+                                "geo_level_uid": 2,
+                                "location_uid": 2,
+                            },
+                            {
+                                "geo_level_name": "PSU",
+                                "location_id": "17101107",
+                                "location_name": "ANKAPUR",
+                                "geo_level_uid": 3,
+                                "location_uid": 5,
+                            },
+                        ],
+                        "target_uid": 2,
+                        "completed_flag": None,
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": None,
+                        "final_survey_status": None,
+                        "final_survey_status_label": None,
+                        "num_attempts": None,
+                        "refusal_flag": None,
+                        "revisit_sections": None,
+                        "target_assignable": None,
+                        "webapp_tag_color": None,
+                        "scto_fields": None,
                     },
-                    "form_uid": 1,
-                    "gender": "Female",
-                    "language": "English",
-                    "location_uid": 5,
-                    "target_id": "2",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101107",
-                            "location_name": "ANKAPUR",
-                            "geo_level_uid": 3,
-                            "location_uid": 5,
-                        },
-                    ],
-                    "target_uid": 2,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "final_survey_status": None,
-                    "final_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
-                    "scto_fields": None,
-                },
-            ],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/targets", query_string={"form_uid": 1})
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_bulk_update_targets_for_non_admin_user_roles(
-        self,
-        client,
-        login_test_user,
-        create_target_column_config,
-        upload_targets_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that targets can be bulk updated by a non_admin user with permissions
-        """
-
-        new_role = create_new_survey_role_with_permissions(
-            # 7 - WRITE Targets
-            client,
-            test_user_credentials,
-            "Survey Role",
-            [7],
-            1,
-        )
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[1],
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the target
-        payload = {
-            "target_uids": [1, 2],
-            "form_uid": 1,
-            "language": "English",
-            "Address": "North Delhi",
-            "location_uid": 5,
-        }
-
-        response = client.patch(
-            "/api/targets",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": [
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                        "Address": "North Delhi",
-                        "Mobile no.": "1234567890",
-                        "Name": "Anil",
-                    },
-                    "form_uid": 1,
-                    "gender": "Male",
-                    "language": "English",
-                    "location_uid": 5,
-                    "target_id": "1",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101107",
-                            "location_name": "ANKAPUR",
-                            "geo_level_uid": 3,
-                            "location_uid": 5,
-                        },
-                    ],
-                    "target_uid": 1,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "final_survey_status": None,
-                    "final_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
-                    "scto_fields": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                        "Address": "North Delhi",
-                        "Mobile no.": "1234567891",
-                        "Name": "Anupama",
-                    },
-                    "form_uid": 1,
-                    "gender": "Female",
-                    "language": "English",
-                    "location_uid": 5,
-                    "target_id": "2",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101107",
-                            "location_name": "ANKAPUR",
-                            "geo_level_uid": 3,
-                            "location_uid": 5,
-                        },
-                    ],
-                    "target_uid": 2,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "final_survey_status": None,
-                    "final_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
-                    "scto_fields": None,
-                },
-            ],
-            "success": True,
-        }
+                ],
+                "success": True,
+            }
 
             # Check the response
             response = client.get("/api/targets", query_string={"form_uid": 1})

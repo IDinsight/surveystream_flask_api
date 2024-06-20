@@ -202,6 +202,7 @@ def get_survey_config_status(survey_uid):
     assignments = None
     target_status_mapping = None
     media_files_config = None
+    email_config = None
 
     if scto_information is not None:
         enumerators = Enumerator.query.filter_by(
