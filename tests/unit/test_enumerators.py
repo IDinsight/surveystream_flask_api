@@ -2908,6 +2908,28 @@ class TestEnumerators:
                             "column_label": "PSU Name",
                         },
                     ],
+                    "productivity_columns": [
+                        {
+                            "column_key": f"form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": f"form_productivity.test_scto_input_output.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": f"form_productivity.test_scto_input_output.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                        {
+                            "column_key": f"form_productivity.test_scto_input_output.avg_num_submissions_per_day",
+                            "column_label": "Avg. submissions/day",
+                        },
+                        {
+                            "column_key": f"form_productivity.test_scto_input_output.avg_num_completed_per_day",
+                            "column_label": "Avg. completed/day",
+                        },
+                    ]
                 },
                 "success": True,
             }

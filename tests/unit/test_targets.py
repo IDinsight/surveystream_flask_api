@@ -1932,6 +1932,24 @@ class TestTargets:
                             "column_label": "PSU Name",
                         },
                     ],
+                    "target_status_columns": [
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Number of Attempts",
+                        },
+                        {
+                            "column_key": "final_survey_status",
+                            "column_label": "Final Survey Status",
+                        },
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status Label",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                    ]
                 },
                 "success": True,
             }

@@ -587,15 +587,33 @@ def get_scto_form_definition(form_uid):
     if scto_form_settings is None:
         response = {"success": True, "data": None}
         return jsonify(response), 200
-
     else:
+
+        question_dict_arr = []
+        question_names_arr = [] 
+        for scto_question in scto_questions:
+            question_dict = scto_question.to_dict()
+            question_name = question_dict["question_name"]
+            question_names_arr.append(question_name)
+            question_dict_arr.append(question_dict)
+
+        metadata_fields = ["instanceID", "formdef_version", "starttime", "endtime", "SubmissionDate"]
+        for field in metadata_fields:
+            if field not in question_names_arr:
+                question_dict_arr.append({
+                    "question_uid": field, # these won't be linked to a proper uid in the DB
+                    "form_uid": form_uid,
+                    "question_name": field,
+                    "question_type": "text",
+                    "list_uid": None,
+                    "is_repeat_group": False,
+                })
+    
         # Form definition (partial)
         response = {
             "success": True,
             "data": {
-                "questions": [
-                    scto_question.to_dict() for scto_question in scto_questions
-                ],
+                "questions": question_dict_arr,
                 "settings": scto_form_settings.to_dict(),
             },
         }

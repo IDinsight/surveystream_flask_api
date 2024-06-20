@@ -13,6 +13,7 @@ from .validators import (
     CreateMediaFilesConfigValidator,
     MediaFilesConfigValidator,
 )
+from sqlalchemy.exc import IntegrityError
 
 
 @media_files_bp.route("", methods=["GET"])
@@ -103,6 +104,15 @@ def create_media_files_config(validated_payload):
     try:
         db.session.add(new_config)
         db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "A config already exists for this survey with the same scto_form_id, type and source"
+                    }
+                }), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -140,6 +150,16 @@ def update_media_files_config(media_files_config_uid, validated_payload):
 
     try:
         db.session.commit()
+
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(
+            {
+                "success": False,
+                "error": {
+                    "message": "A config already exists for this survey with the same scto_form_id, type and source"
+                }
+            }), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
