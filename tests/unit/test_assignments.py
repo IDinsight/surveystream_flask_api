@@ -1124,7 +1124,9 @@ class TestAssignments:
             "form_uid": 1,
             "report_users": [1, 2, 3],
             "email_source": "SurveyStream Data",
-            "email_source_gsheet_key": "test_key",
+            "email_source_gsheet_link": "test_key",
+            "email_source_gsheet_tab": "test_tab",
+            "email_source_gsheet_header_row": 1,
             "email_source_tablename": "test_table",
             "email_source_columns": ["test_column"],
         }
