@@ -123,6 +123,7 @@ class TestForms:
                     "form_type": "parent",
                     "parent_form_uid": None,
                     "dq_form_type": None,
+                    "parent_scto_form_id": None,
                 }
             ],
             "success": True,
@@ -154,6 +155,7 @@ class TestForms:
                     "form_type": "parent",
                     "parent_form_uid": None,
                     "dq_form_type": None,
+                    "parent_scto_form_id": None,
                 }
             ],
             "success": True,
@@ -227,6 +229,7 @@ class TestForms:
                 "form_type": "parent",
                 "parent_form_uid": None,
                 "dq_form_type": None,
+                "parent_scto_form_id": None,
             },
             "success": True,
         }
@@ -600,6 +603,7 @@ class TestForms:
                     "form_type": "dq",
                     "parent_form_uid": 1,
                     "dq_form_type": "audioaudit",
+                    "parent_scto_form_id": "test_scto_input_output",
                 }
             ],
             "success": True,

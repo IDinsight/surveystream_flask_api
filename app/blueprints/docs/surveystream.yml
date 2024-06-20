@@ -1817,6 +1817,10 @@ paths:
                       type: string
                       description: >-
                         The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
+                    parent_scto_form_id:
+                      type: string
+                      description: >-
+                        The SurveyCTO form ID of the parent form for a DQ form.
   "/forms/{form_uid}":
     get:
       summary: Get forms
@@ -1900,6 +1904,10 @@ paths:
                     type: string
                     description: >-
                       The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
+                  parent_scto_form_id:
+                    type: string
+                    description: >-
+                      The SurveyCTO form ID of the parent form for a DQ form.
         "404":
           description: The specified form ID was not found.
           content:
@@ -6016,9 +6024,12 @@ paths:
                         email_source:
                           type: string
                           example: "SurveyStream Data"
-                        email_source_gsheet_key:
+                        email_source_gsheet_link:
                           type: string
-                          example: "some-gsheet-key"
+                          example: "Link to Google sheet"
+                        email_source_gsheet_tab:
+                          type: string
+                          example: "Sheet1"
                         email_source_tablename:
                           type: string
                           example: "some_table"
@@ -6148,10 +6159,14 @@ paths:
                   enum:
                     - Google Sheet
                     - SurveyStream Data
-                email_source_gsheet_key:
+                email_source_gsheet_link:
                   type: string
                   description: Google Sheet Link
                   example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                email_source_gsheet_tab:
+                  type: string
+                  description: Google Sheet Tab name
+                  example: "Sheet1"
                 email_source_tablename:
                   type: string
                   description: Tablename for emails (Redshift email table), If not provided, default to assignments data
@@ -6198,10 +6213,14 @@ paths:
                         enum:
                           - Google Sheet
                           - SurveyStream Data
-                      email_source_gsheet_key:
+                      email_source_gsheet_link:
                         type: string
                         description: Google Sheet Link
                         example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                      email_source_gsheet_tab:
+                        type: string
+                        description: Google Sheet Tab name
+                        example: "Sheet1"
                       email_source_tablename:
                         type: string
                         description: Tablename for emails (Redshift email table), If not provided, default to assignments data
@@ -6295,10 +6314,14 @@ paths:
                           enum:
                             - Google Sheet
                             - SurveyStream Data
-                        email_source_gsheet_key:
+                        email_source_gsheet_link:
                           type: string
                           description: Google Sheet Link
                           example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                        email_source_gsheet_tab:
+                          type: string
+                          description: Google Sheet Tab name
+                          example: "Sheet1"
                         email_source_tablename:
                           type: string
                           description: Tablename for emails (Redshift email table), If not provided, default to assignments data
@@ -6377,10 +6400,14 @@ paths:
                         enum:
                           - Google Sheet
                           - SurveyStream Data
-                      email_source_gsheet_key:
+                      email_source_gsheet_link:
                         type: string
                         description: Google Sheet Link
                         example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                      email_source_gsheet_tab:
+                        type: string
+                        description: Google Sheet Tab name
+                        example: "Sheet1"
                       email_source_tablename:
                         type: string
                         description: Tablename for emails (Redshift email table), If not provided, default to assignments data
@@ -6446,10 +6473,14 @@ paths:
                   enum:
                     - Google Sheet
                     - SurveyStream Data
-                email_source_gsheet_key:
+                email_source_gsheet_link:
                   type: string
                   description: Google Sheet Link
                   example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                email_source_gsheet_tab:
+                  type: string
+                  description: Google Sheet Tab name
+                  example: "Sheet1"
                 email_source_tablename:
                   type: string
                   description: Tablename for emails (Redshift email table), If not provided, default to assignments data
@@ -6498,10 +6529,14 @@ paths:
                         enum:
                           - Google Sheet
                           - SurveyStream Data
-                      email_source_gsheet_key:
+                      email_source_gsheet_link:
                         type: string
                         description: Google Sheet Link
                         example: "https://docs.google.com/spreadsheets/d/1x1sTwmjUAhpZgBb0gi-hUOarfaVUfnElM7zItQr_jKs/edit#gid=0"
+                      email_source_gsheet_tab:
+                        type: string
+                        description: Google Sheet Tab name
+                        example: "Sheet1"
                       email_source_tablename:
                         type: string
                         description: Tablename for emails (Redshift email table), If not provided, default to assignments data
@@ -7206,6 +7241,114 @@ paths:
       responses:
         "200":
           description: Email template deleted successfully
+  
+  /emails/gsheet:
+    get:
+      summary: Get Google Sheet column Headers
+      tags:
+        - Emails
+      parameters:
+        - name: form_uid
+          in: path
+          description: Unique identifier for the form
+          required: true
+          schema:
+            type: integer
+        - name: email_source_gsheet_link
+          in: Body
+          description: Link to Google Sheet
+          required: true
+          schema:
+            type: string
+        - name: email_source_gsheet_tab
+          in: Body
+          description: Google Sheet Tab name
+          required: true
+          schema:
+            type: string
+        - name: email_source_gsheet_header_row
+          in: Body
+          description: Google Sheet Header Row Number
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Google Sheet column Headers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  example: [ "column1", "column2" ]
+        "404":
+          description: Google Sheet not found, kindly check sheet link and tab name
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Google Sheet not found, kindly check sheet link and tab name"
+        "403":
+          description: Google Sheet access forbidden, kindly check sheet permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Google Sheet access forbidden, kindly check sheet permissions"
+        
+    patch:
+      summary: Update Google Sheet column Headers for specific config id
+      tags:
+          - Emails
+      parameters:
+        - name: email_config_uid
+          in: query
+          description: Unique identifier for the Email Config
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Google Sheet column Headers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  example: [ "column1", "column2" ]
+        "404":
+          description: Google Sheet not found, kindly check sheet link and tab name
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Google Sheet not found, kindly check sheet link and tab name"
+        "403":
+          description: Google Sheet access forbidden, kindly check sheet permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Google Sheet access forbidden, kindly check sheet permissions"
+        
 
   /media-files:
     post:

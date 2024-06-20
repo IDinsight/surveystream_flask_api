@@ -20,7 +20,9 @@ class EmailConfig(db.Model):
         server_default="SurveyStream Data",
         nullable=False,
     )  # Gsheet/SurveyStream
-    email_source_gsheet_key = db.Column(db.String(512), nullable=True)  # Gsheet key
+    email_source_gsheet_link = db.Column(db.String(512), nullable=True)  # Gsheet Link
+    email_source_gsheet_tab = db.Column(db.String(256), nullable=True)  # Gsheet tab
+    email_source_gsheet_header_row = db.Column(db.Integer, nullable=True)
     email_source_tablename = db.Column(db.String(256), nullable=True)
     email_source_columns = db.Column(
         db.ARRAY(db.String(128)), nullable=True
@@ -61,7 +63,9 @@ class EmailConfig(db.Model):
         form_uid,
         email_source,
         report_users=None,
-        email_source_gsheet_key=None,
+        email_source_gsheet_link=None,
+        email_source_gsheet_tab=None,
+        email_source_gsheet_header_row=None,
         email_source_tablename=None,
         email_source_columns=None,
     ):
@@ -69,7 +73,9 @@ class EmailConfig(db.Model):
         self.form_uid = form_uid
         self.report_users = report_users
         self.email_source = email_source
-        self.email_source_gsheet_key = email_source_gsheet_key
+        self.email_source_gsheet_link = email_source_gsheet_link
+        self.email_source_gsheet_tab = email_source_gsheet_tab
+        self.email_source_gsheet_header_row = email_source_gsheet_header_row
         self.email_source_tablename = email_source_tablename
         self.email_source_columns = email_source_columns
 
@@ -80,7 +86,9 @@ class EmailConfig(db.Model):
             "form_uid": self.form_uid,
             "report_users": self.report_users,
             "email_source": self.email_source,
-            "email_source_gsheet_key": self.email_source_gsheet_key,
+            "email_source_gsheet_link": self.email_source_gsheet_link,
+            "email_source_gsheet_tab": self.email_source_gsheet_tab,
+            "email_source_gsheet_header_row": self.email_source_gsheet_header_row,
             "email_source_tablename": self.email_source_tablename,
             "email_source_columns": self.email_source_columns,
         }
