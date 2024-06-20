@@ -27,6 +27,7 @@ from .validators import (
     UpdateSCTOQuestionMappingValidator,
 )
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import aliased
 
 
 @forms_bp.route("", methods=["GET"])
@@ -48,9 +49,24 @@ def get_forms(validated_query_params):
     if form_type:
         filters.append(Form.form_type == form_type)
 
-    forms = Form.query.filter(*filters).all()
+    Parent = aliased(Form)
 
-    data = [form.to_dict() for form in forms]
+    result = db.session.query(
+        Form, Parent
+    ).outerjoin(
+        Parent,
+        Form.parent_form_uid == Parent.form_uid
+    ).filter(*filters).all()
+
+    data = []
+    for form, parent in result:
+        if form.form_type == "dq":
+            parent_scto_form_id = parent.scto_form_id
+        else:
+            parent_scto_form_id = None
+        
+        data.append({ **form.to_dict(), **{"parent_scto_form_id": parent_scto_form_id } })
+
     response = {"success": True, "data": data}
 
     return jsonify(response), 200
@@ -63,10 +79,18 @@ def get_form(form_uid):
     Return details for a form
     """
     form = Form.query.filter_by(form_uid=form_uid).first()
+
     if form is None:
         return jsonify({"success": False, "message": "Form not found"}), 404
 
-    response = {"success": True, "data": form.to_dict()}
+    data = form.to_dict()
+    if form.form_type == "dq":
+        parent_form = Form.query.filter_by(form_uid=form.parent_form_uid).first()
+        data["parent_scto_form_id"] = parent_form.scto_form_id
+    else:
+        data["parent_scto_form_id"] = None
+
+    response = {"success": True, "data": data}
 
     return jsonify(response), 200
 
