@@ -125,9 +125,6 @@ class EmailVariableTableColumnMappingValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    source_column = StringField(validators=[DataRequired()], default="")
-    target_column = StringField(validators=[DataRequired()], default="")
-
 
 class EmailVariableValidator(FlaskForm):
     class meta:
@@ -144,11 +141,9 @@ class EmailVariableValidator(FlaskForm):
         ],
         default="string",
     )
-    variable_expression = StringField()
+    variable_expression = StringField(default=None)
     source_table = StringField(validators=[DataRequired()])
-    table_column_mapping = FieldList(
-        FormField(EmailVariableTableColumnMappingValidator), default=[]
-    )
+    table_column_mapping = FormField(EmailVariableTableColumnMappingValidator)
 
 
 class EmailTemplateValidator(FlaskForm):

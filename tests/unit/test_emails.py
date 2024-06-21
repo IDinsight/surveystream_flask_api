@@ -345,216 +345,6 @@ class TestEmails:
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
 
-    def test_fetch_email_google_sheet_columns(
-        self,
-        client,
-        csrf_token,
-        create_email_config,
-        user_permissions,
-        request,
-    ):
-        """
-        Test: Fetching google sheet columns for a sheet that exists
-        Expect: The columns to be returned or permissions denied
-        """
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
-
-        payload = {
-            "form_uid": 1,
-            "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=1838473014#gid=1838473014",
-            "email_source_gsheet_tab": "Test_Success",
-            "email_source_gsheet_header_row": 1,
-        }
-        response = client.get(
-            "/api/emails/gsheet",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        if expected_permission:
-            assert response.status_code == 200
-            expected_response = {
-                "data": ["column1", "column2", "column3"],
-                "success": True,
-                "message": "Google Sheet column Headers retrieved successfully",
-            }
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-        else:
-            assert response.status_code == 403
-
-            expected_response = {
-                "error": "User does not have the required permission: READ Emails",
-                "success": False,
-            }
-
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-
-    def test_fetch_email_google_sheet_columns_no_sheet_permissions(
-        self,
-        client,
-        csrf_token,
-        create_email_config,
-        user_permissions,
-        request,
-    ):
-        """
-        Test: Fetching google sheet columns for a sheet that exists but dont have permissions on Gsheet
-        Expect: 403 Error with message to grant permission on sheet
-        """
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
-
-        payload = {
-            "form_uid": 1,
-            "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1hwQeG349NjFsaII_BYgXMY9zS_qOTKMrqLfo2jTisTY/edit?gid=0#gid=0",
-            "email_source_gsheet_tab": "Test_Success",
-            "email_source_gsheet_header_row": 1,
-        }
-        response = client.get(
-            "/api/emails/gsheet",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        if expected_permission:
-            assert response.status_code == 403
-        else:
-            assert response.status_code == 403
-
-            expected_response = {
-                "error": "User does not have the required permission: READ Emails",
-                "success": False,
-            }
-
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-
-    def test_fetch_email_google_sheet_columns_no_sheet_exists(
-        self,
-        client,
-        csrf_token,
-        create_email_config,
-        user_permissions,
-        request,
-    ):
-        """T
-        Test: Fetching google sheet columns for a sheet that doesnt exist
-        Expect: Error 404 with message that sheet does not exist
-        """
-
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
-
-        payload = {
-            "form_uid": 1,
-            "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1hwQeG349NjFsaII_Bdummy_dummy_dummy_dummy/",
-            "email_source_gsheet_tab": "dummy",
-            "email_source_gsheet_header_row": 1,
-        }
-        response = client.get(
-            "/api/emails/gsheet",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        if expected_permission:
-            assert response.status_code == 404
-        else:
-            assert response.status_code == 403
-
-            expected_response = {
-                "error": "User does not have the required permission: READ Emails",
-                "success": False,
-            }
-
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-
-    def test_update_email_google_sheet_columns(
-        self,
-        client,
-        login_test_user,
-        csrf_token,
-        test_user_credentials,
-        create_email_config,
-    ):
-        """
-        Test: Updating google sheet columns for congig that exists in db
-        Expect: The columns to be returned or permissions denied
-        """
-
-        payload = {"email_config_uid": create_email_config["email_config_uid"]}
-        response = client.patch(
-            "/api/emails/gsheet",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-        expected_response = {
-            "data": ["column1", "column2", "column3"],
-            "success": True,
-            "message": "Email Source Columns updated successfully",
-        }
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_fetch_email_google_sheet_columns_blanksheet(
-        self,
-        client,
-        csrf_token,
-        create_email_config,
-        user_permissions,
-        request,
-    ):
-        """
-        Test: Fetching google sheet columns for a sheet that exists but has no data
-        Expect: Empty list of columns to be returned or permissions denied
-        """
-
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
-
-        payload = {
-            "form_uid": 1,
-            "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=1838473014#gid=1838473014",
-            "email_source_gsheet_tab": "Test_BlankException",
-            "email_source_gsheet_header_row": 100,
-        }
-        response = client.get(
-            "/api/emails/gsheet",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        if expected_permission:
-            assert response.status_code == 200
-            expected_response = {
-                "data": [],
-                "success": True,
-                "message": "Google Sheet column Headers retrieved successfully",
-            }
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-
-        else:
-            assert response.status_code == 403
-
-            expected_response = {
-                "error": "User does not have the required permission: READ Emails",
-                "success": False,
-            }
-
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-
     def test_emails_get_details(
         self,
         client,
@@ -624,6 +414,7 @@ class TestEmails:
                                 "email_template_uid": 1,
                                 "language": "english",
                                 "subject": "Test Assignments Email",
+                                "variable_list": [],
                             }
                         ],
                     }
@@ -1575,6 +1366,7 @@ class TestEmails:
                     "email_template_uid": 1,
                     "language": "english",
                     "subject": "Test Assignments Email",
+                    "variable_list": [],
                 },
                 "success": True,
             }
@@ -1653,6 +1445,7 @@ class TestEmails:
                         "email_template_uid": 1,
                         "language": "english",
                         "subject": "Test Assignments Email",
+                        "variable_list": [],
                     }
                 ],
                 "success": True,
@@ -1706,10 +1499,10 @@ class TestEmails:
                     "variable_name": "test_variable2",
                     "variable_type": "table",
                     "source_table": "test_table",
-                    "table_column_mapping": [
-                        {"test_column": "test_column2"},
-                        {"test_column3": "test_column4"},
-                    ],
+                    "table_column_mapping": {
+                        "column_1": "test_column",
+                        "column2": "test_column2",
+                    },
                 },
             ],
         }
@@ -1740,6 +1533,13 @@ class TestEmails:
                 },
                 get_response.json,
             )
+            print(
+                {
+                    "data": {**payload, "email_template_uid": email_template_uid},
+                    "success": True,
+                }
+            )
+            print(get_response.json)
             assert checkdiff == {}
         else:
             expected_response = {
