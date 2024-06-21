@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 from flask import current_app, jsonify, request, session
 from flask_login import current_user, login_required, logout_user
 from sqlalchemy import and_, func, or_
+from wtforms.fields import Field
 
 from app import db
 from app.blueprints.auth.models import User
@@ -525,3 +526,26 @@ def retry_on_exception(ExceptionToCheck, tries=5, delay=3, backoff=2):
         return f_retry  # true decorator
 
     return deco_retry
+
+
+class JSONField(Field):
+    def _value(self):
+        return self.data if self.data else {}
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            try:
+                self.data = valuelist[0]
+            except ValueError:
+                raise ValueError("This field contains invalid JSON")
+        else:
+            self.data = None
+
+    def pre_validate(self, form):
+        super().pre_validate(form)
+        if self.data:
+            try:
+                if self.data is None or self.data == {} or isinstance(self.data, dict):
+                    pass
+            except TypeError:
+                raise ValueError("This field contains invalid JSON")

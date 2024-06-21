@@ -5,7 +5,7 @@ services:
         restart: always
         environment:
             - CONFIG_TYPE=config.LocalDevelopmentConfig
-            - PYTHONUNBUFFERED=1
+            - PYTHONUNBUFFERED=0
             - AWS_REGION=ap-south-1
             - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
         command: api

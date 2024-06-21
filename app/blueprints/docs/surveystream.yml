@@ -7056,6 +7056,21 @@ paths:
                   type: string
                 content:
                   type: string
+                variable_list:
+                  type: array
+                  items:
+                    type: dict
+                    properties:
+                      variable_name:
+                        type: string
+                      variable_type:
+                        type: string
+                      source_table:
+                        type: string
+                      variable_expression:
+                        type: string
+                      table_column_mapping:
+                        type: dict
               required:
                 - language
                 - email_config_uid
@@ -7077,6 +7092,21 @@ paths:
                     type: string
                   content:
                     type: string
+                  variable_list:
+                    type: array
+                    items:
+                      type: dict
+                      properties:
+                        variable_name:
+                          type: string
+                        variable_type:
+                          type: string
+                        source_table:
+                          type: string
+                        variable_expression:
+                          type: string
+                        table_column_mapping:
+                          type: dict
                 required:
                   - email_config_uid
                   - subject
@@ -7111,6 +7141,21 @@ paths:
                       type: string
                     content:
                       type: string
+                    variable_list:
+                      type: array
+                      items:
+                        type: dict
+                        properties:
+                          variable_name:
+                            type: string
+                          variable_type:
+                            type: string
+                          source_table:
+                            type: string
+                          variable_expression:
+                            type: string
+                          table_column_mapping:
+                            type: dict
                   required:
                     - email_config_uid
                     - subject
@@ -7150,6 +7195,21 @@ paths:
                     type: string
                   content:
                     type: string
+                  variable_list:
+                    type: array
+                    items:
+                      type: dict
+                      properties:
+                        variable_name:
+                          type: string
+                        variable_type:
+                          type: string
+                        source_table:
+                          type: string
+                        variable_expression:
+                          type: string
+                        table_column_mapping:
+                          type: dict
                 required:
                   - email_config_uid
                   - subject
@@ -7187,6 +7247,21 @@ paths:
                   type: string
                 content:
                   type: string
+                variable_list:
+                  type: array
+                  items:
+                    type: dict
+                    properties:
+                      variable_name:
+                        type: string
+                      variable_type:
+                        type: string
+                      source_table:
+                        type: string
+                      variable_expression:
+                        type: string
+                      table_column_mapping:
+                        type: dict
               required:
                 - email_config_uid
                 - subject
@@ -7208,6 +7283,21 @@ paths:
                     type: string
                   content:
                     type: string
+                  variable_list:
+                    type: array
+                    items:
+                      type: dict
+                      properties:
+                        variable_name:
+                          type: string
+                        variable_type:
+                          type: string
+                        source_table:
+                          type: string
+                        variable_expression:
+                          type: string
+                        table_column_mapping:
+                          type: dict
                 required:
                   - email_config_uid
                   - subject

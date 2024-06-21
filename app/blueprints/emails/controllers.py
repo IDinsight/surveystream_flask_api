@@ -796,6 +796,7 @@ def update_email_template(email_template_uid, validated_payload):
         return jsonify({"error": str(e)}), 500
 
     # Upload Template Variables & tables
+
     try:
         for variable in validated_payload.variable_list.data:
             variable_obj = EmailTemplateVariable(

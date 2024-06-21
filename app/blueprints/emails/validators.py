@@ -5,6 +5,8 @@ from flask_wtf import FlaskForm
 from wtforms import FieldList, FormField, IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired, ValidationError
 
+from app.utils.utils import JSONField
+
 
 class EmailConfigValidator(FlaskForm):
     config_type = StringField(validators=[DataRequired()])
@@ -143,7 +145,7 @@ class EmailVariableValidator(FlaskForm):
     )
     variable_expression = StringField(default=None)
     source_table = StringField(validators=[DataRequired()])
-    table_column_mapping = FormField(EmailVariableTableColumnMappingValidator)
+    table_column_mapping = JSONField(default={})
 
 
 class EmailTemplateValidator(FlaskForm):
