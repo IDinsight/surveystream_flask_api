@@ -345,7 +345,7 @@ class TestEmails:
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
 
-     def test_fetch_email_google_sheet_columns(
+    def test_fetch_email_google_sheet_columns(
         self,
         client,
         csrf_token,
