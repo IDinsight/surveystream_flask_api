@@ -26,6 +26,7 @@ from .validators import (
     UpdateTarget,
     BulkUpdateTargetsValidator,
     UpdateTargetsColumnConfig,
+    UpdateTargetStatus,
 )
 from .utils import (
     TargetsUpload,
@@ -319,6 +320,12 @@ def get_targets(validated_query_params):
                         "last_attempt_survey_status_label": getattr(
                             target_status, "last_attempt_survey_status_label", None
                         ),
+                        "final_survey_status": getattr(
+                            target_status, "final_survey_status", None
+                        ),
+                        "final_survey_status_label": getattr(
+                            target_status, "final_survey_status_label", None
+                        ),
                         "target_assignable": getattr(
                             target_status, "target_assignable", None
                         ),
@@ -328,6 +335,7 @@ def get_targets(validated_query_params):
                         "revisit_sections": getattr(
                             target_status, "revisit_sections", None
                         ),
+                        "scto_fields": getattr(target_status, "scto_fields", None),
                         "target_locations": target_locations,
                     }
                     for target, target_status, target_locations in targets_query.items
@@ -364,6 +372,12 @@ def get_targets(validated_query_params):
                             "last_attempt_survey_status_label": getattr(
                                 target_status, "last_attempt_survey_status_label", None
                             ),
+                            "final_survey_status": getattr(
+                                target_status, "final_survey_status", None
+                            ),
+                            "final_survey_status_label": getattr(
+                                target_status, "final_survey_status_label", None
+                            ),
                             "target_assignable": getattr(
                                 target_status, "target_assignable", None
                             ),
@@ -373,6 +387,7 @@ def get_targets(validated_query_params):
                             "revisit_sections": getattr(
                                 target_status, "revisit_sections", None
                             ),
+                            "scto_fields": getattr(target_status, "scto_fields", None),
                         },
                         **{"target_locations": target_locations},
                     }
@@ -479,6 +494,12 @@ def get_target(target_uid):
                         "last_attempt_survey_status_label": getattr(
                             target_status, "last_attempt_survey_status_label", None
                         ),
+                        "final_survey_status": getattr(
+                            target_status, "final_survey_status", None
+                        ),
+                        "final_survey_status_label": getattr(
+                            target_status, "final_survey_status_label", None
+                        ),
                         "target_assignable": getattr(
                             target_status, "target_assignable", None
                         ),
@@ -488,6 +509,7 @@ def get_target(target_uid):
                         "revisit_sections": getattr(
                             target_status, "revisit_sections", None
                         ),
+                        "scto_fields": getattr(target_status, "scto_fields", None),
                     },
                     **{"target_locations": target_locations},
                 }
@@ -916,21 +938,168 @@ def get_target_column_config(validated_query_params):
 
     form_uid = validated_query_params.form_uid.data
 
-    column_config = TargetColumnConfig.query.filter(
-        TargetColumnConfig.form_uid == form_uid,
-    ).all()
+    column_config = TargetColumnConfig.query.filter_by(form_uid=form_uid).all()
 
-    return jsonify(
+    config_data = [
         {
-            "success": True,
-            "data": [
-                {
-                    "column_name": column.column_name,
-                    "column_type": column.column_type,
-                    "bulk_editable": column.bulk_editable,
-                    "contains_pii": column.contains_pii,
-                }
-                for column in column_config
-            ],
+            "column_name": column.column_name,
+            "column_type": column.column_type,
+            "bulk_editable": column.bulk_editable,
+            "contains_pii": column.contains_pii,
         }
+        for column in column_config
+    ]
+
+    location_column = next(
+        (column for column in config_data if column["column_type"] == "location"),
+        None,
     )
+
+    location_columns = []
+
+    if location_column:
+        form = Form.query.filter_by(form_uid=form_uid).first()
+
+        if form is None:
+            return (
+                jsonify(
+                    message=f"The form 'form_uid={form_uid}' could not be found.",
+                    success=False,
+                ),
+                404,
+            )
+
+        survey_uid = form.survey_uid
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+        if geo_levels:
+            try:
+                geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+            except InvalidGeoLevelHierarchyError as e:
+                return (
+                    jsonify(
+                        {"success": False, "errors": {"geo_level_hierarchy": e.errors}}
+                    ),
+                    422,
+                )
+
+            for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
+                location_columns.extend(
+                    [
+                        {
+                            "column_key": f"target_locations[{i}].location_id",
+                            "column_label": f"{geo_level.geo_level_name} ID",
+                        },
+                        {
+                            "column_key": f"target_locations[{i}].location_name",
+                            "column_label": f"{geo_level.geo_level_name} Name",
+                        },
+                    ]
+                )
+    
+    # Add target_status columns
+    target_status_columns = [
+        {
+            "column_key": "num_attempts",
+            "column_label": "Number of Attempts",
+        },
+        {
+            "column_key": "final_survey_status",
+            "column_label": "Final Survey Status",
+        },
+        {
+            "column_key": "final_survey_status_label",
+            "column_label": "Final Survey Status Label",
+        },
+        {
+            "column_key": "revisit_sections",
+            "column_label": "Revisit Sections",
+        },
+    ]
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": {
+                    "file_columns": config_data,
+                    "location_columns": location_columns,
+                    "target_status_columns": target_status_columns,
+                },
+            }
+        ),
+        200,
+    )
+
+@targets_bp.route("/target-status", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(UpdateTargetStatus)
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
+def update_target_status(validated_payload):
+    """
+    Method to update target status
+    """
+
+    payload = request.get_json()
+    form_uid = validated_payload.form_uid.data
+
+    if (
+        Form.query.filter(
+            Form.form_uid == form_uid,
+        ).first()
+        is None
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": f"Form with UID {form_uid} does not exist",
+                }
+            ),
+            422,
+        )
+
+    subquery = (
+        db.session.query(Target.target_uid)
+        .filter(
+            Target.form_uid == form_uid
+        )
+    )
+
+    db.session.query(TargetStatus).filter(
+        TargetStatus.target_uid.in_(subquery)
+    ).delete(synchronize_session=False)
+
+    db.session.flush()
+
+    for each_target in payload["target_status"]:
+        target_id = each_target["target_id"]
+        target = Target.query.filter(
+            Target.target_id == target_id,
+            Target.form_uid == form_uid,
+        ).first()
+
+        if target is not None:
+            db.session.add(
+                TargetStatus(
+                    target_uid=target.target_uid,
+                    completed_flag=each_target["completed_flag"],
+                    refusal_flag=each_target["refusal_flag"],
+                    num_attempts=each_target["num_attempts"],
+                    last_attempt_survey_status=each_target["last_attempt_survey_status"],
+                    last_attempt_survey_status_label=each_target["last_attempt_survey_status_label"],
+                    final_survey_status=each_target["final_survey_status"],
+                    final_survey_status_label=each_target["final_survey_status_label"],
+                    target_assignable=each_target["target_assignable"],
+                    webapp_tag_color=each_target["webapp_tag_color"],
+                    revisit_sections=each_target["revisit_sections"],
+                    scto_fields=each_target["scto_fields"],
+                )
+            )
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return jsonify({"success": True}), 200

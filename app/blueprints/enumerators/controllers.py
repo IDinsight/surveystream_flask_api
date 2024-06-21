@@ -1,3 +1,6 @@
+from app import db
+from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
+from app.blueprints.locations.utils import GeoLevelHierarchy
 from flask import jsonify, request
 from app.blueprints.assignments.models import SurveyorAssignment
 from app.utils.utils import (
@@ -13,10 +16,9 @@ from sqlalchemy.sql.functions import func
 from sqlalchemy import update, cast
 import base64
 from sqlalchemy.orm import aliased
-from app import db
 from app.blueprints.surveys.models import Survey
+from app.blueprints.locations.models import GeoLevel, Location
 from app.blueprints.forms.models import Form
-from app.blueprints.locations.models import Location
 from .models import (
     Enumerator,
     SurveyorForm,
@@ -1375,23 +1377,110 @@ def get_enumerator_column_config(validated_query_params):
     """
 
     form_uid = validated_query_params.form_uid.data
+    form = Form.query.filter_by(form_uid=form_uid).first()
+
+    if form is None:
+        return (
+            jsonify(
+                message=f"The form 'form_uid={form_uid}' could not be found.",
+                success=False,
+            ),
+            404,
+        )
+    survey_uid = form.survey_uid
 
     column_config = EnumeratorColumnConfig.query.filter(
         EnumeratorColumnConfig.form_uid == form_uid,
     ).all()
 
-    return jsonify(
+    config_data = [
         {
-            "success": True,
-            "data": [
-                {
-                    "column_name": column.column_name,
-                    "column_type": column.column_type,
-                    "bulk_editable": column.bulk_editable,
-                }
-                for column in column_config
-            ],
+            "column_name": column.column_name,
+            "column_type": column.column_type,
+            "bulk_editable": column.bulk_editable,
         }
+        for column in column_config
+    ]
+
+    location_column = next(
+        (column for column in config_data if column["column_type"] == "location"),
+        None,
+    )
+
+    if location_column:
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+        location_columns = []
+
+        if geo_levels:
+            try:
+                geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+            except InvalidGeoLevelHierarchyError as e:
+                return (
+                    jsonify(
+                        {"success": False, "errors": {"geo_level_hierarchy": e.errors}}
+                    ),
+                    422,
+                )
+
+            for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
+                location_columns.extend(
+                    [
+                        {
+                            "column_key": f"surveyor_locations[{i}].location_id",
+                            "column_label": f"{geo_level.geo_level_name} ID",
+                        },
+                        {
+                            "column_key": f"surveyor_locations[{i}].location_name",
+                            "column_label": f"{geo_level.geo_level_name} Name",
+                        },
+                    ]
+                )
+
+    # Add surveyor productivity columns for all parent forms in the survey
+    forms = Form.query.filter_by(
+        survey_uid=survey_uid, 
+        form_type="parent"
+    ).all()
+
+    productivity_columns = []
+    for each_form in forms:
+        productivity_columns.extend(
+            [
+                {
+                    "column_key": f"form_productivity.{each_form.scto_form_id}.total_assigned_targets",
+                    "column_label": "Total Assigned Targets",
+                },
+                {
+                    "column_key": f"form_productivity.{each_form.scto_form_id}.total_pending_targets",
+                    "column_label": "Total Pending Targets",
+                },
+                {
+                    "column_key": f"form_productivity.{each_form.scto_form_id}.total_completed_targets",
+                    "column_label": "Total Completed Targets",
+                },
+                {
+                    "column_key": f"form_productivity.{each_form.scto_form_id}.avg_num_submissions_per_day",
+                    "column_label": "Avg. submissions/day",
+                },
+                {
+                    "column_key": f"form_productivity.{each_form.scto_form_id}.avg_num_completed_per_day",
+                    "column_label": "Avg. completed/day",
+                },
+            ]
+        )
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": {
+                    "file_columns": config_data,
+                    "location_columns": location_columns,
+                    "productivity_columns": productivity_columns,
+                },
+            }
+        ),
+        200,
     )
 
 

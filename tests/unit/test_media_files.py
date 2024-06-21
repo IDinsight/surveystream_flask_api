@@ -247,7 +247,7 @@ class TestMedaiFiles:
         request.getfixturevalue(user_fixture)
 
         response = client.get(
-            "api/media-files?form_uid=1",
+            "api/media-files?survey_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -258,6 +258,8 @@ class TestMedaiFiles:
                 "data": [
                     {
                         "media_files_config_uid": 1,
+                        "form_uid": 1,
+                        "scto_form_id": "test_scto_input_output",
                         "file_type": "audio",
                         "source": "SurveyCTO",
                         "scto_fields": [

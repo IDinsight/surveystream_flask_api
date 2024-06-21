@@ -12,6 +12,85 @@ from utils import (
 
 @pytest.mark.enumerators
 class TestEnumerators:
+    # RBAC fixtures
+    @pytest.fixture
+    def user_with_super_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have super admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_survey_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have survey admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_enumerator_permissions(self, client, test_user_credentials):
+        # Assign new roles and permissions
+        new_role = create_new_survey_role_with_permissions(
+            # 5 - WRITE Enumerators
+            client,
+            test_user_credentials,
+            "Enumerators Role",
+            [5],
+            1,
+        )
+
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_no_permissions(self, client, test_user_credentials):
+        # Assign no roles and permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture(
+        params=[
+            ("user_with_super_admin_permissions", True),
+            ("user_with_survey_admin_permissions", True),
+            ("user_with_enumerator_permissions", True),
+            ("user_with_no_permissions", False),
+        ],
+        ids=[
+            "super_admin_permissions",
+            "survey_admin_permissions",
+            "enumerator_permissions",
+            "no_permissions",
+        ],
+    )
+    def user_permissions(self, request):
+        return request.param
+
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -2572,151 +2651,6 @@ class TestEnumerators:
         assert response.status_code == 422
         print(response.json)
 
-        {
-            "errors": {
-                "record_errors": {
-                    "invalid_records": {
-                        "ordered_columns": [
-                            "row_number",
-                            "enumerator_id",
-                            "name",
-                            "email",
-                            "mobile_primary",
-                            "enumerator_type",
-                            "language",
-                            "gender",
-                            "home_address",
-                            "district_id",
-                            "mobile_secondary",
-                            "age",
-                            "errors",
-                        ],
-                        "records": [
-                            {
-                                "age": "1",
-                                "district_id": "2",
-                                "email": "eric.dodge@idinsight.org",
-                                "enumerator_id": "0294612",
-                                "enumerator_type": "surveyor",
-                                "errors": "Duplicate enumerator_id; Location id not found in uploaded locations data for the survey's prime geo level",
-                                "gender": "Male",
-                                "home_address": "my house",
-                                "language": "English",
-                                "mobile_primary": "0123456789",
-                                "mobile_secondary": "1123456789",
-                                "name": "Eric Dodge",
-                                "row_number": 2,
-                            },
-                            {
-                                "age": "2",
-                                "district_id": "1",
-                                "email": "jahnavi.meher@idinsight.org",
-                                "enumerator_id": "0294612",
-                                "enumerator_type": "surveyor",
-                                "errors": "Duplicate enumerator_id; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
-                                "gender": "Female",
-                                "home_address": "my house",
-                                "language": "Telugu",
-                                "mobile_primary": "0123456789*&",
-                                "mobile_secondary": "1123456789",
-                                "name": "Jahnavi Meher",
-                                "row_number": 3,
-                            },
-                            {
-                                "age": "3",
-                                "district_id": "1",
-                                "email": "jay.prakash@idinsight.org",
-                                "enumerator_id": "0294614",
-                                "enumerator_type": "monitor",
-                                "errors": "Blank field(s) found in the following column(s): name. The column(s) cannot contain blank fields.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
-                                "gender": "Male",
-                                "home_address": "my house",
-                                "language": "Hindi",
-                                "mobile_primary": "012345678901234567890123456789",
-                                "mobile_secondary": "1123456789",
-                                "name": "",
-                                "row_number": 4,
-                            },
-                            {
-                                "age": "4",
-                                "district_id": "1",
-                                "email": "griffin.muteti@gmal.com",
-                                "enumerator_id": "0294615",
-                                "enumerator_type": "monitor;surveyor",
-                                "errors": "Duplicate row; Duplicate enumerator_id; The domain name gmal.com does not exist.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
-                                "gender": "Male",
-                                "home_address": "my house",
-                                "language": "Swahili",
-                                "mobile_primary": "012345678",
-                                "mobile_secondary": "1123456789",
-                                "name": "Griffin Muteti",
-                                "row_number": 5,
-                            },
-                            {
-                                "age": "4",
-                                "district_id": "1",
-                                "email": "griffin.muteti@gmal.com",
-                                "enumerator_id": "0294615",
-                                "enumerator_type": "monitor;surveyor",
-                                "errors": "Duplicate row; Duplicate enumerator_id; The domain name gmal.com does not exist.; Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'",
-                                "gender": "Male",
-                                "home_address": "my house",
-                                "language": "Swahili",
-                                "mobile_primary": "012345678",
-                                "mobile_secondary": "1123456789",
-                                "name": "Griffin Muteti",
-                                "row_number": 6,
-                            },
-                        ],
-                    },
-                    "summary": {
-                        "error_count": 14,
-                        "total_correct_rows": 0,
-                        "total_rows": 5,
-                        "total_rows_with_errors": 5,
-                    },
-                    "summary_by_error_type": [
-                        {
-                            "error_count": 1,
-                            "error_message": "Blank values are not allowed in the following columns: enumerator_id, name, email, enumerator_type. Blank values in these columns were found for the following row(s): 4",
-                            "error_type": "Blank field",
-                            "row_numbers_with_errors": [4],
-                        },
-                        {
-                            "error_count": 2,
-                            "error_message": "The file has 2 duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: 5, 6",
-                            "error_type": "Duplicate rows",
-                            "row_numbers_with_errors": [5, 6],
-                        },
-                        {
-                            "error_count": 4,
-                            "error_message": "The file has 4 duplicate enumerator_id(s). The following row numbers contain enumerator_id duplicates: 2, 3, 5, 6",
-                            "error_type": "Duplicate enumerator_id's in file",
-                            "row_numbers_with_errors": [2, 3, 5, 6],
-                        },
-                        {
-                            "error_count": 2,
-                            "error_message": "The file contains 2 invalid email ID(s). The following row numbers have invalid email ID's: 5, 6",
-                            "error_type": "Invalid email ID",
-                            "row_numbers_with_errors": [5, 6],
-                        },
-                        {
-                            "error_count": 4,
-                            "error_message": "The file contains 4 invalid mobile number(s) in the mobile_primary field. Mobile numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'. The following row numbers have invalid mobile numbers: 3, 4, 5, 6",
-                            "error_type": "Invalid mobile number",
-                            "row_numbers_with_errors": [3, 4, 5, 6],
-                        },
-                        {
-                            "error_count": 1,
-                            "error_message": "The file contains 1 location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: 2",
-                            "error_type": "Invalid location_id's",
-                            "row_numbers_with_errors": [2],
-                        },
-                    ],
-                }
-            },
-            "success": False,
-        }
         expected_response = {
             "errors": {
                 "record_errors": {
@@ -2867,68 +2801,22 @@ class TestEnumerators:
         print(response.json)
         assert checkdiff == {}
 
-    def test_upload_column_config_for_super_admin_user(
-        self, client, login_test_user, create_enumerator_column_config, csrf_token
+    def test_upload_column_config(
+        self,
+        client,
+        login_test_user,
+        create_enumerator_column_config,
+        create_geo_levels_for_enumerators_file,
+        user_permissions,
+        csrf_token,
+        request,
     ):
         """
-        Test uploading the enumerators column config
+        Test uploading the enumerators column config for all users
         """
 
-        expected_response = {
-            "success": True,
-            "data": [
-                {
-                    "column_name": "enumerator_id",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "name",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "email",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "mobile_primary",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "personal_details",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "home_address",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "prime_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Mobile (Secondary)",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Age",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                },
-            ],
-        }
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
         # Check the response
         response = client.get(
@@ -2937,443 +2825,136 @@ class TestEnumerators:
             content_type="application/json",
         )
 
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_upload_column_config_for_survey_admin_user(
-        self, client, login_test_user, create_form, csrf_token, test_user_credentials
-    ):
-        """
-        Test uploading the enumerators column config for survey_admin users
-        """
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=True,
-            survey_uid=1,
-            is_super_admin=False,
-        )
-
-        login_user(client, test_user_credentials)
-
-        payload = {
-            "form_uid": 1,
-            "column_config": [
-                {
-                    "column_name": "enumerator_id",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "name",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "email",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "mobile_primary",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "personal_details",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "home_address",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "prime_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Mobile (Secondary)",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Age",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                },
-            ],
-        }
-
-        response = client.put(
-            "/api/enumerators/column-config",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
         print(response.json)
-        assert response.status_code == 200
 
-        expected_response = {
-            "success": True,
-            "data": [
-                {
-                    "column_name": "enumerator_id",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
+        if expected_permission:
+            expected_response = {
+                "data": {
+                    "file_columns": [
+                        {
+                            "bulk_editable": False,
+                            "column_name": "enumerator_id",
+                            "column_type": "personal_details",
+                        },
+                        {
+                            "bulk_editable": False,
+                            "column_name": "name",
+                            "column_type": "personal_details",
+                        },
+                        {
+                            "bulk_editable": False,
+                            "column_name": "email",
+                            "column_type": "personal_details",
+                        },
+                        {
+                            "bulk_editable": False,
+                            "column_name": "mobile_primary",
+                            "column_type": "personal_details",
+                        },
+                        {
+                            "bulk_editable": True,
+                            "column_name": "language",
+                            "column_type": "personal_details",
+                        },
+                        {
+                            "bulk_editable": False,
+                            "column_name": "home_address",
+                            "column_type": "personal_details",
+                        },
+                        {
+                            "bulk_editable": False,
+                            "column_name": "gender",
+                            "column_type": "personal_details",
+                        },
+                        {
+                            "bulk_editable": True,
+                            "column_name": "prime_geo_level_location",
+                            "column_type": "location",
+                        },
+                        {
+                            "bulk_editable": True,
+                            "column_name": "Mobile (Secondary)",
+                            "column_type": "custom_fields",
+                        },
+                        {
+                            "bulk_editable": False,
+                            "column_name": "Age",
+                            "column_type": "custom_fields",
+                        },
+                    ],
+                    "location_columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "surveyor_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "surveyor_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "productivity_columns": [
+                        {
+                            "column_key": f"form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": f"form_productivity.test_scto_input_output.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": f"form_productivity.test_scto_input_output.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                        {
+                            "column_key": f"form_productivity.test_scto_input_output.avg_num_submissions_per_day",
+                            "column_label": "Avg. submissions/day",
+                        },
+                        {
+                            "column_key": f"form_productivity.test_scto_input_output.avg_num_completed_per_day",
+                            "column_label": "Avg. completed/day",
+                        },
+                    ]
                 },
-                {
-                    "column_name": "name",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "email",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "mobile_primary",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "personal_details",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "home_address",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "prime_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Mobile (Secondary)",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Age",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                },
-            ],
-        }
+                "success": True,
+            }
 
-        # Check the response
-        response = client.get(
-            "/api/enumerators/column-config",
-            query_string={"form_uid": 1},
-            content_type="application/json",
-        )
+            assert response.status_code == 200
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
 
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Enumerators",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_upload_column_config_for_non_admin_user_roles(
-        self, client, login_test_user, create_form, csrf_token, test_user_credentials
-    ):
-        """
-        Test uploading the enumerators column config for non_admin users with roles
-        """
-        new_role = create_new_survey_role_with_permissions(
-            # 5 - WRITE Enumerators
-            client,
-            test_user_credentials,
-            "Survey Role",
-            [5],
-            1,
-        )
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[1],
-        )
-
-        login_user(client, test_user_credentials)
-
-        payload = {
-            "form_uid": 1,
-            "column_config": [
-                {
-                    "column_name": "enumerator_id",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "name",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "email",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "mobile_primary",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "personal_details",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "home_address",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "prime_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Mobile (Secondary)",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Age",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                },
-            ],
-        }
-
-        response = client.put(
-            "/api/enumerators/column-config",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-        assert response.status_code == 200
-
-        expected_response = {
-            "success": True,
-            "data": [
-                {
-                    "column_name": "enumerator_id",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "name",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "email",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "mobile_primary",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "personal_details",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "home_address",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "prime_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Mobile (Secondary)",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Age",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                },
-            ],
-        }
-
-        # Check the response
-        response = client.get(
-            "/api/enumerators/column-config",
-            query_string={"form_uid": 1},
-            content_type="application/json",
-        )
-
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_upload_column_config_for_non_admin_user_no_roles(
-        self, client, login_test_user, create_form, csrf_token, test_user_credentials
-    ):
-        """
-        Test uploading the enumerators column config for non_admin users without roles
-        Expect Fail 403
-        """
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[],
-        )
-
-        login_user(client, test_user_credentials)
-
-        payload = {
-            "form_uid": 1,
-            "column_config": [
-                {
-                    "column_name": "enumerator_id",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "name",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "email",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "mobile_primary",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "personal_details",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "home_address",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "personal_details",
-                    "bulk_editable": False,
-                },
-                {
-                    "column_name": "prime_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Mobile (Secondary)",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                },
-                {
-                    "column_name": "Age",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                },
-            ],
-        }
-
-        response = client.put(
-            "/api/enumerators/column-config",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-        assert response.status_code == 403
-
-        expected_response = {
-            "success": False,
-            "error": f"User does not have the required permission: WRITE Enumerators",
-        }
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_update_enumerator_for_super_admin_user(
-        self, client, login_test_user, upload_enumerators_csv, csrf_token
+    def test_update_enumerator(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        csrf_token,
+        user_permissions,
+        request,
     ):
         """
         Test that an individual enumerator can be updated
@@ -3391,6 +2972,9 @@ class TestEnumerators:
             "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
         }
 
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
         response = client.put(
             "/api/enumerators/1",
             json=payload,
@@ -3399,313 +2983,61 @@ class TestEnumerators:
         )
 
         print(response.json)
-        assert response.status_code == 200
 
-        expected_response = {
-            "data": {
-                "custom_fields": {
-                    "Age": "1",
-                    "Mobile (Secondary)": "1123456789",
-                    "column_mapping": {
-                        "custom_fields": [
-                            {
-                                "column_name": "mobile_secondary1",
-                                "field_label": "Mobile (Secondary)",
-                            },
-                            {"column_name": "age1", "field_label": "Age"},
-                        ],
-                        "gender": "gender1",
-                        "home_address": "home_address1",
-                        "language": "language1",
-                        "email": "email1",
-                        "enumerator_id": "enumerator_id1",
-                        "enumerator_type": "enumerator_type1",
-                        "location_id_column": "district_id1",
-                        "mobile_primary": "mobile_primary1",
-                        "name": "name1",
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "custom_fields": {
+                        "Age": "1",
+                        "Mobile (Secondary)": "1123456789",
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
                     },
+                    "email": "eric.dodge@idinsight.org",
+                    "enumerator_id": "0294612",
+                    "enumerator_uid": 1,
+                    "name": "Hi",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "English",
+                    "mobile_primary": "0123456789",
                 },
-                "email": "eric.dodge@idinsight.org",
-                "enumerator_id": "0294612",
-                "enumerator_uid": 1,
-                "name": "Hi",
-                "gender": "Male",
-                "home_address": "my house",
-                "language": "English",
-                "mobile_primary": "0123456789",
-            },
-            "success": True,
-        }
+                "success": True,
+            }
 
-        # Check the response
-        response = client.get("/api/enumerators/1")
-        print(response.json)
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+            # Check the response
+            response = client.get("/api/enumerators/1")
+            print(response.json)
+            assert response.status_code == 200
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
 
-    def test_update_enumerator_for_survey_admin_user(
-        self,
-        client,
-        login_test_user,
-        upload_enumerators_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that an individual enumerator can be updated by a survey_admin user
-        """
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=True,
-            survey_uid=1,
-            is_super_admin=False,
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the enumerator
-        payload = {
-            "enumerator_id": "0294612",
-            "name": "Hi",
-            "email": "eric.dodge@idinsight.org",
-            "mobile_primary": "0123456789",
-            "language": "English",
-            "gender": "Male",
-            "home_address": "my house",
-            "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
-        }
-
-        response = client.put(
-            "/api/enumerators/1",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": {
-                "custom_fields": {
-                    "Age": "1",
-                    "Mobile (Secondary)": "1123456789",
-                    "column_mapping": {
-                        "custom_fields": [
-                            {
-                                "column_name": "mobile_secondary1",
-                                "field_label": "Mobile (Secondary)",
-                            },
-                            {"column_name": "age1", "field_label": "Age"},
-                        ],
-                        "gender": "gender1",
-                        "home_address": "home_address1",
-                        "language": "language1",
-                        "email": "email1",
-                        "enumerator_id": "enumerator_id1",
-                        "enumerator_type": "enumerator_type1",
-                        "location_id_column": "district_id1",
-                        "mobile_primary": "mobile_primary1",
-                        "name": "name1",
-                    },
-                },
-                "email": "eric.dodge@idinsight.org",
-                "enumerator_id": "0294612",
-                "enumerator_uid": 1,
-                "name": "Hi",
-                "gender": "Male",
-                "home_address": "my house",
-                "language": "English",
-                "mobile_primary": "0123456789",
-            },
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/enumerators/1")
-        print(response.json)
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_update_enumerator_for_non_admin_user_roles(
-        self,
-        client,
-        login_test_user,
-        upload_enumerators_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that an individual enumerator can be updated by a non_admin user with roles
-        """
-        new_role = create_new_survey_role_with_permissions(
-            # 5 - WRITE Enumerators
-            client,
-            test_user_credentials,
-            "Survey Role",
-            [5],
-            1,
-        )
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[1],
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the enumerator
-        payload = {
-            "enumerator_id": "0294612",
-            "name": "Hi",
-            "email": "eric.dodge@idinsight.org",
-            "mobile_primary": "0123456789",
-            "language": "English",
-            "gender": "Male",
-            "home_address": "my house",
-            "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
-        }
-
-        response = client.put(
-            "/api/enumerators/1",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": {
-                "custom_fields": {
-                    "Age": "1",
-                    "Mobile (Secondary)": "1123456789",
-                    "column_mapping": {
-                        "custom_fields": [
-                            {
-                                "column_name": "mobile_secondary1",
-                                "field_label": "Mobile (Secondary)",
-                            },
-                            {"column_name": "age1", "field_label": "Age"},
-                        ],
-                        "gender": "gender1",
-                        "home_address": "home_address1",
-                        "language": "language1",
-                        "email": "email1",
-                        "enumerator_id": "enumerator_id1",
-                        "enumerator_type": "enumerator_type1",
-                        "location_id_column": "district_id1",
-                        "mobile_primary": "mobile_primary1",
-                        "name": "name1",
-                    },
-                },
-                "email": "eric.dodge@idinsight.org",
-                "enumerator_id": "0294612",
-                "enumerator_uid": 1,
-                "name": "Hi",
-                "gender": "Male",
-                "home_address": "my house",
-                "language": "English",
-                "mobile_primary": "0123456789",
-            },
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/enumerators/1")
-        print(response.json)
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_update_enumerator_for_non_admin_user_no_roles(
-        self,
-        client,
-        login_test_user,
-        upload_enumerators_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that an individual enumerator cannot be updated by a non_admin user without roles
-        Expect Fail with a 403
-        """
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[],
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the enumerator
-        payload = {
-            "enumerator_id": "0294612",
-            "name": "Hi",
-            "email": "eric.dodge@idinsight.org",
-            "mobile_primary": "0123456789",
-            "language": "English",
-            "gender": "Male",
-            "home_address": "my house",
-            "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
-        }
-
-        response = client.put(
-            "/api/enumerators/1",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        print(response.json)
-        assert response.status_code == 403
-
-        expected_response = {
-            "success": False,
-            "error": f"User does not have the required permission: WRITE Enumerators",
-        }
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Enumerators",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
     def test_update_enumerator_incorrect_custom_fields(
         self, client, login_test_user, upload_enumerators_csv, csrf_token
@@ -3735,75 +3067,21 @@ class TestEnumerators:
 
         assert response.status_code == 422
 
-    def test_update_location_mapping_for_super_admin_user(
-        self, client, login_test_user, upload_enumerators_csv, csrf_token
-    ):
-        """
-        Test that a location mapping can be updated by a super admin user
-        """
-
-        # Update the enumerator
-        payload = {
-            "form_uid": 1,
-            "enumerator_type": "surveyor",
-            "location_uid": None,
-        }
-
-        response = client.put(
-            "/api/enumerators/1/roles/locations",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        print(response.json)
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": {
-                "form_uid": 1,
-                "roles": [
-                    {
-                        "enumerator_type": "surveyor",
-                        "status": "Active",
-                        "locations": None,
-                    }
-                ],
-            },
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get(
-            "/api/enumerators/1/roles",
-            query_string={"form_uid": 1, "enumerator_type": "surveyor"},
-            content_type="application/json",
-        )
-        print(response.json)
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_update_location_mapping_for_survey_admin_user(
+    def test_update_location_mapping(
         self,
         client,
         login_test_user,
         upload_enumerators_csv,
         csrf_token,
         test_user_credentials,
+        user_permissions,
+        request,
     ):
         """
-        Test that a location mapping can be updated by a survey admin user
+        Test that a location mapping can be updated - for all enumerator permissions
+        Expect success for the allowed permissions
+        Expect 403 fail for the un-allowed permissions
         """
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=True,
-            survey_uid=1,
-            is_super_admin=False,
-        )
-
-        login_user(client, test_user_credentials)
 
         # Update the enumerator
         payload = {
@@ -3812,86 +3090,8 @@ class TestEnumerators:
             "location_uid": None,
         }
 
-        response = client.put(
-            "/api/enumerators/1/roles/locations",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        print(response.json)
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": {
-                "form_uid": 1,
-                "roles": [
-                    {
-                        "enumerator_type": "surveyor",
-                        "status": "Active",
-                        "locations": None,
-                    }
-                ],
-            },
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get(
-            "/api/enumerators/1/roles",
-            query_string={"form_uid": 1, "enumerator_type": "surveyor"},
-            content_type="application/json",
-        )
-        print(response.json)
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_update_location_mapping_for_non_admin_user_roles(
-        self,
-        client,
-        login_test_user,
-        upload_enumerators_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that a location mapping can be updated by a non-admin user with roles
-        """
-        new_role = create_new_survey_role_with_permissions(
-            # 5 - WRITE Enumerators
-            client,
-            test_user_credentials,
-            "Survey Role",
-            [5],
-            1,
-        )
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[1],
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the enumerator
-        payload = {
-            "form_uid": 1,
-            "enumerator_type": "surveyor",
-            "location_uid": None,
-        }
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
         response = client.put(
             "/api/enumerators/1/roles/locations",
@@ -3900,98 +3100,45 @@ class TestEnumerators:
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.json)
-        assert response.status_code == 200
 
-        expected_response = {
-            "data": {
-                "form_uid": 1,
-                "roles": [
-                    {
-                        "enumerator_type": "surveyor",
-                        "status": "Active",
-                        "locations": None,
-                    }
-                ],
-            },
-            "success": True,
-        }
+        if expected_permission:
 
-        # Check the response
-        response = client.get(
-            "/api/enumerators/1/roles",
-            query_string={"form_uid": 1, "enumerator_type": "surveyor"},
-            content_type="application/json",
-        )
-        print(response.json)
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+            assert response.status_code == 200
 
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
+            expected_response = {
+                "data": {
+                    "form_uid": 1,
+                    "roles": [
+                        {
+                            "enumerator_type": "surveyor",
+                            "status": "Active",
+                            "locations": None,
+                        }
+                    ],
+                },
+                "success": True,
+            }
 
-        login_user(client, test_user_credentials)
+            # Check the response
+            response = client.get(
+                "/api/enumerators/1/roles",
+                query_string={"form_uid": 1, "enumerator_type": "surveyor"},
+                content_type="application/json",
+            )
+            print(response.json)
+            assert response.status_code == 200
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
-    def test_update_location_mapping_for_non_admin_user_no_roles(
-        self,
-        client,
-        login_test_user,
-        upload_enumerators_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that a location mapping cannot be updated by a non-admin user without roles
-        Expect 403 Fail
-        """
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[],
-        )
+        else:
+            assert response.status_code == 403
 
-        login_user(client, test_user_credentials)
-
-        # Update the enumerator
-        payload = {
-            "form_uid": 1,
-            "enumerator_type": "surveyor",
-            "location_uid": None,
-        }
-
-        response = client.put(
-            "/api/enumerators/1/roles/locations",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        print(response.json)
-        assert response.status_code == 403
-
-        expected_response = {
-            "success": False,
-            "error": f"User does not have the required permission: WRITE Enumerators",
-        }
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Enumerators",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
     def test_delete_enumerator_for_super_admin_user(
         self, client, login_test_user, upload_enumerators_csv, csrf_token

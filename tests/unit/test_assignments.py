@@ -1,16 +1,18 @@
-import jsondiff
-import pytest
 import base64
-import pandas as pd
+from datetime import datetime, timedelta
 from pathlib import Path
+
+import jsondiff
+import pandas as pd
+import pytest
 from utils import (
+    create_new_survey_role_with_permissions,
+    login_user,
     set_target_assignable_status,
     update_logged_in_user_roles,
-    login_user,
-    create_new_survey_role_with_permissions,
 )
+
 from app import db
-from datetime import datetime, timedelta
 
 
 @pytest.mark.assignments
@@ -1120,6 +1122,13 @@ class TestAssignments:
         payload = {
             "config_type": "Assignments",
             "form_uid": 1,
+            "report_users": [1, 2, 3],
+            "email_source": "SurveyStream Data",
+            "email_source_gsheet_link": "test_key",
+            "email_source_gsheet_tab": "test_tab",
+            "email_source_gsheet_header_row": 1,
+            "email_source_tablename": "test_table",
+            "email_source_columns": ["test_column"],
         }
         response = client.post(
             "/api/emails/config",
@@ -1176,6 +1185,7 @@ class TestAssignments:
                 "dates": future_dates,
                 "time": formatted_time,
                 "email_config_uid": create_email_config["email_config_uid"],
+                "email_schedule_name": "Test Schedule " + str(i),
             }
 
             # Send request
@@ -1468,6 +1478,9 @@ class TestAssignments:
                         "language": "Telugu",
                         "last_attempt_survey_status": None,
                         "last_attempt_survey_status_label": "Not Attempted",
+                        "final_survey_status": None,
+                        "final_survey_status_label": "Not Attempted",
+                        "scto_fields": None,
                         "location_uid": 4,
                         "num_attempts": 0,
                         "refusal_flag": None,
@@ -1538,6 +1551,9 @@ class TestAssignments:
                         "language": "Hindi",
                         "last_attempt_survey_status": None,
                         "last_attempt_survey_status_label": "Not Attempted",
+                        "final_survey_status": None,
+                        "final_survey_status_label": "Not Attempted",
+                        "scto_fields": None,
                         "location_uid": 4,
                         "num_attempts": 0,
                         "refusal_flag": None,
@@ -1626,7 +1642,10 @@ class TestAssignments:
 
         if expected_permission:
             assert response.status_code == 200
-            assert response.json["data"]["email_schedule"]["schedule_date"] >= formatted_date
+            assert (
+                response.json["data"]["email_schedule"]["schedule_date"]
+                >= formatted_date
+            )
             expected_put_response = {
                 "data": {
                     "assignments_count": 1,
@@ -1716,6 +1735,9 @@ class TestAssignments:
                         "language": "Telugu",
                         "last_attempt_survey_status": None,
                         "last_attempt_survey_status_label": "Not Attempted",
+                        "final_survey_status": None,
+                        "final_survey_status_label": "Not Attempted",
+                        "scto_fields": None,
                         "location_uid": 4,
                         "num_attempts": 0,
                         "refusal_flag": None,
@@ -1786,6 +1808,9 @@ class TestAssignments:
                         "language": "Hindi",
                         "last_attempt_survey_status": None,
                         "last_attempt_survey_status_label": "Not Attempted",
+                        "final_survey_status": None,
+                        "final_survey_status_label": "Not Attempted",
+                        "scto_fields": None,
                         "location_uid": 4,
                         "num_attempts": 0,
                         "refusal_flag": None,
@@ -1922,6 +1947,9 @@ class TestAssignments:
                     "language": "Telugu",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
                     "location_uid": None,
                     "num_attempts": 0,
                     "refusal_flag": None,
@@ -1966,6 +1994,9 @@ class TestAssignments:
                     "language": "Hindi",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
                     "location_uid": None,
                     "num_attempts": 0,
                     "refusal_flag": None,
@@ -2077,6 +2108,9 @@ class TestAssignments:
                     "language": "Telugu",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
                     "location_uid": 4,
                     "num_attempts": 0,
                     "refusal_flag": None,
@@ -2165,6 +2199,9 @@ class TestAssignments:
                     "language": "Hindi",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
                     "location_uid": 4,
                     "num_attempts": 0,
                     "refusal_flag": None,
@@ -2316,6 +2353,9 @@ class TestAssignments:
                     "language": "Telugu",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
                     "location_uid": 4,
                     "num_attempts": 0,
                     "refusal_flag": None,
@@ -2383,6 +2423,9 @@ class TestAssignments:
                     "language": "Hindi",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
                     "location_uid": 4,
                     "num_attempts": 0,
                     "refusal_flag": None,
@@ -2534,6 +2577,9 @@ class TestAssignments:
                     "language": "Telugu",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
                     "location_uid": 4,
                     "num_attempts": 0,
                     "refusal_flag": None,
@@ -2622,6 +2668,9 @@ class TestAssignments:
                     "language": "Hindi",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
                     "location_uid": 4,
                     "num_attempts": 0,
                     "refusal_flag": None,
@@ -2751,6 +2800,9 @@ class TestAssignments:
                     "language": "Telugu",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
                     "location_uid": 4,
                     "num_attempts": 0,
                     "refusal_flag": None,
@@ -2818,6 +2870,9 @@ class TestAssignments:
                     "language": "Hindi",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
                     "location_uid": 4,
                     "num_attempts": 0,
                     "refusal_flag": None,
@@ -3226,6 +3281,8 @@ class TestAssignments:
                             "total_assigned_targets": 1,
                             "total_completed_targets": 0,
                             "total_pending_targets": 1,
+                            "avg_num_completed_per_day": 0,
+                            "avg_num_submissions_per_day": 0,
                         }
                     },
                     "gender": "Male",
@@ -3277,6 +3334,8 @@ class TestAssignments:
                             "total_assigned_targets": 1,
                             "total_completed_targets": 1,
                             "total_pending_targets": 0,
+                            "avg_num_completed_per_day": 0,
+                            "avg_num_submissions_per_day": 0,
                         }
                     },
                     "gender": "Female",
@@ -3328,6 +3387,8 @@ class TestAssignments:
                             "total_assigned_targets": 0,
                             "total_completed_targets": 0,
                             "total_pending_targets": 0,
+                            "avg_num_completed_per_day": 0,
+                            "avg_num_submissions_per_day": 0,
                         }
                     },
                     "gender": "Male",

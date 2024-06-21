@@ -1,45 +1,41 @@
 from datetime import datetime
-from sqlalchemy import and_, Date, func, alias, DateTime
-from . import assignments_bp
-from app.utils.utils import (
-    custom_permissions_required,
-    logged_in_active_user_required,
-    validate_query_params,
-    validate_payload,
-)
+
 from flask import jsonify
 from flask_login import current_user
-from app import db
+from sqlalchemy import Date, DateTime, alias, and_, func
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import func
 from sqlalchemy.sql.expression import cast
-from .models import SurveyorAssignment
-from .validators import (
-    AssignmentsEmailValidator,
-    AssignmentsQueryParamValidator,
-    UpdateSurveyorAssignmentsValidator,
-)
-from .queries import (
-    build_surveyor_formwise_productivity_subquery,
-)
-from app.blueprints.surveys.models import Survey
-from app.blueprints.forms.models import Form
-from app.blueprints.targets.models import Target, TargetStatus
-from app.blueprints.targets.queries import (
-    build_bottom_level_locations_with_location_hierarchy_subquery,
-)
-from app.blueprints.locations.models import GeoLevel
-from app.blueprints.locations.utils import GeoLevelHierarchy
-from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
+
+from app import db
+from app.blueprints.emails.models import EmailConfig, EmailSchedule, ManualEmailTrigger
 from app.blueprints.enumerators.models import Enumerator, SurveyorForm, SurveyorLocation
 from app.blueprints.enumerators.queries import (
     build_prime_locations_with_location_hierarchy_subquery,
 )
-from app.blueprints.emails.models import (
-    ManualEmailTrigger,
-    EmailSchedule,
-    EmailConfig,
+from app.blueprints.forms.models import Form
+from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
+from app.blueprints.locations.models import GeoLevel
+from app.blueprints.locations.utils import GeoLevelHierarchy
+from app.blueprints.surveys.models import Survey
+from app.blueprints.targets.models import Target, TargetStatus
+from app.blueprints.targets.queries import (
+    build_bottom_level_locations_with_location_hierarchy_subquery,
+)
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_payload,
+    validate_query_params,
+)
+
+from . import assignments_bp
+from .models import SurveyorAssignment
+from .queries import build_surveyor_formwise_productivity_subquery
+from .validators import (
+    AssignmentsEmailValidator,
+    AssignmentsQueryParamValidator,
+    UpdateSurveyorAssignmentsValidator,
 )
 
 
@@ -168,6 +164,14 @@ def view_assignments(validated_query_params):
                             "last_attempt_survey_status_label",
                             "Not Attempted",
                         ),
+                        "final_survey_status": getattr(
+                            target_status, "final_survey_status", None
+                        ),
+                        "final_survey_status_label": getattr(
+                            target_status,
+                            "final_survey_status_label",
+                            "Not Attempted",
+                        ),
                         "target_assignable": getattr(
                             target_status,
                             "target_assignable",
@@ -179,6 +183,7 @@ def view_assignments(validated_query_params):
                         "revisit_sections": getattr(
                             target_status, "revisit_sections", None
                         ),
+                        "scto_fields": getattr(target_status, "scto_fields", None),
                     },
                     "target_locations": target_locations,
                 }
@@ -505,7 +510,11 @@ def schedule_assignments_email(validated_payload):
 
     if email_config is None:
         try:
-            email_config = EmailConfig(config_type="assignments", form_uid=form_uid)
+            email_config = EmailConfig(
+                config_type="assignments",
+                form_uid=form_uid,
+                email_source="SurveyStream Data",
+            )
             db.session.add(email_config)
             db.session.flush()
         except IntegrityError:

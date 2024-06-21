@@ -6,36 +6,49 @@ from app.utils.utils import (
     validate_payload,
 )
 from .models import db, MediaFilesConfig
+from app.blueprints.forms.models import Form
 from .routes import media_files_bp
 from .validators import (
     MediaFilesConfigQueryParamValidator,
     CreateMediaFilesConfigValidator,
     MediaFilesConfigValidator,
 )
+from sqlalchemy.exc import IntegrityError
 
 
 @media_files_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(MediaFilesConfigQueryParamValidator)
-@custom_permissions_required("READ Media Files Config", "query", "form_uid")
+@custom_permissions_required("READ Media Files Config", "query", "survey_uid")
 def get_media_files_configs(validated_query_params):
     """
-    Method to get all the media files config linked to a form
+    Method to get all the media files config linked to a survey
 
     """
 
-    form_uid = validated_query_params.form_uid.data
-    media_files_config = MediaFilesConfig.query.filter_by(form_uid=form_uid).all()
+    survey_uid = validated_query_params.survey_uid.data
+
+    result = db.session.query(
+        MediaFilesConfig,
+        Form
+    ).join(
+        Form,
+        MediaFilesConfig.form_uid == Form.form_uid,
+    ).filter(
+        Form.survey_uid == survey_uid
+    ).all()
 
     data = [
         {
-            "media_files_config_uid": config.media_files_config_uid,
-            "file_type": config.file_type,
-            "source": config.source,
-            "scto_fields": config.scto_fields,
-            "mapping_criteria": config.mapping_criteria,
+            "media_files_config_uid": media_files_config.media_files_config_uid,
+            "form_uid": form.form_uid,
+            "scto_form_id": form.scto_form_id,
+            "file_type": media_files_config.file_type,
+            "source": media_files_config.source,
+            "scto_fields": media_files_config.scto_fields,
+            "mapping_criteria": media_files_config.mapping_criteria,
         }
-        for config in media_files_config
+        for media_files_config, form in result
     ]
 
     response = jsonify(
@@ -91,6 +104,15 @@ def create_media_files_config(validated_payload):
     try:
         db.session.add(new_config)
         db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "A config already exists for this survey with the same scto_form_id, type and source"
+                    }
+                }), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -128,6 +150,16 @@ def update_media_files_config(media_files_config_uid, validated_payload):
 
     try:
         db.session.commit()
+
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(
+            {
+                "success": False,
+                "error": {
+                    "message": "A config already exists for this survey with the same scto_form_id, type and source"
+                }
+            }), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
