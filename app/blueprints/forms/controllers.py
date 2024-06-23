@@ -138,7 +138,11 @@ def create_form(validated_payload):
         return (
             jsonify(
                 {
-                    "error": "A form already exists for this survey with the same form_name or scto_form_id"
+                    "success": False,
+                    "error": {
+                        "message": "A form already exists for this survey with \
+                            the same form_name or scto_form_id"
+                    }
                 }
             ),
             400,
@@ -176,22 +180,38 @@ def update_form(form_uid, validated_payload):
     ):
         return jsonify({"error": "form_type=dq must have a dq_form_type defined"}), 422
 
-    Form.query.filter_by(form_uid=form_uid).update(
-        {
-            Form.scto_form_id: validated_payload.scto_form_id.data,
-            Form.form_name: validated_payload.form_name.data,
-            Form.tz_name: validated_payload.tz_name.data,
-            Form.scto_server_name: validated_payload.scto_server_name.data,
-            Form.encryption_key_shared: validated_payload.encryption_key_shared.data,
-            Form.server_access_role_granted: validated_payload.server_access_role_granted.data,
-            Form.server_access_allowed: validated_payload.server_access_allowed.data,
-            Form.form_type: validated_payload.form_type.data,
-            Form.dq_form_type: validated_payload.dq_form_type.data,
-            Form.parent_form_uid: validated_payload.parent_form_uid.data,
-        },
-        synchronize_session="fetch",
-    )
-    db.session.commit()
+    try:
+        Form.query.filter_by(form_uid=form_uid).update(
+            {
+                Form.scto_form_id: validated_payload.scto_form_id.data,
+                Form.form_name: validated_payload.form_name.data,
+                Form.tz_name: validated_payload.tz_name.data,
+                Form.scto_server_name: validated_payload.scto_server_name.data,
+                Form.encryption_key_shared: validated_payload.encryption_key_shared.data,
+                Form.server_access_role_granted: validated_payload.server_access_role_granted.data,
+                Form.server_access_allowed: validated_payload.server_access_allowed.data,
+                Form.form_type: validated_payload.form_type.data,
+                Form.dq_form_type: validated_payload.dq_form_type.data,
+                Form.parent_form_uid: validated_payload.parent_form_uid.data,
+            },
+            synchronize_session="fetch",
+        )
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "A form already exists for this survey with \
+                            the same form_name or scto_form_id"
+                    }
+                }
+            ),
+            400,
+        )
+
     form = Form.query.filter_by(form_uid=form_uid).first()
     return jsonify(form.to_dict()), 200
 
