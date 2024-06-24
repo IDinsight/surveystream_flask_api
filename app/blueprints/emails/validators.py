@@ -198,3 +198,18 @@ class EmailGsheetSourcePatchParamValidator(FlaskForm):
         csrf = False
 
     email_config_uid = IntegerField(validators=[DataRequired()])
+
+
+class EmailTableCatalogQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField(validators=[DataRequired()])
+
+
+class EmailTableCatalogValidator(FlaskForm):
+    survey_uid = IntegerField(validators=[DataRequired()])
+    table_name = StringField(validators=[DataRequired()])
+    column_name = StringField(validators=[DataRequired()])
+    column_type = StringField(validators=[DataRequired()])
+    column_description = StringField(validators=[DataRequired()])

@@ -329,6 +329,7 @@ class TestEmails:
                     "email_source_gsheet_tab": "Test_Success",
                     "email_source_gsheet_header_row": 1,
                     "email_source_tablename": "test_table",
+                    "table_catalog": [],
                 },
                 "success": True,
             }
@@ -592,6 +593,7 @@ class TestEmails:
                         "email_source_gsheet_tab": "Test_Success",
                         "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
+                        "table_catalog": [],
                         "form_uid": 1,
                         "report_users": [1, 2, 3],
                         "manual_triggers": [
@@ -679,6 +681,7 @@ class TestEmails:
                         "email_source_gsheet_tab": "Test_Success",
                         "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
+                        "table_catalog": [],
                     }
                 ],
                 "success": True,
@@ -717,6 +720,7 @@ class TestEmails:
             "email_source_gsheet_header_row": 1,
             "email_source_tablename": "test_table",
             "email_source_columns": ["test_column"],
+            "table_catalog": [],
         }
 
         response = client.put(
@@ -1858,4 +1862,152 @@ class TestEmails:
                 response.json,
             )
 
+            assert checkdiff == {}
+
+    @pytest.fixture()
+    def create_tablecatalog(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_email_config,
+    ):
+        """
+        Insert new survey as a setup step for the form tests
+        """
+
+        payload = {
+            "survey_uid": "1",
+            "table_name": "test_table",
+            "column_name": "test_column",
+            "column_type": "text",
+            "column_description": "test description",
+        }
+
+        response = client.post(
+            "/api/emails/tablecatalog",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        print(response.status_code)
+        assert response.status_code == 201
+
+        yield
+
+    def test_emails_get_email_table_catalog(
+        self, client, csrf_token, create_tablecatalog, user_permissions, request
+    ):
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "survey_uid": 1,
+        }
+        response = client.get(
+            f"api/emails/tablecatalog",
+            content_type="application/json",
+            query_string=payload,
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.status_code)
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "column_description": "test description",
+                        "column_name": "test_column",
+                        "column_type": "text",
+                        "survey_uid": 1,
+                        "table_name": "test_table",
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+    def test_emails_get_config_with_tablecatalog(
+        self,
+        client,
+        csrf_token,
+        create_tablecatalog,
+        user_permissions,
+        request,
+    ):
+        """
+        Test getting a specific email config, with the different permissions
+        Expect the email configs list or permissions denied
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            f"api/emails/config/1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+            expected_response = {
+                "data": {
+                    "config_type": "Assignments",
+                    "email_config_uid": 1,
+                    "form_uid": 1,
+                    "report_users": [1, 2, 3],
+                    "email_source": "SurveyStream Data",
+                    "email_source_columns": ["test_column"],
+                    "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
+                    "email_source_gsheet_tab": "Test_Success",
+                    "email_source_gsheet_header_row": 1,
+                    "email_source_tablename": "test_table",
+                    "table_catalog": [
+                        {
+                            "column_description": "test description",
+                            "column_name": "test_column",
+                            "column_type": "text",
+                            "survey_uid": 1,
+                            "table_name": "test_table",
+                        }
+                    ],
+                },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}

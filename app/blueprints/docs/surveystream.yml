@@ -7431,7 +7431,142 @@ paths:
                     description: Error message
                     example: "Google Sheet access forbidden, kindly check sheet permissions"
         
-
+  /emails/tablecatalog:
+    get:
+      tags:
+        - Emails
+      summary: Get all table catalog for a specific survey
+      parameters:
+        - name: survey_uid
+          in: query
+          description: Unique identifier for the survey
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        survey_uid:
+                          type: integer
+                          description: Unique identifier of the survey
+                          example: 123
+                        table_name:
+                          type: string
+                          description: Name of the table
+                          example: "table_name"
+                        table_description:
+                          type: string
+                          description: Description of the table
+                          example: "table_description"
+                        column_name:
+                          type: string
+                          description: Name of the column
+                          example: "column_name"
+                        column_description:
+                          type: string
+                          description: Description of the column
+                          example: "column_description"
+                        column_type:
+                          type: string
+                          description: Type of the column
+                          example: "column_type"
+    post:
+      tags:
+        - Emails
+      summary: Create a new table catalog entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: integer
+                  description: Unique identifier for the survey
+                  example: 123
+                table_name:
+                  type: string
+                  description: Name of the table
+                  example: "table_name"
+                table_description:
+                  type: string
+                  description: Description of the table
+                  example: "table_description"
+                column_name:
+                  type: string
+                  description: Name of the column
+                  example: "column_name"
+                column_description:
+                  type: string
+                  description: Description of the column
+                  example: "column_description"
+                column_type:
+                  type: string
+                  description: Type of the column
+                  example: "column_type"
+              required:
+                - survey_uid
+                - table_name
+                - table_description
+                - column_name
+                - column_description
+                - column_type
+      responses:
+        "201":
+          description: Table catalog entry created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      survey_uid:
+                        type: integer
+                        description: Unique identifier of the survey
+                        example: 123
+                      table_name:
+                        type: string
+                        description: Name of the table
+                        example: "table_name"
+                      table_description:
+                        type: string
+                        description: Description of the table
+                        example: "table_description"
+                      column_name:
+                        type: string
+                        description: Name of the column
+                        example: "column_name"
+                      column_description:
+                        type: string
+                        description: Description of the column
+                        example: "column_description"
+                      column_type:
+                        type: string
+                        description: Type of the column
+                        example: "column_type"
+                required:
+                  - success
+                  - data
+                              
   /media-files:
     post:
       tags:

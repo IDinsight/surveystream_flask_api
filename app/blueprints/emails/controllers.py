@@ -18,6 +18,7 @@ from . import emails_bp
 from .models import (
     EmailConfig,
     EmailSchedule,
+    EmailTableCatalog,
     EmailTemplate,
     EmailTemplateVariable,
     ManualEmailTrigger,
@@ -29,6 +30,8 @@ from .validators import (
     EmailGsheetSourcePatchParamValidator,
     EmailScheduleQueryParamValidator,
     EmailScheduleValidator,
+    EmailTableCatalogQueryParamValidator,
+    EmailTableCatalogValidator,
     EmailTemplateQueryParamValidator,
     EmailTemplateValidator,
     ManualEmailTriggerPatchValidator,
@@ -967,3 +970,69 @@ def update_google_sheet_headers(validated_payload):
         }
     )
     return response, 200
+
+
+@emails_bp.route("/tablecatalog", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(EmailTableCatalogQueryParamValidator)
+@custom_permissions_required("READ Emails", "query", "survey_uid")
+def get_email_tablecatalog(validated_query_params):
+    survey_uid = validated_query_params.survey_uid.data
+
+    try:
+        email_table_catalog = EmailTableCatalog.query.filter_by(
+            survey_uid=survey_uid
+        ).all()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": [column.to_dict() for column in email_table_catalog],
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@emails_bp.route("/tablecatalog", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(EmailTableCatalogValidator)
+@custom_permissions_required("WRITE Emails", "body", "survey_uid")
+def create_email_tablecatalog(validated_payload):
+
+    print(validated_payload)
+    survey_uid = validated_payload.survey_uid.data
+    table_name = validated_payload.table_name.data
+    column_name = validated_payload.column_name.data
+    column_type = validated_payload.column_type.data
+    column_description = validated_payload.column_description.data
+
+    try:
+        email_table_catalog = EmailTableCatalog(
+            survey_uid=survey_uid,
+            table_name=table_name,
+            column_name=column_name,
+            column_type=column_type,
+            column_description=column_description,
+        )
+
+        db.session.add(email_table_catalog)
+        db.session.commit()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": "Email Table Catalog created successfully",
+                    "data": email_table_catalog.to_dict(),
+                }
+            ),
+            201,
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
