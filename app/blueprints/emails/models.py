@@ -202,6 +202,7 @@ class EmailTemplate(db.Model):
         email_template_variables = EmailTemplateVariable.query.filter_by(
             email_template_uid=self.email_template_uid
         ).all()
+
         return {
             "email_template_uid": self.email_template_uid,
             "subject": self.subject,
@@ -262,4 +263,37 @@ class EmailTemplateVariable(db.Model):
             "source_table": self.source_table,
             "variable_expression": self.variable_expression,
             "table_column_mapping": self.table_column_mapping,
+        }
+
+
+class EmailTableCatalog(db.Model):
+    __tablename__ = "email_table_catalog"
+
+    form_uid = db.Column(db.Integer, db.ForeignKey(Form.form_uid), nullable=False)
+    table_name = db.Column(db.String(255), nullable=False)
+    column_name = db.Column(db.String(255), nullable=False)
+    column_type = db.Column(db.String(255), nullable=False)
+    column_description = db.Column(db.String(255), nullable=True)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("form_uid", "table_name", "column_name"),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self, form_uid, table_name, column_name, column_type, column_description
+    ):
+        self.form_uid = form_uid
+        self.table_name = table_name
+        self.column_name = column_name
+        self.column_type = column_type
+        self.column_description = column_description
+
+    def to_dict(self):
+        return {
+            "form_uid": self.form_uid,
+            "table_name": self.table_name,
+            "column_name": self.column_name,
+            "column_type": self.column_type,
+            "column_description": self.column_description,
         }
