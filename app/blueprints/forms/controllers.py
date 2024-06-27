@@ -315,8 +315,6 @@ def update_scto_question_mapping(form_uid, validated_payload):
             422,
         )
 
-    # Check if the form type is dq and if the dq_enumerator_id is provided
-
     if SCTOQuestionMapping.query.filter_by(form_uid=form_uid).first() is None:
         return jsonify({"error": "Question mapping for form not found"}), 404
 
