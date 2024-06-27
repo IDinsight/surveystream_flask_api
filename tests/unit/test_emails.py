@@ -1784,6 +1784,63 @@ class TestEmails:
             )
             assert checkdiff == {}
 
+    def test_emails_update_template_variable_list_exception(
+        self, client, csrf_token, create_email_template, user_permissions, request
+    ):
+        """
+        Test updating a specific email template for different user roles
+        Payload has an error on variable mapping with missing variable name
+        Expect errors on email template update
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "subject": "Test Update Email",
+            "language": "Hindi",
+            "content": "Test Content",
+            "email_config_uid": 1,
+            "variable_list": [
+                {
+                    "variable_name": "test_variable",
+                    "variable_type": "string",
+                    "source_table": "test_table",
+                },
+                {
+                    "variable_type": "table",
+                    "source_table": "test_table",
+                    "table_column_mapping": {
+                        "column_1": "test_column",
+                        "column2": "test_column2",
+                    },
+                },
+            ],
+        }
+        response = client.put(
+            f"/api/emails/template/{create_email_template['email_template_uid']}",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 422
+
+        excepted_response = {
+            "message": {
+                "variable_list": [
+                    {},
+                    {"variable_name": ["This field is required."]},
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(excepted_response, response.json)
+
+        assert checkdiff == {}
+
     def test_emails_update_template_exception(
         self, client, csrf_token, create_email_template, request
     ):
