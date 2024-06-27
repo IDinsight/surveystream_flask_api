@@ -51,12 +51,12 @@ def get_forms(validated_query_params):
 
     Parent = aliased(Form)
 
-    result = db.session.query(
-        Form, Parent
-    ).outerjoin(
-        Parent,
-        Form.parent_form_uid == Parent.form_uid
-    ).filter(*filters).all()
+    result = (
+        db.session.query(Form, Parent)
+        .outerjoin(Parent, Form.parent_form_uid == Parent.form_uid)
+        .filter(*filters)
+        .all()
+    )
 
     data = []
     for form, parent in result:
@@ -64,8 +64,8 @@ def get_forms(validated_query_params):
             parent_scto_form_id = parent.scto_form_id
         else:
             parent_scto_form_id = None
-        
-        data.append({ **form.to_dict(), **{"parent_scto_form_id": parent_scto_form_id } })
+
+        data.append({**form.to_dict(), **{"parent_scto_form_id": parent_scto_form_id}})
 
     response = {"success": True, "data": data}
 
@@ -142,7 +142,7 @@ def create_form(validated_payload):
                     "error": {
                         "message": "A form already exists for this survey with \
                             the same form_name or scto_form_id"
-                    }
+                    },
                 }
             ),
             400,
@@ -206,7 +206,7 @@ def update_form(form_uid, validated_payload):
                     "error": {
                         "message": "A form already exists for this survey with \
                             the same form_name or scto_form_id"
-                    }
+                    },
                 }
             ),
             400,
@@ -249,12 +249,21 @@ def create_scto_question_mapping(form_uid, validated_payload):
     form = Form.query.filter_by(form_uid=form_uid).first()
     if form is None:
         return jsonify({"error": "Form not found"}), 404
+
+    # Check if the form type is dq and if the dq_enumerator_id is provided
+    if form.form_type == "dq" and validated_payload.dq_enumerator_id.data is None:
+        return (
+            jsonify({"error": "form_type=dq must have a mapping for dq_enumerator_id"}),
+            422,
+        )
+
     scto_question_mapping = SCTOQuestionMapping(
         form_uid=form_uid,
         survey_status=validated_payload.survey_status.data,
         revisit_section=validated_payload.revisit_section.data,
         target_id=validated_payload.target_id.data,
         enumerator_id=validated_payload.enumerator_id.data,
+        dq_enumerator_id=validated_payload.dq_enumerator_id.data,
         locations=payload["locations"] if "locations" in payload else None,
     )
     try:
@@ -285,6 +294,19 @@ def update_scto_question_mapping(form_uid, validated_payload):
     """
     payload = request.get_json()
 
+    form = Form.query.filter_by(form_uid=form_uid).first()
+    if form is None:
+        return jsonify({"error": "Form not found"}), 404
+
+    # Check if the form type is dq and if the dq_enumerator_id is provided
+    if form.form_type == "dq" and validated_payload.dq_enumerator_id.data is None:
+        return (
+            jsonify({"error": "form_type=dq must have a mapping for dq_enumerator_id"}),
+            422,
+        )
+
+    # Check if the form type is dq and if the dq_enumerator_id is provided
+
     if SCTOQuestionMapping.query.filter_by(form_uid=form_uid).first() is None:
         return jsonify({"error": "Question mapping for form not found"}), 404
 
@@ -295,6 +317,7 @@ def update_scto_question_mapping(form_uid, validated_payload):
                 SCTOQuestionMapping.revisit_section: validated_payload.revisit_section.data,
                 SCTOQuestionMapping.target_id: validated_payload.target_id.data,
                 SCTOQuestionMapping.enumerator_id: validated_payload.enumerator_id.data,
+                SCTOQuestionMapping.dq_enumerator_id: validated_payload.dq_enumerator_id.data,
                 SCTOQuestionMapping.locations: (
                     payload["locations"] if "locations" in payload else None
                 ),
@@ -632,27 +655,34 @@ def get_scto_form_definition(form_uid):
         response = {"success": True, "data": None}
         return jsonify(response), 200
     else:
-
         question_dict_arr = []
-        question_names_arr = [] 
+        question_names_arr = []
         for scto_question in scto_questions:
             question_dict = scto_question.to_dict()
             question_name = question_dict["question_name"]
             question_names_arr.append(question_name)
             question_dict_arr.append(question_dict)
 
-        metadata_fields = ["instanceID", "formdef_version", "starttime", "endtime", "SubmissionDate"]
+        metadata_fields = [
+            "instanceID",
+            "formdef_version",
+            "starttime",
+            "endtime",
+            "SubmissionDate",
+        ]
         for field in metadata_fields:
             if field not in question_names_arr:
-                question_dict_arr.append({
-                    "question_uid": field, # these won't be linked to a proper uid in the DB
-                    "form_uid": form_uid,
-                    "question_name": field,
-                    "question_type": "text",
-                    "list_uid": None,
-                    "is_repeat_group": False,
-                })
-    
+                question_dict_arr.append(
+                    {
+                        "question_uid": field,  # these won't be linked to a proper uid in the DB
+                        "form_uid": form_uid,
+                        "question_name": field,
+                        "question_type": "text",
+                        "list_uid": None,
+                        "is_repeat_group": False,
+                    }
+                )
+
         # Form definition (partial)
         response = {
             "success": True,
