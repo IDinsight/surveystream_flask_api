@@ -661,3 +661,53 @@ class TestForms:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_create_dq_scto_question_mapping_without_dq_enum_id(
+        self, client, csrf_token, login_test_user, create_dq_form
+    ):
+        """
+        Test that create SCTO question mapping returns error if no dq enumerator id is provided
+        """
+
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 2,
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/2/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 422
+    
+    def test_update_dq_scto_question_mapping_without_dq_enum_id(
+        self, client, csrf_token, login_test_user, create_dq_form
+    ):
+        """
+        Test that update SCTO question mapping returns error if no dq enumerator id is provided
+        """
+
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 2,
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.put(
+            "/api/forms/2/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 422
