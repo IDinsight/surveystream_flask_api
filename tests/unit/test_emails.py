@@ -624,6 +624,7 @@ class TestEmails:
                                 "email_template_uid": 1,
                                 "language": "english",
                                 "subject": "Test Assignments Email",
+                                "variable_list": [],
                             }
                         ],
                     }
@@ -1575,6 +1576,7 @@ class TestEmails:
                     "email_template_uid": 1,
                     "language": "english",
                     "subject": "Test Assignments Email",
+                    "variable_list": [],
                 },
                 "success": True,
             }
@@ -1653,6 +1655,7 @@ class TestEmails:
                         "email_template_uid": 1,
                         "language": "english",
                         "subject": "Test Assignments Email",
+                        "variable_list": [],
                     }
                 ],
                 "success": True,
@@ -1695,6 +1698,23 @@ class TestEmails:
             "language": "Hindi",
             "content": "Test Content",
             "email_config_uid": 1,
+            "variable_list": [
+                {
+                    "variable_name": "test_variable",
+                    "variable_type": "string",
+                    "variable_expression": "UPPERCASE(test_variable)",
+                    "source_table": "test_table",
+                },
+                {
+                    "variable_name": "test_variable2",
+                    "variable_type": "table",
+                    "source_table": "test_table",
+                    "table_column_mapping": {
+                        "column_1": "test_column",
+                        "column2": "test_column2",
+                    },
+                },
+            ],
         }
         response = client.put(
             f"/api/emails/template/{create_email_template['email_template_uid']}",
@@ -1702,8 +1722,6 @@ class TestEmails:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-
-        print(response.json)
 
         if expected_permission:
 
@@ -1716,13 +1734,41 @@ class TestEmails:
                 headers={"X-CSRF-Token": csrf_token},
             )
 
+            excepted_response = {
+                "email_template_uid": 1,
+                "subject": "Test Update Email",
+                "language": "Hindi",
+                "content": "Test Content",
+                "email_config_uid": 1,
+                "variable_list": [
+                    {
+                        "variable_name": "test_variable",
+                        "variable_type": "string",
+                        "variable_expression": "UPPERCASE(test_variable)",
+                        "source_table": "test_table",
+                        "table_column_mapping": None,
+                    },
+                    {
+                        "variable_name": "test_variable2",
+                        "variable_type": "table",
+                        "source_table": "test_table",
+                        "table_column_mapping": {
+                            "column_1": "test_column",
+                            "column2": "test_column2",
+                        },
+                        "variable_expression": None,
+                    },
+                ],
+            }
+
             checkdiff = jsondiff.diff(
                 {
-                    "data": {**payload, "email_template_uid": email_template_uid},
+                    "data": excepted_response,
                     "success": True,
                 },
                 get_response.json,
             )
+
             assert checkdiff == {}
         else:
             expected_response = {
@@ -1737,6 +1783,63 @@ class TestEmails:
                 response.json,
             )
             assert checkdiff == {}
+
+    def test_emails_update_template_variable_list_exception(
+        self, client, csrf_token, create_email_template, user_permissions, request
+    ):
+        """
+        Test updating a specific email template for different user roles
+        Payload has an error on variable mapping with missing variable name
+        Expect errors on email template update
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "subject": "Test Update Email",
+            "language": "Hindi",
+            "content": "Test Content",
+            "email_config_uid": 1,
+            "variable_list": [
+                {
+                    "variable_name": "test_variable",
+                    "variable_type": "string",
+                    "source_table": "test_table",
+                },
+                {
+                    "variable_type": "table",
+                    "source_table": "test_table",
+                    "table_column_mapping": {
+                        "column_1": "test_column",
+                        "column2": "test_column2",
+                    },
+                },
+            ],
+        }
+        response = client.put(
+            f"/api/emails/template/{create_email_template['email_template_uid']}",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 422
+
+        excepted_response = {
+            "message": {
+                "variable_list": [
+                    {},
+                    {"variable_name": ["This field is required."]},
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(excepted_response, response.json)
+
+        assert checkdiff == {}
 
     def test_emails_update_template_exception(
         self, client, csrf_token, create_email_template, request
@@ -1758,8 +1861,6 @@ class TestEmails:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-
-        print(response.json)
 
         assert response.status_code == 500
 

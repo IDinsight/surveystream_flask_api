@@ -1,4 +1,6 @@
-from sqlalchemy import TIME, CheckConstraint, Enum
+from sqlalchemy import TIME, CheckConstraint
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.mutable import MutableDict
 
 from app import db
 from app.blueprints.forms.models import Form
@@ -197,10 +199,67 @@ class EmailTemplate(db.Model):
         self.email_config_uid = email_config_uid
 
     def to_dict(self):
+        email_template_variables = EmailTemplateVariable.query.filter_by(
+            email_template_uid=self.email_template_uid
+        ).all()
         return {
             "email_template_uid": self.email_template_uid,
             "subject": self.subject,
             "language": self.language,
             "content": self.content,
             "email_config_uid": self.email_config_uid,
+            "variable_list": [
+                variable.to_dict() for variable in email_template_variables
+            ],
+        }
+
+
+class EmailTemplateVariable(db.Model):
+    __tablename__ = "email_template_variables"
+
+    email_template_uid = db.Column(
+        db.Integer(), db.ForeignKey(EmailTemplate.email_template_uid), nullable=False
+    )
+
+    variable_name = db.Column(db.String(100), nullable=False)
+    variable_type = db.Column(
+        db.String(32),
+        CheckConstraint(
+            "variable_type IN ('string', 'table')",
+            name="ck_email_template_variables_variable_type",
+        ),
+        nullable=False,
+    )
+    source_table = db.Column(db.String(255), nullable=True)
+    variable_expression = db.Column(db.String(255), nullable=True)
+    table_column_mapping = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("email_template_uid", "variable_name"),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self,
+        email_template_uid,
+        variable_name,
+        variable_type,
+        source_table,
+        variable_expression,
+        table_column_mapping,
+    ):
+        self.email_template_uid = email_template_uid
+        self.variable_name = variable_name
+        self.variable_type = variable_type
+        self.source_table = source_table
+        self.variable_expression = variable_expression
+        self.table_column_mapping = table_column_mapping
+
+    def to_dict(self):
+        return {
+            "variable_name": self.variable_name,
+            "variable_type": self.variable_type,
+            "source_table": self.source_table,
+            "variable_expression": self.variable_expression,
+            "table_column_mapping": self.table_column_mapping,
         }

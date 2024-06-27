@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import FieldList, FormField, IntegerField, StringField, BooleanField
-from wtforms.validators import DataRequired, AnyOf, Optional
+from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
+from wtforms.validators import AnyOf, DataRequired, Optional
 
 
 class CustomColumnsValidator(FlaskForm):
@@ -75,9 +75,11 @@ class UpdateTargetsColumnConfig(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     column_config = FieldList(FormField(ColumnConfigValidator))
 
+
 class SctoFieldsValidator(FlaskForm):
     class Meta:
         csrf = False
+
 
 class TargetStatusValidator(FlaskForm):
     class Meta:
@@ -96,8 +98,7 @@ class TargetStatusValidator(FlaskForm):
     revisit_sections = FieldList(StringField())
     scto_fields = FormField(SctoFieldsValidator)
 
+
 class UpdateTargetStatus(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     target_status = FieldList(FormField(TargetStatusValidator))
-
-
