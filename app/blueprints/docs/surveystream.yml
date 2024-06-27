@@ -2145,6 +2145,9 @@ paths:
                   enumerator_id:
                     type: string
                     description: The form's enumerator ID
+                  dq_enumerator_id:
+                    type: string
+                    description: The enumerator ID for the enumerator being checked in the DQ form
                   target_id:
                     type: string
                     description: The form's target ID
@@ -2199,6 +2202,9 @@ paths:
                 enumerator_id:
                   type: string
                   description: The form's enumerator ID
+                dq_enumerator_id:
+                  type: string
+                  description: The enumerator ID for the enumerator being checked in the DQ form
                 target_id:
                   type: string
                   description: The form's target ID
@@ -2239,6 +2245,22 @@ paths:
                     description: >-
                       Error message indicating that the specified form ID was
                       not found.
+        "422":
+          description: DQ enumerator ID is required for DQ forms
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: >-
+                      Error message indicating that the DQ enumerator ID is
+                      required for DQ forms.
+
     put:
       summary: Update an existing SurveyCTO question mapping
       tags:
@@ -2270,6 +2292,9 @@ paths:
                 enumerator_id:
                   type: string
                   description: The form's enumerator ID
+                dq_enumerator_id:
+                  type: string
+                  description: The enumerator ID for the enumerator being checked in the DQ form
                 target_id:
                   type: string
                   description: The form's target ID
@@ -2304,6 +2329,9 @@ paths:
                   enumerator_id:
                     type: string
                     description: The form's enumerator ID
+                  dq_enumerator_id:
+                    type: string
+                    description: The enumerator ID for the enumerator being checked in the DQ form
                   target_id:
                     type: string
                     description: The form's target ID
@@ -2327,6 +2355,21 @@ paths:
                     description: >-
                       Error message indicating that the specified form ID was
                       not found.
+        "422":
+          description: DQ enumerator ID is required for DQ forms
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: >-
+                      Error message indicating that the DQ enumerator ID is
+                      required for DQ forms.
     delete:
       summary: Delete an existing SurveyCTO question mapping
       tags:
