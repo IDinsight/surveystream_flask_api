@@ -253,7 +253,12 @@ def create_scto_question_mapping(form_uid, validated_payload):
     # Check if the form type is dq and if the dq_enumerator_id is provided
     if form.form_type == "dq" and validated_payload.dq_enumerator_id.data is None:
         return (
-            jsonify({"error": "form_type=dq must have a mapping for dq_enumerator_id"}),
+            jsonify(
+                {
+                    "success": False,
+                    "error": "form_type=dq must have a mapping for dq_enumerator_id",
+                }
+            ),
             422,
         )
 
@@ -301,7 +306,12 @@ def update_scto_question_mapping(form_uid, validated_payload):
     # Check if the form type is dq and if the dq_enumerator_id is provided
     if form.form_type == "dq" and validated_payload.dq_enumerator_id.data is None:
         return (
-            jsonify({"error": "form_type=dq must have a mapping for dq_enumerator_id"}),
+            jsonify(
+                {
+                    "success": False,
+                    "error": "form_type=dq must have a mapping for dq_enumerator_id",
+                }
+            ),
             422,
         )
 
