@@ -329,6 +329,7 @@ class TestEmails:
                     "email_source_gsheet_tab": "Test_Success",
                     "email_source_gsheet_header_row": 1,
                     "email_source_tablename": "test_table",
+                    "table_catalog": [],
                 },
                 "success": True,
             }
@@ -592,6 +593,7 @@ class TestEmails:
                         "email_source_gsheet_tab": "Test_Success",
                         "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
+                        "table_catalog": [],
                         "form_uid": 1,
                         "report_users": [1, 2, 3],
                         "manual_triggers": [
@@ -679,6 +681,7 @@ class TestEmails:
                         "email_source_gsheet_tab": "Test_Success",
                         "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
+                        "table_catalog": [],
                     }
                 ],
                 "success": True,
@@ -717,6 +720,7 @@ class TestEmails:
             "email_source_gsheet_header_row": 1,
             "email_source_tablename": "test_table",
             "email_source_columns": ["test_column"],
+            "table_catalog": [],
         }
 
         response = client.put(
@@ -1915,4 +1919,425 @@ class TestEmails:
                 response.json,
             )
 
+            assert checkdiff == {}
+
+    def test_email_load_table_catalog(
+        self, client, csrf_token, create_email_config, user_permissions, request
+    ):
+        """
+        Test loading table catalog for different user roles
+        Expect the table catalog to be loaded
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "survey_uid": "1",
+            "table_catalog": [
+                {
+                    "table_name": "test_table",
+                    "column_name": "test_column",
+                    "column_type": "text",
+                    "column_description": "test description",
+                },
+                {
+                    "table_name": "test_table",
+                    "column_name": "test_column2",
+                    "column_type": "text",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/emails/tablecatalog",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    @pytest.fixture()
+    def create_tablecatalog(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_email_config,
+    ):
+        """
+        Insert new survey as a setup step for the form tests
+        """
+
+        payload = {
+            "survey_uid": "1",
+            "table_catalog": [
+                {
+                    "table_name": "test_table",
+                    "column_name": "test_column",
+                    "column_type": "text",
+                    "column_description": "test description",
+                },
+                {
+                    "table_name": "test_table",
+                    "column_name": "test_column2",
+                    "column_type": "text",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/emails/tablecatalog",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        print(response.status_code)
+        assert response.status_code == 200
+
+        yield
+
+    def test_emails_get_email_table_catalog(
+        self, client, csrf_token, create_tablecatalog, user_permissions, request
+    ):
+        """
+        Test to get table catalog for different user roles
+        Expect the table catalog information to be correctly fetched
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "survey_uid": 1,
+        }
+        response = client.get(
+            f"api/emails/tablecatalog",
+            content_type="application/json",
+            query_string=payload,
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.status_code)
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "survey_uid": 1,
+                        "table_name": "test_table",
+                        "column_name": "test_column",
+                        "column_type": "text",
+                        "column_description": "test description",
+                    },
+                    {
+                        "survey_uid": 1,
+                        "table_name": "test_table",
+                        "column_name": "test_column2",
+                        "column_type": "text",
+                        "column_description": None,
+                    },
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+    def test_emails_get_config_with_tablecatalog(
+        self,
+        client,
+        csrf_token,
+        create_tablecatalog,
+        user_permissions,
+        request,
+    ):
+        """
+        Test getting a specific email config, with the different permissions
+        Expect the email configs list or permissions denied
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            f"api/emails/config/1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+            expected_response = {
+                "data": {
+                    "config_type": "Assignments",
+                    "email_config_uid": 1,
+                    "form_uid": 1,
+                    "report_users": [1, 2, 3],
+                    "email_source": "SurveyStream Data",
+                    "email_source_columns": ["test_column"],
+                    "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
+                    "email_source_gsheet_tab": "Test_Success",
+                    "email_source_gsheet_header_row": 1,
+                    "email_source_tablename": "test_table",
+                    "table_catalog": [
+                        {
+                            "survey_uid": 1,
+                            "table_name": "test_table",
+                            "column_name": "test_column",
+                            "column_type": "text",
+                            "column_description": "test description",
+                        },
+                        {
+                            "survey_uid": 1,
+                            "table_name": "test_table",
+                            "column_name": "test_column2",
+                            "column_type": "text",
+                            "column_description": None,
+                        },
+                    ],
+                },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_email_update_table_catalog(
+        self, client, csrf_token, create_tablecatalog, user_permissions, request
+    ):
+        """
+        Test loading table catalog for different user roles
+        Expect the table catalog to be loaded
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "survey_uid": "1",
+            "table_catalog": [
+                {
+                    "table_name": "test_table",
+                    "column_name": "test_column",
+                    "column_type": "text",
+                    "column_description": "test description changed",
+                },
+                {
+                    "table_name": "test_table",
+                    "column_name": "test_column2",
+                    "column_type": "integer",  # change data type
+                },
+                {
+                    "table_name": "test_table",
+                    "column_name": "test_column3",
+                    "column_type": "text",  # add new column
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/emails/tablecatalog",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            # Check if table catalog was updated
+            response = client.get(
+                f"api/emails/tablecatalog?survey_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            print(response.status_code)
+            print(response.json)
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "survey_uid": 1,
+                        "table_name": "test_table",
+                        "column_name": "test_column",
+                        "column_type": "text",
+                        "column_description": "test description changed",
+                    },
+                    {
+                        "survey_uid": 1,
+                        "table_name": "test_table",
+                        "column_name": "test_column2",
+                        "column_type": "integer",
+                        "column_description": None,
+                    },
+                    {
+                        "survey_uid": 1,
+                        "table_name": "test_table",
+                        "column_name": "test_column3",
+                        "column_type": "text",
+                        "column_description": None,
+                    },
+                ],
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_email_update_table_catalog_with_exception(
+        self, client, csrf_token, create_tablecatalog, user_permissions, request
+    ):
+        """
+        Test loading table catalog for different user roles
+        Expect the table catalog to be not loaded since required columns missing
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "survey_uid": "1",
+            "table_catalog": [
+                {
+                    "table_name": "test_table",
+                    "column_name": "test_column",
+                    "column_type": "text",
+                    "column_description": "test description changed",
+                },
+                {
+                    "table_name": "test_table",
+                    "column_name": "test_column2",
+                    "column_type": "integer",  # change data type
+                },
+                {
+                    "table_name": "test_table",
+                    # missing column name and type
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/emails/tablecatalog",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "message": {
+                "table_catalog": [
+                    {},
+                    {},
+                    {
+                        "column_name": ["This field is required."],
+                        "column_type": ["This field is required."],
+                    },
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # Check if table catalog was updated
+        get_response = client.get(
+            f"api/emails/tablecatalog?survey_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        if expected_permission:
+
+            print(get_response.status_code)
+            print(get_response.json)
+            assert get_response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "survey_uid": 1,
+                        "table_name": "test_table",
+                        "column_name": "test_column",
+                        "column_type": "text",
+                        "column_description": "test description",
+                    },
+                    {
+                        "survey_uid": 1,
+                        "table_name": "test_table",
+                        "column_name": "test_column2",
+                        "column_type": "text",
+                        "column_description": None,
+                    },
+                ],
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, get_response.json)
+            assert checkdiff == {}
+        else:
+            assert get_response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, get_response.json)
             assert checkdiff == {}
