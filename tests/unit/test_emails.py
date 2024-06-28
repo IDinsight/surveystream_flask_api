@@ -2018,6 +2018,10 @@ class TestEmails:
     def test_emails_get_email_table_catalog(
         self, client, csrf_token, create_tablecatalog, user_permissions, request
     ):
+        """
+        Test to get table catalog for different user roles
+        Expect the table catalog information to be correctly fetched
+        """
 
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
