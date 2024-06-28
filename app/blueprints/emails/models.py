@@ -228,7 +228,7 @@ class EmailTemplateVariable(db.Model):
 
     variable_name = db.Column(db.String(100), nullable=False)
     variable_type = db.Column(
-        db.String(32),
+        db.String(8),
         CheckConstraint(
             "variable_type IN ('string', 'table')",
             name="ck_email_template_variables_variable_type",
