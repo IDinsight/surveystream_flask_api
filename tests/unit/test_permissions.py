@@ -133,6 +133,16 @@ class TestPermissions:
                 "name": "WRITE Target Status Mapping",
                 "permission_uid": 21,
             },
+            {
+                "description": "Read DQ Forms permission",
+                "name": "READ DQ Forms",
+                "permission_uid": 22,
+            },
+            {
+                "description": "Write DQ Forms permission",
+                "name": "WRITE DQ Forms",
+                "permission_uid": 23,
+            },
         ]
 
         assert jsondiff.diff(expected_data, response_data) == {}
@@ -249,6 +259,16 @@ class TestPermissions:
                 "description": "Write Target Status Mapping permission",
                 "name": "WRITE Target Status Mapping",
                 "permission_uid": 21,
+            },
+            {
+                "description": "Read DQ Forms permission",
+                "name": "READ DQ Forms",
+                "permission_uid": 22,
+            },
+            {
+                "description": "Write DQ Forms permission",
+                "name": "WRITE DQ Forms",
+                "permission_uid": 23,
             },
             {
                 "permission_uid": create_permission["permission_uid"],
