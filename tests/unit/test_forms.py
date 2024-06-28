@@ -123,6 +123,7 @@ class TestForms:
                     "form_type": "parent",
                     "parent_form_uid": None,
                     "dq_form_type": None,
+                    "parent_scto_form_id": None,
                 }
             ],
             "success": True,
@@ -154,6 +155,7 @@ class TestForms:
                     "form_type": "parent",
                     "parent_form_uid": None,
                     "dq_form_type": None,
+                    "parent_scto_form_id": None,
                 }
             ],
             "success": True,
@@ -227,6 +229,7 @@ class TestForms:
                 "form_type": "parent",
                 "parent_form_uid": None,
                 "dq_form_type": None,
+                "parent_scto_form_id": None,
             },
             "success": True,
         }
@@ -306,6 +309,7 @@ class TestForms:
                 "revisit_section": "test_revisit_section",
                 "target_id": "test_target_id",
                 "enumerator_id": "test_enumerator_id",
+                "dq_enumerator_id": None,
                 "locations": {
                     "location_1": "test_location_1",
                 },
@@ -373,6 +377,7 @@ class TestForms:
                 "revisit_section": "test_revisit_section_updated",
                 "target_id": "test_target_id_updated",
                 "enumerator_id": "test_enumerator_id_updated",
+                "dq_enumerator_id": None,
                 "locations": {
                     "location_1": "test_location_1_updated",
                     "location_2": "test_location_2_updated",
@@ -600,6 +605,7 @@ class TestForms:
                     "form_type": "dq",
                     "parent_form_uid": 1,
                     "dq_form_type": "audioaudit",
+                    "parent_scto_form_id": "test_scto_input_output",
                 }
             ],
             "success": True,
@@ -607,3 +613,101 @@ class TestForms:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_create_dq_scto_question_mapping(
+        self, client, csrf_token, login_test_user, create_dq_form
+    ):
+        """
+        Test that the SCTO question mapping is inserted correctly for a DQ form
+        """
+
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 2,
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "dq_enumerator_id": "test_dq_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/2/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        # Test the SCTO question mapping was inserted correctly
+        response = client.get("/api/forms/2/scto-question-mapping")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "form_uid": 2,
+                "survey_status": None,
+                "revisit_section": None,
+                "target_id": "test_target_id",
+                "enumerator_id": "test_enumerator_id",
+                "dq_enumerator_id": "test_dq_enumerator_id",
+                "locations": {
+                    "location_1": "test_location_1",
+                },
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_create_dq_scto_question_mapping_without_dq_enum_id(
+        self, client, csrf_token, login_test_user, create_dq_form
+    ):
+        """
+        Test that create SCTO question mapping returns error if no dq enumerator id is provided
+        """
+
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 2,
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/2/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 422
+    
+    def test_update_dq_scto_question_mapping_without_dq_enum_id(
+        self, client, csrf_token, login_test_user, create_dq_form
+    ):
+        """
+        Test that update SCTO question mapping returns error if no dq enumerator id is provided
+        """
+
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 2,
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.put(
+            "/api/forms/2/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 422

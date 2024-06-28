@@ -18,7 +18,6 @@ from . import emails_bp
 from .models import (
     EmailConfig,
     EmailSchedule,
-    EmailTableCatalog,
     EmailTemplate,
     EmailTemplateVariable,
     ManualEmailTrigger,
