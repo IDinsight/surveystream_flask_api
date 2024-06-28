@@ -40,10 +40,10 @@ class TestForms:
     def user_with_dq_forms_permissions(self, client, test_user_credentials):
         # Assign new roles and permissions
         new_role = create_new_survey_role_with_permissions(
-            # 23 - WRITE DQ forms
+            # 23 - WRITE Data Quality Forms
             client,
             test_user_credentials,
-            "DQ Forms Role",
+            "Data Quality Forms Role",
             [23],
             1,
         )
@@ -754,7 +754,7 @@ class TestForms:
 
             expected_response = {
                 "success": False,
-                "error": f"User does not have the required permission: WRITE DQ Forms",
+                "error": f"User does not have the required permission: WRITE Data Quality Forms",
             }
             print(response.json)
             print(expected_response)
@@ -825,7 +825,7 @@ class TestForms:
 
             expected_response = {
                 "success": False,
-                "error": f"User does not have the required permission: WRITE DQ Forms",
+                "error": f"User does not have the required permission: WRITE Data Quality Forms",
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}

@@ -134,13 +134,13 @@ class TestPermissions:
                 "permission_uid": 21,
             },
             {
-                "description": "Read DQ Forms permission",
-                "name": "READ DQ Forms",
+                "description": "Read Data Quality Forms permission",
+                "name": "READ Data Quality Forms",
                 "permission_uid": 22,
             },
             {
-                "description": "Write DQ Forms permission",
-                "name": "WRITE DQ Forms",
+                "description": "Write Data Quality Forms permission",
+                "name": "WRITE Data Quality Forms",
                 "permission_uid": 23,
             },
         ]
@@ -261,13 +261,13 @@ class TestPermissions:
                 "permission_uid": 21,
             },
             {
-                "description": "Read DQ Forms permission",
-                "name": "READ DQ Forms",
+                "description": "Read Data Quality Forms permission",
+                "name": "READ Data Quality Forms",
                 "permission_uid": 22,
             },
             {
-                "description": "Write DQ Forms permission",
-                "name": "WRITE DQ Forms",
+                "description": "Write Data Quality Forms permission",
+                "name": "WRITE Data Quality Forms",
                 "permission_uid": 23,
             },
             {

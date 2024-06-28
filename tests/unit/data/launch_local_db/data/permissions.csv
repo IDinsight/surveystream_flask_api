@@ -20,5 +20,5 @@ READ Emails,Read Emails permission,true
 WRITE Emails,Write Emails permission,true
 READ Target Status Mapping,Read Target Status Mapping permission,true
 WRITE Target Status Mapping,Write Target Status Mapping permission,true
-READ DQ Forms,Read DQ Forms permission,true
-WRITE DQ Forms,Write DQ Forms permission,true
+READ Data Quality Forms,Read Data Quality Forms permission,true
+WRITE Data Quality Forms,Write Data Quality Forms permission,true

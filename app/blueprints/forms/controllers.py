@@ -34,7 +34,7 @@ from sqlalchemy.orm import aliased
 @forms_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(GetFormQueryParamValidator)
-@custom_permissions_required(["READ DQ Forms"], "query", "survey_uid")
+@custom_permissions_required(["READ Data Quality Forms"], "query", "survey_uid")
 def get_forms(validated_query_params):
     """
     Return details for a user's forms
@@ -76,7 +76,7 @@ def get_forms(validated_query_params):
 
 @forms_bp.route("/<int:form_uid>", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required(["READ DQ Forms"], "path", "form_uid")
+@custom_permissions_required(["READ Data Quality Forms"], "path", "form_uid")
 def get_form(form_uid):
     """
     Return details for a form
@@ -101,7 +101,7 @@ def get_form(form_uid):
 @forms_bp.route("", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(CreateFormValidator)
-@custom_permissions_required(["WRITE DQ Forms"], "body", "survey_uid")
+@custom_permissions_required(["WRITE Data Quality Forms"], "body", "survey_uid")
 def create_form(validated_payload):
     """
     Create a form
@@ -165,7 +165,7 @@ def create_form(validated_payload):
 @forms_bp.route("/<int:form_uid>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateFormValidator)
-@custom_permissions_required(["WRITE DQ Forms"], "path", "form_uid")
+@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
 def update_form(form_uid, validated_payload):
     """
     Update a form
@@ -223,7 +223,7 @@ def update_form(form_uid, validated_payload):
 
 @forms_bp.route("/<int:form_uid>", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required(["WRITE DQ Forms"], "path", "form_uid")
+@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
 def delete_form(form_uid):
     """
     Delete a form
@@ -243,7 +243,7 @@ def delete_form(form_uid):
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(CreateSCTOQuestionMappingValidator)
-@custom_permissions_required(["WRITE DQ Forms"], "path", "form_uid")
+@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
 def create_scto_question_mapping(form_uid, validated_payload):
     """
     Create a SurveyCTO question mapping for a form
@@ -300,7 +300,7 @@ def create_scto_question_mapping(form_uid, validated_payload):
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateSCTOQuestionMappingValidator)
-@custom_permissions_required(["WRITE DQ Forms"], "path", "form_uid")
+@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
 def update_scto_question_mapping(form_uid, validated_payload):
     """
     Update the SCTO question mapping for a form
@@ -350,7 +350,7 @@ def update_scto_question_mapping(form_uid, validated_payload):
 
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required(["READ DQ Forms"], "path", "form_uid")
+@custom_permissions_required(["READ Data Quality Forms"], "path", "form_uid")
 def get_scto_question_mapping(form_uid):
     """
     Get the SCTO question mapping for a form
@@ -369,7 +369,7 @@ def get_scto_question_mapping(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required(["WRITE DQ Forms"], "path", "form_uid")
+@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
 def delete_scto_question_mapping(form_uid):
     """
     Delete the question mapping for a form
@@ -390,7 +390,7 @@ def delete_scto_question_mapping(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition/refresh", methods=["POST"])
 @logged_in_active_user_required
-@custom_permissions_required(["WRITE DQ Forms"], "path", "form_uid")
+@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
 def ingest_scto_form_definition(form_uid):
     """
     Ingest form definition from the SurveyCTO server
@@ -611,7 +611,7 @@ def ingest_scto_form_definition(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required(["WRITE DQ Forms"], "path", "form_uid")
+@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
 def delete_scto_form_definition(form_uid):
     """
     Delete the SuveyCTO form definition for a form
@@ -634,7 +634,7 @@ def delete_scto_form_definition(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required(["READ DQ Forms"], "path", "form_uid")
+@custom_permissions_required(["READ Data Quality Forms"], "path", "form_uid")
 def get_scto_form_definition(form_uid):
     """
     Get SurveyCTO form definition questions from the database table
