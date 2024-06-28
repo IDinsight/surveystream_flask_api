@@ -207,9 +207,13 @@ class EmailTableCatalogQueryParamValidator(FlaskForm):
     survey_uid = IntegerField(validators=[DataRequired()])
 
 
-class EmailTableCatalogValidator(FlaskForm):
-    survey_uid = IntegerField(validators=[DataRequired()])
+class EmailTableCatalogJSONValidator(FlaskForm):
     table_name = StringField(validators=[DataRequired()])
     column_name = StringField(validators=[DataRequired()])
     column_type = StringField(validators=[DataRequired()])
-    column_description = StringField(validators=[DataRequired()])
+    column_description = StringField(default=None)
+
+
+class EmailTableCatalogValidator(FlaskForm):
+    survey_uid = IntegerField(validators=[DataRequired()])
+    table_catalog = FieldList(FormField(EmailTableCatalogJSONValidator), default=[])

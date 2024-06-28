@@ -7483,10 +7483,10 @@ paths:
                           type: string
                           description: Type of the column
                           example: "column_type"
-    post:
+    put:
       tags:
         - Emails
-      summary: Create a new table catalog entry
+      summary: Create/Update a table catalog entry
       requestBody:
         required: true
         content:
@@ -7498,33 +7498,33 @@ paths:
                   type: integer
                   description: Unique identifier for the survey
                   example: 123
-                table_name:
-                  type: string
-                  description: Name of the table
-                  example: "table_name"
-                table_description:
-                  type: string
-                  description: Description of the table
-                  example: "table_description"
-                column_name:
-                  type: string
-                  description: Name of the column
-                  example: "column_name"
-                column_description:
-                  type: string
-                  description: Description of the column
-                  example: "column_description"
-                column_type:
-                  type: string
-                  description: Type of the column
-                  example: "column_type"
+                table_catalog:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      table_name:
+                        type: string
+                        description: Name of the table
+                        example: "table_name"
+                      column_name:
+                        type: string
+                        description: Name of the column
+                        example: "district_name"
+                      column_description:
+                        type: string
+                        description: Description of the column
+                        example: "Name of district"
+                      column_type:
+                        type: string
+                        description: Type of the column
+                        example: "integer"
               required:
                 - survey_uid
-                - table_name
-                - table_description
-                - column_name
-                - column_description
-                - column_type
+                - table_catalog
+                  - table_name
+                  - column_name
+                  - column_type
       responses:
         "201":
           description: Table catalog entry created successfully
