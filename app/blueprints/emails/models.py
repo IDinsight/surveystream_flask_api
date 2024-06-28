@@ -233,6 +233,7 @@ class EmailTemplateVariable(db.Model):
             "variable_type IN ('string', 'table')",
             name="ck_email_template_variables_variable_type",
         ),
+        server_default="string",
         nullable=False,
     )
     source_table = db.Column(db.String(255), nullable=True)
