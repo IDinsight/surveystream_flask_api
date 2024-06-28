@@ -2241,7 +2241,7 @@ class TestEmails:
     ):
         """
         Test loading table catalog for different user roles
-        Expect the table catalog to be loaded
+        Expect the table catalog to be not loaded since required columns missing
         """
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
