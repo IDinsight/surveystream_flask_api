@@ -1,10 +1,110 @@
 import jsondiff
 import pytest
-from utils import load_reference_data
+
+from utils import (
+    load_reference_data,
+    create_new_survey_role_with_permissions,
+    login_user,
+    set_target_assignable_status,
+    update_logged_in_user_roles,
+)
 
 
 @pytest.mark.forms
 class TestForms:
+    @pytest.fixture
+    def user_with_super_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have super admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_survey_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have survey admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_dq_forms_permissions(self, client, test_user_credentials):
+        # Assign new roles and permissions
+        new_role = create_new_survey_role_with_permissions(
+            # 23 - WRITE Data Quality Forms
+            client,
+            test_user_credentials,
+            "Data Quality Forms Role",
+            [23],
+            1,
+        )
+
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_no_permissions(self, client, test_user_credentials):
+        # Assign no roles and permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture(
+        params=[
+            ("user_with_super_admin_permissions", True),
+            ("user_with_survey_admin_permissions", True),
+            ("user_with_no_permissions", False),
+        ],
+        ids=[
+            "super_admin_permissions",
+            "survey_admin_permissions",
+            "no_permissions",
+        ],
+    )
+    def user_permissions(self, request):
+        return request.param
+
+    @pytest.fixture(
+        params=[
+            ("user_with_super_admin_permissions", True),
+            ("user_with_survey_admin_permissions", True),
+            ("user_with_dq_forms_permissions", True),
+            ("user_with_no_permissions", False),
+        ],
+        ids=[
+            "super_admin_permissions",
+            "survey_admin_permissions",
+            "dq_forms_permissions",
+            "no_permissions",
+        ],
+    )
+    def user_with_dq_forms_permissions(self, request):
+        return request.param
+
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -580,46 +680,102 @@ class TestForms:
         assert response.status_code == 200
         assert response.json == {"data": None, "success": True}
 
-    def test_create_dq_form(self, client, login_test_user, create_dq_form):
+    def test_create_dq_form(
+        self,
+        client,
+        login_test_user,
+        create_parent_form,
+        csrf_token,
+        user_with_dq_forms_permissions,
+        request,
+    ):
         """
         Test that the dq form is inserted correctly
         """
 
-        # Test the form was inserted correctly
-        response = client.get("/api/forms?survey_uid=1&form_type=dq")
-        assert response.status_code == 200
+        user_fixture, expected_permission = user_with_dq_forms_permissions
+        request.getfixturevalue(user_fixture)
 
-        expected_response = {
-            "data": [
-                {
-                    "form_uid": 2,
-                    "survey_uid": 1,
-                    "scto_form_id": "test_scto_dq",
-                    "form_name": "Agrifieldnet AA Form",
-                    "tz_name": "Asia/Kolkata",
-                    "scto_server_name": "dod",
-                    "encryption_key_shared": True,
-                    "server_access_role_granted": True,
-                    "server_access_allowed": True,
-                    "last_ingested_at": None,
-                    "form_type": "dq",
-                    "parent_form_uid": 1,
-                    "dq_form_type": "audioaudit",
-                    "parent_scto_form_id": "test_scto_input_output",
-                }
-            ],
-            "success": True,
+        payload = {
+            "survey_uid": 1,
+            "scto_form_id": "test_scto_dq",
+            "form_name": "Agrifieldnet AA Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": "dod",
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "dq",
+            "parent_form_uid": 1,
+            "dq_form_type": "audioaudit",
         }
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+        response = client.post(
+            "/api/forms",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 201
+
+            # Test the form was inserted correctly
+            response = client.get("/api/forms?survey_uid=1&form_type=dq")
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "form_uid": 2,
+                        "survey_uid": 1,
+                        "scto_form_id": "test_scto_dq",
+                        "form_name": "Agrifieldnet AA Form",
+                        "tz_name": "Asia/Kolkata",
+                        "scto_server_name": "dod",
+                        "encryption_key_shared": True,
+                        "server_access_role_granted": True,
+                        "server_access_allowed": True,
+                        "last_ingested_at": None,
+                        "form_type": "dq",
+                        "parent_form_uid": 1,
+                        "dq_form_type": "audioaudit",
+                        "parent_scto_form_id": "test_scto_input_output",
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            response.status_code = 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Data Quality Forms",
+            }
+            print(response.json)
+            print(expected_response)
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
     def test_create_dq_scto_question_mapping(
-        self, client, csrf_token, login_test_user, create_dq_form
+        self,
+        client,
+        csrf_token,
+        login_test_user,
+        create_dq_form,
+        user_with_dq_forms_permissions,
+        request,
     ):
         """
         Test that the SCTO question mapping is inserted correctly for a DQ form
         """
+
+        user_fixture, expected_permission = user_with_dq_forms_permissions
+        request.getfixturevalue(user_fixture)
 
         # Insert the SCTO question mapping
         payload = {
@@ -638,29 +794,41 @@ class TestForms:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        assert response.status_code == 201
 
-        # Test the SCTO question mapping was inserted correctly
-        response = client.get("/api/forms/2/scto-question-mapping")
-        assert response.status_code == 200
+        if expected_permission:
+            assert response.status_code == 201
 
-        expected_response = {
-            "data": {
-                "form_uid": 2,
-                "survey_status": None,
-                "revisit_section": None,
-                "target_id": "test_target_id",
-                "enumerator_id": "test_enumerator_id",
-                "dq_enumerator_id": "test_dq_enumerator_id",
-                "locations": {
-                    "location_1": "test_location_1",
+            # Test the SCTO question mapping was inserted correctly
+            response = client.get("/api/forms/2/scto-question-mapping")
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "form_uid": 2,
+                    "survey_status": None,
+                    "revisit_section": None,
+                    "target_id": "test_target_id",
+                    "enumerator_id": "test_enumerator_id",
+                    "dq_enumerator_id": "test_dq_enumerator_id",
+                    "locations": {
+                        "location_1": "test_location_1",
+                    },
                 },
-            },
-            "success": True,
-        }
+                "success": True,
+            }
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            response.status_code = 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Data Quality Forms",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
     def test_create_dq_scto_question_mapping_without_dq_enum_id(
         self, client, csrf_token, login_test_user, create_dq_form
@@ -686,7 +854,7 @@ class TestForms:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 422
-    
+
     def test_update_dq_scto_question_mapping_without_dq_enum_id(
         self, client, csrf_token, login_test_user, create_dq_form
     ):
