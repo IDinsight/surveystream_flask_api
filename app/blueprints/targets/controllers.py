@@ -651,6 +651,7 @@ def delete_target(target_uid):
     if Target.query.filter_by(target_uid=target_uid).first() is None:
         return jsonify({"error": "Target not found"}), 404
 
+    TargetStatus.query.filter_by(target_uid=target_uid).delete()
     Target.query.filter_by(target_uid=target_uid).delete()
 
     try:
@@ -996,7 +997,7 @@ def get_target_column_config(validated_query_params):
                         },
                     ]
                 )
-    
+
     # Add target_status columns
     target_status_columns = [
         {
@@ -1031,6 +1032,7 @@ def get_target_column_config(validated_query_params):
         200,
     )
 
+
 @targets_bp.route("/target-status", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateTargetStatus)
@@ -1059,16 +1061,11 @@ def update_target_status(validated_payload):
             422,
         )
 
-    subquery = (
-        db.session.query(Target.target_uid)
-        .filter(
-            Target.form_uid == form_uid
-        )
-    )
+    subquery = db.session.query(Target.target_uid).filter(Target.form_uid == form_uid)
 
-    db.session.query(TargetStatus).filter(
-        TargetStatus.target_uid.in_(subquery)
-    ).delete(synchronize_session=False)
+    db.session.query(TargetStatus).filter(TargetStatus.target_uid.in_(subquery)).delete(
+        synchronize_session=False
+    )
 
     db.session.flush()
 
@@ -1086,8 +1083,12 @@ def update_target_status(validated_payload):
                     completed_flag=each_target["completed_flag"],
                     refusal_flag=each_target["refusal_flag"],
                     num_attempts=each_target["num_attempts"],
-                    last_attempt_survey_status=each_target["last_attempt_survey_status"],
-                    last_attempt_survey_status_label=each_target["last_attempt_survey_status_label"],
+                    last_attempt_survey_status=each_target[
+                        "last_attempt_survey_status"
+                    ],
+                    last_attempt_survey_status_label=each_target[
+                        "last_attempt_survey_status_label"
+                    ],
                     final_survey_status=each_target["final_survey_status"],
                     final_survey_status_label=each_target["final_survey_status_label"],
                     target_assignable=each_target["target_assignable"],

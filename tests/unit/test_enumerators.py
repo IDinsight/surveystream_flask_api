@@ -1541,6 +1541,7 @@ class TestEnumerators:
         client,
         login_test_user,
         create_locations_for_enumerators_file,
+        create_surveyor_stats,
         csrf_token,
         test_user_credentials,
     ):

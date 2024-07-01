@@ -493,6 +493,7 @@ def delete_enumerator(enumerator_uid):
     SurveyorLocation.query.filter_by(enumerator_uid=enumerator_uid).delete()
     MonitorForm.query.filter_by(enumerator_uid=enumerator_uid).delete()
     MonitorLocation.query.filter_by(enumerator_uid=enumerator_uid).delete()
+    SurveyorStats.query.filter_by(enumerator_uid=enumerator_uid).delete()
     Enumerator.query.filter_by(enumerator_uid=enumerator_uid).delete()
 
     try:
@@ -1437,10 +1438,7 @@ def get_enumerator_column_config(validated_query_params):
                 )
 
     # Add surveyor productivity columns for all parent forms in the survey
-    forms = Form.query.filter_by(
-        survey_uid=survey_uid, 
-        form_type="parent"
-    ).all()
+    forms = Form.query.filter_by(survey_uid=survey_uid, form_type="parent").all()
 
     productivity_columns = []
     for each_form in forms:
