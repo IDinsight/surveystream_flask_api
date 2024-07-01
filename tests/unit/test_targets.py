@@ -699,7 +699,6 @@ class TestTargets:
         client,
         login_test_user,
         create_locations_for_targets_file,
-        create_target_status,
         csrf_token,
         test_user_credentials,
     ):
