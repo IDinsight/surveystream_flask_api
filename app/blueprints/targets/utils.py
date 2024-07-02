@@ -13,6 +13,7 @@ from .errors import (
     InvalidFileStructureError,
 )
 
+
 class TargetColumnMapping:
     """
     Class to represent the target column mapping and run validations on it
@@ -264,9 +265,9 @@ class TargetsUpload:
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                non_null_columns_df.at[index, "errors"] = (
-                    f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
-                )
+                non_null_columns_df.at[
+                    index, "errors"
+                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],
@@ -366,9 +367,9 @@ class TargetsUpload:
                     }
                 )
 
-                invalid_location_id_df["errors"] = (
-                    "Location id not found in uploaded locations data for the survey's bottom level geo level"
-                )
+                invalid_location_id_df[
+                    "errors"
+                ] = "Location id not found in uploaded locations data for the survey's bottom level geo level"
                 invalid_records_df = invalid_records_df.merge(
                     invalid_location_id_df["errors"],
                     how="left",
@@ -411,6 +412,28 @@ class TargetsUpload:
                 .to_dict(orient="records")
             )
             raise InvalidTargetRecordsError(record_errors)
+
+        return
+
+    def filter_successful_records(self, record_errors):
+        """
+        Method to filter the records that have no errors
+
+        """
+        row_numbers_with_errors = [
+            error["row_numbers_with_errors"]
+            for error in record_errors["summary_by_error_type"]
+        ]
+        error_record_indices = [
+            item for sublist in row_numbers_with_errors for item in sublist
+        ]
+
+        # deduplicate the list of error record indices
+        error_record_indices = list(set(error_record_indices))
+
+        self.targets_df = self.targets_df[
+            ~self.targets_df.index.isin(error_record_indices)
+        ]
 
         return
 
