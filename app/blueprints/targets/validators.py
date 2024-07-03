@@ -34,6 +34,7 @@ class TargetsFileUploadValidator(FlaskForm):
             DataRequired(),
         ]
     )
+    load_successful = BooleanField(validators=[Optional()], default=False)
 
 
 class TargetsQueryParamValidator(FlaskForm):

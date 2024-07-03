@@ -415,6 +415,28 @@ class TargetsUpload:
 
         return
 
+    def filter_successful_records(self, record_errors):
+        """
+        Method to filter the records that have no errors
+
+        """
+        row_numbers_with_errors = [
+            error["row_numbers_with_errors"]
+            for error in record_errors["summary_by_error_type"]
+        ]
+        error_record_indices = [
+            item for sublist in row_numbers_with_errors for item in sublist
+        ]
+
+        # deduplicate the list of error record indices
+        error_record_indices = list(set(error_record_indices))
+
+        self.targets_df = self.targets_df[
+            ~self.targets_df.index.isin(error_record_indices)
+        ]
+
+        return
+
     def save_records(self, column_mapping, write_mode):
         """
         Method to save the targets data to the database

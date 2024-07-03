@@ -181,6 +181,7 @@ def upload_targets(validated_query_params, validated_payload):
         ].geo_level_uid
 
     # Validate the targets data
+    record_errors = None
     try:
         targets_upload.validate_records(
             column_mapping,
@@ -200,17 +201,25 @@ def upload_targets(validated_query_params, validated_payload):
             422,
         )
     except InvalidTargetRecordsError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "record_errors": e.record_errors,
-                    },
-                }
-            ),
-            422,
-        )
+        record_errors = e.record_errors
+        if validated_payload.load_successful.data is True:
+            # Filter the records that were successfully validated
+            targets_upload.filter_successful_records(
+                record_errors,
+            )
+
+        else:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "record_errors": record_errors,
+                        },
+                    }
+                ),
+                422,
+            )
 
     try:
         targets_upload.save_records(
@@ -222,7 +231,21 @@ def upload_targets(validated_query_params, validated_payload):
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
-    return jsonify(message="Success"), 200
+    # If load_successful is True and errors were found in the records, return the errors
+    if validated_payload.load_successful.data is True and record_errors:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "record_errors": record_errors,
+                    },
+                }
+            ),
+            422,
+        )
+    else:
+        return jsonify(message="Success"), 200
 
 
 @targets_bp.route("", methods=["GET"])

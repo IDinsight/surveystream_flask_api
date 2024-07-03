@@ -5467,6 +5467,15 @@ paths:
                     file. In 'merge' mode, the new targets from the CSV will
                     be added to the existing ones.  Any existing records
                     included in the upload will also be updated.
+                load_successful:
+                  type: boolean
+                  default: False
+                  description: >-
+                    Whether in case of record level failures, load succesful 
+                    records. The default behaviour is to fail upload for all 
+                    records if validations for any record fails. If True, the
+                    upload will load the successful records and return the
+                    failed records in the response.
               required:
                 - column_mapping
                 - file
