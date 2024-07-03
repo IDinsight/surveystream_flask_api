@@ -5,13 +5,14 @@ from app import db
 from sqlalchemy import insert
 from csv import DictReader
 from app.blueprints.locations.models import Location
-from .models import Target
+from .models import Target, TargetStatus
 from .errors import (
     HeaderRowEmptyError,
     InvalidTargetRecordsError,
     InvalidColumnMappingError,
     InvalidFileStructureError,
 )
+
 
 class TargetColumnMapping:
     """
@@ -264,9 +265,9 @@ class TargetsUpload:
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                non_null_columns_df.at[index, "errors"] = (
-                    f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
-                )
+                non_null_columns_df.at[
+                    index, "errors"
+                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],
@@ -366,9 +367,9 @@ class TargetsUpload:
                     }
                 )
 
-                invalid_location_id_df["errors"] = (
-                    "Location id not found in uploaded locations data for the survey's bottom level geo level"
-                )
+                invalid_location_id_df[
+                    "errors"
+                ] = "Location id not found in uploaded locations data for the survey's bottom level geo level"
                 invalid_records_df = invalid_records_df.merge(
                     invalid_location_id_df["errors"],
                     how="left",
@@ -446,6 +447,15 @@ class TargetsUpload:
 
         if write_mode == "overwrite":
             # For the overwrite mode, delete existing records for the form and insert the records in chunks of 1000 using the fast bulk insert method
+
+            # Remove rows from target status table first
+            subquery = db.session.query(Target.target_uid).filter(
+                Target.form_uid == self.form_uid
+            )
+            db.session.query(TargetStatus).filter(
+                TargetStatus.target_uid.in_(subquery)
+            ).delete(synchronize_session=False)
+
             Target.query.filter_by(form_uid=self.form_uid).delete()
             db.session.commit()
 
