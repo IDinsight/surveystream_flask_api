@@ -1,7 +1,9 @@
-from flask_wtf import FlaskForm
-from wtforms import IntegerField, FieldList, FormField, StringField
-from wtforms.validators import DataRequired, ValidationError, AnyOf
 from datetime import datetime
+
+from flask_wtf import FlaskForm
+from wtforms import FieldList, FormField, IntegerField, StringField
+from wtforms.validators import AnyOf, DataRequired, ValidationError
+
 
 class SurveyorAssignmentValidator(FlaskForm):
     class Meta:
@@ -46,3 +48,22 @@ class AssignmentsEmailValidator(FlaskForm):
         date_obj = datetime.strptime(field.data, "%Y-%m-%d").date()
         if date_obj < datetime.now().date():
             raise ValidationError("Date must be in the future.")
+
+
+class ColumnMappingValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    target_id = StringField(validators=[DataRequired()])
+    enumerator_id = StringField(validators=[DataRequired()])
+
+
+class AssignmentsFileUploadValidator(FlaskForm):
+    column_mapping = FormField(ColumnMappingValidator)
+    file = StringField(validators=[DataRequired()])
+    mode = StringField(
+        validators=[
+            AnyOf(["overwrite", "merge"], message="Value must be one of %(values)s"),
+            DataRequired(),
+        ]
+    )

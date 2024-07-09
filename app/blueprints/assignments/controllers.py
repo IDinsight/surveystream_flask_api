@@ -1,8 +1,10 @@
+import base64
+import binascii
 from datetime import datetime
 
 from flask import jsonify
 from flask_login import current_user
-from sqlalchemy import Date, DateTime, alias, and_, func
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import cast
@@ -30,10 +32,22 @@ from app.utils.utils import (
 )
 
 from . import assignments_bp
+from .errors import (
+    HeaderRowEmptyError,
+    InvalidAssignmentRecordsError,
+    InvalidColumnMappingError,
+    InvalidFileStructureError,
+)
 from .models import SurveyorAssignment
 from .queries import build_surveyor_formwise_productivity_subquery
+from .utils import (
+    AssignmentsColumnMapping,
+    AssignmentsUpload,
+    get_next_assignment_email_schedule,
+)
 from .validators import (
     AssignmentsEmailValidator,
+    AssignmentsFileUploadValidator,
     AssignmentsQueryParamValidator,
     UpdateSurveyorAssignmentsValidator,
 )
@@ -420,68 +434,11 @@ def update_assignments(validated_payload):
         "assignments_count": len(assignments),
     }
 
-    # Get current datetime and current time
-    current_datetime = datetime.now()
-    current_time = datetime.now().strftime("%H:%M")
+    # Get the next assignment email schedule and add it to the response
+    email_schedule = get_next_assignment_email_schedule(form_uid)
 
-    # a subquery to unnest the array of dates and filter dates less than current date
-    subquery = (
-        db.session.query(
-            cast(func.unnest(EmailSchedule.dates) + EmailSchedule.time, Date).label(
-                "schedule_date"
-            ),
-            EmailSchedule.email_schedule_uid,
-        )
-        .filter(
-            func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
-        )
-        .correlate(EmailSchedule)
-        .subquery()
-    )
-
-    # Alias the subquery
-    schedule_dates_subquery = alias(subquery)
-
-    # join schedule_dates_subquery and filter dates only greater than current date time
-    email_schedule_res = (
-        db.session.query(EmailSchedule, EmailConfig, schedule_dates_subquery)
-        .select_from(EmailSchedule)
-        .join(
-            schedule_dates_subquery,
-            and_(
-                schedule_dates_subquery.c.email_schedule_uid
-                == EmailSchedule.email_schedule_uid,
-                cast(
-                    schedule_dates_subquery.c.schedule_date + EmailSchedule.time,
-                    DateTime,
-                )
-                >= current_datetime,
-            ),
-        )
-        .join(
-            EmailConfig, EmailSchedule.email_config_uid == EmailConfig.email_config_uid
-        )
-        .filter(
-            EmailConfig.form_uid == form_uid,
-            func.lower(EmailConfig.config_type) == "assignments",
-        )
-        .order_by(schedule_dates_subquery.c.schedule_date.asc())
-        .first()
-    )
-
-    if email_schedule_res:
-        email_schedule, email_config, schedule_date, email_schedule_uid = (
-            email_schedule_res
-        )
-        response_data["email_schedule"] = {
-            "email_config_uid": email_config.email_config_uid,
-            "config_type": email_config.config_type,
-            "dates": email_schedule.dates,
-            "time": str(email_schedule.time),
-            "current_time": str(current_time),
-            "email_schedule_uid": email_schedule_uid,
-            "schedule_date": schedule_date,
-        }
+    if email_schedule:
+        response_data["email_schedule"] = email_schedule
 
     try:
         db.session.commit()
@@ -547,3 +504,151 @@ def schedule_assignments_email(validated_payload):
         ),
         201,
     )
+
+
+@assignments_bp.route("", methods=["POST"])
+@logged_in_active_user_required
+@validate_query_params(AssignmentsQueryParamValidator)
+@validate_payload(AssignmentsFileUploadValidator)
+@custom_permissions_required("WRITE Assignments", "query", "form_uid")
+def upload_assignments(validated_query_params, validated_payload):
+    """
+    Method to validate the uploaded assignments file and save it to the database
+    """
+
+    form_uid = validated_query_params.form_uid.data
+
+    # Get the survey UID from the form UID
+    form = Form.query.filter_by(form_uid=form_uid).first()
+
+    if form is None:
+        return (
+            jsonify(
+                message=f"The form 'form_uid={form_uid}' could not be found. Cannot upload assignments for an undefined form."
+            ),
+            404,
+        )
+
+    survey_uid = form.survey_uid
+
+    try:
+        column_mapping = AssignmentsColumnMapping(
+            validated_payload.column_mapping.data,
+        )
+    except InvalidColumnMappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "column_mapping": e.column_mapping_errors,
+                    },
+                }
+            ),
+            422,
+        )
+
+    # Create an AssignmentsUpload object from the uploaded file
+    try:
+        assignments_upload = AssignmentsUpload(
+            csv_string=base64.b64decode(
+                validated_payload.file.data, validate=True
+            ).decode("utf-8"),
+            column_mapping=column_mapping,
+            survey_uid=survey_uid,
+            form_uid=form_uid,
+        )
+    except binascii.Error:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file_structure_errors": [
+                            "File data has invalid base64 encoding"
+                        ],
+                    },
+                }
+            ),
+            422,
+        )
+    except UnicodeDecodeError:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file_structure_errors": [
+                            "File data has invalid UTF-8 encoding"
+                        ],
+                    },
+                }
+            ),
+            422,
+        )
+    except HeaderRowEmptyError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file_structure_errors": e.message,
+                    },
+                }
+            ),
+            422,
+        )
+
+    # Validate the assignments data
+    try:
+        assignments_upload.validate_records(
+            column_mapping,
+            validated_payload.mode.data,
+        )
+    except InvalidFileStructureError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file_structure_errors": e.file_structure_errors,
+                    },
+                }
+            ),
+            422,
+        )
+    except InvalidAssignmentRecordsError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "record_errors": e.record_errors,
+                    },
+                }
+            ),
+            422,
+        )
+
+    try:
+        response_data = assignments_upload.save_records(
+            column_mapping,
+            validated_payload.mode.data,
+        )
+
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    # Get the next assignment email schedule if present and add it to the response
+    email_schedule = get_next_assignment_email_schedule(form_uid)
+    if email_schedule:
+        response_data["email_schedule"] = email_schedule
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return jsonify(message="Success", data=response_data), 200
