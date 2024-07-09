@@ -3617,6 +3617,253 @@ paths:
                             {`location`_id: _location_id_, `location`_name:
                             _location_name_} in descending order from highest to
                             lowest level location.
+    post:
+      summary: Upload a csv of assignments
+      description: |
+        Upload a csv of assignments to be added to the given form
+      tags:
+        - Assignments
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                column_mapping:
+                  type: object
+                  description: >-
+                    An object mapping the column names in the csv to the
+                    corresponding assignment fields
+                  properties:
+                    target_id:
+                      type: string
+                      description: The column name of the target ID
+                    enumerator_id:
+                      type: string
+                      description: The column name of the enumerator ID
+                  required:
+                    - target_id
+                    - enumerator_id
+                file:
+                  type: string
+                  format: Base64
+                  description: >-
+                    The csv file to be uploaded in base64 encoding
+
+                    The csv must have a header row with the column names
+                    specified in the `column_mapping` object.
+                mode:
+                  type: string
+                  enum:
+                    - overwrite
+                    - merge
+                  description: >-
+                    The mode of the upload. In 'overwrite' mode, all assignments
+                    with the provided form_uid from  the query parameter will be
+                    removed and replaced with the new assignments from  the CSV
+                    file. In 'merge' mode, the new assignments from the CSV will
+                    be added to the existing ones.  Any existing records
+                    included in the upload will also be updated.
+              required:
+                - column_mapping
+                - file
+                - mode
+      responses:
+        "200":
+          description: Records added successfully
+        "400":
+          description: Query parameter errors
+        "403":
+          description: X-CSRF-Token required in header
+        "404":
+          description: Form not found
+        "422":
+          description: Form errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to the csv
+                      file upload. Each key will only be present if there are
+                      errors of that type.
+
+                      In addition to the errors listed below, the `errors`
+                      object may also contain errors related to an incorrectly
+                      specified payload.
+                    properties:
+                      file_structure_errors:
+                        type: array
+                        description: >-
+                          An array of errors in the file structure. Each array
+                          item is a string containing the error message related
+                          to an individual error.
+                      column_mapping:
+                        type: array
+                        description: >-
+                          An array of errors in the column. Each array item is a
+                          string containing the error message related to an
+                          individual error.
+                      record_errors:
+                        type: object
+                        description: >-
+                          An object with information on validation errors in the
+                          csv records.
+                        properties:
+                          summary:
+                            type: object
+                            description: >-
+                              A summary of the validation errors in the csv
+                              records
+                            properties:
+                              error_count:
+                                type: integer
+                                description: The total number of errors in the csv records
+                              total_correct_rows:
+                                type: integer
+                                description: >-
+                                  The total number of correct rows in the csv
+                                  records
+                              total_rows:
+                                type: integer
+                                description: The total number of rows in the csv records
+                              total_rows_with_errors:
+                                type: integer
+                                description: >-
+                                  The total number of rows with errors in the
+                                  csv records
+                          summary_by_error_type:
+                            type: array
+                            description: >-
+                              An array of objects with information on validation
+                              errors by error type in the csv records.
+                            items:
+                              type: object
+                              properties:
+                                error_count:
+                                  type: integer
+                                  description: >-
+                                    The total number of errors of this type in
+                                    the csv records
+                                error_message:
+                                  type: string
+                                  description: The error message for this error type
+                                error_type:
+                                  type: string
+                                  description: The error type
+                                row_numbers_with_errors:
+                                  type: array
+                                  description: >-
+                                    An array of row numbers with errors of this
+                                    type in the csv records
+                                  items:
+                                    type: integer
+                                    description: >-
+                                      The row number with an error of this type
+                                      in the csv records
+                          invalid_records:
+                            type: object
+                            description: >-
+                              An object with information on validation errors by
+                              record in the csv records. This can be used to
+                              identify the specific errors in each record and to
+                              let users download a csv with the errors.
+                            properties:
+                              records:
+                                type: array
+                                description: >-
+                                  An array of objects that represent the
+                                  original records in the csv with the
+                                  validation errors. A new `errors` field is
+                                  added to each record that contains a
+                                  semicolon-separated list of the validation
+                                  errors for that record. A new `row_number`
+                                  field is also added to each record that
+                                  contains the row number of the record in the
+                                  original csv.
+                              ordered_columns:
+                                type: array
+                                description: >-
+                                  An array of strings that represent the column
+                                  names in the `records` array of objects in the
+                                  order that they should  appear in a table or
+                                  downloadable csv file.
+                                items:
+                                  type: string
+                                  description: The column name in the csv
+                  success:
+                    type: boolean
+                    description: Whether the upload was successful
+    put:
+      summary: Update assignments
+      description: >
+        Update the mapping of enumerators to targets
+
+
+        Each target can have 0 or 1 enumerators assigned to it, so assigning an
+        enumerator to an already-assigned target will reassign (overwrite) the previous
+        assignment
+
+
+        To unassign an enumerator from a target, include the target_uid value
+        and pass a null value for the enumerator_uid
+      tags:
+        - Assignments
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              description: A list of target/enumerator pairs
+              items:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  target_uid:
+                    type: integer
+                  enumerator_uid:
+                    type: integer
+                required:
+                  - form_uid
+                  - target_uid
+                  - enumerator_uid
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "404":
+          description: Enumerator or target not found
+        "422":
+          description: Form errors. Specific errors messages will be returned if ineligible/unassignable enumerators or targets are included in the request body.
+      
   /assignments/enumerators:
     get:
       summary: Get enumerators eligible for assignment
@@ -3697,59 +3944,7 @@ paths:
                         total_completed_targets:
                           type: integer
                           description: Total complete targets for the given survey
-    put:
-      summary: Update assignments
-      description: >
-        Update the mapping of enumerators to targets
-
-
-        Each target can have 0 or 1 enumerators assigned to it, so assigning an
-        enumerator to an already-assigned target will reassign (overwrite) the previous
-        assignment
-
-
-        To unassign an enumerator from a target, include the target_uid value
-        and pass a null value for the enumerator_uid
-      tags:
-        - Assignments
-      parameters:
-        - in: header
-          name: X-CSRF-TOKEN
-          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
-          schema:
-            type: string
-          required: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              description: A list of target/enumerator pairs
-              items:
-                type: object
-                properties:
-                  form_uid:
-                    type: integer
-                    description: The unique ID of the form
-                  target_uid:
-                    type: integer
-                  enumerator_uid:
-                    type: integer
-                required:
-                  - form_uid
-                  - target_uid
-                  - enumerator_uid
-      responses:
-        "200":
-          description: Success
-        "403":
-          description: X-CSRF-Token required in header
-        "404":
-          description: Enumerator or target not found
-        "422":
-          description: Form errors. Specific errors messages will be returned if ineligible/unassignable enumerators or targets are included in the request body.
-
+                          
   /assignments/schedule-email:
     post:
       summary: Schedule assignment emails
