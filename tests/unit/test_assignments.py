@@ -5770,8 +5770,6 @@ class TestAssignments:
             # Check the response
             response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-            print(response.json)
-
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
         else:
@@ -5825,8 +5823,7 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
-
+        
         assert response.status_code == 422
 
         expected_put_response = {
@@ -5880,4 +5877,146 @@ class TestAssignments:
         }
 
         checkdiff = jsondiff.diff(expected_put_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_unmapped_column(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Upload the enumerators csv with unmapped enumerator id column
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_errors.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        # enumerator_id is needed
+        assert response.status_code == 422
+
+        expected_response = {
+            "message": {
+                "column_mapping": {"enumerator_id": ["This field is required."]}
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_missing_enumerator(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Function to test uploading asssignments csv with missing enumerator id
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_missing_enumerator.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "merge",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "target_id1",
+                            "enumerator_id1",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "enumerator_id1": "",
+                                "errors": "Blank field(s) found in the following column(s): enumerator_id1. The column(s) cannot contain blank fields.; Enumerator id not found in uploaded enumerators data for the form",
+                                "row_number": 3,
+                                "target_id1": "2",
+                            }
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 2,
+                        "total_correct_rows": 1,
+                        "total_rows": 2,
+                        "total_rows_with_errors": 1,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "Blank values are not allowed in the following columns: enumerator_id1, target_id1. Blank values in these columns were found for the following row(s): 3",
+                            "error_type": "Blank field",
+                            "row_numbers_with_errors": [3],
+                        },
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 enumerator_id(s) that were not found in the uploaded enumerators data. The following row numbers contain invalid enumerator_id's: 3",
+                            "error_type": "Invalid enumerator_id's",
+                            "row_numbers_with_errors": [3],
+                        },
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
