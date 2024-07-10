@@ -6021,7 +6021,7 @@ class TestAssignments:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_upload_assignments_csv_file_structure_errors(
+    def test_upload_assignments_csv_duplicate_column(
         self,
         client,
         login_test_user,
@@ -6067,6 +6067,120 @@ class TestAssignments:
             "errors": {
                 "file_structure_errors": [
                     "Column name 'target_id1' from the column mapping appears 2 time(s) in the uploaded file. It should appear exactly once."
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_column_mapping_error(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Upload the enumerators csv with same column mapped twice
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_errors.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "target_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        # enumerator_id is needed
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "column_mapping": [
+                    "Column name 'target_id1' is mapped to multiple fields: (enumerator_id, target_id). Column names should only be mapped once."
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_blank_headers(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Upload the enumerators csv with blank header row
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_blank_headers.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        # enumerator_id is needed
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "file_structure_errors": [
+                    "Column names were not found in the file. Make sure the first row of the file contains column names."
                 ]
             },
             "success": False,
