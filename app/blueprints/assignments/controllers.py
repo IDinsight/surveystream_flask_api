@@ -645,10 +645,4 @@ def upload_assignments(validated_query_params, validated_payload):
     if email_schedule:
         response_data["email_schedule"] = email_schedule
 
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        return jsonify(message=str(e)), 500
-
     return jsonify(message="Success", data=response_data), 200
