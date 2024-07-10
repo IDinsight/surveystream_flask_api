@@ -6119,7 +6119,8 @@ class TestAssignments:
 
         assert response.status_code == 422
 
-        expected_response = {
+        # Order of the columns in the error message is not guaranteed, so we need to check both possible responses
+        expected_response_1 = {
             "errors": {
                 "column_mapping": [
                     "Column name 'target_id1' is mapped to multiple fields: (enumerator_id, target_id). Column names should only be mapped once."
@@ -6127,9 +6128,19 @@ class TestAssignments:
             },
             "success": False,
         }
+        expected_response_2 = {
+            "errors": {
+                "column_mapping": [
+                    "Column name 'target_id1' is mapped to multiple fields: (target_id, enumerator_id). Column names should only be mapped once."
+                ]
+            },
+            "success": False,
+        }
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+        checkdiff_1 = jsondiff.diff(expected_response_1, response.json)
+        checkdiff_2 = jsondiff.diff(expected_response_2, response.json)
+
+        assert checkdiff_1 == {} or checkdiff_2 == {}
 
     def test_upload_assignments_csv_blank_headers(
         self,
