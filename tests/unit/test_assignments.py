@@ -5782,7 +5782,7 @@ class TestAssignments:
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
 
-    def test_upload_assignments_csv_record_errors(
+    def test_upload_assignments_csv_invalid_ids(
         self,
         client,
         login_test_user,
@@ -5870,6 +5870,192 @@ class TestAssignments:
                             "error_type": "Invalid enumerator_id's",
                             "row_numbers_with_errors": [2],
                         },
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_dropout_enumerator(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Function to test uploading asssignments csv with enumerator who has dropped out of the survey
+        """
+        # Update an enumerator's status to Dropout
+        payload = {
+            "status": "Dropout",
+            "form_uid": 1,
+            "enumerator_type": "surveyor",
+        }
+
+        response = client.patch(
+            "/api/enumerators/2/roles/status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_put_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "target_id1",
+                            "enumerator_id1",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "enumerator_id1": "0294613",
+                                "errors": "Enumerator id has status 'Dropout' and are ineligible for assignment",
+                                "row_number": 2,
+                                "target_id1": "1",
+                            }
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 1,
+                        "total_correct_rows": 1,
+                        "total_rows": 2,
+                        "total_rows_with_errors": 1,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 enumerator_id(s) that have status 'Dropout' and are ineligible for assignment. The following row numbers contain dropout enumerator_id's: 2",
+                            "error_type": "Dropout enumerator_id's",
+                            "row_numbers_with_errors": [2],
+                        }
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_unassignable_target(
+        self,
+        app,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Function to test uploading asssignments csv with target that is not assignable
+        """
+        # Update a target's assignable status to False
+        set_target_assignable_status(app, db, 1, False)
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_put_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "target_id1",
+                            "enumerator_id1",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "enumerator_id1": "0294613",
+                                "errors": "Target id not assignable for this form (most likely because they are complete)",
+                                "row_number": 2,
+                                "target_id1": "1",
+                            }
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 1,
+                        "total_correct_rows": 1,
+                        "total_rows": 2,
+                        "total_rows_with_errors": 1,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 target_id(s) that were not assignable for this form (most likely because they are complete). The following row numbers contain not assignable target_id's: 2",
+                            "error_type": "Not Assignable target_id's",
+                            "row_numbers_with_errors": [2],
+                        }
                     ],
                 }
             },
