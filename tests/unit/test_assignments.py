@@ -6117,7 +6117,6 @@ class TestAssignments:
         )
         print(response.json)
 
-        # enumerator_id is needed
         assert response.status_code == 422
 
         expected_response = {
@@ -6172,9 +6171,7 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
 
-        # enumerator_id is needed
         assert response.status_code == 422
 
         expected_response = {
