@@ -143,6 +143,11 @@ class TestPermissions:
                 "name": "WRITE Data Quality Forms",
                 "permission_uid": 23,
             },
+            {
+                "description": "Write Assignments Upload permission",
+                "name": "WRITE Assignments Upload",
+                "permission_uid": 24,
+            },
         ]
 
         assert jsondiff.diff(expected_data, response_data) == {}
@@ -269,6 +274,11 @@ class TestPermissions:
                 "description": "Write Data Quality Forms permission",
                 "name": "WRITE Data Quality Forms",
                 "permission_uid": 23,
+            },
+            {
+                "description": "Write Assignments Upload permission",
+                "name": "WRITE Assignments Upload",
+                "permission_uid": 24,
             },
             {
                 "permission_uid": create_permission["permission_uid"],

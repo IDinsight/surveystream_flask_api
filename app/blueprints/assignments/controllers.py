@@ -510,7 +510,7 @@ def schedule_assignments_email(validated_payload):
 @logged_in_active_user_required
 @validate_query_params(AssignmentsQueryParamValidator)
 @validate_payload(AssignmentsFileUploadValidator)
-@custom_permissions_required("WRITE Assignments", "query", "form_uid")
+@custom_permissions_required("WRITE Assignments Upload", "query", "form_uid")
 def upload_assignments(validated_query_params, validated_payload):
     """
     Method to validate the uploaded assignments file and save it to the database

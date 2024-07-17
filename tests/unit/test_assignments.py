@@ -65,6 +65,29 @@ class TestAssignments:
         login_user(client, test_user_credentials)
 
     @pytest.fixture
+    def user_with_assignment_upload_permissions(self, client, test_user_credentials):
+        # Assign new roles and permissions
+        new_role = create_new_survey_role_with_permissions(
+            # 24 - WRITE Assignments Upload
+            client,
+            test_user_credentials,
+            "Assignments Upload Role",
+            [24],
+            1,
+        )
+
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
     def user_with_no_permissions(self, client, test_user_credentials):
         # Assign no roles and permissions
         update_logged_in_user_roles(
@@ -95,6 +118,23 @@ class TestAssignments:
     def user_permissions(self, request):
         return request.param
 
+    @pytest.fixture(
+        params=[
+            ("user_with_super_admin_permissions", True),
+            ("user_with_survey_admin_permissions", True),
+            ("user_with_assignment_upload_permissions", True),
+            ("user_with_no_permissions", False),
+        ],
+        ids=[
+            "super_admin_permissions",
+            "survey_admin_permissions",
+            "assignment_upload_permissions",
+            "no_permissions",
+        ],
+    )
+    def user_permissions_with_upload(self, request):
+        return request.param
+    
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -5205,7 +5245,7 @@ class TestAssignments:
         login_test_user,
         create_assignments,
         csrf_token,
-        user_permissions,
+        user_permissions_with_upload,
         request,
         create_email_config,
         create_email_schedule,
@@ -5215,7 +5255,7 @@ class TestAssignments:
 
         """
 
-        user_fixture, expected_permission = user_permissions
+        user_fixture, expected_permission = user_permissions_with_upload
         request.getfixturevalue(user_fixture)
 
         filepath = (
@@ -5486,7 +5526,7 @@ class TestAssignments:
 
             expected_response = {
                 "success": False,
-                "error": f"User does not have the required permission: WRITE Assignments",
+                "error": f"User does not have the required permission: WRITE Assignments Upload",
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
@@ -5497,7 +5537,7 @@ class TestAssignments:
         login_test_user,
         create_assignments,
         csrf_token,
-        user_permissions,
+        user_permissions_with_upload,
         request,
         create_email_config,
         create_email_schedule,
@@ -5506,7 +5546,7 @@ class TestAssignments:
         Function to test uploading asssignments csv with overwrite mode
         """
 
-        user_fixture, expected_permission = user_permissions
+        user_fixture, expected_permission = user_permissions_with_upload
         request.getfixturevalue(user_fixture)
 
         filepath = (
@@ -5777,7 +5817,7 @@ class TestAssignments:
 
             expected_response = {
                 "success": False,
-                "error": f"User does not have the required permission: WRITE Assignments",
+                "error": f"User does not have the required permission: WRITE Assignments Upload",
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
