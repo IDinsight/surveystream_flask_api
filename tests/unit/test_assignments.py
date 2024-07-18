@@ -6383,7 +6383,6 @@ class TestAssignments:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    @pytest.mark.run_only
     def test_available_columns(
         self,
         client,
