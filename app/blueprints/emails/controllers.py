@@ -18,6 +18,7 @@ from . import emails_bp
 from .models import (
     EmailConfig,
     EmailSchedule,
+    EmailScheduleFilter,
     EmailTableCatalog,
     EmailTemplate,
     EmailTemplateVariable,
@@ -331,6 +332,35 @@ def create_email_schedule(validated_payload):
 
     try:
         db.session.add(new_schedule)
+        db.session.flush()
+
+        new_schedule_uid = new_schedule.email_schedule_uid
+
+        # Delete existing filters if any
+        EmailScheduleFilter.query.filter_by(
+            email_schedule_uid=new_schedule_uid
+        ).delete()
+        db.session.flush()
+
+        # Get the max filter group id
+        max_filter_group_id = 0
+
+        # Upload Filter List
+        for filter_group in validated_payload.filter_list.data:
+            max_filter_group_id += 1
+
+            for filter_item in filter_group.get("filter_group"):
+
+                filter_obj = EmailScheduleFilter(
+                    email_schedule_uid=new_schedule_uid,
+                    filter_group_id=max_filter_group_id,
+                    filter_variable=filter_item.get("filter_variable"),
+                    filter_operator=filter_item.get("filter_operator"),
+                    filter_value=filter_item.get("filter_value"),
+                    filter_concatenator=filter_item.get("filter_concatenator"),
+                )
+                db.session.add(filter_obj)
+
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -437,6 +467,30 @@ def update_email_schedule(schedule_id, validated_payload):
     email_schedule.email_schedule_name = validated_payload.email_schedule_name.data
 
     try:
+        if len(validated_payload.filter_list.data) > 0:
+            # Delete existing filters
+            EmailScheduleFilter.query.filter_by(email_schedule_uid=schedule_id).delete()
+            db.session.flush()
+
+            # Get the max filter group id
+            max_filter_group_id = 0
+
+            # Upload Filter List
+            for filter_group in validated_payload.filter_list.data:
+                max_filter_group_id += 1
+
+                for filter_item in filter_group.get("filter_group"):
+
+                    filter_obj = EmailScheduleFilter(
+                        email_schedule_uid=schedule_id,
+                        filter_group_id=max_filter_group_id,
+                        filter_variable=filter_item.get("filter_variable"),
+                        filter_operator=filter_item.get("filter_operator"),
+                        filter_value=filter_item.get("filter_value"),
+                        filter_concatenator=filter_item.get("filter_concatenator"),
+                    )
+                    db.session.add(filter_obj)
+
         db.session.commit()
     except Exception as e:
         db.session.rollback()

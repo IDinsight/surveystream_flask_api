@@ -1,3 +1,6 @@
+from itertools import groupby
+from operator import attrgetter
+
 from sqlalchemy import TIME, CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.mutable import MutableDict
@@ -124,12 +127,22 @@ class EmailSchedule(db.Model):
         self.email_schedule_name = email_schedule_name
 
     def to_dict(self):
+        filter_list = EmailScheduleFilter.query.filter_by(
+            email_schedule_uid=self.email_schedule_uid
+        ).all()
+        filter_groupwise_list = [
+            {"filter_group": [filter.to_dict() for filter in filter_group]}
+            for key, filter_group in groupby(
+                filter_list, key=attrgetter("filter_group_id")
+            )
+        ]
         return {
             "email_schedule_uid": self.email_schedule_uid,
             "email_config_uid": self.email_config_uid,
             "email_schedule_name": self.email_schedule_name,
             "dates": self.dates,
             "time": str(self.time),
+            "filter_list": filter_groupwise_list,
         }
 
 
@@ -301,4 +314,54 @@ class EmailTableCatalog(db.Model):
             "column_name": self.column_name,
             "column_type": self.column_type,
             "column_description": self.column_description,
+        }
+
+
+class EmailScheduleFilter(db.Model):
+    __tablename__ = "email_schedule_filters"
+
+    email_schedule_uid = db.Column(
+        db.Integer, db.ForeignKey(EmailSchedule.email_schedule_uid), nullable=False
+    )
+    filter_group_id = db.Column(db.Integer)
+    filter_variable = db.Column(db.String(255), nullable=False)
+    filter_operator = db.Column(db.String(16), nullable=False)
+    filter_value = db.Column(db.Text, nullable=False)
+    filter_concatenator = db.Column(db.String(4), nullable=True)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(
+            "email_schedule_uid",
+            "filter_group_id",
+            "filter_variable",
+            "filter_operator",
+            "filter_value",
+        ),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self,
+        email_schedule_uid,
+        filter_group_id,
+        filter_variable,
+        filter_operator,
+        filter_value,
+        filter_concatenator,
+    ):
+        self.email_schedule_uid = email_schedule_uid
+        self.filter_group_id = filter_group_id
+        self.filter_variable = filter_variable
+        self.filter_operator = filter_operator
+        self.filter_value = filter_value
+        self.filter_concatenator = filter_concatenator
+
+    def to_dict(self):
+        return {
+            "email_schedule_uid": self.email_schedule_uid,
+            "filter_group_id": self.filter_group_id,
+            "filter_variable": self.filter_variable,
+            "filter_operator": self.filter_operator,
+            "filter_value": self.filter_value,
+            "filter_concatenator": self.filter_concatenator,
         }

@@ -617,6 +617,7 @@ class TestEmails:
                                 "email_schedule_uid": 1,
                                 "time": "20:00:00",
                                 "email_schedule_name": "Test Schedule",
+                                "filter_list": [],
                             }
                         ],
                         "templates": [
@@ -864,6 +865,7 @@ class TestEmails:
                     "email_schedule_uid": 1,
                     "time": "20:00:00",
                     "email_schedule_name": "Test Schedule",
+                    "filter_list": [],
                 },
                 "success": True,
             }
@@ -918,6 +920,7 @@ class TestEmails:
                         "email_schedule_uid": 1,
                         "time": "20:00:00",
                         "email_schedule_name": "Test Schedule",
+                        "filter_list": [],
                     }
                 ],
                 "success": True,
@@ -1058,6 +1061,7 @@ class TestEmails:
                     "email_config_uid": 1,
                     "time": "08:00:00",
                     "email_schedule_uid": create_email_schedule["email_schedule_uid"],
+                    "filter_list": [],
                 },
                 "message": "Email schedule updated successfully",
                 "success": True,
@@ -1092,7 +1096,464 @@ class TestEmails:
                             "email_schedule_uid"
                         ],
                         "email_schedule_name": "Test Schedule",
+                        "filter_list": [],
                     },
+                    "success": True,
+                },
+                get_response.json,
+            )
+
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    def test_emails_update_schedule_with_filters(
+        self, client, csrf_token, create_email_schedule, user_permissions, request
+    ):
+        """
+        Test updating emails schedule with filters for different roles
+        Expect newly created email schedule to be updated
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        current_datetime = datetime.now().date()
+
+        future_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(4)
+        ]
+
+        expected_response_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%a, %d %b %Y %H:%M:%S GMT")
+            for i in range(4)
+        ]
+
+        payload = {
+            "email_config_uid": 1,
+            "dates": future_dates,
+            "time": "08:00",
+            "email_schedule_name": "Test Schedule",
+            "filter_list": [
+                {
+                    "filter_group": [
+                        {
+                            "filter_variable": "test_column",
+                            "filter_operator": "equals",
+                            "filter_value": "test_value",
+                        },
+                        {
+                            "filter_variable": "test_column2",
+                            "filter_operator": "equals",
+                            "filter_value": "test_value2",
+                            "filter_concatenator": "AND",
+                        },
+                    ]
+                },
+                {
+                    "filter_group": [
+                        {
+                            "filter_variable": "test_column",
+                            "filter_operator": "equals",
+                            "filter_value": "test_value",
+                        },
+                        {
+                            "filter_variable": "test_column2",
+                            "filter_operator": "not equals",
+                            "filter_value": "test_value2",
+                            "filter_concatenator": "AND",
+                        },
+                    ]
+                },
+            ],
+        }
+
+        response = client.put(
+            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "dates": expected_response_dates,
+                    "email_config_uid": 1,
+                    "email_schedule_name": "Test Schedule",
+                    "email_schedule_uid": 1,
+                    "filter_list": [
+                        {
+                            "filter_group": [
+                                {
+                                    "email_schedule_uid": 1,
+                                    "filter_concatenator": None,
+                                    "filter_group_id": 1,
+                                    "filter_operator": "equals",
+                                    "filter_value": "test_value",
+                                    "filter_variable": "test_column",
+                                },
+                                {
+                                    "email_schedule_uid": 1,
+                                    "filter_concatenator": "AND",
+                                    "filter_group_id": 1,
+                                    "filter_operator": "equals",
+                                    "filter_value": "test_value2",
+                                    "filter_variable": "test_column2",
+                                },
+                            ]
+                        },
+                        {
+                            "filter_group": [
+                                {
+                                    "email_schedule_uid": 1,
+                                    "filter_concatenator": None,
+                                    "filter_group_id": 2,
+                                    "filter_operator": "equals",
+                                    "filter_value": "test_value",
+                                    "filter_variable": "test_column",
+                                },
+                                {
+                                    "email_schedule_uid": 1,
+                                    "filter_concatenator": "AND",
+                                    "filter_group_id": 2,
+                                    "filter_operator": "not equals",
+                                    "filter_value": "test_value2",
+                                    "filter_variable": "test_column2",
+                                },
+                            ]
+                        },
+                    ],
+                    "time": "08:00:00",
+                },
+                "message": "Email schedule updated successfully",
+                "success": True,
+            }
+            print("Response ", response.json)
+            print("Expected Response ", expected_response)
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+            get_response = client.get(
+                f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            print("Get Response", get_response.json)
+
+            assert get_response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                {
+                    "data": {
+                        "time": "08:00:00",
+                        "dates": expected_response_dates,
+                        "email_schedule_uid": create_email_schedule[
+                            "email_schedule_uid"
+                        ],
+                        "email_config_uid": 1,
+                        "email_schedule_name": "Test Schedule",
+                        "filter_list": [
+                            {
+                                "filter_group": [
+                                    {
+                                        "email_schedule_uid": create_email_schedule[
+                                            "email_schedule_uid"
+                                        ],
+                                        "filter_group_id": 1,
+                                        "filter_variable": "test_column",
+                                        "filter_operator": "equals",
+                                        "filter_value": "test_value",
+                                        "filter_concatenator": None,
+                                    },
+                                    {
+                                        "email_schedule_uid": create_email_schedule[
+                                            "email_schedule_uid"
+                                        ],
+                                        "filter_group_id": 1,
+                                        "filter_variable": "test_column2",
+                                        "filter_operator": "equals",
+                                        "filter_value": "test_value2",
+                                        "filter_concatenator": "AND",
+                                    },
+                                ]
+                            },
+                            {
+                                "filter_group": [
+                                    {
+                                        "email_schedule_uid": create_email_schedule[
+                                            "email_schedule_uid"
+                                        ],
+                                        "filter_group_id": 2,
+                                        "filter_variable": "test_column",
+                                        "filter_operator": "equals",
+                                        "filter_value": "test_value",
+                                        "filter_concatenator": None,
+                                    },
+                                    {
+                                        "email_schedule_uid": create_email_schedule[
+                                            "email_schedule_uid"
+                                        ],
+                                        "filter_group_id": 2,
+                                        "filter_variable": "test_column2",
+                                        "filter_operator": "not equals",
+                                        "filter_value": "test_value2",
+                                        "filter_concatenator": "AND",
+                                    },
+                                ]
+                            },
+                        ],
+                    },
+                    "success": True,
+                },
+                get_response.json,
+            )
+
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    def test_emails_create_schedule_with_filters(
+        self, client, csrf_token, create_email_schedule, user_permissions, request
+    ):
+        """
+        Test creating emails schedule with filters for different roles
+        Expect newly created email schedule to be updated
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        current_datetime = datetime.now().date()
+
+        future_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(4)
+        ]
+
+        expected_response_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%a, %d %b %Y %H:%M:%S GMT")
+            for i in range(4)
+        ]
+
+        payload = {
+            "email_config_uid": 1,
+            "dates": future_dates,
+            "time": "08:00",
+            "email_schedule_name": "Test Schedule_2",
+            "filter_list": [
+                {
+                    "filter_group": [
+                        {
+                            "filter_variable": "test_column",
+                            "filter_operator": "equals",
+                            "filter_value": "test_value",
+                        },
+                        {
+                            "filter_variable": "test_column2",
+                            "filter_operator": "equals",
+                            "filter_value": "test_value2",
+                            "filter_concatenator": "AND",
+                        },
+                    ]
+                },
+                {
+                    "filter_group": [
+                        {
+                            "filter_variable": "test_column",
+                            "filter_operator": "equals",
+                            "filter_value": "test_value",
+                        },
+                        {
+                            "filter_variable": "test_column2",
+                            "filter_operator": "not equals",
+                            "filter_value": "test_value2",
+                            "filter_concatenator": "AND",
+                        },
+                    ]
+                },
+            ],
+        }
+
+        response = client.post(
+            f"api/emails/schedule",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print("Response ", response.json)
+
+        if expected_permission:
+
+            assert response.status_code == 201
+
+            expected_response = {
+                "data": {
+                    "dates": expected_response_dates,
+                    "email_config_uid": 1,
+                    "email_schedule_name": "Test Schedule_2",
+                    "email_schedule_uid": 2,
+                    "filter_list": [
+                        {
+                            "filter_group": [
+                                {
+                                    "email_schedule_uid": 2,
+                                    "filter_concatenator": None,
+                                    "filter_group_id": 1,
+                                    "filter_operator": "equals",
+                                    "filter_value": "test_value",
+                                    "filter_variable": "test_column",
+                                },
+                                {
+                                    "email_schedule_uid": 2,
+                                    "filter_concatenator": "AND",
+                                    "filter_group_id": 1,
+                                    "filter_operator": "equals",
+                                    "filter_value": "test_value2",
+                                    "filter_variable": "test_column2",
+                                },
+                            ]
+                        },
+                        {
+                            "filter_group": [
+                                {
+                                    "email_schedule_uid": 2,
+                                    "filter_concatenator": None,
+                                    "filter_group_id": 2,
+                                    "filter_operator": "equals",
+                                    "filter_value": "test_value",
+                                    "filter_variable": "test_column",
+                                },
+                                {
+                                    "email_schedule_uid": 2,
+                                    "filter_concatenator": "AND",
+                                    "filter_group_id": 2,
+                                    "filter_operator": "not equals",
+                                    "filter_value": "test_value2",
+                                    "filter_variable": "test_column2",
+                                },
+                            ]
+                        },
+                    ],
+                    "time": "08:00:00",
+                },
+                "message": "Email schedule created successfully",
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+            get_response = client.get(
+                f"api/emails/schedule?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            print("Get Response", get_response.json)
+
+            assert get_response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                {
+                    "data": [
+                        {
+                            "dates": [
+                                "Fri, 19 Jul 2024 00:00:00 GMT",
+                                "Sat, 20 Jul 2024 00:00:00 GMT",
+                                "Sun, 21 Jul 2024 00:00:00 GMT",
+                                "Mon, 22 Jul 2024 00:00:00 GMT",
+                                "Fri, 19 Jul 2024 00:00:00 GMT",
+                            ],
+                            "email_config_uid": 1,
+                            "email_schedule_name": "Test Schedule",
+                            "email_schedule_uid": 1,
+                            "filter_list": [],
+                            "time": "20:00:00",
+                        },
+                        {
+                            "time": "08:00:00",
+                            "dates": expected_response_dates,
+                            "email_schedule_uid": 2,
+                            "email_config_uid": 1,
+                            "email_schedule_name": "Test Schedule_2",
+                            "filter_list": [
+                                {
+                                    "filter_group": [
+                                        {
+                                            "email_schedule_uid": 2,
+                                            "filter_group_id": 1,
+                                            "filter_variable": "test_column",
+                                            "filter_operator": "equals",
+                                            "filter_value": "test_value",
+                                            "filter_concatenator": None,
+                                        },
+                                        {
+                                            "email_schedule_uid": 2,
+                                            "filter_group_id": 1,
+                                            "filter_variable": "test_column2",
+                                            "filter_operator": "equals",
+                                            "filter_value": "test_value2",
+                                            "filter_concatenator": "AND",
+                                        },
+                                    ]
+                                },
+                                {
+                                    "filter_group": [
+                                        {
+                                            "email_schedule_uid": 2,
+                                            "filter_group_id": 2,
+                                            "filter_variable": "test_column",
+                                            "filter_operator": "equals",
+                                            "filter_value": "test_value",
+                                            "filter_concatenator": None,
+                                        },
+                                        {
+                                            "email_schedule_uid": 2,
+                                            "filter_group_id": 2,
+                                            "filter_variable": "test_column2",
+                                            "filter_operator": "not equals",
+                                            "filter_value": "test_value2",
+                                            "filter_concatenator": "AND",
+                                        },
+                                    ]
+                                },
+                            ],
+                        },
+                    ],
                     "success": True,
                 },
                 get_response.json,

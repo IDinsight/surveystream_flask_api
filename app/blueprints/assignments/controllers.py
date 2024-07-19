@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import cast
 
 from app import db
-from app.blueprints.emails.models import EmailConfig, EmailSchedule, ManualEmailTrigger
+from app.blueprints.emails.models import EmailConfig, ManualEmailTrigger
 from app.blueprints.enumerators.models import Enumerator, SurveyorForm, SurveyorLocation
 from app.blueprints.enumerators.queries import (
     build_prime_locations_with_location_hierarchy_subquery,

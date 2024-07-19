@@ -6869,6 +6869,24 @@ paths:
                 time:
                   type: string
                   format: time
+                filter_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      filter_group:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            filter_variable:
+                              type: string
+                            filter_operator:
+                              type: string
+                            filter_value:
+                              type: string
+                            filter_concatenator:
+                              type: string
               required:
                 - email_config_uid
                 - dates
@@ -6893,6 +6911,24 @@ paths:
                   time:
                     type: string
                     format: time
+                  filter_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filter_group:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              filter_variable:
+                                type: string
+                              filter_operator:
+                                type: string
+                              filter_value:
+                                type: string
+                              filter_concatenator:
+                                type: string
                 required:
                   - email_config_uid
                   - dates
@@ -6930,6 +6966,24 @@ paths:
                     time:
                       type: string
                       format: time
+                    filter_list:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          filter_group:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                filter_variable:
+                                  type: string
+                                filter_operator:
+                                  type: string
+                                filter_value:
+                                  type: string
+                                filter_concatenator:
+                                  type: string
 
   /emails/schedule/{email_schedule_uid}:
     get:
@@ -6963,6 +7017,24 @@ paths:
                   time:
                     type: string
                     format: time
+                  filter_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filter_group:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              filter_variable:
+                                type: string
+                              filter_operator:
+                                type: string
+                              filter_value:
+                                type: string
+                              filter_concatenator:
+                                type: string
     put:
       summary: Update a specific email schedule
       tags:
@@ -6993,6 +7065,24 @@ paths:
                 time:
                   type: string
                   format: time
+                filter_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      filter_group:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            filter_variable:
+                              type: string
+                            filter_operator:
+                              type: string
+                            filter_value:
+                              type: string
+                            filter_concatenator:
+                              type: string
               required:
                 - email_config_uid
                 - dates
@@ -7017,6 +7107,24 @@ paths:
                   time:
                     type: string
                     format: time
+                  filter_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filter_group:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              filter_variable:
+                                type: string
+                              filter_operator:
+                                type: string
+                              filter_value:
+                                type: string
+                              filter_concatenator:
+                                type: string
                 required:
                   - email_config_uid
                   - dates
