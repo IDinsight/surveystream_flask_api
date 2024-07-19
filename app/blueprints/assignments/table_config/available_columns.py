@@ -130,7 +130,7 @@ class AvailableColumns:
         for row in result:
             scto_fields.append(
                 {
-                    "column_key": f"scto_fields['{row.question_name}']",
+                    "column_key": f"scto_fields.{row.question_name}",
                     "column_label": row.question_name,
                 }
             )
