@@ -4314,7 +4314,123 @@ paths:
           description: Enumerator or target not found
         "422":
           description: Form errors
-  "/module-questionnaire/{survey_uid}":
+  /assignments/table-config/available-columns:
+    get:
+      summary: Get available columns for table configuration
+      description: >-
+        Return the columns that can be included as part of the table configuration for the given form
+      tags:
+        - Assignments Table Configuration
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assignments_main:
+                    type: array
+                    description: >
+                      List of columns with labels and data
+                      access keys
+
+                      Corresponds to the main table on the assignments tab of
+                      the web app
+                    items:
+                      type: object
+                      properties:
+                        column_label:
+                          type: string
+                          description: The label for the column
+                        column_key:
+                          type: string
+                          description: >-
+                            The column key that can be used to access the
+                            column records in the data response
+                  assignments_surveyors:
+                    type: array
+                    description: >
+                      List of columns with labels and data
+                      access keys
+
+                      Corresponds to the surveyors modal table on the
+                      assignments tab of the web app
+                    items:
+                      type: object
+                      properties:
+                        column_label:
+                          type: string
+                          description: The label for the column
+                        column_key:
+                          type: string
+                          description: >-
+                            The column key that can be used to access the
+                            column records in the data response
+                  assignments_review:
+                    type: array
+                    description: >
+                      List of columns with labels and data
+                      access keys
+
+                      Corresponds to the assignments review modal table on the
+                      assignments tab of the web app
+                    items:
+                      type: object
+                      properties:
+                        column_label:
+                          type: string
+                          description: The label for the column
+                        column_key:
+                          type: string
+                          description: >-
+                            The column key that can be used to access the
+                            column records in the data response
+                  surveyors:
+                    type: array
+                    description: >
+                      List of columns with labels and data
+                      access keys
+
+                      Corresponds to the main table on the surveyors tab of the
+                      web app
+                    items:
+                      type: object
+                      properties:
+                        column_label:
+                          type: string
+                          description: The label for the column
+                        column_key:
+                          type: string
+                          description: >-
+                            The column key that can be used to access the
+                            column records in the data response
+                  targets:
+                    type: array
+                    description: >
+                      List of columns with labels and data
+                      access keys
+
+                      Corresponds to the main table on the targets tab of the
+                      web app
+                    items:
+                      type: object
+                      properties:
+                        column_label:
+                          type: string
+                          description: The label for the column
+                        column_key:
+                          type: string
+                          description: >-
+                            The column key that can be used to access the
+                            column records in the data response
+  /module-questionnaire/{survey_uid}:
     get:
       tags:
         - Module Questionnaire
@@ -6366,9 +6482,6 @@ paths:
                   success:
                     type: boolean
                     example: false
-                  data:
-                    type: 'null'
-                    example: null
                   message:
                     type: string
                     example: "Email configs not found"
@@ -7314,7 +7427,7 @@ paths:
                 variable_list:
                   type: array
                   items:
-                    type: dict
+                    type: object
                     properties:
                       variable_name:
                         type: string
@@ -7325,7 +7438,7 @@ paths:
                       variable_expression:
                         type: string
                       table_column_mapping:
-                        type: dict
+                        type: object
               required:
                 - language
                 - email_config_uid
@@ -7350,7 +7463,7 @@ paths:
                   variable_list:
                     type: array
                     items:
-                      type: dict
+                      type: object
                       properties:
                         variable_name:
                           type: string
@@ -7361,7 +7474,7 @@ paths:
                         variable_expression:
                           type: string
                         table_column_mapping:
-                          type: dict
+                          type: object
                 required:
                   - email_config_uid
                   - subject
@@ -7399,7 +7512,7 @@ paths:
                     variable_list:
                       type: array
                       items:
-                        type: dict
+                        type: object
                         properties:
                           variable_name:
                             type: string
@@ -7410,7 +7523,7 @@ paths:
                           variable_expression:
                             type: string
                           table_column_mapping:
-                            type: dict
+                            type: object
                   required:
                     - email_config_uid
                     - subject
@@ -7453,7 +7566,7 @@ paths:
                   variable_list:
                     type: array
                     items:
-                      type: dict
+                      type: object
                       properties:
                         variable_name:
                           type: string
@@ -7464,7 +7577,7 @@ paths:
                         variable_expression:
                           type: string
                         table_column_mapping:
-                          type: dict
+                          type: object
                 required:
                   - email_config_uid
                   - subject
@@ -7505,7 +7618,7 @@ paths:
                 variable_list:
                   type: array
                   items:
-                    type: dict
+                    type: object
                     properties:
                       variable_name:
                         type: string
@@ -7516,7 +7629,7 @@ paths:
                       variable_expression:
                         type: string
                       table_column_mapping:
-                        type: dict
+                        type: object
               required:
                 - email_config_uid
                 - subject
@@ -7541,7 +7654,7 @@ paths:
                   variable_list:
                     type: array
                     items:
-                      type: dict
+                      type: object
                       properties:
                         variable_name:
                           type: string
@@ -7552,7 +7665,7 @@ paths:
                         variable_expression:
                           type: string
                         table_column_mapping:
-                          type: dict
+                          type: object
                 required:
                   - email_config_uid
                   - subject
@@ -7592,19 +7705,19 @@ paths:
           schema:
             type: integer
         - name: email_source_gsheet_link
-          in: Body
+          in: query
           description: Link to Google Sheet
           required: true
           schema:
             type: string
         - name: email_source_gsheet_tab
-          in: Body
+          in: query
           description: Google Sheet Tab name
           required: true
           schema:
             type: string
         - name: email_source_gsheet_header_row
-          in: Body
+          in: query
           description: Google Sheet Header Row Number
           required: true
           schema:

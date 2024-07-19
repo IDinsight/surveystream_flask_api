@@ -1,7 +1,7 @@
 from app import db
 from app.blueprints.targets.models import TargetColumnConfig, TargetStatus, Target
 from app.blueprints.enumerators.models import EnumeratorColumnConfig
-from app.blueprints.forms.models import Form
+from app.blueprints.forms.models import Form, SCTOQuestion
 
 
 class AvailableColumns:
@@ -105,14 +105,35 @@ class AvailableColumns:
         )
 
         scto_fields = []
-        for target_status, target in result:
-            if target_status.scto_field_name is not None:
-                scto_fields.append(
-                    {
-                        "column_key": f"scto_fields['{target_status.scto_field_name}']",
-                        "column_label": target_status.scto_field_name,
-                    }
+        result = (
+            SCTOQuestion.query.filter_by(form_uid=form_uid, is_repeat_group=False)
+            .filter(
+                SCTOQuestion.question_type.notin_(
+                    [
+                        "begin group",
+                        "end group",
+                        "begin repeat",
+                        "end repeat",
+                        "note",
+                        "image",
+                        "audio",
+                        "video",
+                        "file",
+                        "text audit",
+                        "audio audit" "sensor_statistic",
+                        "sensor_stream",
+                    ]
                 )
+            )
+            .all()
+        )
+        for row in result:
+            scto_fields.append(
+                {
+                    "column_key": f"scto_fields['{row.question_name}']",
+                    "column_label": row.question_name,
+                }
+            )
 
         self.assignments_main = [
             {
