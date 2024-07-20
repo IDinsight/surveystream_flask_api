@@ -105,6 +105,16 @@ class AvailableColumns:
         )
 
         scto_fields = []
+
+        # Sometimes the formdef_metadata_fields are not present in the SCTOQuestion table so we will handle them manually
+        formdef_metadata_fields = [
+            "instanceID",
+            "formdef_version",
+            "starttime",
+            "endtime",
+            "SubmissionDate",
+        ]
+
         result = (
             SCTOQuestion.query.filter_by(form_uid=form_uid, is_repeat_group=False)
             .filter(
@@ -127,13 +137,24 @@ class AvailableColumns:
             )
             .all()
         )
+
         for row in result:
-            scto_fields.append(
+            if row.question_name not in formdef_metadata_fields:
+                scto_fields.append(
+                    {
+                        "column_key": f"scto_fields.{row.question_name}",
+                        "column_label": row.question_name,
+                    }
+                )
+
+        if len(scto_fields) != 0:
+            scto_fields = [
                 {
-                    "column_key": f"scto_fields.{row.question_name}",
-                    "column_label": row.question_name,
+                    "column_key": f"scto_fields.{item}",
+                    "column_label": item,
                 }
-            )
+                for item in formdef_metadata_fields
+            ] + scto_fields
 
         self.assignments_main = [
             {
@@ -180,12 +201,12 @@ class AvailableColumns:
             "custom_fields_placeholder",
             "locations_placeholder",
             {
-                "column_key": "last_attempt_survey_status_label",
-                "column_label": "Last Attempt Survey Status",
+                "column_key": "final_survey_status_label",
+                "column_label": "Final Survey Status",
             },
             {
-                "column_key": "last_attempt_survey_status",
-                "column_label": "Last Attempt Survey Status Code",
+                "column_key": "final_survey_status",
+                "column_label": "Final Survey Status Code",
             },
             {
                 "column_key": "revisit_sections",
@@ -279,12 +300,90 @@ class AvailableColumns:
                 "column_key": "prev_assigned_to",
                 "column_label": "Previously Assigned To",
             },
-            {"column_key": "target_id", "column_label": "Target Unique ID"},
             {
-                "column_key": "last_attempt_survey_status_label",
-                "column_label": "Target Status",
+                "column_key": "assigned_enumerator_id",
+                "column_label": "Surveyor ID",
             },
+            {
+                "column_key": "assigned_enumerator_home_address",
+                "column_label": "Surveyor Address",
+            },
+            {
+                "column_key": "assigned_enumerator_gender",
+                "column_label": "Surveyor Gender",
+            },
+            {
+                "column_key": "assigned_enumerator_language",
+                "column_label": "Surveyor Language",
+            },
+            {
+                "column_key": "assigned_enumerator_email",
+                "column_label": "Surveyor Email",
+            },
+            {
+                "column_key": "assigned_enumerator_mobile_primary",
+                "column_label": "Surveyor Mobile",
+            },
+            "assigned_enumerator_custom_fields_placeholder",
+            {
+                "column_key": "target_id",
+                "column_label": "Target ID",
+            },
+            {
+                "column_key": "gender",
+                "column_label": "Gender",
+            },
+            {
+                "column_key": "language",
+                "column_label": "Language",
+            },
+            "custom_fields_placeholder",
+            "locations_placeholder",
+            {
+                "column_key": "final_survey_status_label",
+                "column_label": "Final Survey Status",
+            },
+            {
+                "column_key": "final_survey_status",
+                "column_label": "Final Survey Status Code",
+            },
+            {
+                "column_key": "revisit_sections",
+                "column_label": "Revisit Sections",
+            },
+            {
+                "column_key": "num_attempts",
+                "column_label": "Total Attempts",
+            },
+            {
+                "column_key": "refusal_flag",
+                "column_label": "Refused",
+            },
+            {
+                "column_key": "completed_flag",
+                "column_label": "Completed",
+            },
+            "scto_fields_placeholder",
         ]
+        # "supervisors_placeholder", # Add this back in once we have the supervisor hierarchy in place
+
+        self.assignments_review = self.replace_custom_fields_placeholder(
+            self.assignments_review, target_custom_fields, "custom_fields_placeholder"
+        )
+
+        self.assignments_review = self.replace_custom_fields_placeholder(
+            self.assignments_review,
+            assigned_enumerator_custom_fields,
+            "assigned_enumerator_custom_fields_placeholder",
+        )
+
+        self.assignments_review = self.replace_locations_placeholder(
+            self.assignments_review, target_location_columns
+        )
+
+        self.assignments_review = self.replace_scto_fields_placeholder(
+            self.assignments_review, scto_fields
+        )
 
         self.surveyors = [
             {"column_key": "name", "column_label": "Name"},
@@ -339,12 +438,12 @@ class AvailableColumns:
             "custom_fields_placeholder",
             "locations_placeholder",
             {
-                "column_key": "last_attempt_survey_status_label",
-                "column_label": "Last Attempt Survey Status",
+                "column_key": "final_survey_status_label",
+                "column_label": "Final Survey Status",
             },
             {
-                "column_key": "last_attempt_survey_status",
-                "column_label": "Last Attempt Survey Status Code",
+                "column_key": "final_survey_status",
+                "column_label": "Final Survey Status Code",
             },
             {
                 "column_key": "revisit_sections",

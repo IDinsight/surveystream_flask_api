@@ -6473,12 +6473,12 @@ class TestAssignments:
                     "column_label": "PSU Name",
                 },
                 {
-                    "column_key": "last_attempt_survey_status_label",
-                    "column_label": "Last Attempt Survey Status",
+                    "column_key": "final_survey_status_label",
+                    "column_label": "Final Survey Status",
                 },
                 {
-                    "column_key": "last_attempt_survey_status",
-                    "column_label": "Last Attempt Survey Status Code",
+                    "column_key": "final_survey_status",
+                    "column_label": "Final Survey Status Code",
                 },
                 {"column_key": "revisit_sections", "column_label": "Revisit Sections"},
                 {"column_key": "num_attempts", "column_label": "Total Attempts"},
@@ -6494,11 +6494,80 @@ class TestAssignments:
                     "column_key": "prev_assigned_to",
                     "column_label": "Previously Assigned To",
                 },
-                {"column_key": "target_id", "column_label": "Target Unique ID"},
+                {"column_key": "assigned_enumerator_id", "column_label": "Surveyor ID"},
                 {
-                    "column_key": "last_attempt_survey_status_label",
-                    "column_label": "Target Status",
+                    "column_key": "assigned_enumerator_home_address",
+                    "column_label": "Surveyor Address",
                 },
+                {
+                    "column_key": "assigned_enumerator_gender",
+                    "column_label": "Surveyor Gender",
+                },
+                {
+                    "column_key": "assigned_enumerator_language",
+                    "column_label": "Surveyor Language",
+                },
+                {
+                    "column_key": "assigned_enumerator_email",
+                    "column_label": "Surveyor Email",
+                },
+                {
+                    "column_key": "assigned_enumerator_mobile_primary",
+                    "column_label": "Surveyor Mobile",
+                },
+                {
+                    "column_key": "assigned_enumerator_custom_fields['Mobile (Secondary)']",
+                    "column_label": "Mobile (Secondary)",
+                },
+                {
+                    "column_key": "assigned_enumerator_custom_fields['Age']",
+                    "column_label": "Age",
+                },
+                {"column_key": "target_id", "column_label": "Target ID"},
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "custom_fields['Name']", "column_label": "Name"},
+                {
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Mobile no.",
+                },
+                {"column_key": "custom_fields['Address']", "column_label": "Address"},
+                {
+                    "column_key": "target_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {
+                    "column_key": "target_locations[1].location_id",
+                    "column_label": "Mandal ID",
+                },
+                {
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "Mandal Name",
+                },
+                {
+                    "column_key": "target_locations[2].location_id",
+                    "column_label": "PSU ID",
+                },
+                {
+                    "column_key": "target_locations[2].location_name",
+                    "column_label": "PSU Name",
+                },
+                {
+                    "column_key": "final_survey_status_label",
+                    "column_label": "Final Survey Status",
+                },
+                {
+                    "column_key": "final_survey_status",
+                    "column_label": "Final Survey Status Code",
+                },
+                {"column_key": "revisit_sections", "column_label": "Revisit Sections"},
+                {"column_key": "num_attempts", "column_label": "Total Attempts"},
+                {"column_key": "refusal_flag", "column_label": "Refused"},
+                {"column_key": "completed_flag", "column_label": "Completed"},
             ],
             "assignments_surveyors": [
                 {"column_key": "name", "column_label": "Surveyor Name"},
@@ -6592,12 +6661,12 @@ class TestAssignments:
                     "column_label": "PSU Name",
                 },
                 {
-                    "column_key": "last_attempt_survey_status_label",
-                    "column_label": "Last Attempt Survey Status",
+                    "column_key": "final_survey_status_label",
+                    "column_label": "Final Survey Status",
                 },
                 {
-                    "column_key": "last_attempt_survey_status",
-                    "column_label": "Last Attempt Survey Status Code",
+                    "column_key": "final_survey_status",
+                    "column_label": "Final Survey Status Code",
                 },
                 {"column_key": "revisit_sections", "column_label": "Revisit Sections"},
                 {"column_key": "num_attempts", "column_label": "Total Attempts"},
