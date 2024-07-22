@@ -6422,3 +6422,300 @@ class TestAssignments:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_available_columns(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test the available columns endpoint
+        """
+
+        response = client.get(
+            "/api/assignments/table-config/available-columns",
+            query_string={"form_uid": 1},
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Surveyor Name",
+                },
+                {"column_key": "assigned_enumerator_id", "column_label": "Surveyor ID"},
+                {
+                    "column_key": "assigned_enumerator_home_address",
+                    "column_label": "Surveyor Address",
+                },
+                {
+                    "column_key": "assigned_enumerator_gender",
+                    "column_label": "Surveyor Gender",
+                },
+                {
+                    "column_key": "assigned_enumerator_language",
+                    "column_label": "Surveyor Language",
+                },
+                {
+                    "column_key": "assigned_enumerator_email",
+                    "column_label": "Surveyor Email",
+                },
+                {
+                    "column_key": "assigned_enumerator_mobile_primary",
+                    "column_label": "Surveyor Mobile",
+                },
+                {
+                    "column_key": "assigned_enumerator_custom_fields['Mobile (Secondary)']",
+                    "column_label": "Mobile (Secondary)",
+                },
+                {
+                    "column_key": "assigned_enumerator_custom_fields['Age']",
+                    "column_label": "Age",
+                },
+                {"column_key": "target_id", "column_label": "Target ID"},
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "custom_fields['Name']", "column_label": "Name"},
+                {
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Mobile no.",
+                },
+                {"column_key": "custom_fields['Address']", "column_label": "Address"},
+                {
+                    "column_key": "target_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {
+                    "column_key": "target_locations[1].location_id",
+                    "column_label": "Mandal ID",
+                },
+                {
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "Mandal Name",
+                },
+                {
+                    "column_key": "target_locations[2].location_id",
+                    "column_label": "PSU ID",
+                },
+                {
+                    "column_key": "target_locations[2].location_name",
+                    "column_label": "PSU Name",
+                },
+                {
+                    "column_key": "final_survey_status_label",
+                    "column_label": "Final Survey Status",
+                },
+                {
+                    "column_key": "final_survey_status",
+                    "column_label": "Final Survey Status Code",
+                },
+                {"column_key": "revisit_sections", "column_label": "Revisit Sections"},
+                {"column_key": "num_attempts", "column_label": "Total Attempts"},
+                {"column_key": "refusal_flag", "column_label": "Refused"},
+                {"column_key": "completed_flag", "column_label": "Completed"},
+            ],
+            "assignments_review": [
+                {
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Surveyor Name",
+                },
+                {
+                    "column_key": "prev_assigned_to",
+                    "column_label": "Previously Assigned To",
+                },
+                {"column_key": "assigned_enumerator_id", "column_label": "Surveyor ID"},
+                {
+                    "column_key": "assigned_enumerator_home_address",
+                    "column_label": "Surveyor Address",
+                },
+                {
+                    "column_key": "assigned_enumerator_gender",
+                    "column_label": "Surveyor Gender",
+                },
+                {
+                    "column_key": "assigned_enumerator_language",
+                    "column_label": "Surveyor Language",
+                },
+                {
+                    "column_key": "assigned_enumerator_email",
+                    "column_label": "Surveyor Email",
+                },
+                {
+                    "column_key": "assigned_enumerator_mobile_primary",
+                    "column_label": "Surveyor Mobile",
+                },
+                {
+                    "column_key": "assigned_enumerator_custom_fields['Mobile (Secondary)']",
+                    "column_label": "Mobile (Secondary)",
+                },
+                {
+                    "column_key": "assigned_enumerator_custom_fields['Age']",
+                    "column_label": "Age",
+                },
+                {"column_key": "target_id", "column_label": "Target ID"},
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "custom_fields['Name']", "column_label": "Name"},
+                {
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Mobile no.",
+                },
+                {"column_key": "custom_fields['Address']", "column_label": "Address"},
+                {
+                    "column_key": "target_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {
+                    "column_key": "target_locations[1].location_id",
+                    "column_label": "Mandal ID",
+                },
+                {
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "Mandal Name",
+                },
+                {
+                    "column_key": "target_locations[2].location_id",
+                    "column_label": "PSU ID",
+                },
+                {
+                    "column_key": "target_locations[2].location_name",
+                    "column_label": "PSU Name",
+                },
+                {
+                    "column_key": "final_survey_status_label",
+                    "column_label": "Final Survey Status",
+                },
+                {
+                    "column_key": "final_survey_status",
+                    "column_label": "Final Survey Status Code",
+                },
+                {"column_key": "revisit_sections", "column_label": "Revisit Sections"},
+                {"column_key": "num_attempts", "column_label": "Total Attempts"},
+                {"column_key": "refusal_flag", "column_label": "Refused"},
+                {"column_key": "completed_flag", "column_label": "Completed"},
+            ],
+            "assignments_surveyors": [
+                {"column_key": "name", "column_label": "Surveyor Name"},
+                {"column_key": "surveyor_status", "column_label": "Status"},
+                {
+                    "column_key": "surveyor_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {
+                    "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                    "column_label": "Total Assigned Targets",
+                },
+                {
+                    "column_key": "form_productivity.test_scto_input_output.total_pending_targets",
+                    "column_label": "Total Pending Targets",
+                },
+                {
+                    "column_key": "form_productivity.test_scto_input_output.total_completed_targets",
+                    "column_label": "Total Completed Targets",
+                },
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "home_address", "column_label": "Address"},
+                {"column_key": "email", "column_label": "Email"},
+                {"column_key": "mobile_primary", "column_label": "Mobile"},
+                {
+                    "column_key": "custom_fields['Mobile (Secondary)']",
+                    "column_label": "Mobile (Secondary)",
+                },
+                {"column_key": "custom_fields['Age']", "column_label": "Age"},
+            ],
+            "surveyors": [
+                {"column_key": "name", "column_label": "Name"},
+                {"column_key": "enumerator_id", "column_label": "ID"},
+                {"column_key": "surveyor_status", "column_label": "Status"},
+                {
+                    "column_key": "surveyor_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {"column_key": "email", "column_label": "Email"},
+                {"column_key": "mobile_primary", "column_label": "Mobile"},
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "home_address", "column_label": "Address"},
+                {
+                    "column_key": "custom_fields['Mobile (Secondary)']",
+                    "column_label": "Mobile (Secondary)",
+                },
+                {"column_key": "custom_fields['Age']", "column_label": "Age"},
+            ],
+            "targets": [
+                {"column_key": "target_id", "column_label": "Target ID"},
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "custom_fields['Name']", "column_label": "Name"},
+                {
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Mobile no.",
+                },
+                {"column_key": "custom_fields['Address']", "column_label": "Address"},
+                {
+                    "column_key": "target_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {
+                    "column_key": "target_locations[1].location_id",
+                    "column_label": "Mandal ID",
+                },
+                {
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "Mandal Name",
+                },
+                {
+                    "column_key": "target_locations[2].location_id",
+                    "column_label": "PSU ID",
+                },
+                {
+                    "column_key": "target_locations[2].location_name",
+                    "column_label": "PSU Name",
+                },
+                {
+                    "column_key": "final_survey_status_label",
+                    "column_label": "Final Survey Status",
+                },
+                {
+                    "column_key": "final_survey_status",
+                    "column_label": "Final Survey Status Code",
+                },
+                {"column_key": "revisit_sections", "column_label": "Revisit Sections"},
+                {"column_key": "num_attempts", "column_label": "Total Attempts"},
+                {"column_key": "refusal_flag", "column_label": "Refused"},
+                {"column_key": "completed_flag", "column_label": "Completed"},
+            ],
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}

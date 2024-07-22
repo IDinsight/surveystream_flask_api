@@ -10,6 +10,7 @@ from flask_login import current_user
 from .models import TableConfig
 from .validators import UpdateTableConfigValidator, TableConfigQueryParamValidator
 from .default_config import DefaultTableConfig
+from .available_columns import AvailableColumns
 from .utils import validate_table_config
 from .errors import InvalidTableConfigError
 from app.blueprints.locations.models import GeoLevel
@@ -365,3 +366,140 @@ def update_table_config(validated_payload):
         ),
         200,
     )
+
+
+@table_config_bp.route("/available-columns", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(TableConfigQueryParamValidator)
+@custom_permissions_required("READ Assignments", "query", "form_uid")
+def get_available_columns(validated_query_params):
+    """
+    Returns the full set of available columns for the assignments module tables
+    """
+
+    def is_excluded_supervisor(row, user_level):
+        """
+        Check if the table config row should be excluded because the supervisor is not at a child supervisor level for the logged in user
+        """
+        is_excluded_supervisor = False
+
+        try:
+            if (
+                row.column_key.split(".")[0] == "supervisors"
+                and int(row.column_key.split(".")[1].split("_")[1]) <= user_level
+            ):
+                is_excluded_supervisor = True
+
+        except:
+            pass
+
+        return is_excluded_supervisor
+
+    user_uid = current_user.user_uid
+    form_uid = validated_query_params.form_uid.data
+
+    # Get the survey UID from the form UID
+    form = Form.query.filter_by(form_uid=form_uid).first()
+
+    if form is None:
+        return (
+            jsonify(message=f"The form 'form_uid={form_uid}' could not be found."),
+            404,
+        )
+
+    survey_uid = form.survey_uid
+
+    # survey_query = build_survey_query(form_uid)
+    # user_level = build_user_level_query(user_uid, survey_query).first().level # TODO: Add this back in once we have the supervisor hierarchy in place
+
+    # Figure out if we need to handle location columns
+
+    enumerator_location_configured = False
+    target_location_configured = False
+
+    result = TargetColumnConfig.query.filter(
+        TargetColumnConfig.form_uid == form_uid,
+        TargetColumnConfig.column_type == "location",
+    ).first()
+
+    if result is not None:
+        target_location_configured = True
+
+    result = EnumeratorColumnConfig.query.filter(
+        EnumeratorColumnConfig.form_uid == form_uid,
+        EnumeratorColumnConfig.column_type == "location",
+    ).first()
+
+    if result is not None:
+        enumerator_location_configured = True
+
+    geo_level_hierarchy = None
+    prime_geo_level_uid = None
+
+    if enumerator_location_configured or target_location_configured:
+        # Get the geo levels for the survey
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+        try:
+            geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+        except InvalidGeoLevelHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "geo_level_hierarchy": e.geo_level_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+
+    if enumerator_location_configured:
+        prime_geo_level_uid = (
+            Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
+        )
+
+        if prime_geo_level_uid is None:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": "The prime_geo_level_uid is not configured for this survey but is found as a column in the enumerator_column_config table.",
+                    }
+                ),
+                422,
+            )
+
+        if prime_geo_level_uid not in [
+            geo_level.geo_level_uid
+            for geo_level in geo_level_hierarchy.ordered_geo_levels
+        ]:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": f"The prime_geo_level_uid '{prime_geo_level_uid}' is not in the location type hierarchy for this survey.",
+                    }
+                ),
+                422,
+            )
+
+    # available_columns = {
+    #     "surveyors": [],
+    #     "targets": [],
+    #     "assignments_main": [],
+    #     "assignments_surveyors": [],
+    #     "assignments_review": [],
+    # }
+
+    available_columns = AvailableColumns(
+        form_uid,
+        survey_uid,
+        geo_level_hierarchy,
+        prime_geo_level_uid,
+        enumerator_location_configured,
+        target_location_configured,
+    )
+
+    return jsonify(available_columns.to_dict())
