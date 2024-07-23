@@ -14,7 +14,8 @@ class ModuleQuestionnaire(db.Model):
         db.Integer, db.ForeignKey(Survey.survey_uid), primary_key=True
     )
     target_assignment_criteria = db.Column(ARRAY(db.String()))
-    supervisor_assignment_criteria = db.Column(ARRAY(db.String()))
+    target_mapping_criteria = db.Column(ARRAY(db.String()))
+    surveyor_mapping_criteria = db.Column(ARRAY(db.String()))
     supervisor_hierarchy_exists = db.Column(db.Boolean())
     reassignment_required = db.Column(db.Boolean())
     assignment_process = db.Column(
@@ -37,7 +38,8 @@ class ModuleQuestionnaire(db.Model):
         self,
         survey_uid,
         target_assignment_criteria,
-        supervisor_assignment_criteria,
+        target_mapping_criteria,
+        surveyor_mapping_criteria,
         supervisor_hierarchy_exists,
         reassignment_required,
         assignment_process,
@@ -46,7 +48,8 @@ class ModuleQuestionnaire(db.Model):
     ):
         self.survey_uid = survey_uid
         self.target_assignment_criteria = target_assignment_criteria
-        self.supervisor_assignment_criteria = supervisor_assignment_criteria
+        self.target_mapping_criteria = target_mapping_criteria
+        self.surveyor_mapping_criteria = surveyor_mapping_criteria
         self.supervisor_hierarchy_exists = supervisor_hierarchy_exists
         self.reassignment_required = reassignment_required
         self.assignment_process = assignment_process
@@ -57,7 +60,8 @@ class ModuleQuestionnaire(db.Model):
         return {
             "survey_uid": self.survey_uid,
             "target_assignment_criteria": self.target_assignment_criteria,
-            "supervisor_assignment_criteria": self.supervisor_assignment_criteria,
+            "target_mapping_criteria": self.target_mapping_criteria,
+            "surveyor_mapping_criteria": self.surveyor_mapping_criteria,
             "supervisor_hierarchy_exists": self.supervisor_hierarchy_exists,
             "reassignment_required": self.reassignment_required,
             "assignment_process": self.assignment_process,
