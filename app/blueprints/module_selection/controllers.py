@@ -80,6 +80,28 @@ def add_module_status(validated_payload):
     # Removing the modules if user deselect the card
     for module_status in list(deselected_modules_status):
         if module_status.config_status == "Not Started":
+            if module_status.module_id in [16, 9]:
+                # For '16: Assignments column configuration' and '9: Assignments' deselection,
+                # check if the other module is also of not started status before deleting
+                started_config = (
+                    db.session.query(ModuleStatus)
+                    .filter(
+                        ModuleStatus.survey_uid == survey_uid,
+                        ModuleStatus.module_id.in_([9, 16]),
+                        ModuleStatus.config_status != "Not Started",
+                    )
+                    .first()
+                )
+                if started_config:
+                    return (
+                        jsonify(
+                            {
+                                "success": False,
+                                "message": 'Only modules with "Not Started" status can be deselected.',
+                            }
+                        ),
+                        422,
+                    )
             db.session.delete(module_status)
         else:
             return (
