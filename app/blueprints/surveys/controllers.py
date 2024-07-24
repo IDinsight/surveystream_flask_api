@@ -193,7 +193,9 @@ def get_survey_config_status(survey_uid):
     from app.blueprints.emails.models import EmailConfig
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
-    scto_information = Form.query.filter_by(survey_uid=survey_uid).first()
+    scto_information = Form.query.filter_by(
+        survey_uid=survey_uid, form_type="parent"
+    ).first()
     roles = Role.query.filter_by(survey_uid=survey_uid).first()
     locations = GeoLevel.query.filter_by(survey_uid=survey_uid).first()
 
@@ -203,6 +205,7 @@ def get_survey_config_status(survey_uid):
     target_status_mapping = None
     media_files_config = None
     email_config = None
+    dq_form_config = None
 
     if scto_information is not None:
         enumerators = Enumerator.query.filter_by(
@@ -231,6 +234,16 @@ def get_survey_config_status(survey_uid):
             db.session.query(EmailConfig)
             .join(Form, Form.form_uid == EmailConfig.form_uid)
             .filter(Form.survey_uid == survey_uid)
+            .first()
+        )
+
+        dq_form_config = (
+            db.session.query(Form)
+            .filter(
+                Form.survey_uid == survey_uid,
+                Form.form_type == "dq",
+                Form.parent_form_uid == scto_information.form_uid,
+            )
             .first()
         )
 
@@ -276,6 +289,7 @@ def get_survey_config_status(survey_uid):
         elif item["name"] == "Target status mapping":
             if target_status_mapping is not None:
                 item["status"] = "In Progress"
+
     if "Module configuration" in data:
         # Extract the current module_ids and find the maximum
         current_ids = [
@@ -290,35 +304,14 @@ def get_survey_config_status(survey_uid):
                 if item["name"] == "Assignments":
                     if assignments is not None:
                         item["status"] = "In Progress"
-
-                    if "Emails" not in data["Module configuration"]:
-                        data["Module configuration"].append(
-                            {
-                                "module_id": next_id,
-                                "name": "Emails",
-                                "status": "Not Started",
-                            }
-                        )
-                        next_id += 1
-
-                    if (
-                        "Assignments column configuration"
-                        not in data["Module configuration"]
-                    ):
-                        data["Module configuration"].append(
-                            {
-                                "module_id": next_id,
-                                "name": "Assignments column configuration",
-                                "status": "Not Started",
-                            }
-                        )
-                        next_id += 1
-
                 elif item["name"] == "Media (Audio/Photo) audits":
                     if media_files_config is not None:
                         item["status"] = "In Progress"
                 elif item["name"] == "Emails":
                     if email_config is not None:
+                        item["status"] = "In Progress"
+                elif item["name"] == "Data quality":
+                    if dq_form_config is not None:
                         item["status"] = "In Progress"
 
     response = {"success": True, "data": data}
