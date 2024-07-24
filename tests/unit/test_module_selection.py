@@ -148,3 +148,93 @@ class TestModuleSelection:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_select_assignments_module(
+        self,
+        client,
+        csrf_token,
+        test_user_credentials,
+        create_module_selection,
+    ):
+        """
+        Test that the assignments module addition automatically adds the assignments column configuration module
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "modules": ["1", "2", "3", "4", "5", "6", "7", "8", "13", "14", "9"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Test the survey was inserted correctly
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "In Progress", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 2, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 4, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 5, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 6, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 7, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 8, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 13, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 14, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 9, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # Test the config-status has been updated for the assignments column configuration module
+        response = client.get("/api/surveys/1/config-status")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "Basic information": {"status": "In Progress"},
+                "Module selection": {"status": "In Progress"},
+                "Survey information": [
+                    {"name": "SurveyCTO information", "status": "Not Started"},
+                    {"name": "Field supervisor roles", "status": "Not Started"},
+                    {"name": "Survey locations", "status": "Not Started"},
+                    {"name": "SurveyStream users", "status": "Not Started"},
+                    {"name": "Enumerators", "status": "Not Started"},
+                    {"name": "Targets", "status": "Not Started"},
+                ],
+                "Module configuration": [
+                    {"module_id": 9, "name": "Assignments", "status": "Not Started"},
+                    {
+                        "module_id": 13,
+                        "name": "Surveyor hiring",
+                        "status": "Not Started",
+                    },
+                    {
+                        "module_id": 14,
+                        "name": "Target status mapping",
+                        "status": "Not Started",
+                    },
+                    {
+                        "module_id": 16,
+                        "name": "Assignments column configuration",
+                        "status": "Not Started",
+                    },
+                ],
+                "overall_status": "In Progress - Configuration",
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
