@@ -158,7 +158,7 @@ class TestEmails:
         Insert an email config as a setup step for email tests
         """
         payload = {
-            "config_type": "Assignments",
+            "config_name": "Assignments",
             "form_uid": 1,
             "report_users": [1, 2, 3],
             "email_source": "SurveyStream Data",
@@ -283,7 +283,7 @@ class TestEmails:
         Test if exception is raised when creating configs
         """
         payload = {
-            "config_type": "AejroSkv98z1pqnX6G3fT7WbL2u9Nh4kY1QcVxJld5MgP0UmwHDsIFiyCtROZBEa9Dz5jLpQZcVx8NwTm6Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8",
+            "config_name": "AejroSkv98z1pqnX6G3fT7WbL2u9Nh4kY1QcVxJld5MgP0UmwHDsIFiyCtROZBEa9Dz5jLpQZcVx8NwTm6Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8",
             "form_uid": 1,
         }
         response = client.post(
@@ -319,7 +319,7 @@ class TestEmails:
             assert response.status_code == 200
             expected_response = {
                 "data": {
-                    "config_type": "Assignments",
+                    "config_name": "Assignments",
                     "email_config_uid": 1,
                     "form_uid": 1,
                     "report_users": [1, 2, 3],
@@ -585,7 +585,7 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
-                        "config_type": "Assignments",
+                        "config_name": "Assignments",
                         "email_config_uid": 1,
                         "email_source": "SurveyStream Data",
                         "email_source_columns": ["test_column"],
@@ -672,7 +672,7 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
-                        "config_type": "Assignments",
+                        "config_name": "Assignments",
                         "email_config_uid": 1,
                         "form_uid": 1,
                         "report_users": [1, 2, 3],
@@ -712,7 +712,7 @@ class TestEmails:
 
         payload = {
             "email_config_uid": 1,
-            "config_type": "finance",
+            "config_name": "finance",
             "form_uid": 1,
             "report_users": [1, 2, 3],
             "email_source": "SurveyStream Data",
@@ -781,7 +781,7 @@ class TestEmails:
         """
         payload = {
             "email_config_uid": 1,
-            "config_type": "AejroSkv98z1pqnX6G3fT7WbL2u9Nh4kY1QcVxJld5MgP0UmwHDsIFiyCtROZBEa9Dz5jLpQZcVx8NwTm6Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8",
+            "config_name": "AejroSkv98z1pqnX6G3fT7WbL2u9Nh4kY1QcVxJld5MgP0UmwHDsIFiyCtROZBEa9Dz5jLpQZcVx8NwTm6Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8",
             "form_uid": 1,
         }
 
@@ -2567,7 +2567,7 @@ class TestEmails:
             assert response.status_code == 200
             expected_response = {
                 "data": {
-                    "config_type": "Assignments",
+                    "config_name": "Assignments",
                     "email_config_uid": 1,
                     "form_uid": 1,
                     "report_users": [1, 2, 3],

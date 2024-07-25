@@ -9,7 +9,7 @@ from app.utils.utils import JSONField
 
 
 class EmailConfigValidator(FlaskForm):
-    config_type = StringField(validators=[DataRequired()])
+    config_name = StringField(validators=[DataRequired()])
     form_uid = IntegerField(validators=[DataRequired()])
     report_users = FieldList(IntegerField(), default=[])
     email_source = StringField(

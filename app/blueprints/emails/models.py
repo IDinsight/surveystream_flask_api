@@ -14,7 +14,7 @@ class EmailConfig(db.Model):
     __tablename__ = "email_configs"
 
     email_config_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
-    config_type = db.Column(db.String(100), nullable=False)  # assignments, #finance
+    config_name = db.Column(db.String(100), nullable=False)  # assignments, #finance
     form_uid = db.Column(db.Integer, db.ForeignKey(Form.form_uid), nullable=False)
     report_users = db.Column(db.ARRAY(db.Integer), nullable=True)
     email_source = db.Column(
@@ -56,16 +56,16 @@ class EmailConfig(db.Model):
     __table_args__ = (
         # Ensure that configs are not duplicated per form
         db.UniqueConstraint(
-            "config_type",
+            "config_name",
             "form_uid",
-            name="_email_configs_config_type_form_uid_uc",
+            name="_email_configs_config_name_form_uid_uc",
         ),
         {"schema": "webapp"},
     )
 
     def __init__(
         self,
-        config_type,
+        config_name,
         form_uid,
         email_source,
         report_users=None,
@@ -75,7 +75,7 @@ class EmailConfig(db.Model):
         email_source_tablename=None,
         email_source_columns=None,
     ):
-        self.config_type = config_type
+        self.config_name = config_name
         self.form_uid = form_uid
         self.report_users = report_users
         self.email_source = email_source
@@ -91,7 +91,7 @@ class EmailConfig(db.Model):
         ).all()
         return {
             "email_config_uid": self.email_config_uid,
-            "config_type": self.config_type,
+            "config_name": self.config_name,
             "form_uid": self.form_uid,
             "report_users": self.report_users,
             "email_source": self.email_source,

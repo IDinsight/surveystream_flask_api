@@ -6257,7 +6257,7 @@ paths:
                         email_config_uid:
                           type: integer
                           example: 123
-                        config_type:
+                        config_name:
                           type: string
                           example: "assignments"
                         form_uid:
@@ -6390,9 +6390,9 @@ paths:
                   type: string
                   description: UID of the form
                   example: 123
-                config_type:
+                config_name:
                   type: string
-                  description: Type of the email config
+                  description: Name of the email config
                   example: "assignments"
                 report_users:
                   type: array
@@ -6419,7 +6419,7 @@ paths:
                   description: Tablename for emails (Redshift email table), If not provided, default to assignments data
                   example: "survey_id_email_stats"
               required:
-                - config_type
+                - config_name
                 - form_uid
                 - email_source
       responses:
@@ -6440,9 +6440,9 @@ paths:
                         type: integer
                         description: UID of the email config
                         example: 123
-                      config_type:
+                      config_name:
                         type: string
-                        description: Type of the email config
+                        description: Name of the email config
                         example: "assignments"
                       form_uid:
                         type: integer
@@ -6541,9 +6541,9 @@ paths:
                           type: integer
                           description: UID of the email config
                           example: 123
-                        config_type:
+                        config_name:
                           type: string
-                          description: Type of the email config
+                          description: Name of the email config
                           example: "assignments"
                         form_uid:
                           type: integer
@@ -6627,9 +6627,9 @@ paths:
                         type: integer
                         description: UID of the email config
                         example: 123
-                      config_type:
+                      config_name:
                         type: string
-                        description: Type of the email config
+                        description: Name of the email config
                         example: "assignments"
                       form_uid:
                         type: integer
@@ -6700,9 +6700,9 @@ paths:
             schema:
               type: object
               properties:
-                config_type:
+                config_name:
                   type: string
-                  description: Type of the email config
+                  description: Name of the email config
                   example: "assignments"
                 form_uid:
                   type: integer
@@ -6733,7 +6733,7 @@ paths:
                   description: Tablename for emails (Redshift email table), If not provided, default to assignments data
                   example: "survey_id_email_stats"
               required:
-                - config_type
+                - config_name
                 - form_uid
       responses:
         "200":
@@ -6756,9 +6756,9 @@ paths:
                         type: integer
                         description: UID of the email config
                         example: 123
-                      config_type:
+                      config_name:
                         type: string
-                        description: Type of the email config
+                        description: Name of the email config
                         example: "assignments"
                       form_uid:
                         type: integer

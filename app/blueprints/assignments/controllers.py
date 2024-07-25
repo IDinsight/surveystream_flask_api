@@ -7,7 +7,6 @@ from flask_login import current_user
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.sql.expression import cast
 
 from app import db
 from app.blueprints.emails.models import EmailConfig, ManualEmailTrigger
@@ -461,14 +460,14 @@ def schedule_assignments_email(validated_payload):
     # Find the assignments email_config_uid using the form_uid - if none create one
 
     email_config = EmailConfig.query.filter(
-        func.lower(EmailConfig.config_type) == "assignments",
+        func.lower(EmailConfig.config_name) == "assignments",
         EmailConfig.form_uid == form_uid,
     ).first()
 
     if email_config is None:
         try:
             email_config = EmailConfig(
-                config_type="assignments",
+                config_name="assignments",
                 form_uid=form_uid,
                 email_source="SurveyStream Data",
             )
@@ -477,7 +476,7 @@ def schedule_assignments_email(validated_payload):
         except IntegrityError:
             db.session.rollback()
             email_config = EmailConfig.query.filter(
-                func.lower(EmailConfig.config_type) == "assignments", form_uid=form_uid
+                func.lower(EmailConfig.config_name) == "assignments", form_uid=form_uid
             ).first()
 
     time_str = validated_payload.time.data

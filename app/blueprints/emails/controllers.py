@@ -50,7 +50,7 @@ def create_email_config(validated_payload):
     Function to create a new email config
     """
     config_values = {
-        "config_type": validated_payload.config_type.data,
+        "config_name": validated_payload.config_name.data,
         "form_uid": validated_payload.form_uid.data,
         "report_users": validated_payload.report_users.data,
         "email_source": validated_payload.email_source.data,
@@ -64,7 +64,7 @@ def create_email_config(validated_payload):
     # Check if the email config already exists
     check_config_exists = EmailConfig.query.filter_by(
         form_uid=validated_payload.form_uid.data,
-        config_type=validated_payload.config_type.data,
+        config_name=validated_payload.config_name.data,
     ).first()
 
     if check_config_exists is not None:
@@ -243,7 +243,7 @@ def update_email_config(email_config_uid, validated_payload):
     email_config = EmailConfig.query.get_or_404(email_config_uid)
 
     email_config.form_uid = validated_payload.form_uid.data
-    email_config.config_type = validated_payload.config_type.data
+    email_config.config_name = validated_payload.config_name.data
     email_config.report_users = validated_payload.report_users.data
     email_config.email_source = validated_payload.email_source.data
     email_config.email_source_gsheet_link = (

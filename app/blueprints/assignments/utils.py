@@ -11,9 +11,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app import db
+from app.blueprints.emails.models import EmailConfig, EmailSchedule
 from app.blueprints.enumerators.models import Enumerator, SurveyorForm
 from app.blueprints.targets.models import Target, TargetStatus
-from app.blueprints.emails.models import EmailConfig, EmailSchedule
 
 from .errors import (
     HeaderRowEmptyError,
@@ -237,9 +237,9 @@ class AssignmentsUpload:
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                non_null_columns_df.at[
-                    index, "errors"
-                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                non_null_columns_df.at[index, "errors"] = (
+                    f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                )
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],
@@ -339,9 +339,9 @@ class AssignmentsUpload:
                 }
             )
 
-            invalid_target_id_df[
-                "errors"
-            ] = "Target id not found in uploaded targets data for the form"
+            invalid_target_id_df["errors"] = (
+                "Target id not found in uploaded targets data for the form"
+            )
             invalid_records_df = invalid_records_df.merge(
                 invalid_target_id_df["errors"],
                 how="left",
@@ -388,9 +388,9 @@ class AssignmentsUpload:
                 }
             )
 
-            not_assignable_target_id_df[
-                "errors"
-            ] = "Target id not assignable for this form (most likely because they are complete)"
+            not_assignable_target_id_df["errors"] = (
+                "Target id not assignable for this form (most likely because they are complete)"
+            )
             invalid_records_df = invalid_records_df.merge(
                 not_assignable_target_id_df["errors"],
                 how="left",
@@ -434,9 +434,9 @@ class AssignmentsUpload:
                 }
             )
 
-            invalid_enumerator_id_df[
-                "errors"
-            ] = "Enumerator id not found in uploaded enumerators data for the form"
+            invalid_enumerator_id_df["errors"] = (
+                "Enumerator id not found in uploaded enumerators data for the form"
+            )
             invalid_records_df = invalid_records_df.merge(
                 invalid_enumerator_id_df["errors"],
                 how="left",
@@ -472,9 +472,9 @@ class AssignmentsUpload:
                 }
             )
 
-            dropout_enumerator_id_df[
-                "errors"
-            ] = "Enumerator id has status 'Dropout' and are ineligible for assignment"
+            dropout_enumerator_id_df["errors"] = (
+                "Enumerator id has status 'Dropout' and are ineligible for assignment"
+            )
             invalid_records_df = invalid_records_df.merge(
                 dropout_enumerator_id_df["errors"],
                 how="left",
@@ -685,7 +685,7 @@ def get_next_assignment_email_schedule(form_uid):
         )
         .filter(
             EmailConfig.form_uid == form_uid,
-            func.lower(EmailConfig.config_type) == "assignments",
+            func.lower(EmailConfig.config_name) == "assignments",
         )
         .order_by(schedule_dates_subquery.c.schedule_date.asc())
         .first()
@@ -701,7 +701,7 @@ def get_next_assignment_email_schedule(form_uid):
 
         return {
             "email_config_uid": email_config.email_config_uid,
-            "config_type": email_config.config_type,
+            "config_name": email_config.config_name,
             "dates": email_schedule.dates,
             "time": str(email_schedule.time),
             "current_time": str(current_time),

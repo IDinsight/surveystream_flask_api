@@ -1151,7 +1151,7 @@ class TestAssignments:
         Insert an email config as a setup step for email tests
         """
         payload = {
-            "config_type": "Assignments",
+            "config_name": "Assignments",
             "form_uid": 1,
             "report_users": [1, 2, 3],
             "email_source": "SurveyStream Data",
@@ -1699,7 +1699,7 @@ class TestAssignments:
                     "no_changes_count": 0,
                     "re_assignments_count": 0,
                     "email_schedule": {
-                        "config_type": "Assignments",
+                        "config_name": "Assignments",
                         "dates": response.json["data"]["email_schedule"]["dates"],
                         "schedule_date": response.json["data"]["email_schedule"][
                             "schedule_date"
@@ -5303,7 +5303,7 @@ class TestAssignments:
                     "no_changes_count": 0,
                     "re_assignments_count": 1,
                     "email_schedule": {
-                        "config_type": "Assignments",
+                        "config_name": "Assignments",
                         "dates": response.json["data"]["email_schedule"]["dates"],
                         "schedule_date": response.json["data"]["email_schedule"][
                             "schedule_date"
@@ -5594,7 +5594,7 @@ class TestAssignments:
                     "no_changes_count": 0,
                     "re_assignments_count": 0,
                     "email_schedule": {
-                        "config_type": "Assignments",
+                        "config_name": "Assignments",
                         "dates": response.json["data"]["email_schedule"]["dates"],
                         "schedule_date": response.json["data"]["email_schedule"][
                             "schedule_date"
