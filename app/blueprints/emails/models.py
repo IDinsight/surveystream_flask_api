@@ -325,9 +325,23 @@ class EmailScheduleFilter(db.Model):
     )
     filter_group_id = db.Column(db.Integer)
     filter_variable = db.Column(db.String(255), nullable=False)
-    filter_operator = db.Column(db.String(16), nullable=False)
+    filter_operator = db.Column(
+        db.String(16),
+        CheckConstraint(
+            "filter_operator IN ('Equals','Not Equals','Contains')",
+            name="ck_email_schedule_filter_operator",
+        ),
+        nullable=False,
+    )
     filter_value = db.Column(db.Text, nullable=False)
-    filter_concatenator = db.Column(db.String(4), nullable=True)
+    filter_concatenator = db.Column(
+        db.String(4),
+        CheckConstraint(
+            "filter_concatenator IN ('AND', 'OR', NULL)",
+            name="ck_email_schedule_filter_concatenator",
+        ),
+        nullable=True,
+    )
 
     __table_args__ = (
         db.PrimaryKeyConstraint(

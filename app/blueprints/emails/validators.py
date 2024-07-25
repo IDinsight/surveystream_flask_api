@@ -32,9 +32,24 @@ class EmailConfigValidator(FlaskForm):
 class EmailFilterValidator(FlaskForm):
 
     filter_variable = StringField(validators=[DataRequired()])
-    filter_operator = StringField(validators=[DataRequired()])
+    filter_operator = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                ["Equals", "Not Equals", "Contains"],
+                message="Invalid email source. Must be 'Google Sheet' or 'SurveyStream Data'",
+            ),
+        ]
+    )
     filter_value = StringField(validators=[DataRequired()])
-    filter_concatenator = StringField()
+    filter_concatenator = StringField(
+        validators=[
+            AnyOf(
+                ["AND", "OR"],
+                message="Invalid Concatenator. Must be 'AND' or 'OR'",
+            ),
+        ],
+    )
 
 
 class EmailFilterGroupValidator(FlaskForm):
