@@ -1,7 +1,10 @@
-from sqlalchemy import TIME, CheckConstraint, Enum
+from sqlalchemy import TIME, CheckConstraint
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.mutable import MutableDict
 
 from app import db
 from app.blueprints.forms.models import Form
+from app.blueprints.surveys.models import Survey
 
 
 class EmailConfig(db.Model):
@@ -80,6 +83,9 @@ class EmailConfig(db.Model):
         self.email_source_columns = email_source_columns
 
     def to_dict(self):
+        email_table_catalog = EmailTableCatalog.query.filter_by(
+            survey_uid=Form.query.get(self.form_uid).survey_uid
+        ).all()
         return {
             "email_config_uid": self.email_config_uid,
             "config_type": self.config_type,
@@ -91,6 +97,7 @@ class EmailConfig(db.Model):
             "email_source_gsheet_header_row": self.email_source_gsheet_header_row,
             "email_source_tablename": self.email_source_tablename,
             "email_source_columns": self.email_source_columns,
+            "table_catalog": [table.to_dict() for table in email_table_catalog],
         }
 
 
@@ -197,10 +204,101 @@ class EmailTemplate(db.Model):
         self.email_config_uid = email_config_uid
 
     def to_dict(self):
+        email_template_variables = EmailTemplateVariable.query.filter_by(
+            email_template_uid=self.email_template_uid
+        ).all()
         return {
             "email_template_uid": self.email_template_uid,
             "subject": self.subject,
             "language": self.language,
             "content": self.content,
             "email_config_uid": self.email_config_uid,
+            "variable_list": [
+                variable.to_dict() for variable in email_template_variables
+            ],
+        }
+
+
+class EmailTemplateVariable(db.Model):
+    __tablename__ = "email_template_variables"
+
+    email_template_uid = db.Column(
+        db.Integer(), db.ForeignKey(EmailTemplate.email_template_uid), nullable=False
+    )
+
+    variable_name = db.Column(db.String(100), nullable=False)
+    variable_type = db.Column(
+        db.String(8),
+        CheckConstraint(
+            "variable_type IN ('string', 'table')",
+            name="ck_email_template_variables_variable_type",
+        ),
+        server_default="string",
+        nullable=False,
+    )
+    source_table = db.Column(db.String(255), nullable=True)
+    variable_expression = db.Column(db.String(255), nullable=True)
+    table_column_mapping = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("email_template_uid", "variable_name"),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self,
+        email_template_uid,
+        variable_name,
+        variable_type,
+        source_table,
+        variable_expression,
+        table_column_mapping,
+    ):
+        self.email_template_uid = email_template_uid
+        self.variable_name = variable_name
+        self.variable_type = variable_type
+        self.source_table = source_table
+        self.variable_expression = variable_expression
+        self.table_column_mapping = table_column_mapping
+
+    def to_dict(self):
+        return {
+            "variable_name": self.variable_name,
+            "variable_type": self.variable_type,
+            "source_table": self.source_table,
+            "variable_expression": self.variable_expression,
+            "table_column_mapping": self.table_column_mapping,
+        }
+
+
+class EmailTableCatalog(db.Model):
+    __tablename__ = "email_table_catalog"
+
+    survey_uid = db.Column(db.Integer, db.ForeignKey(Survey.survey_uid), nullable=False)
+    table_name = db.Column(db.String(255), nullable=False)
+    column_name = db.Column(db.String(255), nullable=False)
+    column_type = db.Column(db.String(255), nullable=False)
+    column_description = db.Column(db.String(255), nullable=True)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("survey_uid", "table_name", "column_name"),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self, survey_uid, table_name, column_name, column_type, column_description
+    ):
+        self.survey_uid = survey_uid
+        self.table_name = table_name
+        self.column_name = column_name
+        self.column_type = column_type
+        self.column_description = column_description
+
+    def to_dict(self):
+        return {
+            "survey_uid": self.survey_uid,
+            "table_name": self.table_name,
+            "column_name": self.column_name,
+            "column_type": self.column_type,
+            "column_description": self.column_description,
         }

@@ -181,6 +181,7 @@ def upload_targets(validated_query_params, validated_payload):
         ].geo_level_uid
 
     # Validate the targets data
+    record_errors = None
     try:
         targets_upload.validate_records(
             column_mapping,
@@ -200,17 +201,25 @@ def upload_targets(validated_query_params, validated_payload):
             422,
         )
     except InvalidTargetRecordsError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "record_errors": e.record_errors,
-                    },
-                }
-            ),
-            422,
-        )
+        record_errors = e.record_errors
+        if validated_payload.load_successful.data is True:
+            # Filter the records that were successfully validated
+            targets_upload.filter_successful_records(
+                record_errors,
+            )
+
+        else:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "record_errors": record_errors,
+                        },
+                    }
+                ),
+                422,
+            )
 
     try:
         targets_upload.save_records(
@@ -222,7 +231,21 @@ def upload_targets(validated_query_params, validated_payload):
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
-    return jsonify(message="Success"), 200
+    # If load_successful is True and errors were found in the records, return the errors
+    if validated_payload.load_successful.data is True and record_errors:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "record_errors": record_errors,
+                    },
+                }
+            ),
+            422,
+        )
+    else:
+        return jsonify(message="Success"), 200
 
 
 @targets_bp.route("", methods=["GET"])
@@ -651,6 +674,7 @@ def delete_target(target_uid):
     if Target.query.filter_by(target_uid=target_uid).first() is None:
         return jsonify({"error": "Target not found"}), 404
 
+    TargetStatus.query.filter_by(target_uid=target_uid).delete()
     Target.query.filter_by(target_uid=target_uid).delete()
 
     try:
@@ -996,7 +1020,7 @@ def get_target_column_config(validated_query_params):
                         },
                     ]
                 )
-    
+
     # Add target_status columns
     target_status_columns = [
         {
@@ -1031,6 +1055,7 @@ def get_target_column_config(validated_query_params):
         200,
     )
 
+
 @targets_bp.route("/target-status", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateTargetStatus)
@@ -1059,16 +1084,11 @@ def update_target_status(validated_payload):
             422,
         )
 
-    subquery = (
-        db.session.query(Target.target_uid)
-        .filter(
-            Target.form_uid == form_uid
-        )
-    )
+    subquery = db.session.query(Target.target_uid).filter(Target.form_uid == form_uid)
 
-    db.session.query(TargetStatus).filter(
-        TargetStatus.target_uid.in_(subquery)
-    ).delete(synchronize_session=False)
+    db.session.query(TargetStatus).filter(TargetStatus.target_uid.in_(subquery)).delete(
+        synchronize_session=False
+    )
 
     db.session.flush()
 
@@ -1086,8 +1106,12 @@ def update_target_status(validated_payload):
                     completed_flag=each_target["completed_flag"],
                     refusal_flag=each_target["refusal_flag"],
                     num_attempts=each_target["num_attempts"],
-                    last_attempt_survey_status=each_target["last_attempt_survey_status"],
-                    last_attempt_survey_status_label=each_target["last_attempt_survey_status_label"],
+                    last_attempt_survey_status=each_target[
+                        "last_attempt_survey_status"
+                    ],
+                    last_attempt_survey_status_label=each_target[
+                        "last_attempt_survey_status_label"
+                    ],
                     final_survey_status=each_target["final_survey_status"],
                     final_survey_status_label=each_target["final_survey_status_label"],
                     target_assignable=each_target["target_assignable"],

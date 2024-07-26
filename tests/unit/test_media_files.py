@@ -178,6 +178,80 @@ class TestMedaiFiles:
         assert response.status_code == 201
         return response.json["data"]
 
+    def test_media_files_create_config(
+        self,
+        client,
+        csrf_token,
+        create_form,
+        user_permissions,
+        request,
+    ):
+        """
+        Test creating media files config
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "file_type": "audio",
+            "source": "SurveyCTO",
+            "scto_fields": [
+                "SubmissionDate",
+                "instanceID",
+                "enum_id",
+                "district_id",
+                "status",
+            ],
+        }
+        response = client.post(
+            "/api/media-files",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 201
+
+            response = client.get(
+                "/api/media-files/1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            assert response.status_code == 200
+            expected_response = {
+                "data": {
+                    "media_files_config_uid": 1,
+                    "form_uid": 1,
+                    "file_type": "audio",
+                    "source": "SurveyCTO",
+                    "scto_fields": [
+                        "SubmissionDate",
+                        "instanceID",
+                        "enum_id",
+                        "district_id",
+                        "status",
+                    ],
+                    "mapping_criteria": None,
+                },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Media Files Config",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
     def test_media_files_get_config(
         self,
         client,
@@ -390,3 +464,35 @@ class TestMedaiFiles:
 
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
+    def test_media_files_create_duplicate_config(
+        self,
+        client,
+        csrf_token,
+        create_media_files_config,
+    ):
+        """
+        Test creating media files config
+        """
+        payload = {
+            "form_uid": 1,
+            "file_type": "audio",
+            "source": "SurveyCTO",
+            "scto_fields": ["test", "duplicate", "config"],
+        }
+        response = client.post(
+            "/api/media-files",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 400
+        expected_response = {
+            "success": False,
+            "error": {
+                "message": "A config already exists for this survey with the same scto_form_id, type and source"
+            },
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}

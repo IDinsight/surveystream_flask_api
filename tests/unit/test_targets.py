@@ -1793,8 +1793,8 @@ class TestTargets:
                     },
                     "summary": {
                         "error_count": 6,
-                        "total_correct_rows": 0,
-                        "total_rows": 3,
+                        "total_correct_rows": 1,
+                        "total_rows": 4,
                         "total_rows_with_errors": 3,
                     },
                     "summary_by_error_type": [
@@ -1830,6 +1830,353 @@ class TestTargets:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_upload_targets_csv_load_successful(
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        csrf_token,
+    ):
+        """
+        Test that with load successful flag, the successful targets are uploaded and endpoint returns errors
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_errors.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id",
+                "language": "language",
+                "gender": "gender",
+                "location_id_column": "psu_id",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile no.",
+                        "column_name": "mobile_primary",
+                    },
+                    {
+                        "field_label": "Name",
+                        "column_name": "name",
+                    },
+                    {
+                        "field_label": "Address",
+                        "column_name": "address",
+                    },
+                ],
+            },
+            "file": targets_csv_encoded,
+            "mode": "merge",
+            "load_successful": True,
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "target_id",
+                            "language",
+                            "gender",
+                            "psu_id",
+                            "mobile_primary",
+                            "name",
+                            "address",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "address": "Hyderabad",
+                                "errors": "Duplicate row; Duplicate target_id",
+                                "gender": "Male",
+                                "language": "Telugu",
+                                "mobile_primary": "1234567890",
+                                "name": "Anil",
+                                "psu_id": "17101102",
+                                "row_number": 2,
+                                "target_id": "1",
+                            },
+                            {
+                                "address": "Hyderabad",
+                                "errors": "Duplicate row; Duplicate target_id",
+                                "gender": "Male",
+                                "language": "Telugu",
+                                "mobile_primary": "1234567890",
+                                "name": "Anil",
+                                "psu_id": "17101102",
+                                "row_number": 3,
+                                "target_id": "1",
+                            },
+                            {
+                                "address": "South Delhi",
+                                "errors": "Blank field(s) found in the following column(s): target_id. The column(s) cannot contain blank fields.; Location id not found in uploaded locations data for the survey's bottom level geo level",
+                                "gender": "Female",
+                                "language": "Hindi",
+                                "mobile_primary": "1234567891",
+                                "name": "Anupama",
+                                "psu_id": "1",
+                                "row_number": 4,
+                                "target_id": "",
+                            },
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 6,
+                        "total_correct_rows": 1,
+                        "total_rows": 4,
+                        "total_rows_with_errors": 3,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "Blank values are not allowed in the following columns: target_id, psu_id. Blank values in these columns were found for the following row(s): 4",
+                            "error_type": "Blank field",
+                            "row_numbers_with_errors": [4],
+                        },
+                        {
+                            "error_count": 2,
+                            "error_message": "The file has 2 duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: 2, 3",
+                            "error_type": "Duplicate rows",
+                            "row_numbers_with_errors": [2, 3],
+                        },
+                        {
+                            "error_count": 2,
+                            "error_message": "The file has 2 duplicate target_id(s). The following row numbers contain target_id duplicates: 2, 3",
+                            "error_type": "Duplicate target_id's in file",
+                            "row_numbers_with_errors": [2, 3],
+                        },
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: 4",
+                            "error_type": "Invalid location_id's",
+                            "row_numbers_with_errors": [4],
+                        },
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # Fetch targets to check if the successful targets were uploaded
+        # Combination of targets loaded using upload_targets_csv and the successful targets from the error file 
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "Hyderabad",
+                        "Name": "Anil",
+                        "Mobile no.": "1234567890",
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "location_uid": 4,
+                    "target_id": "1",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 1,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                    "scto_fields": None,
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "South Delhi",
+                        "Name": "Anupama",
+                        "Mobile no.": "1234567891",
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "location_uid": 4,
+                    "target_id": "2",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 2,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                    "scto_fields": None,
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name", "field_label": "Name"},
+                                {"column_name": "address", "field_label": "Address"},
+                            ],
+                            "gender": "gender",
+                            "language": "language",
+                            "location_id_column": "psu_id",
+                            "target_id": "target_id",
+                        },
+                        "Address": "South Delhi",
+                        "Name": "Akhil",
+                        "Mobile no.": "1234567892",
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Hindi",
+                    "location_uid": 4,
+                    "target_id": "3",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 3,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                    "scto_fields": None,
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/targets", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
 
     def test_upload_column_config(
         self,

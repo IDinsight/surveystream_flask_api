@@ -66,6 +66,7 @@ class CreateSCTOQuestionMappingValidator(FlaskForm):
     revisit_section = StringField()
     target_id = StringField(validators=[DataRequired()])
     enumerator_id = StringField(validators=[DataRequired()])
+    dq_enumerator_id = StringField()
     locations = FormField(LocationQuestionMappingValidator)
 
 
@@ -75,4 +76,5 @@ class UpdateSCTOQuestionMappingValidator(FlaskForm):
     revisit_section = StringField()
     target_id = StringField(validators=[DataRequired()])
     enumerator_id = StringField(validators=[DataRequired()])
+    dq_enumerator_id = StringField()
     locations = FormField(LocationQuestionMappingValidator)

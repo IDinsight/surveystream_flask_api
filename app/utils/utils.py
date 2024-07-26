@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 from flask import current_app, jsonify, request, session
 from flask_login import current_user, login_required, logout_user
 from sqlalchemy import and_, func, or_
+from wtforms.fields import Field
 
 from app import db
 from app.blueprints.auth.models import User
@@ -284,7 +285,7 @@ def custom_permissions_required(
             if current_user.get_is_super_admin():
                 return fn(*args, **kwargs)
 
-            if permission_name == "CREATE SURVEY":
+            if (type(permission_name) == str) and (permission_name == "CREATE SURVEY"):
                 if current_user.get_can_create_survey():
                     return fn(*args, **kwargs)
                 else:
@@ -316,7 +317,7 @@ def custom_permissions_required(
             if survey_admin:
                 # If the user is a survey admin for the survey allow all permissions
                 return fn(*args, **kwargs)
-            elif permission_name == "ADMIN":
+            elif (type(permission_name) == str) and (permission_name == "ADMIN"):
                 # deny access if the permission_name was ADMIN
                 error_message = (
                     f"User does not have the required permission: {permission_name}"
@@ -328,43 +329,54 @@ def custom_permissions_required(
             # Get all permissions associated with the user's roles
             user_roles = current_user.get_roles()
 
-            # Split permission_name into action and resource
-            action, resource = permission_name.split(maxsplit=1)
+            if type(permission_name) == str:
+                permission_name_list = [permission_name]
+            else:
+                permission_name_list = permission_name
 
-            try:
-                # Query to get role_permissions
-                role_permissions = (
-                    db.session.query(Permission)
-                    .join(
-                        Role,
-                        Role.survey_uid.in_(survey_uids),
-                    )
-                    .filter(
-                        and_(
-                            Role.role_uid == func.any(user_roles),
-                            or_(
-                                Permission.name == permission_name,
-                                and_(
-                                    action == "READ",
-                                    Permission.name == f"WRITE {resource}",
-                                ),
-                            ),
+            has_permission = False
+            for each_permission in permission_name_list:
+                # Split permission_name into action and resource
+                action, resource = each_permission.split(maxsplit=1)
+
+                try:
+                    # Query to get role_permissions
+                    role_permissions = (
+                        db.session.query(Permission)
+                        .join(
+                            Role,
+                            Role.survey_uid.in_(survey_uids),
                         )
+                        .filter(
+                            and_(
+                                Role.role_uid == func.any(user_roles),
+                                or_(
+                                    Permission.name == each_permission,
+                                    and_(
+                                        action == "READ",
+                                        Permission.name == f"WRITE {resource}",
+                                    ),
+                                ),
+                            )
+                        )
+                        .all()
                     )
-                    .all()
-                )
-            except Exception as e:
-                print("Error querying role_permissions: %s", e)
-                return (
-                    jsonify({"success": False, "error": "Error checking permissions"}),
-                    500,
-                )
+                except Exception as e:
+                    print("Error querying role_permissions: %s", e)
+                    return (
+                        jsonify(
+                            {"success": False, "error": "Error checking permissions"}
+                        ),
+                        500,
+                    )
 
-            # Check if the current user has the specified permission
-            if not role_permissions:
-                error_message = (
-                    f"User does not have the required permission: {permission_name}"
-                )
+                # Check if the current user has the specified permission
+                if role_permissions:
+                    has_permission = True
+                    break
+
+            if has_permission is False:
+                error_message = f"User does not have the required permission: {', '.join(permission_name_list)}"
                 response = {"success": False, "error": error_message}
                 return jsonify(response), 403
 
@@ -525,3 +537,26 @@ def retry_on_exception(ExceptionToCheck, tries=5, delay=3, backoff=2):
         return f_retry  # true decorator
 
     return deco_retry
+
+
+class JSONField(Field):
+    def _value(self):
+        return self.data if self.data else {}
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            try:
+                self.data = valuelist[0]
+            except ValueError:
+                raise ValueError("This field contains invalid JSON")
+        else:
+            self.data = None
+
+    def pre_validate(self, form):
+        super().pre_validate(form)
+        if self.data:
+            try:
+                if self.data is None or self.data == {} or isinstance(self.data, dict):
+                    pass
+            except TypeError:
+                raise ValueError("This field contains invalid JSON")

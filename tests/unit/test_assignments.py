@@ -65,6 +65,29 @@ class TestAssignments:
         login_user(client, test_user_credentials)
 
     @pytest.fixture
+    def user_with_assignment_upload_permissions(self, client, test_user_credentials):
+        # Assign new roles and permissions
+        new_role = create_new_survey_role_with_permissions(
+            # 24 - WRITE Assignments Upload
+            client,
+            test_user_credentials,
+            "Assignments Upload Role",
+            [24],
+            1,
+        )
+
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
     def user_with_no_permissions(self, client, test_user_credentials):
         # Assign no roles and permissions
         update_logged_in_user_roles(
@@ -95,6 +118,23 @@ class TestAssignments:
     def user_permissions(self, request):
         return request.param
 
+    @pytest.fixture(
+        params=[
+            ("user_with_super_admin_permissions", True),
+            ("user_with_survey_admin_permissions", True),
+            ("user_with_assignment_upload_permissions", True),
+            ("user_with_no_permissions", False),
+        ],
+        ids=[
+            "super_admin_permissions",
+            "survey_admin_permissions",
+            "assignment_upload_permissions",
+            "no_permissions",
+        ],
+    )
+    def user_permissions_with_upload(self, request):
+        return request.param
+    
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -354,7 +394,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         yield
@@ -426,7 +465,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         yield
@@ -493,7 +531,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         yield
@@ -552,7 +589,6 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
         assert response.status_code == 200
 
     @pytest.fixture()
@@ -781,7 +817,6 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
         assert response.status_code == 200
 
     @pytest.fixture()
@@ -848,7 +883,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         yield
@@ -911,7 +945,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         yield
@@ -962,7 +995,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         yield
@@ -1016,7 +1048,6 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
         assert response.status_code == 200
 
     @pytest.fixture()
@@ -1199,8 +1230,38 @@ class TestAssignments:
 
             # Append schedule data to the list
             schedules.append(response.json["data"])
-        print(schedules)
         return schedules[0]
+
+    @pytest.fixture
+    def create_assignments(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        csrf_token,
+    ):
+        """
+        Test fixture for initializing assignments
+
+        """
+        payload = {
+            "assignments": [
+                {"target_uid": 1, "enumerator_uid": 1},
+                {"target_uid": 2, "enumerator_uid": 2},
+            ],
+            "form_uid": 1,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
 
     ####################################################
     ## FIXTURES END HERE
@@ -1225,8 +1286,6 @@ class TestAssignments:
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        print(response.json)
-
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -1247,8 +1306,6 @@ class TestAssignments:
 
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -1289,10 +1346,8 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
 
         if expected_permission:
-
             expected_response = {
                 "message": "Manual email trigger created successfully",
                 "success": True,
@@ -1345,7 +1400,6 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
 
         expected_response = {
             "message": {"date": ["Date must be in the future."]},
@@ -1373,8 +1427,6 @@ class TestAssignments:
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        print(response.json)
-
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -1396,8 +1448,6 @@ class TestAssignments:
 
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        print(response.json)
 
         if expected_permission:
             expected_response = {
@@ -1434,8 +1484,6 @@ class TestAssignments:
         request.getfixturevalue(user_fixture)
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        print(response.json)
 
         if expected_permission:
             expected_response = {
@@ -1633,8 +1681,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
-
         current_datetime = datetime.now()
         formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
 
@@ -1668,8 +1714,6 @@ class TestAssignments:
                 },
                 "message": "Success",
             }
-
-            print(expected_put_response)
 
             checkdiff = jsondiff.diff(expected_put_response, response.json)
             assert checkdiff == {}
@@ -1850,8 +1894,6 @@ class TestAssignments:
             # Check the response
             response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-            print(response.json)
-
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
         else:
@@ -1890,7 +1932,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         expected_response = {
@@ -2014,8 +2055,6 @@ class TestAssignments:
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        print(response.json)
-
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -2047,7 +2086,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         expected_response = {
@@ -2241,8 +2279,6 @@ class TestAssignments:
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        print(response.json)
-
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -2274,7 +2310,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         payload = {
@@ -2292,7 +2327,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         expected_response = {
@@ -2465,8 +2499,6 @@ class TestAssignments:
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        print(response.json)
-
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -2498,7 +2530,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         payload = {
@@ -2516,7 +2547,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         expected_response = {
@@ -2709,8 +2739,6 @@ class TestAssignments:
 
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -2957,7 +2985,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 422
 
         expected_response = {
@@ -2999,7 +3026,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 422
 
         expected_response = {
@@ -3058,7 +3084,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 422
 
         expected_response = {
@@ -3117,7 +3142,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 422
 
         expected_response = {
@@ -3154,7 +3178,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 404
 
         expected_response = {
@@ -3190,7 +3213,6 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
         assert response.status_code == 404
 
         expected_response = {
@@ -3406,8 +3428,6 @@ class TestAssignments:
             "/api/assignments/enumerators", query_string={"form_uid": 1}
         )
 
-        print(response.json)
-
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -3430,8 +3450,6 @@ class TestAssignments:
         )
 
         assert response.status_code == 200
-
-        print(response.json)
 
         expected_response = {
             "assignments_main": [
@@ -3821,8 +3839,6 @@ class TestAssignments:
 
         assert response.status_code == 200
 
-        print(response.json)
-
         expected_response = {
             "assignments_main": [
                 {
@@ -4126,8 +4142,6 @@ class TestAssignments:
         )
 
         assert response.status_code == 200
-
-        print(response.json)
 
         expected_response = {
             "assignments_main": [
@@ -4477,7 +4491,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         payload = {
@@ -4519,7 +4532,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         payload = {
@@ -4546,7 +4558,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         payload = {
@@ -4583,7 +4594,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         payload = {
@@ -4620,7 +4630,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 200
 
         response = client.get(
@@ -4629,8 +4638,6 @@ class TestAssignments:
         )
 
         assert response.status_code == 200
-
-        print(response.json)
 
         expected_response = {
             "assignments_main": [
@@ -4815,8 +4822,6 @@ class TestAssignments:
 
         assert response.status_code == 422
 
-        print(response.json)
-
         expected_response = {
             "errors": {
                 "geo_level_hierarchy": [
@@ -4876,8 +4881,6 @@ class TestAssignments:
 
         assert response.status_code == 422
 
-        print(response.json)
-
         expected_response = {
             "errors": "The prime_geo_level_uid is not configured for this survey but is found as a column in the enumerator_column_config table.",
             "success": False,
@@ -4933,8 +4936,6 @@ class TestAssignments:
 
         assert response.status_code == 422
 
-        print(response.json)
-
         expected_response = {
             "errors": "The prime_geo_level_uid '20' is not in the location type hierarchy for this survey.",
             "success": False,
@@ -4978,7 +4979,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 422
 
         expected_response = {
@@ -5011,7 +5011,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 422
 
         expected_response = {
@@ -5159,7 +5158,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 422
 
         expected_response = {
@@ -5224,7 +5222,6 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response.json)
         assert response.status_code == 422
 
         expected_response = {
@@ -5238,6 +5235,1487 @@ class TestAssignments:
             "success": False,
         }
 
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_upload_assignments_merge_csv(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        user_permissions_with_upload,
+        request,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Function to test uploading asssignments csv with merge mode
+
+        """
+
+        user_fixture, expected_permission = user_permissions_with_upload
+        request.getfixturevalue(user_fixture)
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_merge.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "merge",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        current_datetime = datetime.now()
+        formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
+        current_time = datetime.now().strftime("%H:%M")
+
+        if expected_permission:
+            assert response.status_code == 200
+            assert (
+                response.json["data"]["email_schedule"]["schedule_date"]
+                >= formatted_date
+            )
+            expected_put_response = {
+                "data": {
+                    "assignments_count": 1,
+                    "new_assignments_count": 0,
+                    "no_changes_count": 0,
+                    "re_assignments_count": 1,
+                    "email_schedule": {
+                        "config_type": "Assignments",
+                        "dates": response.json["data"]["email_schedule"]["dates"],
+                        "schedule_date": response.json["data"]["email_schedule"][
+                            "schedule_date"
+                        ],
+                        "current_time": current_time,
+                        "email_schedule_uid": response.json["data"]["email_schedule"][
+                            "email_schedule_uid"
+                        ],
+                        "email_config_uid": 1,
+                        "time": response.json["data"]["email_schedule"]["time"],
+                    },
+                },
+                "message": "Success",
+            }
+
+            checkdiff = jsondiff.diff(expected_put_response, response.json)
+            assert checkdiff == {}
+
+            expected_response = {
+                "data": [
+                    {
+                        "assigned_enumerator_custom_fields": {
+                            "Age": "4",
+                            "Mobile (Secondary)": "1123456789",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_secondary1",
+                                        "field_label": "Mobile (Secondary)",
+                                    },
+                                    {"column_name": "age1", "field_label": "Age"},
+                                ],
+                                "email": "email1",
+                                "enumerator_id": "enumerator_id1",
+                                "enumerator_type": "enumerator_type1",
+                                "gender": "gender1",
+                                "home_address": "home_address1",
+                                "language": "language1",
+                                "location_id_column": "district_id1",
+                                "mobile_primary": "mobile_primary1",
+                                "name": "name1",
+                            },
+                        },
+                        "assigned_enumerator_email": "griffin.muteti@idinsight.org",
+                        "assigned_enumerator_gender": "Male",
+                        "assigned_enumerator_home_address": "my house",
+                        "assigned_enumerator_id": "0294615",
+                        "assigned_enumerator_language": "Swahili",
+                        "assigned_enumerator_mobile_primary": "0123456789",
+                        "assigned_enumerator_name": "Griffin Muteti",
+                        "assigned_enumerator_uid": 4,
+                        "completed_flag": None,
+                        "custom_fields": {
+                            "Address": "Hyderabad",
+                            "Mobile no.": "1234567890",
+                            "Name": "Anil",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_primary1",
+                                        "field_label": "Mobile no.",
+                                    },
+                                    {"column_name": "name1", "field_label": "Name"},
+                                    {
+                                        "column_name": "address1",
+                                        "field_label": "Address",
+                                    },
+                                ],
+                                "gender": "gender1",
+                                "language": "language1",
+                                "location_id_column": "psu_id1",
+                                "target_id": "target_id1",
+                            },
+                        },
+                        "form_uid": 1,
+                        "gender": "Male",
+                        "language": "Telugu",
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": "Not Attempted",
+                        "final_survey_status": None,
+                        "final_survey_status_label": "Not Attempted",
+                        "scto_fields": None,
+                        "location_uid": 4,
+                        "num_attempts": 0,
+                        "refusal_flag": None,
+                        "revisit_sections": None,
+                        "target_assignable": True,
+                        "target_id": "1",
+                        "target_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "geo_level_uid": 2,
+                                "location_id": "1101",
+                                "location_name": "ADILABAD RURAL",
+                                "location_uid": 2,
+                            },
+                            {
+                                "geo_level_name": "PSU",
+                                "geo_level_uid": 3,
+                                "location_id": "17101102",
+                                "location_name": "ANKOLI",
+                                "location_uid": 4,
+                            },
+                        ],
+                        "target_uid": 1,
+                        "webapp_tag_color": None,
+                    },
+                    {
+                        "assigned_enumerator_custom_fields": {
+                            "Age": "2",
+                            "Mobile (Secondary)": "1123456789",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_secondary1",
+                                        "field_label": "Mobile (Secondary)",
+                                    },
+                                    {"column_name": "age1", "field_label": "Age"},
+                                ],
+                                "email": "email1",
+                                "enumerator_id": "enumerator_id1",
+                                "enumerator_type": "enumerator_type1",
+                                "gender": "gender1",
+                                "home_address": "home_address1",
+                                "language": "language1",
+                                "location_id_column": "district_id1",
+                                "mobile_primary": "mobile_primary1",
+                                "name": "name1",
+                            },
+                        },
+                        "assigned_enumerator_email": "jahnavi.meher@idinsight.org",
+                        "assigned_enumerator_gender": "Female",
+                        "assigned_enumerator_home_address": "my house",
+                        "assigned_enumerator_id": "0294613",
+                        "assigned_enumerator_language": "Telugu",
+                        "assigned_enumerator_mobile_primary": "0123456789",
+                        "assigned_enumerator_name": "Jahnavi Meher",
+                        "assigned_enumerator_uid": 2,
+                        "completed_flag": None,
+                        "custom_fields": {
+                            "Address": "South Delhi",
+                            "Mobile no.": "1234567891",
+                            "Name": "Anupama",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_primary1",
+                                        "field_label": "Mobile no.",
+                                    },
+                                    {"column_name": "name1", "field_label": "Name"},
+                                    {
+                                        "column_name": "address1",
+                                        "field_label": "Address",
+                                    },
+                                ],
+                                "gender": "gender1",
+                                "language": "language1",
+                                "location_id_column": "psu_id1",
+                                "target_id": "target_id1",
+                            },
+                        },
+                        "form_uid": 1,
+                        "gender": "Female",
+                        "language": "Hindi",
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": "Not Attempted",
+                        "final_survey_status": None,
+                        "final_survey_status_label": "Not Attempted",
+                        "scto_fields": None,
+                        "location_uid": 4,
+                        "num_attempts": 0,
+                        "refusal_flag": None,
+                        "revisit_sections": None,
+                        "target_assignable": True,
+                        "target_id": "2",
+                        "target_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "geo_level_uid": 2,
+                                "location_id": "1101",
+                                "location_name": "ADILABAD RURAL",
+                                "location_uid": 2,
+                            },
+                            {
+                                "geo_level_name": "PSU",
+                                "geo_level_uid": 3,
+                                "location_id": "17101102",
+                                "location_name": "ANKOLI",
+                                "location_uid": 4,
+                            },
+                        ],
+                        "target_uid": 2,
+                        "webapp_tag_color": None,
+                    },
+                ],
+                "success": True,
+            }
+
+            # Check the response
+            response = client.get("/api/assignments", query_string={"form_uid": 1})
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Assignments Upload",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_upload_assignments_overwrite_csv(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        user_permissions_with_upload,
+        request,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Function to test uploading asssignments csv with overwrite mode
+        """
+
+        user_fixture, expected_permission = user_permissions_with_upload
+        request.getfixturevalue(user_fixture)
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        current_datetime = datetime.now()
+        formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
+        current_time = datetime.now().strftime("%H:%M")
+
+        if expected_permission:
+            assert response.status_code == 200
+            assert (
+                response.json["data"]["email_schedule"]["schedule_date"]
+                >= formatted_date
+            )
+            expected_put_response = {
+                "data": {
+                    "assignments_count": 2,
+                    "new_assignments_count": 2,
+                    "no_changes_count": 0,
+                    "re_assignments_count": 0,
+                    "email_schedule": {
+                        "config_type": "Assignments",
+                        "dates": response.json["data"]["email_schedule"]["dates"],
+                        "schedule_date": response.json["data"]["email_schedule"][
+                            "schedule_date"
+                        ],
+                        "current_time": current_time,
+                        "email_schedule_uid": response.json["data"]["email_schedule"][
+                            "email_schedule_uid"
+                        ],
+                        "email_config_uid": 1,
+                        "time": response.json["data"]["email_schedule"]["time"],
+                    },
+                },
+                "message": "Success",
+            }
+
+            checkdiff = jsondiff.diff(expected_put_response, response.json)
+            assert checkdiff == {}
+
+            expected_response = {
+                "data": [
+                    {
+                        "assigned_enumerator_custom_fields": {
+                            "Age": "2",
+                            "Mobile (Secondary)": "1123456789",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_secondary1",
+                                        "field_label": "Mobile (Secondary)",
+                                    },
+                                    {"column_name": "age1", "field_label": "Age"},
+                                ],
+                                "email": "email1",
+                                "enumerator_id": "enumerator_id1",
+                                "enumerator_type": "enumerator_type1",
+                                "gender": "gender1",
+                                "home_address": "home_address1",
+                                "language": "language1",
+                                "location_id_column": "district_id1",
+                                "mobile_primary": "mobile_primary1",
+                                "name": "name1",
+                            },
+                        },
+                        "assigned_enumerator_email": "jahnavi.meher@idinsight.org",
+                        "assigned_enumerator_gender": "Female",
+                        "assigned_enumerator_home_address": "my house",
+                        "assigned_enumerator_id": "0294613",
+                        "assigned_enumerator_language": "Telugu",
+                        "assigned_enumerator_mobile_primary": "0123456789",
+                        "assigned_enumerator_name": "Jahnavi Meher",
+                        "assigned_enumerator_uid": 2,
+                        "completed_flag": None,
+                        "custom_fields": {
+                            "Address": "Hyderabad",
+                            "Mobile no.": "1234567890",
+                            "Name": "Anil",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_primary1",
+                                        "field_label": "Mobile no.",
+                                    },
+                                    {"column_name": "name1", "field_label": "Name"},
+                                    {
+                                        "column_name": "address1",
+                                        "field_label": "Address",
+                                    },
+                                ],
+                                "gender": "gender1",
+                                "language": "language1",
+                                "location_id_column": "psu_id1",
+                                "target_id": "target_id1",
+                            },
+                        },
+                        "form_uid": 1,
+                        "gender": "Male",
+                        "language": "Telugu",
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": "Not Attempted",
+                        "final_survey_status": None,
+                        "final_survey_status_label": "Not Attempted",
+                        "scto_fields": None,
+                        "location_uid": 4,
+                        "num_attempts": 0,
+                        "refusal_flag": None,
+                        "revisit_sections": None,
+                        "target_assignable": True,
+                        "target_id": "1",
+                        "target_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "geo_level_uid": 2,
+                                "location_id": "1101",
+                                "location_name": "ADILABAD RURAL",
+                                "location_uid": 2,
+                            },
+                            {
+                                "geo_level_name": "PSU",
+                                "geo_level_uid": 3,
+                                "location_id": "17101102",
+                                "location_name": "ANKOLI",
+                                "location_uid": 4,
+                            },
+                        ],
+                        "target_uid": 1,
+                        "webapp_tag_color": None,
+                    },
+                    {
+                        "assigned_enumerator_custom_fields": {
+                            "Age": "4",
+                            "Mobile (Secondary)": "1123456789",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_secondary1",
+                                        "field_label": "Mobile (Secondary)",
+                                    },
+                                    {"column_name": "age1", "field_label": "Age"},
+                                ],
+                                "email": "email1",
+                                "enumerator_id": "enumerator_id1",
+                                "enumerator_type": "enumerator_type1",
+                                "gender": "gender1",
+                                "home_address": "home_address1",
+                                "language": "language1",
+                                "location_id_column": "district_id1",
+                                "mobile_primary": "mobile_primary1",
+                                "name": "name1",
+                            },
+                        },
+                        "assigned_enumerator_email": "griffin.muteti@idinsight.org",
+                        "assigned_enumerator_gender": "Male",
+                        "assigned_enumerator_home_address": "my house",
+                        "assigned_enumerator_id": "0294615",
+                        "assigned_enumerator_language": "Swahili",
+                        "assigned_enumerator_mobile_primary": "0123456789",
+                        "assigned_enumerator_name": "Griffin Muteti",
+                        "assigned_enumerator_uid": 4,
+                        "completed_flag": None,
+                        "custom_fields": {
+                            "Address": "South Delhi",
+                            "Mobile no.": "1234567891",
+                            "Name": "Anupama",
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_primary1",
+                                        "field_label": "Mobile no.",
+                                    },
+                                    {"column_name": "name1", "field_label": "Name"},
+                                    {
+                                        "column_name": "address1",
+                                        "field_label": "Address",
+                                    },
+                                ],
+                                "gender": "gender1",
+                                "language": "language1",
+                                "location_id_column": "psu_id1",
+                                "target_id": "target_id1",
+                            },
+                        },
+                        "form_uid": 1,
+                        "gender": "Female",
+                        "language": "Hindi",
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": "Not Attempted",
+                        "final_survey_status": None,
+                        "final_survey_status_label": "Not Attempted",
+                        "scto_fields": None,
+                        "location_uid": 4,
+                        "num_attempts": 0,
+                        "refusal_flag": None,
+                        "revisit_sections": None,
+                        "target_assignable": True,
+                        "target_id": "2",
+                        "target_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "geo_level_uid": 2,
+                                "location_id": "1101",
+                                "location_name": "ADILABAD RURAL",
+                                "location_uid": 2,
+                            },
+                            {
+                                "geo_level_name": "PSU",
+                                "geo_level_uid": 3,
+                                "location_id": "17101102",
+                                "location_name": "ANKOLI",
+                                "location_uid": 4,
+                            },
+                        ],
+                        "target_uid": 2,
+                        "webapp_tag_color": None,
+                    },
+                ],
+                "success": True,
+            }
+
+            # Check the response
+            response = client.get("/api/assignments", query_string={"form_uid": 1})
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Assignments Upload",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_upload_assignments_csv_invalid_ids(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Function to test uploading asssignments csv with invalid target_id and enumerator_id
+        errors
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_errors.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "merge",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_put_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "target_id1",
+                            "enumerator_id1",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "enumerator_id1": "0294614",
+                                "errors": "Enumerator id not found in uploaded enumerators data for the form",
+                                "row_number": 2,
+                                "target_id1": "1",
+                            },
+                            {
+                                "enumerator_id1": "0294612",
+                                "errors": "Target id not found in uploaded targets data for the form",
+                                "row_number": 3,
+                                "target_id1": "3",
+                            },
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 2,
+                        "total_correct_rows": 0,
+                        "total_rows": 2,
+                        "total_rows_with_errors": 2,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 target_id(s) that were not found in the uploaded targets data. The following row numbers contain invalid target_id's: 3",
+                            "error_type": "Invalid target_id's",
+                            "row_numbers_with_errors": [3],
+                        },
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 enumerator_id(s) that were not found in the uploaded enumerators data. The following row numbers contain invalid enumerator_id's: 2",
+                            "error_type": "Invalid enumerator_id's",
+                            "row_numbers_with_errors": [2],
+                        },
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_dropout_enumerator(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Function to test uploading asssignments csv with enumerator who has dropped out of the survey
+        """
+        # Update an enumerator's status to Dropout
+        payload = {
+            "status": "Dropout",
+            "form_uid": 1,
+            "enumerator_type": "surveyor",
+        }
+
+        response = client.patch(
+            "/api/enumerators/2/roles/status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_put_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "target_id1",
+                            "enumerator_id1",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "enumerator_id1": "0294613",
+                                "errors": "Enumerator id has status 'Dropout' and are ineligible for assignment",
+                                "row_number": 2,
+                                "target_id1": "1",
+                            }
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 1,
+                        "total_correct_rows": 1,
+                        "total_rows": 2,
+                        "total_rows_with_errors": 1,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 enumerator_id(s) that have status 'Dropout' and are ineligible for assignment. The following row numbers contain dropout enumerator_id's: 2",
+                            "error_type": "Dropout enumerator_id's",
+                            "row_numbers_with_errors": [2],
+                        }
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_unassignable_target(
+        self,
+        app,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Function to test uploading asssignments csv with target that is not assignable
+        """
+        # Update a target's assignable status to False
+        set_target_assignable_status(app, db, 1, False)
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_put_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "target_id1",
+                            "enumerator_id1",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "enumerator_id1": "0294613",
+                                "errors": "Target id not assignable for this form (most likely because they are complete)",
+                                "row_number": 2,
+                                "target_id1": "1",
+                            }
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 1,
+                        "total_correct_rows": 1,
+                        "total_rows": 2,
+                        "total_rows_with_errors": 1,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 target_id(s) that were not assignable for this form (most likely because they are complete). The following row numbers contain not assignable target_id's: 2",
+                            "error_type": "Not Assignable target_id's",
+                            "row_numbers_with_errors": [2],
+                        }
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_unmapped_column(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Upload the enumerators csv with unmapped enumerator id column
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_errors.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        # enumerator_id is needed
+        assert response.status_code == 422
+
+        expected_response = {
+            "message": {
+                "column_mapping": {"enumerator_id": ["This field is required."]}
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_missing_enumerator(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Function to test uploading asssignments csv with missing enumerator id
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_missing_enumerator.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "merge",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "target_id1",
+                            "enumerator_id1",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "enumerator_id1": "",
+                                "errors": "Blank field(s) found in the following column(s): enumerator_id1. The column(s) cannot contain blank fields.; Enumerator id not found in uploaded enumerators data for the form",
+                                "row_number": 3,
+                                "target_id1": "2",
+                            }
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 2,
+                        "total_correct_rows": 1,
+                        "total_rows": 2,
+                        "total_rows_with_errors": 1,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "Blank values are not allowed in the following columns: enumerator_id1, target_id1. Blank values in these columns were found for the following row(s): 3",
+                            "error_type": "Blank field",
+                            "row_numbers_with_errors": [3],
+                        },
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 enumerator_id(s) that were not found in the uploaded enumerators data. The following row numbers contain invalid enumerator_id's: 3",
+                            "error_type": "Invalid enumerator_id's",
+                            "row_numbers_with_errors": [3],
+                        },
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_duplicate_column(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Function to test uploading asssignments csv with duplicate column
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_duplicate_column.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "merge",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "file_structure_errors": [
+                    "Column name 'target_id1' from the column mapping appears 2 time(s) in the uploaded file. It should appear exactly once."
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_assignments_csv_column_mapping_error(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Upload the enumerators csv with same column mapped twice
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_errors.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "target_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 422
+
+        # Order of the columns in the error message is not guaranteed, so we need to check both possible responses
+        expected_response_1 = {
+            "errors": {
+                "column_mapping": [
+                    "Column name 'target_id1' is mapped to multiple fields: (enumerator_id, target_id). Column names should only be mapped once."
+                ]
+            },
+            "success": False,
+        }
+        expected_response_2 = {
+            "errors": {
+                "column_mapping": [
+                    "Column name 'target_id1' is mapped to multiple fields: (target_id, enumerator_id). Column names should only be mapped once."
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff_1 = jsondiff.diff(expected_response_1, response.json)
+        checkdiff_2 = jsondiff.diff(expected_response_2, response.json)
+
+        assert checkdiff_1 == {} or checkdiff_2 == {}
+
+    def test_upload_assignments_csv_blank_headers(
+        self,
+        client,
+        login_test_user,
+        create_assignments,
+        csrf_token,
+        create_email_config,
+        create_email_schedule,
+    ):
+        """
+        Upload the enumerators csv with blank header row
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_assignments_blank_headers.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            assignments_csv = f.read()
+            assignments_csv_encoded = base64.b64encode(assignments_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "enumerator_id": "enumerator_id1",
+            },
+            "file": assignments_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "file_structure_errors": [
+                    "Column names were not found in the file. Make sure the first row of the file contains column names."
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_available_columns(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test the available columns endpoint
+        """
+
+        response = client.get(
+            "/api/assignments/table-config/available-columns",
+            query_string={"form_uid": 1},
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Surveyor Name",
+                },
+                {"column_key": "assigned_enumerator_id", "column_label": "Surveyor ID"},
+                {
+                    "column_key": "assigned_enumerator_home_address",
+                    "column_label": "Surveyor Address",
+                },
+                {
+                    "column_key": "assigned_enumerator_gender",
+                    "column_label": "Surveyor Gender",
+                },
+                {
+                    "column_key": "assigned_enumerator_language",
+                    "column_label": "Surveyor Language",
+                },
+                {
+                    "column_key": "assigned_enumerator_email",
+                    "column_label": "Surveyor Email",
+                },
+                {
+                    "column_key": "assigned_enumerator_mobile_primary",
+                    "column_label": "Surveyor Mobile",
+                },
+                {
+                    "column_key": "assigned_enumerator_custom_fields['Mobile (Secondary)']",
+                    "column_label": "Mobile (Secondary)",
+                },
+                {
+                    "column_key": "assigned_enumerator_custom_fields['Age']",
+                    "column_label": "Age",
+                },
+                {"column_key": "target_id", "column_label": "Target ID"},
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "custom_fields['Name']", "column_label": "Name"},
+                {
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Mobile no.",
+                },
+                {"column_key": "custom_fields['Address']", "column_label": "Address"},
+                {
+                    "column_key": "target_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {
+                    "column_key": "target_locations[1].location_id",
+                    "column_label": "Mandal ID",
+                },
+                {
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "Mandal Name",
+                },
+                {
+                    "column_key": "target_locations[2].location_id",
+                    "column_label": "PSU ID",
+                },
+                {
+                    "column_key": "target_locations[2].location_name",
+                    "column_label": "PSU Name",
+                },
+                {
+                    "column_key": "final_survey_status_label",
+                    "column_label": "Final Survey Status",
+                },
+                {
+                    "column_key": "final_survey_status",
+                    "column_label": "Final Survey Status Code",
+                },
+                {"column_key": "revisit_sections", "column_label": "Revisit Sections"},
+                {"column_key": "num_attempts", "column_label": "Total Attempts"},
+                {"column_key": "refusal_flag", "column_label": "Refused"},
+                {"column_key": "completed_flag", "column_label": "Completed"},
+            ],
+            "assignments_review": [
+                {
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Surveyor Name",
+                },
+                {
+                    "column_key": "prev_assigned_to",
+                    "column_label": "Previously Assigned To",
+                },
+                {"column_key": "assigned_enumerator_id", "column_label": "Surveyor ID"},
+                {
+                    "column_key": "assigned_enumerator_home_address",
+                    "column_label": "Surveyor Address",
+                },
+                {
+                    "column_key": "assigned_enumerator_gender",
+                    "column_label": "Surveyor Gender",
+                },
+                {
+                    "column_key": "assigned_enumerator_language",
+                    "column_label": "Surveyor Language",
+                },
+                {
+                    "column_key": "assigned_enumerator_email",
+                    "column_label": "Surveyor Email",
+                },
+                {
+                    "column_key": "assigned_enumerator_mobile_primary",
+                    "column_label": "Surveyor Mobile",
+                },
+                {
+                    "column_key": "assigned_enumerator_custom_fields['Mobile (Secondary)']",
+                    "column_label": "Mobile (Secondary)",
+                },
+                {
+                    "column_key": "assigned_enumerator_custom_fields['Age']",
+                    "column_label": "Age",
+                },
+                {"column_key": "target_id", "column_label": "Target ID"},
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "custom_fields['Name']", "column_label": "Name"},
+                {
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Mobile no.",
+                },
+                {"column_key": "custom_fields['Address']", "column_label": "Address"},
+                {
+                    "column_key": "target_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {
+                    "column_key": "target_locations[1].location_id",
+                    "column_label": "Mandal ID",
+                },
+                {
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "Mandal Name",
+                },
+                {
+                    "column_key": "target_locations[2].location_id",
+                    "column_label": "PSU ID",
+                },
+                {
+                    "column_key": "target_locations[2].location_name",
+                    "column_label": "PSU Name",
+                },
+                {
+                    "column_key": "final_survey_status_label",
+                    "column_label": "Final Survey Status",
+                },
+                {
+                    "column_key": "final_survey_status",
+                    "column_label": "Final Survey Status Code",
+                },
+                {"column_key": "revisit_sections", "column_label": "Revisit Sections"},
+                {"column_key": "num_attempts", "column_label": "Total Attempts"},
+                {"column_key": "refusal_flag", "column_label": "Refused"},
+                {"column_key": "completed_flag", "column_label": "Completed"},
+            ],
+            "assignments_surveyors": [
+                {"column_key": "name", "column_label": "Surveyor Name"},
+                {"column_key": "surveyor_status", "column_label": "Status"},
+                {
+                    "column_key": "surveyor_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {
+                    "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                    "column_label": "Total Assigned Targets",
+                },
+                {
+                    "column_key": "form_productivity.test_scto_input_output.total_pending_targets",
+                    "column_label": "Total Pending Targets",
+                },
+                {
+                    "column_key": "form_productivity.test_scto_input_output.total_completed_targets",
+                    "column_label": "Total Completed Targets",
+                },
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "home_address", "column_label": "Address"},
+                {"column_key": "email", "column_label": "Email"},
+                {"column_key": "mobile_primary", "column_label": "Mobile"},
+                {
+                    "column_key": "custom_fields['Mobile (Secondary)']",
+                    "column_label": "Mobile (Secondary)",
+                },
+                {"column_key": "custom_fields['Age']", "column_label": "Age"},
+            ],
+            "surveyors": [
+                {"column_key": "name", "column_label": "Name"},
+                {"column_key": "enumerator_id", "column_label": "ID"},
+                {"column_key": "surveyor_status", "column_label": "Status"},
+                {
+                    "column_key": "surveyor_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {"column_key": "email", "column_label": "Email"},
+                {"column_key": "mobile_primary", "column_label": "Mobile"},
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "home_address", "column_label": "Address"},
+                {
+                    "column_key": "custom_fields['Mobile (Secondary)']",
+                    "column_label": "Mobile (Secondary)",
+                },
+                {"column_key": "custom_fields['Age']", "column_label": "Age"},
+            ],
+            "targets": [
+                {"column_key": "target_id", "column_label": "Target ID"},
+                {"column_key": "gender", "column_label": "Gender"},
+                {"column_key": "language", "column_label": "Language"},
+                {"column_key": "custom_fields['Name']", "column_label": "Name"},
+                {
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Mobile no.",
+                },
+                {"column_key": "custom_fields['Address']", "column_label": "Address"},
+                {
+                    "column_key": "target_locations[0].location_id",
+                    "column_label": "District ID",
+                },
+                {
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "District Name",
+                },
+                {
+                    "column_key": "target_locations[1].location_id",
+                    "column_label": "Mandal ID",
+                },
+                {
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "Mandal Name",
+                },
+                {
+                    "column_key": "target_locations[2].location_id",
+                    "column_label": "PSU ID",
+                },
+                {
+                    "column_key": "target_locations[2].location_name",
+                    "column_label": "PSU Name",
+                },
+                {
+                    "column_key": "final_survey_status_label",
+                    "column_label": "Final Survey Status",
+                },
+                {
+                    "column_key": "final_survey_status",
+                    "column_label": "Final Survey Status Code",
+                },
+                {"column_key": "revisit_sections", "column_label": "Revisit Sections"},
+                {"column_key": "num_attempts", "column_label": "Total Attempts"},
+                {"column_key": "refusal_flag", "column_label": "Refused"},
+                {"column_key": "completed_flag", "column_label": "Completed"},
+            ],
+        }
+
+        print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
 
         assert checkdiff == {}

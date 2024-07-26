@@ -2145,6 +2145,9 @@ paths:
                   enumerator_id:
                     type: string
                     description: The form's enumerator ID
+                  dq_enumerator_id:
+                    type: string
+                    description: The enumerator ID for the enumerator being checked in the DQ form
                   target_id:
                     type: string
                     description: The form's target ID
@@ -2199,6 +2202,9 @@ paths:
                 enumerator_id:
                   type: string
                   description: The form's enumerator ID
+                dq_enumerator_id:
+                  type: string
+                  description: The enumerator ID for the enumerator being checked in the DQ form
                 target_id:
                   type: string
                   description: The form's target ID
@@ -2239,6 +2245,22 @@ paths:
                     description: >-
                       Error message indicating that the specified form ID was
                       not found.
+        "422":
+          description: DQ enumerator ID is required for DQ forms
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: >-
+                      Error message indicating that the DQ enumerator ID is
+                      required for DQ forms.
+
     put:
       summary: Update an existing SurveyCTO question mapping
       tags:
@@ -2270,6 +2292,9 @@ paths:
                 enumerator_id:
                   type: string
                   description: The form's enumerator ID
+                dq_enumerator_id:
+                  type: string
+                  description: The enumerator ID for the enumerator being checked in the DQ form
                 target_id:
                   type: string
                   description: The form's target ID
@@ -2304,6 +2329,9 @@ paths:
                   enumerator_id:
                     type: string
                     description: The form's enumerator ID
+                  dq_enumerator_id:
+                    type: string
+                    description: The enumerator ID for the enumerator being checked in the DQ form
                   target_id:
                     type: string
                     description: The form's target ID
@@ -2327,6 +2355,21 @@ paths:
                     description: >-
                       Error message indicating that the specified form ID was
                       not found.
+        "422":
+          description: DQ enumerator ID is required for DQ forms
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  error:
+                    type: string
+                    description: >-
+                      Error message indicating that the DQ enumerator ID is
+                      required for DQ forms.
     delete:
       summary: Delete an existing SurveyCTO question mapping
       tags:
@@ -3574,6 +3617,253 @@ paths:
                             {`location`_id: _location_id_, `location`_name:
                             _location_name_} in descending order from highest to
                             lowest level location.
+    post:
+      summary: Upload a csv of assignments
+      description: |
+        Upload a csv of assignments to be added to the given form
+      tags:
+        - Assignments
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                column_mapping:
+                  type: object
+                  description: >-
+                    An object mapping the column names in the csv to the
+                    corresponding assignment fields
+                  properties:
+                    target_id:
+                      type: string
+                      description: The column name of the target ID
+                    enumerator_id:
+                      type: string
+                      description: The column name of the enumerator ID
+                  required:
+                    - target_id
+                    - enumerator_id
+                file:
+                  type: string
+                  format: Base64
+                  description: >-
+                    The csv file to be uploaded in base64 encoding
+
+                    The csv must have a header row with the column names
+                    specified in the `column_mapping` object.
+                mode:
+                  type: string
+                  enum:
+                    - overwrite
+                    - merge
+                  description: >-
+                    The mode of the upload. In 'overwrite' mode, all assignments
+                    with the provided form_uid from  the query parameter will be
+                    removed and replaced with the new assignments from  the CSV
+                    file. In 'merge' mode, the new assignments from the CSV will
+                    be added to the existing ones.  Any existing records
+                    included in the upload will also be updated.
+              required:
+                - column_mapping
+                - file
+                - mode
+      responses:
+        "200":
+          description: Records added successfully
+        "400":
+          description: Query parameter errors
+        "403":
+          description: X-CSRF-Token required in header
+        "404":
+          description: Form not found
+        "422":
+          description: Form errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to the csv
+                      file upload. Each key will only be present if there are
+                      errors of that type.
+
+                      In addition to the errors listed below, the `errors`
+                      object may also contain errors related to an incorrectly
+                      specified payload.
+                    properties:
+                      file_structure_errors:
+                        type: array
+                        description: >-
+                          An array of errors in the file structure. Each array
+                          item is a string containing the error message related
+                          to an individual error.
+                      column_mapping:
+                        type: array
+                        description: >-
+                          An array of errors in the column. Each array item is a
+                          string containing the error message related to an
+                          individual error.
+                      record_errors:
+                        type: object
+                        description: >-
+                          An object with information on validation errors in the
+                          csv records.
+                        properties:
+                          summary:
+                            type: object
+                            description: >-
+                              A summary of the validation errors in the csv
+                              records
+                            properties:
+                              error_count:
+                                type: integer
+                                description: The total number of errors in the csv records
+                              total_correct_rows:
+                                type: integer
+                                description: >-
+                                  The total number of correct rows in the csv
+                                  records
+                              total_rows:
+                                type: integer
+                                description: The total number of rows in the csv records
+                              total_rows_with_errors:
+                                type: integer
+                                description: >-
+                                  The total number of rows with errors in the
+                                  csv records
+                          summary_by_error_type:
+                            type: array
+                            description: >-
+                              An array of objects with information on validation
+                              errors by error type in the csv records.
+                            items:
+                              type: object
+                              properties:
+                                error_count:
+                                  type: integer
+                                  description: >-
+                                    The total number of errors of this type in
+                                    the csv records
+                                error_message:
+                                  type: string
+                                  description: The error message for this error type
+                                error_type:
+                                  type: string
+                                  description: The error type
+                                row_numbers_with_errors:
+                                  type: array
+                                  description: >-
+                                    An array of row numbers with errors of this
+                                    type in the csv records
+                                  items:
+                                    type: integer
+                                    description: >-
+                                      The row number with an error of this type
+                                      in the csv records
+                          invalid_records:
+                            type: object
+                            description: >-
+                              An object with information on validation errors by
+                              record in the csv records. This can be used to
+                              identify the specific errors in each record and to
+                              let users download a csv with the errors.
+                            properties:
+                              records:
+                                type: array
+                                description: >-
+                                  An array of objects that represent the
+                                  original records in the csv with the
+                                  validation errors. A new `errors` field is
+                                  added to each record that contains a
+                                  semicolon-separated list of the validation
+                                  errors for that record. A new `row_number`
+                                  field is also added to each record that
+                                  contains the row number of the record in the
+                                  original csv.
+                              ordered_columns:
+                                type: array
+                                description: >-
+                                  An array of strings that represent the column
+                                  names in the `records` array of objects in the
+                                  order that they should  appear in a table or
+                                  downloadable csv file.
+                                items:
+                                  type: string
+                                  description: The column name in the csv
+                  success:
+                    type: boolean
+                    description: Whether the upload was successful
+    put:
+      summary: Update assignments
+      description: >
+        Update the mapping of enumerators to targets
+
+
+        Each target can have 0 or 1 enumerators assigned to it, so assigning an
+        enumerator to an already-assigned target will reassign (overwrite) the previous
+        assignment
+
+
+        To unassign an enumerator from a target, include the target_uid value
+        and pass a null value for the enumerator_uid
+      tags:
+        - Assignments
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              description: A list of target/enumerator pairs
+              items:
+                type: object
+                properties:
+                  form_uid:
+                    type: integer
+                    description: The unique ID of the form
+                  target_uid:
+                    type: integer
+                  enumerator_uid:
+                    type: integer
+                required:
+                  - form_uid
+                  - target_uid
+                  - enumerator_uid
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "404":
+          description: Enumerator or target not found
+        "422":
+          description: Form errors. Specific errors messages will be returned if ineligible/unassignable enumerators or targets are included in the request body.
+      
   /assignments/enumerators:
     get:
       summary: Get enumerators eligible for assignment
@@ -3654,59 +3944,7 @@ paths:
                         total_completed_targets:
                           type: integer
                           description: Total complete targets for the given survey
-    put:
-      summary: Update assignments
-      description: >
-        Update the mapping of enumerators to targets
-
-
-        Each target can have 0 or 1 enumerators assigned to it, so assigning an
-        enumerator to an already-assigned target will reassign (overwrite) the previous
-        assignment
-
-
-        To unassign an enumerator from a target, include the target_uid value
-        and pass a null value for the enumerator_uid
-      tags:
-        - Assignments
-      parameters:
-        - in: header
-          name: X-CSRF-TOKEN
-          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
-          schema:
-            type: string
-          required: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              description: A list of target/enumerator pairs
-              items:
-                type: object
-                properties:
-                  form_uid:
-                    type: integer
-                    description: The unique ID of the form
-                  target_uid:
-                    type: integer
-                  enumerator_uid:
-                    type: integer
-                required:
-                  - form_uid
-                  - target_uid
-                  - enumerator_uid
-      responses:
-        "200":
-          description: Success
-        "403":
-          description: X-CSRF-Token required in header
-        "404":
-          description: Enumerator or target not found
-        "422":
-          description: Form errors. Specific errors messages will be returned if ineligible/unassignable enumerators or targets are included in the request body.
-
+                          
   /assignments/schedule-email:
     post:
       summary: Schedule assignment emails
@@ -4076,7 +4314,123 @@ paths:
           description: Enumerator or target not found
         "422":
           description: Form errors
-  "/module-questionnaire/{survey_uid}":
+  /assignments/table-config/available-columns:
+    get:
+      summary: Get available columns for table configuration
+      description: >-
+        Return the columns that can be included as part of the table configuration for the given form
+      tags:
+        - Assignments Table Configuration
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assignments_main:
+                    type: array
+                    description: >
+                      List of columns with labels and data
+                      access keys
+
+                      Corresponds to the main table on the assignments tab of
+                      the web app
+                    items:
+                      type: object
+                      properties:
+                        column_label:
+                          type: string
+                          description: The label for the column
+                        column_key:
+                          type: string
+                          description: >-
+                            The column key that can be used to access the
+                            column records in the data response
+                  assignments_surveyors:
+                    type: array
+                    description: >
+                      List of columns with labels and data
+                      access keys
+
+                      Corresponds to the surveyors modal table on the
+                      assignments tab of the web app
+                    items:
+                      type: object
+                      properties:
+                        column_label:
+                          type: string
+                          description: The label for the column
+                        column_key:
+                          type: string
+                          description: >-
+                            The column key that can be used to access the
+                            column records in the data response
+                  assignments_review:
+                    type: array
+                    description: >
+                      List of columns with labels and data
+                      access keys
+
+                      Corresponds to the assignments review modal table on the
+                      assignments tab of the web app
+                    items:
+                      type: object
+                      properties:
+                        column_label:
+                          type: string
+                          description: The label for the column
+                        column_key:
+                          type: string
+                          description: >-
+                            The column key that can be used to access the
+                            column records in the data response
+                  surveyors:
+                    type: array
+                    description: >
+                      List of columns with labels and data
+                      access keys
+
+                      Corresponds to the main table on the surveyors tab of the
+                      web app
+                    items:
+                      type: object
+                      properties:
+                        column_label:
+                          type: string
+                          description: The label for the column
+                        column_key:
+                          type: string
+                          description: >-
+                            The column key that can be used to access the
+                            column records in the data response
+                  targets:
+                    type: array
+                    description: >
+                      List of columns with labels and data
+                      access keys
+
+                      Corresponds to the main table on the targets tab of the
+                      web app
+                    items:
+                      type: object
+                      properties:
+                        column_label:
+                          type: string
+                          description: The label for the column
+                        column_key:
+                          type: string
+                          description: >-
+                            The column key that can be used to access the
+                            column records in the data response
+  /module-questionnaire/{survey_uid}:
     get:
       tags:
         - Module Questionnaire
@@ -5424,6 +5778,15 @@ paths:
                     file. In 'merge' mode, the new targets from the CSV will
                     be added to the existing ones.  Any existing records
                     included in the upload will also be updated.
+                load_successful:
+                  type: boolean
+                  default: False
+                  description: >-
+                    Whether in case of record level failures, load succesful 
+                    records. The default behaviour is to fail upload for all 
+                    records if validations for any record fails. If True, the
+                    upload will load the successful records and return the
+                    failed records in the response.
               required:
                 - column_mapping
                 - file
@@ -6119,9 +6482,6 @@ paths:
                   success:
                     type: boolean
                     example: false
-                  data:
-                    type: 'null'
-                    example: null
                   message:
                     type: string
                     example: "Email configs not found"
@@ -7064,6 +7424,21 @@ paths:
                   type: string
                 content:
                   type: string
+                variable_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      variable_name:
+                        type: string
+                      variable_type:
+                        type: string
+                      source_table:
+                        type: string
+                      variable_expression:
+                        type: string
+                      table_column_mapping:
+                        type: object
               required:
                 - language
                 - email_config_uid
@@ -7085,6 +7460,21 @@ paths:
                     type: string
                   content:
                     type: string
+                  variable_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        variable_name:
+                          type: string
+                        variable_type:
+                          type: string
+                        source_table:
+                          type: string
+                        variable_expression:
+                          type: string
+                        table_column_mapping:
+                          type: object
                 required:
                   - email_config_uid
                   - subject
@@ -7119,6 +7509,21 @@ paths:
                       type: string
                     content:
                       type: string
+                    variable_list:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          variable_name:
+                            type: string
+                          variable_type:
+                            type: string
+                          source_table:
+                            type: string
+                          variable_expression:
+                            type: string
+                          table_column_mapping:
+                            type: object
                   required:
                     - email_config_uid
                     - subject
@@ -7158,6 +7563,21 @@ paths:
                     type: string
                   content:
                     type: string
+                  variable_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        variable_name:
+                          type: string
+                        variable_type:
+                          type: string
+                        source_table:
+                          type: string
+                        variable_expression:
+                          type: string
+                        table_column_mapping:
+                          type: object
                 required:
                   - email_config_uid
                   - subject
@@ -7195,6 +7615,21 @@ paths:
                   type: string
                 content:
                   type: string
+                variable_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      variable_name:
+                        type: string
+                      variable_type:
+                        type: string
+                      source_table:
+                        type: string
+                      variable_expression:
+                        type: string
+                      table_column_mapping:
+                        type: object
               required:
                 - email_config_uid
                 - subject
@@ -7216,6 +7651,21 @@ paths:
                     type: string
                   content:
                     type: string
+                  variable_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        variable_name:
+                          type: string
+                        variable_type:
+                          type: string
+                        source_table:
+                          type: string
+                        variable_expression:
+                          type: string
+                        table_column_mapping:
+                          type: object
                 required:
                   - email_config_uid
                   - subject
@@ -7255,19 +7705,19 @@ paths:
           schema:
             type: integer
         - name: email_source_gsheet_link
-          in: Body
+          in: query
           description: Link to Google Sheet
           required: true
           schema:
             type: string
         - name: email_source_gsheet_tab
-          in: Body
+          in: query
           description: Google Sheet Tab name
           required: true
           schema:
             type: string
         - name: email_source_gsheet_header_row
-          in: Body
+          in: query
           description: Google Sheet Header Row Number
           required: true
           schema:
@@ -7349,7 +7799,142 @@ paths:
                     description: Error message
                     example: "Google Sheet access forbidden, kindly check sheet permissions"
         
-
+  /emails/tablecatalog:
+    get:
+      tags:
+        - Emails
+      summary: Get all table catalog for a specific survey
+      parameters:
+        - name: survey_uid
+          in: query
+          description: Unique identifier for the survey
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        survey_uid:
+                          type: integer
+                          description: Unique identifier of the survey
+                          example: 123
+                        table_name:
+                          type: string
+                          description: Name of the table
+                          example: "table_name"
+                        table_description:
+                          type: string
+                          description: Description of the table
+                          example: "table_description"
+                        column_name:
+                          type: string
+                          description: Name of the column
+                          example: "column_name"
+                        column_description:
+                          type: string
+                          description: Description of the column
+                          example: "column_description"
+                        column_type:
+                          type: string
+                          description: Type of the column
+                          example: "column_type"
+    put:
+      tags:
+        - Emails
+      summary: Create/Update a table catalog entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: integer
+                  description: Unique identifier for the survey
+                  example: 123
+                table_catalog:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      table_name:
+                        type: string
+                        description: Name of the table
+                        example: "table_name"
+                      column_name:
+                        type: string
+                        description: Name of the column
+                        example: "district_name"
+                      column_description:
+                        type: string
+                        description: Description of the column
+                        example: "Name of district"
+                      column_type:
+                        type: string
+                        description: Type of the column
+                        example: "integer"
+              required:
+                - survey_uid
+                - table_catalog
+                  - table_name
+                  - column_name
+                  - column_type
+      responses:
+        "201":
+          description: Table catalog entry created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      survey_uid:
+                        type: integer
+                        description: Unique identifier of the survey
+                        example: 123
+                      table_name:
+                        type: string
+                        description: Name of the table
+                        example: "table_name"
+                      table_description:
+                        type: string
+                        description: Description of the table
+                        example: "table_description"
+                      column_name:
+                        type: string
+                        description: Name of the column
+                        example: "column_name"
+                      column_description:
+                        type: string
+                        description: Description of the column
+                        example: "column_description"
+                      column_type:
+                        type: string
+                        description: Type of the column
+                        example: "column_type"
+                required:
+                  - success
+                  - data
+                              
   /media-files:
     post:
       tags:

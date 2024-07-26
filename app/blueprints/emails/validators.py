@@ -5,6 +5,8 @@ from flask_wtf import FlaskForm
 from wtforms import FieldList, FormField, IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired, ValidationError
 
+from app.utils.utils import JSONField
+
 
 class EmailConfigValidator(FlaskForm):
     config_type = StringField(validators=[DataRequired()])
@@ -121,11 +123,37 @@ class ManualEmailTriggerPatchValidator(FlaskForm):
     )
 
 
+class EmailVariableTableColumnMappingValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+
+class EmailVariableValidator(FlaskForm):
+    class meta:
+        csrf = False
+
+    variable_name = StringField(validators=[DataRequired()])
+    variable_type = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                ["string", "table"],
+                message="Invalid variable type. Must be 'text' or 'table'",
+            ),
+        ],
+        default="string",
+    )
+    variable_expression = StringField(default=None)
+    source_table = StringField(validators=[DataRequired()])
+    table_column_mapping = JSONField(default={})
+
+
 class EmailTemplateValidator(FlaskForm):
     subject = StringField(validators=[DataRequired()])
     language = StringField(validators=[DataRequired()])
     email_config_uid = IntegerField(validators=[DataRequired()])
     content = StringField(validators=[DataRequired()])
+    variable_list = FieldList(FormField(EmailVariableValidator), default=[])
 
 
 class EmailConfigQueryParamValidator(FlaskForm):
@@ -170,3 +198,22 @@ class EmailGsheetSourcePatchParamValidator(FlaskForm):
         csrf = False
 
     email_config_uid = IntegerField(validators=[DataRequired()])
+
+
+class EmailTableCatalogQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField(validators=[DataRequired()])
+
+
+class EmailTableCatalogJSONValidator(FlaskForm):
+    table_name = StringField(validators=[DataRequired()])
+    column_name = StringField(validators=[DataRequired()])
+    column_type = StringField(validators=[DataRequired()])
+    column_description = StringField(default=None)
+
+
+class EmailTableCatalogValidator(FlaskForm):
+    survey_uid = IntegerField(validators=[DataRequired()])
+    table_catalog = FieldList(FormField(EmailTableCatalogJSONValidator), default=[])

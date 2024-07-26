@@ -194,6 +194,7 @@ class SCTOQuestionMapping(db.Model):
     revisit_section = db.Column(db.String())
     target_id = db.Column(db.String(), nullable=False)
     enumerator_id = db.Column(db.String(), nullable=False)
+    dq_enumerator_id = db.Column(db.String())
     locations = db.Column(JSONB)
     forms = db.relationship(
         Form, backref=backref("scto_question_mapping", passive_deletes=True)
@@ -206,6 +207,7 @@ class SCTOQuestionMapping(db.Model):
         revisit_section,
         target_id,
         enumerator_id,
+        dq_enumerator_id,
         locations,
     ):
         self.form_uid = form_uid
@@ -213,6 +215,7 @@ class SCTOQuestionMapping(db.Model):
         self.revisit_section = revisit_section
         self.target_id = target_id
         self.enumerator_id = enumerator_id
+        self.dq_enumerator_id = dq_enumerator_id
         self.locations = locations
 
     def to_dict(self):
@@ -222,6 +225,7 @@ class SCTOQuestionMapping(db.Model):
             "revisit_section": self.revisit_section,
             "target_id": self.target_id,
             "enumerator_id": self.enumerator_id,
+            "dq_enumerator_id": self.dq_enumerator_id,
             "locations": self.locations,
         }
 
