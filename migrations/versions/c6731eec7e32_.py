@@ -1,8 +1,8 @@
 """Add target_mapping_criteria column and rename supervisor_assignment_criteria to surveyor_mapping_criteria
 
-Revision ID: 41df9d253183
-Revises: b26f412cf185
-Create Date: 2024-07-23 08:01:22.529701
+Revision ID: c6731eec7e32
+Revises: 4c32850b5077
+Create Date: 2024-07-26 10:59:29.539482
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '41df9d253183'
-down_revision = 'b26f412cf185'
+revision = 'c6731eec7e32'
+down_revision = '4c32850b5077'
 branch_labels = None
 depends_on = None
 
@@ -30,5 +30,5 @@ def downgrade():
     with op.batch_alter_table('module_questionnaire', schema='webapp') as batch_op:
         batch_op.alter_column('surveyor_mapping_criteria', nullable=True, new_column_name='supervisor_assignment_criteria')
         batch_op.drop_column('target_mapping_criteria')
-
+        
     # ### end Alembic commands ###
