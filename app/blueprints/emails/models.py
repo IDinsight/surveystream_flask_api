@@ -27,9 +27,20 @@ class EmailConfig(db.Model):
     email_source_gsheet_tab = db.Column(db.String(256), nullable=True)  # Gsheet tab
     email_source_gsheet_header_row = db.Column(db.Integer, nullable=True)
     email_source_tablename = db.Column(db.String(256), nullable=True)
-    email_source_columns = db.Column(
-        db.ARRAY(db.String(128)), nullable=True
-    )  # List of columns from Gsheet or Table
+    email_source_columns = db.Column(db.ARRAY(db.String(128)), nullable=True)
+    cc_users = db.Column(db.ARRAY(db.Integer), nullable=True)
+    pdf_attachment = db.Column(db.Boolean, nullable=False, server_default="false")
+    pdf_encryption = db.Column(db.Boolean, nullable=False, server_default="false")
+    pdf_encryption_password_type = db.Column(
+        db.String(16),
+        CheckConstraint(
+            "pdf_encryption_password_type IN ('Pattern', 'Password', NULL)",
+            name="ck_email_configs_pdf_encryption_password_type",
+        ),
+        nullable=True,
+    )
+
+    # List of columns from Gsheet or Table
     schedules = db.relationship(
         "EmailSchedule",
         backref="email_config",
@@ -70,6 +81,10 @@ class EmailConfig(db.Model):
         email_source_gsheet_header_row=None,
         email_source_tablename=None,
         email_source_columns=None,
+        cc_users=None,
+        pdf_attachment=False,
+        pdf_encryption=False,
+        pdf_encryption_password_type=None,
     ):
         self.config_name = config_name
         self.form_uid = form_uid
@@ -80,6 +95,10 @@ class EmailConfig(db.Model):
         self.email_source_gsheet_header_row = email_source_gsheet_header_row
         self.email_source_tablename = email_source_tablename
         self.email_source_columns = email_source_columns
+        self.cc_users = cc_users
+        self.pdf_attachment = pdf_attachment
+        self.pdf_encryption = pdf_encryption
+        self.pdf_encryption_password_type = pdf_encryption_password_type
 
     def to_dict(self):
         email_table_catalog = EmailTableCatalog.query.filter_by(
@@ -96,6 +115,10 @@ class EmailConfig(db.Model):
             "email_source_gsheet_header_row": self.email_source_gsheet_header_row,
             "email_source_tablename": self.email_source_tablename,
             "email_source_columns": self.email_source_columns,
+            "cc_users": self.cc_users,
+            "pdf_attachment": self.pdf_attachment,
+            "pdf_encryption": self.pdf_encryption,
+            "pdf_encryption_password_type": self.pdf_encryption_password_type,
             "table_catalog": [table.to_dict() for table in email_table_catalog],
         }
 

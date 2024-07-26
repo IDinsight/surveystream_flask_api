@@ -167,6 +167,10 @@ class TestEmails:
             "email_source_gsheet_header_row": 1,
             "email_source_tablename": "test_table",
             "email_source_columns": ["test_column"],
+            "cc_users": [1, 2, 3],
+            "pdf_attachment": True,
+            "pdf_encryption": True,
+            "pdf_encryption_password_type": "Pattern",
         }
         response = client.post(
             "/api/emails/config",
@@ -326,6 +330,10 @@ class TestEmails:
                     "email_source_gsheet_header_row": 1,
                     "email_source_tablename": "test_table",
                     "table_catalog": [],
+                    "cc_users": [1, 2, 3],
+                    "pdf_attachment": True,
+                    "pdf_encryption": True,
+                    "pdf_encryption_password_type": "Pattern",
                 },
                 "success": True,
             }
@@ -589,6 +597,10 @@ class TestEmails:
                         "email_source_gsheet_tab": "Test_Success",
                         "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
+                        "cc_users": [1, 2, 3],
+                        "pdf_attachment": True,
+                        "pdf_encryption": True,
+                        "pdf_encryption_password_type": "Pattern",
                         "table_catalog": [],
                         "form_uid": 1,
                         "report_users": [1, 2, 3],
@@ -678,6 +690,10 @@ class TestEmails:
                         "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
                         "table_catalog": [],
+                        "cc_users": [1, 2, 3],
+                        "pdf_attachment": True,
+                        "pdf_encryption": True,
+                        "pdf_encryption_password_type": "Pattern",
                     }
                 ],
                 "success": True,
@@ -717,6 +733,10 @@ class TestEmails:
             "email_source_tablename": "test_table",
             "email_source_columns": ["test_column"],
             "table_catalog": [],
+            "cc_users": [1, 2, 3],
+            "pdf_attachment": True,
+            "pdf_encryption": True,
+            "pdf_encryption_password_type": "Password",
         }
 
         response = client.put(
@@ -2481,6 +2501,10 @@ class TestEmails:
                     "email_source_gsheet_tab": "Test_Success",
                     "email_source_gsheet_header_row": 1,
                     "email_source_tablename": "test_table",
+                    "cc_users": [1, 2, 3],
+                    "pdf_attachment": True,
+                    "pdf_encryption": True,
+                    "pdf_encryption_password_type": "Pattern",
                     "table_catalog": [
                         {
                             "survey_uid": 1,

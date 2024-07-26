@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 
 from flask_wtf import FlaskForm
-from wtforms import FieldList, FormField, IntegerField, StringField
+from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired, ValidationError
 
 from app.utils.utils import JSONField
@@ -27,6 +27,16 @@ class EmailConfigValidator(FlaskForm):
     email_source_gsheet_header_row = IntegerField(default=None)
     email_source_tablename = StringField(default=None)
     email_source_columns = FieldList(StringField(), default=[])
+    cc_users = FieldList(IntegerField(), default=[])
+    pdf_attachment = BooleanField(default=False)
+    pdf_encryption = BooleanField(default=False)
+    pdf_encryption_password_type = StringField(
+        AnyOf(
+            ["Pattern", "Password", None],
+            message="Invalid pdf encryption password type . Must be 'Pattern' or 'Password'",
+        ),
+        default=None,
+    )
 
 
 class EmailFilterValidator(FlaskForm):
