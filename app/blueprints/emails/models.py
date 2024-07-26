@@ -1,6 +1,3 @@
-from itertools import groupby
-from operator import attrgetter
-
 from sqlalchemy import TIME, CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.mutable import MutableDict
@@ -33,7 +30,6 @@ class EmailConfig(db.Model):
     email_source_columns = db.Column(
         db.ARRAY(db.String(128)), nullable=True
     )  # List of columns from Gsheet or Table
-
     schedules = db.relationship(
         "EmailSchedule",
         backref="email_config",
@@ -127,22 +123,12 @@ class EmailSchedule(db.Model):
         self.email_schedule_name = email_schedule_name
 
     def to_dict(self):
-        filter_list = EmailScheduleFilter.query.filter_by(
-            email_schedule_uid=self.email_schedule_uid
-        ).all()
-        filter_groupwise_list = [
-            {"filter_group": [filter.to_dict() for filter in filter_group]}
-            for key, filter_group in groupby(
-                filter_list, key=attrgetter("filter_group_id")
-            )
-        ]
         return {
             "email_schedule_uid": self.email_schedule_uid,
             "email_config_uid": self.email_config_uid,
             "email_schedule_name": self.email_schedule_name,
             "dates": self.dates,
             "time": str(self.time),
-            "filter_list": filter_groupwise_list,
         }
 
 

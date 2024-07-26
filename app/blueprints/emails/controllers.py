@@ -1,4 +1,6 @@
 from datetime import datetime
+from itertools import groupby
+from operator import attrgetter
 
 from flask import jsonify
 
@@ -404,7 +406,22 @@ def get_email_schedules(validated_query_params):
 
     schedule_data = []
     for email_schedule in email_schedules:
-        schedule_data.append(email_schedule.to_dict())
+
+        email_schedule_data = email_schedule.to_dict()
+
+        # Get the filters for the schedule
+        filter_list = EmailScheduleFilter.query.filter_by(
+            email_schedule_uid=email_schedule.email_schedule_uid
+        ).all()
+        filter_groupwise_list = [
+            {"filter_group": [filter.to_dict() for filter in filter_group]}
+            for key, filter_group in groupby(
+                filter_list, key=attrgetter("filter_group_id")
+            )
+        ]
+        email_schedule_data["filter_list"] = filter_groupwise_list
+
+        schedule_data.append(email_schedule_data)
 
     response = jsonify(
         {
@@ -438,10 +455,22 @@ def get_email_schedule(email_schedule_uid, validated_query_params):
             404,
         )
 
+    email_schedule_data = email_schedule.to_dict()
+
+    # Get the filters for the schedule
+    filter_list = EmailScheduleFilter.query.filter_by(
+        email_schedule_uid=email_schedule.email_schedule_uid
+    ).all()
+    filter_groupwise_list = [
+        {"filter_group": [filter.to_dict() for filter in filter_group]}
+        for key, filter_group in groupby(filter_list, key=attrgetter("filter_group_id"))
+    ]
+    email_schedule_data["filter_list"] = filter_groupwise_list
+
     response = jsonify(
         {
             "success": True,
-            "data": email_schedule.to_dict(),
+            "data": email_schedule_data,
         }
     )
 

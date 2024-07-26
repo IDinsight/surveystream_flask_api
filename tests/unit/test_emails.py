@@ -223,10 +223,6 @@ class TestEmails:
             for i in range(4)
         ]
 
-        # add today
-
-        future_dates.append(current_datetime.strftime("%Y-%m-%d")),
-
         payload = {
             "dates": future_dates,
             "time": "20:00",
@@ -617,7 +613,6 @@ class TestEmails:
                                 "email_schedule_uid": 1,
                                 "time": "20:00:00",
                                 "email_schedule_name": "Test Schedule",
-                                "filter_list": [],
                             }
                         ],
                         "templates": [
@@ -1061,7 +1056,6 @@ class TestEmails:
                     "email_config_uid": 1,
                     "time": "08:00:00",
                     "email_schedule_uid": create_email_schedule["email_schedule_uid"],
-                    "filter_list": [],
                 },
                 "message": "Email schedule updated successfully",
                 "success": True,
@@ -1196,48 +1190,6 @@ class TestEmails:
                     "email_config_uid": 1,
                     "email_schedule_name": "Test Schedule",
                     "email_schedule_uid": 1,
-                    "filter_list": [
-                        {
-                            "filter_group": [
-                                {
-                                    "email_schedule_uid": 1,
-                                    "filter_concatenator": None,
-                                    "filter_group_id": 1,
-                                    "filter_operator": "Equals",
-                                    "filter_value": "test_value",
-                                    "filter_variable": "test_column",
-                                },
-                                {
-                                    "email_schedule_uid": 1,
-                                    "filter_concatenator": "AND",
-                                    "filter_group_id": 1,
-                                    "filter_operator": "Equals",
-                                    "filter_value": "test_value2",
-                                    "filter_variable": "test_column2",
-                                },
-                            ]
-                        },
-                        {
-                            "filter_group": [
-                                {
-                                    "email_schedule_uid": 1,
-                                    "filter_concatenator": None,
-                                    "filter_group_id": 2,
-                                    "filter_operator": "Equals",
-                                    "filter_value": "test_value",
-                                    "filter_variable": "test_column",
-                                },
-                                {
-                                    "email_schedule_uid": 1,
-                                    "filter_concatenator": "AND",
-                                    "filter_group_id": 2,
-                                    "filter_operator": "Not Equals",
-                                    "filter_value": "test_value2",
-                                    "filter_variable": "test_column2",
-                                },
-                            ]
-                        },
-                    ],
                     "time": "08:00:00",
                 },
                 "message": "Email schedule updated successfully",
@@ -1423,48 +1375,6 @@ class TestEmails:
                     "email_config_uid": 1,
                     "email_schedule_name": "Test Schedule_2",
                     "email_schedule_uid": 2,
-                    "filter_list": [
-                        {
-                            "filter_group": [
-                                {
-                                    "email_schedule_uid": 2,
-                                    "filter_concatenator": None,
-                                    "filter_group_id": 1,
-                                    "filter_operator": "Equals",
-                                    "filter_value": "test_value",
-                                    "filter_variable": "test_column",
-                                },
-                                {
-                                    "email_schedule_uid": 2,
-                                    "filter_concatenator": "AND",
-                                    "filter_group_id": 1,
-                                    "filter_operator": "Equals",
-                                    "filter_value": "test_value2",
-                                    "filter_variable": "test_column2",
-                                },
-                            ]
-                        },
-                        {
-                            "filter_group": [
-                                {
-                                    "email_schedule_uid": 2,
-                                    "filter_concatenator": None,
-                                    "filter_group_id": 2,
-                                    "filter_operator": "Equals",
-                                    "filter_value": "test_value",
-                                    "filter_variable": "test_column",
-                                },
-                                {
-                                    "email_schedule_uid": 2,
-                                    "filter_concatenator": "AND",
-                                    "filter_group_id": 2,
-                                    "filter_operator": "Not Equals",
-                                    "filter_value": "test_value2",
-                                    "filter_variable": "test_column2",
-                                },
-                            ]
-                        },
-                    ],
                     "time": "08:00:00",
                 },
                 "message": "Email schedule created successfully",
@@ -1491,13 +1401,7 @@ class TestEmails:
                 {
                     "data": [
                         {
-                            "dates": [
-                                "Fri, 19 Jul 2024 00:00:00 GMT",
-                                "Sat, 20 Jul 2024 00:00:00 GMT",
-                                "Sun, 21 Jul 2024 00:00:00 GMT",
-                                "Mon, 22 Jul 2024 00:00:00 GMT",
-                                "Fri, 19 Jul 2024 00:00:00 GMT",
-                            ],
+                            "dates": expected_response_dates,
                             "email_config_uid": 1,
                             "email_schedule_name": "Test Schedule",
                             "email_schedule_uid": 1,

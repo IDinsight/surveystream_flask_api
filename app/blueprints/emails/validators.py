@@ -45,7 +45,7 @@ class EmailFilterValidator(FlaskForm):
     filter_concatenator = StringField(
         validators=[
             AnyOf(
-                ["AND", "OR"],
+                ["AND", "OR", None],
                 message="Invalid Concatenator. Must be 'AND' or 'OR'",
             ),
         ],
