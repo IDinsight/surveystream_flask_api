@@ -7,9 +7,8 @@ class ModuleQuestionnaireForm(FlaskForm):
     survey_uid = IntegerField(validators=[DataRequired()])
 
     target_assignment_criteria = FieldList(StringField(validators=[]), validators=[])
-    supervisor_assignment_criteria = FieldList(
-        StringField(validators=[]), validators=[]
-    )
+    target_mapping_criteria = FieldList(StringField(validators=[]), validators=[])
+    surveyor_mapping_criteria = FieldList(StringField(validators=[]), validators=[])
     supervisor_hierarchy_exists = BooleanField()
     reassignment_required = BooleanField()
     assignment_process = StringField()

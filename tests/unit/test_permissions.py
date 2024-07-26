@@ -148,6 +148,11 @@ class TestPermissions:
                 "name": "WRITE Assignments Upload",
                 "permission_uid": 24,
             },
+            {
+                "description": "Read Assignments Upload permission",
+                "name": "READ Assignments Upload",
+                "permission_uid": 25,
+            },
         ]
 
         assert jsondiff.diff(expected_data, response_data) == {}
@@ -279,6 +284,11 @@ class TestPermissions:
                 "description": "Write Assignments Upload permission",
                 "name": "WRITE Assignments Upload",
                 "permission_uid": 24,
+            },
+            {
+                "description": "Read Assignments Upload permission",
+                "name": "READ Assignments Upload",
+                "permission_uid": 25,
             },
             {
                 "permission_uid": create_permission["permission_uid"],
