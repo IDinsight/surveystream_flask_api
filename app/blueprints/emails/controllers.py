@@ -1,4 +1,6 @@
 from datetime import datetime
+from itertools import groupby
+from operator import attrgetter
 
 from flask import jsonify
 
@@ -18,6 +20,7 @@ from . import emails_bp
 from .models import (
     EmailConfig,
     EmailSchedule,
+    EmailScheduleFilter,
     EmailTableCatalog,
     EmailTemplate,
     EmailTemplateVariable,
@@ -49,7 +52,7 @@ def create_email_config(validated_payload):
     Function to create a new email config
     """
     config_values = {
-        "config_type": validated_payload.config_type.data,
+        "config_name": validated_payload.config_name.data,
         "form_uid": validated_payload.form_uid.data,
         "report_users": validated_payload.report_users.data,
         "email_source": validated_payload.email_source.data,
@@ -63,7 +66,7 @@ def create_email_config(validated_payload):
     # Check if the email config already exists
     check_config_exists = EmailConfig.query.filter_by(
         form_uid=validated_payload.form_uid.data,
-        config_type=validated_payload.config_type.data,
+        config_name=validated_payload.config_name.data,
     ).first()
 
     if check_config_exists is not None:
@@ -242,7 +245,7 @@ def update_email_config(email_config_uid, validated_payload):
     email_config = EmailConfig.query.get_or_404(email_config_uid)
 
     email_config.form_uid = validated_payload.form_uid.data
-    email_config.config_type = validated_payload.config_type.data
+    email_config.config_name = validated_payload.config_name.data
     email_config.report_users = validated_payload.report_users.data
     email_config.email_source = validated_payload.email_source.data
     email_config.email_source_gsheet_link = (
@@ -331,6 +334,35 @@ def create_email_schedule(validated_payload):
 
     try:
         db.session.add(new_schedule)
+        db.session.flush()
+
+        new_schedule_uid = new_schedule.email_schedule_uid
+
+        # Delete existing filters if any
+        EmailScheduleFilter.query.filter_by(
+            email_schedule_uid=new_schedule_uid
+        ).delete()
+        db.session.flush()
+
+        # Get the max filter group id
+        max_filter_group_id = 0
+
+        # Upload Filter List
+        for filter_group in validated_payload.filter_list.data:
+            max_filter_group_id += 1
+
+            for filter_item in filter_group.get("filter_group"):
+
+                filter_obj = EmailScheduleFilter(
+                    email_schedule_uid=new_schedule_uid,
+                    filter_group_id=max_filter_group_id,
+                    filter_variable=filter_item.get("filter_variable"),
+                    filter_operator=filter_item.get("filter_operator"),
+                    filter_value=filter_item.get("filter_value"),
+                    filter_concatenator=filter_item.get("filter_concatenator"),
+                )
+                db.session.add(filter_obj)
+
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -374,7 +406,22 @@ def get_email_schedules(validated_query_params):
 
     schedule_data = []
     for email_schedule in email_schedules:
-        schedule_data.append(email_schedule.to_dict())
+
+        email_schedule_data = email_schedule.to_dict()
+
+        # Get the filters for the schedule
+        filter_list = EmailScheduleFilter.query.filter_by(
+            email_schedule_uid=email_schedule.email_schedule_uid
+        ).all()
+        filter_groupwise_list = [
+            {"filter_group": [filter.to_dict() for filter in filter_group]}
+            for key, filter_group in groupby(
+                filter_list, key=attrgetter("filter_group_id")
+            )
+        ]
+        email_schedule_data["filter_list"] = filter_groupwise_list
+
+        schedule_data.append(email_schedule_data)
 
     response = jsonify(
         {
@@ -408,10 +455,22 @@ def get_email_schedule(email_schedule_uid, validated_query_params):
             404,
         )
 
+    email_schedule_data = email_schedule.to_dict()
+
+    # Get the filters for the schedule
+    filter_list = EmailScheduleFilter.query.filter_by(
+        email_schedule_uid=email_schedule.email_schedule_uid
+    ).all()
+    filter_groupwise_list = [
+        {"filter_group": [filter.to_dict() for filter in filter_group]}
+        for key, filter_group in groupby(filter_list, key=attrgetter("filter_group_id"))
+    ]
+    email_schedule_data["filter_list"] = filter_groupwise_list
+
     response = jsonify(
         {
             "success": True,
-            "data": email_schedule.to_dict(),
+            "data": email_schedule_data,
         }
     )
 
@@ -437,6 +496,30 @@ def update_email_schedule(schedule_id, validated_payload):
     email_schedule.email_schedule_name = validated_payload.email_schedule_name.data
 
     try:
+        if len(validated_payload.filter_list.data) > 0:
+            # Delete existing filters
+            EmailScheduleFilter.query.filter_by(email_schedule_uid=schedule_id).delete()
+            db.session.flush()
+
+            # Get the max filter group id
+            max_filter_group_id = 0
+
+            # Upload Filter List
+            for filter_group in validated_payload.filter_list.data:
+                max_filter_group_id += 1
+
+                for filter_item in filter_group.get("filter_group"):
+
+                    filter_obj = EmailScheduleFilter(
+                        email_schedule_uid=schedule_id,
+                        filter_group_id=max_filter_group_id,
+                        filter_variable=filter_item.get("filter_variable"),
+                        filter_operator=filter_item.get("filter_operator"),
+                        filter_value=filter_item.get("filter_value"),
+                        filter_concatenator=filter_item.get("filter_concatenator"),
+                    )
+                    db.session.add(filter_obj)
+
         db.session.commit()
     except Exception as e:
         db.session.rollback()

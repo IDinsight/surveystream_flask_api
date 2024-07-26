@@ -11,7 +11,7 @@ class EmailConfig(db.Model):
     __tablename__ = "email_configs"
 
     email_config_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
-    config_type = db.Column(db.String(100), nullable=False)  # assignments, #finance
+    config_name = db.Column(db.String(100), nullable=False)  # assignments, #finance
     form_uid = db.Column(db.Integer, db.ForeignKey(Form.form_uid), nullable=False)
     report_users = db.Column(db.ARRAY(db.Integer), nullable=True)
     email_source = db.Column(
@@ -30,7 +30,6 @@ class EmailConfig(db.Model):
     email_source_columns = db.Column(
         db.ARRAY(db.String(128)), nullable=True
     )  # List of columns from Gsheet or Table
-
     schedules = db.relationship(
         "EmailSchedule",
         backref="email_config",
@@ -53,16 +52,16 @@ class EmailConfig(db.Model):
     __table_args__ = (
         # Ensure that configs are not duplicated per form
         db.UniqueConstraint(
-            "config_type",
+            "config_name",
             "form_uid",
-            name="_email_configs_config_type_form_uid_uc",
+            name="_email_configs_config_name_form_uid_uc",
         ),
         {"schema": "webapp"},
     )
 
     def __init__(
         self,
-        config_type,
+        config_name,
         form_uid,
         email_source,
         report_users=None,
@@ -72,7 +71,7 @@ class EmailConfig(db.Model):
         email_source_tablename=None,
         email_source_columns=None,
     ):
-        self.config_type = config_type
+        self.config_name = config_name
         self.form_uid = form_uid
         self.report_users = report_users
         self.email_source = email_source
@@ -88,7 +87,7 @@ class EmailConfig(db.Model):
         ).all()
         return {
             "email_config_uid": self.email_config_uid,
-            "config_type": self.config_type,
+            "config_name": self.config_name,
             "form_uid": self.form_uid,
             "report_users": self.report_users,
             "email_source": self.email_source,
@@ -301,4 +300,68 @@ class EmailTableCatalog(db.Model):
             "column_name": self.column_name,
             "column_type": self.column_type,
             "column_description": self.column_description,
+        }
+
+
+class EmailScheduleFilter(db.Model):
+    __tablename__ = "email_schedule_filters"
+
+    email_schedule_uid = db.Column(
+        db.Integer, db.ForeignKey(EmailSchedule.email_schedule_uid), nullable=False
+    )
+    filter_group_id = db.Column(db.Integer)
+    filter_variable = db.Column(db.String(255), nullable=False)
+    filter_operator = db.Column(
+        db.String(16),
+        CheckConstraint(
+            "filter_operator IN ('Equals','Not Equals','Contains')",
+            name="ck_email_schedule_filter_operator",
+        ),
+        nullable=False,
+    )
+    filter_value = db.Column(db.Text, nullable=False)
+    filter_concatenator = db.Column(
+        db.String(4),
+        CheckConstraint(
+            "filter_concatenator IN ('AND', 'OR', NULL)",
+            name="ck_email_schedule_filter_concatenator",
+        ),
+        nullable=True,
+    )
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(
+            "email_schedule_uid",
+            "filter_group_id",
+            "filter_variable",
+            "filter_operator",
+            "filter_value",
+        ),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self,
+        email_schedule_uid,
+        filter_group_id,
+        filter_variable,
+        filter_operator,
+        filter_value,
+        filter_concatenator,
+    ):
+        self.email_schedule_uid = email_schedule_uid
+        self.filter_group_id = filter_group_id
+        self.filter_variable = filter_variable
+        self.filter_operator = filter_operator
+        self.filter_value = filter_value
+        self.filter_concatenator = filter_concatenator
+
+    def to_dict(self):
+        return {
+            "email_schedule_uid": self.email_schedule_uid,
+            "filter_group_id": self.filter_group_id,
+            "filter_variable": self.filter_variable,
+            "filter_operator": self.filter_operator,
+            "filter_value": self.filter_value,
+            "filter_concatenator": self.filter_concatenator,
         }
