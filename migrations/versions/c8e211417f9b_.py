@@ -35,7 +35,13 @@ def upgrade():
         )
         batch_op.add_column(
             sa.Column(
-                "pdf_encryption_password_type", sa.String(length=16), nullable=True
+                "pdf_encryption_password_type",
+                sa.String(length=16),
+                sa.CheckConstraint(
+                    "pdf_encryption_password_type IN ('Pattern','Password', NULL)",
+                    name="ck_email_configs_pdf_encryption_password_type",
+                ),
+                nullable=True,
             )
         )
 
