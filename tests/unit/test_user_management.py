@@ -223,10 +223,80 @@ class TestUserManagement:
 
         assert response.status_code == 200
 
-        # Check if the returned data is a list of users
-        users = json.loads(response.data)
+        print(response.json)
 
-        assert isinstance(users, list)
+        expected_response = [
+            {
+                "can_create_survey": None,
+                "email": "surveystream.devs@idinsight.org",
+                "first_name": None,
+                "is_super_admin": True,
+                "last_name": None,
+                "roles": None,
+                "status": "Active",
+                "user_admin_survey_names": [],
+                "user_admin_surveys": [],
+                "user_role_names": [None],
+                "user_survey_names": [None],
+                "user_uid": 1,
+            },
+            {
+                "can_create_survey": None,
+                "email": "registration_user",
+                "first_name": None,
+                "is_super_admin": True,
+                "last_name": None,
+                "roles": None,
+                "status": "Active",
+                "user_admin_survey_names": [],
+                "user_admin_surveys": [],
+                "user_role_names": [None],
+                "user_survey_names": [None],
+                "user_uid": 2,
+            },
+        ]
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_get_all_users_by_survey(self, client, login_test_user, csrf_token):
+        """
+        Test endpoint for getting all users for a survey
+        Expect a user list
+        """
+        response = client.get(
+            "/api/users",
+            headers={"X-CSRF-Token": csrf_token},
+            query_string={"survey_uid": 1},
+        )
+
+        assert response.status_code == 200
+
+        assert response.json == []
+
+    def test_get_all_users_invalid_param(self, client, login_test_user, csrf_token):
+        """
+        Test endpoint for getting all users
+        Test that an invalid parameter returns the correct error
+        Expect a user list
+        """
+        response = client.get(
+            "/api/users",
+            headers={"X-CSRF-Token": csrf_token},
+            query_string={"survey_uid": "undefined"},
+        )
+
+        assert response.status_code == 400
+
+        expected_response = {
+            "data": None,
+            "message": {"survey_uid": ["Not a valid integer value."]},
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
 
     def test_deactivate_user(self, client, login_test_user, csrf_token, sample_user):
         """
