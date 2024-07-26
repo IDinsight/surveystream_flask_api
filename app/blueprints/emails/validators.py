@@ -9,7 +9,7 @@ from app.utils.utils import JSONField
 
 
 class EmailConfigValidator(FlaskForm):
-    config_type = StringField(validators=[DataRequired()])
+    config_name = StringField(validators=[DataRequired()])
     form_uid = IntegerField(validators=[DataRequired()])
     report_users = FieldList(IntegerField(), default=[])
     email_source = StringField(
@@ -29,11 +29,39 @@ class EmailConfigValidator(FlaskForm):
     email_source_columns = FieldList(StringField(), default=[])
 
 
+class EmailFilterValidator(FlaskForm):
+
+    filter_variable = StringField(validators=[DataRequired()])
+    filter_operator = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                ["Equals", "Not Equals", "Contains"],
+                message="Invalid email source. Must be 'Google Sheet' or 'SurveyStream Data'",
+            ),
+        ]
+    )
+    filter_value = StringField(validators=[DataRequired()])
+    filter_concatenator = StringField(
+        validators=[
+            AnyOf(
+                ["AND", "OR", None],
+                message="Invalid Concatenator. Must be 'AND' or 'OR'",
+            ),
+        ],
+    )
+
+
+class EmailFilterGroupValidator(FlaskForm):
+    filter_group = FieldList(FormField(EmailFilterValidator), default=[])
+
+
 class EmailScheduleValidator(FlaskForm):
     dates = FieldList(StringField(validators=[DataRequired()]))
     time = StringField(validators=[DataRequired()])
     email_config_uid = IntegerField(validators=[DataRequired()])
     email_schedule_name = StringField(validators=[DataRequired()])
+    filter_list = FieldList(FormField(EmailFilterGroupValidator), default=[])
 
     def validate_time(self, field):
         """
