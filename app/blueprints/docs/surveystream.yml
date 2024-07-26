@@ -4476,11 +4476,19 @@ paths:
                           example:
                             - Location
                             - Gender
-                        supervisor_assignment_criteria:
+                        target_mapping_criteria:
                           type: array
                           description: >-
                             Array of selected criteria for supervisor to
-                            enumerator assignments
+                            target mapping
+                          example:
+                            - Location
+                            - Gender
+                        surveyor_mapping_criteria:
+                          type: array
+                          description: >-
+                            Array of selected criteria for supervisor to
+                            surveyor mapping
                           example:
                             - Location
                             - Gender
@@ -4553,11 +4561,19 @@ paths:
                   example:
                     - Location
                     - Gender
-                supervisor_assignment_criteria:
+                target_mapping_criteria:
                   type: array
                   description: >-
-                    Array of selected criteria for supervisor to enumerator
-                    assignments
+                    Array of selected criteria for supervisor to target
+                    mapping
+                  example:
+                    - Location
+                    - Gender
+                surveyor_mapping_criteria:
+                  type: array
+                  description: >-
+                    Array of selected criteria for supervisor to surveyor
+                    mapping
                   example:
                     - Location
                     - Gender

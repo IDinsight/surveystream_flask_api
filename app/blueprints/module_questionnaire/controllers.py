@@ -38,7 +38,8 @@ def update_survey_module_questionnaire(survey_uid, validated_payload):
         .values(
             survey_uid=survey_uid,
             target_assignment_criteria=validated_payload.target_assignment_criteria.data,
-            supervisor_assignment_criteria=validated_payload.supervisor_assignment_criteria.data,
+            target_mapping_criteria=validated_payload.target_mapping_criteria.data,
+            surveyor_mapping_criteria=validated_payload.surveyor_mapping_criteria.data,
             supervisor_hierarchy_exists=validated_payload.supervisor_hierarchy_exists.data,
             reassignment_required=validated_payload.reassignment_required.data,
             assignment_process=validated_payload.assignment_process.data,
@@ -49,7 +50,8 @@ def update_survey_module_questionnaire(survey_uid, validated_payload):
             constraint="pk_module_questionnaire",
             set_={
                 "target_assignment_criteria": validated_payload.target_assignment_criteria.data,
-                "supervisor_assignment_criteria": validated_payload.supervisor_assignment_criteria.data,
+                "target_mapping_criteria": validated_payload.target_mapping_criteria.data,
+                "surveyor_mapping_criteria": validated_payload.surveyor_mapping_criteria.data,
                 "supervisor_hierarchy_exists": validated_payload.supervisor_hierarchy_exists.data,
                 "reassignment_required": validated_payload.reassignment_required.data,
                 "assignment_process": validated_payload.assignment_process.data,
