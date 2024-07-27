@@ -10,6 +10,13 @@ from wtforms import (
 from wtforms.validators import DataRequired, Email, Optional, ValidationError
 
 
+class GetUsersQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField()
+
+
 class RegisterValidator(FlaskForm):
     email = StringField("Email", validators=[DataRequired()])
     password = PasswordField("Password", validators=[DataRequired()])

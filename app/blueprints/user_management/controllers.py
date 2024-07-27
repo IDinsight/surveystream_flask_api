@@ -18,11 +18,13 @@ from .validators import (
     WelcomeUserValidator,
     EditUserValidator,
     CheckUserValidator,
+    GetUsersQueryParamValidator,
 )
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
     validate_payload,
+    validate_query_params,
 )
 
 
@@ -335,13 +337,15 @@ def get_user(user_uid):
 
 @user_management_bp.route("/users", methods=["GET"])
 @logged_in_active_user_required
+@validate_query_params(GetUsersQueryParamValidator)
 @custom_permissions_required("ADMIN", "query", "survey_uid")
-def get_all_users():
+def get_all_users(validated_query_params):
     """
     Endpoint to get information for all users.
     """
 
-    survey_uid = request.args.get("survey_uid")
+    survey_uid = validated_query_params.survey_uid.data
+
     if survey_uid is None and not current_user.is_super_admin:
         return jsonify(message="Survey UID is required for non-super-admin users"), 400
 
