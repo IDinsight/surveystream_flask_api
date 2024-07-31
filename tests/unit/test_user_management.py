@@ -1,6 +1,10 @@
-import pytest
-import jsondiff
+import base64
 import json
+from pathlib import Path
+
+import jsondiff
+import pandas as pd
+import pytest
 
 
 @pytest.mark.user_management
@@ -18,6 +22,8 @@ class TestUserManagement:
                 "first_name": "John",
                 "last_name": "Doe",
                 "roles": [],
+                "gender": None,
+                "languages": [],
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -65,6 +71,252 @@ class TestUserManagement:
         assert response.status_code == 200
         assert b"Success: registration completed" in response.data
 
+    @pytest.fixture()
+    def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
+        """
+        Insert new survey as a setup step for the survey level user tests
+        """
+
+        payload = {
+            "survey_id": "test_survey",
+            "survey_name": "Test Survey",
+            "survey_description": "A test survey",
+            "project_name": "Test Project",
+            "surveying_method": "in-person",
+            "irb_approval": "Yes",
+            "planned_start_date": "2021-01-01",
+            "planned_end_date": "2021-12-31",
+            "state": "Draft",
+            "prime_geo_level_uid": 1,
+            "config_status": "In Progress - Configuration",
+            "created_by_user_uid": test_user_credentials["user_uid"],
+        }
+
+        response = client.post(
+            "/api/surveys",
+            query_string={"user_uid": 3},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        yield
+
+    @pytest.fixture
+    def create_permission(self, client, login_test_user, csrf_token):
+        """
+        Create simple permissions
+        Expect to be used while adding roles
+        """
+        data = {"name": "WRITE", "description": "Write permission"}
+        response = client.post(
+            "/api/permissions",
+            json=data,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+        assert response.json["message"] == "Permission created successfully"
+
+        return {
+            "permission_uid": response.json["permission_uid"],
+            "name": response.json["name"],
+            "description": response.json["description"],
+        }
+
+    @pytest.fixture()
+    def create_roles(
+        self, client, login_test_user, csrf_token, create_survey, create_permission
+    ):
+        """
+        Insert new roles as a setup step for testing survey level users
+        """
+
+        payload = {
+            "roles": [
+                {
+                    "role_uid": None,
+                    "role_name": "Core User",
+                    "reporting_role_uid": None,
+                    "permissions": [create_permission["permission_uid"]],
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "Regional Coordinator",
+                    "reporting_role_uid": 1,
+                    "permissions": [create_permission["permission_uid"]],
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_geo_levels(self, client, login_test_user, csrf_token, create_survey):
+        """
+        Insert new geo levels as a setup step for the location upload
+        These correspond to the geo levels found in the locations test files
+        """
+
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "Mandal",
+                    "parent_geo_level_uid": 1,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "PSU",
+                    "parent_geo_level_uid": 2,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_locations(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels,
+        csrf_token,
+    ):
+        """
+        Upload locations csv as a setup step for user locations test
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            locations_csv = f.read()
+            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        df = pd.read_csv(filepath, dtype=str)
+        df.rename(
+            columns={
+                "district_id": "District ID",
+                "district_name": "District Name",
+                "mandal_id": "Mandal ID",
+                "mandal_name": "Mandal Name",
+                "psu_id": "PSU ID",
+                "psu_name": "PSU Name",
+            },
+            inplace=True,
+        )
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": df.to_dict(orient="records"),
+            },
+            "success": True,
+        }
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    @pytest.fixture
+    def sample_user_with_locations(
+        self, client, csrf_token, sample_user, create_roles, create_locations
+    ):
+        """
+        Return the user added by added_user fixture as the sample_user
+        """
+
+        user_uid = sample_user.get("user_uid")
+        response = client.put(
+            f"/api/users/{user_uid}",
+            json={
+                "survey_uid": 1,
+                "email": "updateduser@example.com",
+                "first_name": "Updated",
+                "last_name": "User",
+                "roles": [1],
+                "gender": "Male",
+                "languages": ["English"],
+                "locations": [1],
+                "is_super_admin": True,
+                "active": True,
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        return sample_user
+
     def test_check_user(self, client, login_test_user, csrf_token, sample_user):
         """
         Test checking user availability by email
@@ -86,6 +338,8 @@ class TestUserManagement:
             "first_name": sample_user.get("first_name"),
             "last_name": sample_user.get("last_name"),
             "roles": sample_user.get("roles"),
+            "gender": sample_user.get("gender"),
+            "languages": sample_user.get("languages"),
             "is_super_admin": sample_user.get("is_super_admin"),
             "can_create_survey": False,
             "active": True,
@@ -170,6 +424,8 @@ class TestUserManagement:
             "first_name": "John",
             "last_name": "Doe",
             "roles": [],
+            "gender": None,
+            "languages": [],
             "is_super_admin": False,
             "can_create_survey": False,
             "active": True,
@@ -189,6 +445,8 @@ class TestUserManagement:
                 "first_name": "Updated",
                 "last_name": "User",
                 "roles": [],
+                "gender": "Male",
+                "languages": ["English"],
                 "is_super_admin": True,
                 "active": True,
             },
@@ -208,6 +466,8 @@ class TestUserManagement:
             "first_name": "Updated",
             "last_name": "User",
             "roles": [],
+            "gender": "Male",
+            "languages": ["English"],
             "is_super_admin": True,
             "can_create_survey": False,
             "active": True,
@@ -223,10 +483,84 @@ class TestUserManagement:
 
         assert response.status_code == 200
 
-        # Check if the returned data is a list of users
-        users = json.loads(response.data)
+        print(response.json)
 
-        assert isinstance(users, list)
+        expected_response = [
+            {
+                "can_create_survey": None,
+                "email": "surveystream.devs@idinsight.org",
+                "first_name": None,
+                "is_super_admin": True,
+                "last_name": None,
+                "roles": None,
+                "gender": None,
+                "languages": None,
+                "status": "Active",
+                "user_admin_survey_names": [],
+                "user_admin_surveys": [],
+                "user_role_names": [None],
+                "user_survey_names": [None],
+                "user_uid": 1,
+            },
+            {
+                "can_create_survey": None,
+                "email": "registration_user",
+                "first_name": None,
+                "is_super_admin": True,
+                "last_name": None,
+                "roles": None,
+                "gender": None,
+                "languages": None,
+                "status": "Active",
+                "user_admin_survey_names": [],
+                "user_admin_surveys": [],
+                "user_role_names": [None],
+                "user_survey_names": [None],
+                "user_uid": 2,
+            },
+        ]
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_get_all_users_by_survey(self, client, login_test_user, csrf_token):
+        """
+        Test endpoint for getting all users for a survey
+        Expect a user list
+        """
+        response = client.get(
+            "/api/users",
+            headers={"X-CSRF-Token": csrf_token},
+            query_string={"survey_uid": 1},
+        )
+
+        assert response.status_code == 200
+
+        assert response.json == []
+
+    def test_get_all_users_invalid_param(self, client, login_test_user, csrf_token):
+        """
+        Test endpoint for getting all users
+        Test that an invalid parameter returns the correct error
+        Expect a user list
+        """
+        response = client.get(
+            "/api/users",
+            headers={"X-CSRF-Token": csrf_token},
+            query_string={"survey_uid": "undefined"},
+        )
+
+        assert response.status_code == 400
+
+        expected_response = {
+            "data": None,
+            "message": {"survey_uid": ["Not a valid integer value."]},
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
 
     def test_deactivate_user(self, client, login_test_user, csrf_token, sample_user):
         """
@@ -255,7 +589,474 @@ class TestUserManagement:
             "is_super_admin": False,
             "last_name": "Doe",
             "roles": [],
+            "gender": None,
+            "languages": [],
             "user_uid": 3,
         }
         checkdiff = jsondiff.diff(expected_response, response_get_user.json)
+        assert checkdiff == {}
+
+    def test_add_user_at_survey_level(
+        self, client, login_test_user, csrf_token, create_roles
+    ):
+        """
+        Test adding a user at the survey level with role
+        """
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "last_name": "Doe2",
+                "roles": [2],
+                "gender": "Male",
+                "languages": ["English"],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+        assert b"Success: user invited" in response.data
+        response_data = json.loads(response.data)
+        user_object = response_data.get("user")
+        invite_object = response_data.get("invite")
+
+        response = client.get(
+            "/api/users",
+            query_string={"survey_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = [
+            {
+                "can_create_survey": None,
+                "email": "surveystream.devs@idinsight.org",
+                "first_name": None,
+                "gender": None,
+                "is_super_admin": True,
+                "languages": None,
+                "last_name": None,
+                "roles": None,
+                "status": "Active",
+                "user_admin_survey_names": ["Test Survey"],
+                "user_admin_surveys": [1],
+                "user_role_names": [None],
+                "user_survey_names": [None],
+                "user_uid": 1,
+            },
+            {
+                "can_create_survey": False,
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "is_super_admin": False,
+                "last_name": "Doe2",
+                "roles": [2],
+                "gender": "Male",
+                "languages": ["English"],
+                "status": "Active",
+                "user_admin_survey_names": [],
+                "user_admin_surveys": [],
+                "user_role_names": ["Regional Coordinator"],
+                "user_survey_names": ["Test Survey"],
+                "user_uid": 3,
+            },
+        ]
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_add_user_at_survey_level_with_locations(
+        self, client, login_test_user, csrf_token, create_locations, create_roles
+    ):
+        """
+        Test adding a user at the survey level with role
+        """
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "last_name": "Doe2",
+                "roles": [2],
+                "gender": "Male",
+                "languages": ["English"],
+                "locations": [1],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+        assert b"Success: user invited" in response.data
+        response_data = json.loads(response.data)
+        user_object = response_data.get("user")
+        invite_object = response_data.get("invite")
+
+        response = client.get(
+            "/api/users",
+            query_string={"survey_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = [
+            {
+                "can_create_survey": None,
+                "email": "surveystream.devs@idinsight.org",
+                "first_name": None,
+                "gender": None,
+                "is_super_admin": True,
+                "languages": None,
+                "last_name": None,
+                "roles": None,
+                "status": "Active",
+                "user_admin_survey_names": ["Test Survey"],
+                "user_admin_surveys": [1],
+                "user_role_names": [None],
+                "user_survey_names": [None],
+                "user_uid": 1,
+            },
+            {
+                "can_create_survey": False,
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "is_super_admin": False,
+                "last_name": "Doe2",
+                "roles": [2],
+                "gender": "Male",
+                "languages": ["English"],
+                "status": "Active",
+                "user_admin_survey_names": [],
+                "user_admin_surveys": [],
+                "user_role_names": ["Regional Coordinator"],
+                "user_survey_names": ["Test Survey"],
+                "user_uid": 3,
+            },
+        ]
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # Fetch user locations
+        response = client.get(
+            "/api/user-locations",
+            query_string={"survey_uid": 1, "user_uid": 3},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [{"location_uid": 1, "survey_uid": 1, "user_uid": 3}],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_edit_user_at_survey_level(
+        self, client, login_test_user, csrf_token, create_roles, sample_user
+    ):
+        """
+        Test endpoint for updating user data at survey level
+        Expect sample_user data to be updated to new values
+        """
+        user_uid = sample_user.get("user_uid")
+        response = client.put(
+            f"/api/users/{user_uid}",
+            json={
+                "survey_uid": 1,
+                "email": "updateduser@example.com",
+                "first_name": "Updated",
+                "last_name": "User",
+                "roles": [1],
+                "gender": "Male",
+                "languages": ["English"],
+                "is_super_admin": True,
+                "active": True,
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Check if user information is updated
+        response_data = json.loads(response.data)
+
+        updated_user = response_data.get("user_data")
+        expected_data = {
+            "user_uid": user_uid,
+            "email": "updateduser@example.com",
+            "first_name": "Updated",
+            "last_name": "User",
+            "roles": [1],
+            "gender": "Male",
+            "languages": ["English"],
+            "is_super_admin": True,
+            "can_create_survey": False,
+            "active": True,
+        }
+        assert jsondiff.diff(expected_data, updated_user) == {}
+
+    def test_edit_user_at_survey_level_with_locations(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_roles,
+        sample_user,
+        create_locations,
+    ):
+        """
+        Test endpoint for updating user data at survey level
+        Expect sample_user data to be updated to new values
+        """
+        user_uid = sample_user.get("user_uid")
+        response = client.put(
+            f"/api/users/{user_uid}",
+            json={
+                "survey_uid": 1,
+                "email": "updateduser@example.com",
+                "first_name": "Updated",
+                "last_name": "User",
+                "roles": [1],
+                "gender": "Male",
+                "languages": ["English"],
+                "locations": [1],
+                "is_super_admin": True,
+                "active": True,
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Check if user information is updated
+        response_data = json.loads(response.data)
+
+        updated_user = response_data.get("user_data")
+        expected_data = {
+            "user_uid": user_uid,
+            "email": "updateduser@example.com",
+            "first_name": "Updated",
+            "last_name": "User",
+            "roles": [1],
+            "gender": "Male",
+            "languages": ["English"],
+            "is_super_admin": True,
+            "can_create_survey": False,
+            "active": True,
+        }
+        assert jsondiff.diff(expected_data, updated_user) == {}
+
+        # Fetch user locations
+        response = client.get(
+            "/api/user-locations",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [{"location_uid": 1, "survey_uid": 1, "user_uid": user_uid}],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_user_locations(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_locations,
+        sample_user_with_locations,
+    ):
+        """
+        Test fetching locations for a user and a survey
+        """
+        user_uid = sample_user_with_locations.get("user_uid")
+
+        # Fetch user locations
+        response = client.get(
+            "/api/user-locations",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [{"location_uid": 1, "survey_uid": 1, "user_uid": user_uid}],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_update_user_locations(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_locations,
+        sample_user_with_locations,
+    ):
+        """
+        Test updating locations data for a user
+        """
+        user_uid = sample_user_with_locations.get("user_uid")
+        response = client.put(
+            "/api/user-locations",
+            json={
+                "survey_uid": 1,
+                "user_uid": user_uid,
+                "locations": [1],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Fetch user locations
+        response = client.get(
+            "/api/user-locations",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        expected_response = {
+            "data": [
+                {"location_uid": 1, "survey_uid": 1, "user_uid": user_uid},
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_update_user_locations_missing_location(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_locations,
+        sample_user_with_locations,
+    ):
+        """
+        Test updating locations data for a user with a missing location
+        """
+        user_uid = sample_user_with_locations.get("user_uid")
+        response = client.put(
+            "/api/user-locations",
+            json={
+                "survey_uid": 1,
+                "user_uid": user_uid,
+                "locations": [1, 100],
+            },  # Add location 100 - this is not a location in locations
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 422
+        expected_response = {
+            "message": {"locations": ["Location with UID 100 does not exist."]},
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # Fetch user locations to see it was not updated
+        response = client.get(
+            "/api/user-locations",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        expected_response = {
+            "data": [
+                {"location_uid": 1, "survey_uid": 1, "user_uid": user_uid},
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_update_user_locations_not_prime_geo_level(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_locations,
+        sample_user_with_locations,
+    ):
+        """
+        Test updating locations data for a user with a location that is not a prime geo level location
+        """
+        user_uid = sample_user_with_locations.get("user_uid")
+        response = client.put(
+            "/api/user-locations",
+            json={
+                "survey_uid": 1,
+                "user_uid": user_uid,
+                "locations": [1, 2],
+            },  # Add location 2 - this is not a location at prime geo level
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 422
+        print(response.json)
+        expected_response = {
+            "message": {
+                "locations": ["Location with UID 2 is not a prime geo level location."]
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_delete_user_locations(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_locations,
+        sample_user_with_locations,
+    ):
+        """
+        Test deleting locations data for a user
+        """
+        user_uid = sample_user_with_locations.get("user_uid")
+        # Delete user locations
+        response = client.delete(
+            "/api/user-locations",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Fetch user locations
+        response = client.get(
+            "/api/user-locations",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 404
+
+        expected_response = {"message": "User locations not found"}
+        checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}

@@ -599,8 +599,20 @@ paths:
                   type: string
                 last_name:
                   type: string
-                role:
+                roles:
+                  type: array
+                  items:
+                    type: integer
+                gender:
                   type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
+                locations:
+                  type: array
+                  items:
+                    type: integer
                 is_super_admin:
                   type: boolean
                 can_create_survey:
@@ -613,7 +625,7 @@ paths:
                 - email
                 - first_name
                 - last_name
-                - role
+                - roles
                 - is_super_admin
       responses:
         "200":
@@ -678,7 +690,15 @@ paths:
                     last_name:
                       type: string
                     roles:
+                      type: array
+                      items:
+                        type: integer
+                    gender:
                       type: string
+                    languages:
+                      type: array
+                      items:
+                        type: string
                     user_survey_names:
                       type: string
                     user_role_names:
@@ -788,6 +808,14 @@ paths:
                     type: string
                   roles:
                     type: array
+                    items:
+                      type: integer
+                  gender:
+                    type: string
+                  languages:
+                    type: array
+                    items:
+                      type: string
                   is_super_admin:
                     type: boolean
                   active:
@@ -830,6 +858,18 @@ paths:
                   type: string
                 roles:
                   type: array
+                  items:
+                    type: integer
+                gender:
+                  type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
+                locations:
+                  type: array
+                  items:
+                    type: integer
                 is_super_admin:
                   type: boolean
                 can_create_survey:
@@ -889,8 +929,8 @@ paths:
     delete:
       tags:
         - User Management
-      summary: Endpoint to delete a user
-      description: delete a single user
+      summary: Endpoint to deactivate a user
+      description: Deactivate a single user
       parameters:
         - in: header
           name: X-CSRF-TOKEN
@@ -907,7 +947,7 @@ paths:
 
       responses:
         "200":
-          description: User deleted successfully
+          description: User deactivated successfully
           content:
             application/json:
               schema:
@@ -924,6 +964,155 @@ paths:
                 properties:
                   message:
                     type: string
+        "500":
+          description: Error deactivating user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  "/user-locations":
+    get:
+      tags:
+        - User Management
+      summary: Get user location details
+      description: Get user location details for a survey and user
+      parameters:
+        - in: query
+          name: survey_uid
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: user_uid
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: User location details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                  message:
+                    type: string
+        "404":
+          description: User locations not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+    put:
+      tags:
+        - User Management
+      summary: Update user locations
+      description: Update user locations for a survey and user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: integer
+                user_uid:
+                  type: integer
+                locations:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - survey_uid
+                - user_uid
+                - locations
+      responses:
+        "200":
+          description: User locations updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user_hierarchy:
+                    type: object
+        "403":
+          description: X-CSRF-Token required in header
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  errors:
+                    type: object
+    delete:
+      tags:
+        - User Management
+      summary: Delete user locations
+      description: Delete user locations for a survey and user
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: survey_uid
+          schema:
+            type: string
+          required: true
+          description: unique id for the survey
+        - in: query
+          name: user_uid
+          schema:
+            type: string
+          required: true
+          description: unique id for the user
+      responses:
+        "200":
+          description: User locations deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: User locations not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        
   /surveys:
     get:
       summary: Get surveys
@@ -4225,8 +4414,8 @@ paths:
                               "completed_flag",
                               "refusal_flag",
                               "num_attempts",
-                              "last_attempt_survey_status",
-                              "last_attempt_survey_status_label",
+                              "final_survey_status",
+                              "final_survey_status_label",
                               "target_assignable",
                               "revisit_sections",
                               "target_locations",
@@ -4277,8 +4466,8 @@ paths:
                               "completed_flag",
                               "refusal_flag",
                               "num_attempts",
-                              "last_attempt_survey_status",
-                              "last_attempt_survey_status_label",
+                              "final_survey_status",
+                              "final_survey_status_label",
                               "target_assignable",
                               "revisit_sections",
                               "target_locations",

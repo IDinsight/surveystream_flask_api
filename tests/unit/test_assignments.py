@@ -3526,8 +3526,8 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "last_attempt_survey_status_label",
-                            "column_label": "Last Attempt Survey Status",
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
                         },
                         {
                             "column_key": "revisit_sections",
@@ -3569,7 +3569,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "last_attempt_survey_status_label",
+                            "column_key": "final_survey_status_label",
                             "column_label": "Target Status",
                         }
                     ],
@@ -3791,8 +3791,8 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "last_attempt_survey_status_label",
-                            "column_label": "Last Attempt Survey Status",
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
                         }
                     ],
                     "group_label": None,
@@ -3885,8 +3885,8 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "last_attempt_survey_status_label",
-                            "column_label": "Last Attempt Survey Status",
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
                         },
                         {
                             "column_key": "revisit_sections",
@@ -3928,7 +3928,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "last_attempt_survey_status_label",
+                            "column_key": "final_survey_status_label",
                             "column_label": "Target Status",
                         }
                     ],
@@ -4095,8 +4095,8 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "last_attempt_survey_status_label",
-                            "column_label": "Last Attempt Survey Status",
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
                         }
                     ],
                     "group_label": None,
@@ -4194,8 +4194,8 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "last_attempt_survey_status_label",
-                            "column_label": "Last Attempt Survey Status",
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
                         },
                         {
                             "column_key": "revisit_sections",
@@ -4237,7 +4237,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "last_attempt_survey_status_label",
+                            "column_key": "final_survey_status_label",
                             "column_label": "Target Status",
                         }
                     ],
@@ -4405,8 +4405,8 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "last_attempt_survey_status_label",
-                            "column_label": "Last Attempt Survey Status",
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
                         }
                     ],
                     "group_label": None,
