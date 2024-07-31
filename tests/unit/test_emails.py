@@ -908,7 +908,7 @@ class TestEmails:
                     "pdf_encryption": False,
                     "pdf_encryption_password_type": None,
                 },
-                "message": "Email config created successfully",
+                "message": "Email Config created successfully",
                 "success": True,
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
