@@ -852,6 +852,77 @@ class TestEmails:
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
 
+    def test_emails_create_email_config_non_encrypted_attachment(
+        self,
+        client,
+        csrf_token,
+        user_permissions,
+        create_email_config,
+        request,
+    ):
+        """
+        Create an email config for encryptred email with no password
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "config_name": "Assignments_attachment",
+            "form_uid": 1,
+            "report_users": [1, 2, 3],
+            "email_source": "SurveyStream Data",
+            "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
+            "email_source_gsheet_tab": "Test_Success",
+            "email_source_gsheet_header_row": 1,
+            "email_source_tablename": "test_table",
+            "email_source_columns": ["test_column"],
+            "cc_users": [1, 2, 3],
+            "pdf_attachment": True,
+            "pdf_encryption": False,
+        }
+        response = client.post(
+            "/api/emails/config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 201
+            expected_response = {
+                "data": {
+                    "config_name": "Assignments_attachment",
+                    "email_config_uid": 2,
+                    "form_uid": 1,
+                    "report_users": [1, 2, 3],
+                    "email_source": "SurveyStream Data",
+                    "email_source_columns": ["test_column"],
+                    "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
+                    "email_source_gsheet_tab": "Test_Success",
+                    "email_source_gsheet_header_row": 1,
+                    "email_source_tablename": "test_table",
+                    "table_catalog": [],
+                    "cc_users": [1, 2, 3],
+                    "pdf_attachment": True,
+                    "pdf_encryption": False,
+                    "pdf_encryption_password_type": None,
+                },
+                "message": "Email config created successfully",
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
     def test_emails_get_schedule(
         self, client, csrf_token, create_email_schedule, user_permissions, request
     ):

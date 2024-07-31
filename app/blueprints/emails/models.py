@@ -34,7 +34,7 @@ class EmailConfig(db.Model):
     pdf_encryption_password_type = db.Column(
         db.String(16),
         CheckConstraint(
-            "pdf_encryption_password_type IN ('Pattern', 'Password', NULL)",
+            "pdf_encryption_password_type IN ('Pattern', 'Password')",
             name="ck_email_configs_pdf_encryption_password_type",
         ),
         nullable=True,
@@ -346,7 +346,7 @@ class EmailScheduleFilter(db.Model):
     filter_concatenator = db.Column(
         db.String(4),
         CheckConstraint(
-            "filter_concatenator IN ('AND', 'OR', NULL)",
+            "filter_concatenator IN ('AND', 'OR')",
             name="ck_email_schedule_filter_concatenator",
         ),
         nullable=True,

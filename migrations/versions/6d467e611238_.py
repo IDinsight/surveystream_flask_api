@@ -1,9 +1,9 @@
 """
-Add CC usersm, PDF attachment and encryption to Email Configs
+Email Configs: Add CC usersm, PDF attachment and encryption 
 
-Revision ID: c8e211417f9b
-Revises: c6731eec7e32
-Create Date: 2024-07-26 12:16:31.562714
+Revision ID: 6d467e611238
+Revises: 0c692fe689aa
+Create Date: 2024-07-31 07:20:24.571659
 
 """
 
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "c8e211417f9b"
-down_revision = "c6731eec7e32"
+revision = "6d467e611238"
+down_revision = "0c692fe689aa"
 branch_labels = None
 depends_on = None
 
