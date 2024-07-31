@@ -61,6 +61,10 @@ def create_email_config(validated_payload):
         "email_source_gsheet_header_row": validated_payload.email_source_gsheet_header_row.data,
         "email_source_tablename": validated_payload.email_source_tablename.data,
         "email_source_columns": validated_payload.email_source_columns.data,
+        "cc_users": validated_payload.cc_users.data,
+        "pdf_attachment": validated_payload.pdf_attachment.data,
+        "pdf_encryption": validated_payload.pdf_encryption.data,
+        "pdf_encryption_password_type": validated_payload.pdf_encryption_password_type.data,
     }
 
     # Check if the email config already exists
@@ -258,6 +262,12 @@ def update_email_config(email_config_uid, validated_payload):
     )
     email_config.email_source_gsheet_header_row = (
         validated_payload.email_source_gsheet_header_row.data
+    )
+    email_config.cc_users = validated_payload.cc_users.data
+    email_config.pdf_attachment = validated_payload.pdf_attachment.data
+    email_config.pdf_encryption = validated_payload.pdf_encryption.data
+    email_config.pdf_encryption_password_type = (
+        validated_payload.pdf_encryption_password_type.data
     )
 
     try:
