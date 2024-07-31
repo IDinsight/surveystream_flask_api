@@ -1,19 +1,39 @@
 import re
+from datetime import datetime
+
 from flask_wtf import FlaskForm
 from wtforms import FieldList, FormField, IntegerField, StringField
-from wtforms.validators import DataRequired, ValidationError, AnyOf
-from datetime import datetime
+from wtforms.validators import AnyOf, DataRequired, ValidationError
+
+from app.utils.utils import JSONField
 
 
 class EmailConfigValidator(FlaskForm):
     config_type = StringField(validators=[DataRequired()])
     form_uid = IntegerField(validators=[DataRequired()])
+    report_users = FieldList(IntegerField(), default=[])
+    email_source = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                ["Google Sheet", "SurveyStream Data"],
+                message="Invalid email source. Must be 'Google Sheet' or 'SurveyStream Data'",
+            ),
+        ],
+        default="SurveyStream Data",
+    )
+    email_source_gsheet_link = StringField(default=None)
+    email_source_gsheet_tab = StringField(default=None)
+    email_source_gsheet_header_row = IntegerField(default=None)
+    email_source_tablename = StringField(default=None)
+    email_source_columns = FieldList(StringField(), default=[])
 
 
 class EmailScheduleValidator(FlaskForm):
     dates = FieldList(StringField(validators=[DataRequired()]))
     time = StringField(validators=[DataRequired()])
     email_config_uid = IntegerField(validators=[DataRequired()])
+    email_schedule_name = StringField(validators=[DataRequired()])
 
     def validate_time(self, field):
         """
@@ -103,11 +123,37 @@ class ManualEmailTriggerPatchValidator(FlaskForm):
     )
 
 
+class EmailVariableTableColumnMappingValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+
+class EmailVariableValidator(FlaskForm):
+    class meta:
+        csrf = False
+
+    variable_name = StringField(validators=[DataRequired()])
+    variable_type = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                ["string", "table"],
+                message="Invalid variable type. Must be 'text' or 'table'",
+            ),
+        ],
+        default="string",
+    )
+    variable_expression = StringField(default=None)
+    source_table = StringField(validators=[DataRequired()])
+    table_column_mapping = JSONField(default={})
+
+
 class EmailTemplateValidator(FlaskForm):
     subject = StringField(validators=[DataRequired()])
     language = StringField(validators=[DataRequired()])
     email_config_uid = IntegerField(validators=[DataRequired()])
     content = StringField(validators=[DataRequired()])
+    variable_list = FieldList(FormField(EmailVariableValidator), default=[])
 
 
 class EmailConfigQueryParamValidator(FlaskForm):
@@ -136,3 +182,38 @@ class EmailTemplateQueryParamValidator(FlaskForm):
         csrf = False
 
     email_config_uid = IntegerField(validators=[DataRequired()])
+
+
+class EmailGsheetSourceParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    email_source_gsheet_link = StringField(validators=[DataRequired()])
+    email_source_gsheet_tab = StringField(validators=[DataRequired()])
+    email_source_gsheet_header_row = IntegerField(validators=[DataRequired()])
+
+
+class EmailGsheetSourcePatchParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    email_config_uid = IntegerField(validators=[DataRequired()])
+
+
+class EmailTableCatalogQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField(validators=[DataRequired()])
+
+
+class EmailTableCatalogJSONValidator(FlaskForm):
+    table_name = StringField(validators=[DataRequired()])
+    column_name = StringField(validators=[DataRequired()])
+    column_type = StringField(validators=[DataRequired()])
+    column_description = StringField(default=None)
+
+
+class EmailTableCatalogValidator(FlaskForm):
+    survey_uid = IntegerField(validators=[DataRequired()])
+    table_catalog = FieldList(FormField(EmailTableCatalogJSONValidator), default=[])

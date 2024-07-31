@@ -13,6 +13,85 @@ from utils import (
 
 @pytest.mark.targets
 class TestTargets:
+    # RBAC fixtures
+    @pytest.fixture
+    def user_with_super_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have super admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_survey_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have survey admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_target_permissions(self, client, test_user_credentials):
+        # Assign new roles and permissions
+        new_role = create_new_survey_role_with_permissions(
+            # 7 - WRITE Targets
+            client,
+            test_user_credentials,
+            "Targets Role",
+            [7],
+            1,
+        )
+
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_no_permissions(self, client, test_user_credentials):
+        # Assign no roles and permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture(
+        params=[
+            ("user_with_super_admin_permissions", True),
+            ("user_with_survey_admin_permissions", True),
+            ("user_with_target_permissions", True),
+            ("user_with_no_permissions", False),
+        ],
+        ids=[
+            "super_admin_permissions",
+            "survey_admin_permissions",
+            "target_permissions",
+            "no_permissions",
+        ],
+    )
+    def user_permissions(self, request):
+        return request.param
+
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -323,6 +402,58 @@ class TestTargets:
         )
         assert response.status_code == 200
 
+    
+    @pytest.fixture()
+    def upload_target_status(
+        self, client, login_test_user, upload_targets_csv, csrf_token
+    ):
+        """
+        Insert new target status as a setup step for the target status tests
+        """
+
+        payload = {
+            "form_uid": 1,
+            "target_status": [
+                {
+                    "target_id": "1",
+                    "completed_flag": False,
+                    "refusal_flag": False,
+                    "num_attempts": 1,
+                    "last_attempt_survey_status": 2,
+                    "last_attempt_survey_status_label": "Partially complete - revisit",
+                    "final_survey_status": 2,
+                    "final_survey_status_label": "Partially complete - revisit",
+                    "target_assignable": True,
+                    "webapp_tag_color": "gold",
+                    "revisit_sections": ["section1", "section2"],
+                    "scto_fields": {"field1": "value1", "field2": "value2"},
+                },
+                {
+                    "target_id": "2",
+                    "completed_flag": True,
+                    "refusal_flag": False,
+                    "num_attempts": 5,
+                    "last_attempt_survey_status": 1,
+                    "last_attempt_survey_status_label": "Fully complete",
+                    "final_survey_status": 1,
+                    "final_survey_status_label": "Fully complete",
+                    "target_assignable": False,
+                    "webapp_tag_color": "green",
+                    "revisit_sections": [],
+                    "scto_fields": {"field1": "value3", "field2": "value4"},
+                }
+            ]
+        }
+
+        response = client.put(
+            "/api/targets/target-status",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
     @pytest.fixture()
     def upload_targets_csv_no_locations(
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
@@ -483,11 +614,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -541,11 +675,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -682,11 +819,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -740,11 +880,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -903,11 +1046,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -961,11 +1107,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1140,11 +1289,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1197,11 +1349,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1232,11 +1387,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1339,11 +1497,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1380,11 +1541,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1450,11 +1614,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -1497,11 +1664,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -1623,8 +1793,8 @@ class TestTargets:
                     },
                     "summary": {
                         "error_count": 6,
-                        "total_correct_rows": 0,
-                        "total_rows": 3,
+                        "total_correct_rows": 1,
+                        "total_rows": 4,
                         "total_rows_with_errors": 3,
                     },
                     "summary_by_error_type": [
@@ -1661,491 +1831,500 @@ class TestTargets:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_upload_column_config_for_super_admin_user(
-        self, client, login_test_user, create_target_column_config, csrf_token
-    ):
-        """
-        Test uploading the targets column config
-        """
-
-        expected_response = {
-            "data": [
-                {
-                    "bulk_editable": False,
-                    "column_name": "target_id",
-                    "column_type": "basic_details",
-                    "contains_pii": False,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "language",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "gender",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Name",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Mobile no.",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "Address",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "bottom_geo_level_location",
-                    "column_type": "location",
-                    "contains_pii": True,
-                },
-            ],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get(
-            "/api/targets/column-config",
-            query_string={"form_uid": 1},
-            content_type="application/json",
-        )
-
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_upload_column_config_for_survey_admin_user(
+    def test_upload_targets_csv_load_successful(
         self,
         client,
         login_test_user,
-        create_form,
+        upload_targets_csv,
         csrf_token,
-        test_user_credentials,
     ):
         """
-        Test uploading the targets column config for survey_admin users
-        Expect Success
+        Test that with load successful flag, the successful targets are uploaded and endpoint returns errors
         """
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=True,
-            survey_uid=1,
-            is_super_admin=False,
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_errors.csv"
         )
 
-        login_user(client, test_user_credentials)
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
 
+        # Try to upload the targets csv
         payload = {
-            "form_uid": 1,
-            "column_config": [
-                {
-                    "column_name": "target_id",
-                    "column_type": "basic_details",
-                    "bulk_editable": False,
-                    "contains_pii": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "basic_details",
-                    "bulk_editable": True,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "basic_details",
-                    "bulk_editable": False,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "Name",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "Mobile no.",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "Address",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "bottom_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                    "contains_pii": True,
-                },
-            ],
+            "column_mapping": {
+                "target_id": "target_id",
+                "language": "language",
+                "gender": "gender",
+                "location_id_column": "psu_id",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile no.",
+                        "column_name": "mobile_primary",
+                    },
+                    {
+                        "field_label": "Name",
+                        "column_name": "name",
+                    },
+                    {
+                        "field_label": "Address",
+                        "column_name": "address",
+                    },
+                ],
+            },
+            "file": targets_csv_encoded,
+            "mode": "merge",
+            "load_successful": True,
         }
 
-        response = client.put(
-            "/api/targets/column-config",
+        response = client.post(
+            "/api/targets",
             query_string={"form_uid": 1},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 422
 
+        expected_response = {
+            "errors": {
+                "record_errors": {
+                    "invalid_records": {
+                        "ordered_columns": [
+                            "row_number",
+                            "target_id",
+                            "language",
+                            "gender",
+                            "psu_id",
+                            "mobile_primary",
+                            "name",
+                            "address",
+                            "errors",
+                        ],
+                        "records": [
+                            {
+                                "address": "Hyderabad",
+                                "errors": "Duplicate row; Duplicate target_id",
+                                "gender": "Male",
+                                "language": "Telugu",
+                                "mobile_primary": "1234567890",
+                                "name": "Anil",
+                                "psu_id": "17101102",
+                                "row_number": 2,
+                                "target_id": "1",
+                            },
+                            {
+                                "address": "Hyderabad",
+                                "errors": "Duplicate row; Duplicate target_id",
+                                "gender": "Male",
+                                "language": "Telugu",
+                                "mobile_primary": "1234567890",
+                                "name": "Anil",
+                                "psu_id": "17101102",
+                                "row_number": 3,
+                                "target_id": "1",
+                            },
+                            {
+                                "address": "South Delhi",
+                                "errors": "Blank field(s) found in the following column(s): target_id. The column(s) cannot contain blank fields.; Location id not found in uploaded locations data for the survey's bottom level geo level",
+                                "gender": "Female",
+                                "language": "Hindi",
+                                "mobile_primary": "1234567891",
+                                "name": "Anupama",
+                                "psu_id": "1",
+                                "row_number": 4,
+                                "target_id": "",
+                            },
+                        ],
+                    },
+                    "summary": {
+                        "error_count": 6,
+                        "total_correct_rows": 1,
+                        "total_rows": 4,
+                        "total_rows_with_errors": 3,
+                    },
+                    "summary_by_error_type": [
+                        {
+                            "error_count": 1,
+                            "error_message": "Blank values are not allowed in the following columns: target_id, psu_id. Blank values in these columns were found for the following row(s): 4",
+                            "error_type": "Blank field",
+                            "row_numbers_with_errors": [4],
+                        },
+                        {
+                            "error_count": 2,
+                            "error_message": "The file has 2 duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: 2, 3",
+                            "error_type": "Duplicate rows",
+                            "row_numbers_with_errors": [2, 3],
+                        },
+                        {
+                            "error_count": 2,
+                            "error_message": "The file has 2 duplicate target_id(s). The following row numbers contain target_id duplicates: 2, 3",
+                            "error_type": "Duplicate target_id's in file",
+                            "row_numbers_with_errors": [2, 3],
+                        },
+                        {
+                            "error_count": 1,
+                            "error_message": "The file contains 1 location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: 4",
+                            "error_type": "Invalid location_id's",
+                            "row_numbers_with_errors": [4],
+                        },
+                    ],
+                }
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # Fetch targets to check if the successful targets were uploaded
+        # Combination of targets loaded using upload_targets_csv and the successful targets from the error file 
         expected_response = {
             "data": [
                 {
-                    "bulk_editable": False,
-                    "column_name": "target_id",
-                    "column_type": "basic_details",
-                    "contains_pii": False,
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "Hyderabad",
+                        "Name": "Anil",
+                        "Mobile no.": "1234567890",
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "location_uid": 4,
+                    "target_id": "1",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 1,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
-                    "bulk_editable": True,
-                    "column_name": "language",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "South Delhi",
+                        "Name": "Anupama",
+                        "Mobile no.": "1234567891",
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "location_uid": 4,
+                    "target_id": "2",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 2,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
-                    "bulk_editable": False,
-                    "column_name": "gender",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Name",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Mobile no.",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "Address",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "bottom_geo_level_location",
-                    "column_type": "location",
-                    "contains_pii": True,
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name", "field_label": "Name"},
+                                {"column_name": "address", "field_label": "Address"},
+                            ],
+                            "gender": "gender",
+                            "language": "language",
+                            "location_id_column": "psu_id",
+                            "target_id": "target_id",
+                        },
+                        "Address": "South Delhi",
+                        "Name": "Akhil",
+                        "Mobile no.": "1234567892",
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Hindi",
+                    "location_uid": 4,
+                    "target_id": "3",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 3,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
         }
 
         # Check the response
-        response = client.get(
-            "/api/targets/column-config",
-            query_string={"form_uid": 1},
-            content_type="application/json",
-        )
+        response = client.get("/api/targets", query_string={"form_uid": 1})
 
-        assert response.status_code == 200
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
 
-        login_user(client, test_user_credentials)
-
-    def test_upload_column_config_for_non_admin_user_roles(
-        self,
-        client,
-        login_test_user,
-        create_form,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test uploading the targets column config for non-admin users with roles
-            - assign user WRITE roles
-            - change the user to non admin
-        Expect Success
-        """
-        new_role = create_new_survey_role_with_permissions(
-            # 7 - WRITE Targets
-            client,
-            test_user_credentials,
-            "Survey Role",
-            [7],
-            1,
-        )
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[1],
-        )
-
-        login_user(client, test_user_credentials)
-
-        payload = {
-            "form_uid": 1,
-            "column_config": [
-                {
-                    "column_name": "target_id",
-                    "column_type": "basic_details",
-                    "bulk_editable": False,
-                    "contains_pii": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "basic_details",
-                    "bulk_editable": True,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "basic_details",
-                    "bulk_editable": False,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "Name",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "Mobile no.",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "Address",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "bottom_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                    "contains_pii": True,
-                },
-            ],
-        }
-
-        response = client.put(
-            "/api/targets/column-config",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": [
-                {
-                    "bulk_editable": False,
-                    "column_name": "target_id",
-                    "column_type": "basic_details",
-                    "contains_pii": False,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "language",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "gender",
-                    "column_type": "basic_details",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Name",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": False,
-                    "column_name": "Mobile no.",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "Address",
-                    "column_type": "custom_fields",
-                    "contains_pii": True,
-                },
-                {
-                    "bulk_editable": True,
-                    "column_name": "bottom_geo_level_location",
-                    "column_type": "location",
-                    "contains_pii": True,
-                },
-            ],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get(
-            "/api/targets/column-config",
-            query_string={"form_uid": 1},
-            content_type="application/json",
-        )
-
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_upload_column_config_for_non_admin_user_no_roles(
+    def test_upload_column_config(
         self,
         client,
         login_test_user,
         create_target_column_config,
+        create_geo_levels_for_targets_file,
+        user_permissions,
         csrf_token,
-        test_user_credentials,
+        request,
     ):
         """
-        Test uploading the targets column config for non-admin users with roles
-            - change the user to non admin
-            - remove all roles
-        Expect Fail with a 403
+        Test uploading the targets column config for all users
         """
 
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[],
-        )
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
-        login_user(client, test_user_credentials)
-
-        payload = {
-            "form_uid": 1,
-            "column_config": [
-                {
-                    "column_name": "target_id",
-                    "column_type": "basic_details",
-                    "bulk_editable": False,
-                    "contains_pii": False,
-                },
-                {
-                    "column_name": "language",
-                    "column_type": "basic_details",
-                    "bulk_editable": True,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "gender",
-                    "column_type": "basic_details",
-                    "bulk_editable": False,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "Name",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "Mobile no.",
-                    "column_type": "custom_fields",
-                    "bulk_editable": False,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "Address",
-                    "column_type": "custom_fields",
-                    "bulk_editable": True,
-                    "contains_pii": True,
-                },
-                {
-                    "column_name": "bottom_geo_level_location",
-                    "column_type": "location",
-                    "bulk_editable": True,
-                    "contains_pii": True,
-                },
-            ],
-        }
-
-        response = client.put(
+        # Check the response
+        # Check the response
+        response = client.get(
             "/api/targets/column-config",
             query_string={"form_uid": 1},
-            json=payload,
             content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
         )
 
-        assert response.status_code == 403
+        print(response.json)
 
-        expected_response = {
-            "success": False,
-            "error": f"User does not have the required permission: WRITE Targets",
-        }
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+        if expected_permission:
 
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
+            expected_response = {
+                "data": {
+                    "file_columns": [
+                        {
+                            "bulk_editable": False,
+                            "column_name": "target_id",
+                            "column_type": "basic_details",
+                            "contains_pii": False,
+                        },
+                        {
+                            "bulk_editable": True,
+                            "column_name": "language",
+                            "column_type": "basic_details",
+                            "contains_pii": True,
+                        },
+                        {
+                            "bulk_editable": False,
+                            "column_name": "gender",
+                            "column_type": "basic_details",
+                            "contains_pii": True,
+                        },
+                        {
+                            "bulk_editable": False,
+                            "column_name": "Name",
+                            "column_type": "custom_fields",
+                            "contains_pii": True,
+                        },
+                        {
+                            "bulk_editable": False,
+                            "column_name": "Mobile no.",
+                            "column_type": "custom_fields",
+                            "contains_pii": True,
+                        },
+                        {
+                            "bulk_editable": True,
+                            "column_name": "Address",
+                            "column_type": "custom_fields",
+                            "contains_pii": True,
+                        },
+                        {
+                            "bulk_editable": True,
+                            "column_name": "bottom_geo_level_location",
+                            "column_type": "location",
+                            "contains_pii": True,
+                        },
+                    ],
+                    "location_columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "target_status_columns": [
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Number of Attempts",
+                        },
+                        {
+                            "column_key": "final_survey_status",
+                            "column_label": "Final Survey Status",
+                        },
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status Label",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                    ]
+                },
+                "success": True,
+            }
 
-        login_user(client, test_user_credentials)
+            assert response.status_code == 200
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
 
-    def test_update_target_for_super_admin_user(
-        self, client, login_test_user, upload_targets_csv, csrf_token
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Targets",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_update_target(
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        csrf_token,
+        user_permissions,
+        request,
     ):
         """
-        Test that an individual target can be updated
+        Test that an individual target can be updated for all user permissions
         """
 
         # Update the target
@@ -2161,6 +2340,9 @@ class TestTargets:
             },
         }
 
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
         response = client.put(
             "/api/targets/2",
             json=payload,
@@ -2168,399 +2350,91 @@ class TestTargets:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        assert response.status_code == 200
+        print(response.json)
 
-        expected_response = {
-            "data": {
-                "custom_fields": {
-                    "column_mapping": {
-                        "custom_fields": [
-                            {
-                                "column_name": "mobile_primary1",
-                                "field_label": "Mobile no.",
-                            },
-                            {"column_name": "name1", "field_label": "Name"},
-                            {"column_name": "address1", "field_label": "Address"},
-                        ],
-                        "gender": "gender1",
-                        "language": "language1",
-                        "location_id_column": "psu_id1",
-                        "target_id": "target_id1",
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "North Delhi",
+                        "Mobile no.": "0234567891",
+                        "Name": "Anupama Srivastava",
                     },
-                    "Address": "North Delhi",
-                    "Mobile no.": "0234567891",
-                    "Name": "Anupama Srivastava",
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Hindi",
+                    "location_uid": 5,
+                    "target_id": "2",
+                    "target_uid": 2,
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "geo_level_uid": 1,
+                            "location_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "geo_level_uid": 2,
+                            "location_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101107",
+                            "location_name": "ANKAPUR",
+                            "geo_level_uid": 3,
+                            "location_uid": 5,
+                        },
+                    ],
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
-                "form_uid": 1,
-                "gender": "Male",
-                "language": "Hindi",
-                "location_uid": 5,
-                "target_id": "2",
-                "target_uid": 2,
-                "target_locations": [
-                    {
-                        "geo_level_name": "District",
-                        "location_id": "1",
-                        "location_name": "ADILABAD",
-                        "geo_level_uid": 1,
-                        "location_uid": 1,
-                    },
-                    {
-                        "geo_level_name": "Mandal",
-                        "location_id": "1101",
-                        "location_name": "ADILABAD RURAL",
-                        "geo_level_uid": 2,
-                        "location_uid": 2,
-                    },
-                    {
-                        "geo_level_name": "PSU",
-                        "location_id": "17101107",
-                        "location_name": "ANKAPUR",
-                        "geo_level_uid": 3,
-                        "location_uid": 5,
-                    },
-                ],
-                "completed_flag": None,
-                "last_attempt_survey_status": None,
-                "last_attempt_survey_status_label": None,
-                "num_attempts": None,
-                "refusal_flag": None,
-                "revisit_sections": None,
-                "target_assignable": None,
-                "webapp_tag_color": None,
-            },
-            "success": True,
-        }
+                "success": True,
+            }
 
-        # Check the response
-        response = client.get("/api/targets/2")
+            # Check the response
+            response = client.get("/api/targets/2")
 
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+            assert response.status_code == 200
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
 
-    def test_update_target_for_survey_admin_user(
-        self,
-        client,
-        login_test_user,
-        upload_targets_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that an individual target can be updated by a survey_admin user
-        """
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=True,
-            survey_uid=1,
-            is_super_admin=False,
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the target
-        payload = {
-            "target_id": "2",
-            "gender": "Male",
-            "language": "Hindi",
-            "location_uid": 5,
-            "custom_fields": {
-                "Address": "North Delhi",
-                "Name": "Anupama Srivastava",
-                "Mobile no.": "0234567891",
-            },
-        }
-
-        response = client.put(
-            "/api/targets/2",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": {
-                "custom_fields": {
-                    "column_mapping": {
-                        "custom_fields": [
-                            {
-                                "column_name": "mobile_primary1",
-                                "field_label": "Mobile no.",
-                            },
-                            {"column_name": "name1", "field_label": "Name"},
-                            {"column_name": "address1", "field_label": "Address"},
-                        ],
-                        "gender": "gender1",
-                        "language": "language1",
-                        "location_id_column": "psu_id1",
-                        "target_id": "target_id1",
-                    },
-                    "Address": "North Delhi",
-                    "Mobile no.": "0234567891",
-                    "Name": "Anupama Srivastava",
-                },
-                "form_uid": 1,
-                "gender": "Male",
-                "language": "Hindi",
-                "location_uid": 5,
-                "target_id": "2",
-                "target_uid": 2,
-                "target_locations": [
-                    {
-                        "geo_level_name": "District",
-                        "location_id": "1",
-                        "location_name": "ADILABAD",
-                        "geo_level_uid": 1,
-                        "location_uid": 1,
-                    },
-                    {
-                        "geo_level_name": "Mandal",
-                        "location_id": "1101",
-                        "location_name": "ADILABAD RURAL",
-                        "geo_level_uid": 2,
-                        "location_uid": 2,
-                    },
-                    {
-                        "geo_level_name": "PSU",
-                        "location_id": "17101107",
-                        "location_name": "ANKAPUR",
-                        "geo_level_uid": 3,
-                        "location_uid": 5,
-                    },
-                ],
-                "completed_flag": None,
-                "last_attempt_survey_status": None,
-                "last_attempt_survey_status_label": None,
-                "num_attempts": None,
-                "refusal_flag": None,
-                "revisit_sections": None,
-                "target_assignable": None,
-                "webapp_tag_color": None,
-            },
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/targets/2")
-
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_update_target_for_non_admin_user_roles(
-        self,
-        client,
-        login_test_user,
-        upload_targets_csv,
-        test_user_credentials,
-        csrf_token,
-    ):
-        """
-        Test that an individual target can be updated by a non-admin user with roles
-         - create write role
-         - update logged-in user to non-admin
-         - assign new role
-        Expect successful update
-        """
-
-        new_role = create_new_survey_role_with_permissions(
-            # 7 - WRITE Targets
-            client,
-            test_user_credentials,
-            "Survey Role",
-            [7],
-            1,
-        )
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[1],
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the target
-        payload = {
-            "target_id": "2",
-            "gender": "Male",
-            "language": "Hindi",
-            "location_uid": 5,
-            "custom_fields": {
-                "Address": "North Delhi",
-                "Name": "Anupama Sri",
-                "Mobile no.": "0234567891",
-            },
-        }
-
-        response = client.put(
-            "/api/targets/2",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        expected_response = {
-            "data": {
-                "custom_fields": {
-                    "column_mapping": {
-                        "custom_fields": [
-                            {
-                                "column_name": "mobile_primary1",
-                                "field_label": "Mobile no.",
-                            },
-                            {"column_name": "name1", "field_label": "Name"},
-                            {"column_name": "address1", "field_label": "Address"},
-                        ],
-                        "gender": "gender1",
-                        "language": "language1",
-                        "location_id_column": "psu_id1",
-                        "target_id": "target_id1",
-                    },
-                    "Address": "North Delhi",
-                    "Mobile no.": "0234567891",
-                    "Name": "Anupama Sri",
-                },
-                "form_uid": 1,
-                "gender": "Male",
-                "language": "Hindi",
-                "location_uid": 5,
-                "target_id": "2",
-                "target_uid": 2,
-                "target_locations": [
-                    {
-                        "geo_level_name": "District",
-                        "location_id": "1",
-                        "location_name": "ADILABAD",
-                        "geo_level_uid": 1,
-                        "location_uid": 1,
-                    },
-                    {
-                        "geo_level_name": "Mandal",
-                        "location_id": "1101",
-                        "location_name": "ADILABAD RURAL",
-                        "geo_level_uid": 2,
-                        "location_uid": 2,
-                    },
-                    {
-                        "geo_level_name": "PSU",
-                        "location_id": "17101107",
-                        "location_name": "ANKAPUR",
-                        "geo_level_uid": 3,
-                        "location_uid": 5,
-                    },
-                ],
-                "completed_flag": None,
-                "last_attempt_survey_status": None,
-                "last_attempt_survey_status_label": None,
-                "num_attempts": None,
-                "refusal_flag": None,
-                "revisit_sections": None,
-                "target_assignable": None,
-                "webapp_tag_color": None,
-            },
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/targets/2")
-
-        assert response.status_code == 200
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_update_target_for_non_admin_user_no_roles(
-        self,
-        client,
-        login_test_user,
-        upload_targets_csv,
-        test_user_credentials,
-        csrf_token,
-    ):
-        """
-        Test that an individual target cannot be updated by a non-admin user without roles
-         - update logged-in user to non-admin
-         - remove all roles
-        Expect Fail with a 403
-        """
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[],
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the target
-        payload = {
-            "target_id": "2",
-            "gender": "Male",
-            "language": "Hindi",
-            "location_uid": 5,
-            "custom_fields": {
-                "Address": "North Delh",
-                "Name": "Anupama Srivastava",
-                "Mobile no.": "0234567891",
-            },
-        }
-
-        response = client.put(
-            "/api/targets/2",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 403
-
-        expected_response = {
-            "success": False,
-            "error": f"User does not have the required permission: WRITE Targets",
-        }
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Targets",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
     def test_update_target_incorrect_custom_fields(
         self, client, login_test_user, upload_targets_csv, csrf_token
@@ -2591,160 +2465,80 @@ class TestTargets:
 
         assert response.status_code == 422
 
-    def test_delete_target_for_super_admin_user(
-        self, client, login_test_user, upload_targets_csv, csrf_token
+    def test_delete_target(
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        csrf_token,
+        create_survey,
+        user_permissions,
+        request,
     ):
         """
-        Test that an individual target can be deleted
+        Test that an individual target can be deleted for all target user_permissions
+        Expect success for the allowed permissions
+        Expect 403 for the non permissions
         """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
-        # Delete the target
-        response = client.delete("/api/targets/1", headers={"X-CSRF-Token": csrf_token})
+        if expected_permission:
+            # Delete the target
+            response = client.delete(
+                "/api/targets/1", headers={"X-CSRF-Token": csrf_token}
+            )
 
-        assert response.status_code == 200
+            assert response.status_code == 200
 
-        response = client.get("/api/targets/1")
+        else:
+            # Delete the target
+            response = client.delete(
+                "/api/targets/1", headers={"X-CSRF-Token": csrf_token}
+            )
+
+            assert response.status_code == 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Targets",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_delete_target_not_found(
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        csrf_token,
+        create_survey,
+    ):
+        """
+        Test missing target delete - super admin
+        Expect 404 not found
+        """
+        response = client.delete(
+            "/api/targets/100", headers={"X-CSRF-Token": csrf_token}
+        )
 
         assert response.status_code == 404
 
-    def test_delete_target_for_survey_admin_user(
-        self,
-        client,
-        login_test_user,
-        upload_targets_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that an individual target can be deleted by a survey_admin
-        """
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=True,
-            survey_uid=1,
-            is_super_admin=False,
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Delete the target
-        response = client.delete("/api/targets/1", headers={"X-CSRF-Token": csrf_token})
-
-        assert response.status_code == 200
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_delete_target_for_non_admin_user_roles(
-        self,
-        client,
-        login_test_user,
-        upload_targets_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that an individual target can be deleted by a non_admin user with permissions
-        Expect success
-        """
-        new_role = create_new_survey_role_with_permissions(
-            # 7 - WRITE Targets
-            client,
-            test_user_credentials,
-            "Survey Role",
-            [7],
-            1,
-        )
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[1],
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Delete the target
-        response = client.delete("/api/targets/1", headers={"X-CSRF-Token": csrf_token})
-
-        assert response.status_code == 200
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_delete_target_for_non_admin_no_roles(
-        self,
-        client,
-        login_test_user,
-        upload_targets_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that an individual target cannot be deleted by a non_admin user without permissions
-        Expect Fail with a 403 permission error
-        """
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[],
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Delete the target
-        response = client.delete("/api/targets/1", headers={"X-CSRF-Token": csrf_token})
-
-        assert response.status_code == 403
-
         expected_response = {
-            "success": False,
-            "error": f"User does not have the required permission: WRITE Targets",
+            "error": f"Target not found",
         }
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_bulk_update_targets_for_super_admin_user(
+    def test_bulk_update_targets(
         self,
         client,
         login_test_user,
         create_target_column_config,
         upload_targets_csv,
         csrf_token,
+        user_permissions,
+        request,
     ):
         """
         Test that targets can be bulk updated
@@ -2759,174 +2553,8 @@ class TestTargets:
             "location_uid": 5,
         }
 
-        response = client.patch(
-            "/api/targets",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": [
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                        "Address": "North Delhi",
-                        "Mobile no.": "1234567890",
-                        "Name": "Anil",
-                    },
-                    "form_uid": 1,
-                    "gender": "Male",
-                    "language": "English",
-                    "location_uid": 5,
-                    "target_id": "1",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101107",
-                            "location_name": "ANKAPUR",
-                            "geo_level_uid": 3,
-                            "location_uid": 5,
-                        },
-                    ],
-                    "target_uid": 1,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                        "Address": "North Delhi",
-                        "Mobile no.": "1234567891",
-                        "Name": "Anupama",
-                    },
-                    "form_uid": 1,
-                    "gender": "Female",
-                    "language": "English",
-                    "location_uid": 5,
-                    "target_id": "2",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101107",
-                            "location_name": "ANKAPUR",
-                            "geo_level_uid": 3,
-                            "location_uid": 5,
-                        },
-                    ],
-                    "target_uid": 2,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
-                },
-            ],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/targets", query_string={"form_uid": 1})
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_bulk_update_targets_for_survey_admin_user(
-        self,
-        client,
-        login_test_user,
-        create_target_column_config,
-        upload_targets_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that targets can be bulk updated by a survey_admin user
-
-        """
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=True,
-            survey_uid=1,
-            is_super_admin=False,
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the target
-        payload = {
-            "target_uids": [1, 2],
-            "form_uid": 1,
-            "language": "English",
-            "Address": "North Delhi",
-            "location_uid": 5,
-        }
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
         response = client.patch(
             "/api/targets",
@@ -2934,395 +2562,153 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        assert response.status_code == 200
 
-        expected_response = {
-            "data": [
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
+        if expected_permission:
+
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "custom_fields": {
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_primary1",
+                                        "field_label": "Mobile no.",
+                                    },
+                                    {"column_name": "name1", "field_label": "Name"},
+                                    {"column_name": "address1", "field_label": "Address"},
+                                ],
+                                "gender": "gender1",
+                                "language": "language1",
+                                "location_id_column": "psu_id1",
+                                "target_id": "target_id1",
+                            },
+                            "Address": "North Delhi",
+                            "Mobile no.": "1234567890",
+                            "Name": "Anil",
                         },
-                        "Address": "North Delhi",
-                        "Mobile no.": "1234567890",
-                        "Name": "Anil",
+                        "form_uid": 1,
+                        "gender": "Male",
+                        "language": "English",
+                        "location_uid": 5,
+                        "target_id": "1",
+                        "target_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "location_id": "1101",
+                                "location_name": "ADILABAD RURAL",
+                                "geo_level_uid": 2,
+                                "location_uid": 2,
+                            },
+                            {
+                                "geo_level_name": "PSU",
+                                "location_id": "17101107",
+                                "location_name": "ANKAPUR",
+                                "geo_level_uid": 3,
+                                "location_uid": 5,
+                            },
+                        ],
+                        "target_uid": 1,
+                        "completed_flag": None,
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": None,
+                        "final_survey_status": None,
+                        "final_survey_status_label": None,
+                        "num_attempts": None,
+                        "refusal_flag": None,
+                        "revisit_sections": None,
+                        "target_assignable": None,
+                        "webapp_tag_color": None,
+                        "scto_fields": None,
                     },
-                    "form_uid": 1,
-                    "gender": "Male",
-                    "language": "English",
-                    "location_uid": 5,
-                    "target_id": "1",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
+                    {
+                        "custom_fields": {
+                            "column_mapping": {
+                                "custom_fields": [
+                                    {
+                                        "column_name": "mobile_primary1",
+                                        "field_label": "Mobile no.",
+                                    },
+                                    {"column_name": "name1", "field_label": "Name"},
+                                    {"column_name": "address1", "field_label": "Address"},
+                                ],
+                                "gender": "gender1",
+                                "language": "language1",
+                                "location_id_column": "psu_id1",
+                                "target_id": "target_id1",
+                            },
+                            "Address": "North Delhi",
+                            "Mobile no.": "1234567891",
+                            "Name": "Anupama",
                         },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101107",
-                            "location_name": "ANKAPUR",
-                            "geo_level_uid": 3,
-                            "location_uid": 5,
-                        },
-                    ],
-                    "target_uid": 1,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                        "Address": "North Delhi",
-                        "Mobile no.": "1234567891",
-                        "Name": "Anupama",
+                        "form_uid": 1,
+                        "gender": "Female",
+                        "language": "English",
+                        "location_uid": 5,
+                        "target_id": "2",
+                        "target_locations": [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "location_id": "1101",
+                                "location_name": "ADILABAD RURAL",
+                                "geo_level_uid": 2,
+                                "location_uid": 2,
+                            },
+                            {
+                                "geo_level_name": "PSU",
+                                "location_id": "17101107",
+                                "location_name": "ANKAPUR",
+                                "geo_level_uid": 3,
+                                "location_uid": 5,
+                            },
+                        ],
+                        "target_uid": 2,
+                        "completed_flag": None,
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": None,
+                        "final_survey_status": None,
+                        "final_survey_status_label": None,
+                        "num_attempts": None,
+                        "refusal_flag": None,
+                        "revisit_sections": None,
+                        "target_assignable": None,
+                        "webapp_tag_color": None,
+                        "scto_fields": None,
                     },
-                    "form_uid": 1,
-                    "gender": "Female",
-                    "language": "English",
-                    "location_uid": 5,
-                    "target_id": "2",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101107",
-                            "location_name": "ANKAPUR",
-                            "geo_level_uid": 3,
-                            "location_uid": 5,
-                        },
-                    ],
-                    "target_uid": 2,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
-                },
-            ],
-            "success": True,
-        }
+                ],
+                "success": True,
+            }
 
-        # Check the response
-        response = client.get("/api/targets", query_string={"form_uid": 1})
+            # Check the response
+            response = client.get("/api/targets", query_string={"form_uid": 1})
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
 
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_bulk_update_targets_for_non_admin_user_roles(
-        self,
-        client,
-        login_test_user,
-        create_target_column_config,
-        upload_targets_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that targets can be bulk updated by a non_admin user with permissions
-        """
-
-        new_role = create_new_survey_role_with_permissions(
-            # 7 - WRITE Targets
-            client,
-            test_user_credentials,
-            "Survey Role",
-            [7],
-            1,
-        )
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[1],
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the target
-        payload = {
-            "target_uids": [1, 2],
-            "form_uid": 1,
-            "language": "English",
-            "Address": "North Delhi",
-            "location_uid": 5,
-        }
-
-        response = client.patch(
-            "/api/targets",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": [
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                        "Address": "North Delhi",
-                        "Mobile no.": "1234567890",
-                        "Name": "Anil",
-                    },
-                    "form_uid": 1,
-                    "gender": "Male",
-                    "language": "English",
-                    "location_uid": 5,
-                    "target_id": "1",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101107",
-                            "location_name": "ANKAPUR",
-                            "geo_level_uid": 3,
-                            "location_uid": 5,
-                        },
-                    ],
-                    "target_uid": 1,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                        "Address": "North Delhi",
-                        "Mobile no.": "1234567891",
-                        "Name": "Anupama",
-                    },
-                    "form_uid": 1,
-                    "gender": "Female",
-                    "language": "English",
-                    "location_uid": 5,
-                    "target_id": "2",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101107",
-                            "location_name": "ANKAPUR",
-                            "geo_level_uid": 3,
-                            "location_uid": 5,
-                        },
-                    ],
-                    "target_uid": 2,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
-                },
-            ],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/targets", query_string={"form_uid": 1})
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
-
-    def test_bulk_update_targets_for_non_admin_user_no_roles(
-        self,
-        client,
-        login_test_user,
-        create_target_column_config,
-        upload_targets_csv,
-        csrf_token,
-        test_user_credentials,
-    ):
-        """
-        Test that targets cannot be bulk updated by a non_admin user without permissions
-        Expect 403 Fail with permission errors
-        """
-
-        updated_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[],
-        )
-
-        login_user(client, test_user_credentials)
-
-        # Update the target
-        payload = {
-            "target_uids": [1, 2],
-            "form_uid": 1,
-            "language": "English",
-            "Address": "North Delhi",
-            "location_uid": 5,
-        }
-
-        response = client.patch(
-            "/api/targets",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 403
-
-        expected_response = {
-            "success": False,
-            "error": f"User does not have the required permission: WRITE Targets",
-        }
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-        # revert user to super admin
-        revert_user = update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=True,
-        )
-
-        login_user(client, test_user_credentials)
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Targets",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
     def test_unmapped_columns(
         self, client, login_test_user, create_locations_for_targets_file, csrf_token
@@ -3473,11 +2859,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "custom_fields": {
@@ -3532,11 +2921,14 @@ class TestTargets:
                     "completed_flag": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "num_attempts": None,
                     "refusal_flag": None,
                     "revisit_sections": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
                 {
                     "completed_flag": None,
@@ -3563,6 +2955,8 @@ class TestTargets:
                     "language": "Tagalog",
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "location_uid": None,
                     "num_attempts": None,
                     "refusal_flag": None,
@@ -3572,6 +2966,7 @@ class TestTargets:
                     "target_locations": None,
                     "target_uid": 3,
                     "webapp_tag_color": None,
+                    "scto_fields": None,
                 },
             ],
             "success": True,
@@ -3582,3 +2977,164 @@ class TestTargets:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_upload_target_status(
+        self,
+        client,
+        csrf_token,
+        user_permissions,
+        upload_target_status,
+        request,
+    ):
+        """
+        Test that the target_status data can be updated
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "Hyderabad",
+                        "Name": "Anil",
+                        "Mobile no.": "1234567890",
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "location_uid": 4,
+                    "target_id": "1",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 1,
+                    "completed_flag": False,
+                    "last_attempt_survey_status": 2,
+                    "last_attempt_survey_status_label": "Partially complete - revisit",
+                    "final_survey_status": 2,
+                    "final_survey_status_label": "Partially complete - revisit",
+                    "num_attempts": 1,
+                    "refusal_flag": False,
+                    "revisit_sections": ["section1", "section2"],
+                    "target_assignable": True,
+                    "webapp_tag_color": "gold",
+                    "scto_fields": {"field1": "value1", "field2": "value2"},
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "South Delhi",
+                        "Name": "Anupama",
+                        "Mobile no.": "1234567891",
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "location_uid": 4,
+                    "target_id": "2",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 2,
+                    "completed_flag": True,
+                    "last_attempt_survey_status": 1,
+                    "last_attempt_survey_status_label": "Fully complete",
+                    "final_survey_status": 1,
+                    "final_survey_status_label": "Fully complete",
+                    "num_attempts": 5,
+                    "refusal_flag": False,
+                    "revisit_sections": [],
+                    "target_assignable": False,
+                    "webapp_tag_color": "green",
+                    "scto_fields": {"field1": "value3", "field2": "value4"},
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/targets", query_string={"form_uid": 1})
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            print(response.json)
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: READ Targets",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}

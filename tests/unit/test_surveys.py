@@ -878,6 +878,44 @@ class TestSurveys:
 
         login_user(client, test_user_credentials)
 
+    def test_update_survey_not_found(
+        self, client, csrf_token, login_test_user, test_user_credentials, create_surveys
+    ):
+        """
+        Test update survey not found
+        Expect 404
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "survey_id": "test_survey_1",
+            "survey_name": "Test Survey 1",
+            "survey_description": "A test survey 1",
+            "project_name": "Test Project 1",
+            "surveying_method": "phone",
+            "irb_approval": "No",
+            "planned_start_date": "2021-01-02",
+            "planned_end_date": "2021-12-30",
+            "state": "Active",
+            "config_status": "In Progress - Backend Setup",
+        }
+        # Attempt to update survey
+        response = client.put(
+            "/api/surveys/100/basic-information",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 404
+
+        print(response.json)
+
+        expected_response = {"error": "Survey not found"}
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
     def test_delete_survey_for_admin(
         self, client, login_test_user, csrf_token, test_user_credentials, create_surveys
     ):
@@ -926,6 +964,25 @@ class TestSurveys:
 
         login_user(client, test_user_credentials)
 
+    def test_delete_survey_not_found(
+        self, client, login_test_user, test_user_credentials, csrf_token, create_surveys
+    ):
+        """
+        Test delete not found survey
+        Expect a 404
+
+        """
+        response = client.delete(
+            "/api/surveys/100",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 404
+
+        expected_response = {"error": "Survey not found"}
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
     def test_get_config_status(
         self,
         client,
@@ -961,6 +1018,31 @@ class TestSurveys:
             },
             "success": True,
         }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_config_status_not_found(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_surveys,
+        create_parent_form,
+        create_roles,
+        upload_enumerators_csv,
+        upload_targets_csv,
+    ):
+        """
+        Test get config status for a missing survey
+        Expect 404 fail
+        """
+
+        response = client.get("/api/surveys/100/config-status")
+        assert response.status_code == 404
+
+        print(response.json)
+        expected_response = {"error": "Survey not found"}
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}

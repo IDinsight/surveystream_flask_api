@@ -456,6 +456,30 @@
                 "question_name": "monitor_comments",
                 "question_type": "text",
                 "question_uid": 70
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "instanceID",
+                "question_type": "text",
+                "question_uid": "instanceID"
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "formdef_version",
+                "question_type": "text",
+                "question_uid": "formdef_version"
+            },
+            {
+                "form_uid": 1,
+                "is_repeat_group": false,
+                "list_uid": null,
+                "question_name": "SubmissionDate",
+                "question_type": "text",
+                "question_uid": "SubmissionDate"
             }
         ],
         "settings": {

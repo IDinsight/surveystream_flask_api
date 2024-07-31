@@ -1,13 +1,17 @@
-from flask import jsonify, session, current_app, request
-from flask_login import login_required, logout_user, current_user
-from botocore.exceptions import ClientError
+import base64
+import math
+import time
 from functools import wraps
-from app import db
-from app.blueprints.auth.models import User
-from sqlalchemy import and_, func, or_
 
 import boto3
-import base64
+from botocore.exceptions import ClientError
+from flask import current_app, jsonify, request, session
+from flask_login import current_user, login_required, logout_user
+from sqlalchemy import and_, func, or_
+from wtforms.fields import Field
+
+from app import db
+from app.blueprints.auth.models import User
 
 
 def concat_names(name_tuple):
@@ -150,12 +154,12 @@ def get_survey_uids(param_location, param_name):
     Returns: A list of applicable survey UID's.
     """
 
-    from app.blueprints.surveys.models import Survey
-    from app.blueprints.forms.models import Form
-    from app.blueprints.targets.models import Target
-    from app.blueprints.enumerators.models import SurveyorForm, MonitorForm
     from app.blueprints.emails.models import EmailConfig
+    from app.blueprints.enumerators.models import MonitorForm, SurveyorForm
+    from app.blueprints.forms.models import Form
     from app.blueprints.media_files.models import MediaFilesConfig
+    from app.blueprints.surveys.models import Survey
+    from app.blueprints.targets.models import Target
 
     if param_name not in [
         "survey_uid",
@@ -163,7 +167,7 @@ def get_survey_uids(param_location, param_name):
         "target_uid",
         "enumerator_uid",
         "email_config_uid",
-        "media_files_config_uid"
+        "media_files_config_uid",
     ]:
         raise ValueError(
             "'param_name' parameter must be one of survey_uid, form_uid, target_uid, enumerator_uid, email_config_uid, media_files_config_uid"
@@ -281,7 +285,7 @@ def custom_permissions_required(
             if current_user.get_is_super_admin():
                 return fn(*args, **kwargs)
 
-            if permission_name == "CREATE SURVEY":
+            if (type(permission_name) == str) and (permission_name == "CREATE SURVEY"):
                 if current_user.get_can_create_survey():
                     return fn(*args, **kwargs)
                 else:
@@ -313,7 +317,7 @@ def custom_permissions_required(
             if survey_admin:
                 # If the user is a survey admin for the survey allow all permissions
                 return fn(*args, **kwargs)
-            elif permission_name == "ADMIN":
+            elif (type(permission_name) == str) and (permission_name == "ADMIN"):
                 # deny access if the permission_name was ADMIN
                 error_message = (
                     f"User does not have the required permission: {permission_name}"
@@ -325,43 +329,54 @@ def custom_permissions_required(
             # Get all permissions associated with the user's roles
             user_roles = current_user.get_roles()
 
-            # Split permission_name into action and resource
-            action, resource = permission_name.split(maxsplit=1)
+            if type(permission_name) == str:
+                permission_name_list = [permission_name]
+            else:
+                permission_name_list = permission_name
 
-            try:
-                # Query to get role_permissions
-                role_permissions = (
-                    db.session.query(Permission)
-                    .join(
-                        Role,
-                        Role.survey_uid.in_(survey_uids),
-                    )
-                    .filter(
-                        and_(
-                            Role.role_uid == func.any(user_roles),
-                            or_(
-                                Permission.name == permission_name,
-                                and_(
-                                    action == "READ",
-                                    Permission.name == f"WRITE {resource}",
-                                ),
-                            ),
+            has_permission = False
+            for each_permission in permission_name_list:
+                # Split permission_name into action and resource
+                action, resource = each_permission.split(maxsplit=1)
+
+                try:
+                    # Query to get role_permissions
+                    role_permissions = (
+                        db.session.query(Permission)
+                        .join(
+                            Role,
+                            Role.survey_uid.in_(survey_uids),
                         )
+                        .filter(
+                            and_(
+                                Role.role_uid == func.any(user_roles),
+                                or_(
+                                    Permission.name == each_permission,
+                                    and_(
+                                        action == "READ",
+                                        Permission.name == f"WRITE {resource}",
+                                    ),
+                                ),
+                            )
+                        )
+                        .all()
                     )
-                    .all()
-                )
-            except Exception as e:
-                print("Error querying role_permissions: %s", e)
-                return (
-                    jsonify({"success": False, "error": "Error checking permissions"}),
-                    500,
-                )
+                except Exception as e:
+                    print("Error querying role_permissions: %s", e)
+                    return (
+                        jsonify(
+                            {"success": False, "error": "Error checking permissions"}
+                        ),
+                        500,
+                    )
 
-            # Check if the current user has the specified permission
-            if not role_permissions:
-                error_message = (
-                    f"User does not have the required permission: {permission_name}"
-                )
+                # Check if the current user has the specified permission
+                if role_permissions:
+                    has_permission = True
+                    break
+
+            if has_permission is False:
+                error_message = f"User does not have the required permission: {', '.join(permission_name_list)}"
                 response = {"success": False, "error": error_message}
                 return jsonify(response), 403
 
@@ -428,3 +443,120 @@ def validate_payload(validator):
 class SurveyNotFoundError(Exception):
     def __init__(self, errors):
         self.errors = [errors]
+
+
+def retry(tries, delay=3, backoff=2):
+    """
+    Retries a function or method until it returns True.
+    https://code.tutsplus.com/tutorials/professional-error-handling-with-python--cms-25950
+
+
+    Delay sets the initial delay in seconds, and backoff sets the factor by which
+    the delay should lengthen after each failure. backoff must be greater than 1,
+    or else it isn't really a backoff. Rries must be at least 0, and delay
+    greater than 0.
+    """
+
+    if backoff <= 1:
+        raise ValueError("Backoff must be greater than 1")
+
+    tries = math.floor(tries)
+
+    if tries < 0:
+        raise ValueError("Tries must be 0 or greater")
+
+    if delay <= 0:
+        raise ValueError("Delay must be greater than 0")
+
+    def deco_retry(f):
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay  # make mutable
+
+            rv = f(*args, **kwargs)  # first attempt
+
+            while mtries > 0:
+                print(mtries)
+
+                if rv is True:  # Done on success
+                    return True
+
+                mtries -= 1  # consume an attempt
+
+                time.sleep(mdelay)  # wait...
+
+                mdelay *= backoff  # make future wait longer
+
+                rv = f(*args, **kwargs)  # Try again
+
+            return False  # Ran out of tries :-(
+
+        return f_retry  # true decorator -> decorated function
+
+    return deco_retry  # @retry(arg[, ...]) -> true decorator
+
+
+def retry_on_exception(ExceptionToCheck, tries=5, delay=3, backoff=2):
+    """Retry calling the decorated function using an exponential backoff.
+
+    http://www.saltycrane.com/blog/2009/11/trying-out-retry-decorator-python/
+    original from: http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
+
+    :param ExceptionToCheck: the exception to check. may be a tuple of
+        exceptions to check
+    :type ExceptionToCheck: Exception or tuple
+    :param tries: number of times to try (not retry) before giving up
+    :type tries: int
+    :param delay: initial delay between retries in seconds
+    :type delay: int
+    :param backoff: backoff multiplier e.g. value of 2 will double the delay
+        each retry
+    :type backoff: int
+    :param logger: logger to use. If None, print
+    :type logger: logging.Logger instance
+    """
+
+    def deco_retry(f):
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return f(*args, **kwargs)
+                except ExceptionToCheck as e:
+                    f_name = f.__name__
+                    msg = (
+                        f"Error in function {f_name}(): {e}. Retrying in"
+                        f" {mdelay} seconds..."
+                    )
+                    print(msg)
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return f(*args, **kwargs)
+
+        return f_retry  # true decorator
+
+    return deco_retry
+
+
+class JSONField(Field):
+    def _value(self):
+        return self.data if self.data else {}
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            try:
+                self.data = valuelist[0]
+            except ValueError:
+                raise ValueError("This field contains invalid JSON")
+        else:
+            self.data = None
+
+    def pre_validate(self, form):
+        super().pre_validate(form)
+        if self.data:
+            try:
+                if self.data is None or self.data == {} or isinstance(self.data, dict):
+                    pass
+            except TypeError:
+                raise ValueError("This field contains invalid JSON")
