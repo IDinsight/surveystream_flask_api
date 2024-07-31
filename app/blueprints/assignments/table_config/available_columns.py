@@ -248,8 +248,12 @@ class AvailableColumns:
 
         self.assignments_surveyors = [
             {
+                "column_key": "enumerator_id",
+                "column_label": "ID",
+            },
+            {
                 "column_key": "name",
-                "column_label": "Surveyor Name",
+                "column_label": "Name",
             },
             {"column_key": "surveyor_status", "column_label": "Status"},
             "locations_placeholder",
