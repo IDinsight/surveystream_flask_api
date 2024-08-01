@@ -134,7 +134,7 @@ class TestAssignments:
     )
     def user_permissions_with_upload(self, request):
         return request.param
-    
+
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -1686,12 +1686,14 @@ class TestAssignments:
 
         current_time = datetime.now().strftime("%H:%M")
 
+        # Define the format corresponding to the date string
+        date_format = "%a, %d %b %Y %H:%M:%S %Z"
+
         if expected_permission:
             assert response.status_code == 200
-            assert (
-                response.json["data"]["email_schedule"]["schedule_date"]
-                >= formatted_date
-            )
+            assert datetime.strptime(
+                response.json["data"]["email_schedule"]["schedule_date"], date_format
+            ) >= datetime.strptime(formatted_date, date_format)
             expected_put_response = {
                 "data": {
                     "assignments_count": 1,
@@ -4532,6 +4534,8 @@ class TestAssignments:
             headers={"X-CSRF-Token": csrf_token},
         )
 
+        print(response.json)
+
         assert response.status_code == 200
 
         payload = {
@@ -4800,6 +4804,7 @@ class TestAssignments:
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
+        print(response.json)
 
         assert checkdiff == {}
 
@@ -4983,13 +4988,14 @@ class TestAssignments:
 
         expected_response = {
             "errors": [
-                "The column_key 'surveyor_locations[0].location_name' is invalid. Location is not defined in the enumerator_column_config table for this form."
+                "The column_key 'surveyor_locations[0].location_name' is invalid. Location is not defined in the enumerator_column_config table for this form.",
             ],
             "success": False,
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
 
+        print(response.json)
         assert checkdiff == {}
 
         payload = {
@@ -5148,6 +5154,16 @@ class TestAssignments:
                     "column_key": "assigned_enumerator_custom_fields['Hotel']",
                     "column_label": "Hotel",
                 },
+                {
+                    "group_label": None,
+                    "column_key": "scto_fields.my-horse",
+                    "column_label": "Horse",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "scto_fields.horse",
+                    "column_label": "Horse",
+                },
             ],
         }
 
@@ -5170,17 +5186,20 @@ class TestAssignments:
                 "'target_locations[0].location_name_asdf' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
                 "'target_locations[0]' is not in the correct format. It should follow the pattern target_locations[<index:int>].location_id or target_locations[<index>].location_name>",
                 "The location index of 10 for target_locations[10].location_name is invalid. It must be in the range [0:2] because there are 3 geo levels defined for the survey.",
-                "'surveyor_locations' is not an allowed key for the assignments_main table configuration",
                 "custom_fields_asdf['Hotel'] is not in the correct format. It should follow the pattern custom_fields['<custom_field_name>']",
                 "custom_fields[Hotel] is not in the correct format. It should follow the pattern custom_fields['<custom_field_name>']",
                 "custom_fields['Hotel']asdf is not in the correct format. It should follow the pattern custom_fields['<custom_field_name>']",
                 "assigned_enumerator_custom_fields_asdf['Hotel']asdf is not in the correct format. It should follow the pattern assigned_enumerator_custom_fields['<custom_field_name>']",
                 "The custom field 'Hotel' is not defined in the target_column_config table for this form.",
                 "The enumerator custom field 'Hotel' is not defined in the enumerator_column_config table for this form.",
+                "'scto_fields.my-horse' is not in the correct format. It should follow the pattern scto_fields.<surveycto_field_name> (allowed characters are a-z, A-Z, 0-9, _).",
+                "The SurveyCTO field 'my-horse' was not found in the form definition for this form.",
+                "The SurveyCTO field 'horse' was not found in the form definition for this form.",
             ],
             "success": False,
         }
         checkdiff = jsondiff.diff(expected_response, response.json)
+        print(response.json)
         assert checkdiff == {}
 
         payload = {
@@ -5235,6 +5254,7 @@ class TestAssignments:
             "success": False,
         }
 
+        print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
 
         assert checkdiff == {}
@@ -5290,12 +5310,14 @@ class TestAssignments:
         formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
         current_time = datetime.now().strftime("%H:%M")
 
+        # Define the format corresponding to the date string
+        date_format = "%a, %d %b %Y %H:%M:%S %Z"
+
         if expected_permission:
             assert response.status_code == 200
-            assert (
-                response.json["data"]["email_schedule"]["schedule_date"]
-                >= formatted_date
-            )
+            assert datetime.strptime(
+                response.json["data"]["email_schedule"]["schedule_date"], date_format
+            ) >= datetime.strptime(formatted_date, date_format)
             expected_put_response = {
                 "data": {
                     "assignments_count": 1,
@@ -5581,12 +5603,14 @@ class TestAssignments:
         formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
         current_time = datetime.now().strftime("%H:%M")
 
+        # Define the format corresponding to the date string
+        date_format = "%a, %d %b %Y %H:%M:%S %Z"
+
         if expected_permission:
             assert response.status_code == 200
-            assert (
-                response.json["data"]["email_schedule"]["schedule_date"]
-                >= formatted_date
-            )
+            assert datetime.strptime(
+                response.json["data"]["email_schedule"]["schedule_date"], date_format
+            ) >= datetime.strptime(formatted_date, date_format)
             expected_put_response = {
                 "data": {
                     "assignments_count": 2,
@@ -6610,7 +6634,8 @@ class TestAssignments:
                 {"column_key": "completed_flag", "column_label": "Completed"},
             ],
             "assignments_surveyors": [
-                {"column_key": "name", "column_label": "Surveyor Name"},
+                {"column_key": "enumerator_id", "column_label": "ID"},
+                {"column_key": "name", "column_label": "Name"},
                 {"column_key": "surveyor_status", "column_label": "Status"},
                 {
                     "column_key": "surveyor_locations[0].location_id",
