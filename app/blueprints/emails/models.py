@@ -101,9 +101,6 @@ class EmailConfig(db.Model):
         self.pdf_encryption_password_type = pdf_encryption_password_type
 
     def to_dict(self):
-        email_table_catalog = EmailTableCatalog.query.filter_by(
-            survey_uid=Form.query.get(self.form_uid).survey_uid
-        ).all()
         return {
             "email_config_uid": self.email_config_uid,
             "config_name": self.config_name,
@@ -119,7 +116,6 @@ class EmailConfig(db.Model):
             "pdf_attachment": self.pdf_attachment,
             "pdf_encryption": self.pdf_encryption,
             "pdf_encryption_password_type": self.pdf_encryption_password_type,
-            "table_catalog": [table.to_dict() for table in email_table_catalog],
         }
 
 

@@ -8239,22 +8239,12 @@ paths:
                           type: string
                           description: Name of the table
                           example: "table_name"
-                        table_description:
-                          type: string
-                          description: Description of the table
-                          example: "table_description"
-                        column_name:
-                          type: string
-                          description: Name of the column
-                          example: "column_name"
-                        column_description:
-                          type: string
-                          description: Description of the column
-                          example: "column_description"
-                        column_type:
-                          type: string
-                          description: Type of the column
-                          example: "column_type"
+                        column_list:
+                          type: array
+                          items:
+                            type: string
+                            description: List of columns in the table
+                            example: ["column1", "column2"]
     put:
       tags:
         - Emails
