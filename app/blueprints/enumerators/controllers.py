@@ -1603,13 +1603,24 @@ def get_enumerator_languages(validated_query_params):
         .filter(Enumerator.form_uid == form_uid)
         .all()
     )
-    print(language_list)
-    return jsonify(
-        {
-            "success": True,
-            "data": {
-                "form_uid": form_uid,
-                "languages": [row.language for row in language_list],
-            },
-        }
-    )
+
+    if language_list is not None:
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "form_uid": form_uid,
+                    "languages": [row.language for row in language_list],
+                },
+            }
+        )
+    else:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": f"No enumerators found for form with UID {form_uid}",
+                }
+            ),
+            404,
+        )

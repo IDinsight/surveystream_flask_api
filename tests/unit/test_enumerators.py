@@ -5000,7 +5000,7 @@ class TestEnumerators:
         request,
     ):
         """
-        Test that an individual enumerator can be updated
+        Test to get list of enumerator languages
         """
 
         user_fixture, expected_permission = user_permissions
@@ -5027,6 +5027,44 @@ class TestEnumerators:
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Enumerators",
+                "success": False,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_get_enumerator_language_with_exception(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        csrf_token,
+        user_permissions,
+        request,
+    ):
+        """
+        Test to raise exception when there is no enumerator data for form
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            "/api/enumerators/languages",
+            query_string={"form_uid": 9999999},
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 404
+
         else:
             assert response.status_code == 403
 

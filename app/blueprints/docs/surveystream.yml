@@ -3692,6 +3692,8 @@ paths:
                   success:
                     type: boolean
                     description: Indicates whether the request was successful
+        "404":
+          description: No languages found for form_uid
   /assignments:
     get:
       summary: Get assignments
