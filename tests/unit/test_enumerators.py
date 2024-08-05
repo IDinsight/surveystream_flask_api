@@ -1,8 +1,9 @@
-import jsondiff
-import pytest
 import base64
-import pandas as pd
 from pathlib import Path
+
+import jsondiff
+import pandas as pd
+import pytest
 from utils import (
     create_new_survey_role_with_permissions,
     login_user,
@@ -2929,7 +2930,7 @@ class TestEnumerators:
                             "column_key": f"form_productivity.test_scto_input_output.avg_num_completed_per_day",
                             "column_label": "Avg. completed/day",
                         },
-                    ]
+                    ],
                 },
                 "success": True,
             }
@@ -4988,3 +4989,50 @@ class TestEnumerators:
         )
 
         login_user(client, test_user_credentials)
+
+    def test_get_enumerator_language(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        csrf_token,
+        user_permissions,
+        request,
+    ):
+        """
+        Test to get list of enumerator languages
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            "/api/enumerators/languages",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "form_uid": 1,
+                    "languages": ["English", "Telugu", "Hindi", "Swahili"],
+                },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Enumerators",
+                "success": False,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
