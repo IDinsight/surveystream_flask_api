@@ -1598,7 +1598,7 @@ def get_enumerator_languages(validated_query_params):
     form_uid = validated_query_params.form_uid.data
 
     language_list = (
-        db.session.query(Enumerator)
+        db.session.query(Enumerator.language)
         .distinct()
         .filter(Enumerator.form_uid == form_uid)
         .all()
