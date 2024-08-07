@@ -5021,7 +5021,7 @@ class TestEnumerators:
             expected_response = {
                 "data": {
                     "form_uid": 1,
-                    "languages": ["English", "Telugu", "Hindi", "Swahili"],
+                    "languages": ["English", "Hindi", "Swahili", "Telugu"],
                 },
                 "success": True,
             }
