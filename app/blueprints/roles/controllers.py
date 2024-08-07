@@ -1,26 +1,29 @@
-from app.blueprints.auth.models import User
 from flask import jsonify, request
+from flask_login import current_user
+from sqlalchemy import ARRAY, Integer, cast, distinct, func, insert
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql import case
+
+from app import db
+from app.blueprints.auth.models import User
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
-    validate_query_params,
     validate_payload,
+    validate_query_params,
 )
-from flask_login import current_user
-from sqlalchemy import insert, cast, Integer, ARRAY, func, distinct
-from sqlalchemy.sql import case
-from sqlalchemy.exc import IntegrityError
-from app import db
-from .models import Role, Permission, RolePermission, UserHierarchy, SurveyAdmin
+
+from .errors import InvalidRoleHierarchyError
+from .models import Permission, Role, RolePermission, SurveyAdmin, UserHierarchy
 from .routes import roles_bp
+from .utils import RoleHierarchy
 from .validators import (
-    SurveyRolesQueryParamValidator,
-    SurveyRolesPayloadValidator,
-    UserHierarchyPayloadValidator,
-    UserHierarchyParamValidator,
     CreatePermissionPayloadValidator,
+    SurveyRolesPayloadValidator,
+    SurveyRolesQueryParamValidator,
+    UserHierarchyParamValidator,
+    UserHierarchyPayloadValidator,
 )
-from .utils import run_role_hierarchy_validations
 
 
 @roles_bp.route("/roles", methods=["GET"])
@@ -120,13 +123,14 @@ def update_survey_roles(validated_query_params, validated_payload):
     payload = request.get_json()
     roles = validated_payload.roles.data
 
+    # If validate_hierarchy is true, validate the hierarchy of the geo levels
     if payload.get("validate_hierarchy"):
         if len(roles) > 0:
-            role_hierarchy_errors = run_role_hierarchy_validations(roles)
-
-            if len(role_hierarchy_errors) > 0:
+            try:
+                RoleHierarchy(roles)
+            except InvalidRoleHierarchyError as e:
                 return (
-                    jsonify({"success": False, "errors": role_hierarchy_errors}),
+                    jsonify({"success": False, "errors": e.role_hierarchy_errors}),
                     422,
                 )
 

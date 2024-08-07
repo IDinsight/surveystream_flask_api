@@ -1,17 +1,23 @@
 import io
-import pandas as pd
-import numpy as np
-from app import db
-from sqlalchemy import insert
 from csv import DictReader
+
+import numpy as np
+import pandas as pd
+from sqlalchemy import insert
+
+from app import db
 from app.blueprints.locations.models import Location
-from .models import Target, TargetStatus
+from app.blueprints.mapping.errors import MappingError
+from app.blueprints.mapping.models import UserTargetMapping
+from app.blueprints.mapping.utils import TargetMapping
+
 from .errors import (
     HeaderRowEmptyError,
-    InvalidTargetRecordsError,
     InvalidColumnMappingError,
     InvalidFileStructureError,
+    InvalidTargetRecordsError,
 )
+from .models import Target, TargetStatus
 
 
 class TargetColumnMapping:
@@ -478,6 +484,11 @@ class TargetsUpload:
                 TargetStatus.target_uid.in_(subquery)
             ).delete(synchronize_session=False)
 
+            # Remove rows from UserTargetMapping table
+            db.session.query(UserTargetMapping).filter(
+                UserTargetMapping.target_uid.in_(subquery)
+            ).delete(synchronize_session=False)
+
             Target.query.filter_by(form_uid=self.form_uid).delete()
             db.session.commit()
 
@@ -543,8 +554,18 @@ class TargetsUpload:
                         insert(Target).values(records_to_insert[pos : pos + chunk_size])
                     )
                     db.session.flush()
-        db.session.commit()
 
+        # Regenerate target to supervisor mappings
+        try:
+            target_mapping = TargetMapping(self.form_uid)
+        except MappingError as e:
+            raise MappingError(e.mapping_errors)
+
+        mappings = target_mapping.generate_mappings()
+        if mappings:
+            target_mapping.save_mappings(mappings)
+
+        db.session.commit()
         return
 
     def __build_location_uid_lookup(self, column_mapping):

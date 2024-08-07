@@ -2,12 +2,15 @@ from flask import current_app, jsonify, request
 from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
-from sqlalchemy import case, func, or_
+from sqlalchemy import case, distinct, func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import aliased
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
+from app.blueprints.forms.models import Form
+from app.blueprints.mapping.errors import MappingError
+from app.blueprints.mapping.utils import TargetMapping
 from app.blueprints.roles.models import Role, SurveyAdmin
 from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
@@ -18,7 +21,7 @@ from app.utils.utils import (
 )
 
 from . import user_management_bp
-from .models import Invite, UserLocation
+from .models import Invite, UserLanguage, UserLocation
 from .utils import generate_invite_code, send_invite_email
 from .validators import (
     AddUserValidator,
@@ -176,7 +179,6 @@ def add_user(validated_payload):
         password=None,
         roles=validated_payload.roles.data,
         gender=validated_payload.gender.data,
-        languages=validated_payload.languages.data,
         is_super_admin=validated_payload.is_super_admin.data,
         can_create_survey=validated_payload.can_create_survey.data,
     )
@@ -192,8 +194,8 @@ def add_user(validated_payload):
         )
         db.session.add(survey_admin_entry)
 
-    # Check if locations data is provided and add them to the user location table
-    if validated_payload.locations.data:
+    # Check if locations data + survey_uid is provided, add them to the user location table
+    if validated_payload.locations.data and validated_payload.survey_uid.data:
         for location_uid in validated_payload.locations.data:
             user_location = UserLocation(
                 survey_uid=validated_payload.survey_uid.data,
@@ -202,6 +204,62 @@ def add_user(validated_payload):
             )
             db.session.add(user_location)
     db.session.commit()
+
+    # Check if language data + survey_uid is provided, add them to the user location table
+    if validated_payload.languages.data and validated_payload.survey_uid.data:
+        for language in validate_payload.languages.data:
+            user_language = UserLanguage(
+                survey_uid=validated_payload.survey_uid.data,
+                user_uid=new_user.user_uid,
+                language=language,
+            )
+            db.session.add(user_language)
+
+    # Update user to target and user to surveyor mappings for that survey if user is being added at survey level
+    # New user added at global level doesn't affect any mappings because they are not yet part of a survey
+    if validated_payload.survey_uid.data:
+        # Find user's role in the survey
+        user_role = (
+            db.session.query(Role.role_uid)
+            .filter(
+                Role.survey_uid == validated_payload.survey_uid.data,
+                Role.role_uid == func.any(new_user.roles),
+            )
+            .first()
+        )
+
+        # Find all parent forms for the survey since mapping is a form level data
+        forms = (
+            db.session.query(Form.form_uid)
+            .filter(
+                Form.survey_uid == validated_payload.survey_uid.data,
+                Form.form_type == "parent",
+            )
+            .all()
+        )
+
+        for form in forms:
+            try:
+                target_mapping = TargetMapping(form.form_uid)
+            except MappingError as e:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": {
+                                "mapping_errors": e.mapping_errors,
+                            },
+                        }
+                    ),
+                    422,
+                )
+            # Mapping is only affected if the user is a bottom level supervisor in the survey
+            if target_mapping.bottom_level_role_uid != user_role:
+                continue
+
+            mappings = target_mapping.generate_mappings()
+            if mappings:
+                target_mapping.save_mappings(mappings)
 
     invite_code = generate_invite_code()
     invite = Invite(
@@ -290,13 +348,17 @@ def edit_user(user_uid, validated_payload):
     if not user_to_edit:
         return jsonify(message="User not found"), 404
 
+    # Check if roles are being removed as part of the edit since this affects mappings
+    roles_removed = [
+        role for role in user_to_edit.roles if role not in validated_payload.roles.data
+    ]
+
     # Update user information based on the form input
     user_to_edit.email = validated_payload.email.data
     user_to_edit.first_name = validated_payload.first_name.data
     user_to_edit.last_name = validated_payload.last_name.data
     user_to_edit.roles = validated_payload.roles.data
     user_to_edit.gender = validated_payload.gender.data
-    user_to_edit.languages = validated_payload.languages.data
     user_to_edit.is_super_admin = validated_payload.is_super_admin.data
     user_to_edit.can_create_survey = validated_payload.can_create_survey.data
     user_to_edit.active = validated_payload.active.data
@@ -345,6 +407,106 @@ def edit_user(user_uid, validated_payload):
                 )
                 db.session.add(user_location)
 
+    # Update user languages if languages data is provided
+    if validated_payload.languages.data:
+        survey_uid = validated_payload.survey_uid.data
+        # Only proceed if survey_uid is provided
+        if survey_uid:
+            # Delete existing user languages
+            UserLanguage.query.filter_by(
+                user_uid=user_uid, survey_uid=survey_uid
+            ).delete()
+            # Add new user languages
+            for language in validated_payload.languages.data:
+                user_language = UserLanguage(
+                    survey_uid=survey_uid,
+                    user_uid=user_uid,
+                    language=language,
+                )
+                db.session.add(user_language)
+
+    # If user is editted,
+    # 1. Update user to target and user to surveyor mappings for all surveys the user is currently a part of
+
+    # Find all surveys this user is part of along with roles
+    survey_roles = (
+        db.session.query(distinct(Survey.survey_uid, Role.role_uid))
+        .join(Role, Role.role_uid == func.any(User.roles))
+        .join(Survey, Survey.survey_uid == Role.survey_uid)
+        .filter(
+            User.user_uid == user_uid,
+        )
+        .all()
+    )
+
+    for survey_uid, role_uid in survey_roles:
+        # Find all parent forms for the survey since mapping is a form level data
+        forms = (
+            db.session.query(Form.form_uid)
+            .filter(Form.survey_uid == survey_uid, Form.form_type == "parent")
+            .all()
+        )
+
+        for form in forms:
+            try:
+                target_mapping = TargetMapping(form.form_uid)
+            except MappingError as e:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": {
+                                "mapping_errors": e.mapping_errors,
+                            },
+                        }
+                    ),
+                    422,
+                )
+
+            # Mapping is only affected if the user is a bottom level supervisor in the survey
+            if target_mapping.bottom_level_role_uid != role_uid:
+                continue
+
+            mappings = target_mapping.generate_mappings()
+            if mappings:
+                target_mapping.save_mappings(mappings)
+
+    # If roles are removed from the user, mappings need to be updated for surveys with the removed role as well
+    for role_uid in roles_removed:
+        # Find the survey correspoding to this role
+        survey_uid = Role.query.filter_by(role_uid=role_uid).first().survey_uid
+
+        # Find all parent forms for the survey since mapping is a form level data
+        forms = (
+            db.session.query(Form.form_uid)
+            .filter(Form.survey_uid == survey_uid, Form.form_type == "parent")
+            .all()
+        )
+
+        for form in forms:
+            try:
+                target_mapping = TargetMapping(form.form_uid)
+            except MappingError as e:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": {
+                                "mapping_errors": e.mapping_errors,
+                            },
+                        }
+                    ),
+                    422,
+                )
+
+            # Mapping is only affected if the user was a bottom level supervisor in the survey
+            if target_mapping.bottom_level_role_uid != role_uid:
+                continue
+
+            mappings = target_mapping.generate_mappings()
+            if mappings:
+                target_mapping.save_mappings(mappings)
+
     db.session.commit()
     user_data = user_to_edit.to_dict()
     return jsonify(message="User updated", user_data=user_data), 200
@@ -366,7 +528,6 @@ def get_user(user_uid):
             "last_name": user.last_name,
             "roles": user.roles,
             "gender": user.gender,
-            "languages": user.languages,
             "is_super_admin": user.is_super_admin,
             "can_create_survey": user.can_create_survey,
             "active": user.active,
@@ -481,7 +642,6 @@ def get_all_users(validated_query_params):
             "last_name": user.last_name,
             "roles": user.roles,
             "gender": user.gender,
-            "languages": user.languages,
             "user_survey_names": user_survey_names,
             "user_role_names": user_role_names,
             "user_admin_surveys": [
@@ -580,6 +740,55 @@ def update_user_locations(validated_payload):
         )
         db.session.add(user_location)
 
+    # Update user to target and user to surveyor mappings for that survey
+    # if user is a bottom level supervisor in the survey and location is a mapping criteria
+    # Find user's role in the survey
+    user_role = (
+        db.session.query(Role.role_uid)
+        .join(User, Role.role_uid == func.any(User.roles))
+        .filter(
+            Role.survey_uid == survey_uid,
+        )
+        .first()
+    )
+
+    # Find all parent forms for the survey since mapping is a form level data
+    forms = (
+        db.session.query(Form.form_uid)
+        .filter(
+            Form.survey_uid == validated_payload.survey_uid.data,
+            Form.form_type == "parent",
+        )
+        .all()
+    )
+
+    for form in forms:
+        try:
+            target_mapping = TargetMapping(form.form_uid)
+        except MappingError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "mapping_errors": e.mapping_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+        # Mapping is only affected if the user is a bottom level supervisor in the survey
+        if target_mapping.bottom_level_role_uid != user_role:
+            continue
+
+        # Mapping is only affected if the location is a mapping criteria
+        if "Location" not in target_mapping.mapping_criteria:
+            continue
+
+        mappings = target_mapping.generate_mappings()
+        if mappings:
+            target_mapping.save_mappings(mappings)
+
     try:
         db.session.commit()
     except IntegrityError as e:
@@ -606,6 +815,53 @@ def delete_user_locations(validated_query_params):
         return jsonify({"error": "User locations not found"}), 404
 
     UserLocation.query.filter_by(survey_uid=survey_uid, user_uid=user_uid).delete()
+
+    # Update user to target and user to surveyor mappings for that survey
+    # if user is a bottom level supervisor in the survey and location is a mapping criteria
+    # Find user's role in the survey
+    user_role = (
+        db.session.query(Role.role_uid)
+        .join(User, Role.role_uid == func.any(User.roles))
+        .filter(
+            Role.survey_uid == survey_uid,
+        )
+        .first()
+    )
+
+    # Find all parent forms for the survey since mapping is a form level data
+    forms = (
+        db.session.query(Form.form_uid)
+        .filter(Form.survey_uid == survey_uid, Form.form_type == "parent")
+        .all()
+    )
+
+    for form in forms:
+        try:
+            target_mapping = TargetMapping(form.form_uid)
+        except MappingError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "mapping_errors": e.mapping_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+        # Mapping is only affected if the user is a bottom level supervisor in the survey
+        if target_mapping.bottom_level_role_uid != user_role:
+            continue
+
+        # Mapping is only affected if the location is a mapping criteria
+        if "Location" not in target_mapping.mapping_criteria:
+            continue
+
+        mappings = target_mapping.generate_mappings()
+        if mappings:
+            target_mapping.save_mappings(mappings)
+
     try:
         db.session.commit()
         return jsonify(message="User locations deleted successfully"), 200

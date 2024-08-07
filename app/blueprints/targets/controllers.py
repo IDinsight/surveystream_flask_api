@@ -1,48 +1,46 @@
+import base64
+import binascii
+
 from flask import jsonify, request
+from flask_login import current_user
+from sqlalchemy import cast, update
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.functions import func
+
+from app import db
+from app.blueprints.forms.models import Form
+from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
+from app.blueprints.locations.models import GeoLevel, Location
+from app.blueprints.locations.utils import GeoLevelHierarchy
+from app.blueprints.mapping.errors import MappingError
+from app.blueprints.mapping.utils import TargetMapping
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
-    validate_query_params,
     validate_payload,
+    validate_query_params,
 )
-from flask_login import current_user
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.sql.functions import func
-from sqlalchemy import update, cast
-import base64
-from app import db
-from app.blueprints.forms.models import Form
-from app.blueprints.locations.models import Location, GeoLevel
-from .models import (
-    Target,
-    TargetStatus,
-    TargetColumnConfig,
+
+from .errors import (
+    HeaderRowEmptyError,
+    InvalidColumnMappingError,
+    InvalidFileStructureError,
+    InvalidNewColumnError,
+    InvalidTargetRecordsError,
 )
+from .models import Target, TargetColumnConfig, TargetStatus
+from .queries import build_bottom_level_locations_with_location_hierarchy_subquery
 from .routes import targets_bp
+from .utils import TargetColumnMapping, TargetsUpload
 from .validators import (
+    BulkUpdateTargetsValidator,
     TargetsFileUploadValidator,
     TargetsQueryParamValidator,
     UpdateTarget,
-    BulkUpdateTargetsValidator,
     UpdateTargetsColumnConfig,
     UpdateTargetStatus,
 )
-from .utils import (
-    TargetsUpload,
-    TargetColumnMapping,
-)
-from .queries import build_bottom_level_locations_with_location_hierarchy_subquery
-from app.blueprints.locations.utils import GeoLevelHierarchy
-from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
-from .errors import (
-    HeaderRowEmptyError,
-    InvalidTargetRecordsError,
-    InvalidFileStructureError,
-    InvalidColumnMappingError,
-    InvalidNewColumnError,
-)
-import binascii
 
 
 @targets_bp.route("", methods=["POST"])
@@ -230,6 +228,19 @@ def upload_targets(validated_query_params, validated_payload):
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500
+
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
+        )
 
     # If load_successful is True and errors were found in the records, return the errors
     if validated_payload.load_successful.data is True and record_errors:
@@ -644,17 +655,38 @@ def update_target(target_uid, validated_payload):
             # add column mapping to custom_fields from db
             payload["custom_fields"]["column_mapping"] = custom_fields_in_db[db_key]
 
+    Target.query.filter_by(target_uid=target_uid).update(
+        {
+            Target.target_id: validated_payload.target_id.data,
+            Target.language: validated_payload.language.data,
+            Target.gender: validated_payload.gender.data,
+            Target.location_uid: location_uid,
+            Target.custom_fields: payload["custom_fields"],
+        },
+        synchronize_session="fetch",
+    )
+
+    # Update the target to supervisor mapping
     try:
-        Target.query.filter_by(target_uid=target_uid).update(
-            {
-                Target.target_id: validated_payload.target_id.data,
-                Target.language: validated_payload.language.data,
-                Target.gender: validated_payload.gender.data,
-                Target.location_uid: location_uid,
-                Target.custom_fields: payload["custom_fields"],
-            },
-            synchronize_session="fetch",
+        target_mapping = TargetMapping(target.form_uid)
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
         )
+
+    mappings = target_mapping.generate_mappings()
+    if mappings:
+        target_mapping.save_mappings(mappings)
+
+    try:
         db.session.commit()
     except Exception as e:
         db.session.rollback()
