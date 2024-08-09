@@ -561,9 +561,12 @@ class TargetsUpload:
         except MappingError as e:
             raise MappingError(e.mapping_errors)
 
+        # Generate new mappings and save them
         mappings = target_mapping.generate_mappings()
         if mappings:
-            target_mapping.save_mappings(mappings)
+            target_mapping.save_mappings(
+                mappings["mappings"], mappings["targets_with_invalid_mappings"]
+            )
 
         db.session.commit()
         return

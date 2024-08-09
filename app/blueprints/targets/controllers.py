@@ -682,9 +682,12 @@ def update_target(target_uid, validated_payload):
             422,
         )
 
+    # Generate new mappings and save them
     mappings = target_mapping.generate_mappings()
     if mappings:
-        target_mapping.save_mappings(mappings)
+        target_mapping.save_mappings(
+            mappings["mappings"], mappings["targets_with_invalid_mappings"]
+        )
 
     try:
         db.session.commit()

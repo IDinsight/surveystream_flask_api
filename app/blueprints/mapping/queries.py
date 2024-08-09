@@ -1,3 +1,4 @@
+from sqlalchemy import literal_column
 from sqlalchemy.sql.functions import func
 
 from app import db
@@ -62,7 +63,8 @@ def build_targets_with_mapping_criteria_values_subquery(
     survey_uid, form_uid, prime_geo_level_uid, mapping_criteria
 ):
     """
-    Build a subquery that returns the targets for the given form along with mapping criteria values in JSON format
+    Build a subquery that returns the targets for the given form along with their
+    mapping criteria values in JSON format
 
     """
     locations_subquery = (
@@ -82,15 +84,16 @@ def build_targets_with_mapping_criteria_values_subquery(
             target_columns.append(
                 locations_subquery.c.prime_geo_level_location_uid.label("location_uid")
             )
-        elif criteria == "manual":
-            target_columns.append("manual".label("manual"))
+        elif criteria == "Manual":
+            target_columns.append(literal_column("'manual'").label("manual"))
 
     # If location is in the mapping criteria, we need to add location id and name columns to the json object
-    if "Location" in mapping_criteria:
+    mapping_criteria_select = mapping_criteria.copy()
+    if "Location" in mapping_criteria_select:
         target_columns.append(Location.location_id.label("location_id"))
         target_columns.append(Location.location_name.label("location_name"))
-        mapping_criteria.append("location_id")
-        mapping_criteria.append("location_name")
+        mapping_criteria_select.append("location_id")
+        mapping_criteria_select.append("location_name")
 
     # This query returns one row per target
     targets_query = (
@@ -103,8 +106,14 @@ def build_targets_with_mapping_criteria_values_subquery(
             Location.location_name.label("location_name"),
             func.jsonb_build_object(
                 *[
-                    (criteria, column)
-                    for criteria, column in zip(mapping_criteria, target_columns)
+                    item
+                    for zipped_item in [
+                        [criteria, column]
+                        for criteria, column in zip(
+                            mapping_criteria_select, target_columns
+                        )
+                    ]
+                    for item in zipped_item
                 ]
             ).label("mapping_criteria_values"),
         )
@@ -116,10 +125,9 @@ def build_targets_with_mapping_criteria_values_subquery(
             Location,
             locations_subquery.c.prime_geo_level_location_uid == Location.location_uid,
         )
-        .filter(Target.form_uid == form_uid)
     )
 
-    return targets_query
+    return targets_query.subquery()
 
 
 def build_supervisors_with_mapping_criteria_values_subquery(
@@ -129,28 +137,15 @@ def build_supervisors_with_mapping_criteria_values_subquery(
     Build a subquery that returns the smallest supervisors for a given survey along with mapping criteria values in JSON format
 
     """
+    # Get users with the smallest supervisor role for the survey
     user_subquery = (
         db.session.query(
             User.user_uid,
             User.gender,
-            User.languages.label("language"),
-            func.unnest(User.roles).label("role_uid"),
         )
-        .filter(User.active.is_(True))
-        .subquery()
+        .filter(User.active.is_(True), User.roles.any(bottom_level_role_uid))
+        .cte()
     )
-    # Filter to only get the smallest supervisors
-    user_subquery = user_subquery.filter(
-        user_subquery.c.role_uid == bottom_level_role_uid
-    )
-
-    if "Language" in mapping_criteria:
-        # Separate each language into its own row
-        user_subquery = db.session.query(
-            user_subquery.c.user_uid,
-            user_subquery.c.gender,
-            func.unnest(user_subquery.c.language).label("language"),
-        ).subquery()
 
     # Build list of columns based on the mapping criteria
     supervisor_columns = []
@@ -158,28 +153,35 @@ def build_supervisors_with_mapping_criteria_values_subquery(
         if criteria == "Gender":
             supervisor_columns.append(user_subquery.c.gender)
         elif criteria == "Language":
-            supervisor_columns.append(user_subquery.c.language)
+            supervisor_columns.append(UserLanguage.language)
         elif criteria == "Location":
             supervisor_columns.append(UserLocation.location_uid.label("location_uid"))
-        elif criteria == "manual":
-            supervisor_columns.append("manual".label("manual"))
+        elif criteria == "Manual":
+            supervisor_columns.append(literal_column("'manual'").label("manual"))
 
     # If location is in the mapping criteria, we need to add location id and name columns to the json object
-    if "Location" in mapping_criteria:
+    mapping_criteria_select = mapping_criteria.copy()
+    if "Location" in mapping_criteria_select:
         supervisor_columns.append(Location.location_id.label("location_id"))
         supervisor_columns.append(Location.location_name.label("location_name"))
-        mapping_criteria.append("location_id")
-        mapping_criteria.append("location_name")
+        mapping_criteria_select.append("location_id")
+        mapping_criteria_select.append("location_name")
 
-    # Since a supervisor can be assigned to multiple languages and locations, the results of this query can
-    # have more than one row per supervisor if the mapping criteria includes language or location
-    # It is expected to have one row per user per mapping criteria value
+    # Since a supervisor can be assigned to multiple languages and locations, the results of this
+    # query can have more than one row per supervisor if the mapping criteria includes language
+    # or location. It is expected to have one row per user per mapping criteria value
     supervisors_query = db.session.query(
         user_subquery.c.user_uid,
         func.jsonb_build_object(
             *[
-                (criteria, column)
-                for criteria, column in zip(mapping_criteria, supervisor_columns)
+                item
+                for zipped_item in [
+                    [criteria, column]
+                    for criteria, column in zip(
+                        mapping_criteria_select, supervisor_columns
+                    )
+                ]
+                for item in zipped_item
             ]
         ).label("mapping_criteria_values"),
     )
@@ -188,8 +190,8 @@ def build_supervisors_with_mapping_criteria_values_subquery(
     if "Location" in mapping_criteria:
         supervisors_query = supervisors_query.outerjoin(
             UserLocation,
-            user_subquery.c.user_uid == UserLocation.user_uid,
-            UserLocation.survey_uid == survey_uid,
+            (user_subquery.c.user_uid == UserLocation.user_uid)
+            & (UserLocation.survey_uid == survey_uid),
         ).outerjoin(
             Location,
             UserLocation.location_uid == Location.location_uid,
@@ -198,8 +200,8 @@ def build_supervisors_with_mapping_criteria_values_subquery(
     if "Language" in mapping_criteria:
         supervisors_query = supervisors_query.outerjoin(
             UserLanguage,
-            user_subquery.c.user_uid == UserLanguage.user_uid,
-            UserLanguage.survey_uid == survey_uid,
+            (user_subquery.c.user_uid == UserLanguage.user_uid)
+            & (UserLanguage.survey_uid == survey_uid),
         )
 
-    return supervisors_query
+    return supervisors_query.subquery()

@@ -1,11 +1,13 @@
-from sqlalchemy import case, distinct, exists, func
+from sqlalchemy import JSON, and_, case, distinct, exists, func, type_coerce
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app import db
 from app.blueprints.forms.models import Form
+from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.blueprints.roles.models import Role
 from app.blueprints.roles.utils import InvalidRoleHierarchyError, RoleHierarchy
 from app.blueprints.surveys.models import Survey
+from app.blueprints.targets.models import Target
 
 from .errors import InvalidMappingRecordsError, MappingError
 from .models import UserMappingConfig, UserSurveyorMapping, UserTargetMapping
@@ -28,8 +30,7 @@ class TargetMapping:
         self.survey_uid = self.__get_survey_uid()
         try:
             self.mapping_criteria = self.__get_mapping_criteria()
-            if "Location" in self.mapping_criteria:
-                self.prime_geo_level_uid = self.__get_prime_geo_level_uid()
+            self.prime_geo_level_uid = self.__get_prime_geo_level_uid()
             self.bottom_level_role_uid = self.__get_bottom_level_role_uid()
         except:
             raise
@@ -47,14 +48,16 @@ class TargetMapping:
         Method to get the mapping criteria for the form
 
         """
-        target_mapping_criteria = (
-            Survey.query.filter_by(survey_uid=self.survey_uid)
-            .first()
-            .target_mapping_criteria
-        )
-        if target_mapping_criteria is None:
+        module_questionnaire = ModuleQuestionnaire.query.filter_by(
+            survey_uid=self.survey_uid
+        ).first()
+        if (
+            module_questionnaire is None
+            or module_questionnaire.target_mapping_criteria is None
+        ):
             raise MappingError("Supervisor to target mapping criteria not found.")
-        return target_mapping_criteria
+
+        return module_questionnaire.target_mapping_criteria
 
     def __get_prime_geo_level_uid(self):
         """
@@ -66,10 +69,11 @@ class TargetMapping:
             .first()
             .prime_geo_level_uid
         )
-        if prime_geo_level_uid is None:
-            raise MappingError(
-                "Prime geo level not configured for the survey. Cannot perform supervisor to target mapping based on location without prime geo level."
-            )
+        if "Location" in self.mapping_criteria:
+            if prime_geo_level_uid is None:
+                raise MappingError(
+                    "Prime geo level not configured for the survey. Cannot perform supervisor to target mapping based on location without a prime geo level."
+                )
         return prime_geo_level_uid
 
     def __get_bottom_level_role_uid(self):
@@ -77,7 +81,10 @@ class TargetMapping:
         Method to get the bottom level role uid for the survey
 
         """
-        roles = Role.query.filter_by(survey_uid=self.survey_uid).all()
+        roles = [
+            role.to_dict()
+            for role in Role.query.filter_by(survey_uid=self.survey_uid).all()
+        ]
         if not roles:
             raise MappingError(
                 "Roles not configured for the survey. Cannot perform supervisor to target mapping without roles."
@@ -88,13 +95,14 @@ class TargetMapping:
         except InvalidRoleHierarchyError as e:
             raise MappingError(e.role_hierarchy_errors)
 
-        bottom_level_role_uid = roles.ordered_geo_levels[-1].role_uid
+        bottom_level_role_uid = roles.ordered_roles[-1]["role_uid"]
         return bottom_level_role_uid
 
     def get_targets_subquery(self):
         """
         Method to get the subquery for fetching targets with mapping criteria values
 
+        This query will have only one row for each target
         """
         targets_subquery = build_targets_with_mapping_criteria_values_subquery(
             self.survey_uid,
@@ -126,9 +134,6 @@ class TargetMapping:
 
         """
         supervisors_subquery = self.get_supervisors_subquery()
-        supervisor_mapping_criteria_values = db.session.query(
-            distinct(supervisors_subquery.c.mapping_criteria_values)
-        )
 
         mapping_config_subquery = db.session.query(
             UserMappingConfig.form_uid,
@@ -138,56 +143,64 @@ class TargetMapping:
         ).filter(
             UserMappingConfig.form_uid == self.form_uid,
             UserMappingConfig.mapping_type == "target",
-            ~exists.where(
+            ~exists().where(
                 *[
-                    getattr(
-                        supervisor_mapping_criteria_values.mapping_criteria_values,
-                        criteria,
+                    (
+                        type_coerce(
+                            supervisors_subquery.c.mapping_criteria_values, JSON
+                        )[criteria]
+                        == type_coerce(UserMappingConfig.mapping_values, JSON)[criteria]
                     )
-                    == getattr(UserMappingConfig.mapping_values, criteria)
                     for criteria in self.mapping_criteria
                 ]
             ),
         )
-
-        return mapping_config_subquery
-
-    def get_mapping_config(self):
-        """
-        Method to get the mapping configuration for the form
-
-        """
-        mapping_config = self.get_mapping_config_subquery().all()
-        return mapping_config
+        return mapping_config_subquery.subquery()
 
     def get_targets_with_mapped_to_subquery(self):
         """
         Method to get the subquery for fetching targets with custom mapping
 
         """
+
         targets_subquery = self.get_targets_subquery()
         mapping_config = self.get_mapping_config_subquery()
 
         targets_with_custom_mapping_subquery = db.session.query(
             targets_subquery.c.target_uid,
+            targets_subquery.c.target_id,
+            targets_subquery.c.gender,
+            targets_subquery.c.language,
+            targets_subquery.c.location_id.label("location_id"),
+            targets_subquery.c.location_name.label("location_name"),
             targets_subquery.c.mapping_criteria_values.label("mapping_criteria_values"),
             func.coalesce(
                 mapping_config.c.mapped_to, targets_subquery.c.mapping_criteria_values
             ).label("mapped_to_values"),
         ).outerjoin(
             mapping_config,
-            *[
-                getattr(mapping_config.c.mapping_values, criteria)
-                == getattr(targets_subquery.c.mapping_criteria_values, criteria)
-                for criteria in self.mapping_criteria
-            ],
+            and_(
+                *[
+                    (
+                        type_coerce(mapping_config.c.mapping_values, JSON)[criteria]
+                        == type_coerce(
+                            targets_subquery.c.mapping_criteria_values, JSON
+                        )[criteria]
+                    )
+                    for criteria in self.mapping_criteria
+                ]
+            ),
         )
 
-        return targets_with_custom_mapping_subquery
+        return targets_with_custom_mapping_subquery.subquery()
 
     def generate_mappings(self):
         """
         Method to generate the mapping of the targets to supervisors
+        This returns 2 lists:
+        1. mappings: All autogenerated mappings as per the mapping criteria
+        2. targets_with_invalid_mappings: Targets with existing mappings that are
+        no longer valid and need to be removed
 
         """
         supervisors_subquery = self.get_supervisors_subquery()
@@ -195,12 +208,36 @@ class TargetMapping:
 
         # Only mapping criteria values with 1 supervisor can be mapped automatically
         # Hence, filter supervisors to only those mapping criteria values with 1 supervisor
-        supervisors_subquery = (
-            supervisors_subquery.filter(
-                func.count(distinct(supervisors_subquery.c.user_uid)) == 1
-            )
+        single_supervisor_mapping_values = (
+            db.session.query(supervisors_subquery.c.mapping_criteria_values)
             .group_by(
                 supervisors_subquery.c.mapping_criteria_values,
+            )
+            .having(func.count(distinct(supervisors_subquery.c.user_uid)) == 1)
+            .subquery()
+        )
+
+        supervisors_subquery = (
+            db.session.query(
+                supervisors_subquery.c.user_uid,
+                supervisors_subquery.c.mapping_criteria_values,
+            )
+            .join(
+                single_supervisor_mapping_values,
+                and_(
+                    *[
+                        (
+                            type_coerce(
+                                single_supervisor_mapping_values.c.mapping_criteria_values,
+                                JSON,
+                            )[criteria]
+                            == type_coerce(
+                                supervisors_subquery.c.mapping_criteria_values, JSON
+                            )[criteria]
+                        )
+                        for criteria in self.mapping_criteria
+                    ]
+                ),
             )
             .subquery()
         )
@@ -213,16 +250,82 @@ class TargetMapping:
             )
             .join(
                 supervisors_subquery,
-                *[
-                    getattr(supervisors_subquery.c.mapping_criteria_values, criteria)
-                    == getattr(targets_subquery.c.mapped_to_values, criteria)
-                    for criteria in self.mapping_criteria
-                ],
+                and_(
+                    *[
+                        (
+                            type_coerce(
+                                supervisors_subquery.c.mapping_criteria_values, JSON
+                            )[criteria]
+                            == type_coerce(targets_subquery.c.mapped_to_values, JSON)[
+                                criteria
+                            ]
+                        )
+                        for criteria in self.mapping_criteria
+                    ]
+                ),
             )
             .all()
         )
 
-        return mappings
+        # In case mapping criteria values for a target have changed, some existing mappings
+        # that no longer follow the mapping criteria rules should be deleted
+
+        # Get all the saved mappings for the current form
+        subquery = db.session.query(Target.target_uid).filter(
+            Target.form_uid == self.form_uid
+        )
+        saved_mappings = UserTargetMapping.query.filter(
+            UserTargetMapping.target_uid.in_(subquery)
+        ).all()
+
+        targets_with_invalid_mappings = []
+        for mapping in saved_mappings:
+            target_uid = mapping.target_uid
+            supervisor_uid = mapping.user_uid
+
+            # We don't need to check for deleted targets and supervisors as they will be removed
+            # by delete cascades
+            # Only check if the mapping holds true for the current mapping criteria values
+            target = (
+                db.session.query(targets_subquery)
+                .filter(targets_subquery.c.target_uid == target_uid)
+                .first()
+            )
+
+            supervisor = None
+            if target is not None:
+                # There will be only one supervisor for the specific mapping criteria values and supervisor UID
+                supervisor = (
+                    db.session.query(supervisors_subquery)
+                    .filter(
+                        supervisors_subquery.c.user_uid == supervisor_uid,
+                        *[
+                            (
+                                type_coerce(
+                                    supervisors_subquery.c.mapping_criteria_values, JSON
+                                )[criteria]
+                                == type_coerce(target.mapped_to_values[criteria], JSON)
+                            )
+                            for criteria in self.mapping_criteria
+                        ],
+                    )
+                    .first()
+                )
+
+            # If the query returned no supervisor, then the mapping is invalid
+            if supervisor is None:
+                targets_with_invalid_mappings.append(target_uid)
+
+        return {
+            "mappings": [
+                {
+                    "target_uid": mapping.target_uid,
+                    "supervisor_uid": mapping.supervisor_uid,
+                }
+                for mapping in mappings
+            ],
+            "targets_with_invalid_mappings": targets_with_invalid_mappings,
+        }
 
     def validate_mappings(self, mappings):
         """
@@ -243,28 +346,41 @@ class TargetMapping:
         invalid_mapping = []
         target_uids = []
         for mapping in mappings:
-            target_uids.append(mapping.target_uid)
-            target = targets_subquery.filter_by(target_uid=mapping.target_uid).first()
+            target_uids.append(mapping["target_uid"])
+            target = (
+                db.session.query(targets_subquery)
+                .filter(targets_subquery.c.target_uid == mapping["target_uid"])
+                .first()
+            )
             if target is None:
-                not_found_target_uids.append(mapping.target_uid)
+                not_found_target_uids.append(mapping["target_uid"])
 
-            supervisor = supervisors_subquery.filter_by(
-                user_uid=mapping.supervisor_uid
-            ).first()
-
+            supervisor = (
+                db.session.query(supervisors_subquery)
+                .filter(supervisors_subquery.c.user_uid == mapping["supervisor_uid"])
+                .first()
+            )
             if supervisor is None:
-                not_found_supervisor_uids.append(mapping.supervisor_uid)
+                not_found_supervisor_uids.append(mapping["supervisor_uid"])
 
-            supervisor_with_same_mapping = supervisors_subquery.filter_by(
-                user_uid=mapping.supervisor_uid,
-                *[
-                    getattr(supervisors_subquery.c.mapping_criteria_values, criteria)
-                    == getattr(target.mapped_to_values, criteria)
-                    for criteria in self.mapping_criteria
-                ],
-            ).first()
+            supervisor_with_same_mapping = (
+                db.session.query(supervisors_subquery)
+                .filter(
+                    supervisors_subquery.c.user_uid == mapping["supervisor_uid"],
+                    *[
+                        (
+                            type_coerce(
+                                supervisors_subquery.c.mapping_criteria_values, JSON
+                            )[criteria]
+                            == type_coerce(target.mapped_to_values[criteria], JSON)
+                        )
+                        for criteria in self.mapping_criteria
+                    ],
+                )
+                .first()
+            )
             if supervisor_with_same_mapping is None:
-                invalid_mapping.append(mapping.target_uid)
+                invalid_mapping.append(mapping["target_uid"])
 
         for target_uid in target_uids:
             if target_uids.count(target_uid) > 1:
@@ -273,11 +389,11 @@ class TargetMapping:
 
         if len(not_found_target_uids) > 0:
             raise InvalidMappingRecordsError(
-                f"The following target UIDs were not found in the database: {', '.join(not_found_target_uids)}"
+                f"The following target UIDs were not found for the given form: {', '.join(not_found_target_uids)}"
             )
         if len(not_found_supervisor_uids) > 0:
             raise InvalidMappingRecordsError(
-                f"The following supervisor UIDs were not found in the database: {', '.join(not_found_supervisor_uids)}"
+                f"The following supervisor UIDs were not found at supervisor level 1 roles for the given survey: {', '.join(not_found_supervisor_uids)}"
             )
         if len(duplicate_target_uids) > 0:
             raise InvalidMappingRecordsError(
@@ -289,15 +405,22 @@ class TargetMapping:
             )
         return
 
-    def save_mappings(self, mappings):
+    def save_mappings(self, mappings, targets_with_invalid_mappings=[]):
         """
         Method to save the mapping of the targets to supervisors
+        and delete the invalid mappings
 
         """
+        # Delete the invalid mappings
+        if len(targets_with_invalid_mappings) > 0:
+            UserTargetMapping.query.filter(
+                UserTargetMapping.target_uid.in_(targets_with_invalid_mappings)
+            ).delete(synchronize_session=False)
+
         # Save the mappings
         for mapping in mappings:
-            target_uid = mapping.target_uid
-            supervisor_uid = mapping.supervisor_uid
+            target_uid = mapping["target_uid"]
+            supervisor_uid = mapping["supervisor_uid"]
 
             # do upsert
             statement = (

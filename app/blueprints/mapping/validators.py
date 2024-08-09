@@ -19,7 +19,14 @@ class MappingConfigValidator(FlaskForm):
     value = StringField(validators=[DataRequired()])
 
 
-class GetMappingConfigQueryParamValidator(FlaskForm):
+class MappingConfigQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
+
+
+class GetMappingParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
@@ -51,7 +58,7 @@ class TargetMappingValidator(FlaskForm):
         csrf = False
 
     target_uid = IntegerField(validators=[DataRequired()])
-    user_uid = IntegerField()
+    supervisor_uid = IntegerField()
 
 
 class UpdateTargetMappingValidator(FlaskForm):

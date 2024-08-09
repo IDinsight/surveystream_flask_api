@@ -21,11 +21,13 @@ class RoleHierarchy:
         Method to create an ordered list of roles based on the role hierarchy
         This method assumes that the role hierarchy has been validated
         """
-        ordered_roles = [role for role in self.roles if role.reporting_role_uid is None]
+        ordered_roles = [
+            role for role in self.roles if role["reporting_role_uid"] is None
+        ]
 
         for i in range(len(self.roles) - 1):
             for role in self.roles:
-                if role.reporting_role_uid == ordered_roles[i].role_uid:
+                if role["reporting_role_uid"] == ordered_roles[i]["role_uid"]:
                     ordered_roles.append(role)
 
         return ordered_roles

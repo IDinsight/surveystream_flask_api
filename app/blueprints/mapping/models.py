@@ -3,10 +3,10 @@ from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.ext.mutable import MutableDict
 
 from app import db
+from app.blueprints.auth.models import User
 from app.blueprints.enumerators.models import Enumerator
 from app.blueprints.forms.models import Form
 from app.blueprints.targets.models import Target
-from app.blueprints.users.models import User
 
 
 class UserTargetMapping(db.Model):
@@ -14,12 +14,13 @@ class UserTargetMapping(db.Model):
 
     target_uid = db.Column(
         db.Integer(),
-        db.ForeignKey(Target.target_uid),
+        db.ForeignKey(Target.target_uid, ondelete="CASCADE"),
         primary_key=True,
         nullable=False,
-        ondelete="CASCADE",
     )
     user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete="CASCADE"))
+
+    __table_args__ = ({"schema": "webapp"},)
 
     def __init__(self, target_uid, user_uid):
         self.target_uid = target_uid
@@ -36,13 +37,12 @@ class UserSurveyorMapping(db.Model):
     __tablename__ = "user_surveyor_mapping"
 
     form_uid = db.Column(
-        db.Integer(), db.ForeignKey(Form.form_uid), nullable=False, ondelete="CASCADE"
+        db.Integer(), db.ForeignKey(Form.form_uid, ondelete="CASCADE"), nullable=False
     )
     enumerator_uid = db.Column(
         db.Integer(),
-        db.ForeignKey(Enumerator.enumerator_uid),
+        db.ForeignKey(Enumerator.enumerator_uid, ondelete="CASCADE"),
         nullable=False,
-        ondelete="CASCADE",
     )
     user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete="CASCADE"))
 
@@ -67,10 +67,10 @@ class UserSurveyorMapping(db.Model):
 class UserMappingConfig(db.Model):
     __tablename__ = "user_mapping_config"
 
+    config_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     form_uid = db.Column(
-        db.Integer(), db.ForeignKey(Form.form_uid), nullable=False, ondelete="CASCADE"
+        db.Integer(), db.ForeignKey(Form.form_uid, ondelete="CASCADE"), nullable=False
     )
-
     mapping_type = db.Column(
         db.String(),
         CheckConstraint(
@@ -82,10 +82,7 @@ class UserMappingConfig(db.Model):
     mapping_values = db.Column(MutableDict.as_mutable(JSONB), nullable=False)
     mapped_to = db.Column(MutableDict.as_mutable(JSONB), nullable=False)
 
-    __table_args__ = (
-        db.PrimaryKeyConstraint("form_uid", "mapping_type", "mapping_values"),
-        {"schema": "webapp"},
-    )
+    __table_args__ = ({"schema": "webapp"},)
 
     def __init__(self, form_uid, mapping_type, mapping_values, mapped_to):
         self.form_uid = form_uid
