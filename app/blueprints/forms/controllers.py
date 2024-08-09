@@ -29,6 +29,7 @@ from .validators import (
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import aliased
+import pandas as pd
 
 
 @forms_bp.route("", methods=["GET"])
@@ -471,6 +472,30 @@ def ingest_scto_form_definition(form_uid):
 
     db.session.add(scto_settings)
 
+    # Check for duplicate choice values in the choices tab
+    errors = []
+    df = pd.DataFrame(
+        scto_form_definition["choicesRowsAndColumns"][1:], columns=choices_tab_columns
+    )
+
+    df = df.loc[df["list_name"] != ""]
+
+    duplicate_choice_values = df[df.duplicated(subset=["list_name", "value"])][
+        ["list_name", "value"]
+    ].drop_duplicates()
+
+    for i, row in duplicate_choice_values.iterrows():
+        errors.append(
+            f"Duplicate choice values found for list_name={row[0]} and value={row[1]}"
+        )
+
+    if len(errors) > 0:
+        return jsonify({"success": False, "errors": errors}), 422
+
+    choice_labels = [
+        col for col in choices_tab_columns if col.split(":")[0].lower() == "label"
+    ]
+
     # Process the lists and choices from the `choices` tab of the form definition
     for row in scto_form_definition["choicesRowsAndColumns"][1:]:
         choices_dict = dict(zip(choices_tab_columns, row))
@@ -496,12 +521,6 @@ def ingest_scto_form_definition(form_uid):
                     )
 
                 unique_list_names.append(choices_dict["list_name"])
-
-            choice_labels = [
-                col
-                for col in choices_tab_columns
-                if col.split(":")[0].lower() == "label"
-            ]
 
             for choice_label in choice_labels:
                 # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified

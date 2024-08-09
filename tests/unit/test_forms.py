@@ -567,6 +567,53 @@ class TestForms:
 
         assert response.status_code == 404
 
+    @pytest.mark.run_only
+    def test_scto_form_duplicate_choice_error(
+        self, client, login_test_user, csrf_token, create_parent_form
+    ):
+        """
+        Test that an SCTO form with duplicate choices raises an error
+        """
+
+        # Update the parent form with the scto form id test_choice_list_duplicate_values
+
+        payload = {
+            "scto_form_id": "test_choice_list_duplicate_values",
+            "form_name": "Agrifieldnet Main Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": "dod",
+            "encryption_key_shared": False,
+            "server_access_role_granted": False,
+            "server_access_allowed": False,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
+        }
+
+        response = client.put(
+            "/api/forms/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Ingest the SCTO variables from SCTO into the database
+        response = client.post(
+            "/api/forms/1/scto-form-definition/refresh",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "success": False,
+            "errors": [
+                "Duplicate choice values found for list_name=state and value=10"
+            ],
+        }
+
+    @pytest.mark.run_only
     def test_scto_form_definition(
         self, client, login_test_user, csrf_token, create_parent_form
     ):
