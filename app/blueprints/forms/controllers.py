@@ -480,13 +480,29 @@ def ingest_scto_form_definition(form_uid):
 
     df = df.loc[df["list_name"] != ""]
 
-    duplicate_choice_values = df[df.duplicated(subset=["list_name", "value"])][
-        ["list_name", "value"]
-    ].drop_duplicates()
+    value_column_name = "value"
+    if "value" not in df.columns:
+        if "name" in df.columns:
+            value_column_name = "name"
+
+        else:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": "No 'value' or 'name' column found on the choices tab of the SurveyCTO form definition",
+                    }
+                ),
+                422,
+            )
+
+    duplicate_choice_values = df[
+        df.duplicated(subset=["list_name", value_column_name])
+    ][["list_name", value_column_name]].drop_duplicates()
 
     for i, row in duplicate_choice_values.iterrows():
         errors.append(
-            f"Duplicate choice values found for list_name={row[0]} and value={row[1]}"
+            f"Duplicate choice values found for list_name={row[0]} and value={row[1]} on the choices tab of the SurveyCTO form definition"
         )
 
     if len(errors) > 0:

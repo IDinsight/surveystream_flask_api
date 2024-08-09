@@ -609,7 +609,7 @@ class TestForms:
         expected_response = {
             "success": False,
             "errors": [
-                "Duplicate choice values found for list_name=state and value=10"
+                "Duplicate choice values found for list_name=state and value=10 on the choices tab of the SurveyCTO form definition"
             ],
         }
 
