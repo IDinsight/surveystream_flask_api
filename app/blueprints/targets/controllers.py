@@ -640,18 +640,18 @@ def update_target(target_uid, validated_payload):
             # add column mapping to custom_fields from db
             payload["custom_fields"]["column_mapping"] = custom_fields_in_db[db_key]
 
-    Target.query.filter_by(target_uid=target_uid).update(
-        {
-            Target.target_id: validated_payload.target_id.data,
-            Target.language: validated_payload.language.data,
-            Target.gender: validated_payload.gender.data,
-            Target.location_uid: location_uid,
-            Target.custom_fields: payload["custom_fields"],
-        },
-        synchronize_session="fetch",
-    )
-
     try:
+        Target.query.filter_by(target_uid=target_uid).update(
+            {
+                Target.target_id: validated_payload.target_id.data,
+                Target.language: validated_payload.language.data,
+                Target.gender: validated_payload.gender.data,
+                Target.location_uid: location_uid,
+                Target.custom_fields: payload["custom_fields"],
+            },
+            synchronize_session="fetch",
+        )
+
         db.session.commit()
     except Exception as e:
         db.session.rollback()
