@@ -3,6 +3,7 @@ from itertools import groupby
 from operator import attrgetter
 
 from flask import jsonify
+from sqlalchemy.sql.functions import func
 
 from app import db
 from app.utils.google_sheet_utils import (
@@ -1073,15 +1074,31 @@ def get_email_tablecatalog(validated_query_params):
     survey_uid = validated_query_params.survey_uid.data
 
     try:
-        email_table_catalog = EmailTableCatalog.query.filter_by(
-            survey_uid=survey_uid
-        ).all()
+        email_table_catalog = (
+            db.session.query(
+                EmailTableCatalog.survey_uid,
+                EmailTableCatalog.table_name,
+                func.array_agg(EmailTableCatalog.column_name.distinct()).label(
+                    "column_list"
+                ),
+            )
+            .filter_by(survey_uid=survey_uid)
+            .group_by(EmailTableCatalog.survey_uid, EmailTableCatalog.table_name)
+            .all()
+        )
 
         return (
             jsonify(
                 {
                     "success": True,
-                    "data": [column.to_dict() for column in email_table_catalog],
+                    "data": [
+                        {
+                            "survey_uid": row.survey_uid,
+                            "table_name": row.table_name,
+                            "column_list": row.column_list,
+                        }
+                        for row in email_table_catalog
+                    ],
                 }
             ),
             200,

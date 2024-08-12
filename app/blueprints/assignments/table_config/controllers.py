@@ -485,14 +485,6 @@ def get_available_columns(validated_query_params):
                 422,
             )
 
-    # available_columns = {
-    #     "surveyors": [],
-    #     "targets": [],
-    #     "assignments_main": [],
-    #     "assignments_surveyors": [],
-    #     "assignments_review": [],
-    # }
-
     available_columns = AvailableColumns(
         form_uid,
         survey_uid,

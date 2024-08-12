@@ -329,7 +329,6 @@ class TestEmails:
                     "email_source_gsheet_tab": "Test_Success",
                     "email_source_gsheet_header_row": 1,
                     "email_source_tablename": "test_table",
-                    "table_catalog": [],
                     "cc_users": [1, 2, 3],
                     "pdf_attachment": True,
                     "pdf_encryption": True,
@@ -601,7 +600,6 @@ class TestEmails:
                         "pdf_attachment": True,
                         "pdf_encryption": True,
                         "pdf_encryption_password_type": "Pattern",
-                        "table_catalog": [],
                         "form_uid": 1,
                         "report_users": [1, 2, 3],
                         "manual_triggers": [
@@ -689,7 +687,6 @@ class TestEmails:
                         "email_source_gsheet_tab": "Test_Success",
                         "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
-                        "table_catalog": [],
                         "cc_users": [1, 2, 3],
                         "pdf_attachment": True,
                         "pdf_encryption": True,
@@ -732,7 +729,6 @@ class TestEmails:
             "email_source_gsheet_header_row": 1,
             "email_source_tablename": "test_table",
             "email_source_columns": ["test_column"],
-            "table_catalog": [],
             "cc_users": [1, 2, 3],
             "pdf_attachment": True,
             "pdf_encryption": True,
@@ -902,7 +898,6 @@ class TestEmails:
                     "email_source_gsheet_tab": "Test_Success",
                     "email_source_gsheet_header_row": 1,
                     "email_source_tablename": "test_table",
-                    "table_catalog": [],
                     "cc_users": [1, 2, 3],
                     "pdf_attachment": True,
                     "pdf_encryption": False,
@@ -2501,19 +2496,10 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
+                        "column_list": ["test_column", "test_column2"],
                         "survey_uid": 1,
                         "table_name": "test_table",
-                        "column_name": "test_column",
-                        "column_type": "text",
-                        "column_description": "test description",
-                    },
-                    {
-                        "survey_uid": 1,
-                        "table_name": "test_table",
-                        "column_name": "test_column2",
-                        "column_type": "text",
-                        "column_description": None,
-                    },
+                    }
                 ],
                 "success": True,
             }
@@ -2535,77 +2521,6 @@ class TestEmails:
                 expected_response,
                 response.json,
             )
-            assert checkdiff == {}
-
-    def test_emails_get_config_with_tablecatalog(
-        self,
-        client,
-        csrf_token,
-        create_tablecatalog,
-        user_permissions,
-        request,
-    ):
-        """
-        Test getting a specific email config, with the different permissions
-        Expect the email configs list or permissions denied
-        """
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
-
-        response = client.get(
-            f"api/emails/config/1",
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        if expected_permission:
-            assert response.status_code == 200
-            expected_response = {
-                "data": {
-                    "config_name": "Assignments",
-                    "email_config_uid": 1,
-                    "form_uid": 1,
-                    "report_users": [1, 2, 3],
-                    "email_source": "SurveyStream Data",
-                    "email_source_columns": ["test_column"],
-                    "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
-                    "email_source_gsheet_tab": "Test_Success",
-                    "email_source_gsheet_header_row": 1,
-                    "email_source_tablename": "test_table",
-                    "cc_users": [1, 2, 3],
-                    "pdf_attachment": True,
-                    "pdf_encryption": True,
-                    "pdf_encryption_password_type": "Pattern",
-                    "table_catalog": [
-                        {
-                            "survey_uid": 1,
-                            "table_name": "test_table",
-                            "column_name": "test_column",
-                            "column_type": "text",
-                            "column_description": "test description",
-                        },
-                        {
-                            "survey_uid": 1,
-                            "table_name": "test_table",
-                            "column_name": "test_column2",
-                            "column_type": "text",
-                            "column_description": None,
-                        },
-                    ],
-                },
-                "success": True,
-            }
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-        else:
-            assert response.status_code == 403
-
-            expected_response = {
-                "error": "User does not have the required permission: READ Emails",
-                "success": False,
-            }
-
-            checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
 
     def test_email_update_table_catalog(
@@ -2633,7 +2548,7 @@ class TestEmails:
                     "column_type": "integer",  # change data type
                 },
                 {
-                    "table_name": "test_table",
+                    "table_name": "test_table2",
                     "column_name": "test_column3",
                     "column_type": "text",  # add new column
                 },
@@ -2665,25 +2580,14 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
+                        "column_list": ["test_column", "test_column2"],
                         "survey_uid": 1,
                         "table_name": "test_table",
-                        "column_name": "test_column",
-                        "column_type": "text",
-                        "column_description": "test description changed",
                     },
                     {
+                        "column_list": ["test_column3"],
                         "survey_uid": 1,
-                        "table_name": "test_table",
-                        "column_name": "test_column2",
-                        "column_type": "integer",
-                        "column_description": None,
-                    },
-                    {
-                        "survey_uid": 1,
-                        "table_name": "test_table",
-                        "column_name": "test_column3",
-                        "column_type": "text",
-                        "column_description": None,
+                        "table_name": "test_table2",
                     },
                 ],
                 "success": True,
@@ -2774,19 +2678,10 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
+                        "column_list": ["test_column", "test_column2"],
                         "survey_uid": 1,
                         "table_name": "test_table",
-                        "column_name": "test_column",
-                        "column_type": "text",
-                        "column_description": "test description",
-                    },
-                    {
-                        "survey_uid": 1,
-                        "table_name": "test_table",
-                        "column_name": "test_column2",
-                        "column_type": "text",
-                        "column_description": None,
-                    },
+                    }
                 ],
                 "success": True,
             }

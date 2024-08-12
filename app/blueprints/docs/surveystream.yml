@@ -3667,7 +3667,33 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred
-
+  /enumerators/languages:
+    get:
+      summary: Get all languages
+      description: >-
+        Return all languages that are available for selection in the system
+      tags:
+        - Enumerators
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    description: List of all languages
+                    items:
+                      type: string
+                      description: The name of the language
+                    example: ["English", "French", "Spanish"]
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+        "404":
+          description: No languages found for form_uid
   /assignments:
     get:
       summary: Get assignments
@@ -8239,22 +8265,12 @@ paths:
                           type: string
                           description: Name of the table
                           example: "table_name"
-                        table_description:
-                          type: string
-                          description: Description of the table
-                          example: "table_description"
-                        column_name:
-                          type: string
-                          description: Name of the column
-                          example: "column_name"
-                        column_description:
-                          type: string
-                          description: Description of the column
-                          example: "column_description"
-                        column_type:
-                          type: string
-                          description: Type of the column
-                          example: "column_type"
+                        column_list:
+                          type: array
+                          items:
+                            type: string
+                            description: List of columns in the table
+                            example: ["column1", "column2"]
     put:
       tags:
         - Emails
