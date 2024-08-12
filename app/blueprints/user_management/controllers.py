@@ -9,6 +9,7 @@ from sqlalchemy.orm import aliased
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
 from app.blueprints.forms.models import Form
+
 # from app.blueprints.mapping.errors import MappingError
 # from app.blueprints.mapping.utils import TargetMapping
 from app.blueprints.roles.models import Role, SurveyAdmin
@@ -215,52 +216,6 @@ def add_user(validated_payload):
             )
             db.session.add(user_language)
 
-    # Update user to target and user to surveyor mappings for that survey if user is being added at survey level
-    # New user added at global level doesn't affect any mappings because they are not yet part of a survey
-    # if validated_payload.survey_uid.data:
-    #     # Find user's role in the survey
-    #     user_role = (
-    #         db.session.query(Role.role_uid)
-    #         .filter(
-    #             Role.survey_uid == validated_payload.survey_uid.data,
-    #             Role.role_uid == func.any(new_user.roles),
-    #         )
-    #         .first()
-    #     )
-
-    #     # Find all parent forms for the survey since mapping is a form level data
-    #     forms = (
-    #         db.session.query(Form.form_uid)
-    #         .filter(
-    #             Form.survey_uid == validated_payload.survey_uid.data,
-    #             Form.form_type == "parent",
-    #         )
-    #         .all()
-    #     )
-
-    #     for form in forms:
-    #         try:
-    #             target_mapping = TargetMapping(form.form_uid)
-    #         except MappingError as e:
-    #             return (
-    #                 jsonify(
-    #                     {
-    #                         "success": False,
-    #                         "errors": {
-    #                             "mapping_errors": e.mapping_errors,
-    #                         },
-    #                     }
-    #                 ),
-    #                 422,
-    #             )
-    #         # Mapping is only affected if the user is a bottom level supervisor in the survey
-    #         if target_mapping.bottom_level_role_uid != user_role:
-    #             continue
-
-    #         mappings = target_mapping.generate_mappings()
-    #         if mappings:
-    #             target_mapping.save_mappings(mappings)
-
     invite_code = generate_invite_code()
     invite = Invite(
         invite_code=invite_code,
@@ -358,11 +313,6 @@ def edit_user(user_uid, validated_payload):
     user_to_edit.can_create_survey = validated_payload.can_create_survey.data
     user_to_edit.active = validated_payload.active.data
 
-    # Check if roles are being removed as part of the edit since this affects mappings
-    roles_removed = [
-        role for role in user_to_edit.roles if role not in validated_payload.roles.data
-    ]
-    
     # Add or remove survey admin privileges based on is_survey_admin field
     if validated_payload.is_survey_admin.data:
         survey_uid = validated_payload.survey_uid.data
@@ -424,88 +374,6 @@ def edit_user(user_uid, validated_payload):
                     language=language,
                 )
                 db.session.add(user_language)
-
-    # If user is editted,
-    # 1. Update user to target and user to surveyor mappings for all surveys the user is currently a part of
-
-    # # Find all surveys this user is part of along with roles
-    # survey_roles = (
-    #     db.session.query(distinct(Survey.survey_uid, Role.role_uid))
-    #     .join(Role, Role.role_uid == func.any(User.roles))
-    #     .join(Survey, Survey.survey_uid == Role.survey_uid)
-    #     .filter(
-    #         User.user_uid == user_uid,
-    #     )
-    #     .all()
-    # )
-
-    # for survey_uid, role_uid in survey_roles:
-    #     # Find all parent forms for the survey since mapping is a form level data
-    #     forms = (
-    #         db.session.query(Form.form_uid)
-    #         .filter(Form.survey_uid == survey_uid, Form.form_type == "parent")
-    #         .all()
-    #     )
-
-    #     for form in forms:
-    #         try:
-    #             target_mapping = TargetMapping(form.form_uid)
-    #         except MappingError as e:
-    #             return (
-    #                 jsonify(
-    #                     {
-    #                         "success": False,
-    #                         "errors": {
-    #                             "mapping_errors": e.mapping_errors,
-    #                         },
-    #                     }
-    #                 ),
-    #                 422,
-    #             )
-
-    #         # Mapping is only affected if the user is a bottom level supervisor in the survey
-    #         if target_mapping.bottom_level_role_uid != role_uid:
-    #             continue
-
-    #         mappings = target_mapping.generate_mappings()
-    #         if mappings:
-    #             target_mapping.save_mappings(mappings)
-
-    # # If roles are removed from the user, mappings need to be updated for surveys with the removed role as well
-    # for role_uid in roles_removed:
-    #     # Find the survey correspoding to this role
-    #     survey_uid = Role.query.filter_by(role_uid=role_uid).first().survey_uid
-
-    #     # Find all parent forms for the survey since mapping is a form level data
-    #     forms = (
-    #         db.session.query(Form.form_uid)
-    #         .filter(Form.survey_uid == survey_uid, Form.form_type == "parent")
-    #         .all()
-    #     )
-
-    #     for form in forms:
-    #         try:
-    #             target_mapping = TargetMapping(form.form_uid)
-    #         except MappingError as e:
-    #             return (
-    #                 jsonify(
-    #                     {
-    #                         "success": False,
-    #                         "errors": {
-    #                             "mapping_errors": e.mapping_errors,
-    #                         },
-    #                     }
-    #                 ),
-    #                 422,
-    #             )
-
-    #         # Mapping is only affected if the user was a bottom level supervisor in the survey
-    #         if target_mapping.bottom_level_role_uid != role_uid:
-    #             continue
-
-    #         mappings = target_mapping.generate_mappings()
-    #         if mappings:
-    #             target_mapping.save_mappings(mappings)
 
     db.session.commit()
     user_data = user_to_edit.to_dict()

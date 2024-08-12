@@ -7,9 +7,7 @@ from sqlalchemy import insert
 
 from app import db
 from app.blueprints.locations.models import Location
-from app.blueprints.mapping.errors import MappingError
 from app.blueprints.mapping.models import UserTargetMapping
-from app.blueprints.mapping.utils import TargetMapping
 
 from .errors import (
     HeaderRowEmptyError,
@@ -554,19 +552,6 @@ class TargetsUpload:
                         insert(Target).values(records_to_insert[pos : pos + chunk_size])
                     )
                     db.session.flush()
-
-        # Regenerate target to supervisor mappings
-        try:
-            target_mapping = TargetMapping(self.form_uid)
-        except MappingError as e:
-            raise MappingError(e.mapping_errors)
-
-        # Generate new mappings and save them
-        mappings = target_mapping.generate_mappings()
-        if mappings:
-            target_mapping.save_mappings(
-                mappings["mappings"], mappings["targets_with_invalid_mappings"]
-            )
 
         db.session.commit()
         return

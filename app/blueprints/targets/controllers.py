@@ -13,8 +13,6 @@ from app.blueprints.forms.models import Form
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.locations.models import GeoLevel, Location
 from app.blueprints.locations.utils import GeoLevelHierarchy
-from app.blueprints.mapping.errors import MappingError
-from app.blueprints.mapping.utils import TargetMapping
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
@@ -228,19 +226,6 @@ def upload_targets(validated_query_params, validated_payload):
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500
-
-    except MappingError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "mapping_errors": e.mapping_errors,
-                    },
-                }
-            ),
-            422,
-        )
 
     # If load_successful is True and errors were found in the records, return the errors
     if validated_payload.load_successful.data is True and record_errors:
@@ -665,29 +650,6 @@ def update_target(target_uid, validated_payload):
         },
         synchronize_session="fetch",
     )
-
-    # Update the target to supervisor mapping
-    try:
-        target_mapping = TargetMapping(target.form_uid)
-    except MappingError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "mapping_errors": e.mapping_errors,
-                    },
-                }
-            ),
-            422,
-        )
-
-    # Generate new mappings and save them
-    mappings = target_mapping.generate_mappings()
-    if mappings:
-        target_mapping.save_mappings(
-            mappings["mappings"], mappings["targets_with_invalid_mappings"]
-        )
 
     try:
         db.session.commit()
