@@ -1101,7 +1101,7 @@ class TestMapping:
         # Add custom mapping config
         payload = {
             "form_uid": 1,
-            "target_mapping_config": [
+            "mapping_config": [
                 {
                     "mapping_values": [
                         {

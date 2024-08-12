@@ -3,7 +3,7 @@ from wtforms import BooleanField, FieldList, FormField, IntegerField, StringFiel
 from wtforms.validators import AnyOf, DataRequired, Optional
 
 
-class MappingConfigValidator(FlaskForm):
+class MappingCriteriaValuesValidator(FlaskForm):
     class Meta:
         csrf = False
 
@@ -33,17 +33,17 @@ class GetMappingParamValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
 
 
-class TargetMappingConfigValidator(FlaskForm):
+class MappingConfigValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    mapping_values = FieldList(FormField(MappingConfigValidator))
-    mapped_to = FieldList(FormField(MappingConfigValidator))
+    mapping_values = FieldList(FormField(MappingCriteriaValuesValidator))
+    mapped_to = FieldList(FormField(MappingCriteriaValuesValidator))
 
 
-class UpdateTargetMappingConfigValidator(FlaskForm):
+class UpdateMappingConfigValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
-    target_mapping_config = FieldList(FormField(TargetMappingConfigValidator))
+    mapping_config = FieldList(FormField(MappingConfigValidator))
 
 
 class GetMappingQueryParamValidator(FlaskForm):

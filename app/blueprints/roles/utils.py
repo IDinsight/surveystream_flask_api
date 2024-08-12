@@ -61,7 +61,7 @@ class RoleHierarchy:
                     errors_list.append(error_message)
 
         if len(errors_list) > 0:
-            return errors_list
+            raise InvalidRoleHierarchyError(errors_list)
 
         # Now validate the tree
 
@@ -72,12 +72,13 @@ class RoleHierarchy:
             errors_list.append(
                 f"The hierarchy should have exactly one top level role (ie, a role with no parent). The current hierarchy has 0 roles with no parent."
             )
-            return errors_list
         elif len(root_nodes) > 1:
             errors_list.append(
                 f"The hierarchy should have exactly one top level role (ie, a role with no parent). The current hierarchy has {len(root_nodes)} roles with no parent:\n{', '.join([role['role_name'] for role in root_nodes])}"
             )
-            return errors_list
+
+        if len(errors_list) > 0:
+            raise InvalidRoleHierarchyError(errors_list)
 
         # Traverse the tree to validate the following:
         # 1. Each role should have at most one child role
@@ -92,12 +93,11 @@ class RoleHierarchy:
                 for role in self.roles
                 if role["reporting_role_uid"] == visited_nodes[-1]["role_uid"]
             ]
-
             if len(child_nodes) > 1:
                 errors_list.append(
                     f"Each role should have at most one child role. Role '{visited_nodes[-1]['role_name']}' has {len(child_nodes)} child roles:\n{', '.join([role['role_name'] for role in child_nodes])}"
                 )
-                return errors_list
+                break
             elif len(child_nodes) == 1:
                 if child_nodes[0]["role_uid"] in [
                     role["role_uid"] for role in visited_nodes
@@ -105,11 +105,14 @@ class RoleHierarchy:
                     errors_list.append(
                         f"The role hierarchy should not have any cycles. The current hierarchy has a cycle starting with role '{child_nodes[0]['role_name']}'."
                     )
-                    return errors_list
+                    break
                 visited_nodes.append(child_nodes[0])
             elif len(child_nodes) == 0:
                 break
 
+        if len(errors_list) > 0:
+            raise InvalidRoleHierarchyError(errors_list)
+        
         # Now check that all nodes were visited
         if len(visited_nodes) != len(self.roles):
             unvisited_nodes = [

@@ -24,7 +24,7 @@ from .utils import TargetMapping
 from .validators import (
     GetMappingParamValidator,
     MappingConfigQueryParamValidator,
-    UpdateTargetMappingConfigValidator,
+    UpdateMappingConfigValidator,
     UpdateTargetMappingValidator,
 )
 
@@ -142,7 +142,7 @@ def get_target_mapping_config(validated_query_params):
 
 @mapping_bp.route("/targets-mapping-config", methods=["PUT"])
 @logged_in_active_user_required
-@validate_payload(UpdateTargetMappingConfigValidator)
+@validate_payload(UpdateMappingConfigValidator)
 @custom_permissions_required("WRITE Mapping", "body", "form_uid")
 def update_target_mapping_config(validated_payload):
     """
@@ -159,7 +159,7 @@ def update_target_mapping_config(validated_payload):
     ).delete()
 
     # Save the new mapping configuration
-    for mapping_config in payload["target_mapping_config"]:
+    for mapping_config in payload["mapping_config"]:
         mapping_values = mapping_config["mapping_values"]
         mapping_values = dict(
             {item["criteria"]: item["value"] for item in mapping_values}
