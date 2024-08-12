@@ -490,7 +490,7 @@ def ingest_scto_form_definition(form_uid):
                 jsonify(
                     {
                         "success": False,
-                        "errors": "No 'value' or 'name' column found on the choices tab of the SurveyCTO form definition",
+                        "error": "No 'value' or 'name' column found on the choices tab of the SurveyCTO form definition",
                     }
                 ),
                 422,
@@ -506,7 +506,7 @@ def ingest_scto_form_definition(form_uid):
         )
 
     if len(errors) > 0:
-        return jsonify({"success": False, "errors": errors}), 422
+        return jsonify({"success": False, "error": "\n".join(errors)}), 422
 
     choice_labels = [
         col for col in choices_tab_columns if col.split(":")[0].lower() == "label"

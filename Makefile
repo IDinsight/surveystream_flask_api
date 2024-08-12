@@ -15,6 +15,9 @@ login:
 image:
 	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --platform=linux/amd64 -t $(BACKEND_NAME):$(VERSION) .
 
+image-arm:
+	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --platform=linux/arm64 -t $(BACKEND_NAME):$(VERSION) .
+
 
 data-db-tunnel:
 	# Open a connection to the remote db via the bastion host
