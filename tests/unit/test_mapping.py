@@ -355,8 +355,7 @@ class TestMapping:
                     "reporting_role_uid": 1,
                     "permissions": [9],
                 },
-            ],
-            "validate_hierarchy": True,
+            ]
         }
 
         response = client.put(
@@ -498,7 +497,8 @@ class TestMapping:
                     "reporting_role_uid": None,
                     "permissions": [9],
                 }
-            ]
+            ],
+            "validate_hierarchy": True,
         }
 
         response = client.put(
