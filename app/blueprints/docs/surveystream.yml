@@ -6572,13 +6572,11 @@ paths:
         "500":
           description: An unexpected error occurred
 
-  /mapping/targets-mapping-config:
+  "/mapping/targets-mapping-config":
     get:
       summary: Get targets mapping configuration for a form
-      description: |
-        Returns the targets mapping configuration for a given form that is, how mapping criteria 
-        values of targets are mapped to mapping criteria values of supervisors and the status of 
-        the mapping for each mapping criteria value.
+      description: >
+        Returns the targets mapping configuration for a given form that is, how mapping criteria values of targets are mapped to mapping criteria values of supervisors and the status of the mapping for each mapping criteria value.
       tags:
         - Mapping
       parameters:
@@ -6673,8 +6671,7 @@ paths:
                         description: The target mapping criteria values
                       mapped_to:
                         type: string
-                        description: The supervisor mapping criteria values to which the 
-                        target mapping criteria values will be mapped
+                        description: The supervisor mapping criteria values to which the target mapping criteria values will be mapped
               required:
                 - form_uid
                 - mapping_config
@@ -6717,7 +6714,7 @@ paths:
         "500":
           description: An unexpected error occurred
 
-  /mapping/targets-mapping:
+  "/mapping/targets-mapping":
     get:
       summary: Get target to supervisor mapping for a form
       description: |
@@ -6736,16 +6733,14 @@ paths:
           schema:
             type: integer
           description: >-
-            The page number of the results to return. Results will be paginated
-            only if `page` and `per_page` are both specified.\
+            The page number of the results to return. Results will be paginated only if `page` and `per_page` are both specified.\
           required: false
         - in: query
           name: per_page
           schema:
             type: integer
           description: >-
-            The number of results to return per page. Results will be paginated
-            only if `page` and `per_page` are both specified.
+            The number of results to return per page. Results will be paginated only if `page` and `per_page` are both specified.
           required: false
       responses:
         "200":
@@ -6879,9 +6874,7 @@ paths:
         "422":
           description: Form errors
         "500":
-          description: An unexpected error occurred      
-                  
-
+          description: An unexpected error occurred 
 
   /emails:
     get:
