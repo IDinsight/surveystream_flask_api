@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
-from wtforms.validators import AnyOf, DataRequired
+from wtforms.validators import AnyOf, DataRequired, Optional
 
 
 class MappingConfigValidator(FlaskForm):

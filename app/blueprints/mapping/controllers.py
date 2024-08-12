@@ -6,6 +6,9 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.blueprints.auth.models import User
+from app.blueprints.forms.models import Form
+from app.blueprints.roles.models import Role
+from app.blueprints.surveys.models import Survey
 from app.blueprints.targets.models import Target
 from app.utils.utils import (
     custom_permissions_required,
@@ -62,9 +65,7 @@ def get_target_mapping_config(validated_query_params):
             func.coalesce(func.count(distinct(targets_subquery.c.target_uid)), 0).label(
                 "target_count"
             ),
-            func.sum(case((UserTargetMapping.user_uid == None, 1), else_=0)).label(
-                "unmapped_count"
-            ),
+            func.array_agg(targets_subquery.c.target_uid).label("target_uids"),
         )
         .outerjoin(
             UserTargetMapping,
@@ -90,29 +91,35 @@ def get_target_mapping_config(validated_query_params):
         .all()
     )
 
+    # Fetch all targets to supervisor mappings
+    mappings = target_mapping.generate_mappings()
+    mapped_targets = [mapping["target_uid"] for mapping in mappings]
+
     # Build the response
     data = []
     for target_group in targets:
-        target_mapping_criteria_values = target_group.mapping_criteria_values
-        mapped_to_values = target_group.mapped_to_values
+        mapping_complete = True
         mapping_found = False
 
-        # Check if there is a mapping configuration entry for the target and supervisor group
-        for supervisor_group in supervisors:
-            supervisor_mapping_criteria_values = (
-                supervisor_group.mapping_criteria_values
-            )
+        # Check if all targets in the group have been mapped
+        for target_uid in target_group.target_uids:
+            if target_uid not in mapped_targets:
+                mapping_complete = False
+                break
 
-            if mapped_to_values == supervisor_mapping_criteria_values:
+        # Find the supervisor group that has the same mapping criteria values as the target group
+        for supervisor_group in supervisors:
+            if (
+                target_group.mapped_to_values
+                == supervisor_group.mapping_criteria_values
+            ):
                 data.append(
                     {
-                        "target": target_mapping_criteria_values,
+                        "target": target_group.mapping_criteria_values,
                         "target_count": target_group.target_count,
-                        "supervisor": supervisor_mapping_criteria_values,
+                        "supervisor": supervisor_group.mapping_criteria_values,
                         "supervisor_count": supervisor_group.supervisor_count,
-                        "mapping_status": "Pending"
-                        if target_group.unmapped_count > 0
-                        else "Complete",
+                        "mapping_status": "Complete" if mapping_complete else "Pending",
                     }
                 )
                 mapping_found = True
@@ -122,8 +129,8 @@ def get_target_mapping_config(validated_query_params):
         if not mapping_found:
             data.append(
                 {
-                    "target": target_mapping_criteria_values,
-                    "target_count": target_group[-1],
+                    "target": target_group.mapping_criteria_values,
+                    "target_count": target_group.target_count,
                     "supervisor": None,
                     "supervisor_count": None,
                     "mapping_status": "Pending",
@@ -178,35 +185,6 @@ def update_target_mapping_config(validated_payload):
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
-    # Update the target to supervisor mappings based on the new configuration
-    try:
-        target_mapping = TargetMapping(form_uid)
-    except MappingError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "mapping_errors": e.mapping_errors,
-                    },
-                }
-            ),
-            422,
-        )
-
-    # Generate new mappings and save them
-    mappings = target_mapping.generate_mappings()
-    if mappings:
-        target_mapping.save_mappings(
-            mappings["mappings"], mappings["targets_with_invalid_mappings"]
-        )
-
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        return jsonify(message=str(e)), 500
-
     return jsonify(message="Success"), 200
 
 
@@ -227,41 +205,12 @@ def delete_target_mapping_config(validated_query_params):
         UserMappingConfig.mapping_type == "target",
     ).delete()
 
-    # Delete existing target to supervisor mappings for the form
+    # Delete existing saved target to supervisor mappings for the form
     db.session.query(UserTargetMapping).filter(
         UserTargetMapping.target_uid.in_(
             db.session.query(Target.target_uid).filter(Target.form_uid == form_uid)
         )
     ).delete(synchronize_session=False)
-
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        return jsonify(message=str(e)), 500
-
-    # Update the target to supervisor mappings based on the new configurations
-    try:
-        target_mapping = TargetMapping(form_uid)
-    except MappingError as e:
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "mapping_errors": e.mapping_errors,
-                    },
-                }
-            ),
-            422,
-        )
-
-    # Generate new mappings and save them
-    mappings = target_mapping.generate_mappings()
-    if mappings:
-        target_mapping.save_mappings(
-            mappings["mappings"], mappings["targets_with_invalid_mappings"]
-        )
 
     try:
         db.session.commit()
@@ -298,72 +247,166 @@ def get_target_mapping(validated_query_params):
             422,
         )
 
+    # Fetch all targets to supervisor mappings
+    mappings = target_mapping.generate_mappings()
+
     target_subquery = target_mapping.get_targets_with_mapped_to_subquery()
     supervisors_subquery = target_mapping.get_supervisors_subquery()
 
-    # Fetch additional target details to help with manual mapping
-    mapping_data = (
+    # Fetch all supervisors for the survey
+    supervisors_data = (
         db.session.query(
-            target_subquery.c.target_uid,
-            target_subquery.c.target_id,
-            target_subquery.c.gender,
-            target_subquery.c.language,
-            target_subquery.c.location_id,
-            target_subquery.c.location_name,
-            target_subquery.c.mapping_criteria_values.label(
-                "target_mapping_criteria_values"
-            ),
-            UserTargetMapping.user_uid,
+            User.user_uid,
             User.email,
             (User.first_name + " " + User.last_name).label("full_name"),
-            func.coalesce(
-                supervisors_subquery.c.mapping_criteria_values,
-                target_subquery.c.mapping_criteria_values,
-            ).label("supervisor_mapping_criteria_values"),
-        )
-        .outerjoin(
-            UserTargetMapping,
-            UserTargetMapping.target_uid == target_subquery.c.target_uid,
-        )
-        .outerjoin(User, User.user_uid == UserTargetMapping.user_uid)
-        .outerjoin(
-            supervisors_subquery,
-            and_(
-                (supervisors_subquery.c.user_uid == User.user_uid),
-                *[
-                    (
-                        type_coerce(
-                            supervisors_subquery.c.mapping_criteria_values, JSON
-                        )[criteria]
-                        == type_coerce(target_subquery.c.mapped_to_values, JSON)[
-                            criteria
-                        ]
-                    )
-                    for criteria in target_mapping.mapping_criteria
-                ]
+            supervisors_subquery.c.mapping_criteria_values.label(
+                "supervisor_mapping_criteria_values"
             ),
         )
+        .join(supervisors_subquery, supervisors_subquery.c.user_uid == User.user_uid)
         .all()
     )
 
-    data = [
-        {
-            "target_uid": mapping.target_uid,
-            "target_id": mapping.target_id,
-            "gender": mapping.gender,
-            "language": mapping.language,
-            "location_id": mapping.location_id,
-            "location_name": mapping.location_name,
-            "target_mapping_criteria_values": mapping.target_mapping_criteria_values,
-            "supervisor_uid": mapping.user_uid,
-            "supervisor_email": mapping.email,
-            "supervisor_name": mapping.full_name,
-            "supervisor_mapping_criteria_values": mapping.supervisor_mapping_criteria_values,
-        }
-        for mapping in mapping_data
-    ]
+    # Fetch all targets for the form
+    targets_query = db.session.query(
+        target_subquery.c.target_uid,
+        target_subquery.c.target_id,
+        target_subquery.c.gender,
+        target_subquery.c.language,
+        target_subquery.c.location_id,
+        target_subquery.c.location_name,
+        target_subquery.c.mapping_criteria_values.label(
+            "target_mapping_criteria_values"
+        ),
+        target_subquery.c.mapped_to_values.label("supervisor_mapping_criteria_values"),
+    )
 
-    return jsonify({"success": True, "data": data}), 200
+    # Check if we need to paginate the results
+    if "page" in request.args and "per_page" in request.args:
+        page = request.args.get("page", None, type=int)
+        per_page = request.args.get("per_page", None, type=int)
+
+        targets_query = targets_query.paginate(page=page, per_page=per_page)
+
+        data = []
+        for target in targets_query.items:
+            target_uid = target.target_uid
+
+            mapping_found = False
+            for mapping in mappings:
+                if target_uid == mapping["target_uid"]:
+                    supervisor_uid = mapping["supervisor_uid"]
+                    mapping_found = True
+                    break
+
+            if mapping_found:
+                for supervisor in supervisors_data:
+                    if (supervisor.user_uid == supervisor_uid) and (
+                        supervisor.supervisor_mapping_criteria_values
+                        == target.supervisor_mapping_criteria_values
+                    ):
+                        break
+
+                data.append(
+                    {
+                        "target_uid": target.target_uid,
+                        "target_id": target.target_id,
+                        "gender": target.gender,
+                        "language": target.language,
+                        "location_id": target.location_id,
+                        "location_name": target.location_name,
+                        "target_mapping_criteria_values": target.target_mapping_criteria_values,
+                        "supervisor_uid": supervisor_uid,
+                        "supervisor_email": supervisor.email,
+                        "supervisor_name": supervisor.full_name,
+                        "supervisor_mapping_criteria_values": supervisor.supervisor_mapping_criteria_values,
+                    }
+                )
+            else:
+                data.append(
+                    {
+                        "target_uid": target.target_uid,
+                        "target_id": target.target_id,
+                        "gender": target.gender,
+                        "language": target.language,
+                        "location_id": target.location_id,
+                        "location_name": target.location_name,
+                        "target_mapping_criteria_values": target.target_mapping_criteria_values,
+                        "supervisor_uid": None,
+                        "supervisor_email": None,
+                        "supervisor_name": None,
+                        "supervisor_mapping_criteria_values": target.supervisor_mapping_criteria_values,
+                    }
+                )
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": data,
+                    "pagination": {
+                        "count": targets_query.total,
+                        "page": page,
+                        "per_page": per_page,
+                        "pages": targets_query.pages,
+                    },
+                }
+            ),
+            200,
+        )
+    else:
+        data = []
+        for target in targets_query.all():
+            target_uid = target.target_uid
+
+            mapping_found = False
+            for mapping in mappings:
+                if target_uid == mapping["target_uid"]:
+                    supervisor_uid = mapping["supervisor_uid"]
+                    mapping_found = True
+                    break
+
+            if mapping_found:
+                for supervisor in supervisors_data:
+                    if (supervisor.user_uid == supervisor_uid) and (
+                        supervisor.supervisor_mapping_criteria_values
+                        == target.supervisor_mapping_criteria_values
+                    ):
+                        break
+
+                data.append(
+                    {
+                        "target_uid": target.target_uid,
+                        "target_id": target.target_id,
+                        "gender": target.gender,
+                        "language": target.language,
+                        "location_id": target.location_id,
+                        "location_name": target.location_name,
+                        "target_mapping_criteria_values": target.target_mapping_criteria_values,
+                        "supervisor_uid": supervisor_uid,
+                        "supervisor_email": supervisor.email,
+                        "supervisor_name": supervisor.full_name,
+                        "supervisor_mapping_criteria_values": supervisor.supervisor_mapping_criteria_values,
+                    }
+                )
+            else:
+                data.append(
+                    {
+                        "target_uid": target.target_uid,
+                        "target_id": target.target_id,
+                        "gender": target.gender,
+                        "language": target.language,
+                        "location_id": target.location_id,
+                        "location_name": target.location_name,
+                        "target_mapping_criteria_values": target.target_mapping_criteria_values,
+                        "supervisor_uid": None,
+                        "supervisor_email": None,
+                        "supervisor_name": None,
+                        "supervisor_mapping_criteria_values": target.supervisor_mapping_criteria_values,
+                    }
+                )
+
+        return jsonify({"success": True, "data": data}), 200
 
 
 @mapping_bp.route("/targets-mapping", methods=["PUT"])

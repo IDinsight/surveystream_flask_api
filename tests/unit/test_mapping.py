@@ -431,15 +431,15 @@ class TestMapping:
         return {"user": user_object, "invite": invite_object}
 
     @pytest.fixture()
-    def add_user_mutliple_languages(
+    def update_user_mutliple_languages(
         self, client, login_test_user, csrf_token, create_roles
     ):
         """
-        Add a user at survey level with role
+        Update the user to have more than one language
         """
 
-        response = client.post(
-            "/api/users",
+        response = client.put(
+            "/api/users/3",
             json={
                 "survey_uid": 1,
                 "email": "newuser1@example.com",
@@ -449,18 +449,77 @@ class TestMapping:
                 "gender": "Male",
                 "languages": ["Hindi", "Telugu"],
                 "locations": [1],
+                "active": True,
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
 
         assert response.status_code == 200
-        assert b"Success: user invited" in response.data
-        response_data = json.loads(response.data)
-        user_object = response_data.get("user")
-        invite_object = response_data.get("invite")
 
-        return {"user": user_object, "invite": invite_object}
+    @pytest.fixture()
+    def update_user_role(self, client, login_test_user, csrf_token, create_roles):
+        """
+        Update the user to have more than one language
+        """
+
+        response = client.put(
+            "/api/users/3",
+            json={
+                "survey_uid": 1,
+                "email": "newuser1@example.com",
+                "first_name": "John",
+                "last_name": "Doe",
+                "roles": [],
+                "gender": "Male",
+                "languages": [],
+                "locations": [],
+                "active": True,
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def update_roles(
+        self, client, login_test_user, csrf_token, create_roles, update_user_role
+    ):
+        """
+        Update roles
+        """
+
+        payload = {
+            "roles": [
+                {
+                    "role_uid": 1,
+                    "role_name": "Core User",
+                    "reporting_role_uid": None,
+                    "permissions": [9],
+                }
+            ]
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        payload = {"roles": []}
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
 
     @pytest.fixture()
     def create_target_column_config(
@@ -724,56 +783,6 @@ class TestMapping:
         )
         assert response.status_code == 200
 
-    def reupload_targets_csv(self, client, csrf_token):
-        """
-        Re-Upload the targets csv
-        """
-
-        filepath = (
-            Path(__file__).resolve().parent
-            / f"data/file_uploads/sample_targets_small.csv"
-        )
-
-        # Read the targets.csv file and convert it to base64
-        with open(filepath, "rb") as f:
-            targets_csv = f.read()
-            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
-
-        # Try to upload the targets csv
-        payload = {
-            "column_mapping": {
-                "target_id": "target_id1",
-                "language": "language1",
-                "gender": "gender1",
-                "location_id_column": "psu_id1",
-                "custom_fields": [
-                    {
-                        "field_label": "Mobile no.",
-                        "column_name": "mobile_primary1",
-                    },
-                    {
-                        "field_label": "Name",
-                        "column_name": "name1",
-                    },
-                    {
-                        "field_label": "Address",
-                        "column_name": "address1",
-                    },
-                ],
-            },
-            "file": targets_csv_encoded,
-            "mode": "merge",
-        }
-
-        response = client.post(
-            "/api/targets",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 200
-
     def test_get_location_based_target_mapping(
         self,
         client,
@@ -846,6 +855,7 @@ class TestMapping:
                 "success": True,
             }
 
+            print(response.json)
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
         else:
@@ -922,7 +932,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         user_permissions,
         request,
         csrf_token,
@@ -933,9 +943,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to language
         self.update_target_mapping_criteria(client, csrf_token, ["Language"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -1007,7 +1014,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         user_permissions,
         request,
         csrf_token,
@@ -1018,9 +1025,6 @@ class TestMapping:
         """
         # Update target_mapping_criteria to language
         self.update_target_mapping_criteria(client, csrf_token, ["Language"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
@@ -1078,7 +1082,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         user_permissions,
         request,
         csrf_token,
@@ -1089,9 +1093,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to language
         self.update_target_mapping_criteria(client, csrf_token, ["Language"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -1235,7 +1236,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         user_permissions,
         request,
         csrf_token,
@@ -1246,9 +1247,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to language
         self.update_target_mapping_criteria(client, csrf_token, ["Language"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -1368,7 +1366,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         user_permissions,
         request,
         csrf_token,
@@ -1379,9 +1377,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to language
         self.update_target_mapping_criteria(client, csrf_token, ["Gender"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -1453,7 +1448,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         add_another_user,
         user_permissions,
         request,
@@ -1465,9 +1460,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to language
         self.update_target_mapping_criteria(client, csrf_token, ["Gender"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -1539,7 +1531,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         add_another_user,
         user_permissions,
         request,
@@ -1551,9 +1543,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to language
         self.update_target_mapping_criteria(client, csrf_token, ["Gender"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -1611,7 +1600,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         add_another_user,
         user_permissions,
         request,
@@ -1623,9 +1612,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to language
         self.update_target_mapping_criteria(client, csrf_token, ["Gender"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -1754,7 +1740,6 @@ class TestMapping:
         login_test_user,
         create_target_column_config,
         upload_targets_csv,
-        add_user,
         user_permissions,
         request,
         csrf_token,
@@ -1766,9 +1751,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to language
         self.update_target_mapping_criteria(client, csrf_token, ["Language"])
-
-        # Re-upload the targets csv, targets csv was already uploaded in the fixture
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -1840,7 +1822,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         user_permissions,
         request,
         csrf_token,
@@ -1853,9 +1835,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to manual
         self.update_target_mapping_criteria(client, csrf_token, ["Manual"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -1927,7 +1906,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         add_another_user,
         user_permissions,
         request,
@@ -1941,9 +1920,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to manual
         self.update_target_mapping_criteria(client, csrf_token, ["Manual"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -2015,7 +1991,7 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user,
+        upload_targets_csv,
         add_another_user,
         user_permissions,
         request,
@@ -2029,9 +2005,6 @@ class TestMapping:
         self.update_target_mapping_criteria(
             client, csrf_token, ["Language", "Location"]
         )
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -2115,7 +2088,8 @@ class TestMapping:
         client,
         login_test_user,
         create_target_column_config,
-        add_user_mutliple_languages,
+        upload_targets_csv,
+        update_user_mutliple_languages,
         user_permissions,
         request,
         csrf_token,
@@ -2126,9 +2100,6 @@ class TestMapping:
 
         # Update target_mapping_criteria to language
         self.update_target_mapping_criteria(client, csrf_token, ["Language"])
-
-        # Upload the targets csv
-        self.reupload_targets_csv(client, csrf_token)
 
         # Test mapping
         user_fixture, expected_permission = user_permissions
@@ -2195,24 +2166,164 @@ class TestMapping:
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
 
-    # Positive tests:
-    # 1. Test location based mapping - Done!
-    # 2. Test language based mapping - Done!
-    # 3. Test gender based mapping - Done!
-    # 4. Test manual - Done!
-    # 5. Test combos - location and language - Done!
-    # 6. Test combos - language and gender
-    # 7. Test with more than one location/language per supervisor to check no duplicates are being created - Done!
-    # 8. Test more than one supervisor scenario - Done!
-    # 9. Test more than one supervisor scenario with a manual mapping added - Done!
-    # 10. Test case with no mapping supervisor for the combo - Done!
-    # 11. Test case with no mapping supervisor for the combo + custom mapping in table - Done!
-    # 12. Test case with no mapping supervisor for the combo + custom mapping in table + delete custom mapping - Done!
-    # 13. Test existing invalid mappings are removed when new mappings are added - Done!
+    def test_mapping_with_no_mapping_criteria(
+        self,
+        client,
+        login_test_user,
+        create_target_column_config,
+        upload_targets_csv,
+        csrf_token,
+    ):
+        """
+        Test getting the target mapping when mapping criteria is not set
+        """
 
-    # Negative tests:
-    # 1. Test failures when user doesn't have the required permissions - Done!
-    # 2. Test when mapping criteria is not set
-    # 3. Test when roles are not set
-    # 4. Test when prime geo level is not set
-    # 5. Test when targets are not uploaded
+        # Update target_mapping_criteria to blank
+        self.update_target_mapping_criteria(client, csrf_token, None)
+
+        response = client.get(
+            "/api/mapping/targets-mapping",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "errors": {
+                "mapping_errors": "Supervisor to target mapping criteria not found."
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_mapping_with_no_roles(
+        self,
+        client,
+        login_test_user,
+        create_target_column_config,
+        upload_targets_csv,
+        update_roles,
+        csrf_token,
+    ):
+        """
+        Test getting the target mapping when roles are not set
+
+        """
+
+        response = client.get(
+            "/api/mapping/targets-mapping",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+        expected_response = {
+            "errors": {
+                "mapping_errors": "Roles not configured for the survey. Cannot perform supervisor to target mapping without roles."
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_location_mapping_with_no_prime_geo_level(
+        self,
+        client,
+        login_test_user,
+        create_target_column_config,
+        upload_targets_csv,
+        update_roles,
+        csrf_token,
+    ):
+        """
+        Test getting the target mapping when roles are not set
+
+        """
+        # Remove prime geo level
+        payload = {
+            "survey_uid": 1,
+            "survey_id": "test_survey",
+            "survey_name": "Test Survey",
+            "survey_description": "A test survey",
+            "project_name": "Test Project",
+            "surveying_method": "in-person",
+            "irb_approval": "Yes",
+            "planned_start_date": "2021-01-01",
+            "planned_end_date": "2021-12-31",
+            "state": "Draft",
+            "config_status": "In Progress - Configuration",
+        }
+
+        response = client.put(
+            "/api/surveys/1/basic-information",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        response = client.get(
+            "/api/mapping/targets-mapping",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+        expected_response = {
+            "errors": {
+                "mapping_errors": "Prime geo level not configured for the survey. Cannot perform supervisor to target mapping based on location without a prime geo level."
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_target_mapping_paginate(
+        self,
+        client,
+        login_test_user,
+        create_target_column_config,
+        upload_targets_csv,
+        request,
+    ):
+        """
+        Test getting the target mapping with pagination
+        """
+        response = client.get(
+            "/api/mapping/targets-mapping",
+            query_string={"form_uid": 1, "page": 1, "per_page": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        expected_response = {
+            "data": [
+                {
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                    "supervisor_email": "newuser1@example.com",
+                    "supervisor_mapping_criteria_values": {
+                        "Location": 1,
+                        "location_id": "1",
+                        "location_name": "ADILABAD",
+                    },
+                    "supervisor_name": "John Doe",
+                    "supervisor_uid": 3,
+                    "target_id": "1",
+                    "target_mapping_criteria_values": {
+                        "Location": 1,
+                        "location_id": "1",
+                        "location_name": "ADILABAD",
+                    },
+                    "target_uid": 1,
+                }
+            ],
+            "success": True,
+            "pagination": {"count": 2, "page": 1, "pages": 2, "per_page": 1},
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}

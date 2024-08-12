@@ -10,8 +10,6 @@ from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
 from app.blueprints.forms.models import Form
 
-# from app.blueprints.mapping.errors import MappingError
-# from app.blueprints.mapping.utils import TargetMapping
 from app.blueprints.roles.models import Role, SurveyAdmin
 from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
