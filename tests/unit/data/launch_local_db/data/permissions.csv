@@ -24,3 +24,5 @@ READ Data Quality Forms,Read Data Quality Forms permission,true
 WRITE Data Quality Forms,Write Data Quality Forms permission,true
 WRITE Assignments Upload,Write Assignments Upload permission,true
 READ Assignments Upload,Read Assignments Upload permission,true
+READ Mapping,Read Mapping permission,true
+WRITE Mapping,Write Mapping permission,true

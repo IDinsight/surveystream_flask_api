@@ -34,7 +34,6 @@ class User(db.Model):
 
     ## Mapping fields
     gender = db.Column(db.String(), nullable=True)
-    languages = db.Column(db.ARRAY(db.String()), nullable=True)
 
     def __init__(
         self,
@@ -47,7 +46,6 @@ class User(db.Model):
         can_create_survey=False,
         roles=None,
         gender=None,
-        languages=None,
     ):
         if roles is None:
             roles = []
@@ -61,7 +59,6 @@ class User(db.Model):
             self.password_secure = None
         self.roles = roles
         self.gender = gender
-        self.languages = languages
         self.is_super_admin = is_super_admin
         self.can_create_survey = can_create_survey
         self.active = active
@@ -74,7 +71,6 @@ class User(db.Model):
             "last_name": self.last_name,
             "roles": self.roles,
             "gender": self.gender,
-            "languages": self.languages,
             "is_super_admin": self.is_super_admin,
             "can_create_survey": self.can_create_survey,
             "active": self.active,
