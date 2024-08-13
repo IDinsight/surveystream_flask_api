@@ -942,7 +942,7 @@ def delete_email_template(email_template_uid, validated_query_params):
     )
 
 
-@emails_bp.route("/gsheet", methods=["GET"])
+@emails_bp.route("/gsheet", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(EmailGsheetSourceParamValidator)
 @custom_permissions_required("READ Emails", "body", "form_uid")
