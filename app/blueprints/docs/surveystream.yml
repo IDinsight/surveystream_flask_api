@@ -6618,7 +6618,7 @@ paths:
                         supervisor_mapping_criteria_values:
                           type: object
                           description: The target to supervisor mapping criteria values for the supervisor
-                         properties:
+                          properties:
                             criteria:
                               type: object
                               description: Value for each target to supervisor mapping criteria for the supervisor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
@@ -6830,7 +6830,7 @@ paths:
                         supervisor_mapping_criteria_values:
                           type: object
                           description: The target to supervisor mapping criteria values for the supervisor
-                         properties:
+                          properties:
                             criteria:
                               type: object
                               description: Value for each target to supervisor mapping criteria for the supervisor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
