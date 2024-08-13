@@ -77,6 +77,7 @@ class UserMappingConfig(db.Model):
             "mapping_type IN ('target', 'surveyor')",
             name="ck_user_mapping_config_mapping_type",
         ),
+        nullable=False,
     )
 
     mapping_values = db.Column(MutableDict.as_mutable(JSONB), nullable=False)

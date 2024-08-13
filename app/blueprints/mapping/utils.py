@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, and_, case, distinct, exists, func, type_coerce
+from sqlalchemy import JSON, and_, distinct, exists, func, type_coerce
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app import db

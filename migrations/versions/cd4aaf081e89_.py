@@ -30,7 +30,15 @@ def upgrade():
     op.create_table('user_mapping_config',
     sa.Column('config_uid', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('form_uid', sa.Integer(), nullable=False),
-    sa.Column('mapping_type', sa.String(), nullable=True),
+    sa.Column(
+        'mapping_type',
+        sa.String(),
+        sa.CheckConstraint(
+            "mapping_type IN ('target', 'surveyor')",
+            name="ck_user_mapping_config_mapping_type",
+        ),
+        nullable=False
+    ),
     sa.Column('mapping_values', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('mapped_to', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.ForeignKeyConstraint(['form_uid'], ['webapp.forms.form_uid'], name=op.f('fk_user_mapping_config_form_uid_forms'), ondelete='CASCADE'),

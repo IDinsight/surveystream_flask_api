@@ -88,7 +88,7 @@ tags:
     description: Endpoints related to permissions
   - name: User Hierarchy
     description: Endpoints related to user hierarchy
-  - name: Mappping
+  - name: Mapping
     description: Endpoints related to mapping
   - name: Emails
     description: Endpoints related to emails configuration
@@ -5777,7 +5777,7 @@ paths:
             type: integer
           description: >-
             The page number of the results to return. Results will be paginated
-            only if `page` and `per_page` are both specified.\
+            only if `page` and `per_page` are both specified.
           required: false
         - in: query
           name: per_page
@@ -6733,7 +6733,7 @@ paths:
           schema:
             type: integer
           description: >-
-            The page number of the results to return. Results will be paginated only if `page` and `per_page` are both specified.\
+            The page number of the results to return. Results will be paginated only if `page` and `per_page` are both specified.
           required: false
         - in: query
           name: per_page

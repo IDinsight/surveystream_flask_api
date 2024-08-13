@@ -1,7 +1,7 @@
 import json
 
 from flask import jsonify, request
-from sqlalchemy import JSON, and_, case, distinct, func, type_coerce
+from sqlalchemy import distinct, func
 from sqlalchemy.exc import IntegrityError
 
 from app import db

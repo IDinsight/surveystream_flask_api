@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
-from wtforms.validators import AnyOf, DataRequired, Optional
+from wtforms.validators import AnyOf, DataRequired
 
 
 class MappingCriteriaValuesValidator(FlaskForm):
@@ -10,7 +10,7 @@ class MappingCriteriaValuesValidator(FlaskForm):
     criteria = StringField(
         validators=[
             AnyOf(
-                ["Location", "Gender", "Language"],
+                ["Location", "Gender", "Language", "Manual"],
                 message="Value must be one of %(values)s",
             ),
             DataRequired(),
