@@ -88,12 +88,13 @@ def build_targets_with_mapping_criteria_values_subquery(
             target_columns.append(literal_column("'manual'").label("manual"))
 
     # If location is in the mapping criteria, we need to add location id and name columns to the json object
-    mapping_criteria_select = mapping_criteria.copy()
-    if "Location" in mapping_criteria_select:
-        target_columns.append(Location.location_id.label("location_id"))
-        target_columns.append(Location.location_name.label("location_name"))
-        mapping_criteria_select.append("location_id")
-        mapping_criteria_select.append("location_name")
+    other_column_keys = []
+    other_column_values = []
+    if "Location" in mapping_criteria:
+        other_column_keys.append("location_id")
+        other_column_values.append(Location.location_id.label("location_id"))
+        other_column_keys.append("location_name")
+        other_column_values.append(Location.location_name.label("location_name"))
 
     # This query returns one row per target
     targets_query = (
@@ -105,16 +106,32 @@ def build_targets_with_mapping_criteria_values_subquery(
             Location.location_id.label("location_id"),
             Location.location_name.label("location_name"),
             func.jsonb_build_object(
-                *[
-                    item
-                    for zipped_item in [
-                        [criteria, column]
-                        for criteria, column in zip(
-                            mapping_criteria_select, target_columns
-                        )
+                "criteria",
+                func.jsonb_build_object(
+                    *[
+                        item
+                        for zipped_item in [
+                            [criteria, column]
+                            for criteria, column in zip(
+                                mapping_criteria, target_columns
+                            )
+                        ]
+                        for item in zipped_item
                     ]
-                    for item in zipped_item
-                ]
+                ),
+                "other",
+                func.jsonb_build_object(
+                    *[
+                        item
+                        for zipped_item in [
+                            [key, value]
+                            for key, value in zip(
+                                other_column_keys, other_column_values
+                            )
+                        ]
+                        for item in zipped_item
+                    ]
+                ),
             ).label("mapping_criteria_values"),
         )
         .outerjoin(
@@ -160,12 +177,13 @@ def build_supervisors_with_mapping_criteria_values_subquery(
             supervisor_columns.append(literal_column("'manual'").label("manual"))
 
     # If location is in the mapping criteria, we need to add location id and name columns to the json object
-    mapping_criteria_select = mapping_criteria.copy()
-    if "Location" in mapping_criteria_select:
-        supervisor_columns.append(Location.location_id.label("location_id"))
-        supervisor_columns.append(Location.location_name.label("location_name"))
-        mapping_criteria_select.append("location_id")
-        mapping_criteria_select.append("location_name")
+    other_column_keys = []
+    other_column_values = []
+    if "Location" in mapping_criteria:
+        other_column_keys.append("location_id")
+        other_column_values.append(Location.location_id.label("location_id"))
+        other_column_keys.append("location_name")
+        other_column_values.append(Location.location_name.label("location_name"))
 
     # Since a supervisor can be assigned to multiple languages and locations, the results of this
     # query can have more than one row per supervisor if the mapping criteria includes language
@@ -173,16 +191,30 @@ def build_supervisors_with_mapping_criteria_values_subquery(
     supervisors_query = db.session.query(
         user_subquery.c.user_uid,
         func.jsonb_build_object(
-            *[
-                item
-                for zipped_item in [
-                    [criteria, column]
-                    for criteria, column in zip(
-                        mapping_criteria_select, supervisor_columns
-                    )
+            "criteria",
+            func.jsonb_build_object(
+                *[
+                    item
+                    for zipped_item in [
+                        [criteria, column]
+                        for criteria, column in zip(
+                            mapping_criteria, supervisor_columns
+                        )
+                    ]
+                    for item in zipped_item
                 ]
-                for item in zipped_item
-            ]
+            ),
+            "other",
+            func.jsonb_build_object(
+                *[
+                    item
+                    for zipped_item in [
+                        [key, value]
+                        for key, value in zip(other_column_keys, other_column_values)
+                    ]
+                    for item in zipped_item
+                ]
+            ),
         ).label("mapping_criteria_values"),
     )
 

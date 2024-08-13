@@ -149,7 +149,7 @@ class TargetMapping:
                     (
                         type_coerce(
                             supervisors_subquery.c.mapping_criteria_values, JSON
-                        )[criteria]
+                        )["criteria"][criteria]
                         == type_coerce(UserMappingConfig.mapping_values, JSON)[criteria]
                     )
                     for criteria in self.mapping_criteria
@@ -176,7 +176,10 @@ class TargetMapping:
             targets_subquery.c.location_name.label("location_name"),
             targets_subquery.c.mapping_criteria_values.label("mapping_criteria_values"),
             func.coalesce(
-                mapping_config.c.mapped_to, targets_subquery.c.mapping_criteria_values
+                mapping_config.c.mapped_to,
+                type_coerce(targets_subquery.c.mapping_criteria_values, JSON)[
+                    "criteria"
+                ],
             ).label("mapped_to_values"),
         ).outerjoin(
             mapping_config,
@@ -186,7 +189,7 @@ class TargetMapping:
                         type_coerce(mapping_config.c.mapping_values, JSON)[criteria]
                         == type_coerce(
                             targets_subquery.c.mapping_criteria_values, JSON
-                        )[criteria]
+                        )["criteria"][criteria]
                     )
                     for criteria in self.mapping_criteria
                 ]
@@ -239,7 +242,7 @@ class TargetMapping:
                             (
                                 type_coerce(
                                     supervisors_subquery.c.mapping_criteria_values, JSON
-                                )[criteria]
+                                )["criteria"][criteria]
                                 == type_coerce(target.mapped_to_values[criteria], JSON)
                             )
                             for criteria in self.mapping_criteria
@@ -278,7 +281,7 @@ class TargetMapping:
                         (
                             type_coerce(
                                 supervisors_subquery.c.mapping_criteria_values, JSON
-                            )[criteria]
+                            )["criteria"][criteria]
                             == type_coerce(targets_subquery.c.mapped_to_values, JSON)[
                                 criteria
                             ]
@@ -329,10 +332,10 @@ class TargetMapping:
                             type_coerce(
                                 single_supervisor_per_mapping_values_subquery.c.mapping_criteria_values,
                                 JSON,
-                            )[criteria]
+                            )["criteria"][criteria]
                             == type_coerce(
                                 supervisors_subquery.c.mapping_criteria_values, JSON
-                            )[criteria]
+                            )["criteria"][criteria]
                         )
                         for criteria in self.mapping_criteria
                     ]
@@ -354,7 +357,7 @@ class TargetMapping:
                         (
                             type_coerce(
                                 supervisors_subquery.c.mapping_criteria_values, JSON
-                            )[criteria]
+                            )["criteria"][criteria]
                             == type_coerce(targets_subquery.c.mapped_to_values, JSON)[
                                 criteria
                             ]
@@ -430,7 +433,7 @@ class TargetMapping:
                         (
                             type_coerce(
                                 supervisors_subquery.c.mapping_criteria_values, JSON
-                            )[criteria]
+                            )["criteria"][criteria]
                             == type_coerce(target.mapped_to_values[criteria], JSON)
                         )
                         for criteria in self.mapping_criteria

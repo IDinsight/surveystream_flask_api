@@ -816,17 +816,25 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Location": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
+                            "criteria": {
+                                "Location": 1,
+                            },
+                            "other": {
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                            },
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Location": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
+                            "criteria": {
+                                "Location": 1,
+                            },
+                            "other": {
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                            },
                         },
                         "target_uid": 2,
                     },
@@ -837,17 +845,25 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Location": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
+                            "criteria": {
+                                "Location": 1,
+                            },
+                            "other": {
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                            },
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Location": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
+                            "criteria": {
+                                "Location": 1,
+                            },
+                            "other": {
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                            },
                         },
                         "target_uid": 1,
                     },
@@ -897,16 +913,24 @@ class TestMapping:
                 "data": [
                     {
                         "mapping_status": "Complete",
-                        "supervisor": {
-                            "Location": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": {
+                                "Location": 1,
+                            },
+                            "other": {
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                            },
                         },
                         "supervisor_count": 1,
-                        "target": {
-                            "Location": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Location": 1,
+                            },
+                            "other": {
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                            },
                         },
                         "target_count": 2,
                     }
@@ -965,13 +989,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "target_uid": 2,
                     },
@@ -982,13 +1012,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": None,
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Telugu",
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": None,
                         "supervisor_uid": None,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Language": "Telugu",
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "target_uid": 1,
                     },
@@ -1041,21 +1077,30 @@ class TestMapping:
                 "data": [
                     {
                         "mapping_status": "Complete",
-                        "supervisor": {
-                            "Language": "Hindi",
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "supervisor_count": 1,
-                        "target": {
-                            "Language": "Hindi",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "target_count": 1,
                     },
                     {
                         "mapping_status": "Pending",
-                        "supervisor": None,
+                        "supervisor_mapping_criteria_values": None,
                         "supervisor_count": None,
-                        "target": {
-                            "Language": "Telugu",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "target_count": 1,
                     },
@@ -1147,13 +1192,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "target_uid": 2,
                     },
@@ -1164,13 +1215,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Language": "Telugu",
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "target_uid": 1,
                     },
@@ -1193,23 +1250,35 @@ class TestMapping:
                 "data": [
                     {
                         "mapping_status": "Complete",
-                        "supervisor": {
-                            "Language": "Hindi",
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "supervisor_count": 1,
-                        "target": {
-                            "Language": "Hindi",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "target_count": 1,
                     },
                     {
                         "mapping_status": "Complete",
-                        "supervisor": {
-                            "Language": "Hindi",
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "supervisor_count": 1,
-                        "target": {
-                            "Language": "Telugu",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "target_count": 1,
                     },
@@ -1279,13 +1348,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "target_uid": 2,
                     },
@@ -1296,13 +1371,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": None,
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Telugu",
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": None,
                         "supervisor_uid": None,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Language": "Telugu",
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "target_uid": 1,
                     },
@@ -1325,21 +1406,30 @@ class TestMapping:
                 "data": [
                     {
                         "mapping_status": "Complete",
-                        "supervisor": {
-                            "Language": "Hindi",
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "supervisor_count": 1,
-                        "target": {
-                            "Language": "Hindi",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "target_count": 1,
                     },
                     {
                         "mapping_status": "Pending",
-                        "supervisor": None,
+                        "supervisor_mapping_criteria_values": None,
                         "supervisor_count": None,
-                        "target": {
-                            "Language": "Telugu",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "target_count": 1,
                     },
@@ -1399,13 +1489,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": None,
                         "supervisor_mapping_criteria_values": {
-                            "Gender": "Female",
+                            "criteria": {
+                                "Gender": "Female",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": None,
                         "supervisor_uid": None,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Gender": "Female",
+                            "criteria": {
+                                "Gender": "Female",
+                            },
+                            "other": {},
                         },
                         "target_uid": 2,
                     },
@@ -1416,13 +1512,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Gender": "Male",
+                            "criteria": {
+                                "Gender": "Male",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Gender": "Male",
+                            "criteria": {
+                                "Gender": "Male",
+                            },
+                            "other": {},
                         },
                         "target_uid": 1,
                     },
@@ -1482,13 +1584,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": None,
                         "supervisor_mapping_criteria_values": {
-                            "Gender": "Female",
+                            "criteria": {
+                                "Gender": "Female",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": None,
                         "supervisor_uid": None,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Gender": "Female",
+                            "criteria": {
+                                "Gender": "Female",
+                            },
+                            "other": {},
                         },
                         "target_uid": 2,
                     },
@@ -1499,13 +1607,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": None,
                         "supervisor_mapping_criteria_values": {
-                            "Gender": "Male",
+                            "criteria": {
+                                "Gender": "Male",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": None,
                         "supervisor_uid": None,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Gender": "Male",
+                            "criteria": {
+                                "Gender": "Male",
+                            },
+                            "other": {},
                         },
                         "target_uid": 1,
                     },
@@ -1560,21 +1674,30 @@ class TestMapping:
                 "data": [
                     {
                         "mapping_status": "Pending",
-                        "supervisor": None,
+                        "supervisor_mapping_criteria_values": None,
                         "supervisor_count": None,
-                        "target": {
-                            "Gender": "Female",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Gender": "Female",
+                            },
+                            "other": {},
                         },
                         "target_count": 1,
                     },
                     {
                         "mapping_status": "Pending",
-                        "supervisor": {
-                            "Gender": "Male",
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": {
+                                "Gender": "Male",
+                            },
+                            "other": {},
                         },
                         "supervisor_count": 2,
-                        "target": {
-                            "Gender": "Male",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Gender": "Male",
+                            },
+                            "other": {},
                         },
                         "target_count": 1,
                     },
@@ -1653,13 +1776,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": None,
                         "supervisor_mapping_criteria_values": {
-                            "Gender": "Female",
+                            "criteria": {
+                                "Gender": "Female",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": None,
                         "supervisor_uid": None,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Gender": "Female",
+                            "criteria": {
+                                "Gender": "Female",
+                            },
+                            "other": {},
                         },
                         "target_uid": 2,
                     },
@@ -1670,13 +1799,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Gender": "Male",
+                            "criteria": {
+                                "Gender": "Male",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Gender": "Male",
+                            "criteria": {
+                                "Gender": "Male",
+                            },
+                            "other": {},
                         },
                         "target_uid": 1,
                     },
@@ -1699,21 +1834,30 @@ class TestMapping:
                 "data": [
                     {
                         "mapping_status": "Pending",
-                        "supervisor": None,
+                        "supervisor_mapping_criteria_values": None,
                         "supervisor_count": None,
-                        "target": {
-                            "Gender": "Female",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Gender": "Female",
+                            },
+                            "other": {},
                         },
                         "target_count": 1,
                     },
                     {
                         "mapping_status": "Complete",
-                        "supervisor": {
-                            "Gender": "Male",
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": {
+                                "Gender": "Male",
+                            },
+                            "other": {},
                         },
                         "supervisor_count": 2,
-                        "target": {
-                            "Gender": "Male",
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Gender": "Male",
+                            },
+                            "other": {},
                         },
                         "target_count": 1,
                     },
@@ -1773,13 +1917,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "target_uid": 2,
                     },
@@ -1790,13 +1940,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": None,
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Telugu",
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": None,
                         "supervisor_uid": None,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Language": "Telugu",
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "target_uid": 1,
                     },
@@ -1857,13 +2013,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Manual": "manual",
+                            "criteria": {
+                                "Manual": "manual",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Manual": "manual",
+                            "criteria": {
+                                "Manual": "manual",
+                            },
+                            "other": {},
                         },
                         "target_uid": 2,
                     },
@@ -1874,13 +2036,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Manual": "manual",
+                            "criteria": {
+                                "Manual": "manual",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Manual": "manual",
+                            "criteria": {
+                                "Manual": "manual",
+                            },
+                            "other": {},
                         },
                         "target_uid": 1,
                     },
@@ -1942,13 +2110,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": None,
                         "supervisor_mapping_criteria_values": {
-                            "Manual": "manual",
+                            "criteria": {
+                                "Manual": "manual",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": None,
                         "supervisor_uid": None,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Manual": "manual",
+                            "criteria": {
+                                "Manual": "manual",
+                            },
+                            "other": {},
                         },
                         "target_uid": 2,
                     },
@@ -1959,13 +2133,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": None,
                         "supervisor_mapping_criteria_values": {
-                            "Manual": "manual",
+                            "criteria": {
+                                "Manual": "manual",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": None,
                         "supervisor_uid": None,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Manual": "manual",
+                            "criteria": {
+                                "Manual": "manual",
+                            },
+                            "other": {},
                         },
                         "target_uid": 1,
                     },
@@ -2027,19 +2207,27 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Hindi",
-                            "Location": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
+                            "criteria": {
+                                "Language": "Hindi",
+                                "Location": 1,
+                            },
+                            "other": {
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                            },
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Language": "Hindi",
-                            "Location": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
+                            "criteria": {
+                                "Language": "Hindi",
+                                "Location": 1,
+                            },
+                            "other": {
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                            },
                         },
                         "target_uid": 2,
                     },
@@ -2050,19 +2238,27 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser2@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Telugu",
-                            "Location": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
+                            "criteria": {
+                                "Language": "Telugu",
+                                "Location": 1,
+                            },
+                            "other": {
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                            },
                         },
                         "supervisor_name": "Tim Doe",
                         "supervisor_uid": 4,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Language": "Telugu",
-                            "Location": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
+                            "criteria": {
+                                "Language": "Telugu",
+                                "Location": 1,
+                            },
+                            "other": {
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                            },
                         },
                         "target_uid": 1,
                     },
@@ -2122,13 +2318,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "2",
                         "target_mapping_criteria_values": {
-                            "Language": "Hindi",
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
                         },
                         "target_uid": 2,
                     },
@@ -2139,13 +2341,19 @@ class TestMapping:
                         "location_name": "ADILABAD",
                         "supervisor_email": "newuser1@example.com",
                         "supervisor_mapping_criteria_values": {
-                            "Language": "Telugu",
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "supervisor_name": "John Doe",
                         "supervisor_uid": 3,
                         "target_id": "1",
                         "target_mapping_criteria_values": {
-                            "Language": "Telugu",
+                            "criteria": {
+                                "Language": "Telugu",
+                            },
+                            "other": {},
                         },
                         "target_uid": 1,
                     },
@@ -2305,17 +2513,25 @@ class TestMapping:
                     "location_name": "ADILABAD",
                     "supervisor_email": "newuser1@example.com",
                     "supervisor_mapping_criteria_values": {
-                        "Location": 1,
-                        "location_id": "1",
-                        "location_name": "ADILABAD",
+                        "criteria": {
+                            "Location": 1,
+                        },
+                        "other": {
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        },
                     },
                     "supervisor_name": "John Doe",
                     "supervisor_uid": 3,
                     "target_id": "1",
                     "target_mapping_criteria_values": {
-                        "Location": 1,
-                        "location_id": "1",
-                        "location_name": "ADILABAD",
+                        "criteria": {
+                            "Location": 1,
+                        },
+                        "other": {
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                        },
                     },
                     "target_uid": 1,
                 }

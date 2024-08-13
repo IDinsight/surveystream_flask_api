@@ -6602,15 +6602,29 @@ paths:
                     items:
                       type: object
                       properties:
-                        target:
-                          type: string
-                          description: The target mapping criteria values
+                        target_mapping_criteria_values:
+                          type: object
+                          description: The target to supervisor mapping criteria values for the target
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each target to supervisor mapping criteria for the target. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
                         target_count:
                           type: integer
                           description: The number of targets that match the target mapping criteria
-                        supervisor:
-                          type: string
-                          description: The supervisor mapping criteria values
+                        supervisor_mapping_criteria_values:
+                          type: object
+                          description: The target to supervisor mapping criteria values for the supervisor
+                         properties:
+                            criteria:
+                              type: object
+                              description: Value for each target to supervisor mapping criteria for the supervisor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
                         supervisor_count:
                           type: integer
                           description: The number of supervisors that match the supervisor mapping criteria
@@ -6667,11 +6681,29 @@ paths:
                     type: object
                     properties:
                       mapping_values:
-                        type: string
+                        type: array
                         description: The target mapping criteria values
+                        items:
+                          type: object
+                          properties:
+                            criteria:
+                              type: string
+                              description: Mapping criteria. Can be one of "Gender", "Language", "Location", "Manual"
+                            value:
+                              type: string
+                              description: The value of the target mapping criteria
                       mapped_to:
-                        type: string
+                        type: array
                         description: The supervisor mapping criteria values to which the target mapping criteria values will be mapped
+                        items:
+                          type: object
+                          properties:
+                            criteria:
+                              type: string
+                              description: Mapping criteria. Can be one of "Gender", "Language", "Location", "Manual"
+                            value:
+                              type: string
+                              description: The corresponding value of the supervisor mapping criteria
               required:
                 - form_uid
                 - mapping_config
@@ -6777,8 +6809,15 @@ paths:
                           type: string
                           description: The name of the target's prime geo level location
                         target_mapping_criteria_values:
-                          type: dict
-                          description: The target's mapping criteria values
+                          type: object
+                          description: The target to supervisor mapping criteria values for the target
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each target to supervisor mapping criteria for the target. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
                         supervisor_uid:
                           type: integer
                           description: The system-assigned unique ID of the supervisor
@@ -6789,8 +6828,15 @@ paths:
                           type: string
                           description: The full name of the supervisor
                         supervisor_mapping_criteria_values:
-                          type: dict
-                          description: The supervisor's mapping criteria values
+                          type: object
+                          description: The target to supervisor mapping criteria values for the supervisor
+                         properties:
+                            criteria:
+                              type: object
+                              description: Value for each target to supervisor mapping criteria for the supervisor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
                   paginate:
                     type: object
                     description: >-

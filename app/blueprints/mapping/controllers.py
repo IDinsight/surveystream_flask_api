@@ -6,9 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.blueprints.auth.models import User
-from app.blueprints.forms.models import Form
-from app.blueprints.roles.models import Role
-from app.blueprints.surveys.models import Survey
+from app.blueprints.locations.models import Location
 from app.blueprints.targets.models import Target
 from app.utils.utils import (
     custom_permissions_required,
@@ -111,13 +109,13 @@ def get_target_mapping_config(validated_query_params):
         for supervisor_group in supervisors:
             if (
                 target_group.mapped_to_values
-                == supervisor_group.mapping_criteria_values
+                == supervisor_group.mapping_criteria_values["criteria"]
             ):
                 data.append(
                     {
-                        "target": target_group.mapping_criteria_values,
+                        "target_mapping_criteria_values": target_group.mapping_criteria_values,
                         "target_count": target_group.target_count,
-                        "supervisor": supervisor_group.mapping_criteria_values,
+                        "supervisor_mapping_criteria_values": supervisor_group.mapping_criteria_values,
                         "supervisor_count": supervisor_group.supervisor_count,
                         "mapping_status": "Complete" if mapping_complete else "Pending",
                     }
@@ -129,9 +127,9 @@ def get_target_mapping_config(validated_query_params):
         if not mapping_found:
             data.append(
                 {
-                    "target": target_group.mapping_criteria_values,
+                    "target_mapping_criteria_values": target_group.mapping_criteria_values,
                     "target_count": target_group.target_count,
-                    "supervisor": None,
+                    "supervisor_mapping_criteria_values": None,
                     "supervisor_count": None,
                     "mapping_status": "Pending",
                 }
@@ -278,7 +276,7 @@ def get_target_mapping(validated_query_params):
         target_subquery.c.mapping_criteria_values.label(
             "target_mapping_criteria_values"
         ),
-        target_subquery.c.mapped_to_values.label("supervisor_mapping_criteria_values"),
+        target_subquery.c.mapped_to_values,
     )
 
     # Check if we need to paginate the results
@@ -302,8 +300,8 @@ def get_target_mapping(validated_query_params):
             if mapping_found:
                 for supervisor in supervisors_data:
                     if (supervisor.user_uid == supervisor_uid) and (
-                        supervisor.supervisor_mapping_criteria_values
-                        == target.supervisor_mapping_criteria_values
+                        supervisor.supervisor_mapping_criteria_values["criteria"]
+                        == target.mapped_to_values
                     ):
                         break
 
@@ -323,6 +321,18 @@ def get_target_mapping(validated_query_params):
                     }
                 )
             else:
+                if "Location" in target_mapping.mapping_criteria:
+                    # Find the location ID and Name for the target's mapped to values
+                    location = (
+                        db.session.query(Location.location_id, Location.location_name)
+                        .filter(
+                            Location.location_uid
+                            == target.mapped_to_values["Location"],
+                            Location.survey_uid == target_mapping.survey_uid,
+                        )
+                        .first()
+                    )
+
                 data.append(
                     {
                         "target_uid": target.target_uid,
@@ -335,7 +345,15 @@ def get_target_mapping(validated_query_params):
                         "supervisor_uid": None,
                         "supervisor_email": None,
                         "supervisor_name": None,
-                        "supervisor_mapping_criteria_values": target.supervisor_mapping_criteria_values,
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": target.mapped_to_values,
+                            "other": {
+                                "location_id": location.location_id,
+                                "location_name": location.location_name,
+                            }
+                            if "Location" in target_mapping.mapping_criteria
+                            else {},
+                        },
                     }
                 )
 
@@ -369,8 +387,8 @@ def get_target_mapping(validated_query_params):
             if mapping_found:
                 for supervisor in supervisors_data:
                     if (supervisor.user_uid == supervisor_uid) and (
-                        supervisor.supervisor_mapping_criteria_values
-                        == target.supervisor_mapping_criteria_values
+                        supervisor.supervisor_mapping_criteria_values["criteria"]
+                        == target.mapped_to_values
                     ):
                         break
 
@@ -390,6 +408,18 @@ def get_target_mapping(validated_query_params):
                     }
                 )
             else:
+                if "Location" in target_mapping.mapping_criteria:
+                    # Find the location ID and Name for the target's mapped to values
+                    location = (
+                        db.session.query(Location.location_id, Location.location_name)
+                        .filter(
+                            Location.location_uid
+                            == target.mapped_to_values["Location"],
+                            Location.survey_uid == target_mapping.survey_uid,
+                        )
+                        .first()
+                    )
+
                 data.append(
                     {
                         "target_uid": target.target_uid,
@@ -402,7 +432,15 @@ def get_target_mapping(validated_query_params):
                         "supervisor_uid": None,
                         "supervisor_email": None,
                         "supervisor_name": None,
-                        "supervisor_mapping_criteria_values": target.supervisor_mapping_criteria_values,
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": target.mapped_to_values,
+                            "other": {
+                                "location_id": location.location_id,
+                                "location_name": location.location_name,
+                            }
+                            if "Location" in target_mapping.mapping_criteria
+                            else {},
+                        },
                     }
                 )
 
