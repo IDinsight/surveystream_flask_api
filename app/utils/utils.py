@@ -495,7 +495,7 @@ def retry(tries, delay=3, backoff=2):
     return deco_retry  # @retry(arg[, ...]) -> true decorator
 
 
-def retry_on_exception(ExceptionToCheck, tries=3, delay=2, backoff=2):
+def retry_on_exception(ExceptionToCheck, tries=2, delay=2, backoff=2):
     """Retry calling the decorated function using an exponential backoff.
 
     http://www.saltycrane.com/blog/2009/11/trying-out-retry-decorator-python/
