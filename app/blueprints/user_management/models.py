@@ -4,6 +4,38 @@ from app.blueprints.locations.models import Location
 from app.blueprints.surveys.models import Survey
 
 
+class UserLanguage(db.Model):
+    """
+    SQLAlchemy data model for User Languages
+    This table describes the languages that a user is associated with
+    """
+
+    __tablename__ = "language_user_mapping"
+
+    survey_uid = db.Column(
+        db.Integer(), db.ForeignKey(Survey.survey_uid), nullable=False
+    )
+    user_uid = db.Column(db.Integer(), db.ForeignKey(User.user_uid), nullable=False)
+    language = db.Column(db.String(), nullable=False)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("survey_uid", "user_uid", "language"),
+        {"schema": "webapp"},
+    )
+
+    def __init__(self, survey_uid, user_uid, language):
+        self.survey_uid = survey_uid
+        self.user_uid = user_uid
+        self.language = language
+
+    def to_dict(self):
+        return {
+            "survey_uid": self.survey_uid,
+            "user_uid": self.user_uid,
+            "language": self.language,
+        }
+
+
 class UserLocation(db.Model):
     """
     SQLAlchemy data model for User Location

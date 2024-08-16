@@ -1013,6 +1013,7 @@ class TestSurveys:
                     {"name": "SurveyStream users", "status": "Not Started"},
                     {"name": "Enumerators", "status": "In Progress"},
                     {"name": "Targets", "status": "In Progress"},
+                    {"name": "Mapping", "status": "Not Started"},
                 ],
                 "overall_status": "In Progress - Configuration",
             },
