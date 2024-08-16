@@ -6869,7 +6869,7 @@ paths:
                       mapping_errors:
                         type: array
                         description: >-
-                          An array of errors encounteredin mapping. Each array
+                          An array of errors encountered in mapping. Each array
                           item is a string containing the error message related
                           to an individual error.
     post:
@@ -7153,11 +7153,11 @@ paths:
                           type: string
                           description: The primary language of the surveyor
                         location_id:
-                          type: integer
-                          description: The unique ID of the surveyor's prime geo level location
+                          type: array
+                          description: List of unique IDs of the surveyor's prime geo level locations
                         location_name:
-                          type: string
-                          description: The name of the surveyor's prime geo level location
+                          type: array
+                          description: List of names of the surveyor's prime geo level locations
                         surveyor_mapping_criteria_values:
                           type: object
                           description: The surveyor to supervisor mapping criteria values for the surveyor
