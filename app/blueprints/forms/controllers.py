@@ -445,7 +445,10 @@ def ingest_scto_form_definition(form_uid):
 
     # Get the list of columns for the `survey` and `choices` tabs of the form definition
     survey_tab_columns = scto_form_definition["fieldsRowsAndColumns"][0]
-    choices_tab_columns = scto_form_definition["choicesRowsAndColumns"][0]
+    choices_tab_columns = [
+        col.replace("label::", "label:")
+        for col in scto_form_definition["choicesRowsAndColumns"][0]
+    ]  # Deal with horrible formatting quirks that SurveyCTO allows
     settings_tab_columns = scto_form_definition["settingsRowsAndColumns"][0]
     unique_list_names = []
 
@@ -490,7 +493,9 @@ def ingest_scto_form_definition(form_uid):
                 jsonify(
                     {
                         "success": False,
-                        "error": "No 'value' or 'name' column found on the choices tab of the SurveyCTO form definition",
+                        "errors": [
+                            "No 'value' or 'name' column found on the choices tab of the SurveyCTO form definition"
+                        ],
                     }
                 ),
                 422,
@@ -502,11 +507,14 @@ def ingest_scto_form_definition(form_uid):
 
     for i, row in duplicate_choice_values.iterrows():
         errors.append(
-            f"Duplicate choice values found for list_name={row[0]} and value={row[1]} on the choices tab of the SurveyCTO form definition"
+            f"Duplicate choice values found for list_name '{row[0]}' and value '{row[1]}' on the choices tab of the SurveyCTO form definition"
+        )
+        errors.append(
+            "Duplicate choice values found for list_name 'district' and value '20' on the choices tab of the SurveyCTO form definition"
         )
 
     if len(errors) > 0:
-        return jsonify({"success": False, "error": "\n".join(errors)}), 422
+        return jsonify({"success": False, "errors": errors}), 422
 
     choice_labels = [
         col for col in choices_tab_columns if col.split(":")[0].lower() == "label"
@@ -530,7 +538,9 @@ def ingest_scto_form_definition(form_uid):
                     return (
                         jsonify(
                             {
-                                "error": "SurveyCTO form definition contains duplicate choice list entities"
+                                "errors": [
+                                    "SurveyCTO form definition contains duplicate choice list entities"
+                                ]
                             }
                         ),
                         500,
@@ -638,7 +648,9 @@ def ingest_scto_form_definition(form_uid):
     except IntegrityError as e:
         db.session.rollback()
         return (
-            jsonify({"error": "SurveyCTO form definition contains duplicate entities"}),
+            jsonify(
+                {"error": ["SurveyCTO form definition contains duplicate entities"]}
+            ),
             500,
         )
 
