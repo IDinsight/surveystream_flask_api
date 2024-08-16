@@ -200,65 +200,6 @@ class TargetMapping:
 
         return targets_with_custom_mapping_subquery.subquery()
 
-    def get_targets_with_invalid_mappings(self):
-        """
-        Function to return the target uids with invalid mappings
-        In case mapping criteria values for a target/supervisor have changed, some
-        saved mappings may no longer be valid. This function will return the target uids
-        with invalid mappings
-
-        """
-        supervisors_subquery = self.get_supervisors_subquery()
-        targets_subquery = self.get_targets_with_mapped_to_subquery()
-
-        # Get all the saved mappings for the current form
-        subquery = db.session.query(Target.target_uid).filter(
-            Target.form_uid == self.form_uid
-        )
-        saved_mappings = UserTargetMapping.query.filter(
-            UserTargetMapping.target_uid.in_(subquery)
-        ).all()
-
-        targets_with_invalid_mappings = []
-        for mapping in saved_mappings:
-            target_uid = mapping.target_uid
-            supervisor_uid = mapping.user_uid
-
-            # We don't need to check for deleted targets and supervisors as they will be removed
-            # by delete cascades
-            # Only check if the mapping holds true for the current mapping criteria values
-            target = (
-                db.session.query(targets_subquery)
-                .filter(targets_subquery.c.target_uid == target_uid)
-                .first()
-            )
-
-            supervisor = None
-            if target is not None:
-                # There will be only one supervisor for the specific mapping criteria values and supervisor UID
-                supervisor = (
-                    db.session.query(supervisors_subquery)
-                    .filter(
-                        supervisors_subquery.c.user_uid == supervisor_uid,
-                        *[
-                            (
-                                type_coerce(
-                                    supervisors_subquery.c.mapping_criteria_values, JSON
-                                )["criteria"][criteria]
-                                == type_coerce(target.mapped_to_values[criteria], JSON)
-                            )
-                            for criteria in self.mapping_criteria
-                        ],
-                    )
-                    .first()
-                )
-
-            # If the query returned no supervisor, then the mapping is invalid
-            if supervisor is None:
-                targets_with_invalid_mappings.append(target_uid)
-
-        return targets_with_invalid_mappings
-
     def get_saved_mappings(self):
         """
         Method to get the saved mappings for the form. This method will only return the mappings that
@@ -685,64 +626,6 @@ class SurveyorMapping:
         )
 
         return surveyors_with_custom_mapping_subquery.subquery()
-
-    def get_surveyors_with_invalid_mappings(self):
-        """
-        Function to return the enumerator uids with invalid mappings
-        In case mapping criteria values for a surveyor/supervisor have changed, some
-        saved mappings may no longer be valid. This function will return the enumerator uids
-        with invalid mappings
-
-        """
-        supervisors_subquery = self.get_supervisors_subquery()
-        surveyors_subquery = self.get_surveyors_with_mapped_to_subquery()
-
-        # Get all the saved mappings for the current form
-        saved_mappings = UserSurveyorMapping.query.filter(
-            UserSurveyorMapping.form_uid == self.form_uid
-        ).all()
-
-        surveyors_with_invalid_mappings = []
-        for mapping in saved_mappings:
-            enumerator_uid = mapping.enumerator_uid
-            supervisor_uid = mapping.user_uid
-
-            # We don't need to check for deleted surveyors and supervisors as they will be removed
-            # by delete cascades
-            # Only check if the mapping holds true for the current mapping criteria values
-            surveyor = (
-                db.session.query(surveyors_subquery)
-                .filter(surveyors_subquery.c.enumerator_uid == enumerator_uid)
-                .first()
-            )
-
-            supervisor = None
-            if surveyor is not None:
-                # There will be only one supervisor for the specific mapping criteria values and supervisor UID
-                supervisor = (
-                    db.session.query(supervisors_subquery)
-                    .filter(
-                        supervisors_subquery.c.user_uid == supervisor_uid,
-                        *[
-                            (
-                                type_coerce(
-                                    supervisors_subquery.c.mapping_criteria_values, JSON
-                                )["criteria"][criteria]
-                                == type_coerce(
-                                    surveyor.mapped_to_values[criteria], JSON
-                                )
-                            )
-                            for criteria in self.mapping_criteria
-                        ],
-                    )
-                    .first()
-                )
-
-            # If the query returned no supervisor, then the mapping is invalid
-            if supervisor is None:
-                surveyors_with_invalid_mappings.append(enumerator_uid)
-
-        return surveyors_with_invalid_mappings
 
     def get_saved_mappings(self):
         """
