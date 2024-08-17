@@ -494,7 +494,7 @@ def ingest_scto_form_definition(form_uid):
                     {
                         "success": False,
                         "errors": [
-                            "No 'value' or 'name' column found on the choices tab of the SurveyCTO form definition"
+                            "An error was found on the choices tab of your SurveyCTO form definition. No 'value' or 'name' column was found. Please update your form definition on SurveyCTO and try again."
                         ],
                     }
                 ),
@@ -507,10 +507,7 @@ def ingest_scto_form_definition(form_uid):
 
     for i, row in duplicate_choice_values.iterrows():
         errors.append(
-            f"Duplicate choice values found for list_name '{row[0]}' and value '{row[1]}' on the choices tab of the SurveyCTO form definition"
-        )
-        errors.append(
-            "Duplicate choice values found for list_name 'district' and value '20' on the choices tab of the SurveyCTO form definition"
+            f"An error was found on the choices tab of your SurveyCTO form definition. The choice list '{row[0]}' has multiple choices with the value '{row[1]}'. Please update your form definition on SurveyCTO and try again."
         )
 
     if len(errors) > 0:
@@ -539,7 +536,7 @@ def ingest_scto_form_definition(form_uid):
                         jsonify(
                             {
                                 "errors": [
-                                    "SurveyCTO form definition contains duplicate choice list entities"
+                                    "An unkown error occurred while processing the choices tab of your SurveyCTO form definition."
                                 ]
                             }
                         ),
@@ -553,7 +550,9 @@ def ingest_scto_form_definition(form_uid):
                 choice_value = choices_dict.get("value", choices_dict.get("name", None))
                 language = "default"
                 if len(choice_label.split(":")) > 1:
-                    language = choice_label.split(":")[1]
+                    language = choice_label.split(":")[
+                        -1
+                    ]  # Get the last element because SCTO allows for multiple colons like label::hindi
 
                 # Add the choice label to the database
                 scto_choice_label = SCTOChoiceLabel(
@@ -633,7 +632,9 @@ def ingest_scto_form_definition(form_uid):
                 # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
                 language = "default"
                 if len(question_label.split(":")) > 1:
-                    language = question_label.split(":")[1]
+                    language = question_label.split(":")[
+                        -1
+                    ]  # Get the last element because SCTO allows for multiple colons like label::hindi
 
                 # Add the question label to the database
                 scto_question_label = SCTOQuestionLabel(
@@ -649,7 +650,11 @@ def ingest_scto_form_definition(form_uid):
         db.session.rollback()
         return (
             jsonify(
-                {"error": ["SurveyCTO form definition contains duplicate entities"]}
+                {
+                    "error": [
+                        "A duplicate error was found on the survey tab of your SurveyCTO form definition. Please update your form definition on SurveyCTO and try again."
+                    ]
+                }
             ),
             500,
         )

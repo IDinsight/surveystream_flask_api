@@ -567,7 +567,6 @@ class TestForms:
 
         assert response.status_code == 404
 
-    @pytest.mark.run_only
     def test_scto_form_duplicate_choice_error(
         self, client, login_test_user, csrf_token, create_parent_form
     ):
@@ -609,11 +608,13 @@ class TestForms:
         expected_response = {
             "success": False,
             "errors": [
-                "Duplicate choice values found for list_name=state and value=10 on the choices tab of the SurveyCTO form definition"
+                "An error was found on the choices tab of your SurveyCTO form definition. The choice list 'state' has multiple choices with the value '10'. Please update your form definition on SurveyCTO and try again."
             ],
         }
 
-    @pytest.mark.run_only
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_scto_form_definition(
         self, client, login_test_user, csrf_token, create_parent_form
     ):
