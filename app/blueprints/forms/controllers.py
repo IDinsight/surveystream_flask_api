@@ -530,7 +530,7 @@ def ingest_scto_form_definition(form_uid):
                 db.session.add(scto_choice_list)
                 try:
                     db.session.flush()
-                except IntegrityError as e:
+                except:
                     db.session.rollback()
                     return (
                         jsonify(
@@ -658,6 +658,9 @@ def ingest_scto_form_definition(form_uid):
             ),
             500,
         )
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
     response = {
         "success": True,
