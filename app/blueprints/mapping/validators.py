@@ -64,3 +64,16 @@ class TargetMappingValidator(FlaskForm):
 class UpdateTargetMappingValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     mappings = FieldList(FormField(TargetMappingValidator))
+
+
+class SurveyorMappingValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    enumerator_uid = IntegerField(validators=[DataRequired()])
+    supervisor_uid = IntegerField()
+
+
+class UpdateSurveyorMappingValidator(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
+    mappings = FieldList(FormField(SurveyorMappingValidator))
