@@ -608,7 +608,7 @@ class TestForms:
         expected_response = {
             "success": False,
             "errors": [
-                "An error was found on the choices tab of your SurveyCTO form definition. The choice list 'state' has multiple choices with the value '10'. Please update your form definition on SurveyCTO and try again."
+                'An error was found on the choices tab of your SurveyCTO form definition. The choice list "state" has multiple choices with the value "10". Please update your form definition on SurveyCTO and try again.'
             ],
         }
 

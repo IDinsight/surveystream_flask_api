@@ -507,7 +507,7 @@ def ingest_scto_form_definition(form_uid):
 
     for i, row in duplicate_choice_values.iterrows():
         errors.append(
-            f"An error was found on the choices tab of your SurveyCTO form definition. The choice list '{row[0]}' has multiple choices with the value '{row[1]}'. Please update your form definition on SurveyCTO and try again."
+            f'An error was found on the choices tab of your SurveyCTO form definition. The choice list "{row[0]}" has multiple choices with the value "{row[1]}". Please update your form definition on SurveyCTO and try again.'
         )
 
     if len(errors) > 0:
