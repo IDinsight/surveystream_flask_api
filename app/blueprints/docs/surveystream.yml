@@ -6646,7 +6646,7 @@ paths:
                       mapping_errors:
                         type: array
                         description: >-
-                          An array of errors encounteredin mapping. Each array
+                          An array of errors encountered in mapping. Each array
                           item is a string containing the error message related
                           to an individual error.
     post:
@@ -6745,7 +6745,6 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred
-
   "/mapping/targets-mapping":
     get:
       summary: Get target to supervisor mapping for a form
@@ -6870,7 +6869,7 @@ paths:
                       mapping_errors:
                         type: array
                         description: >-
-                          An array of errors encounteredin mapping. Each array
+                          An array of errors encountered in mapping. Each array
                           item is a string containing the error message related
                           to an individual error.
     post:
@@ -6906,6 +6905,357 @@ paths:
                       target_uid:
                         type: integer
                         description: The system-assigned unique ID of the target
+                      supervisor_uid:
+                        type: integer
+                        description: The system-assigned unique ID of the supervisor
+              required:
+                - form_uid
+                - mappings
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred 
+  "/mapping/surveyors-mapping-config":
+    get:
+      summary: Get surveyors mapping configuration for a form
+      description: >
+        Returns the surveyors mapping configuration for a given form that is, how mapping criteria values of surveyors are mapped to mapping criteria values of supervisors and the status of the mapping for each mapping criteria value.
+      tags:
+        - Mapping
+      parameters:
+        - name: form_uid
+          in: query
+          description: The unique ID of a parent form.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Returns the surveyors mapping config for a given form.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        surveyor_mapping_criteria_values:
+                          type: object
+                          description: The surveyor to supervisor mapping criteria values for the surveyor
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each surveyor to supervisor mapping criteria for the surveyor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                        surveyor_count:
+                          type: integer
+                          description: The number of surveyors that match the surveyor mapping criteria
+                        supervisor_mapping_criteria_values:
+                          type: object
+                          description: The surveyor to supervisor mapping criteria values for the supervisor
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each surveyor to supervisor mapping criteria for the supervisor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                        supervisor_count:
+                          type: integer
+                          description: The number of supervisors that match the supervisor mapping criteria
+                        mapping_status:
+                          type: string
+                          description: The status of the mapping. Can be one of `Complete` or `Pending` depending on whether the mapping has been completed or not.
+        "422":
+          description: Mapping errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to mapping. 
+                    properties:
+                      mapping_errors:
+                        type: array
+                        description: >-
+                          An array of errors encountered in mapping. Each array
+                          item is a string containing the error message related
+                          to an individual error.
+    post:
+      summary: Save the surveyors mapping configuration for a form
+      description: >
+        Saves the configuration for linking a mapping criteria 
+        value of surveyors to a mapping criteria value of a supervisor.
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: JSON object containing the surveyors mapping configuration for the form.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique ID of the form
+                mapping_config:
+                  type: array
+                  description: Full list mapping configurations
+                  items:
+                    type: object
+                    properties:
+                      mapping_values:
+                        type: array
+                        description: The surveyor mapping criteria values
+                        items:
+                          type: object
+                          properties:
+                            criteria:
+                              type: string
+                              description: Mapping criteria. Can be one of "Gender", "Language", "Location", "Manual"
+                            value:
+                              type: string
+                              description: The value of the surveyor mapping criteria
+                      mapped_to:
+                        type: array
+                        description: The supervisor mapping criteria values to which the surveyor mapping criteria values will be mapped
+                        items:
+                          type: object
+                          properties:
+                            criteria:
+                              type: string
+                              description: Mapping criteria. Can be one of "Gender", "Language", "Location", "Manual"
+                            value:
+                              type: string
+                              description: The corresponding value of the supervisor mapping criteria
+              required:
+                - form_uid
+                - mapping_config
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+    delete:
+      summary: Delete the surveyors mapping configuration for a form
+      description: >
+        Deletes the surveyors mapping, both criteria level as well as surveyor level, for a given form from 
+        the database. This resets the state to auto generated mappings based on the mapping criteria.
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+  "/mapping/surveyors-mapping":
+    get:
+      summary: Get surveyor to supervisor mapping for a form
+      description: |
+        Returns the surveyor to supervisor mapping for a given form.
+      tags:
+        - Mapping
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: The unique ID of a parent form.
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: >-
+            The page number of the results to return. Results will be paginated only if `page` and `per_page` are both specified.
+          required: false
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: >-
+            The number of results to return per page. Results will be paginated only if `page` and `per_page` are both specified.
+          required: false
+      responses:
+        "200":
+          description: Returns the surveyor to supervisor mappings for a given form.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        enumerator_uid:
+                          type: integer
+                          description: The system-assigned unique ID of the surveyor
+                        enumerator_id:
+                          type: string
+                          description: The user-assigned unique ID of the surveyor
+                        name:
+                          type: string
+                          description: The full name of the surveyor
+                        gender:
+                          type: string
+                          description: The gender of the surveyor
+                        language:
+                          type: string
+                          description: The primary language of the surveyor
+                        location_id:
+                          type: array
+                          description: List of unique IDs of the surveyor's prime geo level locations
+                        location_name:
+                          type: array
+                          description: List of names of the surveyor's prime geo level locations
+                        surveyor_mapping_criteria_values:
+                          type: object
+                          description: The surveyor to supervisor mapping criteria values for the surveyor
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each surveyor to supervisor mapping criteria for the surveyor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                        supervisor_uid:
+                          type: integer
+                          description: The system-assigned unique ID of the supervisor
+                        supervisor_email:
+                          type: string
+                          description: The email of the supervisor
+                        supervisor_name:
+                          type: string
+                          description: The full name of the supervisor
+                        supervisor_mapping_criteria_values:
+                          type: object
+                          description: The surveyor to supervisor mapping criteria values for the supervisor
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each surveyor to supervisor mapping criteria for the supervisor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                  paginate:
+                    type: object
+                    description: >-
+                      Pagination details. Will only be included if `page` and
+                      `per_page` are both specified in the query parameters.
+                    properties:
+                      page:
+                        type: integer
+                        description: The page number of the results
+                      per_page:
+                        type: integer
+                        description: The number of results per page
+                      count:
+                        type: integer
+                        description: The total number of results
+                      pages:
+                        type: integer
+                        description: The total number of pages
+        "422":
+          description: Mapping errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to mapping. 
+                    properties:
+                      mapping_errors:
+                        type: array
+                        description: >-
+                          An array of errors encountered in mapping. Each array
+                          item is a string containing the error message related
+                          to an individual error.
+    post:
+      summary: Save the surveyor to supervisor mappings for a form
+      description: >
+        Save the surveyors to supervisor mapping for a given form to the database.
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: JSON object containing the surveyor to supervisor mapping for the form.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique ID of the form
+                mappings:
+                  type: array
+                  description: List of surveyor to supervisor mappings for the given survey
+                  items:
+                    type: object
+                    properties:
+                      enumerator_uid:
+                        type: integer
+                        description: The system-assigned unique ID of the surveyor
                       supervisor_uid:
                         type: integer
                         description: The system-assigned unique ID of the supervisor
