@@ -536,7 +536,7 @@ def ingest_scto_form_definition(form_uid):
                         jsonify(
                             {
                                 "errors": [
-                                    "An unkown error occurred while processing the choices tab of your SurveyCTO form definition."
+                                    "An unknown error occurred while processing the choices tab of your SurveyCTO form definition."
                                 ]
                             }
                         ),
