@@ -29,6 +29,7 @@ from .validators import (
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import aliased
+import pandas as pd
 
 
 @forms_bp.route("", methods=["GET"])
@@ -444,7 +445,10 @@ def ingest_scto_form_definition(form_uid):
 
     # Get the list of columns for the `survey` and `choices` tabs of the form definition
     survey_tab_columns = scto_form_definition["fieldsRowsAndColumns"][0]
-    choices_tab_columns = scto_form_definition["choicesRowsAndColumns"][0]
+    choices_tab_columns = [
+        col.replace("label::", "label:")
+        for col in scto_form_definition["choicesRowsAndColumns"][0]
+    ]  # Deal with horrible formatting quirks that SurveyCTO allows
     settings_tab_columns = scto_form_definition["settingsRowsAndColumns"][0]
     unique_list_names = []
 
@@ -471,6 +475,48 @@ def ingest_scto_form_definition(form_uid):
 
     db.session.add(scto_settings)
 
+    # Check for duplicate choice values in the choices tab
+    errors = []
+    df = pd.DataFrame(
+        scto_form_definition["choicesRowsAndColumns"][1:], columns=choices_tab_columns
+    )
+
+    df = df.loc[df["list_name"] != ""]
+
+    value_column_name = "value"
+    if "value" not in df.columns:
+        if "name" in df.columns:
+            value_column_name = "name"
+
+        else:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": [
+                            "An error was found on the choices tab of your SurveyCTO form definition. No 'value' or 'name' column was found. Please update your form definition on SurveyCTO and try again."
+                        ],
+                    }
+                ),
+                422,
+            )
+
+    duplicate_choice_values = df[
+        df.duplicated(subset=["list_name", value_column_name])
+    ][["list_name", value_column_name]].drop_duplicates()
+
+    for i, row in duplicate_choice_values.iterrows():
+        errors.append(
+            f'An error was found on the choices tab of your SurveyCTO form definition. The choice list "{row[0]}" has multiple choices with the value "{row[1]}". Please update your form definition on SurveyCTO and try again.'
+        )
+
+    if len(errors) > 0:
+        return jsonify({"success": False, "errors": errors}), 422
+
+    choice_labels = [
+        col for col in choices_tab_columns if col.split(":")[0].lower() == "label"
+    ]
+
     # Process the lists and choices from the `choices` tab of the form definition
     for row in scto_form_definition["choicesRowsAndColumns"][1:]:
         choices_dict = dict(zip(choices_tab_columns, row))
@@ -484,12 +530,14 @@ def ingest_scto_form_definition(form_uid):
                 db.session.add(scto_choice_list)
                 try:
                     db.session.flush()
-                except IntegrityError as e:
+                except:
                     db.session.rollback()
                     return (
                         jsonify(
                             {
-                                "error": "SurveyCTO form definition contains duplicate choice list entities"
+                                "errors": [
+                                    "An unknown error occurred while processing the choices tab of your SurveyCTO form definition."
+                                ]
                             }
                         ),
                         500,
@@ -497,18 +545,14 @@ def ingest_scto_form_definition(form_uid):
 
                 unique_list_names.append(choices_dict["list_name"])
 
-            choice_labels = [
-                col
-                for col in choices_tab_columns
-                if col.split(":")[0].lower() == "label"
-            ]
-
             for choice_label in choice_labels:
                 # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
                 choice_value = choices_dict.get("value", choices_dict.get("name", None))
                 language = "default"
                 if len(choice_label.split(":")) > 1:
-                    language = choice_label.split(":")[1]
+                    language = choice_label.split(":")[
+                        -1
+                    ]  # Get the last element because SCTO allows for multiple colons like label::hindi
 
                 # Add the choice label to the database
                 scto_choice_label = SCTOChoiceLabel(
@@ -571,7 +615,7 @@ def ingest_scto_form_definition(form_uid):
                 db.session.flush()
             except IntegrityError as e:
                 db.session.rollback()
-                return (jsonify({"error": str(e)}),)
+                return (jsonify({"error": str(e)}), 500)
 
             # Check if a repeat group is ending
             if questions_dict["type"].strip().lower() == "end repeat":
@@ -588,7 +632,9 @@ def ingest_scto_form_definition(form_uid):
                 # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
                 language = "default"
                 if len(question_label.split(":")) > 1:
-                    language = question_label.split(":")[1]
+                    language = question_label.split(":")[
+                        -1
+                    ]  # Get the last element because SCTO allows for multiple colons like label::hindi
 
                 # Add the question label to the database
                 scto_question_label = SCTOQuestionLabel(
@@ -603,9 +649,18 @@ def ingest_scto_form_definition(form_uid):
     except IntegrityError as e:
         db.session.rollback()
         return (
-            jsonify({"error": "SurveyCTO form definition contains duplicate entities"}),
+            jsonify(
+                {
+                    "error": [
+                        "A duplicate error was found on the survey tab of your SurveyCTO form definition. Please update your form definition on SurveyCTO and try again."
+                    ]
+                }
+            ),
             500,
         )
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
     response = {
         "success": True,
