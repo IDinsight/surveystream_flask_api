@@ -3833,6 +3833,35 @@ paths:
                             {`location`_id: _location_id_, `location`_name:
                             _location_name_} in descending order from highest to
                             lowest level location.
+                        supervisors:
+                          type: array
+                          description: >-
+                            An array of supervisors associated with each target. Only child
+                            supervisors of the logged in user as per user hierarchy are included 
+                            in the array.
+                          items:
+                            type: object
+                            properties:
+                              role_name:
+                                type: string
+                                description: The name of the supervisor's role
+                              role_uid:
+                                type: integer
+                                description: The system-assigned unique ID for the supervisor's role
+                              supervisor_name:
+                                type: string
+                                description: The name of the supervisor
+                              supervisor_email:
+                                type: string
+                                description: The email of the supervisor
+        "422":
+          description: >
+            Form errors
+
+            Any errors encountered in linking the targets to other location hierarchy levels or
+            in mapping the targets to supervisors will be returned as an array under the `errors` 
+            key in the response.
+
     post:
       summary: Upload a csv of assignments
       description: |
@@ -4024,6 +4053,12 @@ paths:
                                 items:
                                   type: string
                                   description: The column name in the csv
+                      mapping_errors:
+                        type: array
+                        description: >-
+                          An array of errors encountered in mapping targets/enumerators
+                          with supervisors. Each array item is a string containing the 
+                          error message related to an individual error.
                   success:
                     type: boolean
                     description: Whether the upload was successful
@@ -4160,7 +4195,191 @@ paths:
                         total_completed_targets:
                           type: integer
                           description: Total complete targets for the given survey
-                          
+                        supervisors:
+                          type: array
+                          description: >-
+                            An array of supervisors associated with the enumerator. Only 
+                            child supervisors of the logged in user as per user
+                            hierarchy are included in the array.
+                          items:
+                            type: object
+                            properties:
+                              role_name:
+                                type: string
+                                description: The name of the supervisor's role
+                              role_uid:
+                                type: integer
+                                description: The system-assigned unique ID for the supervisor's role
+                              supervisor_name:
+                                type: string
+                                description: The name of the supervisor
+                              supervisor_email:
+                                type: string
+                                description: The email of the supervisor
+        "422":
+          description: >
+            Form errors
+
+            Any errors encountered in mapping the surveyors to supervisors will be returned as 
+            an array under the `errors` key in the response.                
+  /assignments/targets:
+    get:
+      summary: Get targets for the logged in user for a form
+      description: Return the logged in user's targets for the given form
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        target_id:
+                          type: string
+                          description: The ID of the target
+                        target_uid:
+                          type: integer
+                          description: The unique ID of the target
+                        language:
+                          type: string
+                          description: The primary language of the target
+                        gender:
+                          type: string
+                          description: The gender of the target
+                        custom_fields:
+                          type: object
+                          description: >-
+                            Any non-standard fields that should be displayed for
+                            the target
+                        location_uid:
+                          type: integer
+                          description: The unique ID of the target's location
+                        target_locations:
+                          type: array
+                          description: >-
+                            The geography of the target.  Each array item is an
+                            object of the form {`location_id`: _location_id_,
+                            `location_name`:  _location_name_, `location_uid`:
+                            __location_uid__, `geo_level_name`:
+                            __geo_level_name__, `geo_level_uid`:
+                            __geo_level_uid__} in descending order from highest 
+                            to lowest level location the target is location in.
+                            Can be null if a location has not been specified for
+                            the target.
+                          items:
+                            type: object
+                            properties:
+                              location_id:
+                                type: integer
+                                description: The user-defined unique ID of the location
+                              location_name:
+                                type: string
+                                description: The name of the location
+                              geo_level_name:
+                                type: string
+                                description: The name of the geo level
+                        completed_flag:
+                          type: boolean
+                          description: >-
+                            Whether the target has been marked as completed
+                        refusal_flag:
+                          type: boolean
+                          description: >-
+                            Whether the target has been flagged as a refusal
+                        num_attempts:
+                          type: integer
+                          description: >-
+                            The number of times the target has been attempted
+                        last_attempt_survey_status:
+                          type: integer
+                          description: >-
+                            The survey status from the target's most recent
+                            SurveyCTO submission
+                        last_attempt_survey_status_label:
+                          type: string
+                          description: >-
+                            The label corresponding to the last_attempt_survey_status
+                            code
+                        final_survey_status:
+                          type: integer
+                          description: >-
+                            The final survey status of the target, calculated based on the survey status 
+                            in its most recent SurveyCTO submission and the completed and refusal flags 
+                            information
+                        final_survey_status_label:
+                          type: string
+                          description: >-
+                            The label corresponding to the final_survey_status
+                            code
+                        target_assignable:
+                          type: boolean
+                          description: >-
+                            Grouping of final_survey_status into assignable/not assignable
+                            categories. Used to determine if the target is
+                            assignable.
+                        webapp_tag_color:
+                          type: string
+                          description: >-
+                            The color that should be used to color the status
+                            tag on the web flask_app
+                        revisit_sections:
+                          type: array
+                          description: The revisit sections for the target
+                          items:
+                            type: string
+                            description: Name of the revisit section for the target
+                        scto_fields:
+                          type: object
+                          description: >-
+                            The required fields from the target's most recent 
+                            SurveyCTO submission
+                        supervisors:
+                          type: array
+                          description: >-
+                            An array of supervisors associated with the target. Only child
+                            supervisors of the logged in user as per user hierarchy are included 
+                            in the array.
+                          items:
+                            type: object
+                            properties:
+                              role_name:
+                                type: string
+                                description: The name of the supervisor's role
+                              role_uid:
+                                type: integer
+                                description: The system-assigned unique ID for the supervisor's role
+                              supervisor_name:
+                                type: string
+                                description: The name of the supervisor
+                              supervisor_email:
+                                type: string
+                                description: The email of the supervisor
+        "422":
+          description: >
+            Form errors
+
+            Any errors encountered in linking the targets to other location hierarchy levels or
+            in mapping the targets to supervisors will be returned as an array under the `errors` 
+            key in the response.
+    
+
   /assignments/schedule-email:
     post:
       summary: Schedule assignment emails
@@ -4941,6 +5160,7 @@ paths:
             Form errors Form errors When `validate_hierarchy` is set to true,
             any validation errors will be returned as an array under the
             `errors` key in the response.
+
   "/permissions":
     get:
       tags:
@@ -5489,6 +5709,7 @@ paths:
 
             When `validate_hierarchy` is set to true, any validation errors will
             be returned as an array under the `errors` key in the response.
+
   /locations:
     get:
       tags:

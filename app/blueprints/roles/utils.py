@@ -1,4 +1,5 @@
 from .errors import InvalidRoleHierarchyError
+from .models import SurveyAdmin
 
 
 class RoleHierarchy:
@@ -112,7 +113,7 @@ class RoleHierarchy:
 
         if len(errors_list) > 0:
             raise InvalidRoleHierarchyError(errors_list)
-        
+
         # Now check that all nodes were visited
         if len(visited_nodes) != len(self.roles):
             unvisited_nodes = [
@@ -147,3 +148,19 @@ class RoleHierarchy:
             raise InvalidRoleHierarchyError(errors_list)
 
         return
+
+
+def check_if_survey_admin(user_uid, survey_uid):
+    """
+    Return a boolean indicating whether the given user
+    is a survey admin for the given survey
+    """
+
+    # Check if the user is survey admin
+    survey_admin_entry = SurveyAdmin.query.filter_by(
+        user_uid=user_uid, survey_uid=survey_uid
+    ).first()
+
+    if survey_admin_entry:
+        return True
+    return False

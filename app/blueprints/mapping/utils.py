@@ -394,19 +394,19 @@ class TargetMapping:
 
         if len(not_found_target_uids) > 0:
             raise InvalidMappingRecordsError(
-                f"The following target UIDs were not found for the given form: {', '.join(not_found_target_uids)}"
+                f"The following target UIDs were not found for the given form: {', '.join([str(x) for x in not_found_target_uids])}"
             )
         if len(not_found_supervisor_uids) > 0:
             raise InvalidMappingRecordsError(
-                f"The following user UIDs were not found with lowest field supervisor roles for the given survey: {', '.join(not_found_supervisor_uids)}"
+                f"The following user UIDs were not found with lowest field supervisor roles for the given survey: {', '.join([str(x) for x in not_found_supervisor_uids])}"
             )
         if len(duplicate_target_uids) > 0:
             raise InvalidMappingRecordsError(
-                f"The following target UIDs are duplicated in the mappings: {', '.join(duplicate_target_uids)}"
+                f"The following target UIDs are duplicated in the mappings: {', '.join([str(x) for x in duplicate_target_uids])}"
             )
         if len(invalid_mapping) > 0:
             raise InvalidMappingRecordsError(
-                f"The mappings for the following target UIDs are violating the mapping criteria: {', '.join(invalid_mapping)}"
+                f"The mappings for the following target UIDs are violating the mapping criteria: {', '.join([str(x) for x in invalid_mapping])}"
             )
         return
 
@@ -830,19 +830,19 @@ class SurveyorMapping:
 
         if len(not_found_enumerator_uids) > 0:
             raise InvalidMappingRecordsError(
-                f"The following enumerator UIDs were not found for the given form: {', '.join(not_found_enumerator_uids)}"
+                f"The following enumerator UIDs were not found for the given form: {', '.join([str(x) for x in not_found_enumerator_uids])}"
             )
         if len(not_found_supervisor_uids) > 0:
             raise InvalidMappingRecordsError(
-                f"The following user UIDs were not found with lowest field supervisor roles for the given survey: {', '.join(not_found_supervisor_uids)}"
+                f"The following user UIDs were not found with lowest field supervisor roles for the given survey: {', '.join([str(x) for x in not_found_supervisor_uids])}"
             )
         if len(duplicate_enumerator_uids) > 0:
             raise InvalidMappingRecordsError(
-                f"The following enumerator UIDs are duplicated in the mappings: {', '.join(duplicate_enumerator_uids)}"
+                f"The following enumerator UIDs are duplicated in the mappings: {', '.join([str(x) for x in duplicate_enumerator_uids])}"
             )
         if len(invalid_mapping) > 0:
             raise InvalidMappingRecordsError(
-                f"The mappings for the following enumerator UIDs are violating the mapping criteria: {', '.join(invalid_mapping)}"
+                f"The mappings for the following enumerator UIDs are violating the mapping criteria: {', '.join([str(x) for x in invalid_mapping])}"
             )
         return
 

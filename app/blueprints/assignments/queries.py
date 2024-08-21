@@ -1,10 +1,14 @@
+from sqlalchemy import case, cast, or_
+from sqlalchemy.sql.functions import func
+
 from app import db
-from .models import SurveyorAssignment
-from app.blueprints.targets.models import TargetStatus
+from app.blueprints.auth.models import User
 from app.blueprints.enumerators.models import SurveyorForm, SurveyorStats
 from app.blueprints.forms.models import Form
-from sqlalchemy.sql.functions import func
-from sqlalchemy import case, or_, cast
+from app.blueprints.roles.models import Role, UserHierarchy
+from app.blueprints.targets.models import TargetStatus
+
+from .models import SurveyorAssignment
 
 
 def build_surveyor_formwise_productivity_subquery(survey_uid):
@@ -109,13 +113,9 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
                         0,
                     ),
                     "avg_num_submissions_per_day",
-                    func.coalesce(
-                        SurveyorStats.avg_num_submissions_per_day, 0
-                    ),
+                    func.coalesce(SurveyorStats.avg_num_submissions_per_day, 0),
                     "avg_num_completed_per_day",
-                    func.coalesce(
-                        SurveyorStats.avg_num_completed_per_day, 0
-                    ),
+                    func.coalesce(SurveyorStats.avg_num_completed_per_day, 0),
                 ),
             ).label("form_productivity"),
         )
@@ -128,7 +128,7 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
         .outerjoin(
             SurveyorStats,
             (SurveyorForm.enumerator_uid == SurveyorStats.enumerator_uid)
-            & (SurveyorForm.form_uid == SurveyorStats.form_uid)
+            & (SurveyorForm.form_uid == SurveyorStats.form_uid),
         )
         .filter(Form.survey_uid == survey_uid)
         .group_by(SurveyorForm.enumerator_uid)
@@ -136,3 +136,86 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
     )
 
     return surveyor_formwise_productivity_subquery
+
+
+def build_child_users_with_supervisors_query(
+    user_uid, survey_uid, is_survey_admin=False
+):
+    """
+    Build a subquery that returns all the child supervisors for the given user
+    joined to a JSON object containing the supervisors linking the given user with
+    the child supervisors.
+
+    This will be used to join with the targets and enumerators to get their supervisor
+    information (restricted to the supervisors underneath the current user)
+    """
+
+    # Assemble the first part of the recursive query
+    if not is_survey_admin:
+        # This returns the user uid with an empty array for the
+        # user's supervisors to start the recursive query
+        top_query = (
+            db.session.query(
+                User.user_uid.label("user_uid"),
+                func.jsonb_build_array().label("supervisors"),
+            )
+            .filter(User.user_uid == user_uid)
+            .cte("supervisor_hierarchy_cte", recursive=True)
+        )
+
+    else:
+        # This returns the level 1 users' user hierarchy records
+        # for the given survey
+        top_query = (
+            db.session.query(
+                User.user_uid,
+                func.jsonb_build_array(
+                    func.jsonb_build_object(
+                        "role_uid",
+                        Role.role_uid,
+                        "role_name",
+                        Role.role_name,
+                        "supervisor_name",
+                        func.coalesce(User.first_name.concat(" "), "")
+                        .concat(func.coalesce(User.middle_name.concat(" "), ""))
+                        .concat(func.coalesce(User.last_name, "")),
+                        "supervisor_email",
+                        User.email,
+                    )
+                ).label("supervisors"),
+            )
+            .join(Role, Role.role_uid == func.any(User.roles))
+            .filter(Role.reporting_role_uid.is_(None), Role.survey_uid == survey_uid)
+            .cte("supervisor_hierarchy_cte", recursive=True)
+        )
+
+    # Assemble the second part of the recursive query
+    # This will descend down the user hierarchy tree and accumulate
+    # the child supervisor names in the supervisors array
+    bottom_query = (
+        db.session.query(
+            UserHierarchy.user_uid.label("user_uid"),
+            top_query.c.supervisors.concat(
+                func.jsonb_build_object(
+                    "role_uid",
+                    Role.role_uid,
+                    "role_name",
+                    Role.role_name,
+                    "supervisor_name",
+                    func.coalesce(User.first_name.concat(" "), "")
+                    .concat(func.coalesce(User.middle_name.concat(" "), ""))
+                    .concat(func.coalesce(User.last_name, "")),
+                    "supervisor_email",
+                    User.email,
+                )
+            ),
+        )
+        .join(User, UserHierarchy.user_uid == User.user_uid)
+        .join(Role, UserHierarchy.role_uid == Role.role_uid)
+        .join(top_query, UserHierarchy.parent_user_uid == top_query.c.user_uid)
+        .filter(UserHierarchy.survey_uid == survey_uid)
+    )
+
+    recursive_query = top_query.union(bottom_query)
+
+    return recursive_query
