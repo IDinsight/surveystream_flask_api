@@ -31,10 +31,16 @@ class EnumeratorColumnMapping:
     """
 
     def __init__(
-        self, column_mapping, prime_geo_level_uid=None, optional_hardcoded_fields=[]
+        self,
+        column_mapping,
+        mapping_criteria,
+        prime_geo_level_uid=None,
+        optional_hardcoded_fields=[],
     ):
         try:
-            self.__validate_column_mapping(column_mapping, prime_geo_level_uid)
+            self.__validate_column_mapping(
+                column_mapping, mapping_criteria, prime_geo_level_uid
+            )
             self.enumerator_id = column_mapping["enumerator_id"]
             self.name = column_mapping["name"]
             self.email = column_mapping["email"]
@@ -93,12 +99,15 @@ class EnumeratorColumnMapping:
                 result[field] = getattr(self, field)
         return result
 
-    def __validate_column_mapping(self, column_mapping, prime_geo_level_uid):
+    def __validate_column_mapping(
+        self, column_mapping, mapping_criteria, prime_geo_level_uid
+    ):
         """
         Method to run validations on the column mapping and raise an exception containing a list of errors
 
-        :param geo_levels: List of geo levels for the survey from the database
         :param column_mapping: List of column mappings from the request payload
+        :param mapping_criteria: List of mapping criteria for surveyor to supervisor mapping
+        :param prime_geo_level_uid: UID of the prime geo level for the survey
         """
 
         mapping_errors = []
@@ -106,6 +115,17 @@ class EnumeratorColumnMapping:
         # Each mandatory column should appear in the mapping exactly once
         # The validator will catch the case where a mandatory column is missing
         # It's a dictionary so we cannot have duplicate keys
+
+        # Columns based on the mapping criteria should be present in the column mapping
+        # "Gender" and "Language" are mandatory fields as per the validator, hence check
+        # only "Location"
+        if (
+            "Location" in mapping_criteria
+            and column_mapping.get("location_id_column") is None
+        ):
+            mapping_errors.append(
+                f"Field name 'location_id_column' is missing from the column mapping but is required based on the mapping criteria."
+            )
 
         # Field names should be unique
         field_names = []

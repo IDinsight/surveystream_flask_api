@@ -16,6 +16,7 @@ from app.blueprints.forms.models import Form
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.locations.models import GeoLevel, Location
 from app.blueprints.locations.utils import GeoLevelHierarchy
+from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
     custom_permissions_required,
@@ -86,6 +87,27 @@ def upload_enumerators(validated_query_params, validated_payload):
 
     survey_uid = form.survey_uid
 
+    # Fetch the surveyor mapping criteria for the form
+    module_questionnaire = ModuleQuestionnaire.query.filter_by(
+        survey_uid=survey_uid
+    ).first()
+    if (
+        module_questionnaire is None
+        or module_questionnaire.surveyor_mapping_criteria is None
+        or len(module_questionnaire.surveyor_mapping_criteria) == 0
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"Supervisor to surveyor mapping criteria not found. Cannot upload enumerators without selecting a mapping criteria first.",
+                }
+            ),
+            422,
+        )
+
+    surveyor_mapping_criteria = module_questionnaire.surveyor_mapping_criteria
+
     # Get the prime geo level from the survey configuration
     prime_geo_level_uid = (
         Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
@@ -96,6 +118,7 @@ def upload_enumerators(validated_query_params, validated_payload):
     try:
         column_mapping = EnumeratorColumnMapping(
             validated_payload.column_mapping.data,
+            surveyor_mapping_criteria,
             prime_geo_level_uid,
             optional_hardcoded_fields,
         )
