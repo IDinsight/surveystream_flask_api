@@ -95,13 +95,15 @@ class EmailConfig(db.Model):
         self.email_source_gsheet_tab = email_source_gsheet_tab
         self.email_source_gsheet_header_row = email_source_gsheet_header_row
         self.email_source_tablename = email_source_tablename
-        self.email_source_columns = (
-            email_source_columns + get_default_email_variable_names(form_uid)
-        )
         self.cc_users = cc_users
         self.pdf_attachment = pdf_attachment
         self.pdf_encryption = pdf_encryption
         self.pdf_encryption_password_type = pdf_encryption_password_type
+        self.email_source_columns = (
+            email_source_columns + get_default_email_variable_names(form_uid)
+            if email_source_columns
+            else get_default_email_variable_names(form_uid)
+        )
 
     def to_dict(self):
         return {
