@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.mutable import MutableDict
 
 from app import db
+from app.blueprints.emails.utils import get_default_email_variable_names
 from app.blueprints.forms.models import Form
 from app.blueprints.surveys.models import Survey
 
@@ -94,7 +95,9 @@ class EmailConfig(db.Model):
         self.email_source_gsheet_tab = email_source_gsheet_tab
         self.email_source_gsheet_header_row = email_source_gsheet_header_row
         self.email_source_tablename = email_source_tablename
-        self.email_source_columns = email_source_columns
+        self.email_source_columns = (
+            email_source_columns + get_default_email_variable_names(form_uid)
+        )
         self.cc_users = cc_users
         self.pdf_attachment = pdf_attachment
         self.pdf_encryption = pdf_encryption
@@ -134,6 +137,13 @@ class EmailSchedule(db.Model):
     )  # Morning, Evening, Daily, Weekly
     dates = db.Column(db.ARRAY(db.Date), nullable=False)
     time = db.Column(TIME, nullable=False)
+
+    email_schedule_filters = db.relationship(
+        "EmailScheduleFilter",
+        backref="email_schedule",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
 
     def __init__(self, dates, time, email_config_uid, email_schedule_name):
         self.email_config_uid = email_config_uid
@@ -215,6 +225,19 @@ class EmailTemplate(db.Model):
         {"schema": "webapp"},
     )
 
+    email_template_tables = db.relationship(
+        "EmailTemplateTable",
+        backref="email_template",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+    email_template_variables = db.relationship(
+        "EmailTemplateVariable",
+        backref="email_template",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+
     def __init__(self, subject, content, language, email_config_uid):
         self.subject = subject
         self.content = content
@@ -237,6 +260,57 @@ class EmailTemplate(db.Model):
         }
 
 
+class EmailTemplateTable(db.Model):
+    __tablename__ = "email_template_tables"
+
+    email_template_table_uid = db.Column(
+        db.Integer(), primary_key=True, autoincrement=True
+    )
+    email_template_uid = db.Column(
+        db.Integer(), db.ForeignKey(EmailTemplate.email_template_uid), nullable=False
+    )
+
+    table_name = db.Column(db.String(255), nullable=False)
+    column_mapping = db.Column(MutableDict.as_mutable(JSONB), nullable=False)
+    sort_list = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
+    variable_name = db.Column(db.String(100), nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "email_template_uid",
+            "table_name",
+            "variable_name",
+            name="email_template_table_uc",
+        ),
+        {"schema": "webapp"},
+    )
+
+    email_table_filters = db.relationship(
+        "EmailTableFilter",
+        backref="email_template_table",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+
+    def __init__(
+        self, email_template_uid, table_name, column_mapping, variable_name, sort_list
+    ):
+        self.email_template_uid = email_template_uid
+        self.table_name = table_name
+        self.column_mapping = column_mapping
+        self.variable_name = variable_name
+        self.sort_list = sort_list
+
+    def to_dict(self):
+        return {
+            "email_template_table_uid": self.email_template_table_uid,
+            "table_name": self.table_name,
+            "column_mapping": self.column_mapping,
+            "variable_name": self.variable_name,
+            "sort_list": self.sort_list,
+        }
+
+
 class EmailTemplateVariable(db.Model):
     __tablename__ = "email_template_variables"
 
@@ -245,18 +319,8 @@ class EmailTemplateVariable(db.Model):
     )
 
     variable_name = db.Column(db.String(100), nullable=False)
-    variable_type = db.Column(
-        db.String(8),
-        CheckConstraint(
-            "variable_type IN ('string', 'table')",
-            name="ck_email_template_variables_variable_type",
-        ),
-        server_default="string",
-        nullable=False,
-    )
     source_table = db.Column(db.String(255), nullable=True)
     variable_expression = db.Column(db.String(255), nullable=True)
-    table_column_mapping = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
 
     __table_args__ = (
         db.PrimaryKeyConstraint("email_template_uid", "variable_name"),
@@ -267,25 +331,19 @@ class EmailTemplateVariable(db.Model):
         self,
         email_template_uid,
         variable_name,
-        variable_type,
         source_table,
         variable_expression,
-        table_column_mapping,
     ):
         self.email_template_uid = email_template_uid
         self.variable_name = variable_name
-        self.variable_type = variable_type
         self.source_table = source_table
         self.variable_expression = variable_expression
-        self.table_column_mapping = table_column_mapping
 
     def to_dict(self):
         return {
             "variable_name": self.variable_name,
-            "variable_type": self.variable_type,
             "source_table": self.source_table,
             "variable_expression": self.variable_expression,
-            "table_column_mapping": self.table_column_mapping,
         }
 
 
@@ -322,18 +380,85 @@ class EmailTableCatalog(db.Model):
         }
 
 
-class EmailScheduleFilter(db.Model):
-    __tablename__ = "email_schedule_filters"
+class EmailTableFilter(db.Model):
+    __tablename__ = "email_table_filters"
 
-    email_schedule_uid = db.Column(
-        db.Integer, db.ForeignKey(EmailSchedule.email_schedule_uid), nullable=False
+    email_template_table_uid = db.Column(
+        db.Integer,
+        db.ForeignKey(EmailTemplateTable.email_template_table_uid),
+        nullable=False,
     )
     filter_group_id = db.Column(db.Integer)
     filter_variable = db.Column(db.String(255), nullable=False)
     filter_operator = db.Column(
         db.String(16),
         CheckConstraint(
-            "filter_operator IN ('Equals','Not Equals','Contains')",
+            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty')",
+            name="ck_email_table_filter_operator",
+        ),
+        nullable=False,
+    )
+    filter_value = db.Column(db.Text, nullable=False)
+    filter_concatenator = db.Column(
+        db.String(4),
+        CheckConstraint(
+            "filter_concatenator IN ('AND', 'OR')",
+            name="ck_email_table_filter_concatenator",
+        ),
+        nullable=True,
+    )
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(
+            "email_template_table_uid",
+            "filter_group_id",
+            "filter_variable",
+            "filter_operator",
+            "filter_value",
+        ),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self,
+        email_template_table_uid,
+        filter_group_id,
+        filter_variable,
+        filter_operator,
+        filter_value,
+        filter_concatenator,
+    ):
+        self.email_template_table_uid = email_template_table_uid
+        self.filter_group_id = filter_group_id
+        self.filter_variable = filter_variable
+        self.filter_operator = filter_operator
+        self.filter_value = filter_value
+        self.filter_concatenator = filter_concatenator
+
+    def to_dict(self):
+        return {
+            "email_template_table_uid": self.email_template_table_uid,
+            "filter_group_id": self.filter_group_id,
+            "filter_variable": self.filter_variable,
+            "filter_operator": self.filter_operator,
+            "filter_value": self.filter_value,
+            "filter_concatenator": self.filter_concatenator,
+        }
+
+
+class EmailScheduleFilter(db.Model):
+    __tablename__ = "email_schedule_filters"
+
+    email_schedule_uid = db.Column(
+        db.Integer, db.ForeignKey(EmailSchedule.email_schedule_uid), nullable=False
+    )
+    table_name = db.Column(db.String(255), nullable=False)
+    filter_group_id = db.Column(db.Integer)
+    filter_variable = db.Column(db.String(255), nullable=False)
+    filter_operator = db.Column(
+        db.String(16),
+        CheckConstraint(
+            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty')",
             name="ck_email_schedule_filter_operator",
         ),
         nullable=False,
@@ -363,6 +488,7 @@ class EmailScheduleFilter(db.Model):
         self,
         email_schedule_uid,
         filter_group_id,
+        table_name,
         filter_variable,
         filter_operator,
         filter_value,
@@ -370,6 +496,7 @@ class EmailScheduleFilter(db.Model):
     ):
         self.email_schedule_uid = email_schedule_uid
         self.filter_group_id = filter_group_id
+        self.table_name = table_name
         self.filter_variable = filter_variable
         self.filter_operator = filter_operator
         self.filter_value = filter_value
@@ -378,6 +505,7 @@ class EmailScheduleFilter(db.Model):
     def to_dict(self):
         return {
             "email_schedule_uid": self.email_schedule_uid,
+            "table_name": self.table_name,
             "filter_group_id": self.filter_group_id,
             "filter_variable": self.filter_variable,
             "filter_operator": self.filter_operator,

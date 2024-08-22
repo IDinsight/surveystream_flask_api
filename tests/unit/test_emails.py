@@ -198,6 +198,54 @@ class TestEmails:
             "language": "english",
             "content": "Test Content",
             "email_config_uid": create_email_config["email_config_uid"],
+            "variable_list": [],
+            "table_list": [
+                {
+                    "table_name": "test_table",
+                    "column_mapping": {
+                        "test_column1": "TEST Column 1",
+                        "test_column2": "TEST Column 2",
+                    },
+                    "sort_list": {"test_column1": "asc", "test_column2": "desc"},
+                    "variable_name": "test_table+_1",
+                    "filter_list": [
+                        {
+                            "filter_group": [
+                                {
+                                    "table_name": "test_table",
+                                    "filter_variable": "test_column",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value",
+                                },
+                                {
+                                    "table_name": "test_table",
+                                    "filter_variable": "test_column2",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value2",
+                                    "filter_concatenator": "AND",
+                                },
+                            ]
+                        },
+                        {
+                            "filter_group": [
+                                {
+                                    "table_name": "test_table",
+                                    "filter_variable": "test_column",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value",
+                                },
+                                {
+                                    "table_name": "test_table",
+                                    "filter_variable": "test_column2",
+                                    "filter_operator": "Is not",
+                                    "filter_value": "test_value2",
+                                    "filter_concatenator": "AND",
+                                },
+                            ]
+                        },
+                    ],
+                }
+            ],
         }
         response = client.post(
             "/api/emails/template",
@@ -205,7 +253,9 @@ class TestEmails:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 201
+        print(response.json)
         return response.json["data"]
 
     @pytest.fixture
@@ -324,7 +374,13 @@ class TestEmails:
                     "form_uid": 1,
                     "report_users": [1, 2, 3],
                     "email_source": "SurveyStream Data",
-                    "email_source_columns": ["test_column"],
+                    "email_source_columns": [
+                        "test_column",
+                        "Surveyor Name",
+                        "Surveyor ID",
+                        "Surveyor Address",
+                        "Assignment Date",
+                    ],
                     "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                     "email_source_gsheet_tab": "Test_Success",
                     "email_source_gsheet_header_row": 1,
@@ -591,7 +647,13 @@ class TestEmails:
                         "config_name": "Assignments",
                         "email_config_uid": 1,
                         "email_source": "SurveyStream Data",
-                        "email_source_columns": ["test_column"],
+                        "email_source_columns": [
+                            "test_column",
+                            "Surveyor Name",
+                            "Surveyor ID",
+                            "Surveyor Address",
+                            "Assignment Date",
+                        ],
                         "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                         "email_source_gsheet_tab": "Test_Success",
                         "email_source_gsheet_header_row": 1,
@@ -682,7 +744,13 @@ class TestEmails:
                         "form_uid": 1,
                         "report_users": [1, 2, 3],
                         "email_source": "SurveyStream Data",
-                        "email_source_columns": ["test_column"],
+                        "email_source_columns": [
+                            "test_column",
+                            "Surveyor Name",
+                            "Surveyor ID",
+                            "Surveyor Address",
+                            "Assignment Date",
+                        ],
                         "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                         "email_source_gsheet_tab": "Test_Success",
                         "email_source_gsheet_header_row": 1,
@@ -728,7 +796,7 @@ class TestEmails:
             "email_source_gsheet_tab": "Test_Success",
             "email_source_gsheet_header_row": 1,
             "email_source_tablename": "test_table",
-            "email_source_columns": ["test_column"],
+            "email_source_columns": ["test_column", "test_column2"],
             "cc_users": [1, 2, 3],
             "pdf_attachment": True,
             "pdf_encryption": True,
@@ -893,7 +961,13 @@ class TestEmails:
                     "form_uid": 1,
                     "report_users": [1, 2, 3],
                     "email_source": "SurveyStream Data",
-                    "email_source_columns": ["test_column"],
+                    "email_source_columns": [
+                        "test_column",
+                        "Surveyor Name",
+                        "Surveyor ID",
+                        "Surveyor Address",
+                        "Assignment Date",
+                    ],
                     "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                     "email_source_gsheet_tab": "Test_Success",
                     "email_source_gsheet_header_row": 1,
@@ -1229,13 +1303,15 @@ class TestEmails:
                 {
                     "filter_group": [
                         {
+                            "table_name": "test_table",
                             "filter_variable": "test_column",
-                            "filter_operator": "Equals",
+                            "filter_operator": "Is",
                             "filter_value": "test_value",
                         },
                         {
+                            "table_name": "test_table",
                             "filter_variable": "test_column2",
-                            "filter_operator": "Equals",
+                            "filter_operator": "Is",
                             "filter_value": "test_value2",
                             "filter_concatenator": "AND",
                         },
@@ -1244,13 +1320,15 @@ class TestEmails:
                 {
                     "filter_group": [
                         {
+                            "table_name": "test_table",
                             "filter_variable": "test_column",
-                            "filter_operator": "Equals",
+                            "filter_operator": "Is",
                             "filter_value": "test_value",
                         },
                         {
+                            "table_name": "test_table",
                             "filter_variable": "test_column2",
-                            "filter_operator": "Not Equals",
+                            "filter_operator": "Is not",
                             "filter_value": "test_value2",
                             "filter_concatenator": "AND",
                         },
@@ -1318,8 +1396,9 @@ class TestEmails:
                                             "email_schedule_uid"
                                         ],
                                         "filter_group_id": 1,
+                                        "table_name": "test_table",
                                         "filter_variable": "test_column",
-                                        "filter_operator": "Equals",
+                                        "filter_operator": "Is",
                                         "filter_value": "test_value",
                                         "filter_concatenator": None,
                                     },
@@ -1328,8 +1407,9 @@ class TestEmails:
                                             "email_schedule_uid"
                                         ],
                                         "filter_group_id": 1,
+                                        "table_name": "test_table",
                                         "filter_variable": "test_column2",
-                                        "filter_operator": "Equals",
+                                        "filter_operator": "Is",
                                         "filter_value": "test_value2",
                                         "filter_concatenator": "AND",
                                     },
@@ -1342,8 +1422,9 @@ class TestEmails:
                                             "email_schedule_uid"
                                         ],
                                         "filter_group_id": 2,
+                                        "table_name": "test_table",
                                         "filter_variable": "test_column",
-                                        "filter_operator": "Equals",
+                                        "filter_operator": "Is",
                                         "filter_value": "test_value",
                                         "filter_concatenator": None,
                                     },
@@ -1352,8 +1433,9 @@ class TestEmails:
                                             "email_schedule_uid"
                                         ],
                                         "filter_group_id": 2,
+                                        "table_name": "test_table",
                                         "filter_variable": "test_column2",
-                                        "filter_operator": "Not Equals",
+                                        "filter_operator": "Is not",
                                         "filter_value": "test_value2",
                                         "filter_concatenator": "AND",
                                     },
@@ -1412,13 +1494,15 @@ class TestEmails:
                 {
                     "filter_group": [
                         {
+                            "table_name": "test_table",
                             "filter_variable": "test_column",
-                            "filter_operator": "Equals",
+                            "filter_operator": "Is",
                             "filter_value": "test_value",
                         },
                         {
+                            "table_name": "test_table",
                             "filter_variable": "test_column2",
-                            "filter_operator": "Equals",
+                            "filter_operator": "Is",
                             "filter_value": "test_value2",
                             "filter_concatenator": "AND",
                         },
@@ -1427,13 +1511,15 @@ class TestEmails:
                 {
                     "filter_group": [
                         {
+                            "table_name": "test_table",
                             "filter_variable": "test_column",
-                            "filter_operator": "Equals",
+                            "filter_operator": "Is",
                             "filter_value": "test_value",
                         },
                         {
+                            "table_name": "test_table",
                             "filter_variable": "test_column2",
-                            "filter_operator": "Not Equals",
+                            "filter_operator": "Is not",
                             "filter_value": "test_value2",
                             "filter_concatenator": "AND",
                         },
@@ -1506,16 +1592,18 @@ class TestEmails:
                                         {
                                             "email_schedule_uid": 2,
                                             "filter_group_id": 1,
+                                            "table_name": "test_table",
                                             "filter_variable": "test_column",
-                                            "filter_operator": "Equals",
+                                            "filter_operator": "Is",
                                             "filter_value": "test_value",
                                             "filter_concatenator": None,
                                         },
                                         {
                                             "email_schedule_uid": 2,
                                             "filter_group_id": 1,
+                                            "table_name": "test_table",
                                             "filter_variable": "test_column2",
-                                            "filter_operator": "Equals",
+                                            "filter_operator": "Is",
                                             "filter_value": "test_value2",
                                             "filter_concatenator": "AND",
                                         },
@@ -1526,16 +1614,18 @@ class TestEmails:
                                         {
                                             "email_schedule_uid": 2,
                                             "filter_group_id": 2,
+                                            "table_name": "test_table",
                                             "filter_variable": "test_column",
-                                            "filter_operator": "Equals",
+                                            "filter_operator": "Is",
                                             "filter_value": "test_value",
                                             "filter_concatenator": None,
                                         },
                                         {
                                             "email_schedule_uid": 2,
                                             "filter_group_id": 2,
+                                            "table_name": "test_table",
                                             "filter_variable": "test_column2",
-                                            "filter_operator": "Not Equals",
+                                            "filter_operator": "Is not",
                                             "filter_value": "test_value2",
                                             "filter_concatenator": "AND",
                                         },
@@ -2031,6 +2121,59 @@ class TestEmails:
                     "email_template_uid": 1,
                     "language": "english",
                     "subject": "Test Assignments Email",
+                    "table_list": [
+                        {
+                            "column_mapping": {
+                                "test_column1": "TEST Column 1",
+                                "test_column2": "TEST Column 2",
+                            },
+                            "email_template_table_uid": 1,
+                            "filter_list": [
+                                [
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_concatenator": None,
+                                        "filter_group_id": 1,
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value",
+                                        "filter_variable": "test_column",
+                                    },
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_concatenator": "AND",
+                                        "filter_group_id": 1,
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value2",
+                                        "filter_variable": "test_column2",
+                                    },
+                                ],
+                                [
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_concatenator": None,
+                                        "filter_group_id": 2,
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value",
+                                        "filter_variable": "test_column",
+                                    },
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_concatenator": "AND",
+                                        "filter_group_id": 2,
+                                        "filter_operator": "Is not",
+                                        "filter_value": "test_value2",
+                                        "filter_variable": "test_column2",
+                                    },
+                                ],
+                            ],
+                            "sort_list": {
+                                "test_column1": "asc",
+                                "test_column2": "desc",
+                            },
+                            "table_name": "test_table",
+                            "variable_name": "test_table+_1",
+                        }
+                    ],
                     "variable_list": [],
                 },
                 "success": True,
@@ -2042,6 +2185,7 @@ class TestEmails:
                 expected_response,
                 response.json,
             )
+            print(checkdiff)
             assert checkdiff == {}
         else:
             expected_response = {
@@ -2110,6 +2254,59 @@ class TestEmails:
                         "email_template_uid": 1,
                         "language": "english",
                         "subject": "Test Assignments Email",
+                        "table_list": [
+                            {
+                                "column_mapping": {
+                                    "test_column1": "TEST Column 1",
+                                    "test_column2": "TEST Column 2",
+                                },
+                                "email_template_table_uid": 1,
+                                "filter_list": [
+                                    [
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_concatenator": None,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_concatenator": "AND",
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                    [
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_concatenator": None,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_concatenator": "AND",
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is not",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                ],
+                                "sort_list": {
+                                    "test_column1": "asc",
+                                    "test_column2": "desc",
+                                },
+                                "table_name": "test_table",
+                                "variable_name": "test_table+_1",
+                            }
+                        ],
                         "variable_list": [],
                     }
                 ],
@@ -2156,18 +2353,13 @@ class TestEmails:
             "variable_list": [
                 {
                     "variable_name": "test_variable",
-                    "variable_type": "string",
                     "variable_expression": "UPPERCASE(test_variable)",
                     "source_table": "test_table",
                 },
                 {
                     "variable_name": "test_variable2",
-                    "variable_type": "table",
                     "source_table": "test_table",
-                    "table_column_mapping": {
-                        "column_1": "test_column",
-                        "column2": "test_column2",
-                    },
+                    "variable_expression": "UPPERCASE(test_variable2)",
                 },
             ],
         }
@@ -2177,7 +2369,7 @@ class TestEmails:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-
+        print(response.json)
         if expected_permission:
 
             assert response.status_code == 200
@@ -2188,39 +2380,85 @@ class TestEmails:
                 content_type="application/json",
                 headers={"X-CSRF-Token": csrf_token},
             )
-
-            excepted_response = {
-                "email_template_uid": 1,
-                "subject": "Test Update Email",
-                "language": "Hindi",
-                "content": "Test Content",
-                "email_config_uid": 1,
-                "variable_list": [
-                    {
-                        "variable_name": "test_variable",
-                        "variable_type": "string",
-                        "variable_expression": "UPPERCASE(test_variable)",
-                        "source_table": "test_table",
-                        "table_column_mapping": None,
-                    },
-                    {
-                        "variable_name": "test_variable2",
-                        "variable_type": "table",
-                        "source_table": "test_table",
-                        "table_column_mapping": {
-                            "column_1": "test_column",
-                            "column2": "test_column2",
+            print(get_response.json)
+            expected_response = {
+                "data": {
+                    "content": "Test Content",
+                    "email_config_uid": 1,
+                    "email_template_uid": 1,
+                    "language": "Hindi",
+                    "subject": "Test Update Email",
+                    "table_list": [
+                        {
+                            "column_mapping": {
+                                "test_column1": "TEST Column 1",
+                                "test_column2": "TEST Column 2",
+                            },
+                            "email_template_table_uid": 1,
+                            "filter_list": [
+                                [
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_concatenator": None,
+                                        "filter_group_id": 1,
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value",
+                                        "filter_variable": "test_column",
+                                    },
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_concatenator": "AND",
+                                        "filter_group_id": 1,
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value2",
+                                        "filter_variable": "test_column2",
+                                    },
+                                ],
+                                [
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_concatenator": None,
+                                        "filter_group_id": 2,
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value",
+                                        "filter_variable": "test_column",
+                                    },
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_concatenator": "AND",
+                                        "filter_group_id": 2,
+                                        "filter_operator": "Is not",
+                                        "filter_value": "test_value2",
+                                        "filter_variable": "test_column2",
+                                    },
+                                ],
+                            ],
+                            "sort_list": {
+                                "test_column1": "asc",
+                                "test_column2": "desc",
+                            },
+                            "table_name": "test_table",
+                            "variable_name": "test_table+_1",
+                        }
+                    ],
+                    "variable_list": [
+                        {
+                            "source_table": "test_table",
+                            "variable_expression": "UPPERCASE(test_variable)",
+                            "variable_name": "test_variable",
                         },
-                        "variable_expression": None,
-                    },
-                ],
-            }
-
-            checkdiff = jsondiff.diff(
-                {
-                    "data": excepted_response,
-                    "success": True,
+                        {
+                            "source_table": "test_table",
+                            "variable_expression": "UPPERCASE(test_variable2)",
+                            "variable_name": "test_variable2",
+                        },
+                    ],
                 },
+                "success": True,
+            }
+            print("Get Response", get_response.json)
+            checkdiff = jsondiff.diff(
+                expected_response,
                 get_response.json,
             )
 
@@ -2499,7 +2737,77 @@ class TestEmails:
                         "column_list": ["test_column", "test_column2"],
                         "survey_uid": 1,
                         "table_name": "test_table",
-                    }
+                    },
+                    {
+                        "column_list": [
+                            {
+                                "column_description": "Enumerators : name",
+                                "column_name": "Surveyor Name",
+                            },
+                            {
+                                "column_description": "Enumerators : enumerator_id",
+                                "column_name": "Surveyor ID",
+                            },
+                            {
+                                "column_description": "Enumerators : home_address",
+                                "column_name": "Surveyor Address",
+                            },
+                            {
+                                "column_description": "Enumerators : gender",
+                                "column_name": "Surveyor Gender",
+                            },
+                            {
+                                "column_description": "Enumerators : language",
+                                "column_name": "Surveyor Language",
+                            },
+                            {
+                                "column_description": "Enumerators : email",
+                                "column_name": "Surveyor Email",
+                            },
+                            {
+                                "column_description": "Enumerators : mobile_primary",
+                                "column_name": "Surveyor Mobile",
+                            },
+                            {
+                                "column_description": "Targets: target_id",
+                                "column_name": "Target ID",
+                            },
+                            {
+                                "column_description": "Targets: gender",
+                                "column_name": "Gender",
+                            },
+                            {
+                                "column_description": "Targets: language",
+                                "column_name": "Language",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status_label",
+                                "column_name": "Final Survey Status",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status",
+                                "column_name": "Final Survey Status Code",
+                            },
+                            {
+                                "column_description": "Target_Status: revisit_sections",
+                                "column_name": "Revisit Sections",
+                            },
+                            {
+                                "column_description": "Target_Status: num_attempts",
+                                "column_name": "Total Attempts",
+                            },
+                            {
+                                "column_description": "Target_Status: refusal_flag",
+                                "column_name": "Refused",
+                            },
+                            {
+                                "column_description": "Target_Status: completed_flag",
+                                "column_name": "Completed",
+                            },
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "Assignments: Default",
+                    },
                 ],
                 "success": True,
             }
@@ -2588,6 +2896,76 @@ class TestEmails:
                         "column_list": ["test_column3"],
                         "survey_uid": 1,
                         "table_name": "test_table2",
+                    },
+                    {
+                        "column_list": [
+                            {
+                                "column_description": "Enumerators : name",
+                                "column_name": "Surveyor Name",
+                            },
+                            {
+                                "column_description": "Enumerators : enumerator_id",
+                                "column_name": "Surveyor ID",
+                            },
+                            {
+                                "column_description": "Enumerators : home_address",
+                                "column_name": "Surveyor Address",
+                            },
+                            {
+                                "column_description": "Enumerators : gender",
+                                "column_name": "Surveyor Gender",
+                            },
+                            {
+                                "column_description": "Enumerators : language",
+                                "column_name": "Surveyor Language",
+                            },
+                            {
+                                "column_description": "Enumerators : email",
+                                "column_name": "Surveyor Email",
+                            },
+                            {
+                                "column_description": "Enumerators : mobile_primary",
+                                "column_name": "Surveyor Mobile",
+                            },
+                            {
+                                "column_description": "Targets: target_id",
+                                "column_name": "Target ID",
+                            },
+                            {
+                                "column_description": "Targets: gender",
+                                "column_name": "Gender",
+                            },
+                            {
+                                "column_description": "Targets: language",
+                                "column_name": "Language",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status_label",
+                                "column_name": "Final Survey Status",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status",
+                                "column_name": "Final Survey Status Code",
+                            },
+                            {
+                                "column_description": "Target_Status: revisit_sections",
+                                "column_name": "Revisit Sections",
+                            },
+                            {
+                                "column_description": "Target_Status: num_attempts",
+                                "column_name": "Total Attempts",
+                            },
+                            {
+                                "column_description": "Target_Status: refusal_flag",
+                                "column_name": "Refused",
+                            },
+                            {
+                                "column_description": "Target_Status: completed_flag",
+                                "column_name": "Completed",
+                            },
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "Assignments: Default",
                     },
                 ],
                 "success": True,
@@ -2681,7 +3059,77 @@ class TestEmails:
                         "column_list": ["test_column", "test_column2"],
                         "survey_uid": 1,
                         "table_name": "test_table",
-                    }
+                    },
+                    {
+                        "column_list": [
+                            {
+                                "column_description": "Enumerators : name",
+                                "column_name": "Surveyor Name",
+                            },
+                            {
+                                "column_description": "Enumerators : enumerator_id",
+                                "column_name": "Surveyor ID",
+                            },
+                            {
+                                "column_description": "Enumerators : home_address",
+                                "column_name": "Surveyor Address",
+                            },
+                            {
+                                "column_description": "Enumerators : gender",
+                                "column_name": "Surveyor Gender",
+                            },
+                            {
+                                "column_description": "Enumerators : language",
+                                "column_name": "Surveyor Language",
+                            },
+                            {
+                                "column_description": "Enumerators : email",
+                                "column_name": "Surveyor Email",
+                            },
+                            {
+                                "column_description": "Enumerators : mobile_primary",
+                                "column_name": "Surveyor Mobile",
+                            },
+                            {
+                                "column_description": "Targets: target_id",
+                                "column_name": "Target ID",
+                            },
+                            {
+                                "column_description": "Targets: gender",
+                                "column_name": "Gender",
+                            },
+                            {
+                                "column_description": "Targets: language",
+                                "column_name": "Language",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status_label",
+                                "column_name": "Final Survey Status",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status",
+                                "column_name": "Final Survey Status Code",
+                            },
+                            {
+                                "column_description": "Target_Status: revisit_sections",
+                                "column_name": "Revisit Sections",
+                            },
+                            {
+                                "column_description": "Target_Status: num_attempts",
+                                "column_name": "Total Attempts",
+                            },
+                            {
+                                "column_description": "Target_Status: refusal_flag",
+                                "column_name": "Refused",
+                            },
+                            {
+                                "column_description": "Target_Status: completed_flag",
+                                "column_name": "Completed",
+                            },
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "Assignments: Default",
+                    },
                 ],
                 "success": True,
             }
