@@ -370,7 +370,7 @@ class TestEmails:
             "email_source_gsheet_tab": "Test_Success",
             "email_source_gsheet_header_row": 1,
         }
-        response = client.get(
+        response = client.post(
             "/api/emails/gsheet",
             json=payload,
             content_type="application/json",
@@ -418,7 +418,7 @@ class TestEmails:
             "email_source_gsheet_tab": "Test_Success",
             "email_source_gsheet_header_row": 1,
         }
-        response = client.get(
+        response = client.post(
             "/api/emails/gsheet",
             json=payload,
             content_type="application/json",
@@ -459,7 +459,7 @@ class TestEmails:
             "email_source_gsheet_tab": "dummy",
             "email_source_gsheet_header_row": 1,
         }
-        response = client.get(
+        response = client.post(
             "/api/emails/gsheet",
             json=payload,
             content_type="application/json",
@@ -531,7 +531,7 @@ class TestEmails:
             "email_source_gsheet_tab": "Test_BlankException",
             "email_source_gsheet_header_row": 100,
         }
-        response = client.get(
+        response = client.post(
             "/api/emails/gsheet",
             json=payload,
             content_type="application/json",

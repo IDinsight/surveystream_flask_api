@@ -8824,7 +8824,7 @@ paths:
           description: Email template deleted successfully
   
   /emails/gsheet:
-    get:
+    post:
       summary: Get Google Sheet column Headers
       tags:
         - Emails
