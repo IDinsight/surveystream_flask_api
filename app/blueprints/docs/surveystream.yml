@@ -8015,6 +8015,8 @@ paths:
                         items:
                           type: object
                           properties:
+                            table_name:
+                              type: string
                             filter_variable:
                               type: string
                             filter_operator:
@@ -8057,6 +8059,8 @@ paths:
                           items:
                             type: object
                             properties:
+                              table_name:
+                                type: string                        
                               filter_variable:
                                 type: string
                               filter_operator:
@@ -8112,6 +8116,8 @@ paths:
                             items:
                               type: object
                               properties:
+                                table_name:
+                                  type: string
                                 filter_variable:
                                   type: string
                                 filter_operator:
@@ -8163,6 +8169,8 @@ paths:
                           items:
                             type: object
                             properties:
+                              table_name:
+                                type: string
                               filter_variable:
                                 type: string
                               filter_operator:
@@ -8211,6 +8219,8 @@ paths:
                         items:
                           type: object
                           properties:
+                            table_name:
+                              type: string
                             filter_variable:
                               type: string
                             filter_operator:
@@ -8253,6 +8263,8 @@ paths:
                           items:
                             type: object
                             properties:
+                              table_name:
+                                type: string
                               filter_variable:
                                 type: string
                               filter_operator:
@@ -8562,14 +8574,44 @@ paths:
                     properties:
                       variable_name:
                         type: string
-                      variable_type:
-                        type: string
                       source_table:
                         type: string
                       variable_expression:
                         type: string
-                      table_column_mapping:
+                table_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      table_name:
+                        type: string
+                      column_list:
                         type: object
+                      sort_list:
+                        type: object
+                      variable_name:
+                        type: string
+                      filter_list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            filter_group:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  filter_variable:
+                                    type: string
+                                  filter_operator:
+                                    type: string
+                                  filter_value:
+                                    type: string
+                                  filter_concatenator:
+                                    type: string
+              
+
+                      
               required:
                 - language
                 - email_config_uid
@@ -8598,14 +8640,41 @@ paths:
                       properties:
                         variable_name:
                           type: string
-                        variable_type:
-                          type: string
                         source_table:
                           type: string
                         variable_expression:
                           type: string
-                        table_column_mapping:
+                  table_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        table_name:
+                          type: string
+                        column_list:
                           type: object
+                        sort_list:
+                          type: object
+                        variable_name:
+                          type: string
+                        filter_list:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              filter_group:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    filter_variable:
+                                      type: string
+                                    filter_operator:
+                                      type: string
+                                    filter_value:
+                                      type: string
+                                    filter_concatenator:
+                                      type: string
                 required:
                   - email_config_uid
                   - subject
@@ -8647,14 +8716,41 @@ paths:
                         properties:
                           variable_name:
                             type: string
-                          variable_type:
-                            type: string
                           source_table:
                             type: string
                           variable_expression:
                             type: string
-                          table_column_mapping:
+                    table_list:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          table_name:
+                            type: string
+                          column_list:
                             type: object
+                          sort_list:
+                            type: object
+                          variable_name:
+                            type: string
+                          filter_list:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                filter_group:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      filter_variable:
+                                        type: string
+                                      filter_operator:
+                                        type: string
+                                      filter_value:
+                                        type: string
+                                      filter_concatenator:
+                                        type: string
                   required:
                     - email_config_uid
                     - subject
@@ -8701,14 +8797,41 @@ paths:
                       properties:
                         variable_name:
                           type: string
-                        variable_type:
-                          type: string
                         source_table:
                           type: string
                         variable_expression:
                           type: string
-                        table_column_mapping:
+                  table_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        table_name:
+                          type: string
+                        column_list:
                           type: object
+                        sort_list:
+                          type: object
+                        variable_name:
+                          type: string
+                        filter_list:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              filter_group:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    filter_variable:
+                                      type: string
+                                    filter_operator:
+                                      type: string
+                                    filter_value:
+                                      type: string
+                                    filter_concatenator:
+                                      type: string
                 required:
                   - email_config_uid
                   - subject
@@ -8753,14 +8876,41 @@ paths:
                     properties:
                       variable_name:
                         type: string
-                      variable_type:
-                        type: string
                       source_table:
                         type: string
                       variable_expression:
                         type: string
-                      table_column_mapping:
+                table_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      table_name:
+                        type: string
+                      column_list:
                         type: object
+                      sort_list:
+                        type: object
+                      variable_name:
+                        type: string
+                      filter_list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            filter_group:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  filter_variable:
+                                    type: string
+                                  filter_operator:
+                                    type: string
+                                  filter_value:
+                                    type: string
+                                  filter_concatenator:
+                                    type: string
               required:
                 - email_config_uid
                 - subject
@@ -8789,14 +8939,41 @@ paths:
                       properties:
                         variable_name:
                           type: string
-                        variable_type:
-                          type: string
                         source_table:
                           type: string
                         variable_expression:
                           type: string
-                        table_column_mapping:
+                  table_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        table_name:
+                          type: string
+                        column_list:
                           type: object
+                        sort_list:
+                          type: object
+                        variable_name:
+                          type: string
+                        filter_list:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              filter_group:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    filter_variable:
+                                      type: string
+                                    filter_operator:
+                                      type: string
+                                    filter_value:
+                                      type: string
+                                    filter_concatenator:
+                                      type: string
                 required:
                   - email_config_uid
                   - subject
