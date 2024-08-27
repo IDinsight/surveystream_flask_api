@@ -550,7 +550,7 @@ class AssignmentsUpload:
                     (0, 0)
                 ]  # If there are no mappings, we still need to return a row with 0 values
             )
-        )
+        ).subquery()
 
         is_survey_admin = check_if_survey_admin(self.user_uid, self.survey_uid)
         child_users_with_supervisors_query = build_child_users_with_supervisors_query(
@@ -593,7 +593,7 @@ class AssignmentsUpload:
                     (0, 0)
                 ]  # If there are no mappings, we still need to return a row with 0 values
             )
-        )
+        ).subquery()
         surveyors_mapped_to_current_user = (
             db.session.query(
                 Enumerator.enumerator_id, surveyor_mappings_query.c.supervisor_uid

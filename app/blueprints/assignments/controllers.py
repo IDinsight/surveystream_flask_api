@@ -142,7 +142,7 @@ def view_assignments(validated_query_params):
                 (0, 0)
             ]  # If there are no mappings, we still need to return a row with 0 values
         )
-    )
+    ).subquery()
 
     # Get the child supervisors for the current logged in user
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
@@ -311,7 +311,7 @@ def view_assignments_enumerators(validated_query_params):
                 (0, 0)
             ]  # If there are no mappings, we still need to return a row with 0 values
         )
-    )
+    ).subquery()
 
     prime_geo_level_uid = surveyor_mapping.prime_geo_level_uid
     prime_locations_with_location_hierarchy_subquery = (
@@ -472,7 +472,7 @@ def view_assignments_targets(validated_query_params):
                 (0, 0)
             ]  # If there are no mappings, we still need to return a row with 0 values
         )
-    )
+    ).subquery()
 
     # Get the child supervisors for the current logged in user
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
@@ -597,7 +597,7 @@ def update_assignments(validated_payload):
                 (0, 0)
             ]  # If there are no mappings, we still need to return a row with 0 values
         )
-    )
+    ).subquery()
     surveyor_mappings_query = select(
         Values(
             column("enumerator_uid", Integer),
@@ -613,7 +613,7 @@ def update_assignments(validated_payload):
                 (0, 0)
             ]  # If there are no mappings, we still need to return a row with 0 values
         )
-    )
+    ).subquery()
 
     # Get the child supervisors for the current logged in user
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
