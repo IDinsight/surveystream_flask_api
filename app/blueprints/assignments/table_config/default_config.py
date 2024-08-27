@@ -17,6 +17,7 @@ class DefaultTableConfig:
         prime_geo_level_uid,
         enumerator_location_configured,
         target_location_configured,
+        role_hierarchy,
     ):
         target_location_columns = []
 
@@ -70,6 +71,25 @@ class DefaultTableConfig:
                         "columns": enumerator_location_columns,
                     }
                 ]
+
+        supervisor_columns = []
+        if role_hierarchy:
+            for i, role in enumerate(role_hierarchy.ordered_roles):
+                supervisor_columns.append(
+                    {
+                        "group_label": role["role_name"],
+                        "columns": [
+                            {
+                                "column_key": f"supervisors[{i}].supervisor_name",
+                                "column_label": "Name",
+                            },
+                            {
+                                "column_key": f"supervisors[{i}].supervisor_email",
+                                "column_label": "Email",
+                            },
+                        ],
+                    }
+                )
 
         result = TargetColumnConfig.query.filter(
             TargetColumnConfig.form_uid == form_uid,
@@ -155,7 +175,7 @@ class DefaultTableConfig:
                     },
                 ],
             },
-            # "supervisors_placeholder", # Add this back in once we have the supervisor hierarchy in place
+            "supervisors_placeholder",
         ]
 
         self.assignments_main = self.replace_custom_fields_placeholder(
@@ -164,6 +184,10 @@ class DefaultTableConfig:
 
         self.assignments_main = self.replace_locations_placeholder(
             self.assignments_main, target_location_columns
+        )
+
+        self.assignments_main = self.replace_supervisors_placeholder(
+            self.assignments_main, supervisor_columns
         )
 
         self.assignments_surveyors = [
@@ -328,7 +352,7 @@ class DefaultTableConfig:
                 ],
             },
             "custom_fields_placeholder",
-            # "supervisors_placeholder", # Add this back in once we have the supervisor hierarchy in place
+            "supervisors_placeholder",
         ]
 
         self.surveyors = self.replace_custom_fields_placeholder(
@@ -337,6 +361,10 @@ class DefaultTableConfig:
 
         self.surveyors = self.replace_locations_placeholder(
             self.surveyors, enumerator_location_columns
+        )
+
+        self.surveyors = self.replace_supervisors_placeholder(
+            self.surveyors, supervisor_columns
         )
 
         self.targets = [
@@ -396,7 +424,7 @@ class DefaultTableConfig:
                     },
                 ],
             },
-            # "supervisors_placeholder",  # Add this back in once we have the supervisor hierarchy in place
+            "supervisors_placeholder",
         ]
 
         self.targets = self.replace_custom_fields_placeholder(
@@ -405,6 +433,10 @@ class DefaultTableConfig:
 
         self.targets = self.replace_locations_placeholder(
             self.targets, target_location_columns
+        )
+
+        self.targets = self.replace_supervisors_placeholder(
+            self.targets, supervisor_columns
         )
 
     def replace_custom_fields_placeholder(self, table_config, custom_fields):
@@ -429,6 +461,19 @@ class DefaultTableConfig:
         table_config = (
             table_config[0:placeholder_index]
             + locations
+            + table_config[placeholder_index + 1 :]
+        )
+        return table_config
+
+    def replace_supervisors_placeholder(self, table_config, supervisors):
+        """
+        Add the supervisors to the table config
+        """
+
+        placeholder_index = table_config.index("supervisors_placeholder")
+        table_config = (
+            table_config[0:placeholder_index]
+            + supervisors
             + table_config[placeholder_index + 1 :]
         )
         return table_config

@@ -20,6 +20,9 @@ from app.blueprints.forms.models import Form
 from app.blueprints.surveys.models import Survey
 from app.blueprints.enumerators.models import EnumeratorColumnConfig
 from app.blueprints.targets.models import TargetColumnConfig
+from app.blueprints.roles.models import Role
+from app.blueprints.roles.utils import RoleHierarchy
+from app.blueprints.roles.errors import InvalidRoleHierarchyError
 from app import db
 
 
@@ -140,6 +143,26 @@ def get_table_config(validated_query_params):
                 422,
             )
 
+    role_hierarchy = None
+    roles = [
+        role.to_dict() for role in Role.query.filter_by(survey_uid=survey_uid).all()
+    ]
+    if len(roles) > 0:
+        try:
+            role_hierarchy = RoleHierarchy(roles)
+        except InvalidRoleHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "role_hierarchy": e.role_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+
     table_config = {
         "surveyors": [],
         "targets": [],
@@ -167,6 +190,7 @@ def get_table_config(validated_query_params):
                     prime_geo_level_uid,
                     enumerator_location_configured,
                     target_location_configured,
+                    role_hierarchy,
                 )
             table_config[key] = getattr(default_table_config, key)
 
@@ -316,6 +340,26 @@ def update_table_config(validated_payload):
                 422,
             )
 
+    role_hierarchy = None
+    roles = [
+        role.to_dict() for role in Role.query.filter_by(survey_uid=survey_uid).all()
+    ]
+    if len(roles) > 0:
+        try:
+            role_hierarchy = RoleHierarchy(roles)
+        except InvalidRoleHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "role_hierarchy": e.role_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+
     # Validate the table config
     try:
         validate_table_config(
@@ -325,6 +369,7 @@ def update_table_config(validated_payload):
             prime_geo_level_uid,
             enumerator_location_configured,
             target_location_configured,
+            role_hierarchy,
             survey_uid,
             form_uid,
         )
@@ -409,11 +454,7 @@ def get_available_columns(validated_query_params):
 
     survey_uid = form.survey_uid
 
-    # survey_query = build_survey_query(form_uid)
-    # user_level = build_user_level_query(user_uid, survey_query).first().level # TODO: Add this back in once we have the supervisor hierarchy in place
-
     # Figure out if we need to handle location columns
-
     enumerator_location_configured = False
     target_location_configured = False
 
@@ -485,6 +526,25 @@ def get_available_columns(validated_query_params):
                 422,
             )
 
+    roles = [
+        role.to_dict() for role in Role.query.filter_by(survey_uid=survey_uid).all()
+    ]
+    if len(roles) > 0:
+        try:
+            role_hierarchy = RoleHierarchy(roles)
+        except InvalidRoleHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "role_hierarchy": e.role_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+
     available_columns = AvailableColumns(
         form_uid,
         survey_uid,
@@ -492,6 +552,7 @@ def get_available_columns(validated_query_params):
         prime_geo_level_uid,
         enumerator_location_configured,
         target_location_configured,
+        role_hierarchy,
     )
 
     return jsonify(available_columns.to_dict())

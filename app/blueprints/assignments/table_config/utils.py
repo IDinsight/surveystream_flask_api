@@ -14,6 +14,7 @@ def validate_table_config(
     prime_geo_level_uid,
     enumerator_location_configured,
     target_location_configured,
+    role_hierarchy,
     survey_uid,
     form_uid,
 ):
@@ -28,6 +29,7 @@ def validate_table_config(
         prime_geo_level_uid,
         enumerator_location_configured,
         target_location_configured,
+        role_hierarchy,
     ).to_dict()
 
     allowed_columns = {}
@@ -39,9 +41,7 @@ def validate_table_config(
 
     invalid_column_errors = []
     for column in table_config:
-
         if column["column_key"] not in allowed_columns[table_name]:
-
             # We know something is wrong with the column key but we want to see if we can provide a more specific error message in addition to the general one above
             location_key = None
             for item in location_keys:
@@ -60,7 +60,6 @@ def validate_table_config(
 
                 # Only proceed to the rest of the location checks if the column key is formatted correctly
                 else:
-
                     # Check if locations are configured in the enumerator/target column config
                     if (
                         location_key == "target_locations"
@@ -132,7 +131,6 @@ def validate_table_config(
                         "targets",
                         "assignments_review",
                     ]:
-
                         invalid_column_errors.append(
                             f"The custom field '{custom_field_name}' is not defined in the target_column_config table for this form."
                         )
@@ -141,7 +139,6 @@ def validate_table_config(
                         table_name == "assignments_surveyors"
                         or table_name == "surveyors"
                     ):
-
                         invalid_column_errors.append(
                             f"The custom field '{custom_field_name}' is not defined in the enumerator_column_config table for this form."
                         )
@@ -159,7 +156,6 @@ def validate_table_config(
                     )
 
                 else:
-
                     # Check that the custom field is defined in the target or enumerator column config table
 
                     custom_field_name = column["column_key"].split(
@@ -195,7 +191,6 @@ def validate_table_config(
                         )
 
             elif column["column_key"].startswith("scto_fields"):
-
                 # Check that the string is in the correct format
                 if not re.match(
                     r"^scto_fields.[a-zA-z0-9_]+$",
@@ -208,6 +203,22 @@ def validate_table_config(
                 invalid_column_errors.append(
                     f'The SurveyCTO field \'{column["column_key"].split(".")[1]}\' was not found in the form definition for this form.'
                 )
+
+            elif column["column_key"].startswith("supervisors"):
+                if role_hierarchy:
+                    max_supervisor_index = len(role_hierarchy.ordered_roles) - 1
+
+                    if (
+                        int(column["column_key"].split("[")[1].split("]")[0])
+                        > max_supervisor_index
+                    ):
+                        invalid_column_errors.append(
+                            f'The supervisor index of {column["column_key"].split("[")[1].split("]")[0]} for {column["column_key"]} is invalid. It must be in the range [0:{max_supervisor_index}] because there are {max_supervisor_index + 1} supervisors defined for the survey.'
+                        )
+                else:
+                    invalid_column_errors.append(
+                        f'The column_key \'{column["column_key"]}\' is invalid. Roles are not defined for this survey.'
+                    )
 
             else:
                 invalid_column_errors.append(

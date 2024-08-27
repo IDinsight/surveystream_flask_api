@@ -4666,6 +4666,7 @@ paths:
                               "target_assignable",
                               "revisit_sections",
                               "target_locations",
+                              "supervisors",
                           ]
 
                           "assignments_surveyors": [
@@ -4702,6 +4703,7 @@ paths:
                               "custom_fields",
                               "surveyor_status",
                               "surveyor_locations",
+                              "supervisors",
                           ]
 
                           "targets": [
@@ -4718,6 +4720,7 @@ paths:
                               "target_assignable",
                               "revisit_sections",
                               "target_locations",
+                              "supervisors",
                           ]
 
                           Note that the following "special" column keys must be formatted as follows:
@@ -4733,6 +4736,14 @@ paths:
                           Note that <geo_level_index> is the index (starting at zero) of the geo level in descending order. Take an example where 
                           the geo levels for the survey are District, Mandal, and Polling Station. The geo level index for District is 0, Mandal is 1, and Polling Station is 2.
                           So if you want to show the Mandal ID column in the surveyors table, you would set the column_key to surveyor_locations[1].location_id.
+
+                          *Supervisors*
+                          supervisors[<supervisor_index>].supervisor_name or supervisors[<supervisor_index>].supervisor_email
+
+                          Note that <supervisor_index> is the index (starting at zero) of the supervisor in descending order of their seniority. 
+                          Take an example where roles defined in the system are Core User, Cluster Coordinator and Regional Coordinator. The supervisor 
+                          index for Core User is 0, Cluster Coordinator is 1, and Regional Coordinator is 2. So if you want to show the Cluster Coordinator's 
+                          name in the surveyors table, you would set the column_key to supervisors[1].supervisor_name.
 
                           *Form Productivity*
                           form_productivity.<scto_form_id>.total_assigned_targets
