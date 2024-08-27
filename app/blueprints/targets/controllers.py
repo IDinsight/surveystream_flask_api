@@ -13,6 +13,7 @@ from app.blueprints.forms.models import Form
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.locations.models import GeoLevel, Location
 from app.blueprints.locations.utils import GeoLevelHierarchy
+from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
@@ -66,10 +67,34 @@ def upload_targets(validated_query_params, validated_payload):
 
     survey_uid = form.survey_uid
 
+    # Fetch the target mapping criteria for the form
+    module_questionnaire = ModuleQuestionnaire.query.filter_by(
+        survey_uid=survey_uid
+    ).first()
+    if (
+        module_questionnaire is None
+        or module_questionnaire.target_mapping_criteria is None
+        or len(module_questionnaire.target_mapping_criteria) == 0
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"Supervisor to target mapping criteria not found. Cannot upload targets without selecting a mapping criteria first.",
+                }
+            ),
+            422,
+        )
+
+    target_mapping_criteria = module_questionnaire.target_mapping_criteria
+
     # Create the column mapping object from the payload
     try:
         column_mapping = TargetColumnMapping(
-            validated_payload.column_mapping.data, form_uid, validated_payload.mode.data
+            validated_payload.column_mapping.data,
+            form_uid,
+            validated_payload.mode.data,
+            target_mapping_criteria,
         )
     except InvalidColumnMappingError as e:
         return (
