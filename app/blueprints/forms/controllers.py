@@ -35,7 +35,7 @@ import pandas as pd
 @forms_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(GetFormQueryParamValidator)
-@custom_permissions_required(["READ Data Quality Forms"], "query", "survey_uid")
+@custom_permissions_required(["READ Data Quality Forms", "READ Admin Forms"], "query", "survey_uid")
 def get_forms(validated_query_params):
     """
     Return details for a user's forms
@@ -120,6 +120,12 @@ def create_form(validated_payload):
         and validated_payload.dq_form_type.data is None
     ):
         return jsonify({"error": "form_type=dq must have a dq_form_type defined"}), 422
+    if (
+        validated_payload.form_type.data == "admin"
+        and validated_payload.admin_form_type.data is None
+    ):
+        return jsonify({"error": "form_type=admin must have a admin_form_type defined"}), 422
+
 
     form = Form(
         survey_uid=validated_payload.survey_uid.data,
@@ -132,6 +138,7 @@ def create_form(validated_payload):
         server_access_allowed=validated_payload.server_access_allowed.data,
         form_type=validated_payload.form_type.data,
         dq_form_type=validated_payload.dq_form_type.data,
+        admin_form_type=validated_payload.admin_form_type.data,
         parent_form_uid=validated_payload.parent_form_uid.data,
     )
 
@@ -185,6 +192,11 @@ def update_form(form_uid, validated_payload):
         and validated_payload.dq_form_type.data is None
     ):
         return jsonify({"error": "form_type=dq must have a dq_form_type defined"}), 422
+    if (
+        validated_payload.form_type.data == "admin"
+        and validated_payload.dq_form_type.data is None
+    ):
+        return jsonify({"error": "form_type=admin must have a admin_form_type defined"}), 422
 
     try:
         Form.query.filter_by(form_uid=form_uid).update(
@@ -198,6 +210,7 @@ def update_form(form_uid, validated_payload):
                 Form.server_access_allowed: validated_payload.server_access_allowed.data,
                 Form.form_type: validated_payload.form_type.data,
                 Form.dq_form_type: validated_payload.dq_form_type.data,
+                Form.admin_form_type: validated_payload.admin_form_type.data,
                 Form.parent_form_uid: validated_payload.parent_form_uid.data,
             },
             synchronize_session="fetch",
@@ -269,6 +282,16 @@ def create_scto_question_mapping(form_uid, validated_payload):
             ),
             422,
         )
+    if form.form_type in ["parent", "dq"] and validated_payload.target_id.data is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"form_type={form.form_type} must have a mapping for target_id",
+                }
+            ),
+            422,
+        )
 
     scto_question_mapping = SCTOQuestionMapping(
         form_uid=form_uid,
@@ -319,6 +342,16 @@ def update_scto_question_mapping(form_uid, validated_payload):
                 {
                     "success": False,
                     "error": "form_type=dq must have a mapping for dq_enumerator_id",
+                }
+            ),
+            422,
+        )
+    if form.form_type in ["parent", "dq"] and validated_payload.target_id.data is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"form_type={form.form_type} must have a mapping for target_id",
                 }
             ),
             422,

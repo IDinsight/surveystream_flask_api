@@ -39,7 +39,7 @@ class Form(db.Model):
     form_type = db.Column(
         db.String(),
         CheckConstraint(
-            "form_type IN ('parent', 'dq')",
+            "form_type IN ('parent', 'dq', 'admin')",
             name="ck_forms_form_type",
         ),
         nullable=False,
@@ -49,6 +49,14 @@ class Form(db.Model):
         CheckConstraint(
             "dq_form_type IN ('audioaudit','spotcheck','backcheck')",
             name="ck_forms_dq_form_type",
+        ),
+        nullable=True,
+    )
+    admin_form_type = db.Column(
+        db.String(),
+        CheckConstraint(
+            "admin_form_type IN ('bikelog', 'account_details')",
+            name="ck_forms_admin_form_type",
         ),
         nullable=True,
     )
