@@ -103,6 +103,30 @@ def login_test_user(test_user_credentials, client, csrf_token):
     yield
 
 
+@pytest.fixture(scope="session")
+def test_user_credentials():
+    """
+    Create credentials for the test user
+    """
+    filepath = Path(__file__).resolve().parent / "config.yml"
+    with open(filepath) as file:
+        settings = yaml.safe_load(file)
+
+    users = {
+        "core": {
+            "user_uid": 1,
+            "email": settings["email"],
+            "password": "asdfasdf",
+            "is_super_admin": True,
+        }
+    }
+
+    for user_type in users.keys():
+        users[user_type]["pw_hash"] = pbkdf2_sha256.hash(users[user_type]["password"])
+
+    yield users["core"]
+
+
 @pytest.fixture(autouse=True)
 def setup_database(app, test_user_credentials, registration_user_credentials):
     """
