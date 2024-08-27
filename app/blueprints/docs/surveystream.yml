@@ -3836,9 +3836,9 @@ paths:
                         supervisors:
                           type: array
                           description: >-
-                            An array of supervisors associated with each target. Only child
-                            supervisors of the logged in user as per user hierarchy are included 
-                            in the array.
+                            An array of supervisors associated with each target in descending order of 
+                            their seniority. Only child supervisors of the logged in user as per user 
+                            hierarchy are included in the array.
                           items:
                             type: object
                             properties:
@@ -4198,9 +4198,10 @@ paths:
                         supervisors:
                           type: array
                           description: >-
-                            An array of supervisors associated with the enumerator. Only 
-                            child supervisors of the logged in user as per user
-                            hierarchy are included in the array.
+                            An array of supervisors associated with the enumerator in 
+                            descending order of their seniority. Only child supervisors of 
+                            the logged in user as per user hierarchy are included in the 
+                            array.
                           items:
                             type: object
                             properties:
@@ -4353,9 +4354,9 @@ paths:
                         supervisors:
                           type: array
                           description: >-
-                            An array of supervisors associated with the target. Only child
-                            supervisors of the logged in user as per user hierarchy are included 
-                            in the array.
+                            An array of supervisors associated with the target in descending order 
+                            of their seniority. Only child supervisors of the logged in user as 
+                            per user hierarchy are included in the array.
                           items:
                             type: object
                             properties:

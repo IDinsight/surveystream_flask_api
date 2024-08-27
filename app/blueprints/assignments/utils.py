@@ -527,10 +527,6 @@ class AssignmentsUpload:
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
         # Mapping criteria based checks
-        is_survey_admin = check_if_survey_admin(self.user_uid, self.survey_uid)
-        child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-            self.user_uid, self.survey_uid, is_survey_admin
-        )
 
         try:
             target_mapping = TargetMapping(self.form_uid)
@@ -555,6 +551,15 @@ class AssignmentsUpload:
                 ]  # If there are no mappings, we still need to return a row with 0 values
             )
         )
+
+        is_survey_admin = check_if_survey_admin(self.user_uid, self.survey_uid)
+        child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+            self.user_uid,
+            self.survey_uid,
+            target_mapping.bottom_level_role_uid,
+            is_survey_admin,
+        )
+
         targets_mapped_to_current_user = (
             db.session.query(Target.target_id, target_mappings_query.c.supervisor_uid)
             .join(

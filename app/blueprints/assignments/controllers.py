@@ -112,12 +112,6 @@ def view_assignments(validated_query_params):
         )
     )
 
-    # Get the child supervisors for the current logged in user
-    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
-    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, is_survey_admin
-    )
-
     # Get the mapping of targets to the smallest supervisor level
     # This is used filter out targets mapped to the current user
     # or to their child supervisors
@@ -148,6 +142,12 @@ def view_assignments(validated_query_params):
                 (0, 0)
             ]  # If there are no mappings, we still need to return a row with 0 values
         )
+    )
+
+    # Get the child supervisors for the current logged in user
+    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
     )
 
     assignments_query = (
@@ -278,12 +278,6 @@ def view_assignments_enumerators(validated_query_params):
 
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
-    # Get the child supervisors for the current logged in user
-    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
-    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, is_survey_admin
-    )
-
     # Get the mapping of surveyors to the smallest supervisor level
     # This is used filter out surveyors mapped to the current user
     # or to their child supervisors
@@ -327,6 +321,12 @@ def view_assignments_enumerators(validated_query_params):
     )
     surveyor_formwise_productivity_subquery = (
         build_surveyor_formwise_productivity_subquery(survey_uid)
+    )
+
+    # Get the child supervisors for the current logged in user
+    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+        user_uid, survey_uid, surveyor_mapping.bottom_level_role_uid, is_survey_admin
     )
 
     assignment_enumerators_query = (
@@ -438,12 +438,6 @@ def view_assignments_targets(validated_query_params):
         )
     )
 
-    # Get the child supervisors for the current logged in user
-    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
-    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, is_survey_admin
-    )
-
     # Get the mapping of targets to the smallest supervisor level
     # This is used filter out targets mapped to the current user
     # or to their child supervisors
@@ -478,6 +472,12 @@ def view_assignments_targets(validated_query_params):
                 (0, 0)
             ]  # If there are no mappings, we still need to return a row with 0 values
         )
+    )
+
+    # Get the child supervisors for the current logged in user
+    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
     )
 
     assignment_targets_query = (
@@ -582,11 +582,6 @@ def update_assignments(validated_payload):
     target_mappings = target_mapping.generate_mappings()
     surveyor_mappings = surveyor_mapping.generate_mappings()
 
-    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
-    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, is_survey_admin
-    )
-
     target_mappings_query = select(
         Values(
             column("target_uid", Integer),
@@ -618,6 +613,12 @@ def update_assignments(validated_payload):
                 (0, 0)
             ]  # If there are no mappings, we still need to return a row with 0 values
         )
+    )
+
+    # Get the child supervisors for the current logged in user
+    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
     )
 
     # Run database-backed validations on the assignment inputs

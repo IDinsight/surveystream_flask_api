@@ -139,12 +139,13 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
 
 
 def build_child_users_with_supervisors_query(
-    user_uid, survey_uid, is_survey_admin=False
+    user_uid, survey_uid, bottom_level_role_uid, is_survey_admin=False
 ):
     """
-    Build a subquery that returns all the child supervisors for the given user
-    joined to a JSON object containing the supervisors linking the given user with
-    the child supervisors.
+    Build a subquery that returns all the FSLn child supervisors for the given user
+    joined to a JSON object containing the parent supervisors (in descending order)
+    of the given child supervisor. Note that the current user is excluded from the
+    JSON object of parent supervisors.
 
     This will be used to join with the targets and enumerators to get their supervisor
     information (restricted to the supervisors underneath the current user)
@@ -156,8 +157,14 @@ def build_child_users_with_supervisors_query(
         # user's supervisors to start the recursive query
         top_query = (
             db.session.query(
-                User.user_uid.label("user_uid"),
+                User.user_uid,
+                Role.role_uid,
                 func.jsonb_build_array().label("supervisors"),
+            )
+            .join(
+                Role,
+                (Role.role_uid == func.any(User.roles))
+                & (Role.survey_uid == survey_uid),
             )
             .filter(User.user_uid == user_uid)
             .cte("supervisor_hierarchy_cte", recursive=True)
@@ -169,6 +176,7 @@ def build_child_users_with_supervisors_query(
         top_query = (
             db.session.query(
                 User.user_uid,
+                Role.role_uid,
                 func.jsonb_build_array(
                     func.jsonb_build_object(
                         "role_uid",
@@ -194,7 +202,8 @@ def build_child_users_with_supervisors_query(
     # the child supervisor names in the supervisors array
     bottom_query = (
         db.session.query(
-            UserHierarchy.user_uid.label("user_uid"),
+            UserHierarchy.user_uid,
+            Role.role_uid,
             top_query.c.supervisors.concat(
                 func.jsonb_build_object(
                     "role_uid",
@@ -218,4 +227,15 @@ def build_child_users_with_supervisors_query(
 
     recursive_query = top_query.union(bottom_query)
 
-    return recursive_query
+    # Filter the recursive query to only include the FSLn child supervisors
+    fsln_supervisors_query = (
+        db.session.query(
+            recursive_query.c.user_uid,
+            recursive_query.c.role_uid,
+            recursive_query.c.supervisors,
+        )
+        .filter(recursive_query.c.role_uid == bottom_level_role_uid)
+        .subquery()
+    )
+
+    return fsln_supervisors_query
