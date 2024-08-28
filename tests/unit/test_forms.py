@@ -246,6 +246,30 @@ class TestForms:
 
         yield
 
+    @pytest.fixture()
+    def create_admin_form_scto_mapping(
+        self, client, login_test_user, csrf_token, create_survey, create_admin_form
+    ):
+        """
+        Insert a SCTO question mapping for the admin form
+        """
+
+        payload = {
+            "form_uid": 2,
+            "enumerator_id": "test_enumerator_id",
+        }
+
+        response = client.post(
+            "/api/forms/2/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 201
+
+        yield
+
     def test_create_parent_form(self, client, login_test_user, create_parent_form):
         """
         Test that the form is inserted correctly
@@ -1147,9 +1171,48 @@ class TestForms:
                 "error": f"User does not have the required permission: WRITE Data Quality Forms, WRITE Admin Forms",
             }
             print(response.json)
-            print(expected_response)
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
+    def test_create_admin_form_without_admin_form_type_error(
+        self,
+        client,
+        login_test_user,
+        create_parent_form,
+        csrf_token,
+    ):
+        """
+        Test that adding admin form without admin form type raises an error
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "scto_form_id": "test_scto_admin",
+            "form_name": "Agrifieldnet Bikelog Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": "dod",
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "admin",
+        }
+
+        response = client.post(
+            "/api/forms",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        response.status_code = 422
+
+        expected_response = {
+            "error": "form_type=admin must have a admin_form_type defined"
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
 
     def test_create_admin_scto_question_mapping(
         self,
@@ -1205,7 +1268,7 @@ class TestForms:
             assert checkdiff == {}
 
         else:
-            response.status_code = 403
+            assert response.status_code == 403
 
             expected_response = {
                 "success": False,
@@ -1215,25 +1278,22 @@ class TestForms:
             assert checkdiff == {}
 
     def test_update_admin_scto_question_mapping(
-        self, client, csrf_token, login_test_user, create_admin_form
+        self,
+        client,
+        csrf_token,
+        login_test_user,
+        create_admin_form,
+        create_admin_form_scto_mapping,
+        user_with_admin_forms_permissions,
+        request,
     ):
         """
         Test that update SCTO question mapping for admin form
 
         """
 
-        # First insert the SCTO question mapping
-        payload = {
-            "form_uid": 2,
-            "enumerator_id": "test_enumerator_id",
-        }
-
-        response = client.post(
-            "/api/forms/2/scto-question-mapping",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
+        user_fixture, expected_permission = user_with_admin_forms_permissions
+        request.getfixturevalue(user_fixture)
 
         # Update the SCTO question mapping
         payload = {
@@ -1249,24 +1309,35 @@ class TestForms:
         )
         print(response.json)
 
-        assert response.status_code == 200
+        if expected_permission:
+            assert response.status_code == 200
 
-        # Test the SCTO question mapping was updated correctly
-        response = client.get("/api/forms/2/scto-question-mapping")
-        assert response.status_code == 200
+            # Test the SCTO question mapping was updated correctly
+            response = client.get("/api/forms/2/scto-question-mapping")
+            assert response.status_code == 200
 
-        expected_response = {
-            "data": {
-                "form_uid": 2,
-                "survey_status": None,
-                "revisit_section": None,
-                "target_id": None,
-                "enumerator_id": "test_enumerator_id_upd",
-                "dq_enumerator_id": None,
-                "locations": None,
-            },
-            "success": True,
-        }
+            expected_response = {
+                "data": {
+                    "form_uid": 2,
+                    "survey_status": None,
+                    "revisit_section": None,
+                    "target_id": None,
+                    "enumerator_id": "test_enumerator_id_upd",
+                    "dq_enumerator_id": None,
+                    "locations": None,
+                },
+                "success": True,
+            }
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Data Quality Forms, WRITE Admin Forms",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
