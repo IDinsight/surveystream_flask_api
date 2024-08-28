@@ -1039,7 +1039,6 @@ def update_email_template(email_template_uid, validated_payload):
                         filter_concatenator=filter_item.get("filter_concatenator"),
                     )
                     db.session.add(filter_obj)
-                    print("yo")
         db.session.commit()
 
     except Exception as e:

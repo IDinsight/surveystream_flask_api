@@ -378,8 +378,10 @@ class TestEmails:
                         "test_column",
                         "Surveyor Name",
                         "Surveyor ID",
-                        "Surveyor Address",
+                        "Surveyor Language",
+                        "Surveyor Gender",
                         "Assignment Date",
+                        "Surveyor Email",
                     ],
                     "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                     "email_source_gsheet_tab": "Test_Success",
@@ -393,6 +395,9 @@ class TestEmails:
                 "success": True,
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
+            print(expected_response)
+            print(response.json)
+            print(checkdiff)
             assert checkdiff == {}
         else:
             assert response.status_code == 403
@@ -744,8 +749,10 @@ class TestEmails:
                             "test_column",
                             "Surveyor Name",
                             "Surveyor ID",
-                            "Surveyor Address",
+                            "Surveyor Language",
+                            "Surveyor Gender",
                             "Assignment Date",
+                            "Surveyor Email",
                         ],
                         "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                         "email_source_gsheet_tab": "Test_Success",
@@ -832,8 +839,10 @@ class TestEmails:
                         "test_column2",
                         "Surveyor Name",
                         "Surveyor ID",
-                        "Surveyor Address",
+                        "Surveyor Language",
+                        "Surveyor Gender",
                         "Assignment Date",
+                        "Surveyor Email",
                     ],
                     "email_source_gsheet_header_row": 1,
                     "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",

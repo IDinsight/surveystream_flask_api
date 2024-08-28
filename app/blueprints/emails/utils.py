@@ -10,6 +10,15 @@ from app.blueprints.targets.models import TargetColumnConfig
 
 
 def get_default_email_assignments_column(survey_uid):
+    """
+    Create a list of columns for the default Assignments email table.
+
+    Args:
+        survey_uid: Survey UID
+
+    Returns:
+        list: List of columns
+    """
 
     default_column_list = []
 
@@ -218,8 +227,10 @@ def get_default_email_variable_names(form_uid):
     default_column_list = [
         "Surveyor Name",
         "Surveyor ID",
-        "Surveyor Address",
+        "Surveyor Language",
+        "Surveyor Gender",
         "Assignment Date",
+        "Surveyor Email",
     ]
 
     location_column_list = []
