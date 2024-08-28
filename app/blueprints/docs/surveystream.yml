@@ -1828,7 +1828,7 @@ paths:
                 form_type:
                   type: string
                   description: >-
-                    The type of form. Allowed values are 'parent' and 'dq'
+                    The type of form. Allowed values are 'parent', 'dq' and 'admin'
                 parent_form_uid:
                   type: integer
                   description: >-
@@ -1836,7 +1836,11 @@ paths:
                 dq_form_type:
                   type: string
                   description: >-
-                    The type of DQ form. Allowed values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                    The type of DQ form. Allowed values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Must be null if form_type is 'parent' or 'admin'.
+                admin_form_type:
+                  type: string
+                  description: >-
+                    The type of admin form. Allowed values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Must be null if form_type is 'parent' or 'dq'.
               required:
                 - survey_uid
                 - scto_form_id
@@ -1893,7 +1897,7 @@ paths:
                   form_type:
                     type: string
                     description: >-
-                      The type of form. Allowed values are 'parent' and 'dq'
+                      The type of form. Allowed values are 'parent', 'dq' and 'admin'
                   parent_form_uid:
                     type: integer
                     description: >-
@@ -1901,7 +1905,11 @@ paths:
                   dq_form_type:
                     type: string
                     description: >-
-                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
+                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent' or 'admin'.
+                  admin_form_type:
+                    type: string
+                    description: >-
+                      The type of admin form. Possible values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Will be null if form_type is 'parent' or 'dq'.
         "400":
           description: >-
             A form with the same survey_uid and scto_form_id already exists, or
@@ -1998,15 +2006,19 @@ paths:
                     form_type:
                       type: string
                       description: >-
-                        The type of form. Allowed values are 'parent' and 'dq'
+                        The type of form. Allowed values are 'parent', 'dq' and 'admin'
                     parent_form_uid:
                       type: integer
                       description: >-
-                        The form_uid of the parent form. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                        The form_uid of the parent form. Required if form_type is 'dq'. Must be null if form_type is 'parent' or 'admin'.
                     dq_form_type:
                       type: string
                       description: >-
-                        The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
+                        The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent' or 'admin'.
+                    admin_form_type:
+                      type: string
+                      description: >-
+                        The type of admin form. Possible values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Will be null if form_type is 'parent' or 'dq'.
                     parent_scto_form_id:
                       type: string
                       description: >-
@@ -2085,7 +2097,7 @@ paths:
                   form_type:
                     type: string
                     description: >-
-                      The type of form. Allowed values are 'parent' and 'dq'
+                      The type of form. Allowed values are 'parent', 'dq' and 'admin'
                   parent_form_uid:
                     type: integer
                     description: >-
@@ -2093,7 +2105,11 @@ paths:
                   dq_form_type:
                     type: string
                     description: >-
-                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
+                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent' or 'admin'.
+                  admin_form_type:
+                    type: string
+                    description: >-
+                      The type of admin form. Possible values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Will be null if form_type is 'parent' or 'dq'.
                   parent_scto_form_id:
                     type: string
                     description: >-
@@ -2170,7 +2186,7 @@ paths:
                 form_type:
                   type: string
                   description: >-
-                    The type of form. Allowed values are 'parent' and 'dq'
+                    The type of form. Allowed values are 'parent', 'dq' and 'admin'
                 parent_form_uid:
                   type: integer
                   description: >-
@@ -2178,7 +2194,11 @@ paths:
                 dq_form_type:
                   type: string
                   description: >-
-                    The type of DQ form. Allowed values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                    The type of DQ form. Allowed values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Must be null if form_type is 'parent' or 'admin'.
+                admin_form_type:
+                  type: string
+                  description: >-
+                    The type of admin form. Allowed values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Must be null if form_type is 'parent' or 'dq'.
               required:
                 - survey_uid
                 - scto_form_id
@@ -2394,10 +2414,10 @@ paths:
                   description: The form's enumerator ID
                 dq_enumerator_id:
                   type: string
-                  description: The enumerator ID for the enumerator being checked in the DQ form
+                  description: The enumerator ID for the enumerator being checked in the DQ form. Required for DQ forms.
                 target_id:
                   type: string
-                  description: The form's target ID
+                  description: The form's target ID. Required for parent and DQ forms.
                 locations:
                   type: object
                   description: >-
@@ -2405,10 +2425,7 @@ paths:
                     for the form locations
               required:
                 - form_uid
-                - survey_status
-                - revisit_section
                 - enumerator_id
-                - target_id
       responses:
         "200":
           description: OK
@@ -2484,10 +2501,10 @@ paths:
                   description: The form's enumerator ID
                 dq_enumerator_id:
                   type: string
-                  description: The enumerator ID for the enumerator being checked in the DQ form
+                  description: The enumerator ID for the enumerator being checked in the DQ form. Required for DQ forms.
                 target_id:
                   type: string
-                  description: The form's target ID
+                  description: The form's target ID. Required for parent and DQ forms.
                 locations:
                   type: object
                   description: >-
@@ -2495,10 +2512,7 @@ paths:
                     for the form locations
               required:
                 - form_uid
-                - survey_status
-                - revisit_section
                 - enumerator_id
-                - target_id
       responses:
         "200":
           description: OK
