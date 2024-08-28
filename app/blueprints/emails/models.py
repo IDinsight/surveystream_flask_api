@@ -99,11 +99,7 @@ class EmailConfig(db.Model):
         self.pdf_attachment = pdf_attachment
         self.pdf_encryption = pdf_encryption
         self.pdf_encryption_password_type = pdf_encryption_password_type
-        self.email_source_columns = (
-            email_source_columns + get_default_email_variable_names(form_uid)
-            if email_source_columns
-            else get_default_email_variable_names(form_uid)
-        )
+        self.email_source_columns = email_source_columns
 
     def to_dict(self):
         return {
@@ -390,7 +386,7 @@ class EmailTableFilter(db.Model):
         db.ForeignKey(EmailTemplateTable.email_template_table_uid),
         nullable=False,
     )
-    filter_group_id = db.Column(db.Integer)
+    filter_group_id = db.Column(db.Integer, nullable=False)
     filter_variable = db.Column(db.String(255), nullable=False)
     filter_operator = db.Column(
         db.String(16),

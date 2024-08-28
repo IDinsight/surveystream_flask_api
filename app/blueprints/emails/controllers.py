@@ -6,7 +6,10 @@ from flask import jsonify
 from sqlalchemy.sql.functions import func
 
 from app import db
-from app.blueprints.emails.utils import get_default_email_assignments_column
+from app.blueprints.emails.utils import (
+    get_default_email_assignments_column,
+    get_default_email_variable_names,
+)
 from app.utils.google_sheet_utils import (
     google_sheet_helpers,
     load_google_service_account_credentials,
@@ -199,7 +202,13 @@ def get_email_configs(validated_query_params):
 
     config_data = []
     for email_config in email_configs:
-        config_data.append(email_config.to_dict())
+        email_config_dict = email_config.to_dict()
+        email_config_dict["email_source_columns"] = (
+            email_config.email_source_columns
+            + get_default_email_variable_names(form_uid)
+        )
+
+        config_data.append(email_config_dict)
 
     response = jsonify(
         {
@@ -232,10 +241,16 @@ def get_email_config(email_config_uid):
             404,
         )
 
+    email_config_dict = email_config.to_dict()
+    email_config_dict["email_source_columns"] = (
+        email_config.email_source_columns
+        + get_default_email_variable_names(email_config.form_uid)
+    )
+
     response = jsonify(
         {
             "success": True,
-            "data": email_config.to_dict(),
+            "data": email_config_dict,
         }
     )
 

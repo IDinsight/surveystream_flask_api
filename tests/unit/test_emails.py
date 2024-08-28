@@ -649,10 +649,6 @@ class TestEmails:
                         "email_source": "SurveyStream Data",
                         "email_source_columns": [
                             "test_column",
-                            "Surveyor Name",
-                            "Surveyor ID",
-                            "Surveyor Address",
-                            "Assignment Date",
                         ],
                         "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                         "email_source_gsheet_tab": "Test_Success",
@@ -825,13 +821,35 @@ class TestEmails:
 
             assert get_response.status_code == 200
 
-            checkdiff = jsondiff.diff(
-                {
-                    "data": {
-                        **payload,
-                    },
-                    "success": True,
+            expected_response = {
+                "data": {
+                    "cc_users": [1, 2, 3],
+                    "config_name": "finance",
+                    "email_config_uid": 1,
+                    "email_source": "SurveyStream Data",
+                    "email_source_columns": [
+                        "test_column",
+                        "test_column2",
+                        "Surveyor Name",
+                        "Surveyor ID",
+                        "Surveyor Address",
+                        "Assignment Date",
+                    ],
+                    "email_source_gsheet_header_row": 1,
+                    "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
+                    "email_source_gsheet_tab": "Test_Success",
+                    "email_source_tablename": "test_table",
+                    "form_uid": 1,
+                    "pdf_attachment": True,
+                    "pdf_encryption": True,
+                    "pdf_encryption_password_type": "Password",
+                    "report_users": [1, 2, 3],
                 },
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
                 get_response.json,
             )
 
@@ -963,10 +981,6 @@ class TestEmails:
                     "email_source": "SurveyStream Data",
                     "email_source_columns": [
                         "test_column",
-                        "Surveyor Name",
-                        "Surveyor ID",
-                        "Surveyor Address",
-                        "Assignment Date",
                     ],
                     "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                     "email_source_gsheet_tab": "Test_Success",
