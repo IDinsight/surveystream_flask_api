@@ -45,15 +45,15 @@ def downgrade():
         batch_op.alter_column('target_id',
                existing_type=sa.VARCHAR(),
                nullable=False)
+        
+
+    with op.batch_alter_table('forms', schema='webapp') as batch_op:
         batch_op.drop_constraint('ck_forms_admin_form_type', type_='check')
+        batch_op.drop_column('admin_form_type')
 
         # Remove 'admin' from form_type enum
         batch_op.drop_constraint('ck_forms_form_type', type_='check')
         batch_op.create_check_constraint(
             "ck_forms_form_type", sa.text("form_type IN ('parent', 'dq')")
         )
-
-    with op.batch_alter_table('forms', schema='webapp') as batch_op:
-        batch_op.drop_column('admin_form_type')
-
     # ### end Alembic commands ###
