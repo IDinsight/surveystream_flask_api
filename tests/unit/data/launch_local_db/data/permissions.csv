@@ -26,5 +26,5 @@ WRITE Assignments Upload,Write Assignments Upload permission,true
 READ Assignments Upload,Read Assignments Upload permission,true
 READ Mapping,Read Mapping permission,true
 WRITE Mapping,Write Mapping permission,true
-READ Admin Forms, Read Admin Forms permission, true
-WRITE Admin Forms, Write Admin Forms permission, true
+READ Admin Forms,Read Admin Forms permission,true
+WRITE Admin Forms,Write Admin Forms permission,true
