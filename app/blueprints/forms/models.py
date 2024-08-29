@@ -39,7 +39,7 @@ class Form(db.Model):
     form_type = db.Column(
         db.String(),
         CheckConstraint(
-            "form_type IN ('parent', 'dq')",
+            "form_type IN ('parent', 'dq', 'admin')",
             name="ck_forms_form_type",
         ),
         nullable=False,
@@ -49,6 +49,14 @@ class Form(db.Model):
         CheckConstraint(
             "dq_form_type IN ('audioaudit','spotcheck','backcheck')",
             name="ck_forms_dq_form_type",
+        ),
+        nullable=True,
+    )
+    admin_form_type = db.Column(
+        db.String(),
+        CheckConstraint(
+            "admin_form_type IN ('bikelog', 'account_details')",
+            name="ck_forms_admin_form_type",
         ),
         nullable=True,
     )
@@ -79,6 +87,7 @@ class Form(db.Model):
         server_access_allowed,
         form_type,
         dq_form_type=None,
+        admin_form_type=None,
         parent_form_uid=None,
     ):
         self.survey_uid = survey_uid
@@ -91,10 +100,10 @@ class Form(db.Model):
         self.server_access_allowed = server_access_allowed
         self.form_type = form_type
         self.dq_form_type = dq_form_type
+        self.admin_form_type = admin_form_type
         self.parent_form_uid = parent_form_uid
 
     def to_dict(self):
-
         return {
             "form_uid": self.form_uid,
             "survey_uid": self.survey_uid,
@@ -102,6 +111,7 @@ class Form(db.Model):
             "form_name": self.form_name,
             "form_type": self.form_type,
             "dq_form_type": self.dq_form_type,
+            "admin_form_type": self.admin_form_type,
             "parent_form_uid": self.parent_form_uid,
             "tz_name": self.tz_name,
             "scto_server_name": self.scto_server_name,
@@ -192,7 +202,7 @@ class SCTOQuestionMapping(db.Model):
     )
     survey_status = db.Column(db.String())
     revisit_section = db.Column(db.String())
-    target_id = db.Column(db.String(), nullable=False)
+    target_id = db.Column(db.String())
     enumerator_id = db.Column(db.String(), nullable=False)
     dq_enumerator_id = db.Column(db.String())
     locations = db.Column(JSONB)
