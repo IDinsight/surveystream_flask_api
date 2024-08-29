@@ -1214,6 +1214,126 @@ class TestForms:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
+    def test_update_admin_form(
+        self,
+        client,
+        login_test_user,
+        create_admin_form,
+        csrf_token,
+        user_with_admin_forms_permissions,
+        request,
+    ):
+        """
+        Test that the admin form is updated correctly
+        """
+
+        user_fixture, expected_permission = user_with_admin_forms_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "survey_uid": 1,
+            "scto_form_id": "test_scto_admin_upd",
+            "form_name": "Agrifieldnet Bikelog Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": "dod",
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "admin",
+            "admin_form_type": "bikelog",
+        }
+
+        response = client.put(
+            "/api/forms/2",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            # Test the form was inserted correctly
+            response = client.get("/api/forms?survey_uid=1&form_type=admin")
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "form_uid": 2,
+                        "survey_uid": 1,
+                        "scto_form_id": "test_scto_admin_upd",
+                        "form_name": "Agrifieldnet Bikelog Form",
+                        "tz_name": "Asia/Kolkata",
+                        "scto_server_name": "dod",
+                        "encryption_key_shared": True,
+                        "server_access_role_granted": True,
+                        "server_access_allowed": True,
+                        "last_ingested_at": None,
+                        "form_type": "admin",
+                        "parent_form_uid": None,
+                        "dq_form_type": None,
+                        "admin_form_type": "bikelog",
+                        "parent_scto_form_id": None,
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            response.status_code = 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Data Quality Forms, WRITE Admin Forms",
+            }
+            print(response.json)
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_update_admin_form_without_admin_form_type_error(
+        self,
+        client,
+        login_test_user,
+        create_admin_form,
+        csrf_token,
+    ):
+        """
+        Test that updating admin form without admin form type raises an error
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "scto_form_id": "test_scto_admin_upd",
+            "form_name": "Agrifieldnet Bikelog Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": "dod",
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "admin",
+        }
+
+        response = client.put(
+            "/api/forms/2",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        response.status_code = 422
+
+        expected_response = {
+            "error": "form_type=admin must have a admin_form_type defined"
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_create_admin_scto_question_mapping(
         self,
         client,

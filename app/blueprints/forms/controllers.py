@@ -204,7 +204,7 @@ def update_form(form_uid, validated_payload):
         return jsonify({"error": "form_type=dq must have a dq_form_type defined"}), 422
     if (
         validated_payload.form_type.data == "admin"
-        and validated_payload.dq_form_type.data is None
+        and validated_payload.admin_form_type.data is None
     ):
         return (
             jsonify({"error": "form_type=admin must have a admin_form_type defined"}),
