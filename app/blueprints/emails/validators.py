@@ -46,8 +46,45 @@ class EmailFilterValidator(FlaskForm):
         validators=[
             DataRequired(),
             AnyOf(
-                ["Equals", "Not Equals", "Contains"],
-                message="Invalid email source. Must be 'Google Sheet' or 'SurveyStream Data'",
+                [
+                    "Is",
+                    "Is not",
+                    "Contains",
+                    "Does not contain",
+                    "Is empty",
+                    "Is not empty",
+                ],
+                message="Invalid operator. Must be 'Is', 'Is Not', 'Contains', 'Does Not Contain', 'Is Empty', or 'Is Not Empty'",
+            ),
+        ]
+    )
+    filter_value = StringField(validators=[DataRequired()])
+    filter_concatenator = StringField(
+        validators=[
+            AnyOf(
+                ["AND", "OR", None],
+                message="Invalid Concatenator. Must be 'AND' or 'OR'",
+            ),
+        ],
+    )
+
+
+class EmailScheduleFilterValidator(FlaskForm):
+    table_name = StringField(validators=[DataRequired()])
+    filter_variable = StringField(validators=[DataRequired()])
+    filter_operator = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                [
+                    "Is",
+                    "Is not",
+                    "Contains",
+                    "Does not contain",
+                    "Is empty",
+                    "Is not empty",
+                ],
+                message="Invalid operator. Must be 'Is', 'Is not', 'Contains', 'Does not contain', 'Is empty', or 'Is not empty'",
             ),
         ]
     )
@@ -66,12 +103,16 @@ class EmailFilterGroupValidator(FlaskForm):
     filter_group = FieldList(FormField(EmailFilterValidator), default=[])
 
 
+class EmailScheduleFilterGroupValidator(FlaskForm):
+    filter_group = FieldList(FormField(EmailScheduleFilterValidator), default=[])
+
+
 class EmailScheduleValidator(FlaskForm):
     dates = FieldList(StringField(validators=[DataRequired()]))
     time = StringField(validators=[DataRequired()])
     email_config_uid = IntegerField(validators=[DataRequired()])
     email_schedule_name = StringField(validators=[DataRequired()])
-    filter_list = FieldList(FormField(EmailFilterGroupValidator), default=[])
+    filter_list = FieldList(FormField(EmailScheduleFilterGroupValidator), default=[])
 
     def validate_time(self, field):
         """
@@ -171,19 +212,17 @@ class EmailVariableValidator(FlaskForm):
         csrf = False
 
     variable_name = StringField(validators=[DataRequired()])
-    variable_type = StringField(
-        validators=[
-            DataRequired(),
-            AnyOf(
-                ["string", "table"],
-                message="Invalid variable type. Must be 'text' or 'table'",
-            ),
-        ],
-        default="string",
-    )
     variable_expression = StringField(default=None)
     source_table = StringField(validators=[DataRequired()])
-    table_column_mapping = JSONField(default={})
+
+
+class EmailTemplateTableValidator(FlaskForm):
+
+    table_name = StringField(validators=[DataRequired()])
+    column_mapping = JSONField(validators=[DataRequired()])
+    sort_list = JSONField()
+    variable_name = StringField(validators=[DataRequired()])
+    filter_list = FieldList(FormField(EmailFilterGroupValidator), default=[])
 
 
 class EmailTemplateValidator(FlaskForm):
@@ -192,6 +231,7 @@ class EmailTemplateValidator(FlaskForm):
     email_config_uid = IntegerField(validators=[DataRequired()])
     content = StringField(validators=[DataRequired()])
     variable_list = FieldList(FormField(EmailVariableValidator), default=[])
+    table_list = FieldList(FormField(EmailTemplateTableValidator), default=[])
 
 
 class EmailConfigQueryParamValidator(FlaskForm):
