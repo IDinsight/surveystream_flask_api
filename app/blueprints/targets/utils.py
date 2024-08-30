@@ -23,9 +23,9 @@ class TargetColumnMapping:
     Class to represent the target column mapping and run validations on it
     """
 
-    def __init__(self, column_mapping, form_uid, write_mode):
+    def __init__(self, column_mapping, form_uid, write_mode, mapping_criteria):
         try:
-            self.__validate_column_mapping(column_mapping)
+            self.__validate_column_mapping(column_mapping, mapping_criteria)
             self.target_id = column_mapping["target_id"]
 
             if column_mapping.get("language"):
@@ -58,12 +58,12 @@ class TargetColumnMapping:
 
         return result
 
-    def __validate_column_mapping(self, column_mapping):
+    def __validate_column_mapping(self, column_mapping, mapping_criteria):
         """
         Method to run validations on the column mapping and raise an exception containing a list of errors
 
-        :param geo_levels: List of geo levels for the survey from the database
         :param column_mapping: List of column mappings from the request payload
+        :param mapping_criteria: List of mapping criteria for targets to supervisor mapping
         """
 
         mapping_errors = []
@@ -71,6 +71,23 @@ class TargetColumnMapping:
         # Each mandatory column should appear in the mapping exactly once
         # The validator will catch the case where a mandatory column is missing
         # It's a dictionary so we cannot have duplicate keys
+
+        # Columns based on the mapping criteria should be present in the column mapping
+        if "Gender" in mapping_criteria and column_mapping.get("gender") is None:
+            mapping_errors.append(
+                f"Field name 'gender' is missing from the column mapping but is required based on the mapping criteria."
+            )
+        if (
+            "Location" in mapping_criteria
+            and column_mapping.get("location_id_column") is None
+        ):
+            mapping_errors.append(
+                f"Field name 'location_id_column' is missing from the column mapping but is required based on the mapping criteria."
+            )
+        if "Language" in mapping_criteria and column_mapping.get("language") is None:
+            mapping_errors.append(
+                f"Field name 'language' is missing from the column mapping but is required based on the mapping criteria."
+            )
 
         # Field names should be unique
         field_names = []

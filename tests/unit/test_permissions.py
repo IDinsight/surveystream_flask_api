@@ -163,6 +163,16 @@ class TestPermissions:
                 "name": "WRITE Mapping",
                 "permission_uid": 27,
             },
+            {
+                "description": "Read Admin Forms permission",
+                "name": "READ Admin Forms",
+                "permission_uid": 28,
+            },
+            {
+                "description": "Write Admin Forms permission",
+                "name": "WRITE Admin Forms",
+                "permission_uid": 29,
+            },
         ]
 
         assert jsondiff.diff(expected_data, response_data) == {}
@@ -309,6 +319,16 @@ class TestPermissions:
                 "description": "Write Mapping permission",
                 "name": "WRITE Mapping",
                 "permission_uid": 27,
+            },
+            {
+                "description": "Read Admin Forms permission",
+                "name": "READ Admin Forms",
+                "permission_uid": 28,
+            },
+            {
+                "description": "Write Admin Forms permission",
+                "name": "WRITE Admin Forms",
+                "permission_uid": 29,
             },
             {
                 "permission_uid": create_permission["permission_uid"],
