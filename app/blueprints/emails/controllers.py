@@ -6,6 +6,10 @@ from flask import jsonify
 from sqlalchemy.sql.functions import func
 
 from app import db
+from app.blueprints.emails.utils import (
+    get_default_email_assignments_column,
+    get_default_email_variable_names,
+)
 from app.utils.google_sheet_utils import (
     google_sheet_helpers,
     load_google_service_account_credentials,
@@ -23,7 +27,9 @@ from .models import (
     EmailSchedule,
     EmailScheduleFilter,
     EmailTableCatalog,
+    EmailTableFilter,
     EmailTemplate,
+    EmailTemplateTable,
     EmailTemplateVariable,
     ManualEmailTrigger,
 )
@@ -196,7 +202,13 @@ def get_email_configs(validated_query_params):
 
     config_data = []
     for email_config in email_configs:
-        config_data.append(email_config.to_dict())
+        email_config_dict = email_config.to_dict()
+        email_config_dict["email_source_columns"] = (
+            email_config.email_source_columns
+            + get_default_email_variable_names(form_uid)
+        )
+
+        config_data.append(email_config_dict)
 
     response = jsonify(
         {
@@ -229,10 +241,16 @@ def get_email_config(email_config_uid):
             404,
         )
 
+    email_config_dict = email_config.to_dict()
+    email_config_dict["email_source_columns"] = (
+        email_config.email_source_columns
+        + get_default_email_variable_names(email_config.form_uid)
+    )
+
     response = jsonify(
         {
             "success": True,
-            "data": email_config.to_dict(),
+            "data": email_config_dict,
         }
     )
 
@@ -367,6 +385,7 @@ def create_email_schedule(validated_payload):
                 filter_obj = EmailScheduleFilter(
                     email_schedule_uid=new_schedule_uid,
                     filter_group_id=max_filter_group_id,
+                    table_name=filter_item.get("table_name"),
                     filter_variable=filter_item.get("filter_variable"),
                     filter_operator=filter_item.get("filter_operator"),
                     filter_value=filter_item.get("filter_value"),
@@ -524,6 +543,7 @@ def update_email_schedule(schedule_id, validated_payload):
                     filter_obj = EmailScheduleFilter(
                         email_schedule_uid=schedule_id,
                         filter_group_id=max_filter_group_id,
+                        table_name=filter_item.get("table_name"),
                         filter_variable=filter_item.get("filter_variable"),
                         filter_operator=filter_item.get("filter_operator"),
                         filter_value=filter_item.get("filter_value"),
@@ -795,7 +815,7 @@ def create_email_template(validated_payload):
 
     try:
         db.session.add(new_template)
-        db.session.commit()
+        db.session.flush()
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -804,15 +824,51 @@ def create_email_template(validated_payload):
     try:
         for variable in validated_payload.variable_list.data:
             variable_obj = EmailTemplateVariable(
-                variable_type=variable.get("variable_type"),
+                email_template_uid=new_template.email_template_uid,
                 variable_name=variable.get("variable_name"),
                 variable_expression=variable.get("variable_expression"),
                 source_table=variable.get("source_table"),
-                table_column_mapping=variable.get("table_column_mapping"),
-                email_template_uid=new_template.email_template_uid,
             )
             db.session.add(variable_obj)
+        db.session.flush()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    try:
+        for table in validated_payload.table_list.data:
+            table_obj = EmailTemplateTable(
+                email_template_uid=new_template.email_template_uid,
+                table_name=table.get("table_name"),
+                column_mapping=table.get("column_mapping"),
+                sort_list=table.get("sort_list"),
+                variable_name=table.get("variable_name"),
+            )
+            db.session.add(table_obj)
+            db.session.flush()
+
+            table_uid = table_obj.email_template_table_uid
+            # Get the max filter group id
+            max_filter_group_id = 0
+
+            # Upload Filter List
+            for filter_group in table.get("filter_list", []):
+                max_filter_group_id += 1
+
+                for filter_item in filter_group.get("filter_group"):
+
+                    filter_obj = EmailTableFilter(
+                        email_template_table_uid=table_uid,
+                        filter_group_id=max_filter_group_id,
+                        filter_variable=filter_item.get("filter_variable"),
+                        filter_operator=filter_item.get("filter_operator"),
+                        filter_value=filter_item.get("filter_value"),
+                        filter_concatenator=filter_item.get("filter_concatenator"),
+                    )
+                    db.session.add(filter_obj)
+            db.session.flush()
         db.session.commit()
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -843,7 +899,28 @@ def get_all_email_templates(validated_query_params):
 
     template_data = []
     for template in templates:
-        template_data.append(template.to_dict())
+        template_variables = EmailTemplateVariable.query.filter_by(
+            email_template_uid=template.email_template_uid
+        ).all()
+        template_tables = EmailTemplateTable.query.filter_by(
+            email_template_uid=template.email_template_uid
+        ).all()
+        template_dict = template.to_dict()
+        template_dict["variable_list"] = [
+            variable.to_dict() for variable in template_variables
+        ]
+        template_dict["table_list"] = [table.to_dict() for table in template_tables]
+        for table in template_dict["table_list"]:
+            table_filters = EmailTableFilter.query.filter_by(
+                email_template_table_uid=table["email_template_table_uid"]
+            ).all()
+            table["filter_list"] = [
+                [filter.to_dict() for filter in filter_group]
+                for key, filter_group in groupby(
+                    table_filters, key=attrgetter("filter_group_id")
+                )
+            ]
+        template_data.append(template_dict)
 
     response = jsonify(
         {
@@ -863,10 +940,35 @@ def get_email_template(email_template_uid, validated_query_params):
     Function to get a specific email template using the template_uid
     """
     template = EmailTemplate.query.get_or_404(email_template_uid)
+    template_dict = template.to_dict()
+
+    # Get the template variables and tables
+    template_variables = EmailTemplateVariable.query.filter_by(
+        email_template_uid=template.email_template_uid
+    ).all()
+    template_tables = EmailTemplateTable.query.filter_by(
+        email_template_uid=template.email_template_uid
+    ).all()
+
+    template_dict["variable_list"] = [
+        variable.to_dict() for variable in template_variables
+    ]
+    template_dict["table_list"] = [table.to_dict() for table in template_tables]
+
+    for table in template_dict["table_list"]:
+        table_filters = EmailTableFilter.query.filter_by(
+            email_template_table_uid=table["email_template_table_uid"]
+        ).all()
+        table["filter_list"] = [
+            [filter.to_dict() for filter in filter_group]
+            for key, filter_group in groupby(
+                table_filters, key=attrgetter("filter_group_id")
+            )
+        ]
     response = jsonify(
         {
             "success": True,
-            "data": template.to_dict(),
+            "data": template_dict,
         }
     )
     return response, 200
@@ -887,25 +989,58 @@ def update_email_template(email_template_uid, validated_payload):
     template.content = validated_payload.content.data
 
     try:
-        db.session.commit()
+        db.session.flush()
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
     # Upload Template Variables & tables
-
+    # Delete existing variables and tables
     try:
         for variable in validated_payload.variable_list.data:
             variable_obj = EmailTemplateVariable(
-                variable_type=variable.get("variable_type"),
                 variable_name=variable.get("variable_name"),
                 variable_expression=variable.get("variable_expression"),
                 source_table=variable.get("source_table"),
-                table_column_mapping=variable.get("table_column_mapping"),
                 email_template_uid=template.email_template_uid,
             )
             db.session.add(variable_obj)
+        db.session.flush()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    try:
+        for table in validated_payload.table_list.data:
+            table_obj = EmailTemplateTable(
+                email_template_uid=template.email_template_uid,
+                table_name=table.get("table_name"),
+                column_mapping=table.get("column_mapping"),
+                sort_list=table.get("sort_list"),
+                variable_name=table.get("variable_name"),
+            )
+            db.session.add(table_obj)
+            table_uid = table_obj.email_template_table_uid
+            # Get the max filter group id
+            max_filter_group_id = 0
+
+            # Upload Filter List
+            for filter_group in table_obj.get("filter_list", []):
+                max_filter_group_id += 1
+
+                for filter_item in filter_group.get("filter_group"):
+
+                    filter_obj = EmailTableFilter(
+                        email_template_table_uid=table_uid,
+                        filter_group_id=max_filter_group_id,
+                        filter_variable=filter_item.get("filter_variable"),
+                        filter_operator=filter_item.get("filter_operator"),
+                        filter_value=filter_item.get("filter_value"),
+                        filter_concatenator=filter_item.get("filter_concatenator"),
+                    )
+                    db.session.add(filter_obj)
         db.session.commit()
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -1087,6 +1222,15 @@ def get_email_tablecatalog(validated_query_params):
             .all()
         )
 
+        assignment_table_columns = get_default_email_assignments_column(survey_uid)
+        assignment_table_columns_dict = [
+            {
+                "survey_uid": survey_uid,
+                "table_name": "Assignments: Default",
+                "column_list": assignment_table_columns,
+            }
+        ]
+
         return (
             jsonify(
                 {
@@ -1098,7 +1242,8 @@ def get_email_tablecatalog(validated_query_params):
                             "column_list": row.column_list,
                         }
                         for row in email_table_catalog
-                    ],
+                    ]
+                    + assignment_table_columns_dict,
                 }
             ),
             200,
