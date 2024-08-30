@@ -33,8 +33,18 @@ class CreateFormValidator(FlaskForm):
         validators=[DataRequired()],
     )
     parent_form_uid = IntegerField()
-    dq_form_type = StringField()
-    admin_form_type = StringField()
+    dq_form_type = StringField(
+        AnyOf(
+            ["audioaudit", "spotcheck", "backcheck"],
+            message="Value must be one of %(values)s",
+        )
+    )
+    admin_form_type = StringField(
+        AnyOf(
+            ["bikelog", "account_details", "other"],
+            message="Value must be one of %(values)s",
+        )
+    )
 
 
 class UpdateFormValidator(FlaskForm):
@@ -53,8 +63,18 @@ class UpdateFormValidator(FlaskForm):
         validators=[DataRequired()],
     )
     parent_form_uid = IntegerField()
-    dq_form_type = StringField()
-    admin_form_type = StringField()
+    dq_form_type = StringField(
+        AnyOf(
+            ["audioaudit", "spotcheck", "backcheck"],
+            message="Value must be one of %(values)s",
+        )
+    )
+    admin_form_type = StringField(
+        AnyOf(
+            ["bikelog", "account_details", "other"],
+            message="Value must be one of %(values)s",
+        )
+    )
 
 
 class LocationQuestionMappingValidator(FlaskForm):

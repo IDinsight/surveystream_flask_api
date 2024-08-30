@@ -55,7 +55,7 @@ class Form(db.Model):
     admin_form_type = db.Column(
         db.String(),
         CheckConstraint(
-            "admin_form_type IN ('bikelog', 'account_details')",
+            "admin_form_type IN ('bikelog', 'account_details', 'other')",
             name="ck_forms_admin_form_type",
         ),
         nullable=True,
