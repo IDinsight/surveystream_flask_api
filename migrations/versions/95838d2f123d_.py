@@ -44,7 +44,7 @@ def upgrade():
         ),
         sa.Column("scto_input_id", sa.String(length=256), nullable=True),
         sa.Column(
-            "scto_encryption_flag", sa.Boolean(), server_default=False, nullable=False
+            "scto_encryption_flag", sa.Boolean(), server_default="false", nullable=False
         ),
         sa.Column(
             "column_mapping", postgresql.JSONB(astext_type=sa.Text()), nullable=True
