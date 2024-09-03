@@ -6454,6 +6454,152 @@ paths:
           description: Form not found
         "422":
           description: Form errors
+  
+  /targets/config:
+    get:
+      summary: Get the targets config for a form
+      description: >
+        Get the targets config for a form.
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: The form UID of the target config to be updated.
+          required: true
+      responses:
+        "200":
+          description: Column config retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates if the request was successful.
+                  data:
+                    type: object
+                    properties:
+                      form_uid:
+                        type: integer
+                        description: The form UID of the targets config
+                      target_source:
+                        type: string
+                        description: The source of the targets- csv or scto
+                      scto_input_type:
+                        type: string
+                        description: The type of SCTO input- form or dataset
+                      scto_input_id:
+                        type: string
+                        description: The ID of the SCTO input, i.e. scto form id or dataset id
+                      scto_encryption_flag:
+                        type: boolean
+                        description: The encryption flag for SCTO input- true or false
+        "404":
+          description: Form not found
+    post:
+      summary: Create the targets config for a form
+      description: >
+        Create the targets config for a form.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The form UID of the targets to be updated.
+                target_source:
+                  type: string
+                  description: The source of the targets- csv or scto
+                  values:
+                    - csv
+                    - scto
+                scto_input_type:
+                  type: string
+                  description: The type of SCTO input- form or dataset
+                  values:
+                    - form
+                    - dataset
+                scto_input_id:
+                  type: string
+                  description: The ID of the SCTO input, i.e. scto form id or dataset id
+                scto_encryption_flag:
+                  type: boolean
+                  description: The encryption flag for SCTO input- true or false
+              required:
+                - form_uid
+                - target_source
+      responses:
+        "200":
+          description: Column config updated successfully
+        "400":
+          description: Request errors
+    put:
+      summary: Update the targets config for a form
+      description: >
+        Update the targets config for a form.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The form UID of the targets to be updated.
+                target_source:
+                  type: string
+                  description: The source of the targets- csv or scto
+                  values:
+                    - csv
+                    - scto
+                scto_input_type:
+                  type: string
+                  description: The type of SCTO input- form or dataset
+                  values:
+                    - form
+                    - dataset
+                scto_input_id:
+                  type: string
+                  description: The ID of the SCTO input, i.e. scto form id or dataset id
+                scto_encryption_flag:
+                  type: boolean
+                  description: The encryption flag for SCTO input- true or false
+              required:
+                - form_uid
+                - target_source
+      responses:
+        "200":
+          description: Column config updated successfully
+        "400":
+          description: Request errors
+    
+
   /targets/column-config:
     put:
       summary: Update the targets column config for a form

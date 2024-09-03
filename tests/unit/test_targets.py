@@ -1,9 +1,9 @@
-import jsondiff
-import pytest
 import base64
-import pandas as pd
 from pathlib import Path
 
+import jsondiff
+import pandas as pd
+import pytest
 from utils import (
     create_new_survey_role_with_permissions,
     login_user,
@@ -663,6 +663,141 @@ class TestTargets:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
+
+    @pytest.fixture()
+    def create_target_config(self, client, csrf_token, login_test_user, create_form):
+        """
+        Create a target config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "target_source": "scto",
+            "scto_input_type": "dataset",
+            "scto_input_id": "test_dynmaic_target_dataset",
+            "scto_encryption_flag": False,
+            "column_mapping": {
+                "target_id": "target_id",
+                "language": "language",
+            },
+        }
+
+        response = client.post(
+            "/api/targets/config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+    def test_get_target_config(
+        self, client, csrf_token, create_target_config, user_permissions, request
+    ):
+        """
+        Test get target config
+        Expect Success and data
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+        print(user_fixture)
+        print(expected_permission)
+
+        response = client.get(
+            "/api/targets/config",
+            query_string={"form_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "column_mapping": {
+                        "language": "language",
+                        "target_id": "target_id",
+                    },
+                    "form_uid": 1,
+                    "scto_encryption_flag": False,
+                    "scto_input_id": "test_dynmaic_target_dataset",
+                    "scto_input_type": "dataset",
+                    "target_source": "scto",
+                },
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.json == {
+                "error": "User does not have the required permission: READ Targets",
+                "success": False,
+            }
+
+    def test_update_target_config(
+        self, client, csrf_token, create_target_config, user_permissions, request
+    ):
+        """
+        Test get target config
+        Expect Success and data
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+        print(user_fixture)
+        print(expected_permission)
+        payload = {
+            "form_uid": 1,
+            "target_source": "scto",
+            "scto_input_type": "form",
+            "scto_input_id": "test_dynmaic_target_dataset",
+            "scto_encryption_flag": False,
+            "column_mapping": {
+                "target_id": "target_id",
+                "language": "language",
+            },
+        }
+
+        response = client.put(
+            "/api/targets/config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "column_mapping": {
+                        "language": "language",
+                        "target_id": "target_id",
+                    },
+                    "form_uid": 1,
+                    "scto_encryption_flag": False,
+                    "scto_input_id": "test_dynmaic_target_dataset",
+                    "scto_input_type": "form",
+                    "target_source": "scto",
+                },
+                "success": True,
+            }
+            get_response = client.get(
+                "/api/targets/config",
+                query_string={"form_uid": 1},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            print(get_response.json)
+
+            checkdiff = jsondiff.diff(expected_response, get_response.json)
+            assert checkdiff == {}
+        else:
+            assert response.json == {
+                "error": "User does not have the required permission: WRITE Targets",
+                "success": False,
+            }
 
     def test_upload_targets_csv_for_super_admin_user(
         self,

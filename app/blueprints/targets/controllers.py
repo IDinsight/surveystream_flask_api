@@ -28,12 +28,14 @@ from .errors import (
     InvalidNewColumnError,
     InvalidTargetRecordsError,
 )
-from .models import Target, TargetColumnConfig, TargetStatus
+from .models import Target, TargetColumnConfig, TargetConfig, TargetStatus
 from .queries import build_bottom_level_locations_with_location_hierarchy_subquery
 from .routes import targets_bp
 from .utils import TargetColumnMapping, TargetsUpload
 from .validators import (
     BulkUpdateTargetsValidator,
+    TargetConfigQueryValidator,
+    TargetConfigValidator,
     TargetsFileUploadValidator,
     TargetsQueryParamValidator,
     UpdateTarget,
@@ -1145,6 +1147,103 @@ def update_target_status(validated_payload):
     try:
         db.session.commit()
     except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return jsonify({"success": True}), 200
+
+
+@targets_bp.route("/config", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(TargetConfigQueryValidator)
+@custom_permissions_required("READ Targets", "query", "form_uid")
+def get_target_config(validated_query_params):
+    """
+    Method to retrieve the targets information from the database
+    """
+
+    form_uid = validated_query_params.form_uid.data
+
+    target_config = TargetConfig.query.filter_by(form_uid=form_uid).first()
+
+    if target_config is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Target configuration not found for the form",
+                }
+            ),
+            404,
+        )
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": target_config.to_dict(),
+            }
+        ),
+        200,
+    )
+
+
+@targets_bp.route("/config", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(TargetConfigValidator)
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
+def create_target_config(validated_payload):
+    """
+    Method to create a target configuration
+    """
+
+    target_config_values = {
+        "form_uid": validated_payload.form_uid.data,
+        "target_source": validated_payload.target_source.data,
+        "scto_input_type": validated_payload.scto_input_type.data,
+        "scto_input_id": validated_payload.scto_input_id.data,
+        "scto_encryption_flag": validated_payload.scto_encryption_flag.data,
+        "column_mapping": validated_payload.column_mapping.data,
+    }
+
+    target_config = TargetConfig(**target_config_values)
+
+    try:
+        db.session.add(target_config)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return jsonify({"success": True}), 200
+
+
+@targets_bp.route("/config", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(TargetConfigValidator)
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
+def update_target_config(validated_payload):
+    """
+    Method to create a target configuration
+    """
+
+    form_uid = validated_payload.form_uid.data
+
+    target_config = TargetConfig.query.get_or_404(form_uid)
+
+    target_config.target_source = validated_payload.target_source.data
+
+    if validated_payload.target_source.data:
+        target_config.scto_input_type = validated_payload.scto_input_type.data
+        target_config.scto_input_id = validated_payload.scto_input_id.data
+        target_config.scto_encryption_flag = validated_payload.scto_encryption_flag.data
+
+    target_config.column_mapping = validated_payload.column_mapping.data
+
+    try:
+        db.session.commit()
+    except Exception as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
