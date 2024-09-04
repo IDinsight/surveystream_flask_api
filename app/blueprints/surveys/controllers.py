@@ -191,6 +191,11 @@ def get_survey_config_status(survey_uid):
     from app.blueprints.target_status_mapping.models import TargetStatusMapping
     from app.blueprints.media_files.models import MediaFilesConfig
     from app.blueprints.emails.models import EmailConfig
+    from app.blueprints.mapping.models import (
+        UserMappingConfig,
+        UserTargetMapping,
+        UserSurveyorMapping,
+    )
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     scto_information = Form.query.filter_by(
@@ -206,6 +211,8 @@ def get_survey_config_status(survey_uid):
     media_files_config = None
     email_config = None
     dq_form_config = None
+    admin_form_config = None
+    mapping_config = None
 
     if scto_information is not None:
         enumerators = Enumerator.query.filter_by(
@@ -246,6 +253,35 @@ def get_survey_config_status(survey_uid):
             )
             .first()
         )
+
+        # Check if any saved mapping config is present
+        mapping_config = (
+            db.session.query(UserMappingConfig)
+            .filter(UserMappingConfig.form_uid == scto_information.form_uid)
+            .first()
+        )
+        if mapping_config is None:
+            mapping_config = (
+                db.session.query(UserSurveyorMapping)
+                .filter(UserSurveyorMapping.form_uid == scto_information.form_uid)
+                .first()
+            )
+        if mapping_config is None:
+            mapping_config = (
+                db.session.query(UserTargetMapping)
+                .join(Target, Target.target_uid == UserTargetMapping.target_uid)
+                .filter(Target.form_uid == scto_information.form_uid)
+                .first()
+            )
+
+    admin_form_config = (
+        db.session.query(Form)
+        .filter(
+            Form.survey_uid == survey_uid,
+            Form.form_type == "admin",
+        )
+        .first()
+    )
 
     if enumerators and targets:
         assignments = (
@@ -289,16 +325,11 @@ def get_survey_config_status(survey_uid):
         elif item["name"] == "Target status mapping":
             if target_status_mapping is not None:
                 item["status"] = "In Progress"
+        elif item["name"] == "Mapping":
+            if mapping_config is not None:
+                item["status"] = "In Progress"
 
     if "Module configuration" in data:
-        # Extract the current module_ids and find the maximum
-        current_ids = [
-            item.get("module_id", 0)
-            for item in data["Module configuration"]
-            if isinstance(item, dict)
-        ]
-        next_id = max(current_ids) + 1 if current_ids else 1
-
         for item in data["Module configuration"]:
             if isinstance(item, dict) and "name" in item:
                 if item["name"] == "Assignments":
@@ -312,6 +343,9 @@ def get_survey_config_status(survey_uid):
                         item["status"] = "In Progress"
                 elif item["name"] == "Data quality":
                     if dq_form_config is not None:
+                        item["status"] = "In Progress"
+                elif item["name"] == "Admin forms":
+                    if admin_form_config is not None:
                         item["status"] = "In Progress"
 
     response = {"success": True, "data": data}

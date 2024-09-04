@@ -27,13 +27,24 @@ class CreateFormValidator(FlaskForm):
     server_access_allowed = BooleanField()
     form_type = StringField(
         AnyOf(
-            ["parent", "dq"],
+            ["parent", "dq", "admin"],
             message="Value must be one of %(values)s",
         ),
         validators=[DataRequired()],
     )
     parent_form_uid = IntegerField()
-    dq_form_type = StringField()
+    dq_form_type = StringField(
+        AnyOf(
+            ["audioaudit", "spotcheck", "backcheck"],
+            message="Value must be one of %(values)s",
+        )
+    )
+    admin_form_type = StringField(
+        AnyOf(
+            ["bikelog", "account_details", "other"],
+            message="Value must be one of %(values)s",
+        )
+    )
 
 
 class UpdateFormValidator(FlaskForm):
@@ -46,13 +57,24 @@ class UpdateFormValidator(FlaskForm):
     server_access_allowed = BooleanField()
     form_type = StringField(
         AnyOf(
-            ["parent", "dq"],
+            ["parent", "dq", "admin"],
             message="Value must be one of %(values)s",
         ),
         validators=[DataRequired()],
     )
     parent_form_uid = IntegerField()
-    dq_form_type = StringField()
+    dq_form_type = StringField(
+        AnyOf(
+            ["audioaudit", "spotcheck", "backcheck"],
+            message="Value must be one of %(values)s",
+        )
+    )
+    admin_form_type = StringField(
+        AnyOf(
+            ["bikelog", "account_details", "other"],
+            message="Value must be one of %(values)s",
+        )
+    )
 
 
 class LocationQuestionMappingValidator(FlaskForm):
@@ -64,7 +86,7 @@ class CreateSCTOQuestionMappingValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     survey_status = StringField()
     revisit_section = StringField()
-    target_id = StringField(validators=[DataRequired()])
+    target_id = StringField()
     enumerator_id = StringField(validators=[DataRequired()])
     dq_enumerator_id = StringField()
     locations = FormField(LocationQuestionMappingValidator)
@@ -74,7 +96,7 @@ class UpdateSCTOQuestionMappingValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     survey_status = StringField()
     revisit_section = StringField()
-    target_id = StringField(validators=[DataRequired()])
+    target_id = StringField()
     enumerator_id = StringField(validators=[DataRequired()])
     dq_enumerator_id = StringField()
     locations = FormField(LocationQuestionMappingValidator)
