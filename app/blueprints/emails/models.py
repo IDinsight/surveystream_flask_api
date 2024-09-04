@@ -396,7 +396,7 @@ class EmailTableFilter(db.Model):
         ),
         nullable=False,
     )
-    filter_value = db.Column(db.Text, nullable=False)
+    filter_value = db.Column(db.Text, nullable=True)
     filter_concatenator = db.Column(
         db.String(4),
         CheckConstraint(
@@ -461,7 +461,7 @@ class EmailScheduleFilter(db.Model):
         ),
         nullable=False,
     )
-    filter_value = db.Column(db.Text, nullable=False)
+    filter_value = db.Column(db.Text, nullable=True)
     filter_concatenator = db.Column(
         db.String(4),
         CheckConstraint(

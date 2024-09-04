@@ -58,7 +58,7 @@ class EmailFilterValidator(FlaskForm):
             ),
         ]
     )
-    filter_value = StringField(validators=[DataRequired()])
+    filter_value = StringField()
     filter_concatenator = StringField(
         validators=[
             AnyOf(
@@ -88,7 +88,7 @@ class EmailScheduleFilterValidator(FlaskForm):
             ),
         ]
     )
-    filter_value = StringField(validators=[DataRequired()])
+    filter_value = StringField()
     filter_concatenator = StringField(
         validators=[
             AnyOf(
