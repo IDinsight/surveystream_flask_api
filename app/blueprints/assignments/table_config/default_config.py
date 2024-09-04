@@ -1,7 +1,7 @@
 from app import db
-from app.blueprints.targets.models import TargetColumnConfig
 from app.blueprints.enumerators.models import EnumeratorColumnConfig
 from app.blueprints.forms.models import Form
+from app.blueprints.targets.models import TargetColumnConfig
 
 
 class DefaultTableConfig:
@@ -18,6 +18,8 @@ class DefaultTableConfig:
         enumerator_location_configured,
         target_location_configured,
         role_hierarchy,
+        filter_supervisors,
+        user_level,
     ):
         target_location_columns = []
 
@@ -75,6 +77,11 @@ class DefaultTableConfig:
         supervisor_columns = []
         if role_hierarchy:
             for i, role in enumerate(role_hierarchy.ordered_roles):
+                # Only return child roles of the given user's role
+                if filter_supervisors and (user_level is not None):
+                    if i <= user_level:
+                        continue
+
                 supervisor_columns.append(
                     {
                         "group_label": role["role_name"],

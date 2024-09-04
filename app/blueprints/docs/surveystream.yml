@@ -4440,6 +4440,14 @@ paths:
           schema:
             type: integer
           description: Unique ID of the form
+        - in: query
+          name: filter_supervisors
+          schema:
+            type: boolean
+          description: >-
+            Whether to filter the supervisor columns based on the logged in user's
+            hierarchy. Defaults to false. When set to true, only child supervisors
+            of the logged in user as per user hierarchy are included in the response.
       responses:
         "200":
           description: OK

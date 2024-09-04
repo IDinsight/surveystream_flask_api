@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, FieldList, FormField, StringField
+from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
 from wtforms.validators import DataRequired
 
 
@@ -23,3 +23,4 @@ class TableConfigQueryParamValidator(FlaskForm):
         csrf = False
 
     form_uid = IntegerField(validators=[DataRequired()])
+    filter_supervisors = BooleanField(default=False)

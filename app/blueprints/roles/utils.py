@@ -1,5 +1,10 @@
+from sqlalchemy.sql.functions import func
+
+from app import db
+from app.blueprints.auth.models import User
+
 from .errors import InvalidRoleHierarchyError
-from .models import SurveyAdmin
+from .models import Role, SurveyAdmin
 
 
 class RoleHierarchy:
@@ -164,3 +169,23 @@ def check_if_survey_admin(user_uid, survey_uid):
     if survey_admin_entry:
         return True
     return False
+
+
+def get_user_role(user_uid, survey_uid):
+    """
+    Get the user's role in the given survey
+
+    """
+
+    user_role = (
+        db.session.query(User.user_uid, Role.role_uid)
+        .join(
+            Role,
+            (Role.role_uid == func.any(User.roles)) & (Role.survey_uid == survey_uid),
+        )
+        .filter(User.user_uid == user_uid)
+        .first()
+    )
+    if user_role:
+        return user_role.role_uid
+    return None
