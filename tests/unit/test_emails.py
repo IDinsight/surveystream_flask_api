@@ -222,7 +222,6 @@ class TestEmails:
                                     "filter_variable": "test_column2",
                                     "filter_operator": "Is",
                                     "filter_value": "test_value2",
-                                    "filter_concatenator": "AND",
                                 },
                             ]
                         },
@@ -239,7 +238,6 @@ class TestEmails:
                                     "filter_variable": "test_column2",
                                     "filter_operator": "Is not",
                                     "filter_value": "test_value2",
-                                    "filter_concatenator": "AND",
                                 },
                             ]
                         },
@@ -1336,7 +1334,6 @@ class TestEmails:
                             "filter_variable": "test_column2",
                             "filter_operator": "Is",
                             "filter_value": "test_value2",
-                            "filter_concatenator": "AND",
                         },
                     ]
                 },
@@ -1353,7 +1350,6 @@ class TestEmails:
                             "filter_variable": "test_column2",
                             "filter_operator": "Is not",
                             "filter_value": "test_value2",
-                            "filter_concatenator": "AND",
                         },
                     ]
                 },
@@ -1423,7 +1419,6 @@ class TestEmails:
                                         "filter_variable": "test_column",
                                         "filter_operator": "Is",
                                         "filter_value": "test_value",
-                                        "filter_concatenator": None,
                                     },
                                     {
                                         "email_schedule_uid": create_email_schedule[
@@ -1434,7 +1429,6 @@ class TestEmails:
                                         "filter_variable": "test_column2",
                                         "filter_operator": "Is",
                                         "filter_value": "test_value2",
-                                        "filter_concatenator": "AND",
                                     },
                                 ]
                             },
@@ -1449,7 +1443,6 @@ class TestEmails:
                                         "filter_variable": "test_column",
                                         "filter_operator": "Is",
                                         "filter_value": "test_value",
-                                        "filter_concatenator": None,
                                     },
                                     {
                                         "email_schedule_uid": create_email_schedule[
@@ -1460,7 +1453,6 @@ class TestEmails:
                                         "filter_variable": "test_column2",
                                         "filter_operator": "Is not",
                                         "filter_value": "test_value2",
-                                        "filter_concatenator": "AND",
                                     },
                                 ]
                             },
@@ -1527,7 +1519,6 @@ class TestEmails:
                             "filter_variable": "test_column2",
                             "filter_operator": "Is",
                             "filter_value": "test_value2",
-                            "filter_concatenator": "AND",
                         },
                     ]
                 },
@@ -1544,7 +1535,6 @@ class TestEmails:
                             "filter_variable": "test_column2",
                             "filter_operator": "Is not",
                             "filter_value": "test_value2",
-                            "filter_concatenator": "AND",
                         },
                     ]
                 },
@@ -1619,7 +1609,6 @@ class TestEmails:
                                             "filter_variable": "test_column",
                                             "filter_operator": "Is",
                                             "filter_value": "test_value",
-                                            "filter_concatenator": None,
                                         },
                                         {
                                             "email_schedule_uid": 2,
@@ -1628,7 +1617,6 @@ class TestEmails:
                                             "filter_variable": "test_column2",
                                             "filter_operator": "Is",
                                             "filter_value": "test_value2",
-                                            "filter_concatenator": "AND",
                                         },
                                     ]
                                 },
@@ -1641,7 +1629,6 @@ class TestEmails:
                                             "filter_variable": "test_column",
                                             "filter_operator": "Is",
                                             "filter_value": "test_value",
-                                            "filter_concatenator": None,
                                         },
                                         {
                                             "email_schedule_uid": 2,
@@ -1650,7 +1637,6 @@ class TestEmails:
                                             "filter_variable": "test_column2",
                                             "filter_operator": "Is not",
                                             "filter_value": "test_value2",
-                                            "filter_concatenator": "AND",
                                         },
                                     ]
                                 },
@@ -2155,7 +2141,6 @@ class TestEmails:
                                 [
                                     {
                                         "email_template_table_uid": 1,
-                                        "filter_concatenator": None,
                                         "filter_group_id": 1,
                                         "filter_operator": "Is",
                                         "filter_value": "test_value",
@@ -2163,7 +2148,6 @@ class TestEmails:
                                     },
                                     {
                                         "email_template_table_uid": 1,
-                                        "filter_concatenator": "AND",
                                         "filter_group_id": 1,
                                         "filter_operator": "Is",
                                         "filter_value": "test_value2",
@@ -2173,7 +2157,6 @@ class TestEmails:
                                 [
                                     {
                                         "email_template_table_uid": 1,
-                                        "filter_concatenator": None,
                                         "filter_group_id": 2,
                                         "filter_operator": "Is",
                                         "filter_value": "test_value",
@@ -2181,7 +2164,6 @@ class TestEmails:
                                     },
                                     {
                                         "email_template_table_uid": 1,
-                                        "filter_concatenator": "AND",
                                         "filter_group_id": 2,
                                         "filter_operator": "Is not",
                                         "filter_value": "test_value2",
@@ -2288,7 +2270,6 @@ class TestEmails:
                                     [
                                         {
                                             "email_template_table_uid": 1,
-                                            "filter_concatenator": None,
                                             "filter_group_id": 1,
                                             "filter_operator": "Is",
                                             "filter_value": "test_value",
@@ -2296,7 +2277,6 @@ class TestEmails:
                                         },
                                         {
                                             "email_template_table_uid": 1,
-                                            "filter_concatenator": "AND",
                                             "filter_group_id": 1,
                                             "filter_operator": "Is",
                                             "filter_value": "test_value2",
@@ -2306,7 +2286,6 @@ class TestEmails:
                                     [
                                         {
                                             "email_template_table_uid": 1,
-                                            "filter_concatenator": None,
                                             "filter_group_id": 2,
                                             "filter_operator": "Is",
                                             "filter_value": "test_value",
@@ -2314,7 +2293,6 @@ class TestEmails:
                                         },
                                         {
                                             "email_template_table_uid": 1,
-                                            "filter_concatenator": "AND",
                                             "filter_group_id": 2,
                                             "filter_operator": "Is not",
                                             "filter_value": "test_value2",
@@ -2422,7 +2400,6 @@ class TestEmails:
                                 [
                                     {
                                         "email_template_table_uid": 1,
-                                        "filter_concatenator": None,
                                         "filter_group_id": 1,
                                         "filter_operator": "Is",
                                         "filter_value": "test_value",
@@ -2430,7 +2407,6 @@ class TestEmails:
                                     },
                                     {
                                         "email_template_table_uid": 1,
-                                        "filter_concatenator": "AND",
                                         "filter_group_id": 1,
                                         "filter_operator": "Is",
                                         "filter_value": "test_value2",
@@ -2440,7 +2416,6 @@ class TestEmails:
                                 [
                                     {
                                         "email_template_table_uid": 1,
-                                        "filter_concatenator": None,
                                         "filter_group_id": 2,
                                         "filter_operator": "Is",
                                         "filter_value": "test_value",
@@ -2448,7 +2423,6 @@ class TestEmails:
                                     },
                                     {
                                         "email_template_table_uid": 1,
-                                        "filter_concatenator": "AND",
                                         "filter_group_id": 2,
                                         "filter_operator": "Is not",
                                         "filter_value": "test_value2",
