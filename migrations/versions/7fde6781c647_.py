@@ -27,6 +27,7 @@ def upgrade():
                 sa.Integer(),
                 autoincrement=True,
                 nullable=False,
+                primary_key=True,
             )
         )
         batch_op.alter_column(
@@ -34,9 +35,7 @@ def upgrade():
         )
         batch_op.alter_column("filter_value", existing_type=sa.TEXT(), nullable=True)
         batch_op.drop_column("filter_concatenator")
-        batch_op.create_primary_key(
-            "pk_email_schedule_filters", columns=["schedule_filter_uid"]
-        )
+        batch_op.create_primary_key(columns=["schedule_filter_uid"])
 
     with op.batch_alter_table("email_table_filters", schema="webapp") as batch_op:
         batch_op.drop_constraint(constraint_name="pk_email_table_filters")
@@ -46,13 +45,12 @@ def upgrade():
                 sa.Integer(),
                 autoincrement=True,
                 nullable=False,
+                primary_key=True,
             )
         )
         batch_op.alter_column("filter_value", existing_type=sa.TEXT(), nullable=True)
         batch_op.drop_column("filter_concatenator")
-        batch_op.create_primary_key(
-            "pk_email_table_filters", columns=["table_filter_uid"]
-        )
+        batch_op.create_primary_key(columns=["table_filter_uid"])
 
     # ### end Alembic commands ###
 
