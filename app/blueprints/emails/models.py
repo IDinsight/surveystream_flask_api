@@ -381,6 +381,8 @@ class EmailTableCatalog(db.Model):
 class EmailTableFilter(db.Model):
     __tablename__ = "email_table_filters"
 
+    table_filter_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+
     email_template_table_uid = db.Column(
         db.Integer,
         db.ForeignKey(EmailTemplateTable.email_template_table_uid),
@@ -396,24 +398,10 @@ class EmailTableFilter(db.Model):
         ),
         nullable=False,
     )
-    filter_value = db.Column(db.Text, nullable=False)
-    filter_concatenator = db.Column(
-        db.String(4),
-        CheckConstraint(
-            "filter_concatenator IN ('AND', 'OR')",
-            name="ck_email_table_filter_concatenator",
-        ),
-        nullable=True,
-    )
+    filter_value = db.Column(db.Text, nullable=True)
 
     __table_args__ = (
-        db.PrimaryKeyConstraint(
-            "email_template_table_uid",
-            "filter_group_id",
-            "filter_variable",
-            "filter_operator",
-            "filter_value",
-        ),
+        db.PrimaryKeyConstraint(table_filter_uid),
         {"schema": "webapp"},
     )
 
@@ -424,14 +412,12 @@ class EmailTableFilter(db.Model):
         filter_variable,
         filter_operator,
         filter_value,
-        filter_concatenator,
     ):
         self.email_template_table_uid = email_template_table_uid
         self.filter_group_id = filter_group_id
         self.filter_variable = filter_variable
         self.filter_operator = filter_operator
         self.filter_value = filter_value
-        self.filter_concatenator = filter_concatenator
 
     def to_dict(self):
         return {
@@ -440,13 +426,13 @@ class EmailTableFilter(db.Model):
             "filter_variable": self.filter_variable,
             "filter_operator": self.filter_operator,
             "filter_value": self.filter_value,
-            "filter_concatenator": self.filter_concatenator,
         }
 
 
 class EmailScheduleFilter(db.Model):
     __tablename__ = "email_schedule_filters"
 
+    schedule_filter_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     email_schedule_uid = db.Column(
         db.Integer, db.ForeignKey(EmailSchedule.email_schedule_uid), nullable=False
     )
@@ -461,24 +447,10 @@ class EmailScheduleFilter(db.Model):
         ),
         nullable=False,
     )
-    filter_value = db.Column(db.Text, nullable=False)
-    filter_concatenator = db.Column(
-        db.String(4),
-        CheckConstraint(
-            "filter_concatenator IN ('AND', 'OR')",
-            name="ck_email_schedule_filter_concatenator",
-        ),
-        nullable=True,
-    )
+    filter_value = db.Column(db.Text, nullable=True)
 
     __table_args__ = (
-        db.PrimaryKeyConstraint(
-            "email_schedule_uid",
-            "filter_group_id",
-            "filter_variable",
-            "filter_operator",
-            "filter_value",
-        ),
+        db.PrimaryKeyConstraint(schedule_filter_uid),
         {"schema": "webapp"},
     )
 
@@ -490,7 +462,6 @@ class EmailScheduleFilter(db.Model):
         filter_variable,
         filter_operator,
         filter_value,
-        filter_concatenator,
     ):
         self.email_schedule_uid = email_schedule_uid
         self.filter_group_id = filter_group_id
@@ -498,7 +469,6 @@ class EmailScheduleFilter(db.Model):
         self.filter_variable = filter_variable
         self.filter_operator = filter_operator
         self.filter_value = filter_value
-        self.filter_concatenator = filter_concatenator
 
     def to_dict(self):
         return {
@@ -508,5 +478,4 @@ class EmailScheduleFilter(db.Model):
             "filter_variable": self.filter_variable,
             "filter_operator": self.filter_operator,
             "filter_value": self.filter_value,
-            "filter_concatenator": self.filter_concatenator,
         }

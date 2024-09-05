@@ -389,7 +389,6 @@ def create_email_schedule(validated_payload):
                     filter_variable=filter_item.get("filter_variable"),
                     filter_operator=filter_item.get("filter_operator"),
                     filter_value=filter_item.get("filter_value"),
-                    filter_concatenator=filter_item.get("filter_concatenator"),
                 )
                 db.session.add(filter_obj)
 
@@ -547,7 +546,6 @@ def update_email_schedule(schedule_id, validated_payload):
                         filter_variable=filter_item.get("filter_variable"),
                         filter_operator=filter_item.get("filter_operator"),
                         filter_value=filter_item.get("filter_value"),
-                        filter_concatenator=filter_item.get("filter_concatenator"),
                     )
                     db.session.add(filter_obj)
 
@@ -863,7 +861,6 @@ def create_email_template(validated_payload):
                         filter_variable=filter_item.get("filter_variable"),
                         filter_operator=filter_item.get("filter_operator"),
                         filter_value=filter_item.get("filter_value"),
-                        filter_concatenator=filter_item.get("filter_concatenator"),
                     )
                     db.session.add(filter_obj)
             db.session.flush()
@@ -1036,7 +1033,6 @@ def update_email_template(email_template_uid, validated_payload):
                         filter_variable=filter_item.get("filter_variable"),
                         filter_operator=filter_item.get("filter_operator"),
                         filter_value=filter_item.get("filter_value"),
-                        filter_concatenator=filter_item.get("filter_concatenator"),
                     )
                     db.session.add(filter_obj)
         db.session.commit()

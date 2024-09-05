@@ -58,15 +58,7 @@ class EmailFilterValidator(FlaskForm):
             ),
         ]
     )
-    filter_value = StringField(validators=[DataRequired()])
-    filter_concatenator = StringField(
-        validators=[
-            AnyOf(
-                ["AND", "OR", None],
-                message="Invalid Concatenator. Must be 'AND' or 'OR'",
-            ),
-        ],
-    )
+    filter_value = StringField()
 
 
 class EmailScheduleFilterValidator(FlaskForm):
@@ -88,15 +80,7 @@ class EmailScheduleFilterValidator(FlaskForm):
             ),
         ]
     )
-    filter_value = StringField(validators=[DataRequired()])
-    filter_concatenator = StringField(
-        validators=[
-            AnyOf(
-                ["AND", "OR", None],
-                message="Invalid Concatenator. Must be 'AND' or 'OR'",
-            ),
-        ],
-    )
+    filter_value = StringField()
 
 
 class EmailFilterGroupValidator(FlaskForm):
