@@ -4559,6 +4559,1964 @@ class TestAssignments:
                     ],
                     "group_label": "Target Status Details",
                 },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "prev_assigned_to",
+                            "column_label": "Previously Assigned To",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Target Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                    ],
+                    "group_label": "Form Productivity (Agrifieldnet Main Form)",
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [{"column_key": "name", "column_label": "Name"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "enumerator_id", "column_label": "ID"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [{"column_key": "email", "column_label": "Email"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "mobile_primary", "column_label": "Mobile"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "num_attempts", "column_label": "Total Attempts"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_fsl_1_login(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy_with_fsl_1_login,
+        create_enumerator_column_config,
+        create_target_column_config,
+        test_user_credentials,
+        csrf_token,
+    ):
+        """
+        Test the default response from the table config endpoint for an FS L1 user
+        with no `all_supervisors` flag set to True
+        """
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],  # FS L1 role
+        )
+
+        login_user(client, test_user_credentials)
+
+        response = client.get(
+            "/api/assignments/table-config", query_string={"form_uid": 1}
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                        {"column_key": "gender", "column_label": "Gender"},
+                        {"column_key": "language", "column_label": "Language"},
+                    ],
+                    "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Total Attempts",
+                        },
+                    ],
+                    "group_label": "Target Status Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "prev_assigned_to",
+                            "column_label": "Previously Assigned To",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Target Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                    ],
+                    "group_label": "Form Productivity (Agrifieldnet Main Form)",
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [{"column_key": "name", "column_label": "Name"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "enumerator_id", "column_label": "ID"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [{"column_key": "email", "column_label": "Email"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "mobile_primary", "column_label": "Mobile"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "num_attempts", "column_label": "Total Attempts"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_fsl_1_login_filtered_supervisors(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy_with_fsl_1_login,
+        create_enumerator_column_config,
+        create_target_column_config,
+        test_user_credentials,
+        csrf_token,
+    ):
+        """
+        Test the default response from the table config endpoint for an FS L1 user
+        with `filter_supervisors` flag
+        """
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],  # FS L1 role
+        )
+
+        login_user(client, test_user_credentials)
+
+        response = client.get(
+            "/api/assignments/table-config",
+            query_string={"form_uid": 1, "filter_supervisors": "true"},
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                        {"column_key": "gender", "column_label": "Gender"},
+                        {"column_key": "language", "column_label": "Language"},
+                    ],
+                    "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Total Attempts",
+                        },
+                    ],
+                    "group_label": "Target Status Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "prev_assigned_to",
+                            "column_label": "Previously Assigned To",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Target Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                    ],
+                    "group_label": "Form Productivity (Agrifieldnet Main Form)",
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [{"column_key": "name", "column_label": "Name"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "enumerator_id", "column_label": "ID"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [{"column_key": "email", "column_label": "Email"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "mobile_primary", "column_label": "Mobile"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "num_attempts", "column_label": "Total Attempts"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_fsl_2_login_filtered_supervisors(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy_with_fsl_2_login,
+        create_enumerator_column_config,
+        create_target_column_config,
+        test_user_credentials,
+        csrf_token,
+    ):
+        """
+        Test the default response from the table config endpoint for an FS L2 user
+        with no `filter_supervisors` flag
+        """
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[2],  # FS L2 role
+        )
+
+        login_user(client, test_user_credentials)
+
+        response = client.get(
+            "/api/assignments/table-config",
+            query_string={"form_uid": 1, "filter_supervisors": "true"},
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                        {"column_key": "gender", "column_label": "Gender"},
+                        {"column_key": "language", "column_label": "Language"},
+                    ],
+                    "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Total Attempts",
+                        },
+                    ],
+                    "group_label": "Target Status Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "prev_assigned_to",
+                            "column_label": "Previously Assigned To",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Target Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                    ],
+                    "group_label": "Form Productivity (Agrifieldnet Main Form)",
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [{"column_key": "name", "column_label": "Name"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "enumerator_id", "column_label": "ID"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [{"column_key": "email", "column_label": "Email"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "mobile_primary", "column_label": "Mobile"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "num_attempts", "column_label": "Total Attempts"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_fsl_3_login_filtered_supervisors(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy_with_fsl_3_login,
+        create_enumerator_column_config,
+        create_target_column_config,
+        test_user_credentials,
+        csrf_token,
+    ):
+        """
+        Test the default response from the table config endpoint for an FS L3 user
+        with no `filter_supervisors` flag
+        """
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[3],  # FS L3 role
+        )
+
+        login_user(client, test_user_credentials)
+
+        response = client.get(
+            "/api/assignments/table-config",
+            query_string={"form_uid": 1, "filter_supervisors": "true"},
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                        {"column_key": "gender", "column_label": "Gender"},
+                        {"column_key": "language", "column_label": "Language"},
+                    ],
+                    "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Total Attempts",
+                        },
+                    ],
+                    "group_label": "Target Status Details",
+                },
             ],
             "assignments_review": [
                 {
@@ -4919,6 +6877,45 @@ class TestAssignments:
                     ],
                     "group_label": "Target Status Details",
                 },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
             ],
             "assignments_review": [
                 {
@@ -5072,6 +7069,45 @@ class TestAssignments:
                     ],
                     "group_label": None,
                 },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
             ],
             "targets": [
                 {
@@ -5136,6 +7172,45 @@ class TestAssignments:
                     ],
                     "group_label": None,
                 },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
             ],
         }
 
@@ -5182,6 +7257,458 @@ class TestAssignments:
                         {"column_key": "language", "column_label": "Language"},
                     ],
                     "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Total Attempts",
+                        },
+                    ],
+                    "group_label": "Target Status Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "prev_assigned_to",
+                            "column_label": "Previously Assigned To",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target Unique ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Target Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_pending_targets",
+                            "column_label": "Total Pending Targets",
+                        },
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_completed_targets",
+                            "column_label": "Total Completed Targets",
+                        },
+                    ],
+                    "group_label": "Form Productivity (Agrifieldnet Main Form)",
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [{"column_key": "name", "column_label": "Name"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "enumerator_id", "column_label": "ID"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "surveyor_status", "column_label": "Status"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                    ],
+                    "group_label": "Surveyor Working Location",
+                },
+                {
+                    "columns": [{"column_key": "email", "column_label": "Email"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "mobile_primary", "column_label": "Mobile"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "home_address", "column_label": "Address"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "gender", "column_label": "Gender"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "group_label": "Target Location Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "num_attempts", "column_label": "Total Attempts"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[0].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[1].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        },
+                        {
+                            "column_key": "supervisors[2].supervisor_email",
+                            "column_label": "Email",
+                        },
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_table_config_default_no_roles(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test the default response from the table config endpoint with no roles
+        """
+
+        response = client.get(
+            "/api/assignments/table-config", query_string={"form_uid": 1}
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Surveyor Name",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                        {"column_key": "gender", "column_label": "Gender"},
+                        {"column_key": "language", "column_label": "Language"},
+                    ],
+                    "group_label": "Target Details",
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
+                    "group_label": None,
                 },
                 {
                     "columns": [
@@ -5325,6 +7852,21 @@ class TestAssignments:
                     ],
                     "group_label": None,
                 },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
             ],
             "surveyors": [
                 {
@@ -5378,6 +7920,21 @@ class TestAssignments:
                     ],
                     "group_label": None,
                 },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile (Secondary)']",
+                            "column_label": "Mobile (Secondary)",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Age']", "column_label": "Age"}
+                    ],
+                    "group_label": None,
+                },
             ],
             "targets": [
                 {
@@ -5392,6 +7949,30 @@ class TestAssignments:
                 },
                 {
                     "columns": [{"column_key": "language", "column_label": "Language"}],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {"column_key": "custom_fields['Name']", "column_label": "Name"}
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Address']",
+                            "column_label": "Address",
+                        }
+                    ],
                     "group_label": None,
                 },
                 {
@@ -5502,6 +8083,21 @@ class TestAssignments:
                     "group_label": "Locations",
                     "column_key": "target_locations[1].location_name",
                     "column_label": "District",
+                },
+                {
+                    "group_label": "Core User",
+                    "column_key": "supervisors[0].supervisor_name",
+                    "column_label": "Name",
+                },
+                {
+                    "group_label": "Cluster Coordinator",
+                    "column_key": "supervisors[1].supervisor_name",
+                    "column_label": "Name",
+                },
+                {
+                    "group_label": "Regional Coordinator",
+                    "column_key": "supervisors[2].supervisor_name",
+                    "column_label": "Name",
                 },
             ],
         }
@@ -5708,6 +8304,652 @@ class TestAssignments:
                         },
                     ],
                     "group_label": "Locations",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        }
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        }
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        }
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Enumerator name",
+                        },
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                    ],
+                    "group_label": "Details",
+                }
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "enumerator_id",
+                            "column_label": "Enumerator id",
+                        },
+                        {"column_key": "name", "column_label": "Enumerator name"},
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Age']",
+                            "column_label": "Enumerator Age",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "State",
+                        }
+                    ],
+                    "group_label": "Locations",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned",
+                        }
+                    ],
+                    "group_label": "Form productivity",
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "enumerator_id",
+                            "column_label": "Enumerator id",
+                        },
+                        {"column_key": "name", "column_label": "Enumerator name"},
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Age']",
+                            "column_label": "Enumerator Age",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "State",
+                        }
+                    ],
+                    "group_label": "Locations",
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target id"}
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Target Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "State",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "District",
+                        },
+                    ],
+                    "group_label": "Locations",
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        print(response.json)
+
+        assert checkdiff == {}
+
+    def test_create_table_config_fsl1_login(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy_with_fsl_1_login,
+        create_enumerator_column_config,
+        create_target_column_config,
+        test_user_credentials,
+        csrf_token,
+    ):
+        """
+        Test creating a new table config for each table type with FS L1 login
+        """
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[1],  # FS L1 role
+        )
+
+        login_user(client, test_user_credentials)
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_main",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_id",
+                    "column_label": "Enumerator id",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Target Mobile no.",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "assigned_enumerator_custom_fields['Age']",
+                    "column_label": "Enumerator Age",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "District",
+                },
+                {
+                    "group_label": "Core User",
+                    "column_key": "supervisors[0].supervisor_name",
+                    "column_label": "Name",
+                },
+                {
+                    "group_label": "Cluster Coordinator",
+                    "column_key": "supervisors[1].supervisor_name",
+                    "column_label": "Name",
+                },
+                {
+                    "group_label": "Regional Coordinator",
+                    "column_key": "supervisors[2].supervisor_name",
+                    "column_label": "Name",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_surveyors",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "enumerator_id",
+                    "column_label": "Enumerator id",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Age']",
+                    "column_label": "Enumerator Age",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Form productivity",
+                    "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                    "column_label": "Total Assigned",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+        assert response.status_code == 200
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_review",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "target_id",
+                    "column_label": "Target ID",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "surveyors",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "enumerator_id",
+                    "column_label": "Enumerator id",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Age']",
+                    "column_label": "Enumerator Age",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "surveyor_locations[0].location_name",
+                    "column_label": "State",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "targets",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "target_id",
+                    "column_label": "Target id",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Target Mobile no.",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "District",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        # Fetch with no filter_supervisors flag
+        response = client.get(
+            "/api/assignments/table-config",
+            query_string={"form_uid": 1},
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_id",
+                            "column_label": "Enumerator id",
+                        },
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Enumerator name",
+                        },
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Target Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_custom_fields['Age']",
+                            "column_label": "Enumerator Age",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "State",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "District",
+                        },
+                    ],
+                    "group_label": "Locations",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[0].supervisor_name",
+                            "column_label": "Name",
+                        }
+                    ],
+                    "group_label": "Core User",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        }
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        }
+                    ],
+                    "group_label": "Regional Coordinator",
+                },
+            ],
+            "assignments_review": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Enumerator name",
+                        },
+                        {"column_key": "target_id", "column_label": "Target ID"},
+                    ],
+                    "group_label": "Details",
+                }
+            ],
+            "assignments_surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "enumerator_id",
+                            "column_label": "Enumerator id",
+                        },
+                        {"column_key": "name", "column_label": "Enumerator name"},
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Age']",
+                            "column_label": "Enumerator Age",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "State",
+                        }
+                    ],
+                    "group_label": "Locations",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "form_productivity.test_scto_input_output.total_assigned_targets",
+                            "column_label": "Total Assigned",
+                        }
+                    ],
+                    "group_label": "Form productivity",
+                },
+            ],
+            "surveyors": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "enumerator_id",
+                            "column_label": "Enumerator id",
+                        },
+                        {"column_key": "name", "column_label": "Enumerator name"},
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Age']",
+                            "column_label": "Enumerator Age",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "surveyor_locations[0].location_name",
+                            "column_label": "State",
+                        }
+                    ],
+                    "group_label": "Locations",
+                },
+            ],
+            "targets": [
+                {
+                    "columns": [
+                        {"column_key": "target_id", "column_label": "Target id"}
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Target Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "State",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "District",
+                        },
+                    ],
+                    "group_label": "Locations",
+                },
+            ],
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        # print(response.json)
+
+        assert checkdiff == {}
+
+        # Fetch with filter_supervisors flag
+        response = client.get(
+            "/api/assignments/table-config",
+            query_string={"form_uid": 1, "filter_supervisors": True},
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "assignments_main": [
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_id",
+                            "column_label": "Enumerator id",
+                        },
+                        {
+                            "column_key": "assigned_enumerator_name",
+                            "column_label": "Enumerator name",
+                        },
+                    ],
+                    "group_label": "Details",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "custom_fields['Mobile no.']",
+                            "column_label": "Target Mobile no.",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "assigned_enumerator_custom_fields['Age']",
+                            "column_label": "Enumerator Age",
+                        }
+                    ],
+                    "group_label": None,
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "State",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "District",
+                        },
+                    ],
+                    "group_label": "Locations",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[1].supervisor_name",
+                            "column_label": "Name",
+                        }
+                    ],
+                    "group_label": "Cluster Coordinator",
+                },
+                {
+                    "columns": [
+                        {
+                            "column_key": "supervisors[2].supervisor_name",
+                            "column_label": "Name",
+                        }
+                    ],
+                    "group_label": "Regional Coordinator",
                 },
             ],
             "assignments_review": [
@@ -6053,6 +9295,54 @@ class TestAssignments:
 
         assert checkdiff == {}
 
+    def test_table_config_validations_no_roles_configured(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        create_enumerator_column_config_no_locations,
+        create_target_column_config_no_locations,
+        csrf_token,
+    ):
+        """
+        Test creating invalid table configs to trigger each type of validation error
+        This test is for when no roles are configured but the table config contains supervisor roles
+        """
+
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_main",
+            "table_config": [
+                {
+                    "group_label": "Core User",
+                    "column_key": "supervisors[0].supervisor_name",
+                    "column_label": "Name",
+                }
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": [
+                "The column_key 'supervisors[0].supervisor_name' is invalid. Roles are not defined for this survey."
+            ],
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        print(response.json)
+        assert checkdiff == {}
+
     def test_table_config_validations(
         self,
         client,
@@ -6077,6 +9367,7 @@ class TestAssignments:
         Check for non-existent keys in assignments_surveyors custom fields
         Try different incorrect formats for form productivity
         Check for non-existent scto_form_id in form productivity
+        Check for non-existing supervisor index in assignments_main
         """
 
         payload = {
@@ -6188,6 +9479,11 @@ class TestAssignments:
                     "column_key": "scto_fields.horse",
                     "column_label": "Horse",
                 },
+                {
+                    "group_label": "Core User",
+                    "column_key": "supervisors[3].supervisor_name",
+                    "column_label": "Name",
+                },
             ],
         }
 
@@ -6219,6 +9515,7 @@ class TestAssignments:
                 "'scto_fields.my-horse' is not in the correct format. It should follow the pattern scto_fields.<surveycto_field_name> (allowed characters are a-z, A-Z, 0-9, _).",
                 "The SurveyCTO field 'my-horse' was not found in the form definition for this form.",
                 "The SurveyCTO field 'horse' was not found in the form definition for this form.",
+                "The supervisor index of 3 for supervisors[3].supervisor_name is invalid. It must be in the range [0:2] because there are 3 supervisors defined for the survey.",
             ],
             "success": False,
         }
@@ -7155,8 +10452,8 @@ class TestAssignments:
         create_email_schedule,
     ):
         """
-        Function to test uploading asssignments csv with enumerator who has dropped out of the survey
-        """
+        #     Function to test uploading asssignments csv with enumerator who has dropped out of the survey
+        #"""
         # Update an enumerator's status to Dropout
         payload = {
             "status": "Dropout",
@@ -7834,6 +11131,30 @@ class TestAssignments:
                 {"column_key": "num_attempts", "column_label": "Total Attempts"},
                 {"column_key": "refusal_flag", "column_label": "Refused"},
                 {"column_key": "completed_flag", "column_label": "Completed"},
+                {
+                    "column_key": "supervisors[0].supervisor_name",
+                    "column_label": "Core User Name",
+                },
+                {
+                    "column_key": "supervisors[0].supervisor_email",
+                    "column_label": "Core User Email",
+                },
+                {
+                    "column_key": "supervisors[1].supervisor_name",
+                    "column_label": "Cluster Coordinator Name",
+                },
+                {
+                    "column_key": "supervisors[1].supervisor_email",
+                    "column_label": "Cluster Coordinator Email",
+                },
+                {
+                    "column_key": "supervisors[2].supervisor_name",
+                    "column_label": "Regional Coordinator Name",
+                },
+                {
+                    "column_key": "supervisors[2].supervisor_email",
+                    "column_label": "Regional Coordinator Email",
+                },
             ],
             "assignments_review": [
                 {
@@ -7918,6 +11239,30 @@ class TestAssignments:
                 {"column_key": "num_attempts", "column_label": "Total Attempts"},
                 {"column_key": "refusal_flag", "column_label": "Refused"},
                 {"column_key": "completed_flag", "column_label": "Completed"},
+                {
+                    "column_key": "supervisors[0].supervisor_name",
+                    "column_label": "Core User Name",
+                },
+                {
+                    "column_key": "supervisors[0].supervisor_email",
+                    "column_label": "Core User Email",
+                },
+                {
+                    "column_key": "supervisors[1].supervisor_name",
+                    "column_label": "Cluster Coordinator Name",
+                },
+                {
+                    "column_key": "supervisors[1].supervisor_email",
+                    "column_label": "Cluster Coordinator Email",
+                },
+                {
+                    "column_key": "supervisors[2].supervisor_name",
+                    "column_label": "Regional Coordinator Name",
+                },
+                {
+                    "column_key": "supervisors[2].supervisor_email",
+                    "column_label": "Regional Coordinator Email",
+                },
             ],
             "assignments_surveyors": [
                 {"column_key": "enumerator_id", "column_label": "ID"},
@@ -7976,6 +11321,30 @@ class TestAssignments:
                     "column_label": "Mobile (Secondary)",
                 },
                 {"column_key": "custom_fields['Age']", "column_label": "Age"},
+                {
+                    "column_key": "supervisors[0].supervisor_name",
+                    "column_label": "Core User Name",
+                },
+                {
+                    "column_key": "supervisors[0].supervisor_email",
+                    "column_label": "Core User Email",
+                },
+                {
+                    "column_key": "supervisors[1].supervisor_name",
+                    "column_label": "Cluster Coordinator Name",
+                },
+                {
+                    "column_key": "supervisors[1].supervisor_email",
+                    "column_label": "Cluster Coordinator Email",
+                },
+                {
+                    "column_key": "supervisors[2].supervisor_name",
+                    "column_label": "Regional Coordinator Name",
+                },
+                {
+                    "column_key": "supervisors[2].supervisor_email",
+                    "column_label": "Regional Coordinator Email",
+                },
             ],
             "targets": [
                 {"column_key": "target_id", "column_label": "Target ID"},
@@ -8023,6 +11392,30 @@ class TestAssignments:
                 {"column_key": "num_attempts", "column_label": "Total Attempts"},
                 {"column_key": "refusal_flag", "column_label": "Refused"},
                 {"column_key": "completed_flag", "column_label": "Completed"},
+                {
+                    "column_key": "supervisors[0].supervisor_name",
+                    "column_label": "Core User Name",
+                },
+                {
+                    "column_key": "supervisors[0].supervisor_email",
+                    "column_label": "Core User Email",
+                },
+                {
+                    "column_key": "supervisors[1].supervisor_name",
+                    "column_label": "Cluster Coordinator Name",
+                },
+                {
+                    "column_key": "supervisors[1].supervisor_email",
+                    "column_label": "Cluster Coordinator Email",
+                },
+                {
+                    "column_key": "supervisors[2].supervisor_name",
+                    "column_label": "Regional Coordinator Name",
+                },
+                {
+                    "column_key": "supervisors[2].supervisor_email",
+                    "column_label": "Regional Coordinator Email",
+                },
             ],
         }
 
