@@ -5199,7 +5199,16 @@ paths:
     get:
       tags:
         - Permissions
-      description: Get all permissions
+      description: Get all permissions. Optionally, a
+        `?survey_uid=<survey_uid>` query parameter can be provided to return
+        permisions applicable for a specific survey based on modules selected.
+      parameters:
+        - in: query
+          name: survey_uid
+          schema:
+            type: integer
+          required: false
+          description: Unique ID of the survey to return permissions for.
       responses:
         "200":
           description: Permissions retrieved successfully

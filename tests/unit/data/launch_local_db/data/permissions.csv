@@ -1,30 +1,30 @@
-name,description,active
-ADMIN,Admin permission,true
-READ Survey Locations,Read Survey Locations permission,true
-WRITE Survey Locations,Write Survey Locations permission,true
-READ Enumerators,Read Enumerators permission,true
-WRITE Enumerators,Write Enumerators permission,true
-READ Targets,Read Targets permission,true
-WRITE Targets,Write Targets permission,true
-READ Assignments,Read Assignments permission,true
-WRITE Assignments,Write Assignments permission,true
-READ Media Files Config,Read Media Files Config permission,true
-WRITE Media Files Config,Write Media Files Config permission,true
-READ Media Files,Read Media Files permission,true
-WRITE Media Files,Write Media Files permission,true
-READ Productivity,Read Productivity permission,true
-WRITE Productivity,Write Productivity permission,true
-READ Data Quality,Read Data Quality permission,true
-WRITE Data Quality,Write Data Quality permission,true
-READ Emails,Read Emails permission,true
-WRITE Emails,Write Emails permission,true
-READ Target Status Mapping,Read Target Status Mapping permission,true
-WRITE Target Status Mapping,Write Target Status Mapping permission,true
-READ Data Quality Forms,Read Data Quality Forms permission,true
-WRITE Data Quality Forms,Write Data Quality Forms permission,true
-WRITE Assignments Upload,Write Assignments Upload permission,true
-READ Assignments Upload,Read Assignments Upload permission,true
-READ Mapping,Read Mapping permission,true
-WRITE Mapping,Write Mapping permission,true
-READ Admin Forms,Read Admin Forms permission,true
-WRITE Admin Forms,Write Admin Forms permission,true
+name,description,active,module_id
+ADMIN,Admin permission,true,
+READ Survey Locations,Read Survey Locations permission,true,5
+WRITE Survey Locations,Write Survey Locations permission,true,5
+READ Enumerators,Read Enumerators permission,true,7
+WRITE Enumerators,Write Enumerators permission,true,7
+READ Targets,Read Targets permission,true,8
+WRITE Targets,Write Targets permission,true,8
+READ Assignments,Read Assignments permission,true,9
+WRITE Assignments,Write Assignments permission,true,9
+READ Media Files Config,Read Media Files Config permission,true,12
+WRITE Media Files Config,Write Media Files Config permission,true,12
+READ Media Files,Read Media Files permission,true,12
+WRITE Media Files,Write Media Files permission,true,12
+READ Productivity,Read Productivity permission,true,10
+WRITE Productivity,Write Productivity permission,true,10
+READ Data Quality,Read Data Quality permission,true,11
+WRITE Data Quality,Write Data Quality permission,true,11
+READ Emails,Read Emails permission,true,15
+WRITE Emails,Write Emails permission,true,15
+READ Target Status Mapping,Read Target Status Mapping permission,true,14
+WRITE Target Status Mapping,Write Target Status Mapping permission,true,14
+READ Data Quality Forms,Read Data Quality Forms permission,true,11
+WRITE Data Quality Forms,Write Data Quality Forms permission,true,11
+WRITE Assignments Upload,Write Assignments Upload permission,true,9
+READ Assignments Upload,Read Assignments Upload permission,true,9
+READ Mapping,Read Mapping permission,true,17
+WRITE Mapping,Write Mapping permission,true,17
+READ Admin Forms,Read Admin Forms permission,true,18
+WRITE Admin Forms,Write Admin Forms permission,true,18
