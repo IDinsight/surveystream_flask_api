@@ -121,7 +121,7 @@ def get_default_email_assignments_column(survey_uid):
         target_custom_fields.append(
             {
                 "column_description": f"Targets: custom_fields['{row.column_name}']",
-                "column_name": row.column_name,
+                "column_name": "Targets: " + row.column_name,
             }
         )
 
@@ -134,8 +134,8 @@ def get_default_email_assignments_column(survey_uid):
     for row in result:
         enumerator_custom_fields.append(
             {
-                "column_description": f"Enumerators: custom_fields['{row.column_name}']",
-                "column_name": row.column_name,
+                "column_key": f"Enumerators: custom_fields['{row.column_name}']",
+                "column_label": "Enumerators: " + row.column_name,
             }
         )
     default_column_list = (
@@ -226,11 +226,14 @@ def get_default_email_variable_names(form_uid):
 
     default_column_list = [
         "Surveyor Name",
-        "Surveyor ID",
-        "Surveyor Language",
-        "Surveyor Gender",
-        "Assignment Date",
         "Surveyor Email",
+        "Surveyor Language",
+        "Surveyor ID",
+        "Assignment Date",
+        "Survey Name",
+        "Schedule Name",
+        "Config Name",
+        "SCTO Form ID",
     ]
 
     location_column_list = []
