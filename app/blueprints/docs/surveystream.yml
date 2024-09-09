@@ -9377,9 +9377,9 @@ paths:
         - Emails
       summary: Get all table catalog for a specific survey
       parameters:
-        - name: survey_uid
+        - name: email_config_uid
           in: query
-          description: Unique identifier for the survey
+          description: Unique identifier for the email config
           required: true
           schema:
             type: integer
