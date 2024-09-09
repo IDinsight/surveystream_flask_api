@@ -127,3 +127,10 @@ class UserHierarchyPayloadValidator(FlaskForm):
 class CreatePermissionPayloadValidator(FlaskForm):
     name = StringField(validators=[DataRequired()])
     description = StringField(validators=[DataRequired()])
+
+
+class GetPermissionsQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField()

@@ -1,6 +1,7 @@
 import pytest
 import jsondiff
 
+
 @pytest.mark.permissions
 class TestPermissions:
     @pytest.fixture
@@ -9,9 +10,13 @@ class TestPermissions:
         Tests if we can create a simple WRITE permissions
         The permission is returned by the fixture for subsequent tests
         """
-        data = {'name': 'WRITE', 'description': 'Write permission'}
-        response = client.post('/api/permissions', json=data, content_type="application/json",
-                               headers={"X-CSRF-Token": csrf_token})
+        data = {"name": "WRITE", "description": "Write permission"}
+        response = client.post(
+            "/api/permissions",
+            json=data,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
         assert response.status_code == 201
         assert response.json["message"] == "Permission created successfully"
 
@@ -21,13 +26,70 @@ class TestPermissions:
             "description": response.json["description"],
         }
 
+    @pytest.fixture()
+    def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
+        """
+        Insert new survey as a setup step for the form tests
+        """
+
+        payload = {
+            "survey_id": "test_survey",
+            "survey_name": "Test Survey",
+            "survey_description": "A test survey",
+            "project_name": "Test Project",
+            "surveying_method": "in-person",
+            "irb_approval": "Yes",
+            "planned_start_date": "2021-01-01",
+            "planned_end_date": "2021-12-31",
+            "state": "Draft",
+            "config_status": "In Progress - Configuration",
+            "created_by_user_uid": test_user_credentials["user_uid"],
+        }
+
+        response = client.post(
+            "/api/surveys",
+            query_string={"user_uid": 3},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        yield
+
+    @pytest.fixture()
+    def create_module_selection(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Insert new module_selection as a setup step for the module_selection tests
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "modules": ["1", "2", "3", "4", "5", "6", "7", "8", "13", "14", "18"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
     def test_default_data_available(self, client, login_test_user, csrf_token):
         """
-            Tests fetch permissions is working, this tests also expects that permissions are
-            already seeded to the database by the migrations
+        Tests fetch permissions is working, this tests also expects that permissions are
+        already seeded to the database by the migrations
         """
-        response = client.get('/api/permissions', content_type="application/json",
-                              headers={"X-CSRF-Token": csrf_token})
+        response = client.get(
+            "/api/permissions",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
         assert response.status_code == 200
         # Ensure the default permission is present in the response
         response_data = response.json
@@ -177,14 +239,18 @@ class TestPermissions:
 
         assert jsondiff.diff(expected_data, response_data) == {}
 
-
-    def test_create_permission(self, client, login_test_user, csrf_token, create_permission):
+    def test_create_permission(
+        self, client, login_test_user, csrf_token, create_permission
+    ):
         """
         Test the create_permission fixture is working
         Using a fetch test confirm that both the default data and the new created permission are both available
         """
-        response = client.get('/api/permissions', content_type="application/json",
-                              headers={"X-CSRF-Token": csrf_token})
+        response = client.get(
+            "/api/permissions",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
         assert response.status_code == 200
 
         response_data = response.json
@@ -339,13 +405,18 @@ class TestPermissions:
 
         assert jsondiff.diff(expected_data, response_data) == {}
 
-    def test_get_permission(self, client, login_test_user, csrf_token, create_permission):
+    def test_get_permission(
+        self, client, login_test_user, csrf_token, create_permission
+    ):
         """
         Test single permissions fetch
         Expect data similar to create_permission data
         """
-        response = client.get(f"/api/permissions/{create_permission['permission_uid']}", content_type="application/json",
-                              headers={"X-CSRF-Token": csrf_token})
+        response = client.get(
+            f"/api/permissions/{create_permission['permission_uid']}",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
         assert response.status_code == 200
         assert response.json == {
             "permission_uid": create_permission["permission_uid"],
@@ -353,15 +424,21 @@ class TestPermissions:
             "description": create_permission["description"],
         }
 
-    def test_update_permission(self, client, login_test_user, csrf_token, create_permission):
+    def test_update_permission(
+        self, client, login_test_user, csrf_token, create_permission
+    ):
         """
-           Test permissions update endpoint
-           Expect data from create_permission to change to new data provided
+        Test permissions update endpoint
+        Expect data from create_permission to change to new data provided
         """
-        permission_id = create_permission['permission_uid']
-        data = {'name': 'UPDATED', 'description': 'Updated permission'}
-        response = client.put(f'/api/permissions/{permission_id}', json=data, content_type="application/json",
-                              headers={"X-CSRF-Token": csrf_token})
+        permission_id = create_permission["permission_uid"]
+        data = {"name": "UPDATED", "description": "Updated permission"}
+        response = client.put(
+            f"/api/permissions/{permission_id}",
+            json=data,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
         assert response.status_code == 200
         assert response.json["message"] == "Permission updated successfully"
 
@@ -378,14 +455,19 @@ class TestPermissions:
             "description": "Updated permission",
         }
 
-    def test_delete_permission(self, client, login_test_user, csrf_token, create_permission):
+    def test_delete_permission(
+        self, client, login_test_user, csrf_token, create_permission
+    ):
         """
-            Test permissions delete endpoint
-            Expect data from create_permission to be deleted
+        Test permissions delete endpoint
+        Expect data from create_permission to be deleted
         """
-        permission_id = create_permission['permission_uid']
-        response = client.delete(f'/api/permissions/{permission_id}', content_type="application/json",
-                                 headers={"X-CSRF-Token": csrf_token})
+        permission_id = create_permission["permission_uid"]
+        response = client.delete(
+            f"/api/permissions/{permission_id}",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
         assert response.status_code == 200
         assert response.json["message"] == "Permission deleted successfully"
 
@@ -396,3 +478,75 @@ class TestPermissions:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert delete_response.status_code == 404
+
+    def test_get_survey_permissions(
+        self, client, login_test_user, csrf_token, create_module_selection
+    ):
+        """
+        Test permissions fetch for a survey
+        Expect only permissions that are associated with the survey as per
+        modules selected to be returned
+        """
+        response = client.get(
+            "api/permissions?survey_uid=1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        response_data = response.json
+        expected_data = [
+            {"description": "Admin permission", "name": "ADMIN", "permission_uid": 1},
+            {
+                "description": "Read Survey Locations permission",
+                "name": "READ Survey Locations",
+                "permission_uid": 2,
+            },
+            {
+                "description": "Write Survey Locations permission",
+                "name": "WRITE Survey Locations",
+                "permission_uid": 3,
+            },
+            {
+                "description": "Read Enumerators permission",
+                "name": "READ Enumerators",
+                "permission_uid": 4,
+            },
+            {
+                "description": "Write Enumerators permission",
+                "name": "WRITE Enumerators",
+                "permission_uid": 5,
+            },
+            {
+                "description": "Read Targets permission",
+                "name": "READ Targets",
+                "permission_uid": 6,
+            },
+            {
+                "description": "Write Targets permission",
+                "name": "WRITE Targets",
+                "permission_uid": 7,
+            },
+            {
+                "description": "Read Target Status Mapping permission",
+                "name": "READ Target Status Mapping",
+                "permission_uid": 20,
+            },
+            {
+                "description": "Write Target Status Mapping permission",
+                "name": "WRITE Target Status Mapping",
+                "permission_uid": 21,
+            },
+            {
+                "description": "Read Admin Forms permission",
+                "name": "READ Admin Forms",
+                "permission_uid": 28,
+            },
+            {
+                "description": "Write Admin Forms permission",
+                "name": "WRITE Admin Forms",
+                "permission_uid": 29,
+            },
+        ]
+        print(response_data)
+        assert jsondiff.diff(expected_data, response_data) == {}

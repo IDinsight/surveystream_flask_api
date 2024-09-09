@@ -6,6 +6,7 @@ from sqlalchemy.sql import case
 
 from app import db
 from app.blueprints.auth.models import User
+from app.blueprints.module_selection.models import ModuleStatus
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
@@ -19,6 +20,7 @@ from .routes import roles_bp
 from .utils import RoleHierarchy
 from .validators import (
     CreatePermissionPayloadValidator,
+    GetPermissionsQueryParamValidator,
     SurveyRolesPayloadValidator,
     SurveyRolesQueryParamValidator,
     UserHierarchyParamValidator,
@@ -237,9 +239,26 @@ def update_survey_roles(validated_query_params, validated_payload):
 # GET all permissions
 @roles_bp.route("/permissions", methods=["GET"])
 @logged_in_active_user_required
-def get_permissions():
+@validate_query_params(GetPermissionsQueryParamValidator)
+def get_permissions(validated_query_params):
     """Function to get permissions"""
-    permissions = Permission.query.all()
+
+    survey_uid = validated_query_params.survey_uid.data
+
+    if survey_uid:
+        common_permissions = (
+            db.session.query(Permission).filter(Permission.module_id == None).all()
+        )
+        survey_permissions = (
+            db.session.query(Permission)
+            .join(ModuleStatus, ModuleStatus.module_id == Permission.module_id)
+            .filter(ModuleStatus.survey_uid == survey_uid)
+            .all()
+        )
+        permissions = common_permissions + survey_permissions
+    else:
+        permissions = Permission.query.all()
+
     permission_list = [
         {
             "permission_uid": permission.permission_uid,

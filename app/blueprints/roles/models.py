@@ -1,5 +1,6 @@
 from app import db
 from app.blueprints.auth.models import User
+from app.blueprints.module_selection.models import Module
 from app.blueprints.surveys.models import Survey
 
 
@@ -91,6 +92,9 @@ class Permission(db.Model):
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
     active = db.Column(db.Boolean(), nullable=False, default=True)
+    module_id = db.Column(
+        db.Integer, db.ForeignKey(Module.module_id, ondelete="CASCADE")
+    )
 
 
 class RolePermission(db.Model):

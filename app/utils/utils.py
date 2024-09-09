@@ -276,7 +276,6 @@ def custom_permissions_required(
     """
     Function to check if the current user has the required permissions
     """
-    from app.blueprints.roles.models import Permission, Role, SurveyAdmin
 
     def decorator(fn):
         @wraps(fn)
@@ -308,6 +307,8 @@ def custom_permissions_required(
                 response = {"success": False, "error": error_message}
                 return jsonify(response), 403
 
+            from app.blueprints.roles.models import SurveyAdmin
+
             # check if current user is a survey_admin for the survey
             survey_admin = SurveyAdmin.query.filter(
                 SurveyAdmin.user_uid == current_user.user_uid,
@@ -338,6 +339,8 @@ def custom_permissions_required(
             for each_permission in permission_name_list:
                 # Split permission_name into action and resource
                 action, resource = each_permission.split(maxsplit=1)
+
+                from app.blueprints.roles.models import Permission, Role
 
                 try:
                     # Query to get role_permissions
