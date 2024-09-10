@@ -1,5 +1,5 @@
 from sqlalchemy import TIME, CheckConstraint
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.mutable import MutableDict
 
 from app import db
@@ -269,8 +269,8 @@ class EmailTemplateTable(db.Model):
     )
 
     table_name = db.Column(db.String(255), nullable=False)
-    column_mapping = db.Column(MutableDict.as_mutable(JSONB), nullable=False)
-    sort_list = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
+    column_mapping = db.Column(MutableDict.as_mutable(JSON), nullable=False)
+    sort_list = db.Column(MutableDict.as_mutable(JSON), nullable=True)
     variable_name = db.Column(db.String(100), nullable=False)
 
     __table_args__ = (
