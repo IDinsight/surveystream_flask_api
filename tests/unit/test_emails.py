@@ -161,7 +161,7 @@ class TestEmails:
             "config_name": "Assignments",
             "form_uid": 1,
             "report_users": [1, 2, 3],
-            "email_source": "SurveyStream Data",
+            "email_source": "Google Sheet",
             "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
             "email_source_gsheet_tab": "Test_Success",
             "email_source_gsheet_header_row": 1,
@@ -371,15 +371,18 @@ class TestEmails:
                     "email_config_uid": 1,
                     "form_uid": 1,
                     "report_users": [1, 2, 3],
-                    "email_source": "SurveyStream Data",
+                    "email_source": "Google Sheet",
                     "email_source_columns": [
                         "test_column",
                         "Surveyor Name",
-                        "Surveyor ID",
-                        "Surveyor Language",
-                        "Surveyor Gender",
-                        "Assignment Date",
                         "Surveyor Email",
+                        "Surveyor Language",
+                        "Surveyor ID",
+                        "Assignment Date",
+                        "Survey Name",
+                        "Schedule Name",
+                        "Config Name",
+                        "SCTO Form ID",
                     ],
                     "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                     "email_source_gsheet_tab": "Test_Success",
@@ -649,7 +652,7 @@ class TestEmails:
                     {
                         "config_name": "Assignments",
                         "email_config_uid": 1,
-                        "email_source": "SurveyStream Data",
+                        "email_source": "Google Sheet",
                         "email_source_columns": [
                             "test_column",
                         ],
@@ -742,15 +745,18 @@ class TestEmails:
                         "email_config_uid": 1,
                         "form_uid": 1,
                         "report_users": [1, 2, 3],
-                        "email_source": "SurveyStream Data",
+                        "email_source": "Google Sheet",
                         "email_source_columns": [
                             "test_column",
                             "Surveyor Name",
-                            "Surveyor ID",
-                            "Surveyor Language",
-                            "Surveyor Gender",
-                            "Assignment Date",
                             "Surveyor Email",
+                            "Surveyor Language",
+                            "Surveyor ID",
+                            "Assignment Date",
+                            "Survey Name",
+                            "Schedule Name",
+                            "Config Name",
+                            "SCTO Form ID",
                         ],
                         "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                         "email_source_gsheet_tab": "Test_Success",
@@ -836,11 +842,14 @@ class TestEmails:
                         "test_column",
                         "test_column2",
                         "Surveyor Name",
-                        "Surveyor ID",
-                        "Surveyor Language",
-                        "Surveyor Gender",
-                        "Assignment Date",
                         "Surveyor Email",
+                        "Surveyor Language",
+                        "Surveyor ID",
+                        "Assignment Date",
+                        "Survey Name",
+                        "Schedule Name",
+                        "Config Name",
+                        "SCTO Form ID",
                     ],
                     "email_source_gsheet_header_row": 1,
                     "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
@@ -2713,7 +2722,7 @@ class TestEmails:
         request.getfixturevalue(user_fixture)
 
         payload = {
-            "survey_uid": 1,
+            "email_config_uid": 1,
         }
         response = client.get(
             f"api/emails/tablecatalog",
@@ -2731,7 +2740,13 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
-                        "column_list": ["test_column", "test_column2"],
+                        "column_list": [
+                            {
+                                "column_description": "test description",
+                                "column_name": "test_column",
+                            },
+                            {"column_description": None, "column_name": "test_column2"},
+                        ],
                         "survey_uid": 1,
                         "table_name": "test_table",
                     },
@@ -2805,6 +2820,13 @@ class TestEmails:
                         "survey_uid": 1,
                         "table_name": "Assignments: Default",
                     },
+                    {
+                        "column_list": [
+                            {"column_description": None, "column_name": "test_column"}
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "Google Sheet: Test_Success",
+                    },
                 ],
                 "success": True,
             }
@@ -2874,7 +2896,7 @@ class TestEmails:
 
             # Check if table catalog was updated
             response = client.get(
-                f"api/emails/tablecatalog?survey_uid=1",
+                f"api/emails/tablecatalog?email_config_uid=1",
                 content_type="application/json",
                 headers={"X-CSRF-Token": csrf_token},
             )
@@ -2885,12 +2907,20 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
-                        "column_list": ["test_column", "test_column2"],
+                        "column_list": [
+                            {
+                                "column_description": "test description changed",
+                                "column_name": "test_column",
+                            },
+                            {"column_description": None, "column_name": "test_column2"},
+                        ],
                         "survey_uid": 1,
                         "table_name": "test_table",
                     },
                     {
-                        "column_list": ["test_column3"],
+                        "column_list": [
+                            {"column_description": None, "column_name": "test_column3"}
+                        ],
                         "survey_uid": 1,
                         "table_name": "test_table2",
                     },
@@ -2963,6 +2993,13 @@ class TestEmails:
                         ],
                         "survey_uid": 1,
                         "table_name": "Assignments: Default",
+                    },
+                    {
+                        "column_list": [
+                            {"column_description": None, "column_name": "test_column"}
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "Google Sheet: Test_Success",
                     },
                 ],
                 "success": True,
@@ -3040,7 +3077,7 @@ class TestEmails:
 
         # Check if table catalog was updated
         get_response = client.get(
-            f"api/emails/tablecatalog?survey_uid=1",
+            f"api/emails/tablecatalog?email_config_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -3053,7 +3090,13 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
-                        "column_list": ["test_column", "test_column2"],
+                        "column_list": [
+                            {
+                                "column_description": "test description",
+                                "column_name": "test_column",
+                            },
+                            {"column_description": None, "column_name": "test_column2"},
+                        ],
                         "survey_uid": 1,
                         "table_name": "test_table",
                     },
@@ -3126,6 +3169,13 @@ class TestEmails:
                         ],
                         "survey_uid": 1,
                         "table_name": "Assignments: Default",
+                    },
+                    {
+                        "column_list": [
+                            {"column_description": None, "column_name": "test_column"}
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "Google Sheet: Test_Success",
                     },
                 ],
                 "success": True,

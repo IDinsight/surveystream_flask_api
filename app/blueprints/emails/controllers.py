@@ -10,6 +10,7 @@ from app.blueprints.emails.utils import (
     get_default_email_assignments_column,
     get_default_email_variable_names,
 )
+from app.blueprints.forms.models import Form
 from app.utils.google_sheet_utils import (
     google_sheet_helpers,
     load_google_service_account_credentials,
@@ -1200,25 +1201,33 @@ def update_google_sheet_headers(validated_payload):
 @emails_bp.route("/tablecatalog", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(EmailTableCatalogQueryParamValidator)
-@custom_permissions_required("WRITE Emails", "query", "survey_uid")
+@custom_permissions_required("WRITE Emails", "query", "email_config_uid")
 def get_email_tablecatalog(validated_query_params):
-    survey_uid = validated_query_params.survey_uid.data
+    email_config_uid = validated_query_params.email_config_uid.data
+    email_config = EmailConfig.query.get_or_404(email_config_uid)
+    form_uid = email_config.form_uid
+    survey_uid = Form.query.get_or_404(form_uid).survey_uid
 
     try:
         email_table_catalog = (
             db.session.query(
                 EmailTableCatalog.survey_uid,
                 EmailTableCatalog.table_name,
-                func.array_agg(EmailTableCatalog.column_name.distinct()).label(
-                    "column_list"
-                ),
+                func.array_agg(
+                    func.json_build_object(
+                        "column_name",
+                        EmailTableCatalog.column_name,
+                        "column_description",
+                        EmailTableCatalog.column_description,
+                    )
+                ).label("column_list"),
             )
             .filter_by(survey_uid=survey_uid)
             .group_by(EmailTableCatalog.survey_uid, EmailTableCatalog.table_name)
             .all()
         )
 
-        assignment_table_columns = get_default_email_assignments_column(survey_uid)
+        assignment_table_columns = get_default_email_assignments_column(form_uid)
         assignment_table_columns_dict = [
             {
                 "survey_uid": survey_uid,
@@ -1226,6 +1235,20 @@ def get_email_tablecatalog(validated_query_params):
                 "column_list": assignment_table_columns,
             }
         ]
+        email_source_columns = []
+        if email_config.email_source == "Google Sheet":
+            email_source_column_list = email_config.email_source_columns
+            gsheet_tabname = email_config.email_source_gsheet_tab
+            email_source_columns = [
+                {
+                    "survey_uid": survey_uid,
+                    "table_name": "Google Sheet: " + str(gsheet_tabname),
+                    "column_list": [
+                        {"column_name": column, "column_description": None}
+                        for column in email_source_column_list
+                    ],
+                }
+            ]
 
         return (
             jsonify(
@@ -1239,7 +1262,8 @@ def get_email_tablecatalog(validated_query_params):
                         }
                         for row in email_table_catalog
                     ]
-                    + assignment_table_columns_dict,
+                    + assignment_table_columns_dict
+                    + email_source_columns,
                 }
             ),
             200,

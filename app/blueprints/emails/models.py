@@ -1,5 +1,5 @@
 from sqlalchemy import TIME, CheckConstraint
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.mutable import MutableDict
 
 from app import db
@@ -269,8 +269,8 @@ class EmailTemplateTable(db.Model):
     )
 
     table_name = db.Column(db.String(255), nullable=False)
-    column_mapping = db.Column(MutableDict.as_mutable(JSONB), nullable=False)
-    sort_list = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
+    column_mapping = db.Column(MutableDict.as_mutable(JSON), nullable=False)
+    sort_list = db.Column(MutableDict.as_mutable(JSON), nullable=True)
     variable_name = db.Column(db.String(100), nullable=False)
 
     __table_args__ = (
@@ -312,6 +312,9 @@ class EmailTemplateTable(db.Model):
 class EmailTemplateVariable(db.Model):
     __tablename__ = "email_template_variables"
 
+    email_template_variable_uid = db.Column(
+        db.Integer(), primary_key=True, autoincrement=True
+    )
     email_template_uid = db.Column(
         db.Integer(), db.ForeignKey(EmailTemplate.email_template_uid), nullable=False
     )
@@ -321,7 +324,13 @@ class EmailTemplateVariable(db.Model):
     variable_expression = db.Column(db.String(255), nullable=True)
 
     __table_args__ = (
-        db.PrimaryKeyConstraint("email_template_uid", "variable_name"),
+        db.PrimaryKeyConstraint("email_template_variable_uid"),
+        db.UniqueConstraint(
+            "email_template_uid",
+            "variable_name",
+            "variable_expression",
+            name="email_template_variable_uc",
+        ),
         {"schema": "webapp"},
     )
 

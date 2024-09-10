@@ -197,7 +197,7 @@ class EmailVariableValidator(FlaskForm):
 
     variable_name = StringField(validators=[DataRequired()])
     variable_expression = StringField(default=None)
-    source_table = StringField(validators=[DataRequired()])
+    source_table = StringField()
 
 
 class EmailTemplateTableValidator(FlaskForm):
@@ -266,7 +266,7 @@ class EmailTableCatalogQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    survey_uid = IntegerField(validators=[DataRequired()])
+    email_config_uid = IntegerField(validators=[DataRequired()])
 
 
 class EmailTableCatalogJSONValidator(FlaskForm):
