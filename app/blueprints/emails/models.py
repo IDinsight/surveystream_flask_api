@@ -348,7 +348,6 @@ class EmailTemplateVariable(db.Model):
 
     def to_dict(self):
         return {
-            "email_template_variable_uid": self.email_template_variable_uid,
             "variable_name": self.variable_name,
             "source_table": self.source_table,
             "variable_expression": self.variable_expression,
