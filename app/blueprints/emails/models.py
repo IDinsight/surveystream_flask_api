@@ -312,6 +312,9 @@ class EmailTemplateTable(db.Model):
 class EmailTemplateVariable(db.Model):
     __tablename__ = "email_template_variables"
 
+    email_template_variable_uid = db.Column(
+        db.Integer(), primary_key=True, autoincrement=True
+    )
     email_template_uid = db.Column(
         db.Integer(), db.ForeignKey(EmailTemplate.email_template_uid), nullable=False
     )
@@ -321,7 +324,13 @@ class EmailTemplateVariable(db.Model):
     variable_expression = db.Column(db.String(255), nullable=True)
 
     __table_args__ = (
-        db.PrimaryKeyConstraint("email_template_uid", "variable_name"),
+        db.PrimaryKeyConstraint("email_template_variable_uid"),
+        db.UniqueConstraint(
+            "email_template_uid",
+            "variable_name",
+            "variable_expression",
+            name="email_template_variable_uc",
+        ),
         {"schema": "webapp"},
     )
 
@@ -339,6 +348,7 @@ class EmailTemplateVariable(db.Model):
 
     def to_dict(self):
         return {
+            "email_template_variable_uid": self.email_template_variable_uid,
             "variable_name": self.variable_name,
             "source_table": self.source_table,
             "variable_expression": self.variable_expression,
