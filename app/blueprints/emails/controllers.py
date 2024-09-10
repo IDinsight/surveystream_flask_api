@@ -1227,7 +1227,7 @@ def get_email_tablecatalog(validated_query_params):
             .all()
         )
 
-        assignment_table_columns = get_default_email_assignments_column(survey_uid)
+        assignment_table_columns = get_default_email_assignments_column(form_uid)
         assignment_table_columns_dict = [
             {
                 "survey_uid": survey_uid,

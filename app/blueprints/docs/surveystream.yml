@@ -9375,7 +9375,7 @@ paths:
     get:
       tags:
         - Emails
-      summary: Get all table catalog for a specific survey
+      summary: Get all table catalog for a specific email config
       parameters:
         - name: email_config_uid
           in: query

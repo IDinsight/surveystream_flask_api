@@ -1,4 +1,5 @@
-"""empty message
+"""
+Email Template Variables - Change Primary key
 
 Revision ID: f58a0e498a96
 Revises: 4ba0f2701c55

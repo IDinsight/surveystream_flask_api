@@ -9,12 +9,12 @@ from app.blueprints.surveys.models import Survey
 from app.blueprints.targets.models import TargetColumnConfig
 
 
-def get_default_email_assignments_column(survey_uid):
+def get_default_email_assignments_column(form_uid):
     """
     Create a list of columns for the default Assignments email table.
 
     Args:
-        survey_uid: Survey UID
+        form_uid: Form UID
 
     Returns:
         list: List of columns
@@ -22,8 +22,7 @@ def get_default_email_assignments_column(survey_uid):
 
     default_column_list = []
 
-    form = Form.query.filter_by(survey_uid=survey_uid, form_type="parent").first()
-    form_uid = form.form_uid
+    survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
     enumerator_location_configured = False
     target_location_configured = False
@@ -134,8 +133,8 @@ def get_default_email_assignments_column(survey_uid):
     for row in result:
         enumerator_custom_fields.append(
             {
-                "column_key": f"Enumerators: custom_fields['{row.column_name}']",
-                "column_label": "Enumerators: " + row.column_name,
+                "column_description": f"Enumerators: custom_fields['{row.column_name}']",
+                "column_name": "Enumerators: " + row.column_name,
             }
         )
     default_column_list = (
