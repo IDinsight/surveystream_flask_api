@@ -8287,8 +8287,6 @@ paths:
                               type: string
                             filter_value:
                               type: string
-                            filter_concatenator:
-                              type: string
               required:
                 - email_config_uid
                 - dates
@@ -8330,8 +8328,6 @@ paths:
                               filter_operator:
                                 type: string
                               filter_value:
-                                type: string
-                              filter_concatenator:
                                 type: string
                 required:
                   - email_config_uid
@@ -8388,8 +8384,7 @@ paths:
                                   type: string
                                 filter_value:
                                   type: string
-                                filter_concatenator:
-                                  type: string
+                                
 
   /emails/schedule/{email_schedule_uid}:
     get:
@@ -8441,8 +8436,6 @@ paths:
                                 type: string
                               filter_value:
                                 type: string
-                              filter_concatenator:
-                                type: string
     put:
       summary: Update a specific email schedule
       tags:
@@ -8491,8 +8484,6 @@ paths:
                               type: string
                             filter_value:
                               type: string
-                            filter_concatenator:
-                              type: string
               required:
                 - email_config_uid
                 - dates
@@ -8534,8 +8525,6 @@ paths:
                               filter_operator:
                                 type: string
                               filter_value:
-                                type: string
-                              filter_concatenator:
                                 type: string
                 required:
                   - email_config_uid
@@ -8810,7 +8799,135 @@ paths:
                   - date
                   - time
                   - status
-
+  /emails/templates:
+    post:
+      summary: Create multiple new email templates
+      tags:
+        - Emails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_config_uid:
+                  type: integer
+                templates:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      language:
+                        type: string
+                      subject:
+                        type: string
+                      content:
+                        type: string
+                      variable_list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            variable_name:
+                              type: string
+                            source_table:
+                              type: string
+                            variable_expression:
+                              type: string
+                      table_list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            table_name:
+                              type: string
+                            column_list:
+                              type: object
+                            sort_list:
+                              type: object
+                            variable_name:
+                              type: string
+                            filter_list:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  filter_group:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        filter_variable:
+                                          type: string
+                                        filter_operator:
+                                          type: string
+                                        filter_value:
+                                          type: string
+              required:
+                - language
+                - email_config_uid
+                - subject
+                - content
+      responses:
+        "201":
+          description: Email templates created successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    email_config_uid:
+                      type: integer
+                    subject:
+                      type: string
+                    language:
+                      type: string
+                    content:
+                      type: string
+                    variable_list:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          variable_name:
+                            type: string
+                          source_table:
+                            type: string
+                          variable_expression:
+                            type: string
+                    table_list:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          table_name:
+                            type: string
+                          column_list:
+                            type: object
+                          sort_list:
+                            type: object
+                          variable_name:
+                            type: string
+                          filter_list:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                filter_group:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      filter_variable:
+                                        type: string
+                                      filter_operator:
+                                        type: string
+                                      filter_value:
+                                        type: string
+    
   /emails/template:
     post:
       summary: Create a new email template
@@ -8871,11 +8988,6 @@ paths:
                                     type: string
                                   filter_value:
                                     type: string
-                                  filter_concatenator:
-                                    type: string
-              
-
-                      
               required:
                 - language
                 - email_config_uid
@@ -8936,8 +9048,6 @@ paths:
                                     filter_operator:
                                       type: string
                                     filter_value:
-                                      type: string
-                                    filter_concatenator:
                                       type: string
                 required:
                   - email_config_uid
@@ -9012,8 +9122,6 @@ paths:
                                       filter_operator:
                                         type: string
                                       filter_value:
-                                        type: string
-                                      filter_concatenator:
                                         type: string
                   required:
                     - email_config_uid
@@ -9094,8 +9202,7 @@ paths:
                                       type: string
                                     filter_value:
                                       type: string
-                                    filter_concatenator:
-                                      type: string
+                                    
                 required:
                   - email_config_uid
                   - subject
@@ -9173,8 +9280,7 @@ paths:
                                     type: string
                                   filter_value:
                                     type: string
-                                  filter_concatenator:
-                                    type: string
+                                  
               required:
                 - email_config_uid
                 - subject
@@ -9236,8 +9342,7 @@ paths:
                                       type: string
                                     filter_value:
                                       type: string
-                                    filter_concatenator:
-                                      type: string
+                                    
                 required:
                   - email_config_uid
                   - subject

@@ -43,6 +43,7 @@ from .validators import (
     EmailScheduleValidator,
     EmailTableCatalogQueryParamValidator,
     EmailTableCatalogValidator,
+    EmailTemplateBulkValidator,
     EmailTemplateQueryParamValidator,
     EmailTemplateValidator,
     ManualEmailTriggerPatchValidator,
@@ -877,6 +878,115 @@ def create_email_template(validated_payload):
                 "success": True,
                 "message": "Email template created successfully",
                 "data": new_template.to_dict(),
+            }
+        ),
+        201,
+    )
+
+
+@emails_bp.route("/templates", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(EmailTemplateBulkValidator)
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
+def create_email_template_bulk(validated_payload):
+    """
+    Function to create an email template
+    """
+    template_list = []
+    email_config_uid = validated_payload.email_config_uid.data
+    for template in validated_payload.templates.data:
+        template_values = {
+            "email_config_uid": email_config_uid,
+            "subject": template.get("subject"),
+            "language": template.get("language"),
+            "content": template.get("content"),
+        }
+        language = template.get("language")
+
+        # Check if the email template already exists
+        check_email_template_exists = EmailTemplate.query.filter_by(
+            email_config_uid=email_config_uid,
+            language=language,
+        ).first()
+
+        if check_email_template_exists is not None:
+            return (
+                jsonify(
+                    {
+                        "error": f"Email Template already exists for {language}, Use PUT methood for update"
+                    }
+                ),
+                400,
+            )
+
+        new_template = EmailTemplate(**template_values)
+
+        try:
+            db.session.add(new_template)
+            db.session.flush()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"For language {language} " + str(e)}), 500
+
+        template_list.append(new_template)
+        # Upload Template Variables & tables
+        try:
+            for variable in template.get("variable_list", []):
+                variable_obj = EmailTemplateVariable(
+                    email_template_uid=new_template.email_template_uid,
+                    variable_name=variable.get("variable_name"),
+                    variable_expression=variable.get("variable_expression"),
+                    source_table=variable.get("source_table"),
+                )
+                db.session.add(variable_obj)
+            db.session.flush()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"For language {language} " + str(e)}), 500
+
+        try:
+            for table in template.get("table_list", []):
+                table_obj = EmailTemplateTable(
+                    email_template_uid=new_template.email_template_uid,
+                    table_name=table.get("table_name"),
+                    column_mapping=table.get("column_mapping"),
+                    sort_list=table.get("sort_list"),
+                    variable_name=table.get("variable_name"),
+                )
+                db.session.add(table_obj)
+                db.session.flush()
+
+                table_uid = table_obj.email_template_table_uid
+                # Get the max filter group id
+                max_filter_group_id = 0
+
+                # Upload Filter List
+                for filter_group in table.get("filter_list", []):
+                    max_filter_group_id += 1
+
+                    for filter_item in filter_group.get("filter_group"):
+
+                        filter_obj = EmailTableFilter(
+                            email_template_table_uid=table_uid,
+                            filter_group_id=max_filter_group_id,
+                            filter_variable=filter_item.get("filter_variable"),
+                            filter_operator=filter_item.get("filter_operator"),
+                            filter_value=filter_item.get("filter_value"),
+                        )
+                        db.session.add(filter_obj)
+                db.session.flush()
+            db.session.commit()
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"For language {language} " + str(e)}), 500
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "message": "Email template created successfully",
+                "data": [new_template.to_dict() for new_template in template_list],
             }
         ),
         201,

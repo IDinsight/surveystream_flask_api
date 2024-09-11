@@ -2344,6 +2344,287 @@ class TestEmails:
             )
             assert checkdiff == {}
 
+    def test_emails_bulk_create_templates(
+        self, client, csrf_token, create_email_config, user_permissions, request
+    ):
+        """
+        Test uploading multiple email template for different user roles
+        Expect the email template to be updated
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "email_config_uid": create_email_config["email_config_uid"],
+            "templates": [
+                {
+                    "subject": "Test Assignments Email",
+                    "language": "english",
+                    "content": "Test Content",
+                    "variable_list": [],
+                    "table_list": [
+                        {
+                            "table_name": "test_table",
+                            "column_mapping": {
+                                "test_column1": "TEST Column 1",
+                                "test_column2": "TEST Column 2",
+                            },
+                            "sort_list": {
+                                "test_column1": "asc",
+                                "test_column2": "desc",
+                            },
+                            "variable_name": "test_table+_1",
+                            "filter_list": [
+                                {
+                                    "filter_group": [
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                        },
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column2",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value2",
+                                        },
+                                    ]
+                                },
+                                {
+                                    "filter_group": [
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                        },
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column2",
+                                            "filter_operator": "Is not",
+                                            "filter_value": "test_value2",
+                                        },
+                                    ]
+                                },
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "subject": "Test Assignments Email",
+                    "language": "hindi",
+                    "content": "Test Content",
+                    "variable_list": [],
+                    "table_list": [
+                        {
+                            "table_name": "test_table",
+                            "column_mapping": {
+                                "test_column1": "TEST Column 1",
+                                "test_column2": "TEST Column 2",
+                            },
+                            "sort_list": {
+                                "test_column1": "asc",
+                                "test_column2": "desc",
+                            },
+                            "variable_name": "test_table+_1",
+                            "filter_list": [
+                                {
+                                    "filter_group": [
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                        },
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column2",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value2",
+                                        },
+                                    ]
+                                },
+                                {
+                                    "filter_group": [
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                        },
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column2",
+                                            "filter_operator": "Is not",
+                                            "filter_value": "test_value2",
+                                        },
+                                    ]
+                                },
+                            ],
+                        }
+                    ],
+                },
+            ],
+        }
+
+        response = client.post(
+            "/api/emails/templates",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        if expected_permission:
+            assert response.status_code == 201
+            get_response = client.get(
+                f"api/emails/template?email_config_uid={create_email_config['email_config_uid']}",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            print(get_response.json)
+            expected_response = {
+                "data": [
+                    {
+                        "content": "Test Content",
+                        "email_config_uid": 1,
+                        "email_template_uid": 1,
+                        "language": "english",
+                        "subject": "Test Assignments Email",
+                        "table_list": [
+                            {
+                                "column_mapping": {
+                                    "test_column1": "TEST Column 1",
+                                    "test_column2": "TEST Column 2",
+                                },
+                                "email_template_table_uid": 1,
+                                "filter_list": [
+                                    [
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                    [
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is not",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                ],
+                                "sort_list": {
+                                    "test_column1": "asc",
+                                    "test_column2": "desc",
+                                },
+                                "table_name": "test_table",
+                                "variable_name": "test_table+_1",
+                            }
+                        ],
+                        "variable_list": [],
+                    },
+                    {
+                        "content": "Test Content",
+                        "email_config_uid": 1,
+                        "email_template_uid": 2,
+                        "language": "hindi",
+                        "subject": "Test Assignments Email",
+                        "table_list": [
+                            {
+                                "column_mapping": {
+                                    "test_column1": "TEST Column 1",
+                                    "test_column2": "TEST Column 2",
+                                },
+                                "email_template_table_uid": 2,
+                                "filter_list": [
+                                    [
+                                        {
+                                            "email_template_table_uid": 2,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 2,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                    [
+                                        {
+                                            "email_template_table_uid": 2,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 2,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is not",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                ],
+                                "sort_list": {
+                                    "test_column1": "asc",
+                                    "test_column2": "desc",
+                                },
+                                "table_name": "test_table",
+                                "variable_name": "test_table+_1",
+                            }
+                        ],
+                        "variable_list": [],
+                    },
+                ],
+                "success": True,
+            }
+
+            assert get_response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                get_response.json,
+            )
+            assert checkdiff == {}
+
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
     def test_emails_update_template(
         self, client, csrf_token, create_email_template, user_permissions, request
     ):
@@ -2462,6 +2743,7 @@ class TestEmails:
                 },
                 "success": True,
             }
+
             print("Get Response", get_response.json)
             checkdiff = jsondiff.diff(
                 expected_response,
