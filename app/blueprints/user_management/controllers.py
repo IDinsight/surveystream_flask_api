@@ -2,15 +2,15 @@ from flask import current_app, jsonify, request
 from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
-from sqlalchemy import case, distinct, func, or_
+from sqlalchemy import case, distinct, func, or_, null, case
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import aliased
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
 from app.blueprints.forms.models import Form
 
-from app.blueprints.roles.models import Role, SurveyAdmin
+from app.blueprints.roles.models import Role, SurveyAdmin, UserHierarchy
+from app.blueprints.locations.models import Location
 from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
     custom_permissions_required,
@@ -133,12 +133,66 @@ def check_user(validated_payload):
     Requires X-CSRF-Token in the header, obtained from the cookie set by /get-csrf
     """
 
-    user_with_email = User.query.filter_by(email=validated_payload.email.data).first()
+    # If survey_uid is provided, also fetch user locations and languages to return along with user details
+    if validated_payload.survey_uid.data:
+        user_with_email = (
+            db.session.query(
+                User,
+                func.array_agg(UserLocation.location_uid).label("location_uids"),
+                func.array_agg(Location.location_id).label("location_ids"),
+                func.array_agg(Location.location_name).label("location_names"),
+                func.array_agg(UserLanguage.language).label("languages"),
+            )
+            .outerjoin(
+                UserLocation,
+                (User.user_uid == UserLocation.user_uid)
+                & (UserLocation.survey_uid == validated_payload.survey_uid.data),
+            )
+            .outerjoin(
+                Location,
+                (Location.location_uid == UserLocation.location_uid)
+                & (Location.survey_uid == validated_payload.survey_uid.data),
+            )
+            .outerjoin(
+                UserLanguage,
+                (User.user_uid == UserLanguage.user_uid)
+                & (UserLanguage.survey_uid == validated_payload.survey_uid.data),
+            )
+            .filter(
+                User.email == validated_payload.email.data,
+            )
+            .group_by(User.user_uid)
+            .first()
+        )
+    else:
+        user_with_email = (
+            db.session.query(
+                User,
+                null().label("location_uids"),
+                null().label("location_ids"),
+                null().label("location_names"),
+                null().label("languages"),
+            )
+            .filter_by(email=validated_payload.email.data)
+            .first()
+        )
+
     if not user_with_email:
         return jsonify(message="User not found"), 404
     else:
         return (
-            jsonify(message="User already exists", user=user_with_email.to_dict()),
+            jsonify(
+                message="User already exists",
+                user={
+                    **user_with_email[0].to_dict(),
+                    **{
+                        "location_uids": [location_uid for location_uid in user_with_email[1] if location_uid],
+                        "location_ids": [location_id for location_id in user_with_email[2] if location_id],
+                        "location_names": [location_names for location_names in user_with_email[3] if location_names],
+                        "languages": [language for language in user_with_email[4] if language],
+                    },
+                },
+            ),
             200,
         )
 
@@ -158,7 +212,7 @@ def add_user(validated_payload):
     - roles
     - gender
     - languages
-    - locations
+    - location_uids
     - is_super_admin
     - can_create_survey
 
@@ -194,8 +248,8 @@ def add_user(validated_payload):
         db.session.add(survey_admin_entry)
 
     # Check if locations data + survey_uid is provided, add them to the user location table
-    if validated_payload.locations.data and validated_payload.survey_uid.data:
-        for location_uid in validated_payload.locations.data:
+    if validated_payload.location_uids.data and validated_payload.survey_uid.data:
+        for location_uid in validated_payload.location_uids.data:
             user_location = UserLocation(
                 survey_uid=validated_payload.survey_uid.data,
                 user_uid=new_user.user_uid,
@@ -290,7 +344,7 @@ def edit_user(user_uid, validated_payload):
     - roles
     - gender
     - languages
-    - locations
+    - location_uids
     - is_super_admin
     - is_survey_admin
     - active
@@ -337,8 +391,8 @@ def edit_user(user_uid, validated_payload):
                 db.session.delete(survey_admin_entry)
                 db.session.commit()  # Commit the deletion
 
-    # Update user locations if locations data is provided
-    if validated_payload.locations.data:
+    # Update user locations if location_uids data is provided
+    if validated_payload.location_uids.data:
         survey_uid = validated_payload.survey_uid.data
         # Only proceed if survey_uid is provided
         if survey_uid:
@@ -347,7 +401,7 @@ def edit_user(user_uid, validated_payload):
                 user_uid=user_uid, survey_uid=survey_uid
             ).delete()
             # Add new user locations
-            for location_uid in validated_payload.locations.data:
+            for location_uid in validated_payload.location_uids.data:
                 user_location = UserLocation(
                     survey_uid=survey_uid,
                     user_uid=user_uid,
@@ -410,14 +464,9 @@ def get_user(user_uid):
 def get_all_users(validated_query_params):
     """
     Endpoint to get information for all users.
+
     """
-
-    # TO DO:
-    # 1. Fetch supervisor hierarchy and location information when survey uid is provided
-    # 2. Fix the query to get survey wise user role information. Currently it is returning
-    # all roles for the user and all surveys for the user in separate arrays and combining them
-    # on frontend. This should be done in the query itself.
-
+    # TO DO: Confirm logic for invite pending vs active status
     survey_uid = validated_query_params.survey_uid.data
 
     if survey_uid is None and not current_user.is_super_admin:
@@ -433,19 +482,20 @@ def get_all_users(validated_query_params):
 
     roles_subquery = (
         db.session.query(
-            Role.role_name,
-            Role.role_uid,
             Role.survey_uid,
+            Role.role_uid,
+            Role.role_name,
+            Survey.survey_name,
         )
+        .join(Survey, Role.survey_uid == Survey.survey_uid)
         .distinct()
         .subquery()
     )
 
     survey_admin_subquery = (
         db.session.query(
-            SurveyAdmin,
-            SurveyAdmin.user_uid,
             SurveyAdmin.survey_uid,
+            SurveyAdmin.user_uid,
             Survey.survey_name,
         )
         .join(Survey, SurveyAdmin.survey_uid == Survey.survey_uid)
@@ -453,41 +503,137 @@ def get_all_users(validated_query_params):
         .subquery()
     )
 
-    user_query = (
-        db.session.query(
-            User,
-            invite_subquery.c.is_active.label("invite_is_active"),
-            func.array_agg(roles_subquery.c.role_name.distinct()).label(
-                "user_role_names"
-            ),
-            func.array_agg(Survey.survey_name.distinct()).label("user_survey_names"),
-            func.array_agg(survey_admin_subquery.c.survey_uid.distinct()).label(
-                "user_admin_surveys"
-            ),
-            func.array_agg(survey_admin_subquery.c.survey_name.distinct()).label(
-                "user_admin_survey_names"
-            ),
-        )
-        .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
-        .outerjoin(
-            survey_admin_subquery, survey_admin_subquery.c.user_uid == User.user_uid
-        )
-        .outerjoin(roles_subquery, roles_subquery.c.role_uid == func.any(User.roles))
-        .outerjoin(Survey, Survey.survey_uid == roles_subquery.c.survey_uid)
-        .group_by(
-            User.user_uid,
-            invite_subquery.c.is_active,
-        )
-    )
-
     # Apply conditions based on current_user.is_super_admin
     if current_user.is_super_admin and survey_uid is None:
-        users = user_query.all()
+        users = (
+            db.session.query(
+                User,
+                invite_subquery.c.is_active.label("invite_is_active"),
+                func.array_agg(
+                    distinct(
+                        case(
+                            [
+                                (
+                                    roles_subquery.c.role_name.isnot(None),
+                                    func.jsonb_build_object(
+                                        "role_name",
+                                        roles_subquery.c.role_name,
+                                        "survey_name",
+                                        roles_subquery.c.survey_name,
+                                    ),
+                                )
+                            ]
+                        )
+                    )
+                ).label("user_survey_role_names"),
+                func.array_agg(
+                    distinct(
+                        case(
+                            [
+                                (
+                                    survey_admin_subquery.c.survey_name.isnot(None),
+                                    survey_admin_subquery.c.survey_name,
+                                )
+                            ]
+                        )
+                    )
+                ).label("user_admin_survey_names"),
+                # Initialize survey level fields as null
+                null().label("supervisor_uid"),
+                null().label("location_uids"),
+                null().label("location_ids"),
+                null().label("location_names"),
+                null().label("languages"),
+            )
+            .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
+            .outerjoin(
+                survey_admin_subquery, survey_admin_subquery.c.user_uid == User.user_uid
+            )
+            .outerjoin(
+                roles_subquery, (roles_subquery.c.role_uid == func.any(User.roles))
+            )
+            .group_by(
+                User.user_uid,
+                invite_subquery.c.is_active,
+            )
+        ).all()
     else:
-        users = user_query.filter(
-            or_(
-                roles_subquery.c.survey_uid == survey_uid,
-                survey_admin_subquery.c.survey_uid == survey_uid,
+        users = (
+            db.session.query(
+                User,
+                invite_subquery.c.is_active.label("invite_is_active"),
+                func.array_agg(
+                    case(
+                        [
+                            (
+                                roles_subquery.c.role_name.isnot(None),
+                                func.json_build_object(
+                                    "role_name",
+                                    roles_subquery.c.role_name,
+                                    "survey_name",
+                                    roles_subquery.c.survey_name,
+                                ),
+                            )
+                        ]
+                    )
+                ).label("user_survey_role_names"),
+                func.array_agg(
+                    case(
+                        [
+                            (
+                                survey_admin_subquery.c.survey_name.isnot(None),
+                                survey_admin_subquery.c.survey_name,
+                            )
+                        ]
+                    )
+                ).label("user_admin_survey_names"),
+                UserHierarchy.parent_user_uid.label("supervisor_uid"),
+                func.array_agg(UserLocation.location_uid).label("location_uids"),
+                func.array_agg(Location.location_id).label("location_ids"),
+                func.array_agg(Location.location_name).label("location_names"),
+                func.array_agg(UserLanguage.language).label("languages"),
+            )
+            .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
+            .outerjoin(
+                survey_admin_subquery,
+                (survey_admin_subquery.c.user_uid == User.user_uid)
+                & (survey_admin_subquery.c.survey_uid == survey_uid),
+            )
+            .outerjoin(
+                roles_subquery,
+                (roles_subquery.c.role_uid == func.any(User.roles))
+                & (roles_subquery.c.survey_uid == survey_uid),
+            )
+            .outerjoin(
+                UserHierarchy,
+                (UserHierarchy.user_uid == User.user_uid)
+                & (UserHierarchy.survey_uid == survey_uid),
+            )
+            .outerjoin(
+                UserLocation,
+                (UserLocation.user_uid == User.user_uid)
+                & (UserLocation.survey_uid == survey_uid),
+            )
+            .outerjoin(
+                Location,
+                (Location.location_uid == UserLocation.location_uid)
+                & (Location.survey_uid == survey_uid),
+            )
+            .outerjoin(
+                UserLanguage,
+                (UserLanguage.user_uid == User.user_uid)
+                & (UserLanguage.survey_uid == survey_uid),
+            )
+            .group_by(
+                User.user_uid,
+                invite_subquery.c.is_active,
+                UserHierarchy.parent_user_uid,
+            )
+            .filter(
+                or_(
+                    roles_subquery.c.survey_uid == survey_uid,
+                    survey_admin_subquery.c.survey_uid == survey_uid,
+                )
             )
         ).all()
 
@@ -496,10 +642,13 @@ def get_all_users(validated_query_params):
     for (
         user,
         invite_is_active,
-        user_role_names,
-        user_survey_names,
-        user_admin_surveys,
+        user_survey_role_names,
         user_admin_survey_names,
+        supervisor_uid,
+        location_uids,
+        location_ids,
+        location_names,
+        languages,
     ) in users:
         user_data = {
             "user_uid": user.user_uid,
@@ -508,25 +657,20 @@ def get_all_users(validated_query_params):
             "last_name": user.last_name,
             "roles": user.roles,
             "gender": user.gender,
-            "user_survey_names": user_survey_names,
-            "user_role_names": user_role_names,
-            "user_admin_surveys": [
-                survey_uid
-                for survey_uid in user_admin_surveys
-                if survey_uid is not None
-            ],
+            "user_survey_role_names": user_survey_role_names,
             "user_admin_survey_names": [
                 survey_name
                 for survey_name in user_admin_survey_names
                 if survey_name is not None
             ],
+            "supervisor_uid": supervisor_uid,
+            "location_uids": [location_uid for location_uid in location_uids if location_uid],
+            "location_ids": [location_id for location_id in location_ids if location_id],
+            "location_names": [location_name for location_name in location_names if location_name],
+            "languages": [language for language in languages if language],
             "is_super_admin": user.is_super_admin,
             "can_create_survey": user.can_create_survey,
-            "status": (
-                "Active"
-                if user.active
-                else ("Invite pending" if invite_is_active else "Deactivated")
-            ),
+            "status": ("Active" if user.active else "Deactivated"),
         }
 
         user_list.append(user_data)
@@ -594,11 +738,11 @@ def update_user_locations(validated_payload):
 
     survey_uid = validated_payload.survey_uid.data
     user_uid = validated_payload.user_uid.data
-    locations = validated_payload.locations.data
+    location_uids = validated_payload.location_uids.data
 
     UserLocation.query.filter_by(survey_uid=survey_uid, user_uid=user_uid).delete()
 
-    for location_uid in locations:
+    for location_uid in location_uids:
         user_location = UserLocation(
             survey_uid=survey_uid,
             user_uid=user_uid,

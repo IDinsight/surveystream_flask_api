@@ -32,6 +32,7 @@ class WelcomeUserValidator(FlaskForm):
 
 class CheckUserValidator(FlaskForm):
     email = StringField("Email", validators=[DataRequired()])
+    survey_uid = IntegerField("survey_uid", validators=[Optional()], default=None)
 
 
 def validate_locations(form, field):
@@ -68,7 +69,7 @@ class AddUserValidator(FlaskForm):
 
     gender = StringField("Gender", validators=[Optional()])
     languages = FieldList(StringField("Language"), default=[], validators=[Optional()])
-    locations = FieldList(
+    location_uids = FieldList(
         IntegerField("Location"),
         default=[],
         validators=[Optional(), validate_locations],
@@ -98,7 +99,7 @@ class EditUserValidator(FlaskForm):
     roles = FieldList(StringField("Roles"), default=[], validators=[Optional()])
     gender = StringField("Gender", validators=[Optional()])
     languages = FieldList(StringField("Language"), default=[], validators=[Optional()])
-    locations = FieldList(
+    location_uids = FieldList(
         IntegerField("Location"),
         default=[],
         validators=[Optional(), validate_locations],
@@ -146,7 +147,7 @@ class UserLocationsParamValidator(FlaskForm):
 class UserLocationsPayloadValidator(FlaskForm):
     survey_uid = IntegerField(validators=[DataRequired()])
     user_uid = IntegerField(validators=[DataRequired()])
-    locations = FieldList(
+    location_uids = FieldList(
         IntegerField(), validators=[DataRequired(), validate_locations]
     )
 
