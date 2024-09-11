@@ -279,3 +279,16 @@ class EmailTableCatalogJSONValidator(FlaskForm):
 class EmailTableCatalogValidator(FlaskForm):
     survey_uid = IntegerField(validators=[DataRequired()])
     table_catalog = FieldList(FormField(EmailTableCatalogJSONValidator), default=[])
+
+
+class EmailTemplateSingletonValidator(FlaskForm):
+    subject = StringField(validators=[DataRequired()])
+    language = StringField(validators=[DataRequired()])
+    content = StringField(validators=[DataRequired()])
+    variable_list = FieldList(FormField(EmailVariableValidator), default=[])
+    table_list = FieldList(FormField(EmailTemplateTableValidator), default=[])
+
+
+class EmailTemplateBulkValidator(FlaskForm):
+    templates = FieldList(FormField(EmailTemplateSingletonValidator), default=[])
+    email_config_uid = IntegerField(validators=[DataRequired()])
