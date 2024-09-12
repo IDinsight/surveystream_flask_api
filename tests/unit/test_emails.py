@@ -2731,19 +2731,13 @@ class TestEmails:
                     "variable_list": [
                         {
                             "source_table": "test_table",
-                            "variable_expression": "UPPERCASE(test_variable)",
-                            "variable_name": "test_variable",
-                        },
-                        {
-                            "source_table": "test_table",
                             "variable_expression": "UPPERCASE(test_variable2)",
                             "variable_name": "test_variable2",
-                        },
+                        }
                     ],
                 },
                 "success": True,
             }
-
             print("Get Response", get_response.json)
             checkdiff = jsondiff.diff(
                 expected_response,
