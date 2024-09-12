@@ -128,7 +128,9 @@ class EmailSchedule(db.Model):
 
     email_schedule_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     email_config_uid = db.Column(
-        db.Integer, db.ForeignKey(EmailConfig.email_config_uid), nullable=False
+        db.Integer,
+        db.ForeignKey(EmailConfig.email_config_uid, ondelete="CASCADE"),
+        nullable=False,
     )
     email_schedule_name = db.Column(
         db.String(255), nullable=False
@@ -169,7 +171,9 @@ class ManualEmailTrigger(db.Model):
         db.Integer(), primary_key=True, autoincrement=True
     )
     email_config_uid = db.Column(
-        db.Integer, db.ForeignKey(EmailConfig.email_config_uid), nullable=False
+        db.Integer,
+        db.ForeignKey(EmailConfig.email_config_uid, ondelete="CASCADE"),
+        nullable=False,
     )
     date = db.Column(db.Date, nullable=False)
     time = db.Column(TIME, nullable=False)
@@ -210,7 +214,9 @@ class EmailTemplate(db.Model):
     language = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text(), nullable=False)
     email_config_uid = db.Column(
-        db.Integer, db.ForeignKey(EmailConfig.email_config_uid), nullable=False
+        db.Integer,
+        db.ForeignKey(EmailConfig.email_config_uid, ondelete="CASCADE"),
+        nullable=False,
     )
 
     __table_args__ = (
@@ -265,7 +271,9 @@ class EmailTemplateTable(db.Model):
         db.Integer(), primary_key=True, autoincrement=True
     )
     email_template_uid = db.Column(
-        db.Integer(), db.ForeignKey(EmailTemplate.email_template_uid), nullable=False
+        db.Integer(),
+        db.ForeignKey(EmailTemplate.email_template_uid, ondelete="CASCADE"),
+        nullable=False,
     )
 
     table_name = db.Column(db.String(255), nullable=False)
@@ -316,7 +324,9 @@ class EmailTemplateVariable(db.Model):
         db.Integer(), primary_key=True, autoincrement=True
     )
     email_template_uid = db.Column(
-        db.Integer(), db.ForeignKey(EmailTemplate.email_template_uid), nullable=False
+        db.Integer(),
+        db.ForeignKey(EmailTemplate.email_template_uid, ondelete="CASCADE"),
+        nullable=False,
     )
 
     variable_name = db.Column(db.String(100), nullable=False)
@@ -394,7 +404,7 @@ class EmailTableFilter(db.Model):
 
     email_template_table_uid = db.Column(
         db.Integer,
-        db.ForeignKey(EmailTemplateTable.email_template_table_uid),
+        db.ForeignKey(EmailTemplateTable.email_template_table_uid, ondelete="CASCADE"),
         nullable=False,
     )
     filter_group_id = db.Column(db.Integer, nullable=False)
@@ -443,7 +453,9 @@ class EmailScheduleFilter(db.Model):
 
     schedule_filter_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     email_schedule_uid = db.Column(
-        db.Integer, db.ForeignKey(EmailSchedule.email_schedule_uid), nullable=False
+        db.Integer,
+        db.ForeignKey(EmailSchedule.email_schedule_uid, ondelete="CASCADE"),
+        nullable=False,
     )
     table_name = db.Column(db.String(255), nullable=False)
     filter_group_id = db.Column(db.Integer)

@@ -1106,6 +1106,11 @@ def update_email_template(email_template_uid, validated_payload):
     # Delete existing variables and tables
     try:
         for variable in validated_payload.variable_list.data:
+            # delete existing variables
+            EmailTemplateVariable.query.filter_by(
+                email_template_uid=template.email_template_uid
+            ).delete()
+            db.session.flush()
             variable_obj = EmailTemplateVariable(
                 variable_name=variable.get("variable_name"),
                 variable_expression=variable.get("variable_expression"),
@@ -1120,6 +1125,11 @@ def update_email_template(email_template_uid, validated_payload):
 
     try:
         for table in validated_payload.table_list.data:
+            EmailTemplateTable.query.filter_by(
+                email_template_uid=template.email_template_uid
+            ).delete()
+            db.session.flush()
+            # Delete existing table
             table_obj = EmailTemplateTable(
                 email_template_uid=template.email_template_uid,
                 table_name=table.get("table_name"),
@@ -1133,7 +1143,7 @@ def update_email_template(email_template_uid, validated_payload):
             max_filter_group_id = 0
 
             # Upload Filter List
-            for filter_group in table_obj.get("filter_list", []):
+            for filter_group in table.get("filter_list", []):
                 max_filter_group_id += 1
 
                 for filter_item in filter_group.get("filter_group"):
