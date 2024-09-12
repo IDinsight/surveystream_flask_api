@@ -365,11 +365,11 @@ def edit_user(user_uid, validated_payload):
     user_to_edit.can_create_survey = validated_payload.can_create_survey.data
     user_to_edit.active = validated_payload.active.data
 
-    # Add or remove survey admin privileges based on is_survey_admin field
-    if validated_payload.is_survey_admin.data:
-        survey_uid = validated_payload.survey_uid.data
-        # Only proceed if survey_uid is provided
-        if survey_uid:
+    survey_uid = validated_payload.survey_uid.data
+    # Only proceed with survey level details updation if survey_uid is provided
+    if survey_uid:
+        # Add or remove survey admin privileges based on is_survey_admin field
+        if validated_payload.is_survey_admin.data:
             user_to_edit.can_create_survey = True
             survey_admin_entry = SurveyAdmin.query.filter_by(
                 user_uid=user_uid, survey_uid=survey_uid
@@ -379,10 +379,7 @@ def edit_user(user_uid, validated_payload):
                     survey_uid=survey_uid, user_uid=user_uid
                 )
                 db.session.add(survey_admin_entry)
-    else:
-        survey_uid = validated_payload.survey_uid.data
-        # Only proceed if survey_uid is provided
-        if survey_uid:
+        else:
             # Remove survey admin entry
             survey_admin_entry = SurveyAdmin.query.filter_by(
                 user_uid=user_uid, survey_uid=survey_uid
@@ -391,11 +388,8 @@ def edit_user(user_uid, validated_payload):
                 db.session.delete(survey_admin_entry)
                 db.session.commit()  # Commit the deletion
 
-    # Update user locations if location_uids data is provided
-    if validated_payload.location_uids.data:
-        survey_uid = validated_payload.survey_uid.data
-        # Only proceed if survey_uid is provided
-        if survey_uid:
+        # Update user locations if location_uids data is provided
+        if validated_payload.location_uids.data:
             # Delete existing user locations
             UserLocation.query.filter_by(
                 user_uid=user_uid, survey_uid=survey_uid
@@ -408,24 +402,34 @@ def edit_user(user_uid, validated_payload):
                     location_uid=location_uid,
                 )
                 db.session.add(user_location)
+        else:
+            # Delete existing user locations
+            UserLocation.query.filter_by(
+                user_uid=user_uid, survey_uid=survey_uid
+            ).delete()
 
-    # Update user languages if languages data is provided
-    if validated_payload.languages.data:
-        survey_uid = validated_payload.survey_uid.data
-        # Only proceed if survey_uid is provided
-        if survey_uid:
+        # Update user languages if languages data is provided
+        if validated_payload.languages.data:
+            survey_uid = validated_payload.survey_uid.data
+            # Only proceed if survey_uid is provided
+            if survey_uid:
+                # Delete existing user languages
+                UserLanguage.query.filter_by(
+                    user_uid=user_uid, survey_uid=survey_uid
+                ).delete()
+                # Add new user languages
+                for language in validated_payload.languages.data:
+                    user_language = UserLanguage(
+                        survey_uid=survey_uid,
+                        user_uid=user_uid,
+                        language=language,
+                    )
+                    db.session.add(user_language)
+        else:
             # Delete existing user languages
             UserLanguage.query.filter_by(
                 user_uid=user_uid, survey_uid=survey_uid
             ).delete()
-            # Add new user languages
-            for language in validated_payload.languages.data:
-                user_language = UserLanguage(
-                    survey_uid=survey_uid,
-                    user_uid=user_uid,
-                    language=language,
-                )
-                db.session.add(user_language)
 
     db.session.commit()
     user_data = user_to_edit.to_dict()
@@ -664,10 +668,10 @@ def get_all_users(validated_query_params):
                 if survey_name is not None
             ],
             "supervisor_uid": supervisor_uid,
-            "location_uids": [location_uid for location_uid in location_uids if location_uid],
-            "location_ids": [location_id for location_id in location_ids if location_id],
-            "location_names": [location_name for location_name in location_names if location_name],
-            "languages": [language for language in languages if language],
+            "location_uids": [location_uid for location_uid in location_uids if location_uid] if location_uids else [],
+            "location_ids": [location_id for location_id in location_ids if location_id] if location_ids else [],
+            "location_names": [location_name for location_name in location_names if location_name] if location_names else [],
+            "languages": [language for language in languages if language] if languages else [],
             "is_super_admin": user.is_super_admin,
             "can_create_survey": user.can_create_survey,
             "status": ("Active" if user.active else "Deactivated"),

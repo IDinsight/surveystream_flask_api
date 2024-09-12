@@ -104,6 +104,7 @@ class EditUserValidator(FlaskForm):
         default=[],
         validators=[Optional(), validate_locations],
     )
+
     is_super_admin = BooleanField(
         "Is Super Admin", default=False, validators=[Optional()]
     )
