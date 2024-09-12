@@ -135,33 +135,52 @@ def check_user(validated_payload):
 
     # If survey_uid is provided, also fetch user locations and languages to return along with user details
     if validated_payload.survey_uid.data:
-        user_with_email = (
+        locations_subquery = (
             db.session.query(
-                User,
+                UserLocation.user_uid,
                 func.array_agg(UserLocation.location_uid).label("location_uids"),
                 func.array_agg(Location.location_id).label("location_ids"),
                 func.array_agg(Location.location_name).label("location_names"),
-                func.array_agg(UserLanguage.language).label("languages"),
             )
-            .outerjoin(
-                UserLocation,
-                (User.user_uid == UserLocation.user_uid)
-                & (UserLocation.survey_uid == validated_payload.survey_uid.data),
-            )
-            .outerjoin(
+            .join(
                 Location,
                 (Location.location_uid == UserLocation.location_uid)
                 & (Location.survey_uid == validated_payload.survey_uid.data),
             )
+            .filter(UserLocation.survey_uid == validated_payload.survey_uid.data)
+            .group_by(UserLocation.user_uid)
+            .distinct()
+            .subquery()
+        )
+
+        languages_subquery = (
+            db.session.query(
+                UserLanguage.user_uid,
+                func.array_agg(UserLanguage.language).label("languages"),
+            )
+            .filter(UserLanguage.survey_uid == validated_payload.survey_uid.data)
+            .group_by(UserLanguage.user_uid)
+            .distinct()
+            .subquery()
+        )
+
+        user_with_email = (
+            db.session.query(
+                User,
+                locations_subquery.c.location_uids,
+                locations_subquery.c.location_ids,
+                locations_subquery.c.location_names,
+                languages_subquery.c.languages,
+            )
             .outerjoin(
-                UserLanguage,
-                (User.user_uid == UserLanguage.user_uid)
-                & (UserLanguage.survey_uid == validated_payload.survey_uid.data),
+                locations_subquery, (User.user_uid == locations_subquery.c.user_uid)
+            )
+            .outerjoin(
+                languages_subquery, (User.user_uid == languages_subquery.c.user_uid)
             )
             .filter(
                 User.email == validated_payload.email.data,
             )
-            .group_by(User.user_uid)
             .first()
         )
     else:
@@ -186,10 +205,32 @@ def check_user(validated_payload):
                 user={
                     **user_with_email[0].to_dict(),
                     **{
-                        "location_uids": [location_uid for location_uid in user_with_email[1] if location_uid],
-                        "location_ids": [location_id for location_id in user_with_email[2] if location_id],
-                        "location_names": [location_names for location_names in user_with_email[3] if location_names],
-                        "languages": [language for language in user_with_email[4] if language],
+                        "location_uids": [
+                            location_uid
+                            for location_uid in user_with_email[1]
+                            if location_uid
+                        ]
+                        if user_with_email[1]
+                        else [],
+                        "location_ids": [
+                            location_id
+                            for location_id in user_with_email[2]
+                            if location_id
+                        ]
+                        if user_with_email[2]
+                        else [],
+                        "location_names": [
+                            location_names
+                            for location_names in user_with_email[3]
+                            if location_names
+                        ]
+                        if user_with_email[3]
+                        else [],
+                        "languages": [
+                            language for language in user_with_email[4] if language
+                        ]
+                        if user_with_email[4]
+                        else [],
                     },
                 },
             ),
@@ -562,6 +603,35 @@ def get_all_users(validated_query_params):
             )
         ).all()
     else:
+        locations_subquery = (
+            db.session.query(
+                UserLocation.user_uid,
+                func.array_agg(UserLocation.location_uid).label("location_uids"),
+                func.array_agg(Location.location_id).label("location_ids"),
+                func.array_agg(Location.location_name).label("location_names"),
+            )
+            .join(
+                Location,
+                (Location.location_uid == UserLocation.location_uid)
+                & (Location.survey_uid == survey_uid),
+            )
+            .filter(UserLocation.survey_uid == survey_uid)
+            .group_by(UserLocation.user_uid)
+            .distinct()
+            .subquery()
+        )
+
+        languages_subquery = (
+            db.session.query(
+                UserLanguage.user_uid,
+                func.array_agg(UserLanguage.language).label("languages"),
+            )
+            .filter(UserLanguage.survey_uid == survey_uid)
+            .group_by(UserLanguage.user_uid)
+            .distinct()
+            .subquery()
+        )
+
         users = (
             db.session.query(
                 User,
@@ -592,10 +662,10 @@ def get_all_users(validated_query_params):
                     )
                 ).label("user_admin_survey_names"),
                 UserHierarchy.parent_user_uid.label("supervisor_uid"),
-                func.array_agg(UserLocation.location_uid).label("location_uids"),
-                func.array_agg(Location.location_id).label("location_ids"),
-                func.array_agg(Location.location_name).label("location_names"),
-                func.array_agg(UserLanguage.language).label("languages"),
+                locations_subquery.c.location_uids,
+                locations_subquery.c.location_ids,
+                locations_subquery.c.location_names,
+                languages_subquery.c.languages,
             )
             .outerjoin(invite_subquery, User.user_uid == invite_subquery.c.user_uid)
             .outerjoin(
@@ -614,24 +684,19 @@ def get_all_users(validated_query_params):
                 & (UserHierarchy.survey_uid == survey_uid),
             )
             .outerjoin(
-                UserLocation,
-                (UserLocation.user_uid == User.user_uid)
-                & (UserLocation.survey_uid == survey_uid),
+                locations_subquery, (locations_subquery.c.user_uid == User.user_uid)
             )
             .outerjoin(
-                Location,
-                (Location.location_uid == UserLocation.location_uid)
-                & (Location.survey_uid == survey_uid),
-            )
-            .outerjoin(
-                UserLanguage,
-                (UserLanguage.user_uid == User.user_uid)
-                & (UserLanguage.survey_uid == survey_uid),
+                languages_subquery, (languages_subquery.c.user_uid == User.user_uid)
             )
             .group_by(
                 User.user_uid,
                 invite_subquery.c.is_active,
                 UserHierarchy.parent_user_uid,
+                locations_subquery.c.location_uids,
+                locations_subquery.c.location_ids,
+                locations_subquery.c.location_names,
+                languages_subquery.c.languages,
             )
             .filter(
                 or_(
@@ -668,10 +733,22 @@ def get_all_users(validated_query_params):
                 if survey_name is not None
             ],
             "supervisor_uid": supervisor_uid,
-            "location_uids": [location_uid for location_uid in location_uids if location_uid] if location_uids else [],
-            "location_ids": [location_id for location_id in location_ids if location_id] if location_ids else [],
-            "location_names": [location_name for location_name in location_names if location_name] if location_names else [],
-            "languages": [language for language in languages if language] if languages else [],
+            "location_uids": [
+                location_uid for location_uid in location_uids if location_uid
+            ]
+            if location_uids
+            else [],
+            "location_ids": [location_id for location_id in location_ids if location_id]
+            if location_ids
+            else [],
+            "location_names": [
+                location_name for location_name in location_names if location_name
+            ]
+            if location_names
+            else [],
+            "languages": [language for language in languages if language]
+            if languages
+            else [],
             "is_super_admin": user.is_super_admin,
             "can_create_survey": user.can_create_survey,
             "status": ("Active" if user.active else "Deactivated"),
