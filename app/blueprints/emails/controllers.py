@@ -158,7 +158,31 @@ def get_email_details(validated_query_params):
             {
                 **email_config.to_dict(),
                 "schedules": [
-                    schedule.to_dict() for schedule in email_config.schedules
+                    {
+                        **schedule.to_dict(),
+                        "filter_list": [
+                            {
+                                "table_name": table_name,
+                                "filter_list": [
+                                    {
+                                        "filter_group": [
+                                            filter.to_dict() for filter in filter_group
+                                        ]
+                                    }
+                                    for key, filter_group in groupby(
+                                        table, key=attrgetter("filter_group_id")
+                                    )
+                                ],
+                            }
+                            for table_name, table in groupby(
+                                EmailScheduleFilter.query.filter_by(
+                                    email_schedule_uid=schedule.email_schedule_uid
+                                ).all(),
+                                key=attrgetter("table_name"),
+                            )
+                        ],
+                    }
+                    for schedule in email_config.schedules
                 ],
                 "templates": [
                     template.to_dict() for template in email_config.templates
@@ -277,7 +301,6 @@ def update_email_config(email_config_uid, validated_payload):
         validated_payload.email_source_gsheet_link.data
     )
     email_config.email_source_tablename = validated_payload.email_source_tablename.data
-    email_config.email_source_columns = validated_payload.email_source_columns.data
     email_config.email_source_gsheet_tab = (
         validated_payload.email_source_gsheet_tab.data
     )
@@ -290,6 +313,14 @@ def update_email_config(email_config_uid, validated_payload):
     email_config.pdf_encryption_password_type = (
         validated_payload.pdf_encryption_password_type.data
     )
+
+    # Avoid updating default column names with source columns
+    default_variables = get_default_email_variable_names(email_config.form_uid)
+    email_config.email_source_columns = [
+        column
+        for column in validated_payload.email_source_columns.data
+        if column not in default_variables
+    ]
 
     try:
         db.session.commit()
@@ -383,7 +414,7 @@ def create_email_schedule(validated_payload):
             max_filter_group_id += 1
 
             for filter_item in filter_group.get("filter_group"):
-
+                print(filter_item, max_filter_group_id)
                 filter_obj = EmailScheduleFilter(
                     email_schedule_uid=new_schedule_uid,
                     filter_group_id=max_filter_group_id,
@@ -394,11 +425,16 @@ def create_email_schedule(validated_payload):
                 )
                 db.session.add(filter_obj)
 
-        db.session.commit()
+        db.session.flush()
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
     return (
         jsonify(
             {
@@ -823,11 +859,11 @@ def create_email_template(validated_payload):
     # Upload Template Variables & tables
     try:
         for variable in validated_payload.variable_list.data:
+            print(variable)
             variable_obj = EmailTemplateVariable(
                 email_template_uid=new_template.email_template_uid,
                 variable_name=variable.get("variable_name"),
                 variable_expression=variable.get("variable_expression"),
-                source_table=variable.get("source_table"),
             )
             db.session.add(variable_obj)
         db.session.flush()
@@ -936,7 +972,6 @@ def create_email_template_bulk(validated_payload):
                     email_template_uid=new_template.email_template_uid,
                     variable_name=variable.get("variable_name"),
                     variable_expression=variable.get("variable_expression"),
-                    source_table=variable.get("source_table"),
                 )
                 db.session.add(variable_obj)
             db.session.flush()
@@ -1105,16 +1140,16 @@ def update_email_template(email_template_uid, validated_payload):
     # Upload Template Variables & tables
     # Delete existing variables and tables
     try:
+        EmailTemplateVariable.query.filter_by(
+            email_template_uid=template.email_template_uid
+        ).delete()
         for variable in validated_payload.variable_list.data:
             # delete existing variables
-            EmailTemplateVariable.query.filter_by(
-                email_template_uid=template.email_template_uid
-            ).delete()
             db.session.flush()
+            print(variable)
             variable_obj = EmailTemplateVariable(
                 variable_name=variable.get("variable_name"),
                 variable_expression=variable.get("variable_expression"),
-                source_table=variable.get("source_table"),
                 email_template_uid=template.email_template_uid,
             )
             db.session.add(variable_obj)
@@ -1156,8 +1191,14 @@ def update_email_template(email_template_uid, validated_payload):
                         filter_value=filter_item.get("filter_value"),
                     )
                     db.session.add(filter_obj)
-        db.session.commit()
+        db.session.flush()
 
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    try:
+        db.session.commit()
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
