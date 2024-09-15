@@ -414,7 +414,6 @@ def create_email_schedule(validated_payload):
             max_filter_group_id += 1
 
             for filter_item in filter_group.get("filter_group"):
-                print(filter_item, max_filter_group_id)
                 filter_obj = EmailScheduleFilter(
                     email_schedule_uid=new_schedule_uid,
                     filter_group_id=max_filter_group_id,
@@ -859,7 +858,6 @@ def create_email_template(validated_payload):
     # Upload Template Variables & tables
     try:
         for variable in validated_payload.variable_list.data:
-            print(variable)
             variable_obj = EmailTemplateVariable(
                 email_template_uid=new_template.email_template_uid,
                 variable_name=variable.get("variable_name"),
@@ -1140,13 +1138,13 @@ def update_email_template(email_template_uid, validated_payload):
     # Upload Template Variables & tables
     # Delete existing variables and tables
     try:
-        EmailTemplateVariable.query.filter_by(
-            email_template_uid=template.email_template_uid
-        ).delete()
-        for variable in validated_payload.variable_list.data:
+        if len(validated_payload.variable_list.data) > 0:
             # delete existing variables
+            EmailTemplateVariable.query.filter_by(
+                email_template_uid=template.email_template_uid
+            ).delete()
+        for variable in validated_payload.variable_list.data:
             db.session.flush()
-            print(variable)
             variable_obj = EmailTemplateVariable(
                 variable_name=variable.get("variable_name"),
                 variable_expression=variable.get("variable_expression"),
