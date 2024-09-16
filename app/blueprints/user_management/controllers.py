@@ -536,7 +536,6 @@ def get_all_users(validated_query_params):
     Endpoint to get information for all users.
 
     """
-    # TO DO: Confirm logic for invite pending vs active status
     survey_uid = validated_query_params.survey_uid.data
 
     if survey_uid is None and not current_user.is_super_admin:
