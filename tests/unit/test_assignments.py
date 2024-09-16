@@ -767,6 +767,7 @@ class TestAssignments:
             survey_uid=1,
             is_super_admin=True,
             roles=[3],  # FS L3 role
+            location_uids=[1],
         )
 
         # Add mapping
@@ -785,6 +786,7 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+
         assert response.status_code == 200
 
     @pytest.fixture()
@@ -807,6 +809,7 @@ class TestAssignments:
             survey_uid=1,
             is_super_admin=True,
             roles=[3],  # FS L3 role
+            location_uids=[1],
         )
 
         # Add mapping
@@ -825,6 +828,7 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+
         assert response.status_code == 200
 
     @pytest.fixture()
@@ -6417,6 +6421,7 @@ class TestAssignments:
             survey_uid=1,
             is_super_admin=False,
             roles=[3],  # FS L3 role
+            location_uids=[1],
         )
 
         login_user(client, test_user_credentials)
@@ -11899,6 +11904,7 @@ class TestAssignments:
             survey_uid=1,
             is_super_admin=False,
             roles=[3],  # FS L3 role
+            location_uids=[1],
         )
 
         login_user(client, test_user_credentials)
@@ -12569,6 +12575,7 @@ class TestAssignments:
             survey_uid=1,
             is_super_admin=False,
             roles=[3],  # FS L3 role
+            location_uids=[1],
         )
 
         login_user(client, test_user_credentials)
@@ -13328,6 +13335,7 @@ class TestAssignments:
             survey_uid=1,
             is_super_admin=False,
             roles=[3],  # FS L3 role
+            location_uids=[1],
         )
 
         login_user(client, test_user_credentials)

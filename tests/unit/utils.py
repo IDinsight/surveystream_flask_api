@@ -41,6 +41,7 @@ def update_logged_in_user_roles(
     can_create_survey=False,
     is_survey_admin=False,
     survey_uid=None,
+    location_uids=None,
 ):
     """
     Function to update the logged-in user admin status and roles
@@ -61,6 +62,7 @@ def update_logged_in_user_roles(
             "is_survey_admin": is_survey_admin,
             "survey_uid": survey_uid,
             "active": True,
+            "location_uids": location_uids,
         },
         content_type="application/json",
         headers={"X-CSRF-Token": csrf_token},
