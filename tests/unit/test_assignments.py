@@ -515,7 +515,7 @@ class TestAssignments:
                 "roles": [3],
                 "gender": "Male",
                 "languages": ["Hindi", "Telugu", "English"],
-                "locations": [1],
+                "location_uids": [1],
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -740,7 +740,7 @@ class TestAssignments:
             json={
                 "survey_uid": 1,
                 "user_uid": test_user_credentials.get("user_uid"),
-                "locations": [1],
+                "location_uids": [1],
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
