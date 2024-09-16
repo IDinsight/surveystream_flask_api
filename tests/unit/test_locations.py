@@ -12,6 +12,59 @@ from utils import (
 
 @pytest.mark.locations
 class TestLocations:
+    @pytest.fixture
+    def user_with_super_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have super admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=True,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_survey_admin_permissions(self, client, test_user_credentials):
+        # Set the user to have survey admin permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=True,
+            survey_uid=1,
+            is_super_admin=False,
+        )
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture
+    def user_with_no_permissions(self, client, test_user_credentials):
+        # Assign no roles and permissions
+        update_logged_in_user_roles(
+            client,
+            test_user_credentials,
+            is_survey_admin=False,
+            survey_uid=1,
+            is_super_admin=False,
+            roles=[],
+        )
+
+        login_user(client, test_user_credentials)
+
+    @pytest.fixture(
+        params=[
+            ("user_with_super_admin_permissions", True),
+            ("user_with_survey_admin_permissions", True),
+            ("user_with_no_permissions", False),
+        ],
+        ids=[
+            "super_admin_permissions",
+            "survey_admin_permissions",
+            "no_permissions",
+        ],
+    )
+    def user_permissions(self, request):
+        return request.param
+
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -110,6 +163,65 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def upload_locations_csv(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_locations_file,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Upload locations csv as a setup step for the location tests
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            locations_csv = f.read()
+            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response)
+
         assert response.status_code == 200
 
         yield
@@ -2092,3 +2204,302 @@ class TestLocations:
         )
         print(response.json)
         assert response.status_code == 200
+
+    def test_get_locations_in_long_format(
+        self,
+        client,
+        login_test_user,
+        upload_locations_csv,
+        csrf_token,
+        user_permissions,
+        request,
+    ):
+        """
+        Test that the locations can be fetched in long format
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        # Check the response
+        response = client.get("/api/locations/long", query_string={"survey_uid": 1})
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "geo_level_name": "District",
+                        "geo_level_uid": 1,
+                        "location_id": "1",
+                        "location_name": "ADILABAD",
+                        "location_uid": 1,
+                        "parent_geo_level_uid": None,
+                        "parent_location_uid": None,
+                    },
+                    {
+                        "geo_level_name": "Mandal",
+                        "geo_level_uid": 2,
+                        "location_id": "1104",
+                        "location_name": "BELA",
+                        "location_uid": 3,
+                        "parent_geo_level_uid": 1,
+                        "parent_location_uid": 1,
+                    },
+                    {
+                        "geo_level_name": "Mandal",
+                        "geo_level_uid": 2,
+                        "location_id": "1101",
+                        "location_name": "ADILABAD RURAL",
+                        "location_uid": 2,
+                        "parent_geo_level_uid": 1,
+                        "parent_location_uid": 1,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "1710495",
+                        "location_name": "SANGVI",
+                        "location_uid": 22,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 3,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "1710487",
+                        "location_name": "PITGAON",
+                        "location_uid": 21,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 3,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "1710482",
+                        "location_name": "EKORI",
+                        "location_uid": 20,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 3,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "1710470",
+                        "location_name": "BELA",
+                        "location_uid": 19,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 3,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "1710465",
+                        "location_name": "KOBBAI",
+                        "location_uid": 18,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 3,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "1710462",
+                        "location_name": "DAHEGAON",
+                        "location_uid": 17,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 3,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "1710459",
+                        "location_name": "GUDA",
+                        "location_uid": 16,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 3,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "1710458",
+                        "location_name": "BHEDODA",
+                        "location_uid": 15,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 3,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "1710457",
+                        "location_name": "SANGIDI",
+                        "location_uid": 14,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 3,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "17101280",
+                        "location_name": "CHANDA T",
+                        "location_uid": 13,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 2,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "17101279",
+                        "location_name": "CHANDA",
+                        "location_uid": 12,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 2,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "17101278",
+                        "location_name": "CHANDA T",
+                        "location_uid": 11,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 2,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "17101147",
+                        "location_name": "RAMPUR",
+                        "location_uid": 10,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 2,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "17101131",
+                        "location_name": "KHANAPUR",
+                        "location_uid": 9,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 2,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "17101127",
+                        "location_name": "NEW RAMPUR",
+                        "location_uid": 8,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 2,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "17101122",
+                        "location_name": "YAPALGUDA",
+                        "location_uid": 7,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 2,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "17101119",
+                        "location_name": "BANGARIGUDA",
+                        "location_uid": 6,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 2,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "17101107",
+                        "location_name": "ANKAPUR",
+                        "location_uid": 5,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 2,
+                    },
+                    {
+                        "geo_level_name": "PSU",
+                        "geo_level_uid": 3,
+                        "location_id": "17101102",
+                        "location_name": "ANKOLI",
+                        "location_uid": 4,
+                        "parent_geo_level_uid": 2,
+                        "parent_location_uid": 2,
+                    },
+                ],
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Survey Locations",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+
+            assert checkdiff == {}
+
+    def test_get_locations_in_long_format_geo_level_filter(
+        self,
+        client,
+        login_test_user,
+        upload_locations_csv,
+        csrf_token,
+        user_permissions,
+        request,
+    ):
+        """
+        Test that the locations can be fetched in long format with a geo level filter
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        # Check the response
+        response = client.get(
+            "/api/locations/long", query_string={"survey_uid": 1, "geo_level_uid": 2}
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "geo_level_name": "Mandal",
+                        "geo_level_uid": 2,
+                        "location_id": "1101",
+                        "location_name": "ADILABAD RURAL",
+                        "location_uid": 2,
+                        "parent_geo_level_uid": 1,
+                        "parent_location_uid": 1,
+                    },
+                    {
+                        "geo_level_name": "Mandal",
+                        "geo_level_uid": 2,
+                        "location_id": "1104",
+                        "location_name": "BELA",
+                        "location_uid": 3,
+                        "parent_geo_level_uid": 1,
+                        "parent_location_uid": 1,
+                    },
+                ],
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Survey Locations",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+
+            assert checkdiff == {}

@@ -135,6 +135,16 @@ def check_user(validated_payload):
 
     # If survey_uid is provided, also fetch user locations and languages to return along with user details
     if validated_payload.survey_uid.data:
+        survey_admin_subquery = (
+            db.session.query(
+                SurveyAdmin.survey_uid,
+                SurveyAdmin.user_uid,
+            )
+            .filter(SurveyAdmin.survey_uid == validated_payload.survey_uid.data)
+            .distinct()
+            .subquery()
+        )
+
         locations_subquery = (
             db.session.query(
                 UserLocation.user_uid,
@@ -167,6 +177,15 @@ def check_user(validated_payload):
         user_with_email = (
             db.session.query(
                 User,
+                case(
+                    [
+                        (
+                            survey_admin_subquery.c.user_uid.isnot(None),
+                            True,
+                        )
+                    ],
+                    else_=False,
+                ).label("is_survey_admin"),
                 locations_subquery.c.location_uids,
                 locations_subquery.c.location_ids,
                 locations_subquery.c.location_names,
@@ -178,6 +197,10 @@ def check_user(validated_payload):
             .outerjoin(
                 languages_subquery, (User.user_uid == languages_subquery.c.user_uid)
             )
+            .outerjoin(
+                survey_admin_subquery,
+                (User.user_uid == survey_admin_subquery.c.user_uid),
+            )
             .filter(
                 User.email == validated_payload.email.data,
             )
@@ -187,6 +210,7 @@ def check_user(validated_payload):
         user_with_email = (
             db.session.query(
                 User,
+                False,  # is_survey_admin
                 null().label("location_uids"),
                 null().label("location_ids"),
                 null().label("location_names"),
@@ -205,31 +229,32 @@ def check_user(validated_payload):
                 user={
                     **user_with_email[0].to_dict(),
                     **{
+                        "is_survey_admin": user_with_email[1],
                         "location_uids": [
                             location_uid
-                            for location_uid in user_with_email[1]
+                            for location_uid in user_with_email[2]
                             if location_uid
                         ]
-                        if user_with_email[1]
+                        if user_with_email[4]
                         else [],
                         "location_ids": [
                             location_id
-                            for location_id in user_with_email[2]
+                            for location_id in user_with_email[3]
                             if location_id
                         ]
-                        if user_with_email[2]
+                        if user_with_email[4]
                         else [],
                         "location_names": [
                             location_names
-                            for location_names in user_with_email[3]
+                            for location_names in user_with_email[4]
                             if location_names
                         ]
-                        if user_with_email[3]
+                        if user_with_email[4]
                         else [],
                         "languages": [
-                            language for language in user_with_email[4] if language
+                            language for language in user_with_email[5] if language
                         ]
-                        if user_with_email[4]
+                        if user_with_email[5]
                         else [],
                     },
                 },
@@ -726,11 +751,11 @@ def get_all_users(validated_query_params):
             "last_name": user.last_name,
             "roles": user.roles,
             "gender": user.gender,
-            "user_survey_role_names": user_survey_role_names,
+            "user_survey_role_names": [
+                role_name for role_name in user_survey_role_names if role_name
+            ],
             "user_admin_survey_names": [
-                survey_name
-                for survey_name in user_admin_survey_names
-                if survey_name is not None
+                survey_name for survey_name in user_admin_survey_names if survey_name
             ],
             "supervisor_uid": supervisor_uid,
             "location_uids": [
