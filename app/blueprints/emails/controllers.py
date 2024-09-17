@@ -1157,12 +1157,12 @@ def update_email_template(email_template_uid, validated_payload):
         return jsonify({"error": str(e)}), 500
 
     try:
+        # Delete existing table
+        EmailTemplateTable.query.filter_by(
+            email_template_uid=template.email_template_uid
+        ).delete()
+        db.session.flush()
         for table in validated_payload.table_list.data:
-            EmailTemplateTable.query.filter_by(
-                email_template_uid=template.email_template_uid
-            ).delete()
-            db.session.flush()
-            # Delete existing table
             table_obj = EmailTemplateTable(
                 email_template_uid=template.email_template_uid,
                 table_name=table.get("table_name"),
