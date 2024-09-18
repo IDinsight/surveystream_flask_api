@@ -7633,6 +7633,33 @@ paths:
                                 type: string
                                 format: time
                                 example: "12:00:00"
+                              filter_list:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    table_name:
+                                      type: string
+                                      example: "Assignments"
+                                    filter_list:
+                                      type: array
+                                      items:
+                                        type: object
+                                        properties:
+                                          filter_group:
+                                            type: array
+                                            items:
+                                              type: object
+                                              properties:
+                                                table_name:
+                                                  type: string
+                                                filter_variable:
+                                                  type: string
+                                                  example: "="
+                                                filter_operator:
+                                                  type: string
+                                                filter_value:
+                                                  type: string
                         templates:
                           type: array
                           items:

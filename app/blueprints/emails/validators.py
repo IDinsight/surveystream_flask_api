@@ -197,7 +197,6 @@ class EmailVariableValidator(FlaskForm):
 
     variable_name = StringField(validators=[DataRequired()])
     variable_expression = StringField(default=None)
-    source_table = StringField()
 
 
 class EmailTemplateTableValidator(FlaskForm):

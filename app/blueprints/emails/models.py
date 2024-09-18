@@ -348,18 +348,15 @@ class EmailTemplateVariable(db.Model):
         self,
         email_template_uid,
         variable_name,
-        source_table,
         variable_expression,
     ):
         self.email_template_uid = email_template_uid
         self.variable_name = variable_name
-        self.source_table = source_table
         self.variable_expression = variable_expression
 
     def to_dict(self):
         return {
             "variable_name": self.variable_name,
-            "source_table": self.source_table,
             "variable_expression": self.variable_expression,
         }
 

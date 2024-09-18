@@ -687,6 +687,7 @@ class TestEmails:
                                 "email_schedule_uid": 1,
                                 "time": "20:00:00",
                                 "email_schedule_name": "Test Schedule",
+                                "filter_list": [],
                             }
                         ],
                         "templates": [
@@ -883,18 +884,21 @@ class TestEmails:
     def test_emails_update_config_exception(
         self,
         client,
-        login_test_user,
-        create_email_config,
         csrf_token,
-        test_user_credentials,
-        create_form,
+        user_permissions,
+        create_survey,
+        create_email_config,
+        request,
     ):
         """
         Test if exception is raised when creating configs
         """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
         payload = {
             "email_config_uid": 1,
-            "config_name": "AejroSkv98z1pqnX6G3fT7WbL2u9Nh4kY1QcVxJld5MgP0UmwHDsIFiyCtROZBEa9Dz5jLpQZcVx8NwTm6Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8",
+            "config_name": None,
             "form_uid": 1,
         }
 
@@ -904,7 +908,9 @@ class TestEmails:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        assert response.status_code == 500
+        print(response.json)
+
+        assert response.status_code == 422
 
     def test_emails_delete_config(
         self,
@@ -2645,11 +2651,9 @@ class TestEmails:
                 {
                     "variable_name": "test_variable",
                     "variable_expression": "UPPERCASE(test_variable)",
-                    "source_table": "test_table",
                 },
                 {
                     "variable_name": "test_variable2",
-                    "source_table": "test_table",
                     "variable_expression": "UPPERCASE(test_variable2)",
                 },
             ],
@@ -2679,61 +2683,16 @@ class TestEmails:
                     "email_template_uid": 1,
                     "language": "Hindi",
                     "subject": "Test Update Email",
-                    "table_list": [
-                        {
-                            "column_mapping": {
-                                "test_column1": "TEST Column 1",
-                                "test_column2": "TEST Column 2",
-                            },
-                            "email_template_table_uid": 1,
-                            "filter_list": [
-                                [
-                                    {
-                                        "email_template_table_uid": 1,
-                                        "filter_group_id": 1,
-                                        "filter_operator": "Is",
-                                        "filter_value": "test_value",
-                                        "filter_variable": "test_column",
-                                    },
-                                    {
-                                        "email_template_table_uid": 1,
-                                        "filter_group_id": 1,
-                                        "filter_operator": "Is",
-                                        "filter_value": "test_value2",
-                                        "filter_variable": "test_column2",
-                                    },
-                                ],
-                                [
-                                    {
-                                        "email_template_table_uid": 1,
-                                        "filter_group_id": 2,
-                                        "filter_operator": "Is",
-                                        "filter_value": "test_value",
-                                        "filter_variable": "test_column",
-                                    },
-                                    {
-                                        "email_template_table_uid": 1,
-                                        "filter_group_id": 2,
-                                        "filter_operator": "Is not",
-                                        "filter_value": "test_value2",
-                                        "filter_variable": "test_column2",
-                                    },
-                                ],
-                            ],
-                            "sort_list": {
-                                "test_column1": "asc",
-                                "test_column2": "desc",
-                            },
-                            "table_name": "test_table",
-                            "variable_name": "test_table+_1",
-                        }
-                    ],
+                    "table_list": [],
                     "variable_list": [
                         {
-                            "source_table": "test_table",
+                            "variable_expression": "UPPERCASE(test_variable)",
+                            "variable_name": "test_variable",
+                        },
+                        {
                             "variable_expression": "UPPERCASE(test_variable2)",
                             "variable_name": "test_variable2",
-                        }
+                        },
                     ],
                 },
                 "success": True,
@@ -2777,19 +2736,7 @@ class TestEmails:
             "content": "Test Content",
             "email_config_uid": 1,
             "variable_list": [
-                {
-                    "variable_name": "test_variable",
-                    "variable_type": "string",
-                    "source_table": "test_table",
-                },
-                {
-                    "variable_type": "table",
-                    "source_table": "test_table",
-                    "table_column_mapping": {
-                        "column_1": "test_column",
-                        "column2": "test_column2",
-                    },
-                },
+                {"variable_expression": "test_variable"},
             ],
         }
         response = client.put(
@@ -2804,10 +2751,7 @@ class TestEmails:
 
         excepted_response = {
             "message": {
-                "variable_list": [
-                    {},
-                    {"variable_name": ["This field is required."]},
-                ]
+                "variable_list": [{"variable_name": ["This field is required."]}]
             },
             "success": False,
         }

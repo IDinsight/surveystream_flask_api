@@ -246,7 +246,7 @@ def get_default_email_variable_names(form_uid):
         EnumeratorColumnConfig.column_type == "custom_fields",
     ).all()
     for row in result:
-        enumerator_custom_fields.append(f"Surveyor: {row.column_name}")
+        enumerator_custom_fields.append(f"Enumerators : {row.column_name}")
 
     # For locations we will generate all location hierarchies above or equal to prime geo level
     # Check if geo level configured for the form
@@ -305,6 +305,7 @@ def get_default_email_variable_names(form_uid):
                 422,
             )
         for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
+
             location_column_list.append(f"Locations : {geo_level.geo_level_name}_id")
             location_column_list.append(f"Locations : {geo_level.geo_level_name}_name")
             if geo_level.geo_level_uid == prime_geo_level_uid:
