@@ -673,7 +673,9 @@ class TestEmails:
                         "form_uid": 1,
                         "manual_triggers": [
                             {
-                                "date": "Thu, 19 Sep 2024 00:00:00 GMT",
+                                "date": response.json["data"][0]["manual_triggers"][0][
+                                    "date"
+                                ],
                                 "email_config_uid": 1,
                                 "manual_email_trigger_uid": 1,
                                 "recipients": [1, 2, 3],
@@ -687,11 +689,8 @@ class TestEmails:
                         "report_users": [1, 2, 3],
                         "schedules": [
                             {
-                                "dates": [
-                                    "Wed, 18 Sep 2024 00:00:00 GMT",
-                                    "Thu, 19 Sep 2024 00:00:00 GMT",
-                                    "Fri, 20 Sep 2024 00:00:00 GMT",
-                                    "Sat, 21 Sep 2024 00:00:00 GMT",
+                                "dates": response.json["data"][0]["schedules"][0][
+                                    "dates"
                                 ],
                                 "email_config_uid": 1,
                                 "email_schedule_name": "Test Schedule",

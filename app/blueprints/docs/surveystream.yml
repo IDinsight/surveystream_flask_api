@@ -9628,6 +9628,48 @@ paths:
                 required:
                   - success
                   - data
+  /emails/tablecatalog/schedules:
+    get:
+      tags:
+        - Emails
+      summary: Get table catalog for a specific email config containing only tables which have been used in config templates
+      parameters:
+        - name: email_config_uid
+          in: query
+          description: Unique identifier for the email config
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        survey_uid:
+                          type: integer
+                          description: Unique identifier of the survey
+                          example: 123
+                        table_name:
+                          type: string
+                          description: Name of the table
+                          example: "table_name"
+                        column_list:
+                          type: array
+                          items:
+                            type: string
+                            description: List of columns in the table
+                            example: ["column1", "column2"]
                               
   /media-files:
     post:
