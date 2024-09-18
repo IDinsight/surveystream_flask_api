@@ -154,9 +154,14 @@ def get_email_details(validated_query_params):
     # Process and structure the config data
     config_data = []
     for email_config in email_configs:
+        email_config_dict = email_config.to_dict()
+        email_config_dict["email_source_columns"] = (
+            email_config.email_source_columns
+            + get_default_email_variable_names(form_uid)
+        )
         config_data.append(
             {
-                **email_config.to_dict(),
+                **email_config_dict,
                 "schedules": [
                     {
                         **schedule.to_dict(),
@@ -192,7 +197,6 @@ def get_email_details(validated_query_params):
                 ],
             }
         )
-
     # Return the response
     response = jsonify(
         {
@@ -1466,6 +1470,109 @@ def create_email_tablecatalog(validated_payload):
                 {
                     "success": True,
                     "message": "Email Table Catalog created successfully",
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@emails_bp.route("/tablecatalog/schedules", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(EmailTableCatalogQueryParamValidator)
+@custom_permissions_required("WRITE Emails", "query", "email_config_uid")
+def get_email_tablecatalog_schedule_filters(validated_query_params):
+    email_config_uid = validated_query_params.email_config_uid.data
+    email_config = EmailConfig.query.get_or_404(email_config_uid)
+    form_uid = email_config.form_uid
+    survey_uid = Form.query.get_or_404(form_uid).survey_uid
+
+    try:
+        # Check current tables in Email template tables
+        email_template_tables = (
+            EmailTemplateTable.query.with_entities(EmailTemplateTable.table_name)
+            .join(
+                EmailTemplate,
+                EmailTemplate.email_template_uid
+                == EmailTemplateTable.email_template_uid,
+            )
+            .filter(EmailTemplate.email_config_uid == email_config_uid)
+            .distinct()
+        )
+        email_template_table_list = set(
+            [table.table_name for table in email_template_tables]
+        )
+        email_table_catalog = (
+            db.session.query(
+                EmailTableCatalog.survey_uid,
+                EmailTableCatalog.table_name,
+                func.array_agg(
+                    func.json_build_object(
+                        "column_name",
+                        EmailTableCatalog.column_name,
+                        "column_description",
+                        EmailTableCatalog.column_description,
+                    )
+                ).label("column_list"),
+            )
+            .filter(
+                EmailTableCatalog.survey_uid == survey_uid,
+                EmailTableCatalog.table_name.in_(email_template_tables),
+            )
+            .group_by(EmailTableCatalog.survey_uid, EmailTableCatalog.table_name)
+            .all()
+        )
+
+        assignment_table_columns_dict = []
+        if "Assignments: Default" in email_template_table_list:
+            assignment_table_columns = get_default_email_assignments_column(form_uid)
+            assignment_table_columns_dict = [
+                {
+                    "survey_uid": survey_uid,
+                    "table_name": "Assignments: Default",
+                    "column_list": assignment_table_columns,
+                }
+            ]
+
+        email_source_columns = []
+        check_if_gsheet_in_template_tables = [
+            table
+            for table in email_template_table_list
+            if table.startswith("Google Sheet")
+        ]
+        if (
+            email_config.email_source == "Google Sheet"
+            and len(check_if_gsheet_in_template_tables) > 0
+        ):
+            email_source_column_list = email_config.email_source_columns
+            gsheet_tabname = email_config.email_source_gsheet_tab
+            email_source_columns = [
+                {
+                    "survey_uid": survey_uid,
+                    "table_name": "Google Sheet: " + str(gsheet_tabname),
+                    "column_list": [
+                        {"column_name": column, "column_description": None}
+                        for column in email_source_column_list
+                    ],
+                }
+            ]
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": [
+                        {
+                            "survey_uid": row.survey_uid,
+                            "table_name": row.table_name,
+                            "column_list": row.column_list,
+                        }
+                        for row in email_table_catalog
+                    ]
+                    + assignment_table_columns_dict
+                    + email_source_columns,
                 }
             ),
             200,
