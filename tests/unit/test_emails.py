@@ -2683,55 +2683,7 @@ class TestEmails:
                     "email_template_uid": 1,
                     "language": "Hindi",
                     "subject": "Test Update Email",
-                    "table_list": [
-                        {
-                            "column_mapping": {
-                                "test_column1": "TEST Column 1",
-                                "test_column2": "TEST Column 2",
-                            },
-                            "email_template_table_uid": 1,
-                            "filter_list": [
-                                [
-                                    {
-                                        "email_template_table_uid": 1,
-                                        "filter_group_id": 1,
-                                        "filter_operator": "Is",
-                                        "filter_value": "test_value",
-                                        "filter_variable": "test_column",
-                                    },
-                                    {
-                                        "email_template_table_uid": 1,
-                                        "filter_group_id": 1,
-                                        "filter_operator": "Is",
-                                        "filter_value": "test_value2",
-                                        "filter_variable": "test_column2",
-                                    },
-                                ],
-                                [
-                                    {
-                                        "email_template_table_uid": 1,
-                                        "filter_group_id": 2,
-                                        "filter_operator": "Is",
-                                        "filter_value": "test_value",
-                                        "filter_variable": "test_column",
-                                    },
-                                    {
-                                        "email_template_table_uid": 1,
-                                        "filter_group_id": 2,
-                                        "filter_operator": "Is not",
-                                        "filter_value": "test_value2",
-                                        "filter_variable": "test_column2",
-                                    },
-                                ],
-                            ],
-                            "sort_list": {
-                                "test_column1": "asc",
-                                "test_column2": "desc",
-                            },
-                            "table_name": "test_table",
-                            "variable_name": "test_table+_1",
-                        }
-                    ],
+                    "table_list": [],
                     "variable_list": [
                         {
                             "variable_expression": "UPPERCASE(test_variable)",
