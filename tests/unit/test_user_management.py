@@ -377,6 +377,41 @@ class TestUserManagement:
 
         return response.json["user_data"]
 
+    @pytest.fixture
+    def sample_user_with_languages(
+        self,
+        client,
+        csrf_token,
+        sample_user,
+        create_roles,
+        update_mapping_criteria_to_language,
+    ):
+        """
+        Return the user added by added_user fixture as the sample_user
+        """
+
+        user_uid = sample_user.get("user_uid")
+        response = client.put(
+            f"/api/users/{user_uid}",
+            json={
+                "survey_uid": 1,
+                "email": "updateduser@example.com",
+                "first_name": "Updated",
+                "last_name": "User",
+                "roles": [2],
+                "gender": "Male",
+                "languages": ["English", "Hindi"],
+                "is_super_admin": True,
+                "active": True,
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        return response.json["user_data"]
+
     def test_check_user(self, client, login_test_user, csrf_token, sample_user):
         """
         Test checking user availability by email
@@ -874,7 +909,14 @@ class TestUserManagement:
         print(response.json)
 
         expected_response = {
-            "data": [{"location_uid": 1, "survey_uid": 1, "user_uid": 3}],
+            "data": [
+                {
+                    "location_uid": 1,
+                    "user_uid": 3,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                }
+            ],
             "success": True,
         }
 
@@ -983,7 +1025,14 @@ class TestUserManagement:
         print(response.json)
 
         expected_response = {
-            "data": [{"location_uid": 1, "survey_uid": 1, "user_uid": user_uid}],
+            "data": [
+                {
+                    "location_uid": 1,
+                    "user_uid": user_uid,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                }
+            ],
             "success": True,
         }
 
@@ -1013,7 +1062,51 @@ class TestUserManagement:
         print(response.json)
 
         expected_response = {
-            "data": [{"location_uid": 1, "survey_uid": 1, "user_uid": user_uid}],
+            "data": [
+                {
+                    "location_uid": 1,
+                    "user_uid": user_uid,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                }
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_all_user_locations(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        sample_user_with_locations,
+    ):
+        """
+        Test fetching locations for all users in a survey
+        """
+        user_uid = sample_user_with_locations.get("user_uid")
+
+        # Fetch user locations
+        response = client.get(
+            "/api/user-locations",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {
+                    "location_uid": 1,
+                    "user_uid": user_uid,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                }
+            ],
             "success": True,
         }
 
@@ -1053,7 +1146,12 @@ class TestUserManagement:
         print(response.json)
         expected_response = {
             "data": [
-                {"location_uid": 1, "survey_uid": 1, "user_uid": user_uid},
+                {
+                    "location_uid": 1,
+                    "user_uid": user_uid,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                },
             ],
             "success": True,
         }
@@ -1100,7 +1198,12 @@ class TestUserManagement:
         print(response.json)
         expected_response = {
             "data": [
-                {"location_uid": 1, "survey_uid": 1, "user_uid": user_uid},
+                {
+                    "location_uid": 1,
+                    "user_uid": user_uid,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                },
             ],
             "success": True,
         }
@@ -1269,6 +1372,72 @@ class TestUserManagement:
                 ]
             },
             "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_user_languages(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        sample_user_with_languages,
+    ):
+        """
+        Test fetching languages for a user and a survey
+        """
+        user_uid = sample_user_with_languages.get("user_uid")
+
+        # Fetch user languages
+        response = client.get(
+            "/api/user-languages",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {"language": "English", "user_uid": user_uid},
+                {"language": "Hindi", "user_uid": user_uid},
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_all_user_languages(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        sample_user_with_languages,
+    ):
+        """
+        Test fetching languages for all users in a survey
+        """
+        user_uid = sample_user_with_languages.get("user_uid")
+
+        # Fetch user languages
+        response = client.get(
+            "/api/user-languages",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {"language": "English", "user_uid": user_uid},
+                {"language": "Hindi", "user_uid": user_uid},
+            ],
+            "success": True,
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)

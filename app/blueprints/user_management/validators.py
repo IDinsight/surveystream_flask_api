@@ -246,6 +246,14 @@ class CompleteRegistrationValidator(FlaskForm):
     )
 
 
+class GetUserLocationsParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField(validators=[DataRequired()])
+    user_uid = IntegerField()
+
+
 class UserLocationsParamValidator(FlaskForm):
     class Meta:
         csrf = False
@@ -270,3 +278,11 @@ class UserLocationsPayloadValidator(FlaskForm):
         user = User.query.get(field.data)
         if not user:
             raise ValidationError(f"User with UID {field.data} does not exist.")
+
+
+class GetUserLanguagesParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField(validators=[DataRequired()])
+    user_uid = IntegerField()

@@ -1065,7 +1065,7 @@ paths:
       tags:
         - User Management
       summary: Get user location details
-      description: Get user location details for a survey and user
+      description: Get user location details for a survey and for a specific user if user_uid is provided
       parameters:
         - in: query
           name: survey_uid
@@ -1076,7 +1076,6 @@ paths:
           name: user_uid
           schema:
             type: string
-          required: true
       responses:
         "200":
           description: User location details retrieved successfully
@@ -1088,9 +1087,22 @@ paths:
                   success:
                     type: boolean
                   data:
-                    type: object
-                  message:
-                    type: string
+                    type: list
+                    items:
+                      type: object
+                      properties:
+                        user_uid:
+                          type: integer
+                          description: The unique ID of the user
+                        location_uid:
+                          type: integer
+                          description: The unique ID of the location
+                        location_id:
+                          type: integer
+                          description: The ID of the location
+                        location_name:
+                          type: string
+                          description: The name of the location
         "404":
           description: User locations not found
           content:
@@ -1199,7 +1211,52 @@ paths:
                 properties:
                   message:
                     type: string
-        
+  "/user-languages":
+    get:
+      tags:
+        - User Management
+      summary: Get user languages
+      description: Get user languages for a survey and for a specific user if user_uid is provided
+      parameters:
+        - in: query
+          name: survey_uid
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: user_uid
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User languages retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: list
+                    items:
+                      type: object
+                      properties:
+                        user_uid:
+                          type: integer
+                          description: The unique ID of the user
+                        language:
+                          type: string
+                          description: The language of the user
+        "404":
+          description: User languages not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string        
   /surveys:
     get:
       summary: Get surveys

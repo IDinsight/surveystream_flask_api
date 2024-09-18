@@ -29,6 +29,8 @@ from .validators import (
     EditUserValidator,
     GetUsersQueryParamValidator,
     RegisterValidator,
+    GetUserLocationsParamValidator,
+    GetUserLanguagesParamValidator,
     UserLocationsParamValidator,
     UserLocationsPayloadValidator,
     WelcomeUserValidator,
@@ -807,16 +809,34 @@ def deactivate_user(user_uid):
 # User Locations
 @user_management_bp.route("/user-locations", methods=["GET"])
 @logged_in_active_user_required
-@validate_query_params(UserLocationsParamValidator)
+@validate_query_params(GetUserLocationsParamValidator)
 def get_user_locations(validated_query_params):
     """Function to get user locations"""
 
     survey_uid = validated_query_params.survey_uid.data
-    user_uid = request.args.get("user_uid")
+    user_uid = validated_query_params.user_uid.data
 
-    user_locations = UserLocation.query.filter_by(
-        survey_uid=survey_uid, user_uid=user_uid
-    ).all()
+    user_location_query = (
+        db.session.query(
+            UserLocation.user_uid,
+            UserLocation.location_uid,
+            Location.location_id,
+            Location.location_name,
+        )
+        .join(
+            Location,
+            (Location.location_uid == UserLocation.location_uid)
+            & (Location.survey_uid == survey_uid),
+        )
+        .filter(UserLocation.survey_uid == survey_uid)
+    )
+
+    if user_uid:
+        user_location_query = user_location_query.filter(
+            UserLocation.user_uid == user_uid
+        )
+
+    user_locations = user_location_query.all()
 
     if user_locations:
         return (
@@ -824,7 +844,13 @@ def get_user_locations(validated_query_params):
                 {
                     "success": True,
                     "data": [
-                        user_location.to_dict() for user_location in user_locations
+                        {
+                            "user_uid": user_uid,
+                            "location_uid": location_uid,
+                            "location_id": location_id,
+                            "location_name": location_name,
+                        }
+                        for user_uid, location_uid, location_id, location_name in user_locations
                     ],
                 }
             ),
@@ -888,3 +914,45 @@ def delete_user_locations(validated_query_params):
     except Exception as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500
+
+
+# User Languages
+@user_management_bp.route("/user-languages", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(GetUserLanguagesParamValidator)
+def get_user_languages(validated_query_params):
+    """Function to get user languages"""
+
+    survey_uid = validated_query_params.survey_uid.data
+    user_uid = validated_query_params.user_uid.data
+
+    user_language_query = db.session.query(
+        UserLanguage.user_uid,
+        UserLanguage.language,
+    ).filter(UserLanguage.survey_uid == survey_uid)
+
+    if user_uid:
+        user_language_query = user_language_query.filter(
+            UserLanguage.user_uid == user_uid
+        )
+
+    user_languages = user_language_query.all()
+
+    if user_languages:
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": [
+                        {
+                            "user_uid": user_uid,
+                            "language": language,
+                        }
+                        for user_uid, language in user_languages
+                    ],
+                }
+            ),
+            200,
+        )
+    else:
+        return jsonify(message="User languages not found"), 404
