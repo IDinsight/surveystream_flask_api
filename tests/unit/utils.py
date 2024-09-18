@@ -105,6 +105,8 @@ def create_new_survey_role_with_permissions(
     - return updated user
     """
     csrf_token = get_csrf_token(client)
+
+    # Give one existing role permissions to write mapping
     payload = {
         "roles": [
             {
@@ -113,9 +115,15 @@ def create_new_survey_role_with_permissions(
                 "reporting_role_uid": None,
                 "permissions": permissions,
             },
-        ]
+            {
+                "role_uid": None,
+                "role_name": "Regional Coordinator",
+                "reporting_role_uid": 1,
+                "permissions": [],
+            },
+        ],
     }
-
+    
     response = client.put(
         "/api/roles",
         query_string={"survey_uid": survey_uid},

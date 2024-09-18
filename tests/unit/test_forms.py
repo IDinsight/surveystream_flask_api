@@ -138,6 +138,7 @@ class TestForms:
             "planned_start_date": "2021-01-01",
             "planned_end_date": "2021-12-31",
             "state": "Draft",
+            "prime_geo_level_uid": 1,
             "config_status": "In Progress - Configuration",
             "created_by_user_uid": test_user_credentials["user_uid"],
         }
@@ -150,6 +151,36 @@ class TestForms:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 201
+
+        yield
+
+    @pytest.fixture()
+    def create_module_questionnaire(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Insert new module_questionnaire as a setup step for the module_questionnaire tests
+        """
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
 
         yield
 
@@ -185,7 +216,13 @@ class TestForms:
 
     @pytest.fixture()
     def create_dq_form(
-        self, client, login_test_user, csrf_token, create_survey, create_parent_form
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_survey,
+        create_parent_form,
+        create_module_questionnaire,
     ):
         """
         Insert new dq form as a setup step for the form tests
@@ -217,7 +254,13 @@ class TestForms:
 
     @pytest.fixture()
     def create_admin_form(
-        self, client, login_test_user, csrf_token, create_survey, create_parent_form
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_survey,
+        create_parent_form,
+        create_module_questionnaire,
     ):
         """
         Insert new admin form as a setup step for the form tests
@@ -844,6 +887,7 @@ class TestForms:
         client,
         login_test_user,
         create_parent_form,
+        create_module_questionnaire,
         csrf_token,
         user_with_dq_forms_permissions,
         request,
@@ -1099,6 +1143,7 @@ class TestForms:
         client,
         login_test_user,
         create_parent_form,
+        create_module_questionnaire,
         csrf_token,
         user_with_admin_forms_permissions,
         request,

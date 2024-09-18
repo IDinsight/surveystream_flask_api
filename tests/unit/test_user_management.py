@@ -23,7 +23,6 @@ class TestUserManagement:
                 "last_name": "Doe",
                 "roles": [],
                 "gender": None,
-                "languages": [],
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -103,6 +102,61 @@ class TestUserManagement:
 
         yield
 
+    @pytest.fixture()
+    def create_module_questionnaire(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Insert new module_questionnaire as a setup step for the module_questionnaire tests
+        """
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def update_mapping_criteria_to_language(
+        self, client, login_test_user, csrf_token, test_user_credentials
+    ):
+        # Update mapping_criteria to specified value
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Language"],
+            "surveyor_mapping_criteria": ["Language"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
     @pytest.fixture
     def create_permission(self, client, login_test_user, csrf_token):
         """
@@ -127,7 +181,12 @@ class TestUserManagement:
 
     @pytest.fixture()
     def create_roles(
-        self, client, login_test_user, csrf_token, create_survey, create_permission
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_module_questionnaire,
+        create_permission,
     ):
         """
         Insert new roles as a setup step for testing survey level users
@@ -162,7 +221,9 @@ class TestUserManagement:
         yield
 
     @pytest.fixture()
-    def create_geo_levels(self, client, login_test_user, csrf_token, create_survey):
+    def create_geo_levels(
+        self, client, login_test_user, csrf_token, create_module_questionnaire
+    ):
         """
         Insert new geo levels as a setup step for the location upload
         These correspond to the geo levels found in the locations test files
@@ -302,9 +363,8 @@ class TestUserManagement:
                 "email": "updateduser@example.com",
                 "first_name": "Updated",
                 "last_name": "User",
-                "roles": [1],
+                "roles": [2],
                 "gender": "Male",
-                "languages": ["English"],
                 "location_uids": [1],
                 "is_super_admin": True,
                 "active": True,
@@ -371,7 +431,6 @@ class TestUserManagement:
         Test checking user availability by email with survey_uid parameter set
         Expect sample_user_with_locations to be available , also expect similar data
         """
-        print(sample_user_with_locations.get("email"))
         response = client.post(
             "/api/users/check-email-availability",
             json={"email": sample_user_with_locations.get("email"), "survey_uid": 1},
@@ -397,7 +456,7 @@ class TestUserManagement:
             "location_uids": [1],
             "location_ids": ["1"],
             "location_names": ["ADILABAD"],
-            "languages": ["English"],
+            "languages": [],
         }
         assert response.json["user"] == expected_data
 
@@ -486,7 +545,6 @@ class TestUserManagement:
                 "last_name": "User",
                 "roles": [],
                 "gender": "Male",
-                "languages": ["English"],
                 "is_super_admin": True,
                 "active": True,
             },
@@ -639,7 +697,12 @@ class TestUserManagement:
         assert checkdiff == {}
 
     def test_add_user_at_survey_level(
-        self, client, login_test_user, csrf_token, create_roles
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_roles,
+        update_mapping_criteria_to_language,
     ):
         """
         Test adding a user at the survey level with role
@@ -835,7 +898,6 @@ class TestUserManagement:
                 "last_name": "User",
                 "roles": [1],
                 "gender": "Male",
-                "languages": ["English"],
                 "is_super_admin": True,
                 "active": True,
             },
@@ -882,9 +944,8 @@ class TestUserManagement:
                 "email": "updateduser@example.com",
                 "first_name": "Updated",
                 "last_name": "User",
-                "roles": [1],
+                "roles": [2],
                 "gender": "Male",
-                "languages": ["English"],
                 "location_uids": [1],
                 "is_super_admin": True,
                 "active": True,
@@ -903,7 +964,7 @@ class TestUserManagement:
             "email": "updateduser@example.com",
             "first_name": "Updated",
             "last_name": "User",
-            "roles": [1],
+            "roles": [2],
             "gender": "Male",
             "is_super_admin": True,
             "can_create_survey": False,
@@ -1111,5 +1172,104 @@ class TestUserManagement:
         assert response.status_code == 404
 
         expected_response = {"message": "User locations not found"}
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_add_user_survey_uid_validation_error(
+        self, client, login_test_user, csrf_token, create_roles
+    ):
+        """
+        Test adding a user at the survey level with is_survey_admin set to True
+        """
+        response = client.post(
+            "/api/users",
+            json={
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "last_name": "Doe2",
+                "roles": [],
+                "gender": "Male",
+                "is_survey_admin": True,
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "message": {
+                "survey_uid": ["Survey UID is required if user is a survey admin."]
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_add_user_at_survey_level_location_uid_validation_error(
+        self, client, login_test_user, csrf_token, create_roles
+    ):
+        """
+        Test adding a user at the survey level with wrong location_uids raises error
+        """
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "last_name": "Doe2",
+                "roles": [2],
+                "gender": "Male",
+                "location_uids": [100],
+                "languages": ["English"],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "message": {"location_uids": ["Location with UID 100 does not exist."]},
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_add_user_at_survey_level_location_uid_mapping_validation_error(
+        self, client, login_test_user, csrf_token, create_roles
+    ):
+        """
+        Test adding a user at the survey level without location_uids when Location is in mapping criteria raises error
+        """
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "last_name": "Doe2",
+                "roles": [2],
+                "gender": "Male",
+                "languages": ["English"],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "message": {
+                "location_uids": [
+                    "Location mapping is required for the lowest supervisor role."
+                ]
+            },
+            "success": False,
+        }
+
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}

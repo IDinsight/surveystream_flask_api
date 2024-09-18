@@ -96,6 +96,36 @@ class TestLocations:
         yield
 
     @pytest.fixture()
+    def create_module_questionnaire(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Insert new module_questionnaire as a setup step for the module_questionnaire tests
+        """
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
     def create_geo_levels(self, client, login_test_user, csrf_token, create_survey):
         """
         Insert new geo levels as a setup step for the geo levels tests
@@ -341,7 +371,13 @@ class TestLocations:
         login_user(client, test_user_credentials)
 
     def test_insert_geo_levels_for_non_admin_user_roles(
-        self, client, login_test_user, test_user_credentials, csrf_token, create_survey
+        self,
+        client,
+        login_test_user,
+        test_user_credentials,
+        csrf_token,
+        create_survey,
+        create_module_questionnaire,
     ):
         """
         Test that non-admins can insert geo levels
@@ -1166,7 +1202,13 @@ class TestLocations:
         assert checkdiff == {}
 
     def test_update_survey_prime_geo_level(
-        self, client, login_test_user, test_user_credentials, csrf_token, create_survey
+        self,
+        client,
+        login_test_user,
+        test_user_credentials,
+        csrf_token,
+        create_survey,
+        create_module_questionnaire,
     ):
         """
         Test that non-admins can update prime_geo_level
@@ -1336,6 +1378,7 @@ class TestLocations:
         client,
         login_test_user,
         create_geo_levels_for_locations_file,
+        create_module_questionnaire,
         csrf_token,
         test_user_credentials,
     ):
@@ -2031,6 +2074,7 @@ class TestLocations:
         client,
         login_test_user,
         create_geo_levels_for_locations_file,
+        create_module_questionnaire,
         csrf_token,
         test_user_credentials,
     ):
