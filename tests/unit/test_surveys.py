@@ -724,7 +724,7 @@ class TestSurveys:
         assert checkdiff == {}
 
     def test_get_surveys_for_non_admin_user_survey_roles(
-        self, client, login_test_user, create_surveys, test_user_credentials
+        self, client, login_test_user, create_surveys, create_module_questionnaire, test_user_credentials
     ):
         """
         Test get surveys for non-admin with roles

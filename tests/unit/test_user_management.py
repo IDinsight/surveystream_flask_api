@@ -23,7 +23,6 @@ class TestUserManagement:
                 "last_name": "Doe",
                 "roles": [],
                 "gender": None,
-                "languages": [],
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -103,6 +102,61 @@ class TestUserManagement:
 
         yield
 
+    @pytest.fixture()
+    def create_module_questionnaire(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Insert new module_questionnaire as a setup step for the module_questionnaire tests
+        """
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def update_mapping_criteria_to_language(
+        self, client, login_test_user, csrf_token, test_user_credentials
+    ):
+        # Update mapping_criteria to specified value
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Language"],
+            "surveyor_mapping_criteria": ["Language"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
     @pytest.fixture
     def create_permission(self, client, login_test_user, csrf_token):
         """
@@ -127,7 +181,12 @@ class TestUserManagement:
 
     @pytest.fixture()
     def create_roles(
-        self, client, login_test_user, csrf_token, create_survey, create_permission
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_module_questionnaire,
+        create_permission,
     ):
         """
         Insert new roles as a setup step for testing survey level users
@@ -162,7 +221,9 @@ class TestUserManagement:
         yield
 
     @pytest.fixture()
-    def create_geo_levels(self, client, login_test_user, csrf_token, create_survey):
+    def create_geo_levels(
+        self, client, login_test_user, csrf_token, create_module_questionnaire
+    ):
         """
         Insert new geo levels as a setup step for the location upload
         These correspond to the geo levels found in the locations test files
@@ -302,10 +363,9 @@ class TestUserManagement:
                 "email": "updateduser@example.com",
                 "first_name": "Updated",
                 "last_name": "User",
-                "roles": [1],
+                "roles": [2],
                 "gender": "Male",
-                "languages": ["English"],
-                "locations": [1],
+                "location_uids": [1],
                 "is_super_admin": True,
                 "active": True,
             },
@@ -315,7 +375,42 @@ class TestUserManagement:
         print(response.json)
         assert response.status_code == 200
 
-        return sample_user
+        return response.json["user_data"]
+
+    @pytest.fixture
+    def sample_user_with_languages(
+        self,
+        client,
+        csrf_token,
+        sample_user,
+        create_roles,
+        update_mapping_criteria_to_language,
+    ):
+        """
+        Return the user added by added_user fixture as the sample_user
+        """
+
+        user_uid = sample_user.get("user_uid")
+        response = client.put(
+            f"/api/users/{user_uid}",
+            json={
+                "survey_uid": 1,
+                "email": "updateduser@example.com",
+                "first_name": "Updated",
+                "last_name": "User",
+                "roles": [2],
+                "gender": "Male",
+                "languages": ["English", "Hindi"],
+                "is_super_admin": True,
+                "active": True,
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        return response.json["user_data"]
 
     def test_check_user(self, client, login_test_user, csrf_token, sample_user):
         """
@@ -342,6 +437,11 @@ class TestUserManagement:
             "is_super_admin": sample_user.get("is_super_admin"),
             "can_create_survey": False,
             "active": True,
+            "is_survey_admin": False,
+            "location_uids": [],
+            "location_ids": [],
+            "location_names": [],
+            "languages": [],
         }
         assert response.json["user"] == expected_data
 
@@ -358,6 +458,42 @@ class TestUserManagement:
 
         assert response.status_code == 404
         assert b"User not found" in response.data
+
+    def test_check_user_survey_level(
+        self, client, login_test_user, csrf_token, sample_user_with_locations
+    ):
+        """
+        Test checking user availability by email with survey_uid parameter set
+        Expect sample_user_with_locations to be available , also expect similar data
+        """
+        response = client.post(
+            "/api/users/check-email-availability",
+            json={"email": sample_user_with_locations.get("email"), "survey_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 200
+        assert b"User already exists" in response.data
+
+        # Check if the returned user data matches the expected data
+        expected_data = {
+            "user_uid": sample_user_with_locations.get("user_uid"),
+            "email": sample_user_with_locations.get("email"),
+            "first_name": sample_user_with_locations.get("first_name"),
+            "last_name": sample_user_with_locations.get("last_name"),
+            "roles": sample_user_with_locations.get("roles"),
+            "gender": sample_user_with_locations.get("gender"),
+            "is_super_admin": sample_user_with_locations.get("is_super_admin"),
+            "can_create_survey": False,
+            "active": True,
+            "is_survey_admin": False,
+            "location_uids": [1],
+            "location_ids": ["1"],
+            "location_names": ["ADILABAD"],
+            "languages": [],
+        }
+        assert response.json["user"] == expected_data
 
     def test_complete_registration_invalid_invite(
         self, client, login_test_user, csrf_token
@@ -444,7 +580,6 @@ class TestUserManagement:
                 "last_name": "User",
                 "roles": [],
                 "gender": "Male",
-                "languages": ["English"],
                 "is_super_admin": True,
                 "active": True,
             },
@@ -492,11 +627,14 @@ class TestUserManagement:
                 "roles": None,
                 "gender": None,
                 "status": "Active",
+                "supervisor_uid": None,
                 "user_admin_survey_names": [],
-                "user_admin_surveys": [],
-                "user_role_names": [None],
-                "user_survey_names": [None],
+                "user_survey_role_names": [],
                 "user_uid": 1,
+                "location_uids": [],
+                "location_ids": [],
+                "location_names": [],
+                "languages": [],
             },
             {
                 "can_create_survey": None,
@@ -507,11 +645,14 @@ class TestUserManagement:
                 "roles": None,
                 "gender": None,
                 "status": "Active",
+                "supervisor_uid": None,
                 "user_admin_survey_names": [],
-                "user_admin_surveys": [],
-                "user_role_names": [None],
-                "user_survey_names": [None],
+                "user_survey_role_names": [],
                 "user_uid": 2,
+                "location_uids": [],
+                "location_ids": [],
+                "location_names": [],
+                "languages": [],
             },
         ]
 
@@ -591,7 +732,12 @@ class TestUserManagement:
         assert checkdiff == {}
 
     def test_add_user_at_survey_level(
-        self, client, login_test_user, csrf_token, create_roles
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_roles,
+        update_mapping_criteria_to_language,
     ):
         """
         Test adding a user at the survey level with role
@@ -628,34 +774,42 @@ class TestUserManagement:
 
         expected_response = [
             {
+                "can_create_survey": False,
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "gender": "Male",
+                "is_super_admin": False,
+                "languages": ["English"],
+                "last_name": "Doe2",
+                "location_ids": [],
+                "location_names": [],
+                "location_uids": [],
+                "roles": [2],
+                "status": "Active",
+                "supervisor_uid": None,
+                "user_admin_survey_names": [],
+                "user_survey_role_names": [
+                    {"role_name": "Regional Coordinator", "survey_name": "Test Survey"}
+                ],
+                "user_uid": 3,
+            },
+            {
                 "can_create_survey": None,
                 "email": "surveystream.devs@idinsight.org",
                 "first_name": None,
                 "gender": None,
                 "is_super_admin": True,
+                "languages": [],
                 "last_name": None,
+                "location_ids": [],
+                "location_names": [],
+                "location_uids": [],
                 "roles": None,
                 "status": "Active",
+                "supervisor_uid": None,
                 "user_admin_survey_names": ["Test Survey"],
-                "user_admin_surveys": [1],
-                "user_role_names": [None],
-                "user_survey_names": [None],
+                "user_survey_role_names": [],
                 "user_uid": 1,
-            },
-            {
-                "can_create_survey": False,
-                "email": "newuser2@example.com",
-                "first_name": "John",
-                "is_super_admin": False,
-                "last_name": "Doe2",
-                "roles": [2],
-                "gender": "Male",
-                "status": "Active",
-                "user_admin_survey_names": [],
-                "user_admin_surveys": [],
-                "user_role_names": ["Regional Coordinator"],
-                "user_survey_names": ["Test Survey"],
-                "user_uid": 3,
             },
         ]
 
@@ -679,7 +833,7 @@ class TestUserManagement:
                 "roles": [2],
                 "gender": "Male",
                 "languages": ["English"],
-                "locations": [1],
+                "location_uids": [1],
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -710,11 +864,14 @@ class TestUserManagement:
                 "last_name": None,
                 "roles": None,
                 "status": "Active",
+                "supervisor_uid": None,
                 "user_admin_survey_names": ["Test Survey"],
-                "user_admin_surveys": [1],
-                "user_role_names": [None],
-                "user_survey_names": [None],
+                "user_survey_role_names": [],
                 "user_uid": 1,
+                "location_uids": [],
+                "location_ids": [],
+                "location_names": [],
+                "languages": [],
             },
             {
                 "can_create_survey": False,
@@ -725,11 +882,16 @@ class TestUserManagement:
                 "roles": [2],
                 "gender": "Male",
                 "status": "Active",
+                "supervisor_uid": None,
                 "user_admin_survey_names": [],
-                "user_admin_surveys": [],
-                "user_role_names": ["Regional Coordinator"],
-                "user_survey_names": ["Test Survey"],
+                "user_survey_role_names": [
+                    {"role_name": "Regional Coordinator", "survey_name": "Test Survey"}
+                ],
                 "user_uid": 3,
+                "location_uids": [1],
+                "location_ids": ["1"],
+                "location_names": ["ADILABAD"],
+                "languages": ["English"],
             },
         ]
 
@@ -747,7 +909,14 @@ class TestUserManagement:
         print(response.json)
 
         expected_response = {
-            "data": [{"location_uid": 1, "survey_uid": 1, "user_uid": 3}],
+            "data": [
+                {
+                    "location_uid": 1,
+                    "user_uid": 3,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                }
+            ],
             "success": True,
         }
 
@@ -771,7 +940,6 @@ class TestUserManagement:
                 "last_name": "User",
                 "roles": [1],
                 "gender": "Male",
-                "languages": ["English"],
                 "is_super_admin": True,
                 "active": True,
             },
@@ -818,10 +986,9 @@ class TestUserManagement:
                 "email": "updateduser@example.com",
                 "first_name": "Updated",
                 "last_name": "User",
-                "roles": [1],
+                "roles": [2],
                 "gender": "Male",
-                "languages": ["English"],
-                "locations": [1],
+                "location_uids": [1],
                 "is_super_admin": True,
                 "active": True,
             },
@@ -839,7 +1006,7 @@ class TestUserManagement:
             "email": "updateduser@example.com",
             "first_name": "Updated",
             "last_name": "User",
-            "roles": [1],
+            "roles": [2],
             "gender": "Male",
             "is_super_admin": True,
             "can_create_survey": False,
@@ -858,7 +1025,14 @@ class TestUserManagement:
         print(response.json)
 
         expected_response = {
-            "data": [{"location_uid": 1, "survey_uid": 1, "user_uid": user_uid}],
+            "data": [
+                {
+                    "location_uid": 1,
+                    "user_uid": user_uid,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                }
+            ],
             "success": True,
         }
 
@@ -870,7 +1044,6 @@ class TestUserManagement:
         client,
         login_test_user,
         csrf_token,
-        create_locations,
         sample_user_with_locations,
     ):
         """
@@ -889,7 +1062,51 @@ class TestUserManagement:
         print(response.json)
 
         expected_response = {
-            "data": [{"location_uid": 1, "survey_uid": 1, "user_uid": user_uid}],
+            "data": [
+                {
+                    "location_uid": 1,
+                    "user_uid": user_uid,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                }
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_all_user_locations(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        sample_user_with_locations,
+    ):
+        """
+        Test fetching locations for all users in a survey
+        """
+        user_uid = sample_user_with_locations.get("user_uid")
+
+        # Fetch user locations
+        response = client.get(
+            "/api/user-locations",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {
+                    "location_uid": 1,
+                    "user_uid": user_uid,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                }
+            ],
             "success": True,
         }
 
@@ -913,7 +1130,7 @@ class TestUserManagement:
             json={
                 "survey_uid": 1,
                 "user_uid": user_uid,
-                "locations": [1],
+                "location_uids": [1],
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -929,7 +1146,12 @@ class TestUserManagement:
         print(response.json)
         expected_response = {
             "data": [
-                {"location_uid": 1, "survey_uid": 1, "user_uid": user_uid},
+                {
+                    "location_uid": 1,
+                    "user_uid": user_uid,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                },
             ],
             "success": True,
         }
@@ -954,14 +1176,14 @@ class TestUserManagement:
             json={
                 "survey_uid": 1,
                 "user_uid": user_uid,
-                "locations": [1, 100],
+                "location_uids": [1, 100],
             },  # Add location 100 - this is not a location in locations
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 422
         expected_response = {
-            "message": {"locations": ["Location with UID 100 does not exist."]},
+            "message": {"location_uids": ["Location with UID 100 does not exist."]},
             "success": False,
         }
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -976,7 +1198,12 @@ class TestUserManagement:
         print(response.json)
         expected_response = {
             "data": [
-                {"location_uid": 1, "survey_uid": 1, "user_uid": user_uid},
+                {
+                    "location_uid": 1,
+                    "user_uid": user_uid,
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                },
             ],
             "success": True,
         }
@@ -1001,7 +1228,7 @@ class TestUserManagement:
             json={
                 "survey_uid": 1,
                 "user_uid": user_uid,
-                "locations": [1, 2],
+                "location_uids": [1, 2],
             },  # Add location 2 - this is not a location at prime geo level
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -1010,7 +1237,9 @@ class TestUserManagement:
         print(response.json)
         expected_response = {
             "message": {
-                "locations": ["Location with UID 2 is not a prime geo level location."]
+                "location_uids": [
+                    "Location with UID 2 is not a prime geo level location."
+                ]
             },
             "success": False,
         }
@@ -1046,5 +1275,170 @@ class TestUserManagement:
         assert response.status_code == 404
 
         expected_response = {"message": "User locations not found"}
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_add_user_survey_uid_validation_error(
+        self, client, login_test_user, csrf_token, create_roles
+    ):
+        """
+        Test adding a user at the survey level with is_survey_admin set to True
+        """
+        response = client.post(
+            "/api/users",
+            json={
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "last_name": "Doe2",
+                "roles": [],
+                "gender": "Male",
+                "is_survey_admin": True,
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "message": {
+                "survey_uid": ["Survey UID is required if user is a survey admin."]
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+
+        assert checkdiff == {}
+
+    def test_add_user_at_survey_level_location_uid_validation_error(
+        self, client, login_test_user, csrf_token, create_roles
+    ):
+        """
+        Test adding a user at the survey level with wrong location_uids raises error
+        """
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "last_name": "Doe2",
+                "roles": [2],
+                "gender": "Male",
+                "location_uids": [100],
+                "languages": ["English"],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "message": {"location_uids": ["Location with UID 100 does not exist."]},
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_add_user_at_survey_level_location_uid_mapping_validation_error(
+        self, client, login_test_user, csrf_token, create_roles
+    ):
+        """
+        Test adding a user at the survey level without location_uids when Location is in mapping criteria raises error
+        """
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser2@example.com",
+                "first_name": "John",
+                "last_name": "Doe2",
+                "roles": [2],
+                "gender": "Male",
+                "languages": ["English"],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "message": {
+                "location_uids": [
+                    "Location mapping is required for the lowest supervisor role."
+                ]
+            },
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_user_languages(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        sample_user_with_languages,
+    ):
+        """
+        Test fetching languages for a user and a survey
+        """
+        user_uid = sample_user_with_languages.get("user_uid")
+
+        # Fetch user languages
+        response = client.get(
+            "/api/user-languages",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {"language": "English", "user_uid": user_uid},
+                {"language": "Hindi", "user_uid": user_uid},
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_all_user_languages(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        sample_user_with_languages,
+    ):
+        """
+        Test fetching languages for all users in a survey
+        """
+        user_uid = sample_user_with_languages.get("user_uid")
+
+        # Fetch user languages
+        response = client.get(
+            "/api/user-languages",
+            query_string={"survey_uid": 1, "user_uid": user_uid},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {"language": "English", "user_uid": user_uid},
+                {"language": "Hindi", "user_uid": user_uid},
+            ],
+            "success": True,
+        }
+
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}

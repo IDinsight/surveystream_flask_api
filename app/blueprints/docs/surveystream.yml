@@ -551,6 +551,8 @@ paths:
               properties:
                 email:
                   type: string
+                survey_uid:
+                  type: integer
               required:
                 - email
       responses:
@@ -565,6 +567,59 @@ paths:
                     type: string
                   user:
                     type: object
+                    properties:
+                      user_uid:
+                        type: integer
+                        description: The unique ID of the user
+                      email:
+                        type: string
+                        description: The email address of the user
+                      first_name:
+                        type: string
+                        description: The first name of the user
+                      last_name:
+                        type: string
+                        description: The last name of the user
+                      roles:
+                        type: array
+                        items:
+                          type: integer
+                        description: All roles of the user across all surveys
+                      gender:
+                        type: string
+                        description: Gender of the user
+                      is_super_admin:
+                        type: boolean
+                        description: Super admin status for the user
+                      can_create_survey:
+                        type: boolean
+                        description: Whether the user can create a survey
+                      active:
+                        type: boolean
+                        description: Whether the user is active
+                      is_survey_admin:
+                        type: boolean
+                        description: Whether the user is a survey admin if survey_uid is provided
+                      location_uids:
+                        type: array
+                        items:
+                          type: integer
+                        description: List of unique IDs of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                      location_ids:
+                        type: array
+                        items:
+                          type: integer
+                        description: List of IDs of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                      location_names:
+                        type: array
+                        items:
+                          type: string
+                        description: Names of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                      languages:
+                        type: array
+                        items:
+                          type: string
+                        description: Languages mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
         "403":
           description: X-CSRF-Token required in header
           content:
@@ -614,7 +669,7 @@ paths:
                   type: array
                   items:
                     type: string
-                locations:
+                location_uids:
                   type: array
                   items:
                     type: integer
@@ -700,18 +755,49 @@ paths:
                         type: integer
                     gender:
                       type: string
-                    languages:
-                      type: array
+                    supervisor_uid:
+                      type: integer
+                      description: The unique ID of the supervisor
+                    user_admin_survey_names:
+                      type: list
                       items:
                         type: string
-                    user_survey_names:
-                      type: string
-                    user_role_names:
-                      type: string
+                      description: The names of the surveys the user is a survey admin of
+                    user_survey_role_names:
+                      type: list
+                      items:
+                        type: object
+                        properties:
+                          role_name:
+                            type: string
+                            description: The name of the role
+                          survey_name:
+                            type: string
+                            description: The name of the survey
                     is_super_admin:
                       type: boolean
                     status:
                       type: string
+                    location_uids:
+                      type: array
+                      items:
+                        type: integer
+                      description: List of unique IDs of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                    location_ids:
+                      type: array
+                      items:
+                        type: integer
+                      description: List of IDs of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                    location_names:
+                      type: array
+                      items:
+                        type: string
+                      description: Names of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                    languages:
+                      type: array
+                      items:
+                        type: string
+                      description: Languages mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
         "400":
           description: Survey ID is required for non-super-admin users
           content:
@@ -867,7 +953,7 @@ paths:
                   type: array
                   items:
                     type: string
-                locations:
+                location_uids:
                   type: array
                   items:
                     type: integer
@@ -979,7 +1065,7 @@ paths:
       tags:
         - User Management
       summary: Get user location details
-      description: Get user location details for a survey and user
+      description: Get user location details for a survey and for a specific user if user_uid is provided
       parameters:
         - in: query
           name: survey_uid
@@ -990,7 +1076,6 @@ paths:
           name: user_uid
           schema:
             type: string
-          required: true
       responses:
         "200":
           description: User location details retrieved successfully
@@ -1002,9 +1087,22 @@ paths:
                   success:
                     type: boolean
                   data:
-                    type: object
-                  message:
-                    type: string
+                    type: list
+                    items:
+                      type: object
+                      properties:
+                        user_uid:
+                          type: integer
+                          description: The unique ID of the user
+                        location_uid:
+                          type: integer
+                          description: The unique ID of the location
+                        location_id:
+                          type: integer
+                          description: The ID of the location
+                        location_name:
+                          type: string
+                          description: The name of the location
         "404":
           description: User locations not found
           content:
@@ -1113,7 +1211,52 @@ paths:
                 properties:
                   message:
                     type: string
-        
+  "/user-languages":
+    get:
+      tags:
+        - User Management
+      summary: Get user languages
+      description: Get user languages for a survey and for a specific user if user_uid is provided
+      parameters:
+        - in: query
+          name: survey_uid
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: user_uid
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User languages retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: list
+                    items:
+                      type: object
+                      properties:
+                        user_uid:
+                          type: integer
+                          description: The unique ID of the user
+                        language:
+                          type: string
+                          description: The language of the user
+        "404":
+          description: User languages not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string        
   /surveys:
     get:
       summary: Get surveys
@@ -5899,6 +6042,76 @@ paths:
 
             Note that the file validation will only be run if the geo level
             mapping is valid.
+  
+  /locations/long:
+    get:
+      tags:
+        - Locations
+      summary: Get locations for a survey in long format
+      description: |
+        Returns the locations for a given survey in long format where each row is a location at a specific geo level
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+        - name: geo_level_uid
+          in: query
+          description: The unique ID of the geo level.
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Returns the locations for a given survey for a specific geo level if geo_level_uid parameter is provided.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of locations for the given survey
+                    items:
+                      type: object
+                      properties:
+                        geo_level_name:
+                          type: string
+                          description: The name of the geo level.
+                        geo_level_uid:
+                          type: integer
+                          description: The unique ID of the geo level.
+                        location_id:
+                          type: string
+                          description: The ID of the location.
+                        location_name:
+                          type: string
+                          description: The name of the location.
+                        location_uid:
+                          type: integer
+                          description: The unique ID of the location.
+                        parent_geo_level_uid:
+                          type: integer
+                          description: >-
+                            The unique ID of the parent geo level of the given
+                            geo level.
+                        parent_location_uid:
+                          type: integer
+                          description: >-
+                            The unique ID of the parent location of the given
+                            location.
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+        "500":
+          description: >
+            Error message indicating that the locations could not be retrieved.
+  
   /target-status-mapping:
     get:
       tags:
