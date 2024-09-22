@@ -484,9 +484,18 @@ def get_email_schedules(validated_query_params):
             email_schedule_uid=email_schedule.email_schedule_uid
         ).all()
         filter_groupwise_list = [
-            {"filter_group": [filter.to_dict() for filter in filter_group]}
-            for key, filter_group in groupby(
-                filter_list, key=attrgetter("filter_group_id")
+            {
+                "table_name": table_name,
+                "filter_list": [
+                    {"filter_group": [filter.to_dict() for filter in filter_group]}
+                    for key, filter_group in groupby(
+                        table, key=attrgetter("filter_group_id")
+                    )
+                ],
+            }
+            for table_name, table in groupby(
+                filter_list,
+                key=attrgetter("table_name"),
             )
         ]
         email_schedule_data["filter_list"] = filter_groupwise_list

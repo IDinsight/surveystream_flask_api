@@ -1618,53 +1618,58 @@ class TestEmails:
                             "time": "20:00:00",
                         },
                         {
-                            "time": "08:00:00",
                             "dates": expected_response_dates,
-                            "email_schedule_uid": 2,
                             "email_config_uid": 1,
                             "email_schedule_name": "Test Schedule_2",
+                            "email_schedule_uid": 2,
                             "filter_list": [
                                 {
-                                    "filter_group": [
+                                    "filter_list": [
                                         {
-                                            "email_schedule_uid": 2,
-                                            "filter_group_id": 1,
-                                            "table_name": "test_table",
-                                            "filter_variable": "test_column",
-                                            "filter_operator": "Is",
-                                            "filter_value": "test_value",
+                                            "filter_group": [
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 1,
+                                                    "filter_operator": "Is",
+                                                    "filter_value": "test_value",
+                                                    "filter_variable": "test_column",
+                                                    "table_name": "test_table",
+                                                },
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 1,
+                                                    "filter_operator": "Is",
+                                                    "filter_value": "test_value2",
+                                                    "filter_variable": "test_column2",
+                                                    "table_name": "test_table",
+                                                },
+                                            ]
                                         },
                                         {
-                                            "email_schedule_uid": 2,
-                                            "filter_group_id": 1,
-                                            "table_name": "test_table",
-                                            "filter_variable": "test_column2",
-                                            "filter_operator": "Is",
-                                            "filter_value": "test_value2",
+                                            "filter_group": [
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 2,
+                                                    "filter_operator": "Is",
+                                                    "filter_value": "test_value",
+                                                    "filter_variable": "test_column",
+                                                    "table_name": "test_table",
+                                                },
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 2,
+                                                    "filter_operator": "Is not",
+                                                    "filter_value": "test_value2",
+                                                    "filter_variable": "test_column2",
+                                                    "table_name": "test_table",
+                                                },
+                                            ]
                                         },
-                                    ]
-                                },
-                                {
-                                    "filter_group": [
-                                        {
-                                            "email_schedule_uid": 2,
-                                            "filter_group_id": 2,
-                                            "table_name": "test_table",
-                                            "filter_variable": "test_column",
-                                            "filter_operator": "Is",
-                                            "filter_value": "test_value",
-                                        },
-                                        {
-                                            "email_schedule_uid": 2,
-                                            "filter_group_id": 2,
-                                            "table_name": "test_table",
-                                            "filter_variable": "test_column2",
-                                            "filter_operator": "Is not",
-                                            "filter_value": "test_value2",
-                                        },
-                                    ]
-                                },
+                                    ],
+                                    "table_name": "test_table",
+                                }
                             ],
+                            "time": "08:00:00",
                         },
                     ],
                     "success": True,
