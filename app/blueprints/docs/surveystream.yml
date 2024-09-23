@@ -3993,7 +3993,7 @@ paths:
                         supervisors:
                           type: array
                           description: >-
-                            An array of supervisors associated with each target in descending order of 
+                            An array of supervisors associated with each target in ascending order of 
                             their seniority. Only child supervisors of the logged in user as per user 
                             hierarchy are included in the array.
                           items:
@@ -4356,7 +4356,7 @@ paths:
                           type: array
                           description: >-
                             An array of supervisors associated with the enumerator in 
-                            descending order of their seniority. Only child supervisors of 
+                            ascending order of their seniority. Only child supervisors of 
                             the logged in user as per user hierarchy are included in the 
                             array.
                           items:
@@ -4511,7 +4511,7 @@ paths:
                         supervisors:
                           type: array
                           description: >-
-                            An array of supervisors associated with the target in descending order 
+                            An array of supervisors associated with the target in ascending order 
                             of their seniority. Only child supervisors of the logged in user as 
                             per user hierarchy are included in the array.
                           items:
@@ -4905,9 +4905,9 @@ paths:
                           *Supervisors*
                           supervisors[<supervisor_index>].supervisor_name or supervisors[<supervisor_index>].supervisor_email
 
-                          Note that <supervisor_index> is the index (starting at zero) of the supervisor in descending order of their seniority. 
+                          Note that <supervisor_index> is the index (starting at zero) of the supervisor in ascending order of their seniority. 
                           Take an example where roles defined in the system are Core User, Cluster Coordinator and Regional Coordinator. The supervisor 
-                          index for Core User is 0, Cluster Coordinator is 1, and Regional Coordinator is 2. So if you want to show the Cluster Coordinator's 
+                          index for Regional Coordinator is 0, Cluster Coordinator is 1, and Core User is 2. So if you want to show the Cluster Coordinator's 
                           name in the surveyors table, you would set the column_key to supervisors[1].supervisor_name.
 
                           *Form Productivity*

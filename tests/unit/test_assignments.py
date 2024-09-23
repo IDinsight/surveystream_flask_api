@@ -2143,10 +2143,10 @@ class TestAssignments:
                             "scto_fields": None,
                             "supervisors": [
                                 {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
                                 },
                                 {
                                     "role_name": "Cluster Coordinator",
@@ -2155,10 +2155,10 @@ class TestAssignments:
                                     "supervisor_name": "Ron Doe",
                                 },
                                 {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
                                 },
                             ],
                             "location_uid": 4,
@@ -2236,10 +2236,10 @@ class TestAssignments:
                             "scto_fields": None,
                             "supervisors": [
                                 {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
                                 },
                                 {
                                     "role_name": "Cluster Coordinator",
@@ -2248,10 +2248,10 @@ class TestAssignments:
                                     "supervisor_name": "Ron Doe",
                                 },
                                 {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
                                 },
                             ],
                             "location_uid": 4,
@@ -2445,10 +2445,10 @@ class TestAssignments:
                             "scto_fields": None,
                             "supervisors": [
                                 {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
                                 },
                                 {
                                     "role_name": "Cluster Coordinator",
@@ -2457,10 +2457,10 @@ class TestAssignments:
                                     "supervisor_name": "Ron Doe",
                                 },
                                 {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
                                 },
                             ],
                             "location_uid": 4,
@@ -2538,10 +2538,10 @@ class TestAssignments:
                             "scto_fields": None,
                             "supervisors": [
                                 {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
                                 },
                                 {
                                     "role_name": "Cluster Coordinator",
@@ -2550,10 +2550,10 @@ class TestAssignments:
                                     "supervisor_name": "Ron Doe",
                                 },
                                 {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
                                 },
                             ],
                             "location_uid": 4,
@@ -2602,8 +2602,13 @@ class TestAssignments:
                 # Can't save assignments since user doesn't have access to the targets as per mapping
                 assert response.status_code == 422
                 expected_put_response = {
-                    "message": "The following target_uid's are not assignable by the current user: 1"
+                    "errors": {
+                        "message": "The following target ID's are not assignable by the current user: 1. Kindly refresh and try again.",
+                        "not_mapped_target_uids": [1],
+                    },
+                    "success": False,
                 }
+
                 print(response.json)
                 checkdiff = jsondiff.diff(expected_put_response, response.json)
                 assert checkdiff == {}
@@ -2688,10 +2693,10 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -2700,10 +2705,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "location_uid": None,
@@ -2773,10 +2778,10 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -2785,10 +2790,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "location_uid": None,
@@ -2906,10 +2911,10 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -2918,10 +2923,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "location_uid": 4,
@@ -3017,10 +3022,10 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -3029,10 +3034,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "location_uid": 4,
@@ -3188,10 +3193,10 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -3200,10 +3205,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "location_uid": 4,
@@ -3278,10 +3283,10 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -3290,10 +3295,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "location_uid": 4,
@@ -3449,10 +3454,10 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -3461,10 +3466,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "location_uid": 4,
@@ -3560,10 +3565,10 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -3572,10 +3577,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "location_uid": 4,
@@ -3711,10 +3716,10 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -3723,10 +3728,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "location_uid": 4,
@@ -3801,10 +3806,10 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -3813,10 +3818,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "location_uid": 4,
@@ -3906,8 +3911,13 @@ class TestAssignments:
 
         assert response.status_code == 422
 
+        print(response.json)
         expected_response = {
-            "message": 'The following enumerator_uid\'s have status "Dropout" and are ineligible for assignment: 1'
+            "errors": {
+                "dropout_enumerator_uids": [1],
+                "message": "The following enumerator ID's have status 'Dropout' and are ineligible for assignment: 0294612",
+            },
+            "success": False,
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -3947,9 +3957,14 @@ class TestAssignments:
         )
 
         assert response.status_code == 422
+        print(response.json)
 
         expected_response = {
-            "message": "The following target_uid's are not assignable for this form (most likely because they are complete): 1"
+            "errors": {
+                "message": "The following target ID's are not assignable for this form (most likely because they are complete): 1",
+                "unassignable_target_uids": [1],
+            },
+            "success": False,
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -4007,8 +4022,13 @@ class TestAssignments:
 
         assert response.status_code == 422
 
+        print(response.json)
         expected_response = {
-            "message": "The following target_uid's are not assignable for this form (most likely because they are complete): 1"
+            "errors": {
+                "message": "The following target ID's are not assignable for this form (most likely because they are complete): 1",
+                "unassignable_target_uids": [1],
+            },
+            "success": False,
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -4066,8 +4086,13 @@ class TestAssignments:
 
         assert response.status_code == 422
 
+        print(response.json)
         expected_response = {
-            "message": "The following target_uid's are not assignable for this form (most likely because they are complete): 1"
+            "errors": {
+                "message": "The following target ID's are not assignable for this form (most likely because they are complete): 1",
+                "unassignable_target_uids": [1],
+            },
+            "success": False,
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -4102,9 +4127,14 @@ class TestAssignments:
         )
 
         assert response.status_code == 404
+        print(response.json)
 
         expected_response = {
-            "message": "The following target_uid's were not found for this form: 10"
+            "errors": {
+                "message": "Some of the target ID's provided were not found for this form. Kindly refresh and try again.",
+                "not_found_target_uids": [10],
+            },
+            "success": False,
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -4139,8 +4169,13 @@ class TestAssignments:
         )
         assert response.status_code == 404
 
+        print(response.json)
         expected_response = {
-            "message": "The following enumerator_uid's were not found for this form: 10"
+            "errors": {
+                "message": "Some of the enumerator ID's provided were not found for this form. Kindly refresh and try again.",
+                "not_found_enumerator_uids": [10],
+            },
+            "success": False,
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -4177,7 +4212,11 @@ class TestAssignments:
         assert response.status_code == 422
 
         expected_response = {
-            "message": "The following target_uid's are assigned to enumerators mapped to a different supervisor: 1"
+            "errors": {
+                "message": "The following target ID's are assigned to enumerators mapped to a different supervisor: 1. Please ensure that the target and assigned enumerator are mapped to the same supervisor.",
+                "incorrect_mapping_target_uids": [1],
+            },
+            "success": False,
         }
         print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -4275,10 +4314,10 @@ class TestAssignments:
                     "name": "Eric Dodge",
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -4287,10 +4326,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "surveyor_status": "Active",
@@ -4348,10 +4387,10 @@ class TestAssignments:
                     "name": "Jahnavi Meher",
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -4360,10 +4399,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "surveyor_status": "Active",
@@ -4421,10 +4460,10 @@ class TestAssignments:
                     "name": "Griffin Muteti",
                     "supervisors": [
                         {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
                         },
                         {
                             "role_name": "Cluster Coordinator",
@@ -4433,10 +4472,10 @@ class TestAssignments:
                             "supervisor_name": "Ron Doe",
                         },
                         {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
                         },
                     ],
                     "surveyor_status": "Active",
@@ -4566,11 +4605,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -4592,11 +4631,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -4784,11 +4823,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -4810,11 +4849,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -4916,11 +4955,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -4942,11 +4981,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -5084,11 +5123,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -5110,11 +5149,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -5302,11 +5341,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -5328,11 +5367,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -5434,11 +5473,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -5460,11 +5499,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -5616,11 +5655,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -5821,11 +5860,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -5940,11 +5979,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -6083,11 +6122,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -6275,11 +6314,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -6381,11 +6420,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -6885,11 +6924,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -6911,11 +6950,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -7077,11 +7116,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -7103,11 +7142,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -7180,11 +7219,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -7206,11 +7245,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -7312,11 +7351,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -7338,11 +7377,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -7500,11 +7539,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -7526,11 +7565,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -7608,11 +7647,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[0].supervisor_email",
+                            "column_key": "supervisors[2].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -7634,11 +7673,11 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         },
                         {
-                            "column_key": "supervisors[2].supervisor_email",
+                            "column_key": "supervisors[0].supervisor_email",
                             "column_label": "Email",
                         },
                     ],
@@ -8091,7 +8130,7 @@ class TestAssignments:
                 },
                 {
                     "group_label": "Core User",
-                    "column_key": "supervisors[0].supervisor_name",
+                    "column_key": "supervisors[2].supervisor_name",
                     "column_label": "Name",
                 },
                 {
@@ -8101,7 +8140,7 @@ class TestAssignments:
                 },
                 {
                     "group_label": "Regional Coordinator",
-                    "column_key": "supervisors[2].supervisor_name",
+                    "column_key": "supervisors[0].supervisor_name",
                     "column_label": "Name",
                 },
             ],
@@ -8313,7 +8352,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         }
                     ],
@@ -8331,7 +8370,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         }
                     ],
@@ -8518,7 +8557,7 @@ class TestAssignments:
                 },
                 {
                     "group_label": "Core User",
-                    "column_key": "supervisors[0].supervisor_name",
+                    "column_key": "supervisors[2].supervisor_name",
                     "column_label": "Name",
                 },
                 {
@@ -8528,7 +8567,7 @@ class TestAssignments:
                 },
                 {
                     "group_label": "Regional Coordinator",
-                    "column_key": "supervisors[2].supervisor_name",
+                    "column_key": "supervisors[0].supervisor_name",
                     "column_label": "Name",
                 },
             ],
@@ -8741,7 +8780,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[0].supervisor_name",
+                            "column_key": "supervisors[2].supervisor_name",
                             "column_label": "Name",
                         }
                     ],
@@ -8759,7 +8798,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         }
                     ],
@@ -8878,9 +8917,7 @@ class TestAssignments:
                 },
             ],
         }
-
         checkdiff = jsondiff.diff(expected_response, response.json)
-        # print(response.json)
 
         assert checkdiff == {}
 
@@ -8950,7 +8987,7 @@ class TestAssignments:
                 {
                     "columns": [
                         {
-                            "column_key": "supervisors[2].supervisor_name",
+                            "column_key": "supervisors[0].supervisor_name",
                             "column_label": "Name",
                         }
                     ],
@@ -9070,8 +9107,8 @@ class TestAssignments:
             ],
         }
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
         print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
 
         assert checkdiff == {}
 
@@ -9321,7 +9358,7 @@ class TestAssignments:
             "table_config": [
                 {
                     "group_label": "Core User",
-                    "column_key": "supervisors[0].supervisor_name",
+                    "column_key": "supervisors[2].supervisor_name",
                     "column_label": "Name",
                 }
             ],
@@ -9338,7 +9375,7 @@ class TestAssignments:
 
         expected_response = {
             "errors": [
-                "The column_key 'supervisors[0].supervisor_name' is invalid. Roles are not defined for this survey."
+                "The column_key 'supervisors[2].supervisor_name' is invalid. Roles are not defined for this survey."
             ],
             "success": False,
         }
@@ -9737,10 +9774,10 @@ class TestAssignments:
                             "scto_fields": None,
                             "supervisors": [
                                 {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
                                 },
                                 {
                                     "role_name": "Cluster Coordinator",
@@ -9749,10 +9786,10 @@ class TestAssignments:
                                     "supervisor_name": "Ron Doe",
                                 },
                                 {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
                                 },
                             ],
                             "location_uid": 4,
@@ -9851,10 +9888,10 @@ class TestAssignments:
                             "scto_fields": None,
                             "supervisors": [
                                 {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
                                 },
                                 {
                                     "role_name": "Cluster Coordinator",
@@ -9863,10 +9900,10 @@ class TestAssignments:
                                     "supervisor_name": "Ron Doe",
                                 },
                                 {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
                                 },
                             ],
                             "location_uid": 4,
@@ -10116,10 +10153,10 @@ class TestAssignments:
                             "scto_fields": None,
                             "supervisors": [
                                 {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
                                 },
                                 {
                                     "role_name": "Cluster Coordinator",
@@ -10128,10 +10165,10 @@ class TestAssignments:
                                     "supervisor_name": "Ron Doe",
                                 },
                                 {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
                                 },
                             ],
                             "location_uid": 4,
@@ -10230,10 +10267,10 @@ class TestAssignments:
                             "scto_fields": None,
                             "supervisors": [
                                 {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
                                 },
                                 {
                                     "role_name": "Cluster Coordinator",
@@ -10242,10 +10279,10 @@ class TestAssignments:
                                     "supervisor_name": "Ron Doe",
                                 },
                                 {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
                                 },
                             ],
                             "location_uid": 4,
@@ -11137,11 +11174,11 @@ class TestAssignments:
                 {"column_key": "refusal_flag", "column_label": "Refused"},
                 {"column_key": "completed_flag", "column_label": "Completed"},
                 {
-                    "column_key": "supervisors[0].supervisor_name",
+                    "column_key": "supervisors[2].supervisor_name",
                     "column_label": "Core User Name",
                 },
                 {
-                    "column_key": "supervisors[0].supervisor_email",
+                    "column_key": "supervisors[2].supervisor_email",
                     "column_label": "Core User Email",
                 },
                 {
@@ -11153,11 +11190,11 @@ class TestAssignments:
                     "column_label": "Cluster Coordinator Email",
                 },
                 {
-                    "column_key": "supervisors[2].supervisor_name",
+                    "column_key": "supervisors[0].supervisor_name",
                     "column_label": "Regional Coordinator Name",
                 },
                 {
-                    "column_key": "supervisors[2].supervisor_email",
+                    "column_key": "supervisors[0].supervisor_email",
                     "column_label": "Regional Coordinator Email",
                 },
             ],
@@ -11245,11 +11282,11 @@ class TestAssignments:
                 {"column_key": "refusal_flag", "column_label": "Refused"},
                 {"column_key": "completed_flag", "column_label": "Completed"},
                 {
-                    "column_key": "supervisors[0].supervisor_name",
+                    "column_key": "supervisors[2].supervisor_name",
                     "column_label": "Core User Name",
                 },
                 {
-                    "column_key": "supervisors[0].supervisor_email",
+                    "column_key": "supervisors[2].supervisor_email",
                     "column_label": "Core User Email",
                 },
                 {
@@ -11261,11 +11298,11 @@ class TestAssignments:
                     "column_label": "Cluster Coordinator Email",
                 },
                 {
-                    "column_key": "supervisors[2].supervisor_name",
+                    "column_key": "supervisors[0].supervisor_name",
                     "column_label": "Regional Coordinator Name",
                 },
                 {
-                    "column_key": "supervisors[2].supervisor_email",
+                    "column_key": "supervisors[0].supervisor_email",
                     "column_label": "Regional Coordinator Email",
                 },
             ],
@@ -11327,11 +11364,11 @@ class TestAssignments:
                 },
                 {"column_key": "custom_fields['Age']", "column_label": "Age"},
                 {
-                    "column_key": "supervisors[0].supervisor_name",
+                    "column_key": "supervisors[2].supervisor_name",
                     "column_label": "Core User Name",
                 },
                 {
-                    "column_key": "supervisors[0].supervisor_email",
+                    "column_key": "supervisors[2].supervisor_email",
                     "column_label": "Core User Email",
                 },
                 {
@@ -11343,11 +11380,11 @@ class TestAssignments:
                     "column_label": "Cluster Coordinator Email",
                 },
                 {
-                    "column_key": "supervisors[2].supervisor_name",
+                    "column_key": "supervisors[0].supervisor_name",
                     "column_label": "Regional Coordinator Name",
                 },
                 {
-                    "column_key": "supervisors[2].supervisor_email",
+                    "column_key": "supervisors[0].supervisor_email",
                     "column_label": "Regional Coordinator Email",
                 },
             ],
@@ -11398,11 +11435,11 @@ class TestAssignments:
                 {"column_key": "refusal_flag", "column_label": "Refused"},
                 {"column_key": "completed_flag", "column_label": "Completed"},
                 {
-                    "column_key": "supervisors[0].supervisor_name",
+                    "column_key": "supervisors[2].supervisor_name",
                     "column_label": "Core User Name",
                 },
                 {
-                    "column_key": "supervisors[0].supervisor_email",
+                    "column_key": "supervisors[2].supervisor_email",
                     "column_label": "Core User Email",
                 },
                 {
@@ -11414,11 +11451,11 @@ class TestAssignments:
                     "column_label": "Cluster Coordinator Email",
                 },
                 {
-                    "column_key": "supervisors[2].supervisor_name",
+                    "column_key": "supervisors[0].supervisor_name",
                     "column_label": "Regional Coordinator Name",
                 },
                 {
-                    "column_key": "supervisors[2].supervisor_email",
+                    "column_key": "supervisors[0].supervisor_email",
                     "column_label": "Regional Coordinator Email",
                 },
             ],
@@ -11541,16 +11578,16 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
                             "role_name": "Regional Coordinator",
                             "role_uid": 3,
                             "supervisor_email": "newuser3@example.com",
                             "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
                         },
                     ],
                     "location_uid": 4,
@@ -11628,16 +11665,16 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
                             "role_name": "Regional Coordinator",
                             "role_uid": 3,
                             "supervisor_email": "newuser3@example.com",
                             "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
                         },
                     ],
                     "location_uid": 4,
@@ -12141,16 +12178,16 @@ class TestAssignments:
                     "name": "Eric Dodge",
                     "supervisors": [
                         {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
                             "role_name": "Regional Coordinator",
                             "role_uid": 3,
                             "supervisor_email": "newuser3@example.com",
                             "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
                         },
                     ],
                     "surveyor_status": "Active",
@@ -12208,16 +12245,16 @@ class TestAssignments:
                     "name": "Jahnavi Meher",
                     "supervisors": [
                         {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
                             "role_name": "Regional Coordinator",
                             "role_uid": 3,
                             "supervisor_email": "newuser3@example.com",
                             "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
                         },
                     ],
                     "surveyor_status": "Active",
@@ -12275,16 +12312,16 @@ class TestAssignments:
                     "name": "Griffin Muteti",
                     "supervisors": [
                         {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
                             "role_name": "Regional Coordinator",
                             "role_uid": 3,
                             "supervisor_email": "newuser3@example.com",
                             "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
                         },
                     ],
                     "surveyor_status": "Active",
@@ -12736,10 +12773,10 @@ class TestAssignments:
                             "scto_fields": None,
                             "supervisors": [
                                 {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
                                 },
                                 {
                                     "role_name": "Cluster Coordinator",
@@ -12748,10 +12785,10 @@ class TestAssignments:
                                     "supervisor_name": "Ron Doe",
                                 },
                                 {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
                                 },
                             ],
                             "target_assignable": None,
@@ -12820,10 +12857,10 @@ class TestAssignments:
                             "scto_fields": None,
                             "supervisors": [
                                 {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
                                 },
                                 {
                                     "role_name": "Cluster Coordinator",
@@ -12832,10 +12869,10 @@ class TestAssignments:
                                     "supervisor_name": "Ron Doe",
                                 },
                                 {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
                                 },
                             ],
                             "target_assignable": None,
@@ -12998,16 +13035,16 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
                             "role_name": "Regional Coordinator",
                             "role_uid": 3,
                             "supervisor_email": "newuser3@example.com",
                             "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
                         },
                     ],
                     "target_assignable": None,
@@ -13076,16 +13113,16 @@ class TestAssignments:
                     "scto_fields": None,
                     "supervisors": [
                         {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
                             "role_name": "Regional Coordinator",
                             "role_uid": 3,
                             "supervisor_email": "newuser3@example.com",
                             "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
                         },
                     ],
                     "target_assignable": None,

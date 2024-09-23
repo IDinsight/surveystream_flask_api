@@ -77,21 +77,21 @@ class DefaultTableConfig:
         supervisor_columns = []
         if role_hierarchy:
             for i, role in enumerate(role_hierarchy.ordered_roles):
+                column_index = len(role_hierarchy.ordered_roles) - i - 1
                 # Only return child roles of the given user's role
                 if filter_supervisors and (user_level is not None):
-                    if i <= user_level:
+                    if column_index >= user_level:
                         continue
-
                 supervisor_columns.append(
                     {
                         "group_label": role["role_name"],
                         "columns": [
                             {
-                                "column_key": f"supervisors[{i}].supervisor_name",
+                                "column_key": f"supervisors[{column_index}].supervisor_name",
                                 "column_label": "Name",
                             },
                             {
-                                "column_key": f"supervisors[{i}].supervisor_email",
+                                "column_key": f"supervisors[{column_index}].supervisor_email",
                                 "column_label": "Email",
                             },
                         ],

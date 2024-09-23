@@ -204,20 +204,20 @@ def build_child_users_with_supervisors_query(
         db.session.query(
             UserHierarchy.user_uid,
             Role.role_uid,
-            top_query.c.supervisors.concat(
-                func.jsonb_build_object(
-                    "role_uid",
-                    Role.role_uid,
-                    "role_name",
-                    Role.role_name,
-                    "supervisor_name",
-                    func.coalesce(User.first_name.concat(" "), "")
-                    .concat(func.coalesce(User.middle_name.concat(" "), ""))
-                    .concat(func.coalesce(User.last_name, "")),
-                    "supervisor_email",
-                    User.email,
-                )
-            ),
+            func.jsonb_build_object(
+                "role_uid",
+                Role.role_uid,
+                "role_name",
+                Role.role_name,
+                "supervisor_name",
+                func.coalesce(User.first_name.concat(" "), "")
+                .concat(func.coalesce(User.middle_name.concat(" "), ""))
+                .concat(func.coalesce(User.last_name, "")),
+                "supervisor_email",
+                User.email,
+            )
+            .concat(top_query.c.supervisors)
+            .label("supervisors"),
         )
         .join(User, UserHierarchy.user_uid == User.user_uid)
         .join(Role, UserHierarchy.role_uid == Role.role_uid)

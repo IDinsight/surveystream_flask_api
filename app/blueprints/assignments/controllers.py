@@ -708,17 +708,39 @@ def update_assignments(validated_payload):
                 incorrect_mapping_target_uids.append(assignment["target_uid"])
 
     if len(dropout_enumerator_uids) > 0:
+        enumerator_ids = (
+            db.session.query(Enumerator.enumerator_id)
+            .filter(Enumerator.enumerator_uid.in_(dropout_enumerator_uids))
+            .all()
+        )
         return (
             jsonify(
-                message=f'The following enumerator_uid\'s have status "Dropout" and are ineligible for assignment: {", ".join(str(enumerator_uid) for enumerator_uid in dropout_enumerator_uids)}'
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"The following enumerator ID's have status 'Dropout' and are ineligible for assignment: {', '.join(str(enumerator_id.enumerator_id) for enumerator_id in enumerator_ids)}",
+                        "dropout_enumerator_uids": dropout_enumerator_uids,
+                    },
+                }
             ),
             422,
         )
 
     if len(unassignable_target_uids) > 0:
+        target_ids = (
+            db.session.query(Target.target_id)
+            .filter(Target.target_uid.in_(unassignable_target_uids))
+            .all()
+        )
         return (
             jsonify(
-                message=f"The following target_uid's are not assignable for this form (most likely because they are complete): {', '.join(str(target_uid) for target_uid in unassignable_target_uids)}"
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"The following target ID's are not assignable for this form (most likely because they are complete): {', '.join(str(target_id.target_id) for target_id in target_ids)}",
+                        "unassignable_target_uids": unassignable_target_uids,
+                    },
+                }
             ),
             422,
         )
@@ -726,7 +748,13 @@ def update_assignments(validated_payload):
     if len(not_found_enumerator_uids) > 0:
         return (
             jsonify(
-                message=f"The following enumerator_uid's were not found for this form: {', '.join(str(enumerator_uid) for enumerator_uid in not_found_enumerator_uids)}"
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"Some of the enumerator ID's provided were not found for this form. Kindly refresh and try again.",
+                        "not_found_enumerator_uids": not_found_enumerator_uids,
+                    },
+                }
             ),
             404,
         )
@@ -734,23 +762,51 @@ def update_assignments(validated_payload):
     if len(not_found_target_uids) > 0:
         return (
             jsonify(
-                message=f"The following target_uid's were not found for this form: {', '.join(str(target_uid) for target_uid in not_found_target_uids)}"
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"Some of the target ID's provided were not found for this form. Kindly refresh and try again.",
+                        "not_found_target_uids": not_found_target_uids,
+                    },
+                }
             ),
             404,
         )
 
     if len(incorrect_mapping_target_uids) > 0:
+        target_ids = (
+            db.session.query(Target.target_id)
+            .filter(Target.target_uid.in_(incorrect_mapping_target_uids))
+            .all()
+        )
         return (
             jsonify(
-                message=f"The following target_uid's are assigned to enumerators mapped to a different supervisor: {', '.join(str(target_uid) for target_uid in incorrect_mapping_target_uids)}"
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"The following target ID's are assigned to enumerators mapped to a different supervisor: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Please ensure that the target and assigned enumerator are mapped to the same supervisor.",
+                        "incorrect_mapping_target_uids": incorrect_mapping_target_uids,
+                    },
+                }
             ),
             422,
         )
 
     if len(not_mapped_target_uids) > 0:
+        target_ids = (
+            db.session.query(Target.target_id)
+            .filter(Target.target_uid.in_(not_mapped_target_uids))
+            .all()
+        )
         return (
             jsonify(
-                message=f"The following target_uid's are not assignable by the current user: {', '.join(str(target_uid) for target_uid in not_mapped_target_uids)}"
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"The following target ID's are not assignable by the current user: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Kindly refresh and try again.",
+                        "not_mapped_target_uids": not_mapped_target_uids,
+                    },
+                }
             ),
             422,
         )
