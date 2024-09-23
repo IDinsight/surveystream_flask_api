@@ -9841,7 +9841,154 @@ paths:
                 required:
                   - success
                   - data
-                              
+
+  /emails/report:
+    post:
+      summary: Create a new email delivery report
+      tags:
+        - Emails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_config_uid:
+                  type: integer
+                email_schedule_uid:
+                  type: integer
+                manual_trigger_uid:
+                  type: integer
+                slot_type:
+                  type: string
+                  enum:
+                    - schedule
+                    - trigger
+                slot_date:
+                  type: string
+                  format: date
+                slot_time:
+                  type: string
+                  format: time
+                delivery_time:
+                  type: string
+                  format: datetime
+                enumerator_status:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      enumerator_id:
+                        type: integer
+                      status:
+                        type: string
+                        enum:
+                          - sent
+                          - failed
+                      error_description:
+                        type: string
+      responses:
+        "200":
+          description: Email Delivery Report created successfully
+        "404":
+          description: Invalid slot type
+
+    get:
+      tags:
+        - Emails
+      summary: Get email delivery reports for a specific email schedule/trigger
+      parameters:
+        - name: email_config_uid
+          in: query
+          description: Unique identifier for the email config
+          required: true
+          schema:
+            type: integer
+        - name: email_schedule_uid
+          in: query
+          description: Unique identifier for the email schedule
+          required: true
+          schema:
+            type: integer
+        - name: manual_trigger_uid
+          in: query
+          description: Unique identifier for the manual trigger
+          required: true
+          schema:
+            type: integer
+        - name: slot_type
+          in: query
+          description: Type of slot - schedule or trigger
+          required: true
+          schema:
+            type: string
+            enum:
+              - schedule
+              - trigger
+      responses:
+        "200":
+          description: Email delivery reports retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    email_schedule_uid:
+                      type: integer
+                    manual_trigger_uid:
+                      type: integer
+                    slot_type:
+                      type: string
+                      enum:
+                        - schedule
+                        - trigger
+                    slot_date:
+                      type: string
+                      format: date
+                    slot_time:
+                      type: string
+                      format: time
+                    delivery_time:
+                      type: string
+                      format: datetime
+                    enumerator_status:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          enumerator_id:
+                            type: integer
+                          status:
+                            type: string
+                            enum:
+                              - sent
+                              - failed
+                          error_description:
+                            type: string
+        "404":
+          description: Email delivery reports not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Not Found"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "Email delivery reports not found"
+                required:
+                  - error
+                  - message
+
+
+                                
   /media-files:
     post:
       tags:

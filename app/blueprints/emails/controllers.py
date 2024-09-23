@@ -25,6 +25,8 @@ from app.utils.utils import (
 from . import emails_bp
 from .models import (
     EmailConfig,
+    EmailDeliveryReport,
+    EmailEnumeratorDeliveryStatus,
     EmailSchedule,
     EmailScheduleFilter,
     EmailTableCatalog,
@@ -37,6 +39,8 @@ from .models import (
 from .validators import (
     EmailConfigQueryParamValidator,
     EmailConfigValidator,
+    EmailDeliveryReportQueryValidator,
+    EmailDeliveryReportValidator,
     EmailGsheetSourceParamValidator,
     EmailGsheetSourcePatchParamValidator,
     EmailScheduleQueryParamValidator,
@@ -1473,3 +1477,154 @@ def create_email_tablecatalog(validated_payload):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@emails_bp.route("/report", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(EmailDeliveryReportValidator)
+@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
+def load_email_schedule_delivery_report(validated_payload):
+    """
+    Function to load email delivery report for email schedule or trigger
+    """
+
+    slot_type = validated_payload.slot_type.data
+    email_schedule_uid = validated_payload.email_schedule_uid.data
+    manual_email_trigger_uid = validated_payload.manual_email_trigger_uid.data
+    slot_date = validated_payload.slot_date.data
+    slot_time = validated_payload.slot_time.data
+    delivery_time = validated_payload.delivery_time.data
+
+    if slot_type not in ("schedule", "trigger"):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "message": "Invalid slot type",
+                }
+            ),
+            404,
+        )
+
+    # Check if the email schedule delivery report already exists
+    check_email_schedule_report_exists = EmailDeliveryReport.query.filter_by(
+        email_schedule_uid=email_schedule_uid,
+        manual_email_trigger_uid=manual_email_trigger_uid,
+        slot_type=slot_type,
+        slot_date=slot_date,
+        slot_time=slot_time,
+    ).first()
+    if check_email_schedule_report_exists is not None:
+        # Delete existing report
+        EmailDeliveryReport.query.filter_by(
+            email_schedule_uid=email_schedule_uid,
+            manual_email_trigger_uid=manual_email_trigger_uid,
+            slot_type=slot_type,
+            slot_date=slot_date,
+            slot_time=slot_time,
+        ).delete()
+        db.session.flush()
+
+    email_delivery_report = EmailDeliveryReport(
+        email_schedule_uid=email_schedule_uid,
+        manual_email_trigger_uid=manual_email_trigger_uid,
+        slot_type=slot_type,
+        slot_date=slot_date,
+        slot_time=slot_time,
+        delivery_time=delivery_time,
+    )
+    db.session.add(email_delivery_report)
+    db.session.flush()
+
+    email_delivery_report_uid = email_delivery_report.email_delivery_report_uid
+
+    for enum in validated_payload.enumerator_status.data:
+        enum_report = EmailEnumeratorDeliveryStatus(
+            email_delivery_report_uid=email_delivery_report_uid,
+            enumerator_uid=enum.get("enumerator_uid"),
+            status=enum.get("status"),
+            error_message=enum.get("error_message"),
+        )
+        db.session.add(enum_report)
+
+    try:
+        db.session.commit()
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": "Email Delivery Report created successfully",
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@emails_bp.route("/report", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(EmailDeliveryReportQueryValidator)
+@custom_permissions_required("READ Emails", "query", "email_config_uid")
+def get_email_schedule_report(validated_query_params):
+    """Function to get email delivery report for email schedule or trigger"""
+
+    slot_type = validated_query_params.slot_type.data
+
+    if slot_type == "schedule":
+        email_schedule_uid = validated_query_params.email_schedule_uid.data
+        email_delivery_reports = EmailDeliveryReport.query.filter_by(
+            email_schedule_uid=email_schedule_uid
+        ).all()
+
+    elif slot_type == "trigger":
+        manual_email_trigger_uid = validated_query_params.manual_email_trigger_uid.data
+        email_delivery_reports = EmailDeliveryReport.query.filter_by(
+            manual_email_trigger_uid=manual_email_trigger_uid
+        ).all()
+
+    else:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Invalid slot type",
+                }
+            ),
+            404,
+        )
+    if email_delivery_reports is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Email delivery reports not found",
+                }
+            ),
+            404,
+        )
+
+    else:
+        result = []
+        for email_delivery_report in email_delivery_reports:
+            email_delivery_report_dict = email_delivery_report.to_dict()
+            email_enumerator_status = EmailEnumeratorDeliveryStatus.query.filter_by(
+                email_delivery_report_uid=email_delivery_report.email_delivery_report_uid
+            ).all()
+            email_delivery_report_dict["enumerator_status"] = [
+                enum.to_dict() for enum in email_enumerator_status
+            ]
+            result.append(email_delivery_report_dict)
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": result,
+                }
+            ),
+            200,
+        )
