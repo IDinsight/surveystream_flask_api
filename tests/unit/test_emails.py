@@ -3855,21 +3855,24 @@ class TestEmails:
                     {
                         "enumerator_status": [
                             {
-                                "email_delivery_report_uid": 1,
+                                "enumerator_id": "0294612",
                                 "enumerator_uid": 1,
                                 "error_message": None,
+                                "language": "English",
                                 "status": "sent",
                             },
                             {
-                                "email_delivery_report_uid": 1,
+                                "enumerator_id": "0294613",
                                 "enumerator_uid": 2,
                                 "error_message": "Email delivery failed",
+                                "language": "Telugu",
                                 "status": "failed",
                             },
                             {
-                                "email_delivery_report_uid": 1,
+                                "enumerator_id": "0294614",
                                 "enumerator_uid": 3,
                                 "error_message": None,
+                                "language": "Hindi",
                                 "status": "sent",
                             },
                         ],
@@ -4023,35 +4026,39 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
-                        "enumerator_status": [
-                            {
-                                "email_delivery_report_uid": 2,
-                                "enumerator_uid": 1,
-                                "error_message": None,
-                                "status": "sent",
-                            },
-                            {
-                                "email_delivery_report_uid": 2,
-                                "enumerator_uid": 2,
-                                "error_message": "Email delivery failed",
-                                "status": "failed",
-                            },
-                            {
-                                "email_delivery_report_uid": 2,
-                                "enumerator_uid": 3,
-                                "error_message": None,
-                                "status": "sent",
-                            },
-                            {
-                                "email_delivery_report_uid": 2,
-                                "enumerator_uid": 4,
-                                "error_message": None,
-                                "status": "sent",
-                            },
-                        ],
                         "delivery_time": "2021-06-01 00:00:00",
                         "email_delivery_report_uid": 2,
                         "email_schedule_uid": 1,
+                        "enumerator_status": [
+                            {
+                                "enumerator_id": "0294612",
+                                "enumerator_uid": 1,
+                                "error_message": None,
+                                "language": "English",
+                                "status": "sent",
+                            },
+                            {
+                                "enumerator_id": "0294613",
+                                "enumerator_uid": 2,
+                                "error_message": "Email delivery failed",
+                                "language": "Telugu",
+                                "status": "failed",
+                            },
+                            {
+                                "enumerator_id": "0294614",
+                                "enumerator_uid": 3,
+                                "error_message": None,
+                                "language": "Hindi",
+                                "status": "sent",
+                            },
+                            {
+                                "enumerator_id": "0294615",
+                                "enumerator_uid": 4,
+                                "error_message": None,
+                                "language": "Swahili",
+                                "status": "sent",
+                            },
+                        ],
                         "manual_email_trigger_uid": None,
                         "slot_date": "Tue, 01 Jun 2021 00:00:00 GMT",
                         "slot_time": "00:00:00",
@@ -4060,7 +4067,6 @@ class TestEmails:
                 ],
                 "success": True,
             }
-
             assert get_response.status_code == 200
 
             print(get_response.json)
@@ -4150,35 +4156,39 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
-                        "enumerator_status": [
-                            {
-                                "email_delivery_report_uid": 2,
-                                "enumerator_uid": 1,
-                                "error_message": None,
-                                "status": "sent",
-                            },
-                            {
-                                "email_delivery_report_uid": 2,
-                                "enumerator_uid": 2,
-                                "error_message": "Email delivery failed",
-                                "status": "failed",
-                            },
-                            {
-                                "email_delivery_report_uid": 2,
-                                "enumerator_uid": 3,
-                                "error_message": None,
-                                "status": "sent",
-                            },
-                            {
-                                "email_delivery_report_uid": 2,
-                                "enumerator_uid": 4,
-                                "error_message": None,
-                                "status": "sent",
-                            },
-                        ],
                         "delivery_time": "2021-06-01 00:00:00",
                         "email_delivery_report_uid": 2,
                         "email_schedule_uid": None,
+                        "enumerator_status": [
+                            {
+                                "enumerator_id": "0294612",
+                                "enumerator_uid": 1,
+                                "error_message": None,
+                                "language": "English",
+                                "status": "sent",
+                            },
+                            {
+                                "enumerator_id": "0294613",
+                                "enumerator_uid": 2,
+                                "error_message": "Email delivery failed",
+                                "language": "Telugu",
+                                "status": "failed",
+                            },
+                            {
+                                "enumerator_id": "0294614",
+                                "enumerator_uid": 3,
+                                "error_message": None,
+                                "language": "Hindi",
+                                "status": "sent",
+                            },
+                            {
+                                "enumerator_id": "0294615",
+                                "enumerator_uid": 4,
+                                "error_message": None,
+                                "language": "Swahili",
+                                "status": "sent",
+                            },
+                        ],
                         "manual_email_trigger_uid": 1,
                         "slot_date": "Tue, 01 Jun 2021 00:00:00 GMT",
                         "slot_time": "00:00:00",

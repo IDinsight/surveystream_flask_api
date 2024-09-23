@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from itertools import groupby
 from operator import attrgetter
@@ -10,6 +11,7 @@ from app.blueprints.emails.utils import (
     get_default_email_assignments_column,
     get_default_email_variable_names,
 )
+from app.blueprints.enumerators.models import Enumerator
 from app.blueprints.forms.models import Form
 from app.utils.google_sheet_utils import (
     google_sheet_helpers,
@@ -1611,11 +1613,34 @@ def get_email_schedule_report(validated_query_params):
         result = []
         for email_delivery_report in email_delivery_reports:
             email_delivery_report_dict = email_delivery_report.to_dict()
-            email_enumerator_status = EmailEnumeratorDeliveryStatus.query.filter_by(
-                email_delivery_report_uid=email_delivery_report.email_delivery_report_uid
-            ).all()
+            email_enumerator_status = (
+                db.session.query(
+                    EmailEnumeratorDeliveryStatus.enumerator_uid,
+                    Enumerator.enumerator_id,
+                    Enumerator.language,
+                    EmailEnumeratorDeliveryStatus.status,
+                    EmailEnumeratorDeliveryStatus.error_message,
+                )
+                .join(
+                    Enumerator,
+                    EmailEnumeratorDeliveryStatus.enumerator_uid
+                    == Enumerator.enumerator_uid,
+                )
+                .filter(
+                    EmailEnumeratorDeliveryStatus.email_delivery_report_uid
+                    == email_delivery_report.email_delivery_report_uid
+                )
+                .all()
+            )
             email_delivery_report_dict["enumerator_status"] = [
-                enum.to_dict() for enum in email_enumerator_status
+                {
+                    "enumerator_uid": enum.enumerator_uid,
+                    "enumerator_id": enum.enumerator_id,
+                    "language": enum.language,
+                    "status": enum.status,
+                    "error_message": enum.error_message,
+                }
+                for enum in email_enumerator_status
             ]
             result.append(email_delivery_report_dict)
 
