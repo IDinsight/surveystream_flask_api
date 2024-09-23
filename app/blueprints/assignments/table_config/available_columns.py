@@ -59,15 +59,16 @@ class AvailableColumns:
         supervisor_columns = []
         if role_hierarchy:
             for i, role in enumerate(role_hierarchy.ordered_roles):
+                column_index = len(role_hierarchy.ordered_roles) - i - 1
                 supervisor_columns.append(
                     {
-                        "column_key": f"supervisors[{i}].supervisor_name",
+                        "column_key": f"supervisors[{column_index}].supervisor_name",
                         "column_label": f"""{role["role_name"]} Name""",
                     }
                 )
                 supervisor_columns.append(
                     {
-                        "column_key": f"supervisors[{i}].supervisor_email",
+                        "column_key": f"supervisors[{column_index}].supervisor_email",
                         "column_label": f"""{role["role_name"]} Email""",
                     }
                 )

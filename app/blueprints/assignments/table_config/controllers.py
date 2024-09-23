@@ -49,10 +49,9 @@ def get_table_config(validated_query_params):
         try:
             if (
                 row.column_key.split("[")[0] == "supervisors"
-                and int(row.column_key.split("[")[1].split("]")[0]) <= user_level
+                and int(row.column_key.split("[")[1].split("]")[0]) >= user_level
             ):
                 is_excluded_supervisor = True
-
         except:
             pass
 
@@ -176,7 +175,7 @@ def get_table_config(validated_query_params):
             user_role = get_user_role(user_uid, survey_uid)
             for i, role in enumerate(role_hierarchy.ordered_roles):
                 if role["role_uid"] == user_role:
-                    user_level = i
+                    user_level = len(role_hierarchy.ordered_roles) - i - 1
                     break
 
     table_config = {
