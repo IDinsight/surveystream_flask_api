@@ -6105,9 +6105,6 @@ paths:
                           description: >-
                             The unique ID of the parent location of the given
                             location.
-                  success:
-                    type: boolean
-                    description: Indicates whether the request was successful
         "500":
           description: >
             Error message indicating that the locations could not be retrieved.
@@ -9879,7 +9876,7 @@ paths:
                   items:
                     type: object
                     properties:
-                      enumerator_id:
+                      enumerator_uid:
                         type: integer
                       status:
                         type: string
@@ -9959,7 +9956,7 @@ paths:
                       items:
                         type: object
                         properties:
-                          enumerator_id:
+                          enumerator_uid:
                             type: integer
                           status:
                             type: string
@@ -9967,6 +9964,10 @@ paths:
                               - sent
                               - failed
                           error_description:
+                            type: string
+                          language:
+                            type: string
+                          enumerator_id:
                             type: string
         "404":
           description: Email delivery reports not found
