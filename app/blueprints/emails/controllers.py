@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from itertools import groupby
 from operator import attrgetter
@@ -7,10 +6,6 @@ from flask import jsonify
 from sqlalchemy.sql.functions import func
 
 from app import db
-from app.blueprints.emails.utils import (
-    get_default_email_assignments_column,
-    get_default_email_variable_names,
-)
 from app.blueprints.enumerators.models import Enumerator
 from app.blueprints.forms.models import Form
 from app.utils.google_sheet_utils import (
@@ -37,6 +32,11 @@ from .models import (
     EmailTemplateTable,
     EmailTemplateVariable,
     ManualEmailTrigger,
+)
+from .utils import (
+    get_default_email_assignments_column,
+    get_default_email_variable_names,
+    get_surveyors,
 )
 from .validators import (
     EmailConfigQueryParamValidator,
@@ -1497,6 +1497,9 @@ def load_email_schedule_delivery_report(validated_payload):
     slot_time = validated_payload.slot_time.data
     delivery_time = validated_payload.delivery_time.data
 
+    email_config_uid = validated_payload.email_config_uid.data
+    form_uid = EmailConfig.query.get_or_404(email_config_uid).form_uid
+
     if slot_type not in ("schedule", "trigger"):
         return (
             jsonify(
@@ -1541,9 +1544,15 @@ def load_email_schedule_delivery_report(validated_payload):
     email_delivery_report_uid = email_delivery_report.email_delivery_report_uid
 
     for enum in validated_payload.enumerator_status.data:
+        enumerator_id = enum.get("enumerator_id")
+        enumerator_uid = (
+            Enumerator.query.filter_by(enumerator_id=enumerator_id, form_uid=form_uid)
+            .first()
+            .enumerator_uid
+        )
         enum_report = EmailEnumeratorDeliveryStatus(
             email_delivery_report_uid=email_delivery_report_uid,
-            enumerator_uid=enum.get("enumerator_uid"),
+            enumerator_uid=enumerator_uid,
             status=enum.get("status"),
             error_message=enum.get("error_message"),
         )
@@ -1571,6 +1580,8 @@ def load_email_schedule_delivery_report(validated_payload):
 @custom_permissions_required("READ Emails", "query", "email_config_uid")
 def get_email_schedule_report(validated_query_params):
     """Function to get email delivery report for email schedule or trigger"""
+
+    email_config_uid = validated_query_params.email_config_uid.data
 
     slot_type = validated_query_params.slot_type.data
 

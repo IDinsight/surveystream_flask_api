@@ -301,7 +301,7 @@ class EmailTemplateBulkValidator(FlaskForm):
 
 
 class EnumeratorStatusListValidator(FlaskForm):
-    enumerator_uid = IntegerField(validators=[DataRequired()])
+    enumerator_id = StringField(validators=[DataRequired()])
     status = StringField(
         AnyOf(["sent", "failed"], message="Status can be sent or failed"),
         validators=[DataRequired()],

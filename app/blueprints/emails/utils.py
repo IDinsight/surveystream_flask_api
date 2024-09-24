@@ -5,6 +5,7 @@ from app.blueprints.forms.models import Form
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.locations.utils import GeoLevelHierarchy
+from app.blueprints.mapping.utils import SurveyorMapping
 from app.blueprints.surveys.models import Survey
 from app.blueprints.targets.models import TargetColumnConfig
 
@@ -312,3 +313,22 @@ def get_default_email_variable_names(form_uid):
                 break
 
     return default_column_list + location_column_list + enumerator_custom_fields
+
+
+def get_surveyors(form_uid):
+    """
+    Get the list of surveyors for the given email config uid.
+
+    Args:
+        email_config_uid: Email config UID
+
+    Returns:
+        List of surveyors
+    """
+
+    surveyor_mapping = SurveyorMapping(form_uid=form_uid)
+
+    surveyors = surveyor_mapping.get_surveyors_with_mapped_to_subquery()
+    print(surveyors)
+
+    return surveyors

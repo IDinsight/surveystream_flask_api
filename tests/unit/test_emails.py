@@ -3729,16 +3729,16 @@ class TestEmails:
             "slot_type": "schedule",
             "enumerator_status": [
                 {
-                    "enumerator_uid": 1,
+                    "enumerator_id": "0294612",
                     "status": "sent",
                 },
                 {
-                    "enumerator_uid": 2,
+                    "enumerator_id": "0294613",
                     "status": "failed",
                     "error_message": "Email delivery failed",
                 },
                 {
-                    "enumerator_uid": 3,
+                    "enumerator_id": "0294614",
                     "status": "sent",
                 },
             ],
@@ -3791,16 +3791,16 @@ class TestEmails:
             "slot_type": "schedule",
             "enumerator_status": [
                 {
-                    "enumerator_uid": 1,
+                    "enumerator_id": "0294612",
                     "status": "sent",
                 },
                 {
-                    "enumerator_uid": 2,
+                    "enumerator_id": "0294613",
                     "status": "failed",
                     "error_message": "Email delivery failed",
                 },
                 {
-                    "enumerator_uid": 3,
+                    "enumerator_id": "0294614",
                     "status": "sent",
                 },
             ],
@@ -3982,20 +3982,20 @@ class TestEmails:
             "slot_type": "schedule",
             "enumerator_status": [
                 {
-                    "enumerator_uid": 1,
+                    "enumerator_id": "0294612",
                     "status": "sent",
                 },
                 {
-                    "enumerator_uid": 2,
+                    "enumerator_id": "0294613",
                     "status": "failed",
                     "error_message": "Email delivery failed",
                 },
                 {
-                    "enumerator_uid": 3,
+                    "enumerator_id": "0294614",
                     "status": "sent",
                 },
                 {
-                    "enumerator_uid": 4,
+                    "enumerator_id": "0294615",
                     "status": "sent",
                 },
             ],
@@ -4112,20 +4112,20 @@ class TestEmails:
             "slot_type": "trigger",
             "enumerator_status": [
                 {
-                    "enumerator_uid": 1,
+                    "enumerator_id": "0294612",
                     "status": "sent",
                 },
                 {
-                    "enumerator_uid": 2,
+                    "enumerator_id": "0294613",
                     "status": "failed",
                     "error_message": "Email delivery failed",
                 },
                 {
-                    "enumerator_uid": 3,
+                    "enumerator_id": "0294614",
                     "status": "sent",
                 },
                 {
-                    "enumerator_uid": 4,
+                    "enumerator_id": "0294615",
                     "status": "sent",
                 },
             ],
