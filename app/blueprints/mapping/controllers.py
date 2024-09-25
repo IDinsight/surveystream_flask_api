@@ -182,9 +182,9 @@ def update_target_mapping_config(validated_payload):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message=str(e)), 500
+        return jsonify({"message": str(e), "success": False}), 500
 
-    return jsonify(message="Success"), 200
+    return jsonify({"message": "Success", "success": True}), 200
 
 
 @mapping_bp.route("/targets-mapping-config", methods=["DELETE"])
@@ -215,9 +215,9 @@ def delete_target_mapping_config(validated_query_params):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message=str(e)), 500
+        return jsonify({"message": str(e), "success": False}), 500
 
-    return jsonify(message="Success"), 200
+    return jsonify({"message": "Success", "success": True}), 200
 
 
 @mapping_bp.route("/targets-mapping", methods=["GET"])
@@ -496,9 +496,9 @@ def update_target_mapping(validated_payload):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message=str(e)), 500
+        return jsonify({"message": str(e), "success": False}), 500
 
-    return jsonify(message="Success"), 200
+    return jsonify({"message": "Success", "success": True}), 200
 
 
 @mapping_bp.route("/surveyors-mapping-config", methods=["GET"])
@@ -658,9 +658,9 @@ def update_surveyor_mapping_config(validated_payload):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message=str(e)), 500
+        return jsonify({"message": str(e), "success": False}), 500
 
-    return jsonify(message="Success"), 200
+    return jsonify({"message": "Success", "success": True}), 200
 
 
 @mapping_bp.route("/surveyors-mapping-config", methods=["DELETE"])
@@ -689,9 +689,9 @@ def delete_surveyor_mapping_config(validated_query_params):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message=str(e)), 500
+        return jsonify({"message": str(e), "success": False}), 500
 
-    return jsonify(message="Success"), 200
+    return jsonify({"message": "Success", "success": True}), 200
 
 
 @mapping_bp.route("/surveyors-mapping", methods=["GET"])
@@ -975,6 +975,6 @@ def update_surveyor_mapping(validated_payload):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(message=str(e)), 500
+        return jsonify({"message": str(e), "success": False}), 500
 
-    return jsonify(message="Success"), 200
+    return jsonify({"message": "Success", "success": True}), 200
