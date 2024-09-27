@@ -1,21 +1,20 @@
 from flask import jsonify
-from sqlalchemy.exc import IntegrityError
 from flask_login import current_user
+from sqlalchemy.exc import IntegrityError
+
 from app import db
-from .models import Survey
-from app.blueprints.roles.models import Role, SurveyAdmin
 from app.blueprints.locations.models import GeoLevel
-from app.blueprints.module_selection.models import ModuleStatus, Module
-from .routes import surveys_bp
-from .validators import (
-    CreateSurveyValidator,
-    UpdateSurveyValidator,
-)
+from app.blueprints.module_selection.models import Module, ModuleStatus
+from app.blueprints.roles.models import Role, SurveyAdmin
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
     validate_payload,
 )
+
+from .models import Survey
+from .routes import surveys_bp
+from .validators import CreateSurveyValidator, UpdateSurveyValidator
 
 
 @surveys_bp.route("", methods=["GET"])
@@ -184,18 +183,18 @@ def get_survey_config_status(survey_uid):
 
     # Temp: Update module status based on whether data is present in the corresponding backend
     # table because we aren't updating the module status table from each module currently
-    from app.blueprints.forms.models import Form
-    from app.blueprints.enumerators.models import Enumerator
-    from app.blueprints.targets.models import Target
     from app.blueprints.assignments.models import SurveyorAssignment
-    from app.blueprints.target_status_mapping.models import TargetStatusMapping
-    from app.blueprints.media_files.models import MediaFilesConfig
     from app.blueprints.emails.models import EmailConfig
+    from app.blueprints.enumerators.models import Enumerator
+    from app.blueprints.forms.models import Form
     from app.blueprints.mapping.models import (
         UserMappingConfig,
-        UserTargetMapping,
         UserSurveyorMapping,
+        UserTargetMapping,
     )
+    from app.blueprints.media_files.models import MediaFilesConfig
+    from app.blueprints.target_status_mapping.models import TargetStatusMapping
+    from app.blueprints.targets.models import Target
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     scto_information = Form.query.filter_by(

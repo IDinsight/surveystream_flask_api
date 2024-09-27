@@ -139,7 +139,7 @@ class TestAssignments:
         )
 
         login_user(client, test_user_credentials)
-
+        
     @pytest.fixture
     def user_with_no_permissions(self, client, test_user_credentials):
         # Assign no roles and permissions
@@ -187,7 +187,6 @@ class TestAssignments:
     )
     def user_permissions_with_upload(self, request):
         return request.param
-
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -13452,4 +13451,5 @@ class TestAssignments:
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
         assert checkdiff == {}

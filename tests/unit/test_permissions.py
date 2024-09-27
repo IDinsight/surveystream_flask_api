@@ -1,5 +1,5 @@
-import pytest
 import jsondiff
+import pytest
 
 
 @pytest.mark.permissions

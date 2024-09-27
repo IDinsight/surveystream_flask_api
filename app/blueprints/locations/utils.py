@@ -395,6 +395,7 @@ class LocationsUpload:
                 file_errors.append(
                     f"Location type {geo_level.geo_level_name} has location id's that have more than one location name. Make sure to use a unique location name for each location id. The following rows have location id's that have more than one location name:\n{self.locations_df[self.locations_df.drop_duplicates(subset=[geo_level_id_column_name, geo_level_name_column_name]).duplicated(subset=[geo_level_id_column_name], keep=False).reindex(self.locations_df.index, fill_value=False)].to_string()}"
                 )
+
         if len(file_errors) > 0:
             raise InvalidLocationsError(file_errors)
 
