@@ -1184,6 +1184,8 @@ def update_email_template(email_template_uid, validated_payload):
                 variable_name=table.get("variable_name"),
             )
             db.session.add(table_obj)
+            db.session.flush()
+
             table_uid = table_obj.email_template_table_uid
             # Get the max filter group id
             max_filter_group_id = 0
