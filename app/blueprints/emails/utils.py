@@ -1,6 +1,17 @@
 from flask import jsonify
+from sqlalchemy import Integer, column, select
+from sqlalchemy.sql import Values
 
-from app.blueprints.enumerators.models import EnumeratorColumnConfig
+from app import db
+from app.blueprints.enumerators.models import (
+    Enumerator,
+    EnumeratorColumnConfig,
+    SurveyorForm,
+    SurveyorLocation,
+)
+from app.blueprints.enumerators.queries import (
+    build_prime_locations_with_location_hierarchy_subquery,
+)
 from app.blueprints.forms.models import Form
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.locations.models import GeoLevel
@@ -8,6 +19,9 @@ from app.blueprints.locations.utils import GeoLevelHierarchy
 from app.blueprints.mapping.utils import SurveyorMapping
 from app.blueprints.surveys.models import Survey
 from app.blueprints.targets.models import TargetColumnConfig
+from app.blueprints.user_management.models import User
+
+from .models import EmailEnumeratorDeliveryStatus
 
 
 def get_default_email_assignments_column(form_uid):
@@ -315,20 +329,74 @@ def get_default_email_variable_names(form_uid):
     return default_column_list + location_column_list + enumerator_custom_fields
 
 
-def get_surveyors(form_uid):
+def get_surveyors(form_uid, email_delivery_report_uid):
     """
     Get the list of surveyors for the given email config uid.
 
     Args:
         email_config_uid: Email config UID
+        email_delivery_report_uid: Email delivery report UID
 
     Returns:
         List of surveyors
     """
 
-    surveyor_mapping = SurveyorMapping(form_uid=form_uid)
+    surveyor_mapping = SurveyorMapping(form_uid)
+    survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
-    surveyors = surveyor_mapping.get_surveyors_with_mapped_to_subquery()
-    print(surveyors)
+    surveyor_mappings = surveyor_mapping.generate_mappings()
+    surveyor_mappings_query = select(
+        Values(
+            column("enumerator_uid", Integer),
+            column("supervisor_uid", Integer),
+            name="mappings",
+        ).data(
+            [
+                (mapping["enumerator_uid"], mapping["supervisor_uid"])
+                for mapping in surveyor_mappings
+            ]
+            if len(surveyor_mappings) > 0
+            else [
+                (0, 0)
+            ]  # If there are no mappings, we still need to return a row with 0 values
+        )
+    ).subquery()
 
-    return surveyors
+    assignment_enumerators_query = (
+        db.session.query(
+            Enumerator.enumerator_id,
+            Enumerator.name,
+            Enumerator.email,
+            db.func.concat_ws(" ", User.first_name, User.last_name).label(
+                "supervisor_name"
+            ),
+            User.email.label("supervisor_email"),
+            EmailEnumeratorDeliveryStatus.status,
+            EmailEnumeratorDeliveryStatus.error_message,
+        )
+        .join(SurveyorForm, Enumerator.enumerator_uid == SurveyorForm.enumerator_uid)
+        .outerjoin(
+            SurveyorLocation,
+            (SurveyorForm.enumerator_uid == SurveyorLocation.enumerator_uid)
+            & (SurveyorForm.form_uid == SurveyorLocation.form_uid),
+        )
+        .join(
+            surveyor_mappings_query,
+            Enumerator.enumerator_uid == surveyor_mappings_query.c.enumerator_uid,
+        )
+        .outerjoin(
+            User,
+            surveyor_mappings_query.c.supervisor_uid == User.user_uid,
+        )
+        .join(
+            EmailEnumeratorDeliveryStatus,
+            Enumerator.enumerator_uid == EmailEnumeratorDeliveryStatus.enumerator_uid,
+        )
+        .filter(
+            SurveyorForm.form_uid == form_uid,
+            EmailEnumeratorDeliveryStatus.email_delivery_report_uid
+            == email_delivery_report_uid,
+        )
+    )
+
+    return assignment_enumerators_query

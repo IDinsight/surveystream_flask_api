@@ -1,4 +1,5 @@
 import base64
+import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -39,16 +40,43 @@ class TestEmails:
         login_user(client, test_user_credentials)
 
     @pytest.fixture
-    def user_with_email_permissions(self, client, test_user_credentials):
-        # Assign new roles and permissions
-        new_role = create_new_survey_role_with_permissions(
-            # 19 - WRITE Emails
-            client,
-            test_user_credentials,
-            "Emails Role",
-            [19],
-            1,
+    def user_with_email_permissions(
+        self, client, test_user_credentials, csrf_token, create_roles
+    ):
+        # Give existing roles permissions to upload assignments
+        payload = {
+            "roles": [
+                {
+                    "role_uid": 1,
+                    "role_name": "Core User",
+                    "reporting_role_uid": None,
+                    "permissions": [19],
+                },
+                {
+                    "role_uid": 2,
+                    "role_name": "Cluster Coordinator",
+                    "reporting_role_uid": 1,
+                    "permissions": [19],
+                },
+                {
+                    "role_uid": 3,
+                    "role_name": "Regional Coordinator",
+                    "reporting_role_uid": 2,
+                    "permissions": [19],
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
+        assert response.status_code == 200
 
         update_logged_in_user_roles(
             client,
@@ -190,6 +218,177 @@ class TestEmails:
         assert response.status_code == 201
 
         yield
+
+    @pytest.fixture()
+    def create_roles(self, client, login_test_user, csrf_token):
+        """
+        Insert new roles as a setup step
+        """
+
+        payload = {
+            "roles": [
+                {
+                    "role_uid": None,
+                    "role_name": "Core User",
+                    "reporting_role_uid": None,
+                    "permissions": [9],
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "Cluster Coordinator",
+                    "reporting_role_uid": 1,
+                    "permissions": [9],
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "Regional Coordinator",
+                    "reporting_role_uid": 2,
+                    "permissions": [9],
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def add_fsl_1_user(self, client, login_test_user, csrf_token, create_roles):
+        """
+        Add users at with field supervisor level 1 role
+        """
+        # Add core team user
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser1@example.com",
+                "first_name": "Tim",
+                "last_name": "Doe",
+                "roles": [1],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+        assert b"Success: user invited" in response.data
+        response_data = json.loads(response.data)
+        core_user = response_data.get("user")
+
+        return core_user
+
+    @pytest.fixture()
+    def add_fsl_2_user(self, client, login_test_user, csrf_token, create_roles):
+        """
+        Add users at with field supervisor level 2 role
+        """
+        # Add CC user
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser2@example.com",
+                "first_name": "Ron",
+                "last_name": "Doe",
+                "roles": [2],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+        assert b"Success: user invited" in response.data
+        response_data = json.loads(response.data)
+        cc_user = response_data.get("user")
+
+        return cc_user
+
+    @pytest.fixture()
+    def add_fsl_3_user(self, client, login_test_user, csrf_token):
+        """
+        Add users at with field supervisor level 3 role (lowest level)
+        """
+        # Add RC user
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser3@example.com",
+                "first_name": "John",
+                "last_name": "Doe",
+                "roles": [3],
+                "gender": "Male",
+                "languages": ["Hindi", "Telugu", "English"],
+                "location_uids": [1],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+        assert b"Success: user invited" in response.data
+        response_data = json.loads(response.data)
+        rc_user = response_data.get("user")
+
+        return rc_user
+
+    @pytest.fixture()
+    def add_user_hierarchy(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_roles,
+        add_fsl_1_user,
+        add_fsl_2_user,
+        add_fsl_3_user,
+    ):
+        """
+        Define user hierarchy dependencies between fsl 1, fsl 2 and fsl 3 users added
+        """
+
+        # Add user hierarchy records between rc and cc
+        payload = {
+            "survey_uid": 1,
+            "role_uid": 3,
+            "user_uid": add_fsl_3_user["user_uid"],
+            "parent_user_uid": add_fsl_2_user["user_uid"],
+        }
+
+        response = client.put(
+            "/api/user-hierarchy",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        # Add user hierarchy records between cc and core user
+        payload = {
+            "survey_uid": 1,
+            "role_uid": 2,
+            "user_uid": add_fsl_2_user["user_uid"],
+            "parent_user_uid": add_fsl_1_user["user_uid"],
+        }
+
+        response = client.put(
+            "/api/user-hierarchy",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
 
     @pytest.fixture
     def create_geo_levels_for_enumerators_file(
@@ -3721,26 +3920,31 @@ class TestEmails:
         request.getfixturevalue(user_fixture)
 
         payload = {
-            "email_config_uid": 1,
-            "email_schedule_uid": 1,
-            "delivery_time": "2021-06-01 00:00:00",
-            "slot_date": "2021-06-01",
-            "slot_time": "00:00:00",
-            "slot_type": "schedule",
-            "enumerator_status": [
+            "form_uid": 1,
+            "reports": [
                 {
-                    "enumerator_id": "0294612",
-                    "status": "sent",
-                },
-                {
-                    "enumerator_id": "0294613",
-                    "status": "failed",
-                    "error_message": "Email delivery failed",
-                },
-                {
-                    "enumerator_id": "0294614",
-                    "status": "sent",
-                },
+                    "email_config_uid": 1,
+                    "email_schedule_uid": 1,
+                    "delivery_time": "2021-06-01 00:00:00",
+                    "slot_date": "2021-06-01",
+                    "slot_time": "00:00:00",
+                    "slot_type": "schedule",
+                    "enumerator_status": [
+                        {
+                            "enumerator_id": "0294612",
+                            "status": "sent",
+                        },
+                        {
+                            "enumerator_id": "0294613",
+                            "status": "failed",
+                            "error_message": "Email delivery failed",
+                        },
+                        {
+                            "enumerator_id": "0294614",
+                            "status": "sent",
+                        },
+                    ],
+                }
             ],
         }
 
@@ -3777,32 +3981,34 @@ class TestEmails:
         csrf_token,
         create_email_schedule,
         upload_enumerators_csv,
+        add_user_hierarchy,
     ):
         """
         Insert new survey as a setup step for the form tests
         """
 
         payload = {
-            "email_config_uid": 1,
-            "email_schedule_uid": 1,
-            "delivery_time": "2021-06-01 00:00:00",
-            "slot_date": "2021-06-01",
-            "slot_time": "00:00:00",
-            "slot_type": "schedule",
-            "enumerator_status": [
+            "form_uid": 1,
+            "reports": [
                 {
-                    "enumerator_id": "0294612",
-                    "status": "sent",
-                },
-                {
-                    "enumerator_id": "0294613",
-                    "status": "failed",
-                    "error_message": "Email delivery failed",
-                },
-                {
-                    "enumerator_id": "0294614",
-                    "status": "sent",
-                },
+                    "email_config_uid": 1,
+                    "email_schedule_uid": 1,
+                    "delivery_time": "2021-06-01 00:00:00",
+                    "slot_date": "2021-06-01",
+                    "slot_time": "00:00:00",
+                    "slot_type": "schedule",
+                    "enumerator_status": [
+                        {
+                            "enumerator_id": "0294612",
+                            "status": "sent",
+                        },
+                        {
+                            "enumerator_id": "0294613",
+                            "status": "failed",
+                            "error_message": "Email delivery failed",
+                        },
+                    ],
+                }
             ],
         }
 
@@ -3853,32 +4059,29 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
-                        "enumerator_status": [
-                            {
-                                "enumerator_id": "0294612",
-                                "enumerator_uid": 1,
-                                "error_message": None,
-                                "language": "English",
-                                "status": "sent",
-                            },
-                            {
-                                "enumerator_id": "0294613",
-                                "enumerator_uid": 2,
-                                "error_message": "Email delivery failed",
-                                "language": "Telugu",
-                                "status": "failed",
-                            },
-                            {
-                                "enumerator_id": "0294614",
-                                "enumerator_uid": 3,
-                                "error_message": None,
-                                "language": "Hindi",
-                                "status": "sent",
-                            },
-                        ],
                         "delivery_time": "2021-06-01 00:00:00",
                         "email_delivery_report_uid": 1,
                         "email_schedule_uid": 1,
+                        "enumerator_status": [
+                            {
+                                "enumerator_email": "eric.dodge@idinsight.org",
+                                "enumerator_id": "0294612",
+                                "enumerator_name": "Eric Dodge",
+                                "error_message": None,
+                                "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                            {
+                                "enumerator_email": "jahnavi.meher@idinsight.org",
+                                "enumerator_id": "0294613",
+                                "enumerator_name": "Jahnavi Meher",
+                                "error_message": "Email delivery failed",
+                                "status": "failed",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                        ],
                         "manual_email_trigger_uid": None,
                         "slot_date": "Tue, 01 Jun 2021 00:00:00 GMT",
                         "slot_time": "00:00:00",
@@ -3974,30 +4177,31 @@ class TestEmails:
         request.getfixturevalue(user_fixture)
 
         payload = {
-            "email_config_uid": 1,
-            "email_schedule_uid": 1,
-            "delivery_time": "2021-06-01 00:00:00",
-            "slot_date": "2021-06-01",
-            "slot_time": "00:00:00",
-            "slot_type": "schedule",
-            "enumerator_status": [
+            "form_uid": 1,
+            "reports": [
                 {
-                    "enumerator_id": "0294612",
-                    "status": "sent",
-                },
-                {
-                    "enumerator_id": "0294613",
-                    "status": "failed",
-                    "error_message": "Email delivery failed",
-                },
-                {
-                    "enumerator_id": "0294614",
-                    "status": "sent",
-                },
-                {
-                    "enumerator_id": "0294615",
-                    "status": "sent",
-                },
+                    "email_config_uid": 1,
+                    "email_schedule_uid": 1,
+                    "delivery_time": "2021-06-01 00:00:00",
+                    "slot_date": "2021-06-01",
+                    "slot_time": "00:00:00",
+                    "slot_type": "schedule",
+                    "enumerator_status": [
+                        {
+                            "enumerator_id": "0294612",
+                            "status": "sent",
+                        },
+                        {
+                            "enumerator_id": "0294613",
+                            "status": "failed",
+                            "error_message": "Email delivery failed",
+                        },
+                        {
+                            "enumerator_id": "0294615",
+                            "status": "sent",
+                        },
+                    ],
+                }
             ],
         }
 
@@ -4031,32 +4235,31 @@ class TestEmails:
                         "email_schedule_uid": 1,
                         "enumerator_status": [
                             {
+                                "enumerator_email": "eric.dodge@idinsight.org",
                                 "enumerator_id": "0294612",
-                                "enumerator_uid": 1,
+                                "enumerator_name": "Eric Dodge",
                                 "error_message": None,
-                                "language": "English",
                                 "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
                             },
                             {
+                                "enumerator_email": "jahnavi.meher@idinsight.org",
                                 "enumerator_id": "0294613",
-                                "enumerator_uid": 2,
+                                "enumerator_name": "Jahnavi Meher",
                                 "error_message": "Email delivery failed",
-                                "language": "Telugu",
                                 "status": "failed",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
                             },
                             {
-                                "enumerator_id": "0294614",
-                                "enumerator_uid": 3,
-                                "error_message": None,
-                                "language": "Hindi",
-                                "status": "sent",
-                            },
-                            {
+                                "enumerator_email": "griffin.muteti@idinsight.org",
                                 "enumerator_id": "0294615",
-                                "enumerator_uid": 4,
+                                "enumerator_name": "Griffin Muteti",
                                 "error_message": None,
-                                "language": "Swahili",
                                 "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
                             },
                         ],
                         "manual_email_trigger_uid": None,
@@ -4104,30 +4307,31 @@ class TestEmails:
         request.getfixturevalue(user_fixture)
 
         payload = {
-            "email_config_uid": 1,
-            "manual_email_trigger_uid": 1,
-            "delivery_time": "2021-06-01 00:00:00",
-            "slot_date": "2021-06-01",
-            "slot_time": "00:00:00",
-            "slot_type": "trigger",
-            "enumerator_status": [
+            "form_uid": 1,
+            "reports": [
                 {
-                    "enumerator_id": "0294612",
-                    "status": "sent",
-                },
-                {
-                    "enumerator_id": "0294613",
-                    "status": "failed",
-                    "error_message": "Email delivery failed",
-                },
-                {
-                    "enumerator_id": "0294614",
-                    "status": "sent",
-                },
-                {
-                    "enumerator_id": "0294615",
-                    "status": "sent",
-                },
+                    "email_config_uid": 1,
+                    "manual_email_trigger_uid": 1,
+                    "delivery_time": "2021-06-01 00:00:00",
+                    "slot_date": "2021-06-01",
+                    "slot_time": "00:00:00",
+                    "slot_type": "trigger",
+                    "enumerator_status": [
+                        {
+                            "enumerator_id": "0294612",
+                            "status": "sent",
+                        },
+                        {
+                            "enumerator_id": "0294613",
+                            "status": "failed",
+                            "error_message": "Email delivery failed",
+                        },
+                        {
+                            "enumerator_id": "0294615",
+                            "status": "sent",
+                        },
+                    ],
+                }
             ],
         }
 
@@ -4161,32 +4365,31 @@ class TestEmails:
                         "email_schedule_uid": None,
                         "enumerator_status": [
                             {
+                                "enumerator_email": "eric.dodge@idinsight.org",
                                 "enumerator_id": "0294612",
-                                "enumerator_uid": 1,
+                                "enumerator_name": "Eric Dodge",
                                 "error_message": None,
-                                "language": "English",
                                 "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
                             },
                             {
+                                "enumerator_email": "jahnavi.meher@idinsight.org",
                                 "enumerator_id": "0294613",
-                                "enumerator_uid": 2,
+                                "enumerator_name": "Jahnavi Meher",
                                 "error_message": "Email delivery failed",
-                                "language": "Telugu",
                                 "status": "failed",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
                             },
                             {
-                                "enumerator_id": "0294614",
-                                "enumerator_uid": 3,
-                                "error_message": None,
-                                "language": "Hindi",
-                                "status": "sent",
-                            },
-                            {
+                                "enumerator_email": "griffin.muteti@idinsight.org",
                                 "enumerator_id": "0294615",
-                                "enumerator_uid": 4,
+                                "enumerator_name": "Griffin Muteti",
                                 "error_message": None,
-                                "language": "Swahili",
                                 "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
                             },
                         ],
                         "manual_email_trigger_uid": 1,
@@ -4197,7 +4400,6 @@ class TestEmails:
                 ],
                 "success": True,
             }
-
             assert get_response.status_code == 200
 
             print(get_response.json)

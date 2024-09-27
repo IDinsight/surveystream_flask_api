@@ -319,8 +319,13 @@ class EmailDeliveryReportValidator(FlaskForm):
     )
     slot_date = StringField(validators=[DataRequired()])
     slot_time = StringField(validators=[DataRequired()])
-    delivery_time = DateTimeField(validators=[DataRequired()])
+    delivery_time = StringField(validators=[DataRequired()])
     enumerator_status = FieldList(FormField(EnumeratorStatusListValidator), default=[])
+
+
+class EmailDeliveryReportBulkValidator(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
+    reports = FieldList(FormField(EmailDeliveryReportValidator), default=[])
 
 
 class EmailDeliveryReportQueryValidator(FlaskForm):

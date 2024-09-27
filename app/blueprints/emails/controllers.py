@@ -41,8 +41,8 @@ from .utils import (
 from .validators import (
     EmailConfigQueryParamValidator,
     EmailConfigValidator,
+    EmailDeliveryReportBulkValidator,
     EmailDeliveryReportQueryValidator,
-    EmailDeliveryReportValidator,
     EmailGsheetSourceParamValidator,
     EmailGsheetSourcePatchParamValidator,
     EmailScheduleQueryParamValidator,
@@ -1483,80 +1483,87 @@ def create_email_tablecatalog(validated_payload):
 
 @emails_bp.route("/report", methods=["POST"])
 @logged_in_active_user_required
-@validate_payload(EmailDeliveryReportValidator)
-@custom_permissions_required("WRITE Emails", "body", "email_config_uid")
-def load_email_schedule_delivery_report(validated_payload):
+@validate_payload(EmailDeliveryReportBulkValidator)
+@custom_permissions_required("WRITE Emails", "body", "form_uid")
+def load_email_schedule_delivery_reports(validated_payload):
     """
     Function to load email delivery report for email schedule or trigger
     """
 
-    slot_type = validated_payload.slot_type.data
-    email_schedule_uid = validated_payload.email_schedule_uid.data
-    manual_email_trigger_uid = validated_payload.manual_email_trigger_uid.data
-    slot_date = validated_payload.slot_date.data
-    slot_time = validated_payload.slot_time.data
-    delivery_time = validated_payload.delivery_time.data
+    form_uid = validated_payload.form_uid.data
+    for report in validated_payload.reports.data:
 
-    email_config_uid = validated_payload.email_config_uid.data
-    form_uid = EmailConfig.query.get_or_404(email_config_uid).form_uid
+        slot_type = report["slot_type"]
+        email_schedule_uid = report["email_schedule_uid"]
+        manual_email_trigger_uid = report["manual_email_trigger_uid"]
+        slot_date = report["slot_date"]
+        slot_time = report["slot_time"]
+        delivery_time = report["delivery_time"]
 
-    if slot_type not in ("schedule", "trigger"):
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "message": "Invalid slot type",
-                }
-            ),
-            404,
-        )
+        email_config_uid = report["email_config_uid"]
 
-    # Check if the email schedule delivery report already exists
-    check_email_schedule_report_exists = EmailDeliveryReport.query.filter_by(
-        email_schedule_uid=email_schedule_uid,
-        manual_email_trigger_uid=manual_email_trigger_uid,
-        slot_type=slot_type,
-        slot_date=slot_date,
-        slot_time=slot_time,
-    ).first()
-    if check_email_schedule_report_exists is not None:
-        # Delete existing report
-        EmailDeliveryReport.query.filter_by(
+        if slot_type not in ("schedule", "trigger"):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "message": "Invalid slot type",
+                    }
+                ),
+                404,
+            )
+
+        # Check if the email schedule delivery report already exists
+        check_email_schedule_report_exists = EmailDeliveryReport.query.filter_by(
             email_schedule_uid=email_schedule_uid,
             manual_email_trigger_uid=manual_email_trigger_uid,
             slot_type=slot_type,
             slot_date=slot_date,
             slot_time=slot_time,
-        ).delete()
+        ).first()
+
+        if check_email_schedule_report_exists is not None:
+            # Delete existing report
+            EmailDeliveryReport.query.filter_by(
+                email_schedule_uid=email_schedule_uid,
+                manual_email_trigger_uid=manual_email_trigger_uid,
+                slot_type=slot_type,
+                slot_date=slot_date,
+                slot_time=slot_time,
+            ).delete()
+            db.session.flush()
+
+        email_delivery_report = EmailDeliveryReport(
+            email_schedule_uid=email_schedule_uid,
+            manual_email_trigger_uid=manual_email_trigger_uid,
+            slot_type=slot_type,
+            slot_date=slot_date,
+            slot_time=slot_time,
+            delivery_time=delivery_time,
+        )
+        db.session.add(email_delivery_report)
+
         db.session.flush()
 
-    email_delivery_report = EmailDeliveryReport(
-        email_schedule_uid=email_schedule_uid,
-        manual_email_trigger_uid=manual_email_trigger_uid,
-        slot_type=slot_type,
-        slot_date=slot_date,
-        slot_time=slot_time,
-        delivery_time=delivery_time,
-    )
-    db.session.add(email_delivery_report)
-    db.session.flush()
+        email_delivery_report_uid = email_delivery_report.email_delivery_report_uid
 
-    email_delivery_report_uid = email_delivery_report.email_delivery_report_uid
-
-    for enum in validated_payload.enumerator_status.data:
-        enumerator_id = enum.get("enumerator_id")
-        enumerator_uid = (
-            Enumerator.query.filter_by(enumerator_id=enumerator_id, form_uid=form_uid)
-            .first()
-            .enumerator_uid
-        )
-        enum_report = EmailEnumeratorDeliveryStatus(
-            email_delivery_report_uid=email_delivery_report_uid,
-            enumerator_uid=enumerator_uid,
-            status=enum.get("status"),
-            error_message=enum.get("error_message"),
-        )
-        db.session.add(enum_report)
+        for enum in report["enumerator_status"]:
+            enumerator_id = enum.get("enumerator_id")
+            enumerator_uid = (
+                Enumerator.query.filter_by(
+                    enumerator_id=enumerator_id, form_uid=form_uid
+                )
+                .first()
+                .enumerator_uid
+            )
+            enum_report = EmailEnumeratorDeliveryStatus(
+                email_delivery_report_uid=email_delivery_report_uid,
+                enumerator_uid=enumerator_uid,
+                status=enum.get("status"),
+                error_message=enum.get("error_message"),
+            )
+            db.session.add(enum_report)
+        db.session.flush()
 
     try:
         db.session.commit()
@@ -1582,6 +1589,7 @@ def get_email_schedule_report(validated_query_params):
     """Function to get email delivery report for email schedule or trigger"""
 
     email_config_uid = validated_query_params.email_config_uid.data
+    form_uid = EmailConfig.query.get_or_404(email_config_uid).form_uid
 
     slot_type = validated_query_params.slot_type.data
 
@@ -1624,10 +1632,16 @@ def get_email_schedule_report(validated_query_params):
         result = []
         for email_delivery_report in email_delivery_reports:
             email_delivery_report_dict = email_delivery_report.to_dict()
-            email_enumerator_status = (
+            email_enumerator_status = get_surveyors(
+                form_uid, email_delivery_report.email_delivery_report_uid
+            )
+
+            """email_enumerator_status = (
                 db.session.query(
                     EmailEnumeratorDeliveryStatus.enumerator_uid,
                     Enumerator.enumerator_id,
+                    Enumerator.name,
+                    Enumerator.gender,
                     Enumerator.language,
                     EmailEnumeratorDeliveryStatus.status,
                     EmailEnumeratorDeliveryStatus.error_message,
@@ -1643,16 +1657,22 @@ def get_email_schedule_report(validated_query_params):
                 )
                 .all()
             )
+            """
+
             email_delivery_report_dict["enumerator_status"] = [
                 {
-                    "enumerator_uid": enum.enumerator_uid,
-                    "enumerator_id": enum.enumerator_id,
-                    "language": enum.language,
-                    "status": enum.status,
-                    "error_message": enum.error_message,
+                    "enumerator_id": enum[0],
+                    "enumerator_name": enum[1],
+                    "enumerator_email": enum[2],
+                    "supervisor_name": enum[3],
+                    "supervisor_email": enum[4],
+                    "status": enum[5],
+                    "error_message": enum[6],
                 }
                 for enum in email_enumerator_status
             ]
+            print(email_delivery_report_dict)
+
             result.append(email_delivery_report_dict)
 
         return (
