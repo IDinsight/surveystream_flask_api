@@ -1,40 +1,46 @@
-import pysurveycto
 import json
+
+import pandas as pd
+import pysurveycto
 from flask import current_app, jsonify, request
 from flask_login import current_user
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import aliased
+
 from app import db
 from app.utils.utils import (
     custom_permissions_required,
-    logged_in_active_user_required,
     get_aws_secret,
-    validate_query_params,
+    logged_in_active_user_required,
     validate_payload,
+    validate_query_params,
 )
+
 from . import forms_bp
 from .models import (
     Form,
-    SCTOFormSettings,
-    SCTOQuestionMapping,
     SCTOChoiceLabel,
-    SCTOQuestionLabel,
-    SCTOQuestion,
     SCTOChoiceList,
+    SCTOFormSettings,
+    SCTOQuestion,
+    SCTOQuestionLabel,
+    SCTOQuestionMapping,
 )
 from .validators import (
     CreateFormValidator,
-    UpdateFormValidator,
-    GetFormQueryParamValidator,
     CreateSCTOQuestionMappingValidator,
+    GetFormQueryParamValidator,
+    UpdateFormValidator,
     UpdateSCTOQuestionMappingValidator,
 )
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import aliased
 
 
 @forms_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(GetFormQueryParamValidator)
-@custom_permissions_required(["READ Data Quality Forms"], "query", "survey_uid")
+@custom_permissions_required(
+    ["READ Data Quality Forms", "READ Admin Forms"], "query", "survey_uid"
+)
 def get_forms(validated_query_params):
     """
     Return details for a user's forms
@@ -76,7 +82,9 @@ def get_forms(validated_query_params):
 
 @forms_bp.route("/<int:form_uid>", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required(["READ Data Quality Forms"], "path", "form_uid")
+@custom_permissions_required(
+    ["READ Data Quality Forms", "READ Admin Forms"], "path", "form_uid"
+)
 def get_form(form_uid):
     """
     Return details for a form
@@ -101,7 +109,9 @@ def get_form(form_uid):
 @forms_bp.route("", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(CreateFormValidator)
-@custom_permissions_required(["WRITE Data Quality Forms"], "body", "survey_uid")
+@custom_permissions_required(
+    ["WRITE Data Quality Forms", "WRITE Admin Forms"], "body", "survey_uid"
+)
 def create_form(validated_payload):
     """
     Create a form
@@ -119,6 +129,14 @@ def create_form(validated_payload):
         and validated_payload.dq_form_type.data is None
     ):
         return jsonify({"error": "form_type=dq must have a dq_form_type defined"}), 422
+    if (
+        validated_payload.form_type.data == "admin"
+        and validated_payload.admin_form_type.data is None
+    ):
+        return (
+            jsonify({"error": "form_type=admin must have a admin_form_type defined"}),
+            422,
+        )
 
     form = Form(
         survey_uid=validated_payload.survey_uid.data,
@@ -131,6 +149,7 @@ def create_form(validated_payload):
         server_access_allowed=validated_payload.server_access_allowed.data,
         form_type=validated_payload.form_type.data,
         dq_form_type=validated_payload.dq_form_type.data,
+        admin_form_type=validated_payload.admin_form_type.data,
         parent_form_uid=validated_payload.parent_form_uid.data,
     )
 
@@ -165,7 +184,9 @@ def create_form(validated_payload):
 @forms_bp.route("/<int:form_uid>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateFormValidator)
-@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
+@custom_permissions_required(
+    ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
+)
 def update_form(form_uid, validated_payload):
     """
     Update a form
@@ -184,6 +205,14 @@ def update_form(form_uid, validated_payload):
         and validated_payload.dq_form_type.data is None
     ):
         return jsonify({"error": "form_type=dq must have a dq_form_type defined"}), 422
+    if (
+        validated_payload.form_type.data == "admin"
+        and validated_payload.admin_form_type.data is None
+    ):
+        return (
+            jsonify({"error": "form_type=admin must have a admin_form_type defined"}),
+            422,
+        )
 
     try:
         Form.query.filter_by(form_uid=form_uid).update(
@@ -197,6 +226,7 @@ def update_form(form_uid, validated_payload):
                 Form.server_access_allowed: validated_payload.server_access_allowed.data,
                 Form.form_type: validated_payload.form_type.data,
                 Form.dq_form_type: validated_payload.dq_form_type.data,
+                Form.admin_form_type: validated_payload.admin_form_type.data,
                 Form.parent_form_uid: validated_payload.parent_form_uid.data,
             },
             synchronize_session="fetch",
@@ -223,7 +253,9 @@ def update_form(form_uid, validated_payload):
 
 @forms_bp.route("/<int:form_uid>", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
+@custom_permissions_required(
+    ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
+)
 def delete_form(form_uid):
     """
     Delete a form
@@ -243,7 +275,9 @@ def delete_form(form_uid):
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(CreateSCTOQuestionMappingValidator)
-@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
+@custom_permissions_required(
+    ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
+)
 def create_scto_question_mapping(form_uid, validated_payload):
     """
     Create a SurveyCTO question mapping for a form
@@ -264,6 +298,16 @@ def create_scto_question_mapping(form_uid, validated_payload):
                 {
                     "success": False,
                     "error": "form_type=dq must have a mapping for dq_enumerator_id",
+                }
+            ),
+            422,
+        )
+    if form.form_type in ["parent", "dq"] and validated_payload.target_id.data is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"form_type={form.form_type} must have a mapping for target_id",
                 }
             ),
             422,
@@ -300,7 +344,9 @@ def create_scto_question_mapping(form_uid, validated_payload):
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateSCTOQuestionMappingValidator)
-@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
+@custom_permissions_required(
+    ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
+)
 def update_scto_question_mapping(form_uid, validated_payload):
     """
     Update the SCTO question mapping for a form
@@ -318,6 +364,16 @@ def update_scto_question_mapping(form_uid, validated_payload):
                 {
                     "success": False,
                     "error": "form_type=dq must have a mapping for dq_enumerator_id",
+                }
+            ),
+            422,
+        )
+    if form.form_type in ["parent", "dq"] and validated_payload.target_id.data is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"form_type={form.form_type} must have a mapping for target_id",
                 }
             ),
             422,
@@ -350,7 +406,9 @@ def update_scto_question_mapping(form_uid, validated_payload):
 
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required(["READ Data Quality Forms"], "path", "form_uid")
+@custom_permissions_required(
+    ["READ Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
+)
 def get_scto_question_mapping(form_uid):
     """
     Get the SCTO question mapping for a form
@@ -369,7 +427,9 @@ def get_scto_question_mapping(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-question-mapping", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
+@custom_permissions_required(
+    ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
+)
 def delete_scto_question_mapping(form_uid):
     """
     Delete the question mapping for a form
@@ -390,7 +450,9 @@ def delete_scto_question_mapping(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition/refresh", methods=["POST"])
 @logged_in_active_user_required
-@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
+@custom_permissions_required(
+    ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
+)
 def ingest_scto_form_definition(form_uid):
     """
     Ingest form definition from the SurveyCTO server
@@ -444,7 +506,10 @@ def ingest_scto_form_definition(form_uid):
 
     # Get the list of columns for the `survey` and `choices` tabs of the form definition
     survey_tab_columns = scto_form_definition["fieldsRowsAndColumns"][0]
-    choices_tab_columns = scto_form_definition["choicesRowsAndColumns"][0]
+    choices_tab_columns = [
+        col.replace("label::", "label:")
+        for col in scto_form_definition["choicesRowsAndColumns"][0]
+    ]  # Deal with horrible formatting quirks that SurveyCTO allows
     settings_tab_columns = scto_form_definition["settingsRowsAndColumns"][0]
     unique_list_names = []
 
@@ -471,6 +536,48 @@ def ingest_scto_form_definition(form_uid):
 
     db.session.add(scto_settings)
 
+    # Check for duplicate choice values in the choices tab
+    errors = []
+    df = pd.DataFrame(
+        scto_form_definition["choicesRowsAndColumns"][1:], columns=choices_tab_columns
+    )
+
+    df = df.loc[df["list_name"] != ""]
+
+    value_column_name = "value"
+    if "value" not in df.columns:
+        if "name" in df.columns:
+            value_column_name = "name"
+
+        else:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": [
+                            "An error was found on the choices tab of your SurveyCTO form definition. No 'value' or 'name' column was found. Please update your form definition on SurveyCTO and try again."
+                        ],
+                    }
+                ),
+                422,
+            )
+
+    duplicate_choice_values = df[
+        df.duplicated(subset=["list_name", value_column_name])
+    ][["list_name", value_column_name]].drop_duplicates()
+
+    for i, row in duplicate_choice_values.iterrows():
+        errors.append(
+            f'An error was found on the choices tab of your SurveyCTO form definition. The choice list "{row[0]}" has multiple choices with the value "{row[1]}". Please update your form definition on SurveyCTO and try again.'
+        )
+
+    if len(errors) > 0:
+        return jsonify({"success": False, "errors": errors}), 422
+
+    choice_labels = [
+        col for col in choices_tab_columns if col.split(":")[0].lower() == "label"
+    ]
+
     # Process the lists and choices from the `choices` tab of the form definition
     for row in scto_form_definition["choicesRowsAndColumns"][1:]:
         choices_dict = dict(zip(choices_tab_columns, row))
@@ -484,12 +591,14 @@ def ingest_scto_form_definition(form_uid):
                 db.session.add(scto_choice_list)
                 try:
                     db.session.flush()
-                except IntegrityError as e:
+                except:
                     db.session.rollback()
                     return (
                         jsonify(
                             {
-                                "error": "SurveyCTO form definition contains duplicate choice list entities"
+                                "errors": [
+                                    "An unknown error occurred while processing the choices tab of your SurveyCTO form definition."
+                                ]
                             }
                         ),
                         500,
@@ -497,18 +606,14 @@ def ingest_scto_form_definition(form_uid):
 
                 unique_list_names.append(choices_dict["list_name"])
 
-            choice_labels = [
-                col
-                for col in choices_tab_columns
-                if col.split(":")[0].lower() == "label"
-            ]
-
             for choice_label in choice_labels:
                 # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
                 choice_value = choices_dict.get("value", choices_dict.get("name", None))
                 language = "default"
                 if len(choice_label.split(":")) > 1:
-                    language = choice_label.split(":")[1]
+                    language = choice_label.split(":")[
+                        -1
+                    ]  # Get the last element because SCTO allows for multiple colons like label::hindi
 
                 # Add the choice label to the database
                 scto_choice_label = SCTOChoiceLabel(
@@ -571,7 +676,7 @@ def ingest_scto_form_definition(form_uid):
                 db.session.flush()
             except IntegrityError as e:
                 db.session.rollback()
-                return (jsonify({"error": str(e)}),)
+                return (jsonify({"error": str(e)}), 500)
 
             # Check if a repeat group is ending
             if questions_dict["type"].strip().lower() == "end repeat":
@@ -588,7 +693,9 @@ def ingest_scto_form_definition(form_uid):
                 # We are going to get the language from the label column that is in the format `label:<language>` or just `label` if the language is not specified
                 language = "default"
                 if len(question_label.split(":")) > 1:
-                    language = question_label.split(":")[1]
+                    language = question_label.split(":")[
+                        -1
+                    ]  # Get the last element because SCTO allows for multiple colons like label::hindi
 
                 # Add the question label to the database
                 scto_question_label = SCTOQuestionLabel(
@@ -603,9 +710,18 @@ def ingest_scto_form_definition(form_uid):
     except IntegrityError as e:
         db.session.rollback()
         return (
-            jsonify({"error": "SurveyCTO form definition contains duplicate entities"}),
+            jsonify(
+                {
+                    "error": [
+                        "A duplicate error was found on the survey tab of your SurveyCTO form definition. Please update your form definition on SurveyCTO and try again."
+                    ]
+                }
+            ),
             500,
         )
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
     response = {
         "success": True,
@@ -616,7 +732,9 @@ def ingest_scto_form_definition(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition", methods=["DELETE"])
 @logged_in_active_user_required
-@custom_permissions_required(["WRITE Data Quality Forms"], "path", "form_uid")
+@custom_permissions_required(
+    ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
+)
 def delete_scto_form_definition(form_uid):
     """
     Delete the SuveyCTO form definition for a form
@@ -639,7 +757,9 @@ def delete_scto_form_definition(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition", methods=["GET"])
 @logged_in_active_user_required
-@custom_permissions_required(["READ Data Quality Forms"], "path", "form_uid")
+@custom_permissions_required(
+    ["READ Data Quality Forms", "READ Admin Forms"], "path", "form_uid"
+)
 def get_scto_form_definition(form_uid):
     """
     Get SurveyCTO form definition questions from the database table

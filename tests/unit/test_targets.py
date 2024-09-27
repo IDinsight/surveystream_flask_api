@@ -1,9 +1,9 @@
-import jsondiff
-import pytest
 import base64
-import pandas as pd
 from pathlib import Path
 
+import jsondiff
+import pandas as pd
+import pytest
 from utils import (
     create_new_survey_role_with_permissions,
     login_user,
@@ -125,7 +125,39 @@ class TestTargets:
         yield
 
     @pytest.fixture()
-    def create_form(self, client, login_test_user, csrf_token, create_survey):
+    def create_module_questionnaire(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Insert new module_questionnaire to set up mapping criteria needed for assignments
+        """
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_form(
+        self, client, login_test_user, csrf_token, create_module_questionnaire
+    ):
         """
         Insert new form as a setup step for the form tests
         """
@@ -402,7 +434,6 @@ class TestTargets:
         )
         assert response.status_code == 200
 
-    
     @pytest.fixture()
     def upload_target_status(
         self, client, login_test_user, upload_targets_csv, csrf_token
@@ -441,8 +472,8 @@ class TestTargets:
                     "webapp_tag_color": "green",
                     "revisit_sections": [],
                     "scto_fields": {"field1": "value3", "field2": "value4"},
-                }
-            ]
+                },
+            ],
         }
 
         response = client.put(
@@ -456,7 +487,12 @@ class TestTargets:
 
     @pytest.fixture()
     def upload_targets_csv_no_locations(
-        self, client, login_test_user, create_locations_for_targets_file, csrf_token
+        self,
+        client,
+        login_test_user,
+        create_locations_for_targets_file,
+        update_target_mapping_criteria_to_language,
+        csrf_token,
     ):
         """
         Upload the targets csv with no locations
@@ -545,6 +581,87 @@ class TestTargets:
             headers={"X-CSRF-Token": csrf_token},
         )
 
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def update_target_mapping_criteria_to_language(self, client, csrf_token):
+        """
+        Method to update the mapping criteria to Langauge
+        """
+
+        # Update target_mapping_criteria to gender
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Language"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def update_target_mapping_criteria_to_gender(self, client, csrf_token):
+        """
+        Method to update the mapping criteria to Gender
+        """
+
+        # Update target_mapping_criteria to gender
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Gender"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def update_target_mapping_criteria_to_none(self, client, csrf_token):
+        """
+        Method to update the mapping criteria to none
+        """
+
+        # Update target_mapping_criteria to None
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": None,
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
         assert response.status_code == 200
 
     def test_upload_targets_csv_for_super_admin_user(
@@ -1409,10 +1526,16 @@ class TestTargets:
         assert checkdiff == {}
 
     def test_upload_targets_csv_no_locations_no_geo_levels_defined(
-        self, client, login_test_user, create_form, csrf_token
+        self,
+        client,
+        login_test_user,
+        create_form,
+        update_target_mapping_criteria_to_language,
+        csrf_token,
     ):
         """
         Test that we can upload a targets csv with no locations mapped and no geo levels defined
+        if location is not the mapping criteria
         """
 
         filepath = (
@@ -1981,7 +2104,7 @@ class TestTargets:
         assert checkdiff == {}
 
         # Fetch targets to check if the successful targets were uploaded
-        # Combination of targets loaded using upload_targets_csv and the successful targets from the error file 
+        # Combination of targets loaded using upload_targets_csv and the successful targets from the error file
         expected_response = {
             "data": [
                 {
@@ -2177,7 +2300,6 @@ class TestTargets:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-
     def test_upload_column_config(
         self,
         client,
@@ -2206,7 +2328,6 @@ class TestTargets:
         print(response.json)
 
         if expected_permission:
-
             expected_response = {
                 "data": {
                     "file_columns": [
@@ -2296,7 +2417,7 @@ class TestTargets:
                             "column_key": "revisit_sections",
                             "column_label": "Revisit Sections",
                         },
-                    ]
+                    ],
                 },
                 "success": True,
             }
@@ -2564,7 +2685,6 @@ class TestTargets:
         )
 
         if expected_permission:
-
             assert response.status_code == 200
 
             expected_response = {
@@ -2578,7 +2698,10 @@ class TestTargets:
                                         "field_label": "Mobile no.",
                                     },
                                     {"column_name": "name1", "field_label": "Name"},
-                                    {"column_name": "address1", "field_label": "Address"},
+                                    {
+                                        "column_name": "address1",
+                                        "field_label": "Address",
+                                    },
                                 ],
                                 "gender": "gender1",
                                 "language": "language1",
@@ -2639,7 +2762,10 @@ class TestTargets:
                                         "field_label": "Mobile no.",
                                     },
                                     {"column_name": "name1", "field_label": "Name"},
-                                    {"column_name": "address1", "field_label": "Address"},
+                                    {
+                                        "column_name": "address1",
+                                        "field_label": "Address",
+                                    },
                                 ],
                                 "gender": "gender1",
                                 "language": "language1",
@@ -2753,6 +2879,7 @@ class TestTargets:
         login_test_user,
         upload_targets_csv,
         create_target_column_config,
+        update_target_mapping_criteria_to_language,
         csrf_token,
     ):
         """
@@ -3138,3 +3265,278 @@ class TestTargets:
 
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
+    def test_upload_targets_csv_missing_location_error(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Test that when uploading targets csv without a locations column
+        when mapping criteria has locations raises error
+
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_no_locations.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id",
+                "language": "language",
+                "gender": "gender",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile no.",
+                        "column_name": "mobile_primary",
+                    },
+                    {
+                        "field_label": "Name",
+                        "column_name": "name",
+                    },
+                    {
+                        "field_label": "Address",
+                        "column_name": "address",
+                    },
+                ],
+            },
+            "file": targets_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "column_mapping": [
+                    "Field name 'location_id_column' is missing from the column mapping but is required based on the mapping criteria."
+                ]
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_targets_csv_missing_gender_error(
+        self,
+        client,
+        login_test_user,
+        create_form,
+        update_target_mapping_criteria_to_gender,
+        csrf_token,
+    ):
+        """
+        Test that when uploading targets csv without a gender column when
+        the mapping criteria has gender raises error
+
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_small.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "language": "language1",
+                "location_id_column": "psu_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile no.",
+                        "column_name": "mobile_primary1",
+                    },
+                    {
+                        "field_label": "Name",
+                        "column_name": "name1",
+                    },
+                    {
+                        "field_label": "Address",
+                        "column_name": "address1",
+                    },
+                ],
+            },
+            "file": targets_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "column_mapping": [
+                    "Field name 'gender' is missing from the column mapping but is required based on the mapping criteria."
+                ]
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_targets_csv_missing_language_error(
+        self,
+        client,
+        login_test_user,
+        create_form,
+        update_target_mapping_criteria_to_language,
+        csrf_token,
+    ):
+        """
+        Test that when uploading targets csv without a language column when
+        the mapping criteria has language raises error
+
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_small.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "gender": "gender1",
+                "location_id_column": "psu_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile no.",
+                        "column_name": "mobile_primary1",
+                    },
+                    {
+                        "field_label": "Name",
+                        "column_name": "name1",
+                    },
+                    {
+                        "field_label": "Address",
+                        "column_name": "address1",
+                    },
+                ],
+            },
+            "file": targets_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "column_mapping": [
+                    "Field name 'language' is missing from the column mapping but is required based on the mapping criteria."
+                ]
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_targets_csv_no_mapping_criteria_error(
+        self,
+        client,
+        login_test_user,
+        create_form,
+        update_target_mapping_criteria_to_none,
+        csrf_token,
+    ):
+        """
+        Test uploading targets csv fails without a mapping criteria set
+
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_small.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "gender": "gender1",
+                "location_id_column": "psu_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile no.",
+                        "column_name": "mobile_primary1",
+                    },
+                    {
+                        "field_label": "Name",
+                        "column_name": "name1",
+                    },
+                    {
+                        "field_label": "Address",
+                        "column_name": "address1",
+                    },
+                ],
+            },
+            "file": targets_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "error": "Supervisor to target mapping criteria not found. Cannot upload targets without selecting a mapping criteria first.",
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}

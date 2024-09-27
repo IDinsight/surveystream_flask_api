@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
-from app import db
+
 from passlib.hash import pbkdf2_sha256
+
+from app import db
 
 
 class User(db.Model):
@@ -30,6 +32,9 @@ class User(db.Model):
     is_super_admin = db.Column(db.Boolean, default=False, nullable=True)
     can_create_survey = db.Column(db.Boolean, default=False, nullable=True)
 
+    ## Mapping fields
+    gender = db.Column(db.String(), nullable=True)
+
     def __init__(
         self,
         email,
@@ -40,6 +45,7 @@ class User(db.Model):
         is_super_admin=False,
         can_create_survey=False,
         roles=None,
+        gender=None,
     ):
         if roles is None:
             roles = []
@@ -52,6 +58,7 @@ class User(db.Model):
         else:
             self.password_secure = None
         self.roles = roles
+        self.gender = gender
         self.is_super_admin = is_super_admin
         self.can_create_survey = can_create_survey
         self.active = active
@@ -63,6 +70,7 @@ class User(db.Model):
             "first_name": self.first_name,
             "last_name": self.last_name,
             "roles": self.roles,
+            "gender": self.gender,
             "is_super_admin": self.is_super_admin,
             "can_create_survey": self.can_create_survey,
             "active": self.active,

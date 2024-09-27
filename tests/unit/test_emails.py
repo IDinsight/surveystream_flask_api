@@ -121,7 +121,39 @@ class TestEmails:
         yield
 
     @pytest.fixture()
-    def create_form(self, client, login_test_user, csrf_token, create_survey):
+    def create_module_questionnaire(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Insert new module_questionnaire as a setup step for the module_questionnaire tests
+        """
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_form(
+        self, client, login_test_user, csrf_token, create_module_questionnaire
+    ):
         """
         Insert new form as a setup step for the form tests
         """
@@ -158,15 +190,19 @@ class TestEmails:
         Insert an email config as a setup step for email tests
         """
         payload = {
-            "config_type": "Assignments",
+            "config_name": "Assignments",
             "form_uid": 1,
             "report_users": [1, 2, 3],
-            "email_source": "SurveyStream Data",
+            "email_source": "Google Sheet",
             "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
             "email_source_gsheet_tab": "Test_Success",
             "email_source_gsheet_header_row": 1,
             "email_source_tablename": "test_table",
             "email_source_columns": ["test_column"],
+            "cc_users": [1, 2, 3],
+            "pdf_attachment": True,
+            "pdf_encryption": True,
+            "pdf_encryption_password_type": "Pattern",
         }
         response = client.post(
             "/api/emails/config",
@@ -194,6 +230,52 @@ class TestEmails:
             "language": "english",
             "content": "Test Content",
             "email_config_uid": create_email_config["email_config_uid"],
+            "variable_list": [],
+            "table_list": [
+                {
+                    "table_name": "test_table",
+                    "column_mapping": {
+                        "test_column1": "TEST Column 1",
+                        "test_column2": "TEST Column 2",
+                    },
+                    "sort_list": {"test_column1": "asc", "test_column2": "desc"},
+                    "variable_name": "test_table+_1",
+                    "filter_list": [
+                        {
+                            "filter_group": [
+                                {
+                                    "table_name": "test_table",
+                                    "filter_variable": "test_column",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value",
+                                },
+                                {
+                                    "table_name": "test_table",
+                                    "filter_variable": "test_column2",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value2",
+                                },
+                            ]
+                        },
+                        {
+                            "filter_group": [
+                                {
+                                    "table_name": "test_table",
+                                    "filter_variable": "test_column",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value",
+                                },
+                                {
+                                    "table_name": "test_table",
+                                    "filter_variable": "test_column2",
+                                    "filter_operator": "Is not",
+                                    "filter_value": "test_value2",
+                                },
+                            ]
+                        },
+                    ],
+                }
+            ],
         }
         response = client.post(
             "/api/emails/template",
@@ -201,7 +283,9 @@ class TestEmails:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 201
+        print(response.json)
         return response.json["data"]
 
     @pytest.fixture
@@ -222,10 +306,6 @@ class TestEmails:
             (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
             for i in range(4)
         ]
-
-        # add today
-
-        future_dates.append(current_datetime.strftime("%Y-%m-%d")),
 
         payload = {
             "dates": future_dates,
@@ -283,7 +363,7 @@ class TestEmails:
         Test if exception is raised when creating configs
         """
         payload = {
-            "config_type": "AejroSkv98z1pqnX6G3fT7WbL2u9Nh4kY1QcVxJld5MgP0UmwHDsIFiyCtROZBEa9Dz5jLpQZcVx8NwTm6Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8",
+            "config_name": "AejroSkv98z1pqnX6G3fT7WbL2u9Nh4kY1QcVxJld5MgP0UmwHDsIFiyCtROZBEa9Dz5jLpQZcVx8NwTm6Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8",
             "form_uid": 1,
         }
         response = client.post(
@@ -319,21 +399,38 @@ class TestEmails:
             assert response.status_code == 200
             expected_response = {
                 "data": {
-                    "config_type": "Assignments",
+                    "config_name": "Assignments",
                     "email_config_uid": 1,
                     "form_uid": 1,
                     "report_users": [1, 2, 3],
-                    "email_source": "SurveyStream Data",
-                    "email_source_columns": ["test_column"],
+                    "email_source": "Google Sheet",
+                    "email_source_columns": [
+                        "test_column",
+                        "Surveyor Name",
+                        "Surveyor Email",
+                        "Surveyor Language",
+                        "Surveyor ID",
+                        "Assignment Date",
+                        "Survey Name",
+                        "Schedule Name",
+                        "Config Name",
+                        "SCTO Form ID",
+                    ],
                     "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                     "email_source_gsheet_tab": "Test_Success",
                     "email_source_gsheet_header_row": 1,
                     "email_source_tablename": "test_table",
-                    "table_catalog": [],
+                    "cc_users": [1, 2, 3],
+                    "pdf_attachment": True,
+                    "pdf_encryption": True,
+                    "pdf_encryption_password_type": "Pattern",
                 },
                 "success": True,
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
+            print(expected_response)
+            print(response.json)
+            print(checkdiff)
             assert checkdiff == {}
         else:
             assert response.status_code == 403
@@ -367,7 +464,7 @@ class TestEmails:
             "email_source_gsheet_tab": "Test_Success",
             "email_source_gsheet_header_row": 1,
         }
-        response = client.get(
+        response = client.post(
             "/api/emails/gsheet",
             json=payload,
             content_type="application/json",
@@ -415,7 +512,7 @@ class TestEmails:
             "email_source_gsheet_tab": "Test_Success",
             "email_source_gsheet_header_row": 1,
         }
-        response = client.get(
+        response = client.post(
             "/api/emails/gsheet",
             json=payload,
             content_type="application/json",
@@ -456,7 +553,7 @@ class TestEmails:
             "email_source_gsheet_tab": "dummy",
             "email_source_gsheet_header_row": 1,
         }
-        response = client.get(
+        response = client.post(
             "/api/emails/gsheet",
             json=payload,
             content_type="application/json",
@@ -528,7 +625,7 @@ class TestEmails:
             "email_source_gsheet_tab": "Test_BlankException",
             "email_source_gsheet_header_row": 100,
         }
-        response = client.get(
+        response = client.post(
             "/api/emails/gsheet",
             json=payload,
             content_type="application/json",
@@ -585,17 +682,27 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
-                        "config_type": "Assignments",
+                        "cc_users": [1, 2, 3],
+                        "config_name": "Assignments",
                         "email_config_uid": 1,
-                        "email_source": "SurveyStream Data",
-                        "email_source_columns": ["test_column"],
+                        "email_source": "Google Sheet",
+                        "email_source_columns": [
+                            "test_column",
+                            "Surveyor Name",
+                            "Surveyor Email",
+                            "Surveyor Language",
+                            "Surveyor ID",
+                            "Assignment Date",
+                            "Survey Name",
+                            "Schedule Name",
+                            "Config Name",
+                            "SCTO Form ID",
+                        ],
+                        "email_source_gsheet_header_row": 1,
                         "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                         "email_source_gsheet_tab": "Test_Success",
-                        "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
-                        "table_catalog": [],
                         "form_uid": 1,
-                        "report_users": [1, 2, 3],
                         "manual_triggers": [
                             {
                                 "date": response.json["data"][0]["manual_triggers"][0][
@@ -608,15 +715,20 @@ class TestEmails:
                                 "time": "08:00:00",
                             }
                         ],
+                        "pdf_attachment": True,
+                        "pdf_encryption": True,
+                        "pdf_encryption_password_type": "Pattern",
+                        "report_users": [1, 2, 3],
                         "schedules": [
                             {
                                 "dates": response.json["data"][0]["schedules"][0][
                                     "dates"
                                 ],
                                 "email_config_uid": 1,
-                                "email_schedule_uid": 1,
-                                "time": "20:00:00",
                                 "email_schedule_name": "Test Schedule",
+                                "email_schedule_uid": 1,
+                                "filter_list": [],
+                                "time": "20:00:00",
                             }
                         ],
                         "templates": [
@@ -671,17 +783,31 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
-                        "config_type": "Assignments",
+                        "config_name": "Assignments",
                         "email_config_uid": 1,
                         "form_uid": 1,
                         "report_users": [1, 2, 3],
-                        "email_source": "SurveyStream Data",
-                        "email_source_columns": ["test_column"],
+                        "email_source": "Google Sheet",
+                        "email_source_columns": [
+                            "test_column",
+                            "Surveyor Name",
+                            "Surveyor Email",
+                            "Surveyor Language",
+                            "Surveyor ID",
+                            "Assignment Date",
+                            "Survey Name",
+                            "Schedule Name",
+                            "Config Name",
+                            "SCTO Form ID",
+                        ],
                         "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                         "email_source_gsheet_tab": "Test_Success",
                         "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
-                        "table_catalog": [],
+                        "cc_users": [1, 2, 3],
+                        "pdf_attachment": True,
+                        "pdf_encryption": True,
+                        "pdf_encryption_password_type": "Pattern",
                     }
                 ],
                 "success": True,
@@ -711,7 +837,7 @@ class TestEmails:
 
         payload = {
             "email_config_uid": 1,
-            "config_type": "finance",
+            "config_name": "finance",
             "form_uid": 1,
             "report_users": [1, 2, 3],
             "email_source": "SurveyStream Data",
@@ -719,8 +845,11 @@ class TestEmails:
             "email_source_gsheet_tab": "Test_Success",
             "email_source_gsheet_header_row": 1,
             "email_source_tablename": "test_table",
-            "email_source_columns": ["test_column"],
-            "table_catalog": [],
+            "email_source_columns": ["test_column", "test_column2"],
+            "cc_users": [1, 2, 3],
+            "pdf_attachment": True,
+            "pdf_encryption": True,
+            "pdf_encryption_password_type": "Password",
         }
 
         response = client.put(
@@ -745,13 +874,40 @@ class TestEmails:
 
             assert get_response.status_code == 200
 
-            checkdiff = jsondiff.diff(
-                {
-                    "data": {
-                        **payload,
-                    },
-                    "success": True,
+            expected_response = {
+                "data": {
+                    "cc_users": [1, 2, 3],
+                    "config_name": "finance",
+                    "email_config_uid": 1,
+                    "email_source": "SurveyStream Data",
+                    "email_source_columns": [
+                        "test_column",
+                        "test_column2",
+                        "Surveyor Name",
+                        "Surveyor Email",
+                        "Surveyor Language",
+                        "Surveyor ID",
+                        "Assignment Date",
+                        "Survey Name",
+                        "Schedule Name",
+                        "Config Name",
+                        "SCTO Form ID",
+                    ],
+                    "email_source_gsheet_header_row": 1,
+                    "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
+                    "email_source_gsheet_tab": "Test_Success",
+                    "email_source_tablename": "test_table",
+                    "form_uid": 1,
+                    "pdf_attachment": True,
+                    "pdf_encryption": True,
+                    "pdf_encryption_password_type": "Password",
+                    "report_users": [1, 2, 3],
                 },
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
                 get_response.json,
             )
 
@@ -769,18 +925,21 @@ class TestEmails:
     def test_emails_update_config_exception(
         self,
         client,
-        login_test_user,
-        create_email_config,
         csrf_token,
-        test_user_credentials,
-        create_form,
+        user_permissions,
+        create_survey,
+        create_email_config,
+        request,
     ):
         """
         Test if exception is raised when creating configs
         """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
         payload = {
             "email_config_uid": 1,
-            "config_type": "AejroSkv98z1pqnX6G3fT7WbL2u9Nh4kY1QcVxJld5MgP0UmwHDsIFiyCtROZBEa9Dz5jLpQZcVx8NwTm6Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8Sc1Mw7Ln2Kg3Fh2Bv4Uq9Zy8Wx5Lk3Jc7Gp4Zb9Ah2Dm6Fn5Oe4Vx8",
+            "config_name": None,
             "form_uid": 1,
         }
 
@@ -790,7 +949,9 @@ class TestEmails:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        assert response.status_code == 500
+        print(response.json)
+
+        assert response.status_code == 422
 
     def test_emails_delete_config(
         self,
@@ -816,7 +977,6 @@ class TestEmails:
         print(response.json)
 
         if expected_permission:
-
             assert response.status_code == 200
 
             expected_response = {
@@ -824,6 +984,78 @@ class TestEmails:
                 "message": "Email config deleted successfully",
             }
 
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_emails_create_email_config_non_encrypted_attachment(
+        self,
+        client,
+        csrf_token,
+        user_permissions,
+        create_email_config,
+        request,
+    ):
+        """
+        Create an email config for encryptred email with no password
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "config_name": "Assignments_attachment",
+            "form_uid": 1,
+            "report_users": [1, 2, 3],
+            "email_source": "SurveyStream Data",
+            "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
+            "email_source_gsheet_tab": "Test_Success",
+            "email_source_gsheet_header_row": 1,
+            "email_source_tablename": "test_table",
+            "email_source_columns": ["test_column"],
+            "cc_users": [1, 2, 3],
+            "pdf_attachment": True,
+            "pdf_encryption": False,
+        }
+        response = client.post(
+            "/api/emails/config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 201
+            expected_response = {
+                "data": {
+                    "config_name": "Assignments_attachment",
+                    "email_config_uid": 2,
+                    "form_uid": 1,
+                    "report_users": [1, 2, 3],
+                    "email_source": "SurveyStream Data",
+                    "email_source_columns": [
+                        "test_column",
+                    ],
+                    "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
+                    "email_source_gsheet_tab": "Test_Success",
+                    "email_source_gsheet_header_row": 1,
+                    "email_source_tablename": "test_table",
+                    "cc_users": [1, 2, 3],
+                    "pdf_attachment": True,
+                    "pdf_encryption": False,
+                    "pdf_encryption_password_type": None,
+                },
+                "message": "Email Config created successfully",
+                "success": True,
+            }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
         else:
@@ -864,6 +1096,7 @@ class TestEmails:
                     "email_schedule_uid": 1,
                     "time": "20:00:00",
                     "email_schedule_name": "Test Schedule",
+                    "filter_list": [],
                 },
                 "success": True,
             }
@@ -918,6 +1151,7 @@ class TestEmails:
                         "email_schedule_uid": 1,
                         "time": "20:00:00",
                         "email_schedule_name": "Test Schedule",
+                        "filter_list": [],
                     }
                 ],
                 "success": True,
@@ -1050,7 +1284,6 @@ class TestEmails:
         print(response.json)
 
         if expected_permission:
-
             expected_response = {
                 "data": {
                     **payload,
@@ -1092,7 +1325,381 @@ class TestEmails:
                             "email_schedule_uid"
                         ],
                         "email_schedule_name": "Test Schedule",
+                        "filter_list": [],
                     },
+                    "success": True,
+                },
+                get_response.json,
+            )
+
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    def test_emails_update_schedule_with_filters(
+        self, client, csrf_token, create_email_schedule, user_permissions, request
+    ):
+        """
+        Test updating emails schedule with filters for different roles
+        Expect newly created email schedule to be updated
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        current_datetime = datetime.now().date()
+
+        future_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(4)
+        ]
+
+        expected_response_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%a, %d %b %Y %H:%M:%S GMT")
+            for i in range(4)
+        ]
+
+        payload = {
+            "email_config_uid": 1,
+            "dates": future_dates,
+            "time": "08:00",
+            "email_schedule_name": "Test Schedule",
+            "filter_list": [
+                {
+                    "filter_group": [
+                        {
+                            "table_name": "test_table",
+                            "filter_variable": "test_column",
+                            "filter_operator": "Is",
+                            "filter_value": "test_value",
+                        },
+                        {
+                            "table_name": "test_table",
+                            "filter_variable": "test_column2",
+                            "filter_operator": "Is",
+                            "filter_value": "test_value2",
+                        },
+                    ]
+                },
+                {
+                    "filter_group": [
+                        {
+                            "table_name": "test_table",
+                            "filter_variable": "test_column",
+                            "filter_operator": "Is",
+                            "filter_value": "test_value",
+                        },
+                        {
+                            "table_name": "test_table",
+                            "filter_variable": "test_column2",
+                            "filter_operator": "Is not",
+                            "filter_value": "test_value2",
+                        },
+                    ]
+                },
+            ],
+        }
+
+        response = client.put(
+            f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "dates": expected_response_dates,
+                    "email_config_uid": 1,
+                    "email_schedule_name": "Test Schedule",
+                    "email_schedule_uid": 1,
+                    "time": "08:00:00",
+                },
+                "message": "Email schedule updated successfully",
+                "success": True,
+            }
+            print("Response ", response.json)
+            print("Expected Response ", expected_response)
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+            get_response = client.get(
+                f"api/emails/schedule/{create_email_schedule['email_schedule_uid']}?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            print("Get Response", get_response.json)
+
+            assert get_response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                {
+                    "data": {
+                        "time": "08:00:00",
+                        "dates": expected_response_dates,
+                        "email_schedule_uid": create_email_schedule[
+                            "email_schedule_uid"
+                        ],
+                        "email_config_uid": 1,
+                        "email_schedule_name": "Test Schedule",
+                        "filter_list": [
+                            {
+                                "filter_group": [
+                                    {
+                                        "email_schedule_uid": create_email_schedule[
+                                            "email_schedule_uid"
+                                        ],
+                                        "filter_group_id": 1,
+                                        "table_name": "test_table",
+                                        "filter_variable": "test_column",
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value",
+                                    },
+                                    {
+                                        "email_schedule_uid": create_email_schedule[
+                                            "email_schedule_uid"
+                                        ],
+                                        "filter_group_id": 1,
+                                        "table_name": "test_table",
+                                        "filter_variable": "test_column2",
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value2",
+                                    },
+                                ]
+                            },
+                            {
+                                "filter_group": [
+                                    {
+                                        "email_schedule_uid": create_email_schedule[
+                                            "email_schedule_uid"
+                                        ],
+                                        "filter_group_id": 2,
+                                        "table_name": "test_table",
+                                        "filter_variable": "test_column",
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value",
+                                    },
+                                    {
+                                        "email_schedule_uid": create_email_schedule[
+                                            "email_schedule_uid"
+                                        ],
+                                        "filter_group_id": 2,
+                                        "table_name": "test_table",
+                                        "filter_variable": "test_column2",
+                                        "filter_operator": "Is not",
+                                        "filter_value": "test_value2",
+                                    },
+                                ]
+                            },
+                        ],
+                    },
+                    "success": True,
+                },
+                get_response.json,
+            )
+
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    def test_emails_create_schedule_with_filters(
+        self, client, csrf_token, create_email_schedule, user_permissions, request
+    ):
+        """
+        Test creating emails schedule with filters for different roles
+        Expect newly created email schedule to be updated
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        current_datetime = datetime.now().date()
+
+        future_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(4)
+        ]
+
+        expected_response_dates = [
+            (current_datetime + timedelta(days=i)).strftime("%a, %d %b %Y %H:%M:%S GMT")
+            for i in range(4)
+        ]
+
+        payload = {
+            "email_config_uid": 1,
+            "dates": future_dates,
+            "time": "08:00",
+            "email_schedule_name": "Test Schedule_2",
+            "filter_list": [
+                {
+                    "filter_group": [
+                        {
+                            "table_name": "test_table",
+                            "filter_variable": "test_column",
+                            "filter_operator": "Is",
+                            "filter_value": "test_value",
+                        },
+                        {
+                            "table_name": "test_table",
+                            "filter_variable": "test_column2",
+                            "filter_operator": "Is",
+                            "filter_value": "test_value2",
+                        },
+                    ]
+                },
+                {
+                    "filter_group": [
+                        {
+                            "table_name": "test_table",
+                            "filter_variable": "test_column",
+                            "filter_operator": "Is",
+                            "filter_value": "test_value",
+                        },
+                        {
+                            "table_name": "test_table",
+                            "filter_variable": "test_column2",
+                            "filter_operator": "Is not",
+                            "filter_value": "test_value2",
+                        },
+                    ]
+                },
+            ],
+        }
+
+        response = client.post(
+            f"api/emails/schedule",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print("Response ", response.json)
+
+        if expected_permission:
+            assert response.status_code == 201
+
+            expected_response = {
+                "data": {
+                    "dates": expected_response_dates,
+                    "email_config_uid": 1,
+                    "email_schedule_name": "Test Schedule_2",
+                    "email_schedule_uid": 2,
+                    "time": "08:00:00",
+                },
+                "message": "Email schedule created successfully",
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+            get_response = client.get(
+                f"api/emails/schedule?email_config_uid=1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            print("Get Response", get_response.json)
+
+            assert get_response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                {
+                    "data": [
+                        {
+                            "dates": expected_response_dates,
+                            "email_config_uid": 1,
+                            "email_schedule_name": "Test Schedule",
+                            "email_schedule_uid": 1,
+                            "filter_list": [],
+                            "time": "20:00:00",
+                        },
+                        {
+                            "dates": expected_response_dates,
+                            "email_config_uid": 1,
+                            "email_schedule_name": "Test Schedule_2",
+                            "email_schedule_uid": 2,
+                            "filter_list": [
+                                {
+                                    "filter_list": [
+                                        {
+                                            "filter_group": [
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 1,
+                                                    "filter_operator": "Is",
+                                                    "filter_value": "test_value",
+                                                    "filter_variable": "test_column",
+                                                    "table_name": "test_table",
+                                                },
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 1,
+                                                    "filter_operator": "Is",
+                                                    "filter_value": "test_value2",
+                                                    "filter_variable": "test_column2",
+                                                    "table_name": "test_table",
+                                                },
+                                            ]
+                                        },
+                                        {
+                                            "filter_group": [
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 2,
+                                                    "filter_operator": "Is",
+                                                    "filter_value": "test_value",
+                                                    "filter_variable": "test_column",
+                                                    "table_name": "test_table",
+                                                },
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 2,
+                                                    "filter_operator": "Is not",
+                                                    "filter_value": "test_value2",
+                                                    "filter_variable": "test_column2",
+                                                    "table_name": "test_table",
+                                                },
+                                            ]
+                                        },
+                                    ],
+                                    "table_name": "test_table",
+                                }
+                            ],
+                            "time": "08:00:00",
+                        },
+                    ],
                     "success": True,
                 },
                 get_response.json,
@@ -1370,7 +1977,6 @@ class TestEmails:
         print(response.json)
 
         if expected_permission:
-
             assert response.status_code == 200
 
             expected_response = {
@@ -1456,7 +2062,6 @@ class TestEmails:
         print(response.json)
 
         if expected_permission:
-
             assert response.status_code == 200
 
             expected_response = {
@@ -1580,6 +2185,55 @@ class TestEmails:
                     "email_template_uid": 1,
                     "language": "english",
                     "subject": "Test Assignments Email",
+                    "table_list": [
+                        {
+                            "column_mapping": {
+                                "test_column1": "TEST Column 1",
+                                "test_column2": "TEST Column 2",
+                            },
+                            "email_template_table_uid": 1,
+                            "filter_list": [
+                                [
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_group_id": 1,
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value",
+                                        "filter_variable": "test_column",
+                                    },
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_group_id": 1,
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value2",
+                                        "filter_variable": "test_column2",
+                                    },
+                                ],
+                                [
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_group_id": 2,
+                                        "filter_operator": "Is",
+                                        "filter_value": "test_value",
+                                        "filter_variable": "test_column",
+                                    },
+                                    {
+                                        "email_template_table_uid": 1,
+                                        "filter_group_id": 2,
+                                        "filter_operator": "Is not",
+                                        "filter_value": "test_value2",
+                                        "filter_variable": "test_column2",
+                                    },
+                                ],
+                            ],
+                            "sort_list": {
+                                "test_column1": "asc",
+                                "test_column2": "desc",
+                            },
+                            "table_name": "test_table",
+                            "variable_name": "test_table+_1",
+                        }
+                    ],
                     "variable_list": [],
                 },
                 "success": True,
@@ -1591,6 +2245,7 @@ class TestEmails:
                 expected_response,
                 response.json,
             )
+            print(checkdiff)
             assert checkdiff == {}
         else:
             expected_response = {
@@ -1659,6 +2314,55 @@ class TestEmails:
                         "email_template_uid": 1,
                         "language": "english",
                         "subject": "Test Assignments Email",
+                        "table_list": [
+                            {
+                                "column_mapping": {
+                                    "test_column1": "TEST Column 1",
+                                    "test_column2": "TEST Column 2",
+                                },
+                                "email_template_table_uid": 1,
+                                "filter_list": [
+                                    [
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                    [
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is not",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                ],
+                                "sort_list": {
+                                    "test_column1": "asc",
+                                    "test_column2": "desc",
+                                },
+                                "table_name": "test_table",
+                                "variable_name": "test_table+_1",
+                            }
+                        ],
                         "variable_list": [],
                     }
                 ],
@@ -1675,6 +2379,287 @@ class TestEmails:
         else:
             expected_response = {
                 "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+    def test_emails_bulk_create_templates(
+        self, client, csrf_token, create_email_config, user_permissions, request
+    ):
+        """
+        Test uploading multiple email template for different user roles
+        Expect the email template to be updated
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "email_config_uid": create_email_config["email_config_uid"],
+            "templates": [
+                {
+                    "subject": "Test Assignments Email",
+                    "language": "english",
+                    "content": "Test Content",
+                    "variable_list": [],
+                    "table_list": [
+                        {
+                            "table_name": "test_table",
+                            "column_mapping": {
+                                "test_column1": "TEST Column 1",
+                                "test_column2": "TEST Column 2",
+                            },
+                            "sort_list": {
+                                "test_column1": "asc",
+                                "test_column2": "desc",
+                            },
+                            "variable_name": "test_table+_1",
+                            "filter_list": [
+                                {
+                                    "filter_group": [
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                        },
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column2",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value2",
+                                        },
+                                    ]
+                                },
+                                {
+                                    "filter_group": [
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                        },
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column2",
+                                            "filter_operator": "Is not",
+                                            "filter_value": "test_value2",
+                                        },
+                                    ]
+                                },
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "subject": "Test Assignments Email",
+                    "language": "hindi",
+                    "content": "Test Content",
+                    "variable_list": [],
+                    "table_list": [
+                        {
+                            "table_name": "test_table",
+                            "column_mapping": {
+                                "test_column1": "TEST Column 1",
+                                "test_column2": "TEST Column 2",
+                            },
+                            "sort_list": {
+                                "test_column1": "asc",
+                                "test_column2": "desc",
+                            },
+                            "variable_name": "test_table+_1",
+                            "filter_list": [
+                                {
+                                    "filter_group": [
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                        },
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column2",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value2",
+                                        },
+                                    ]
+                                },
+                                {
+                                    "filter_group": [
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column",
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                        },
+                                        {
+                                            "table_name": "test_table",
+                                            "filter_variable": "test_column2",
+                                            "filter_operator": "Is not",
+                                            "filter_value": "test_value2",
+                                        },
+                                    ]
+                                },
+                            ],
+                        }
+                    ],
+                },
+            ],
+        }
+
+        response = client.post(
+            "/api/emails/templates",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        if expected_permission:
+            assert response.status_code == 201
+            get_response = client.get(
+                f"api/emails/template?email_config_uid={create_email_config['email_config_uid']}",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            print(get_response.json)
+            expected_response = {
+                "data": [
+                    {
+                        "content": "Test Content",
+                        "email_config_uid": 1,
+                        "email_template_uid": 1,
+                        "language": "english",
+                        "subject": "Test Assignments Email",
+                        "table_list": [
+                            {
+                                "column_mapping": {
+                                    "test_column1": "TEST Column 1",
+                                    "test_column2": "TEST Column 2",
+                                },
+                                "email_template_table_uid": 1,
+                                "filter_list": [
+                                    [
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                    [
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 1,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is not",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                ],
+                                "sort_list": {
+                                    "test_column1": "asc",
+                                    "test_column2": "desc",
+                                },
+                                "table_name": "test_table",
+                                "variable_name": "test_table+_1",
+                            }
+                        ],
+                        "variable_list": [],
+                    },
+                    {
+                        "content": "Test Content",
+                        "email_config_uid": 1,
+                        "email_template_uid": 2,
+                        "language": "hindi",
+                        "subject": "Test Assignments Email",
+                        "table_list": [
+                            {
+                                "column_mapping": {
+                                    "test_column1": "TEST Column 1",
+                                    "test_column2": "TEST Column 2",
+                                },
+                                "email_template_table_uid": 2,
+                                "filter_list": [
+                                    [
+                                        {
+                                            "email_template_table_uid": 2,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 2,
+                                            "filter_group_id": 1,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                    [
+                                        {
+                                            "email_template_table_uid": 2,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is",
+                                            "filter_value": "test_value",
+                                            "filter_variable": "test_column",
+                                        },
+                                        {
+                                            "email_template_table_uid": 2,
+                                            "filter_group_id": 2,
+                                            "filter_operator": "Is not",
+                                            "filter_value": "test_value2",
+                                            "filter_variable": "test_column2",
+                                        },
+                                    ],
+                                ],
+                                "sort_list": {
+                                    "test_column1": "asc",
+                                    "test_column2": "desc",
+                                },
+                                "table_name": "test_table",
+                                "variable_name": "test_table+_1",
+                            }
+                        ],
+                        "variable_list": [],
+                    },
+                ],
+                "success": True,
+            }
+
+            assert get_response.status_code == 200
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                get_response.json,
+            )
+            assert checkdiff == {}
+
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
                 "success": False,
             }
 
@@ -1705,18 +2690,11 @@ class TestEmails:
             "variable_list": [
                 {
                     "variable_name": "test_variable",
-                    "variable_type": "string",
                     "variable_expression": "UPPERCASE(test_variable)",
-                    "source_table": "test_table",
                 },
                 {
                     "variable_name": "test_variable2",
-                    "variable_type": "table",
-                    "source_table": "test_table",
-                    "table_column_mapping": {
-                        "column_1": "test_column",
-                        "column2": "test_column2",
-                    },
+                    "variable_expression": "UPPERCASE(test_variable2)",
                 },
             ],
         }
@@ -1726,9 +2704,8 @@ class TestEmails:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-
+        print(response.json)
         if expected_permission:
-
             assert response.status_code == 200
 
             email_template_uid = create_email_template["email_template_uid"]
@@ -1737,39 +2714,31 @@ class TestEmails:
                 content_type="application/json",
                 headers={"X-CSRF-Token": csrf_token},
             )
-
-            excepted_response = {
-                "email_template_uid": 1,
-                "subject": "Test Update Email",
-                "language": "Hindi",
-                "content": "Test Content",
-                "email_config_uid": 1,
-                "variable_list": [
-                    {
-                        "variable_name": "test_variable",
-                        "variable_type": "string",
-                        "variable_expression": "UPPERCASE(test_variable)",
-                        "source_table": "test_table",
-                        "table_column_mapping": None,
-                    },
-                    {
-                        "variable_name": "test_variable2",
-                        "variable_type": "table",
-                        "source_table": "test_table",
-                        "table_column_mapping": {
-                            "column_1": "test_column",
-                            "column2": "test_column2",
+            print(get_response.json)
+            expected_response = {
+                "data": {
+                    "content": "Test Content",
+                    "email_config_uid": 1,
+                    "email_template_uid": 1,
+                    "language": "Hindi",
+                    "subject": "Test Update Email",
+                    "table_list": [],
+                    "variable_list": [
+                        {
+                            "variable_expression": "UPPERCASE(test_variable)",
+                            "variable_name": "test_variable",
                         },
-                        "variable_expression": None,
-                    },
-                ],
-            }
-
-            checkdiff = jsondiff.diff(
-                {
-                    "data": excepted_response,
-                    "success": True,
+                        {
+                            "variable_expression": "UPPERCASE(test_variable2)",
+                            "variable_name": "test_variable2",
+                        },
+                    ],
                 },
+                "success": True,
+            }
+            print("Get Response", get_response.json)
+            checkdiff = jsondiff.diff(
+                expected_response,
                 get_response.json,
             )
 
@@ -1806,19 +2775,7 @@ class TestEmails:
             "content": "Test Content",
             "email_config_uid": 1,
             "variable_list": [
-                {
-                    "variable_name": "test_variable",
-                    "variable_type": "string",
-                    "source_table": "test_table",
-                },
-                {
-                    "variable_type": "table",
-                    "source_table": "test_table",
-                    "table_column_mapping": {
-                        "column_1": "test_column",
-                        "column2": "test_column2",
-                    },
-                },
+                {"variable_expression": "test_variable"},
             ],
         }
         response = client.put(
@@ -1833,10 +2790,7 @@ class TestEmails:
 
         excepted_response = {
             "message": {
-                "variable_list": [
-                    {},
-                    {"variable_name": ["This field is required."]},
-                ]
+                "variable_list": [{"variable_name": ["This field is required."]}]
             },
             "success": False,
         }
@@ -2027,7 +2981,7 @@ class TestEmails:
         request.getfixturevalue(user_fixture)
 
         payload = {
-            "survey_uid": 1,
+            "email_config_uid": 1,
         }
         response = client.get(
             f"api/emails/tablecatalog",
@@ -2045,18 +2999,92 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
+                        "column_list": [
+                            {
+                                "column_description": "test description",
+                                "column_name": "test_column",
+                            },
+                            {"column_description": None, "column_name": "test_column2"},
+                        ],
                         "survey_uid": 1,
                         "table_name": "test_table",
-                        "column_name": "test_column",
-                        "column_type": "text",
-                        "column_description": "test description",
                     },
                     {
+                        "column_list": [
+                            {
+                                "column_description": "Enumerators : name",
+                                "column_name": "Surveyor Name",
+                            },
+                            {
+                                "column_description": "Enumerators : enumerator_id",
+                                "column_name": "Surveyor ID",
+                            },
+                            {
+                                "column_description": "Enumerators : home_address",
+                                "column_name": "Surveyor Address",
+                            },
+                            {
+                                "column_description": "Enumerators : gender",
+                                "column_name": "Surveyor Gender",
+                            },
+                            {
+                                "column_description": "Enumerators : language",
+                                "column_name": "Surveyor Language",
+                            },
+                            {
+                                "column_description": "Enumerators : email",
+                                "column_name": "Surveyor Email",
+                            },
+                            {
+                                "column_description": "Enumerators : mobile_primary",
+                                "column_name": "Surveyor Mobile",
+                            },
+                            {
+                                "column_description": "Targets: target_id",
+                                "column_name": "Target ID",
+                            },
+                            {
+                                "column_description": "Targets: gender",
+                                "column_name": "Gender",
+                            },
+                            {
+                                "column_description": "Targets: language",
+                                "column_name": "Language",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status_label",
+                                "column_name": "Final Survey Status",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status",
+                                "column_name": "Final Survey Status Code",
+                            },
+                            {
+                                "column_description": "Target_Status: revisit_sections",
+                                "column_name": "Revisit Sections",
+                            },
+                            {
+                                "column_description": "Target_Status: num_attempts",
+                                "column_name": "Total Attempts",
+                            },
+                            {
+                                "column_description": "Target_Status: refusal_flag",
+                                "column_name": "Refused",
+                            },
+                            {
+                                "column_description": "Target_Status: completed_flag",
+                                "column_name": "Completed",
+                            },
+                        ],
                         "survey_uid": 1,
-                        "table_name": "test_table",
-                        "column_name": "test_column2",
-                        "column_type": "text",
-                        "column_description": None,
+                        "table_name": "Assignments: Default",
+                    },
+                    {
+                        "column_list": [
+                            {"column_description": None, "column_name": "test_column"}
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "Google Sheet: Test_Success",
                     },
                 ],
                 "success": True,
@@ -2081,71 +3109,73 @@ class TestEmails:
             )
             assert checkdiff == {}
 
-    def test_emails_get_config_with_tablecatalog(
+    def test_emails_get_email_table_catalog_for_schedule_filters(
         self,
         client,
         csrf_token,
+        create_email_template,
         create_tablecatalog,
         user_permissions,
         request,
     ):
         """
-        Test getting a specific email config, with the different permissions
-        Expect the email configs list or permissions denied
+        Test to get table catalog for different user roles
+        Expect the table catalog information to be correctly fetched
         """
+
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
+        payload = {
+            "email_config_uid": 1,
+        }
         response = client.get(
-            f"api/emails/config/1",
+            f"api/emails/tablecatalog/schedules",
             content_type="application/json",
+            query_string=payload,
             headers={"X-CSRF-Token": csrf_token},
         )
 
+        print(response.status_code)
+        print(response.json)
+
         if expected_permission:
             assert response.status_code == 200
-            expected_response = {
-                "data": {
-                    "config_type": "Assignments",
-                    "email_config_uid": 1,
-                    "form_uid": 1,
-                    "report_users": [1, 2, 3],
-                    "email_source": "SurveyStream Data",
-                    "email_source_columns": ["test_column"],
-                    "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
-                    "email_source_gsheet_tab": "Test_Success",
-                    "email_source_gsheet_header_row": 1,
-                    "email_source_tablename": "test_table",
-                    "table_catalog": [
-                        {
-                            "survey_uid": 1,
-                            "table_name": "test_table",
-                            "column_name": "test_column",
-                            "column_type": "text",
-                            "column_description": "test description",
-                        },
-                        {
-                            "survey_uid": 1,
-                            "table_name": "test_table",
-                            "column_name": "test_column2",
-                            "column_type": "text",
-                            "column_description": None,
-                        },
-                    ],
-                },
-                "success": True,
-            }
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-        else:
-            assert response.status_code == 403
 
             expected_response = {
-                "error": "User does not have the required permission: READ Emails",
+                "data": [
+                    {
+                        "column_list": [
+                            {
+                                "column_description": "test description",
+                                "column_name": "test_column",
+                            },
+                            {"column_description": None, "column_name": "test_column2"},
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "test_table",
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
                 "success": False,
             }
 
-            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
             assert checkdiff == {}
 
     def test_email_update_table_catalog(
@@ -2173,7 +3203,7 @@ class TestEmails:
                     "column_type": "integer",  # change data type
                 },
                 {
-                    "table_name": "test_table",
+                    "table_name": "test_table2",
                     "column_name": "test_column3",
                     "column_type": "text",  # add new column
                 },
@@ -2194,7 +3224,7 @@ class TestEmails:
 
             # Check if table catalog was updated
             response = client.get(
-                f"api/emails/tablecatalog?survey_uid=1",
+                f"api/emails/tablecatalog?email_config_uid=1",
                 content_type="application/json",
                 headers={"X-CSRF-Token": csrf_token},
             )
@@ -2205,25 +3235,99 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
+                        "column_list": [
+                            {
+                                "column_description": "test description changed",
+                                "column_name": "test_column",
+                            },
+                            {"column_description": None, "column_name": "test_column2"},
+                        ],
                         "survey_uid": 1,
                         "table_name": "test_table",
-                        "column_name": "test_column",
-                        "column_type": "text",
-                        "column_description": "test description changed",
                     },
                     {
+                        "column_list": [
+                            {"column_description": None, "column_name": "test_column3"}
+                        ],
                         "survey_uid": 1,
-                        "table_name": "test_table",
-                        "column_name": "test_column2",
-                        "column_type": "integer",
-                        "column_description": None,
+                        "table_name": "test_table2",
                     },
                     {
+                        "column_list": [
+                            {
+                                "column_description": "Enumerators : name",
+                                "column_name": "Surveyor Name",
+                            },
+                            {
+                                "column_description": "Enumerators : enumerator_id",
+                                "column_name": "Surveyor ID",
+                            },
+                            {
+                                "column_description": "Enumerators : home_address",
+                                "column_name": "Surveyor Address",
+                            },
+                            {
+                                "column_description": "Enumerators : gender",
+                                "column_name": "Surveyor Gender",
+                            },
+                            {
+                                "column_description": "Enumerators : language",
+                                "column_name": "Surveyor Language",
+                            },
+                            {
+                                "column_description": "Enumerators : email",
+                                "column_name": "Surveyor Email",
+                            },
+                            {
+                                "column_description": "Enumerators : mobile_primary",
+                                "column_name": "Surveyor Mobile",
+                            },
+                            {
+                                "column_description": "Targets: target_id",
+                                "column_name": "Target ID",
+                            },
+                            {
+                                "column_description": "Targets: gender",
+                                "column_name": "Gender",
+                            },
+                            {
+                                "column_description": "Targets: language",
+                                "column_name": "Language",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status_label",
+                                "column_name": "Final Survey Status",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status",
+                                "column_name": "Final Survey Status Code",
+                            },
+                            {
+                                "column_description": "Target_Status: revisit_sections",
+                                "column_name": "Revisit Sections",
+                            },
+                            {
+                                "column_description": "Target_Status: num_attempts",
+                                "column_name": "Total Attempts",
+                            },
+                            {
+                                "column_description": "Target_Status: refusal_flag",
+                                "column_name": "Refused",
+                            },
+                            {
+                                "column_description": "Target_Status: completed_flag",
+                                "column_name": "Completed",
+                            },
+                        ],
                         "survey_uid": 1,
-                        "table_name": "test_table",
-                        "column_name": "test_column3",
-                        "column_type": "text",
-                        "column_description": None,
+                        "table_name": "Assignments: Default",
+                    },
+                    {
+                        "column_list": [
+                            {"column_description": None, "column_name": "test_column"}
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "Google Sheet: Test_Success",
                     },
                 ],
                 "success": True,
@@ -2301,12 +3405,11 @@ class TestEmails:
 
         # Check if table catalog was updated
         get_response = client.get(
-            f"api/emails/tablecatalog?survey_uid=1",
+            f"api/emails/tablecatalog?email_config_uid=1",
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
         if expected_permission:
-
             print(get_response.status_code)
             print(get_response.json)
             assert get_response.status_code == 200
@@ -2314,18 +3417,92 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
+                        "column_list": [
+                            {
+                                "column_description": "test description",
+                                "column_name": "test_column",
+                            },
+                            {"column_description": None, "column_name": "test_column2"},
+                        ],
                         "survey_uid": 1,
                         "table_name": "test_table",
-                        "column_name": "test_column",
-                        "column_type": "text",
-                        "column_description": "test description",
                     },
                     {
+                        "column_list": [
+                            {
+                                "column_description": "Enumerators : name",
+                                "column_name": "Surveyor Name",
+                            },
+                            {
+                                "column_description": "Enumerators : enumerator_id",
+                                "column_name": "Surveyor ID",
+                            },
+                            {
+                                "column_description": "Enumerators : home_address",
+                                "column_name": "Surveyor Address",
+                            },
+                            {
+                                "column_description": "Enumerators : gender",
+                                "column_name": "Surveyor Gender",
+                            },
+                            {
+                                "column_description": "Enumerators : language",
+                                "column_name": "Surveyor Language",
+                            },
+                            {
+                                "column_description": "Enumerators : email",
+                                "column_name": "Surveyor Email",
+                            },
+                            {
+                                "column_description": "Enumerators : mobile_primary",
+                                "column_name": "Surveyor Mobile",
+                            },
+                            {
+                                "column_description": "Targets: target_id",
+                                "column_name": "Target ID",
+                            },
+                            {
+                                "column_description": "Targets: gender",
+                                "column_name": "Gender",
+                            },
+                            {
+                                "column_description": "Targets: language",
+                                "column_name": "Language",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status_label",
+                                "column_name": "Final Survey Status",
+                            },
+                            {
+                                "column_description": "Target_Status: final_survey_status",
+                                "column_name": "Final Survey Status Code",
+                            },
+                            {
+                                "column_description": "Target_Status: revisit_sections",
+                                "column_name": "Revisit Sections",
+                            },
+                            {
+                                "column_description": "Target_Status: num_attempts",
+                                "column_name": "Total Attempts",
+                            },
+                            {
+                                "column_description": "Target_Status: refusal_flag",
+                                "column_name": "Refused",
+                            },
+                            {
+                                "column_description": "Target_Status: completed_flag",
+                                "column_name": "Completed",
+                            },
+                        ],
                         "survey_uid": 1,
-                        "table_name": "test_table",
-                        "column_name": "test_column2",
-                        "column_type": "text",
-                        "column_description": None,
+                        "table_name": "Assignments: Default",
+                    },
+                    {
+                        "column_list": [
+                            {"column_description": None, "column_name": "test_column"}
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "Google Sheet: Test_Success",
                     },
                 ],
                 "success": True,

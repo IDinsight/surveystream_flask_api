@@ -1,17 +1,21 @@
 import io
-import pandas as pd
-import numpy as np
-from app import db
-from sqlalchemy import insert
 from csv import DictReader
+
+import numpy as np
+import pandas as pd
+from sqlalchemy import insert
+
+from app import db
 from app.blueprints.locations.models import Location
-from .models import Target, TargetStatus
+from app.blueprints.mapping.models import UserTargetMapping
+
 from .errors import (
     HeaderRowEmptyError,
-    InvalidTargetRecordsError,
     InvalidColumnMappingError,
     InvalidFileStructureError,
+    InvalidTargetRecordsError,
 )
+from .models import Target, TargetStatus
 
 
 class TargetColumnMapping:
@@ -19,9 +23,9 @@ class TargetColumnMapping:
     Class to represent the target column mapping and run validations on it
     """
 
-    def __init__(self, column_mapping, form_uid, write_mode):
+    def __init__(self, column_mapping, form_uid, write_mode, mapping_criteria):
         try:
-            self.__validate_column_mapping(column_mapping)
+            self.__validate_column_mapping(column_mapping, mapping_criteria)
             self.target_id = column_mapping["target_id"]
 
             if column_mapping.get("language"):
@@ -54,12 +58,12 @@ class TargetColumnMapping:
 
         return result
 
-    def __validate_column_mapping(self, column_mapping):
+    def __validate_column_mapping(self, column_mapping, mapping_criteria):
         """
         Method to run validations on the column mapping and raise an exception containing a list of errors
 
-        :param geo_levels: List of geo levels for the survey from the database
         :param column_mapping: List of column mappings from the request payload
+        :param mapping_criteria: List of mapping criteria for targets to supervisor mapping
         """
 
         mapping_errors = []
@@ -67,6 +71,23 @@ class TargetColumnMapping:
         # Each mandatory column should appear in the mapping exactly once
         # The validator will catch the case where a mandatory column is missing
         # It's a dictionary so we cannot have duplicate keys
+
+        # Columns based on the mapping criteria should be present in the column mapping
+        if "Gender" in mapping_criteria and column_mapping.get("gender") is None:
+            mapping_errors.append(
+                f"Field name 'gender' is missing from the column mapping but is required based on the mapping criteria."
+            )
+        if (
+            "Location" in mapping_criteria
+            and column_mapping.get("location_id_column") is None
+        ):
+            mapping_errors.append(
+                f"Field name 'location_id_column' is missing from the column mapping but is required based on the mapping criteria."
+            )
+        if "Language" in mapping_criteria and column_mapping.get("language") is None:
+            mapping_errors.append(
+                f"Field name 'language' is missing from the column mapping but is required based on the mapping criteria."
+            )
 
         # Field names should be unique
         field_names = []
@@ -265,9 +286,9 @@ class TargetsUpload:
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                non_null_columns_df.at[
-                    index, "errors"
-                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                non_null_columns_df.at[index, "errors"] = (
+                    f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                )
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],
@@ -367,9 +388,9 @@ class TargetsUpload:
                     }
                 )
 
-                invalid_location_id_df[
-                    "errors"
-                ] = "Location id not found in uploaded locations data for the survey's bottom level geo level"
+                invalid_location_id_df["errors"] = (
+                    "Location id not found in uploaded locations data for the survey's bottom level geo level"
+                )
                 invalid_records_df = invalid_records_df.merge(
                     invalid_location_id_df["errors"],
                     how="left",
@@ -478,6 +499,11 @@ class TargetsUpload:
                 TargetStatus.target_uid.in_(subquery)
             ).delete(synchronize_session=False)
 
+            # Remove rows from UserTargetMapping table
+            db.session.query(UserTargetMapping).filter(
+                UserTargetMapping.target_uid.in_(subquery)
+            ).delete(synchronize_session=False)
+
             Target.query.filter_by(form_uid=self.form_uid).delete()
             db.session.commit()
 
@@ -543,8 +569,8 @@ class TargetsUpload:
                         insert(Target).values(records_to_insert[pos : pos + chunk_size])
                     )
                     db.session.flush()
-        db.session.commit()
 
+        db.session.commit()
         return
 
     def __build_location_uid_lookup(self, column_mapping):

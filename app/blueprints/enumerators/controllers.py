@@ -1,62 +1,65 @@
-from app import db
-from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
-from app.blueprints.locations.utils import GeoLevelHierarchy
+import base64
+import binascii
+
 from flask import jsonify, request
+from flask_login import current_user
+from sqlalchemy import cast, update
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql.functions import func
+
+from app import db
 from app.blueprints.assignments.models import SurveyorAssignment
+from app.blueprints.forms.models import Form
+from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
+from app.blueprints.locations.models import GeoLevel, Location
+from app.blueprints.locations.utils import GeoLevelHierarchy
+from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
+from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
-    validate_query_params,
     validate_payload,
+    validate_query_params,
 )
-from flask_login import current_user
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.dialects.postgresql import insert as pg_insert, JSONB
-from sqlalchemy.sql.functions import func
-from sqlalchemy import update, cast
-import base64
-from sqlalchemy.orm import aliased
-from app.blueprints.surveys.models import Survey
-from app.blueprints.locations.models import GeoLevel, Location
-from app.blueprints.forms.models import Form
-from .models import (
-    Enumerator,
-    SurveyorForm,
-    SurveyorLocation,
-    MonitorForm,
-    MonitorLocation,
-    EnumeratorColumnConfig,
-    SurveyorStats,
-)
-from .routes import enumerators_bp
-from .validators import (
-    EnumeratorsFileUploadValidator,
-    EnumeratorsQueryParamValidator,
-    GetEnumeratorsQueryParamValidator,
-    UpdateEnumerator,
-    CreateEnumeratorRole,
-    UpdateEnumeratorRole,
-    UpdateEnumeratorRoleStatus,
-    GetEnumeratorRolesQueryParamValidator,
-    BulkUpdateEnumeratorsValidator,
-    BulkUpdateEnumeratorsRoleLocationValidator,
-    UpdateEnumeratorsColumnConfig,
-    EnumeratorColumnConfigQueryParamValidator,
-    UpdateSurveyorStats,
-    SurveyorStatsQueryParamValidator,
-)
-from .utils import (
-    EnumeratorsUpload,
-    EnumeratorColumnMapping,
-)
-from .queries import build_prime_locations_with_location_hierarchy_subquery
+
 from .errors import (
     HeaderRowEmptyError,
+    InvalidColumnMappingError,
     InvalidEnumeratorRecordsError,
     InvalidFileStructureError,
-    InvalidColumnMappingError,
 )
-import binascii
+from .models import (
+    Enumerator,
+    EnumeratorColumnConfig,
+    MonitorForm,
+    MonitorLocation,
+    SurveyorForm,
+    SurveyorLocation,
+    SurveyorStats,
+)
+from .queries import build_prime_locations_with_location_hierarchy_subquery
+from .routes import enumerators_bp
+from .utils import EnumeratorColumnMapping, EnumeratorsUpload
+from .validators import (
+    BulkUpdateEnumeratorsRoleLocationValidator,
+    BulkUpdateEnumeratorsValidator,
+    CreateEnumeratorRole,
+    EnumeratorColumnConfigQueryParamValidator,
+    EnumeratorLanguageQueryParamValidator,
+    EnumeratorsFileUploadValidator,
+    EnumeratorsQueryParamValidator,
+    GetEnumeratorRolesQueryParamValidator,
+    GetEnumeratorsQueryParamValidator,
+    SurveyorStatsQueryParamValidator,
+    UpdateEnumerator,
+    UpdateEnumeratorRole,
+    UpdateEnumeratorRoleStatus,
+    UpdateEnumeratorsColumnConfig,
+    UpdateSurveyorStats,
+)
 
 
 @enumerators_bp.route("", methods=["POST"])
@@ -84,6 +87,27 @@ def upload_enumerators(validated_query_params, validated_payload):
 
     survey_uid = form.survey_uid
 
+    # Fetch the surveyor mapping criteria for the form
+    module_questionnaire = ModuleQuestionnaire.query.filter_by(
+        survey_uid=survey_uid
+    ).first()
+    if (
+        module_questionnaire is None
+        or module_questionnaire.surveyor_mapping_criteria is None
+        or len(module_questionnaire.surveyor_mapping_criteria) == 0
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"Supervisor to surveyor mapping criteria not found. Cannot upload enumerators without selecting a mapping criteria first.",
+                }
+            ),
+            422,
+        )
+
+    surveyor_mapping_criteria = module_questionnaire.surveyor_mapping_criteria
+
     # Get the prime geo level from the survey configuration
     prime_geo_level_uid = (
         Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
@@ -94,6 +118,7 @@ def upload_enumerators(validated_query_params, validated_payload):
     try:
         column_mapping = EnumeratorColumnMapping(
             validated_payload.column_mapping.data,
+            surveyor_mapping_criteria,
             prime_geo_level_uid,
             optional_hardcoded_fields,
         )
@@ -1582,3 +1607,43 @@ def get_surveyor_stats(validated_query_params):
             ],
         }
     )
+
+
+@enumerators_bp.route("/languages", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(EnumeratorLanguageQueryParamValidator)
+@custom_permissions_required("READ Enumerators", "query", "form_uid")
+def get_enumerator_languages(validated_query_params):
+    """
+    Method to get list of languages for enumerators for a given form
+    """
+
+    form_uid = validated_query_params.form_uid.data
+
+    language_list = (
+        db.session.query(Enumerator.language)
+        .distinct()
+        .filter(Enumerator.form_uid == form_uid)
+        .all()
+    )
+
+    if language_list is not None:
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "form_uid": form_uid,
+                    "languages": [row.language for row in language_list],
+                },
+            }
+        )
+    else:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": f"No enumerators found for form with UID {form_uid}",
+                }
+            ),
+            404,
+        )

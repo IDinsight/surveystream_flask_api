@@ -71,7 +71,6 @@ class google_sheet_helpers:
         if self.header_index is None:
             self.header_index = 1
         if self.header_index > 0:
-            v_retry_count = 0
             sheet_records = []
 
             sheet_records = self.sheet.get_all_records(

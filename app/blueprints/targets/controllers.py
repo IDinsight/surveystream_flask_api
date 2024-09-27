@@ -1,48 +1,45 @@
+import base64
+import binascii
+
 from flask import jsonify, request
+from flask_login import current_user
+from sqlalchemy import cast, update
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.functions import func
+
+from app import db
+from app.blueprints.forms.models import Form
+from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
+from app.blueprints.locations.models import GeoLevel, Location
+from app.blueprints.locations.utils import GeoLevelHierarchy
+from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
-    validate_query_params,
     validate_payload,
+    validate_query_params,
 )
-from flask_login import current_user
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.sql.functions import func
-from sqlalchemy import update, cast
-import base64
-from app import db
-from app.blueprints.forms.models import Form
-from app.blueprints.locations.models import Location, GeoLevel
-from .models import (
-    Target,
-    TargetStatus,
-    TargetColumnConfig,
+
+from .errors import (
+    HeaderRowEmptyError,
+    InvalidColumnMappingError,
+    InvalidFileStructureError,
+    InvalidNewColumnError,
+    InvalidTargetRecordsError,
 )
+from .models import Target, TargetColumnConfig, TargetStatus
+from .queries import build_bottom_level_locations_with_location_hierarchy_subquery
 from .routes import targets_bp
+from .utils import TargetColumnMapping, TargetsUpload
 from .validators import (
+    BulkUpdateTargetsValidator,
     TargetsFileUploadValidator,
     TargetsQueryParamValidator,
     UpdateTarget,
-    BulkUpdateTargetsValidator,
     UpdateTargetsColumnConfig,
     UpdateTargetStatus,
 )
-from .utils import (
-    TargetsUpload,
-    TargetColumnMapping,
-)
-from .queries import build_bottom_level_locations_with_location_hierarchy_subquery
-from app.blueprints.locations.utils import GeoLevelHierarchy
-from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
-from .errors import (
-    HeaderRowEmptyError,
-    InvalidTargetRecordsError,
-    InvalidFileStructureError,
-    InvalidColumnMappingError,
-    InvalidNewColumnError,
-)
-import binascii
 
 
 @targets_bp.route("", methods=["POST"])
@@ -70,10 +67,34 @@ def upload_targets(validated_query_params, validated_payload):
 
     survey_uid = form.survey_uid
 
+    # Fetch the target mapping criteria for the form
+    module_questionnaire = ModuleQuestionnaire.query.filter_by(
+        survey_uid=survey_uid
+    ).first()
+    if (
+        module_questionnaire is None
+        or module_questionnaire.target_mapping_criteria is None
+        or len(module_questionnaire.target_mapping_criteria) == 0
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"Supervisor to target mapping criteria not found. Cannot upload targets without selecting a mapping criteria first.",
+                }
+            ),
+            422,
+        )
+
+    target_mapping_criteria = module_questionnaire.target_mapping_criteria
+
     # Create the column mapping object from the payload
     try:
         column_mapping = TargetColumnMapping(
-            validated_payload.column_mapping.data, form_uid, validated_payload.mode.data
+            validated_payload.column_mapping.data,
+            form_uid,
+            validated_payload.mode.data,
+            target_mapping_criteria,
         )
     except InvalidColumnMappingError as e:
         return (
@@ -655,6 +676,7 @@ def update_target(target_uid, validated_payload):
             },
             synchronize_session="fetch",
         )
+
         db.session.commit()
     except Exception as e:
         db.session.rollback()
