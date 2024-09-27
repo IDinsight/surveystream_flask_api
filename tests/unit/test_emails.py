@@ -682,22 +682,27 @@ class TestEmails:
             expected_response = {
                 "data": [
                     {
+                        "cc_users": [1, 2, 3],
                         "config_name": "Assignments",
                         "email_config_uid": 1,
                         "email_source": "Google Sheet",
                         "email_source_columns": [
                             "test_column",
+                            "Surveyor Name",
+                            "Surveyor Email",
+                            "Surveyor Language",
+                            "Surveyor ID",
+                            "Assignment Date",
+                            "Survey Name",
+                            "Schedule Name",
+                            "Config Name",
+                            "SCTO Form ID",
                         ],
+                        "email_source_gsheet_header_row": 1,
                         "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                         "email_source_gsheet_tab": "Test_Success",
-                        "email_source_gsheet_header_row": 1,
                         "email_source_tablename": "test_table",
-                        "cc_users": [1, 2, 3],
-                        "pdf_attachment": True,
-                        "pdf_encryption": True,
-                        "pdf_encryption_password_type": "Pattern",
                         "form_uid": 1,
-                        "report_users": [1, 2, 3],
                         "manual_triggers": [
                             {
                                 "date": response.json["data"][0]["manual_triggers"][0][
@@ -710,16 +715,20 @@ class TestEmails:
                                 "time": "08:00:00",
                             }
                         ],
+                        "pdf_attachment": True,
+                        "pdf_encryption": True,
+                        "pdf_encryption_password_type": "Pattern",
+                        "report_users": [1, 2, 3],
                         "schedules": [
                             {
                                 "dates": response.json["data"][0]["schedules"][0][
                                     "dates"
                                 ],
                                 "email_config_uid": 1,
-                                "email_schedule_uid": 1,
-                                "time": "20:00:00",
                                 "email_schedule_name": "Test Schedule",
+                                "email_schedule_uid": 1,
                                 "filter_list": [],
+                                "time": "20:00:00",
                             }
                         ],
                         "templates": [
@@ -1637,53 +1646,58 @@ class TestEmails:
                             "time": "20:00:00",
                         },
                         {
-                            "time": "08:00:00",
                             "dates": expected_response_dates,
-                            "email_schedule_uid": 2,
                             "email_config_uid": 1,
                             "email_schedule_name": "Test Schedule_2",
+                            "email_schedule_uid": 2,
                             "filter_list": [
                                 {
-                                    "filter_group": [
+                                    "filter_list": [
                                         {
-                                            "email_schedule_uid": 2,
-                                            "filter_group_id": 1,
-                                            "table_name": "test_table",
-                                            "filter_variable": "test_column",
-                                            "filter_operator": "Is",
-                                            "filter_value": "test_value",
+                                            "filter_group": [
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 1,
+                                                    "filter_operator": "Is",
+                                                    "filter_value": "test_value",
+                                                    "filter_variable": "test_column",
+                                                    "table_name": "test_table",
+                                                },
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 1,
+                                                    "filter_operator": "Is",
+                                                    "filter_value": "test_value2",
+                                                    "filter_variable": "test_column2",
+                                                    "table_name": "test_table",
+                                                },
+                                            ]
                                         },
                                         {
-                                            "email_schedule_uid": 2,
-                                            "filter_group_id": 1,
-                                            "table_name": "test_table",
-                                            "filter_variable": "test_column2",
-                                            "filter_operator": "Is",
-                                            "filter_value": "test_value2",
+                                            "filter_group": [
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 2,
+                                                    "filter_operator": "Is",
+                                                    "filter_value": "test_value",
+                                                    "filter_variable": "test_column",
+                                                    "table_name": "test_table",
+                                                },
+                                                {
+                                                    "email_schedule_uid": 2,
+                                                    "filter_group_id": 2,
+                                                    "filter_operator": "Is not",
+                                                    "filter_value": "test_value2",
+                                                    "filter_variable": "test_column2",
+                                                    "table_name": "test_table",
+                                                },
+                                            ]
                                         },
-                                    ]
-                                },
-                                {
-                                    "filter_group": [
-                                        {
-                                            "email_schedule_uid": 2,
-                                            "filter_group_id": 2,
-                                            "table_name": "test_table",
-                                            "filter_variable": "test_column",
-                                            "filter_operator": "Is",
-                                            "filter_value": "test_value",
-                                        },
-                                        {
-                                            "email_schedule_uid": 2,
-                                            "filter_group_id": 2,
-                                            "table_name": "test_table",
-                                            "filter_variable": "test_column2",
-                                            "filter_operator": "Is not",
-                                            "filter_value": "test_value2",
-                                        },
-                                    ]
-                                },
+                                    ],
+                                    "table_name": "test_table",
+                                }
                             ],
+                            "time": "08:00:00",
                         },
                     ],
                     "success": True,
@@ -3072,6 +3086,75 @@ class TestEmails:
                         "survey_uid": 1,
                         "table_name": "Google Sheet: Test_Success",
                     },
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+        else:
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            assert response.status_code == 403
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+
+    def test_emails_get_email_table_catalog_for_schedule_filters(
+        self,
+        client,
+        csrf_token,
+        create_email_template,
+        create_tablecatalog,
+        user_permissions,
+        request,
+    ):
+        """
+        Test to get table catalog for different user roles
+        Expect the table catalog information to be correctly fetched
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "email_config_uid": 1,
+        }
+        response = client.get(
+            f"api/emails/tablecatalog/schedules",
+            content_type="application/json",
+            query_string=payload,
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.status_code)
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "column_list": [
+                            {
+                                "column_description": "test description",
+                                "column_name": "test_column",
+                            },
+                            {"column_description": None, "column_name": "test_column2"},
+                        ],
+                        "survey_uid": 1,
+                        "table_name": "test_table",
+                    }
                 ],
                 "success": True,
             }
