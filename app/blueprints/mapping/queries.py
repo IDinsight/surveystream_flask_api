@@ -143,6 +143,7 @@ def build_targets_with_mapping_criteria_values_subquery(
             Location,
             locations_subquery.c.prime_geo_level_location_uid == Location.location_uid,
         )
+        .filter(Target.form_uid == form_uid)
     )
 
     return targets_query.subquery()
