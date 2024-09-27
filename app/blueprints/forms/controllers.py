@@ -1,35 +1,38 @@
-import pysurveycto
 import json
+
+import pandas as pd
+import pysurveycto
 from flask import current_app, jsonify, request
 from flask_login import current_user
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import aliased
+
 from app import db
 from app.utils.utils import (
     custom_permissions_required,
-    logged_in_active_user_required,
     get_aws_secret,
-    validate_query_params,
+    logged_in_active_user_required,
     validate_payload,
+    validate_query_params,
 )
+
 from . import forms_bp
 from .models import (
     Form,
-    SCTOFormSettings,
-    SCTOQuestionMapping,
     SCTOChoiceLabel,
-    SCTOQuestionLabel,
-    SCTOQuestion,
     SCTOChoiceList,
+    SCTOFormSettings,
+    SCTOQuestion,
+    SCTOQuestionLabel,
+    SCTOQuestionMapping,
 )
 from .validators import (
     CreateFormValidator,
-    UpdateFormValidator,
-    GetFormQueryParamValidator,
     CreateSCTOQuestionMappingValidator,
+    GetFormQueryParamValidator,
+    UpdateFormValidator,
     UpdateSCTOQuestionMappingValidator,
 )
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import aliased
-import pandas as pd
 
 
 @forms_bp.route("", methods=["GET"])

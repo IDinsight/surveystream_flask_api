@@ -102,6 +102,9 @@ class EmailConfig(db.Model):
         self.email_source_columns = email_source_columns
 
     def to_dict(self):
+        email_table_catalog = EmailTableCatalog.query.filter_by(
+            survey_uid=Form.query.get(self.form_uid).survey_uid
+        ).all()
         return {
             "email_config_uid": self.email_config_uid,
             "config_name": self.config_name,

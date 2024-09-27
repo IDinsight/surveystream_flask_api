@@ -1,7 +1,7 @@
 from app import db
-from app.blueprints.targets.models import TargetColumnConfig, TargetStatus, Target
 from app.blueprints.enumerators.models import EnumeratorColumnConfig
 from app.blueprints.forms.models import Form, SCTOQuestion
+from app.blueprints.targets.models import Target, TargetColumnConfig, TargetStatus
 
 
 class AvailableColumns:

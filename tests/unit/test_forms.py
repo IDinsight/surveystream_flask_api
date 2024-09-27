@@ -1,9 +1,8 @@
 import jsondiff
 import pytest
-
 from utils import (
-    load_reference_data,
     create_new_survey_role_with_permissions,
+    load_reference_data,
     login_user,
     set_target_assignable_status,
     update_logged_in_user_roles,
