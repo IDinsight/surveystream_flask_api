@@ -139,30 +139,7 @@ class TestAssignments:
         )
 
         login_user(client, test_user_credentials)
-
-    @pytest.fixture
-    def user_with_assignment_upload_permissions(self, client, test_user_credentials):
-        # Assign new roles and permissions
-        new_role = create_new_survey_role_with_permissions(
-            # 24 - WRITE Assignments Upload
-            client,
-            test_user_credentials,
-            "Assignments Upload Role",
-            [24],
-            1,
-        )
-
-        update_logged_in_user_roles(
-            client,
-            test_user_credentials,
-            is_survey_admin=False,
-            survey_uid=1,
-            is_super_admin=False,
-            roles=[1],
-        )
-
-        login_user(client, test_user_credentials)
-
+        
     @pytest.fixture
     def user_with_no_permissions(self, client, test_user_credentials):
         # Assign no roles and permissions
@@ -13474,4 +13451,5 @@ class TestAssignments:
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
         assert checkdiff == {}

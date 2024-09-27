@@ -702,7 +702,6 @@ class TestEmails:
                         "email_source_gsheet_link": "https://docs.google.com/spreadsheets/d/1JTYpHS1zVZq2cUH9_dSOGt-tDLCc8qMYWXfC1VRUJYU/edit?gid=0#gid=0",
                         "email_source_gsheet_tab": "Test_Success",
                         "email_source_tablename": "test_table",
-                        "table_catalog": [],
                         "form_uid": 1,
                         "manual_triggers": [
                             {
