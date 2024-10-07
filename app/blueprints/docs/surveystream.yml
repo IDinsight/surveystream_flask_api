@@ -1094,6 +1094,9 @@ paths:
                         user_uid:
                           type: integer
                           description: The unique ID of the user
+                        user_name:
+                          type: string
+                          description: The name of the user
                         location_uid:
                           type: integer
                           description: The unique ID of the location
@@ -1245,6 +1248,9 @@ paths:
                         user_uid:
                           type: integer
                           description: The unique ID of the user
+                        user_name:
+                          type: string
+                          description: The name of the user
                         language:
                           type: string
                           description: The language of the user
