@@ -819,10 +819,14 @@ def get_user_locations(validated_query_params):
     user_location_query = (
         db.session.query(
             UserLocation.user_uid,
+            func.concat(
+                User.first_name, ' ', User.last_name
+            ).label('user_name'),
             UserLocation.location_uid,
             Location.location_id,
             Location.location_name,
         )
+        .join(User, User.user_uid == UserLocation.user_uid)
         .join(
             Location,
             (Location.location_uid == UserLocation.location_uid)
@@ -846,11 +850,12 @@ def get_user_locations(validated_query_params):
                     "data": [
                         {
                             "user_uid": user_uid,
+                            "user_name": user_name,
                             "location_uid": location_uid,
                             "location_id": location_id,
                             "location_name": location_name,
                         }
-                        for user_uid, location_uid, location_id, location_name in user_locations
+                        for user_uid, user_name, location_uid, location_id, location_name in user_locations
                     ],
                 }
             ),
@@ -926,10 +931,17 @@ def get_user_languages(validated_query_params):
     survey_uid = validated_query_params.survey_uid.data
     user_uid = validated_query_params.user_uid.data
 
-    user_language_query = db.session.query(
-        UserLanguage.user_uid,
-        UserLanguage.language,
-    ).filter(UserLanguage.survey_uid == survey_uid)
+    user_language_query = (
+        db.session.query(
+            UserLanguage.user_uid,
+            func.concat(
+                User.first_name, ' ', User.last_name
+            ).label('user_name'),
+            UserLanguage.language,
+        )
+        .join(User, User.user_uid == UserLanguage.user_uid)
+        .filter(UserLanguage.survey_uid == survey_uid)
+    )
 
     if user_uid:
         user_language_query = user_language_query.filter(
@@ -946,9 +958,10 @@ def get_user_languages(validated_query_params):
                     "data": [
                         {
                             "user_uid": user_uid,
+                            "user_name": user_name,
                             "language": language,
                         }
-                        for user_uid, language in user_languages
+                        for user_uid, user_name, language in user_languages
                     ],
                 }
             ),

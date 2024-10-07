@@ -913,6 +913,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": 3,
+                    "user_name": "John Doe2",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 }
@@ -1029,6 +1030,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": user_uid,
+                    "user_name": "Updated User",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 }
@@ -1066,6 +1068,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": user_uid,
+                    "user_name": "Updated User",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 }
@@ -1103,6 +1106,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": user_uid,
+                    "user_name": "Updated User",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 }
@@ -1149,6 +1153,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": user_uid,
+                    "user_name": "Updated User",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 },
@@ -1201,6 +1206,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": user_uid,
+                    "user_name": "Updated User",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 },
@@ -1401,8 +1407,8 @@ class TestUserManagement:
 
         expected_response = {
             "data": [
-                {"language": "English", "user_uid": user_uid},
-                {"language": "Hindi", "user_uid": user_uid},
+                {"language": "English", "user_uid": user_uid, "user_name": "Updated User"},
+                {"language": "Hindi", "user_uid": user_uid, "user_name": "Updated User"},
             ],
             "success": True,
         }
@@ -1434,8 +1440,8 @@ class TestUserManagement:
 
         expected_response = {
             "data": [
-                {"language": "English", "user_uid": user_uid},
-                {"language": "Hindi", "user_uid": user_uid},
+                {"language": "English", "user_uid": user_uid, "user_name": "Updated User"},
+                {"language": "Hindi", "user_uid": user_uid, "user_name": "Updated User"},
             ],
             "success": True,
         }
