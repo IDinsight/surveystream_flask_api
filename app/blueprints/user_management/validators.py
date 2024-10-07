@@ -286,3 +286,11 @@ class GetUserLanguagesParamValidator(FlaskForm):
 
     survey_uid = IntegerField(validators=[DataRequired()])
     user_uid = IntegerField()
+
+
+class GetUserGenderParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField(validators=[DataRequired()])
+    user_uid = IntegerField()
