@@ -9956,18 +9956,22 @@ paths:
                       items:
                         type: object
                         properties:
-                          enumerator_uid:
-                            type: integer
+                          enumerator_id:
+                            type: string
+                          enumerator_name:
+                            type: string
+                          enumerator_email:
+                            type: string
+                          supervisor_name:
+                            type: string
+                          supervisor_email:
+                            type: string
                           status:
                             type: string
                             enum:
                               - sent
                               - failed
-                          error_description:
-                            type: string
-                          language:
-                            type: string
-                          enumerator_id:
+                          error_message:
                             type: string
         "404":
           description: Email delivery reports not found

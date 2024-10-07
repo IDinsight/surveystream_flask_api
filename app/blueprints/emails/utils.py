@@ -9,13 +9,11 @@ from app.blueprints.enumerators.models import (
     SurveyorForm,
     SurveyorLocation,
 )
-from app.blueprints.enumerators.queries import (
-    build_prime_locations_with_location_hierarchy_subquery,
-)
 from app.blueprints.forms.models import Form
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.locations.utils import GeoLevelHierarchy
+from app.blueprints.mapping.errors import MappingError
 from app.blueprints.mapping.utils import SurveyorMapping
 from app.blueprints.surveys.models import Survey
 from app.blueprints.targets.models import TargetColumnConfig
@@ -329,20 +327,32 @@ def get_default_email_variable_names(form_uid):
     return default_column_list + location_column_list + enumerator_custom_fields
 
 
-def get_surveyors(form_uid, email_delivery_report_uid):
+def get_surveyor_details(form_uid, email_delivery_report_uid):
     """
-    Get the list of surveyors for the given email config uid.
+    Get the details of surveyors for the given email_delivery_report_uid.
 
     Args:
-        email_config_uid: Email config UID
+        form_uid: Form UID
         email_delivery_report_uid: Email delivery report UID
 
     Returns:
-        List of surveyors
+        List of surveyors dictionary with surveyor & supervisor details
     """
 
-    surveyor_mapping = SurveyorMapping(form_uid)
-    survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
+    try:
+        surveyor_mapping = SurveyorMapping(form_uid)
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping": e.message,
+                    },
+                }
+            ),
+            422,
+        )
 
     surveyor_mappings = surveyor_mapping.generate_mappings()
     surveyor_mappings_query = select(

@@ -36,7 +36,7 @@ from .models import (
 from .utils import (
     get_default_email_assignments_column,
     get_default_email_variable_names,
-    get_surveyors,
+    get_surveyor_details,
 )
 from .validators import (
     EmailConfigQueryParamValidator,
@@ -1500,8 +1500,6 @@ def load_email_schedule_delivery_reports(validated_payload):
         slot_time = report["slot_time"]
         delivery_time = report["delivery_time"]
 
-        email_config_uid = report["email_config_uid"]
-
         if slot_type not in ("schedule", "trigger"):
             return (
                 jsonify(
@@ -1513,25 +1511,15 @@ def load_email_schedule_delivery_reports(validated_payload):
                 404,
             )
 
-        # Check if the email schedule delivery report already exists
-        check_email_schedule_report_exists = EmailDeliveryReport.query.filter_by(
+        # Delete if the email schedule delivery report already exists
+        EmailDeliveryReport.query.filter_by(
             email_schedule_uid=email_schedule_uid,
             manual_email_trigger_uid=manual_email_trigger_uid,
             slot_type=slot_type,
             slot_date=slot_date,
             slot_time=slot_time,
-        ).first()
-
-        if check_email_schedule_report_exists is not None:
-            # Delete existing report
-            EmailDeliveryReport.query.filter_by(
-                email_schedule_uid=email_schedule_uid,
-                manual_email_trigger_uid=manual_email_trigger_uid,
-                slot_type=slot_type,
-                slot_date=slot_date,
-                slot_time=slot_time,
-            ).delete()
-            db.session.flush()
+        ).delete()
+        db.session.flush()
 
         email_delivery_report = EmailDeliveryReport(
             email_schedule_uid=email_schedule_uid,
@@ -1632,32 +1620,9 @@ def get_email_schedule_report(validated_query_params):
         result = []
         for email_delivery_report in email_delivery_reports:
             email_delivery_report_dict = email_delivery_report.to_dict()
-            email_enumerator_status = get_surveyors(
+            email_enumerator_status = get_surveyor_details(
                 form_uid, email_delivery_report.email_delivery_report_uid
             )
-
-            """email_enumerator_status = (
-                db.session.query(
-                    EmailEnumeratorDeliveryStatus.enumerator_uid,
-                    Enumerator.enumerator_id,
-                    Enumerator.name,
-                    Enumerator.gender,
-                    Enumerator.language,
-                    EmailEnumeratorDeliveryStatus.status,
-                    EmailEnumeratorDeliveryStatus.error_message,
-                )
-                .join(
-                    Enumerator,
-                    EmailEnumeratorDeliveryStatus.enumerator_uid
-                    == Enumerator.enumerator_uid,
-                )
-                .filter(
-                    EmailEnumeratorDeliveryStatus.email_delivery_report_uid
-                    == email_delivery_report.email_delivery_report_uid
-                )
-                .all()
-            )
-            """
 
             email_delivery_report_dict["enumerator_status"] = [
                 {
@@ -1671,7 +1636,6 @@ def get_email_schedule_report(validated_query_params):
                 }
                 for enum in email_enumerator_status
             ]
-            print(email_delivery_report_dict)
 
             result.append(email_delivery_report_dict)
 
