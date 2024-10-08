@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.mutable import MutableDict
 
 from app import db
-from app.blueprints.emails.utils import get_default_email_variable_names
+from app.blueprints.enumerators.models import Enumerator
 from app.blueprints.forms.models import Form
 from app.blueprints.surveys.models import Survey
 
@@ -496,4 +496,120 @@ class EmailScheduleFilter(db.Model):
             "filter_variable": self.filter_variable,
             "filter_operator": self.filter_operator,
             "filter_value": self.filter_value,
+        }
+
+
+class EmailDeliveryReport(db.Model):
+    __tablename__ = "email_delivery_reports"
+
+    email_delivery_report_uid = db.Column(
+        db.Integer(), primary_key=True, autoincrement=True
+    )
+    email_schedule_uid = db.Column(
+        db.Integer,
+        db.ForeignKey(EmailSchedule.email_schedule_uid),
+        nullable=True,
+    )
+    manual_email_trigger_uid = db.Column(
+        db.Integer,
+        db.ForeignKey(ManualEmailTrigger.manual_email_trigger_uid),
+        nullable=True,
+    )
+    slot_date = db.Column(db.Date, nullable=False)
+    slot_time = db.Column(TIME, nullable=False)
+    delivery_time = db.Column(db.DateTime, nullable=False)
+    slot_type = db.Column(
+        db.String(100),
+        CheckConstraint(
+            "slot_type IN ('trigger', 'schedule')",
+            name="ck_email_delivery_reports_slot_type",
+        ),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(email_delivery_report_uid),
+        db.UniqueConstraint(
+            "manual_email_trigger_uid",
+            "email_schedule_uid",
+            "slot_type",
+            "slot_date",
+            "slot_time",
+            name="email_delivery_reports_uc",
+        ),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self,
+        email_schedule_uid,
+        manual_email_trigger_uid,
+        slot_type,
+        slot_date,
+        slot_time,
+        delivery_time,
+    ):
+        self.email_schedule_uid = email_schedule_uid
+        self.manual_email_trigger_uid = manual_email_trigger_uid
+        self.slot_type = slot_type
+        self.slot_date = slot_date
+        self.slot_time = slot_time
+        self.delivery_time = delivery_time
+
+    def to_dict(self):
+        return {
+            "email_delivery_report_uid": self.email_delivery_report_uid,
+            "email_schedule_uid": self.email_schedule_uid,
+            "manual_email_trigger_uid": self.manual_email_trigger_uid,
+            "slot_date": self.slot_date,
+            "slot_time": str(self.slot_time),
+            "delivery_time": str(self.delivery_time),
+            "slot_type": self.slot_type,
+        }
+
+
+class EmailEnumeratorDeliveryStatus(db.Model):
+    __tablename__ = "email_enumerator_delivery_status"
+
+    email_delivery_report_uid = db.Column(
+        db.Integer(),
+        db.ForeignKey(
+            EmailDeliveryReport.email_delivery_report_uid, ondelete="CASCADE"
+        ),
+        nullable=False,
+    )
+    enumerator_uid = db.Column(
+        db.Integer,
+        db.ForeignKey(Enumerator.enumerator_uid),
+        nullable=False,
+    )
+    status = db.Column(
+        db.String(100),
+        CheckConstraint(
+            "status IN ( 'sent', 'failed')",
+            name="ck_email_enumerator_status",
+        ),
+        nullable=False,
+    )
+    error_message = db.Column(db.Text, nullable=True)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(email_delivery_report_uid, enumerator_uid),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self, email_delivery_report_uid, enumerator_uid, status, error_message
+    ):
+        self.email_delivery_report_uid = email_delivery_report_uid
+        self.enumerator_uid = enumerator_uid
+        self.status = status
+        self.error_message = error_message
+
+    def to_dict(self):
+        return {
+            "email_delivery_report_uid": self.email_delivery_report_uid,
+            "enumerator_uid": self.enumerator_uid,
+            "status": self.status,
+            "error_message": self.error_message,
         }

@@ -6171,9 +6171,6 @@ paths:
                           description: >-
                             The unique ID of the parent location of the given
                             location.
-                  success:
-                    type: boolean
-                    description: Indicates whether the request was successful
         "500":
           description: >
             Error message indicating that the locations could not be retrieved.
@@ -9907,11 +9904,63 @@ paths:
                 required:
                   - success
                   - data
-  /emails/tablecatalog/schedules:
+
+  /emails/report:
+    post:
+      summary: Create a new email delivery report
+      tags:
+        - Emails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_config_uid:
+                  type: integer
+                email_schedule_uid:
+                  type: integer
+                manual_trigger_uid:
+                  type: integer
+                slot_type:
+                  type: string
+                  enum:
+                    - schedule
+                    - trigger
+                slot_date:
+                  type: string
+                  format: date
+                slot_time:
+                  type: string
+                  format: time
+                delivery_time:
+                  type: string
+                  format: datetime
+                enumerator_status:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      enumerator_id:
+                        type: string
+                      status:
+                        type: string
+                        enum:
+                          - sent
+                          - failed
+                      error_description:
+                        type: string
+      responses:
+        "200":
+          description: Email Delivery Report created successfully
+        "404":
+          description: Invalid slot type
+
     get:
       tags:
         - Emails
-      summary: Get table catalog for a specific email config containing only tables which have been used in config templates
+      summary: Get email delivery reports for a specific email schedule/trigger
       parameters:
         - name: email_config_uid
           in: query
@@ -9919,37 +9968,141 @@ paths:
           required: true
           schema:
             type: integer
+        - name: email_schedule_uid
+          in: query
+          description: Unique identifier for the email schedule
+          required: true
+          schema:
+            type: integer
+        - name: manual_trigger_uid
+          in: query
+          description: Unique identifier for the manual trigger
+          required: true
+          schema:
+            type: integer
+        - name: slot_type
+          in: query
+          description: Type of slot - schedule or trigger
+          required: true
+          schema:
+            type: string
+            enum:
+              - schedule
+              - trigger
       responses:
         "200":
-          description: Success
+          description: Email delivery reports retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    email_schedule_uid:
+                      type: integer
+                    manual_trigger_uid:
+                      type: integer
+                    slot_type:
+                      type: string
+                      enum:
+                        - schedule
+                        - trigger
+                    slot_date:
+                      type: string
+                      format: date
+                    slot_time:
+                      type: string
+                      format: time
+                    delivery_time:
+                      type: string
+                      format: datetime
+                    enumerator_status:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          enumerator_id:
+                            type: string
+                          enumerator_name:
+                            type: string
+                          enumerator_email:
+                            type: string
+                          supervisor_name:
+                            type: string
+                          supervisor_email:
+                            type: string
+                          status:
+                            type: string
+                            enum:
+                              - sent
+                              - failed
+                          error_message:
+                            type: string
+        "404":
+          description: Email delivery reports not found
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Not Found"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "Email delivery reports not found"
+                required:
+                  - error
+                  - message
+
+
+                                
+  /emails/tablecatalog/schedules:
+      get:
+        tags:
+          - Emails
+        summary: Get table catalog for a specific email config containing only tables which have been used in config templates
+        parameters:
+          - name: email_config_uid
+            in: query
+            description: Unique identifier for the email config
+            required: true
+        responses:
+        "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+          schema:
+            type: integer
+            success:
+              type: boolean
+              example: true
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  survey_uid:
+                    type: integer
+                    description: Unique identifier of the survey
+                    example: 123
+                  table_name:
+                    type: string
+                    description: Name of the table
+                    example: "table_name"
+                  column_list:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        survey_uid:
-                          type: integer
-                          description: Unique identifier of the survey
-                          example: 123
-                        table_name:
-                          type: string
-                          description: Name of the table
-                          example: "table_name"
-                        column_list:
-                          type: array
-                          items:
-                            type: string
-                            description: List of columns in the table
-                            example: ["column1", "column2"]
-                              
+                      type: string
+                      description: List of columns in the table
+                      example: ["column1", "column2"]
+                            
   /media-files:
     post:
       tags:
