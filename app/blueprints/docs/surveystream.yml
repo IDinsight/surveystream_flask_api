@@ -1064,7 +1064,7 @@ paths:
     get:
       tags:
         - User Management
-      summary: Get user location details
+      summary: Get user location details for users with the lowest field supervisor role
       description: Get user location details for a survey and for a specific user if user_uid is provided
       parameters:
         - in: query
@@ -1094,6 +1094,9 @@ paths:
                         user_uid:
                           type: integer
                           description: The unique ID of the user
+                        user_name:
+                          type: string
+                          description: The name of the user
                         location_uid:
                           type: integer
                           description: The unique ID of the location
@@ -1215,7 +1218,7 @@ paths:
     get:
       tags:
         - User Management
-      summary: Get user languages
+      summary: Get user languages for users with the lowest field supervisor role
       description: Get user languages for a survey and for a specific user if user_uid is provided
       parameters:
         - in: query
@@ -1245,6 +1248,9 @@ paths:
                         user_uid:
                           type: integer
                           description: The unique ID of the user
+                        user_name:
+                          type: string
+                          description: The name of the user
                         language:
                           type: string
                           description: The language of the user
@@ -1257,6 +1263,66 @@ paths:
                 properties:
                   message:
                     type: string        
+  
+  "/user-gender":
+    get:
+      tags:
+        - User Management
+      summary: Get user gender for users with the lowest field supervisor role
+      description: Get user gender for a survey and for a specific user if user_uid is provided for users with the lowest field supervisor role
+      parameters:
+        - in: query
+          name: survey_uid
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: user_uid
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User gender retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: list
+                    items:
+                      type: object
+                      properties:
+                        user_uid:
+                          type: integer
+                          description: The unique ID of the user
+                        user_name:
+                          type: string
+                          description: The name of the user
+                        gender:
+                          type: string
+                          description: Gender of the user
+        "404":
+          description: User gender data not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "422":
+          description: Role hierarchy errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  
   /surveys:
     get:
       summary: Get surveys
@@ -9994,6 +10060,49 @@ paths:
 
 
                                 
+  /emails/tablecatalog/schedules:
+      get:
+        tags:
+          - Emails
+        summary: Get table catalog for a specific email config containing only tables which have been used in config templates
+        parameters:
+          - name: email_config_uid
+            in: query
+            description: Unique identifier for the email config
+            required: true
+        responses:
+        "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+          schema:
+            type: integer
+            success:
+              type: boolean
+              example: true
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  survey_uid:
+                    type: integer
+                    description: Unique identifier of the survey
+                    example: 123
+                  table_name:
+                    type: string
+                    description: Name of the table
+                    example: "table_name"
+                  column_list:
+                    type: array
+                    items:
+                      type: string
+                      description: List of columns in the table
+                      example: ["column1", "column2"]
+                            
   /media-files:
     post:
       tags:

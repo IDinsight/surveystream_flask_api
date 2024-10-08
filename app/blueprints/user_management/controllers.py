@@ -2,15 +2,16 @@ from flask import current_app, jsonify, request
 from flask_login import current_user
 from flask_mail import Message
 from passlib.pwd import genword
-from sqlalchemy import case, distinct, func, or_, null, case
+from sqlalchemy import case, distinct, func, null, or_
 from sqlalchemy.exc import IntegrityError
 
 from app import db, mail
 from app.blueprints.auth.models import ResetPasswordToken, User
 from app.blueprints.forms.models import Form
-
-from app.blueprints.roles.models import Role, SurveyAdmin, UserHierarchy
 from app.blueprints.locations.models import Location
+from app.blueprints.roles.errors import InvalidRoleHierarchyError
+from app.blueprints.roles.models import Role, SurveyAdmin, UserHierarchy
+from app.blueprints.roles.utils import RoleHierarchy
 from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
     custom_permissions_required,
@@ -27,10 +28,11 @@ from .validators import (
     CheckUserValidator,
     CompleteRegistrationValidator,
     EditUserValidator,
+    GetUserGenderParamValidator,
+    GetUserLanguagesParamValidator,
+    GetUserLocationsParamValidator,
     GetUsersQueryParamValidator,
     RegisterValidator,
-    GetUserLocationsParamValidator,
-    GetUserLanguagesParamValidator,
     UserLocationsParamValidator,
     UserLocationsPayloadValidator,
     WelcomeUserValidator,
@@ -819,15 +821,18 @@ def get_user_locations(validated_query_params):
     user_location_query = (
         db.session.query(
             UserLocation.user_uid,
+            func.concat(User.first_name, " ", User.last_name).label("user_name"),
             UserLocation.location_uid,
             Location.location_id,
             Location.location_name,
         )
+        .join(User, User.user_uid == UserLocation.user_uid)
         .join(
             Location,
             (Location.location_uid == UserLocation.location_uid)
             & (Location.survey_uid == survey_uid),
         )
+        .filter(User.active.is_(True))
         .filter(UserLocation.survey_uid == survey_uid)
     )
 
@@ -846,11 +851,12 @@ def get_user_locations(validated_query_params):
                     "data": [
                         {
                             "user_uid": user_uid,
+                            "user_name": user_name,
                             "location_uid": location_uid,
                             "location_id": location_id,
                             "location_name": location_name,
                         }
-                        for user_uid, location_uid, location_id, location_name in user_locations
+                        for user_uid, user_name, location_uid, location_id, location_name in user_locations
                     ],
                 }
             ),
@@ -926,10 +932,16 @@ def get_user_languages(validated_query_params):
     survey_uid = validated_query_params.survey_uid.data
     user_uid = validated_query_params.user_uid.data
 
-    user_language_query = db.session.query(
-        UserLanguage.user_uid,
-        UserLanguage.language,
-    ).filter(UserLanguage.survey_uid == survey_uid)
+    user_language_query = (
+        db.session.query(
+            UserLanguage.user_uid,
+            func.concat(User.first_name, " ", User.last_name).label("user_name"),
+            UserLanguage.language,
+        )
+        .join(User, User.user_uid == UserLanguage.user_uid)
+        .filter(User.active.is_(True))
+        .filter(UserLanguage.survey_uid == survey_uid)
+    )
 
     if user_uid:
         user_language_query = user_language_query.filter(
@@ -946,9 +958,10 @@ def get_user_languages(validated_query_params):
                     "data": [
                         {
                             "user_uid": user_uid,
+                            "user_name": user_name,
                             "language": language,
                         }
-                        for user_uid, language in user_languages
+                        for user_uid, user_name, language in user_languages
                     ],
                 }
             ),
@@ -956,3 +969,59 @@ def get_user_languages(validated_query_params):
         )
     else:
         return jsonify(message="User languages not found"), 404
+
+
+# User Gender
+@user_management_bp.route("/user-gender", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(GetUserGenderParamValidator)
+def get_user_gender(validated_query_params):
+    """Function to get users with the bottom level role in a survey along with gender"""
+
+    survey_uid = validated_query_params.survey_uid.data
+    user_uid = validated_query_params.user_uid.data
+
+    roles = [
+        role.to_dict() for role in Role.query.filter_by(survey_uid=survey_uid).all()
+    ]
+
+    try:
+        roles = RoleHierarchy(roles)
+    except InvalidRoleHierarchyError as e:
+        return (
+            jsonify({"success": False, "errors": e.role_hierarchy_errors}),
+            422,
+        )
+
+    bottom_level_role_uid = roles.ordered_roles[-1]["role_uid"]
+
+    user_gender_query = db.session.query(
+        User.user_uid,
+        func.concat(User.first_name, " ", User.last_name).label("user_name"),
+        User.gender,
+    ).filter(User.active.is_(True), User.roles.any(bottom_level_role_uid))
+
+    if user_uid:
+        user_gender_query = user_gender_query.filter(User.user_uid == user_uid)
+
+    user_gender = user_gender_query.all()
+
+    if user_gender:
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": [
+                        {
+                            "user_uid": user_uid,
+                            "user_name": user_name,
+                            "gender": gender,
+                        }
+                        for user_uid, user_name, gender in user_gender
+                    ],
+                }
+            ),
+            200,
+        )
+    else:
+        return jsonify(message="User gender data not found"), 404

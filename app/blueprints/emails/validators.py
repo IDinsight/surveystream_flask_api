@@ -131,9 +131,6 @@ class EmailScheduleValidator(FlaskForm):
             except ValueError:
                 raise ValidationError("Invalid date.")
 
-            if date_obj < datetime.now().date():
-                raise ValidationError("Date must be in the future.")
-
 
 class ManualEmailTriggerValidator(FlaskForm):
     date = StringField(validators=[DataRequired()])
