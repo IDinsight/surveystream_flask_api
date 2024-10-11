@@ -1869,8 +1869,7 @@ class TestEmails:
                         {
                             "table_name": "test_table",
                             "filter_variable": "test_column2",
-                            "filter_operator": "Is not",
-                            "filter_value": "test_value2",
+                            "filter_operator": "Date: Is Current Date",
                         },
                     ]
                 },
@@ -1971,8 +1970,8 @@ class TestEmails:
                                         "filter_group_id": 2,
                                         "table_name": "test_table",
                                         "filter_variable": "test_column2",
-                                        "filter_operator": "Is not",
-                                        "filter_value": "test_value2",
+                                        "filter_operator": "Date: Is Current Date",
+                                        "filter_value": None,
                                     },
                                 ]
                             },

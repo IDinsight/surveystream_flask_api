@@ -407,9 +407,21 @@ class EmailTableFilter(db.Model):
     filter_group_id = db.Column(db.Integer, nullable=False)
     filter_variable = db.Column(db.String(255), nullable=False)
     filter_operator = db.Column(
-        db.String(16),
+        db.String(64),
         CheckConstraint(
-            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty')",
+            """filter_operator IN 
+            (   'Is',
+                'Is not',
+                'Contains',
+                'Does not contain',
+                'Is Empty',
+                'Is not empty',
+                'Greather than',
+                'Smaller than',
+                'Date: Is Current Date',
+                'Date: In last week',
+                'Date: In last month',
+                'Date: In Date Range')""",
             name="ck_email_table_filter_operator",
         ),
         nullable=False,
@@ -458,9 +470,21 @@ class EmailScheduleFilter(db.Model):
     filter_group_id = db.Column(db.Integer)
     filter_variable = db.Column(db.String(255), nullable=False)
     filter_operator = db.Column(
-        db.String(16),
+        db.String(64),
         CheckConstraint(
-            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty')",
+            """filter_operator IN 
+            (   'Is',
+                'Is not',
+                'Contains',
+                'Does not contain',
+                'Is Empty',
+                'Is not empty',
+                'Greather than',
+                'Smaller than',
+                'Date: Is Current Date',
+                'Date: In last week',
+                'Date: In last month',
+                'Date: In Date Range')""",
             name="ck_email_schedule_filter_operator",
         ),
         nullable=False,
