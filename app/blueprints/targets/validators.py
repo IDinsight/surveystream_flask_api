@@ -132,7 +132,6 @@ class TargetConfigValidator(FlaskForm):
     )
     scto_input_id = StringField(DataRequired())
     scto_encryption_flag = BooleanField(default=False)
-    column_mapping = JSONField()
 
 
 class TargetConfigQueryValidator(FlaskForm):

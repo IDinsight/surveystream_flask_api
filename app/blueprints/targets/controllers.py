@@ -1204,7 +1204,6 @@ def create_target_config(validated_payload):
         "scto_input_type": validated_payload.scto_input_type.data,
         "scto_input_id": validated_payload.scto_input_id.data,
         "scto_encryption_flag": validated_payload.scto_encryption_flag.data,
-        "column_mapping": validated_payload.column_mapping.data,
     }
 
     target_config = TargetConfig(**target_config_values)
@@ -1238,8 +1237,6 @@ def update_target_config(validated_payload):
         target_config.scto_input_type = validated_payload.scto_input_type.data
         target_config.scto_input_id = validated_payload.scto_input_id.data
         target_config.scto_encryption_flag = validated_payload.scto_encryption_flag.data
-
-    target_config.column_mapping = validated_payload.column_mapping.data
 
     try:
         db.session.commit()

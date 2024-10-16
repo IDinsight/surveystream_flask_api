@@ -188,7 +188,6 @@ class TargetConfig(db.Model):
     )
     scto_input_id = db.Column(db.String(256), nullable=True)
     scto_encryption_flag = db.Column(db.Boolean, nullable=False, server_default="false")
-    column_mapping = db.Column(MutableDict.as_mutable(JSONB))
 
     __table_args__ = (
         db.PrimaryKeyConstraint("form_uid"),
@@ -202,14 +201,12 @@ class TargetConfig(db.Model):
         scto_input_type,
         scto_input_id,
         scto_encryption_flag,
-        column_mapping,
     ):
         self.form_uid = form_uid
         self.target_source = target_source
         self.scto_input_type = scto_input_type
         self.scto_input_id = scto_input_id
         self.scto_encryption_flag = scto_encryption_flag
-        self.column_mapping = column_mapping
 
     def to_dict(self):
         result = {
@@ -218,7 +215,6 @@ class TargetConfig(db.Model):
             "scto_input_type": self.scto_input_type,
             "scto_input_id": self.scto_input_id,
             "scto_encryption_flag": self.scto_encryption_flag,
-            "column_mapping": self.column_mapping,
         }
 
         return result

@@ -1,19 +1,18 @@
 """
-Add Target Config Test Table
+Add Target Config table
 
-Revision ID: 95838d2f123d
-Revises: 19df8836b103
-Create Date: 2024-09-03 15:03:06.209160
+Revision ID: 7c9fc25d9651
+Revises: 40ee53f5075b
+Create Date: 2024-10-16 11:22:20.429391
 
 """
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "95838d2f123d"
-down_revision = "19df8836b103"
+revision = "7c9fc25d9651"
+down_revision = "40ee53f5075b"
 branch_labels = None
 depends_on = None
 
@@ -46,15 +45,12 @@ def upgrade():
         sa.Column(
             "scto_encryption_flag", sa.Boolean(), server_default="false", nullable=False
         ),
-        sa.Column(
-            "column_mapping", postgresql.JSONB(astext_type=sa.Text()), nullable=True
-        ),
         sa.ForeignKeyConstraint(
             ["form_uid"],
             ["webapp.forms.form_uid"],
-            name=op.f("fk_target_config_test_form_uid_forms"),
+            name=op.f("fk_target_config_form_uid_forms"),
         ),
-        sa.PrimaryKeyConstraint("form_uid", name=op.f("pk_target_config_test")),
+        sa.PrimaryKeyConstraint("form_uid", name=op.f("pk_target_config")),
         schema="webapp",
     )
     # ### end Alembic commands ###

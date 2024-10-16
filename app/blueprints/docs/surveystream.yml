@@ -6902,7 +6902,6 @@ paths:
           description: Column config updated successfully
         "400":
           description: Request errors
-    
 
   /targets/column-config:
     put:

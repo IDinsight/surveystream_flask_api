@@ -676,10 +676,6 @@ class TestTargets:
             "scto_input_type": "dataset",
             "scto_input_id": "test_dynmaic_target_dataset",
             "scto_encryption_flag": False,
-            "column_mapping": {
-                "target_id": "target_id",
-                "language": "language",
-            },
         }
 
         response = client.post(
@@ -700,8 +696,6 @@ class TestTargets:
         """
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
-        print(user_fixture)
-        print(expected_permission)
 
         response = client.get(
             "/api/targets/config",
@@ -715,10 +709,6 @@ class TestTargets:
 
             expected_response = {
                 "data": {
-                    "column_mapping": {
-                        "language": "language",
-                        "target_id": "target_id",
-                    },
                     "form_uid": 1,
                     "scto_encryption_flag": False,
                     "scto_input_id": "test_dynmaic_target_dataset",
@@ -740,23 +730,18 @@ class TestTargets:
         self, client, csrf_token, create_target_config, user_permissions, request
     ):
         """
-        Test get target config
+        Test update target config using put
         Expect Success and data
         """
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
-        print(user_fixture)
-        print(expected_permission)
+
         payload = {
             "form_uid": 1,
             "target_source": "scto",
             "scto_input_type": "form",
             "scto_input_id": "test_dynmaic_target_dataset",
-            "scto_encryption_flag": False,
-            "column_mapping": {
-                "target_id": "target_id",
-                "language": "language",
-            },
+            "scto_encryption_flag": True,
         }
 
         response = client.put(
@@ -772,12 +757,8 @@ class TestTargets:
 
             expected_response = {
                 "data": {
-                    "column_mapping": {
-                        "language": "language",
-                        "target_id": "target_id",
-                    },
                     "form_uid": 1,
-                    "scto_encryption_flag": False,
+                    "scto_encryption_flag": True,
                     "scto_input_id": "test_dynmaic_target_dataset",
                     "scto_input_type": "form",
                     "target_source": "scto",
