@@ -546,3 +546,51 @@ def get_locations(validated_query_params):
     )
 
     return response, 200
+
+
+@locations_bp.route("/long", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(LocationsQueryParamValidator)
+@custom_permissions_required("READ Survey Locations", "query", "survey_uid")
+def get_locations_data_long(validated_query_params):
+    """
+    Method to retrieve the locations information from the database in long format
+    """
+
+    survey_uid = validated_query_params.survey_uid.data
+    geo_level_uid = validated_query_params.geo_level_uid.data
+
+    locations_query = (
+        db.session.query(
+            GeoLevel.geo_level_uid,
+            GeoLevel.geo_level_name,
+            GeoLevel.parent_geo_level_uid,
+            Location.location_uid,
+            Location.location_id,
+            Location.location_name,
+            Location.parent_location_uid,
+        )
+        .join(Location, GeoLevel.geo_level_uid == Location.geo_level_uid)
+        .filter(Location.survey_uid == survey_uid)
+    )
+
+    if geo_level_uid is not None:
+        locations_query = locations_query.filter(Location.geo_level_uid == geo_level_uid)
+
+    locations = locations_query.all()
+
+    return jsonify(
+        {
+            "success": True,
+            "data": [ {
+                "geo_level_uid": location.geo_level_uid,
+                "geo_level_name": location.geo_level_name,
+                "parent_geo_level_uid": location.parent_geo_level_uid,
+                "location_uid": location.location_uid,
+                "location_id": location.location_id,
+                "location_name": location.location_name,
+                "parent_location_uid": location.parent_location_uid,
+            } for location in locations],
+        }
+    ), 200
+    

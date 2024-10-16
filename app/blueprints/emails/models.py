@@ -1,9 +1,9 @@
 from sqlalchemy import TIME, CheckConstraint
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.mutable import MutableDict
 
 from app import db
-from app.blueprints.emails.utils import get_default_email_variable_names
+from app.blueprints.enumerators.models import Enumerator
 from app.blueprints.forms.models import Form
 from app.blueprints.surveys.models import Survey
 
@@ -128,7 +128,9 @@ class EmailSchedule(db.Model):
 
     email_schedule_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     email_config_uid = db.Column(
-        db.Integer, db.ForeignKey(EmailConfig.email_config_uid), nullable=False
+        db.Integer,
+        db.ForeignKey(EmailConfig.email_config_uid, ondelete="CASCADE"),
+        nullable=False,
     )
     email_schedule_name = db.Column(
         db.String(255), nullable=False
@@ -169,7 +171,9 @@ class ManualEmailTrigger(db.Model):
         db.Integer(), primary_key=True, autoincrement=True
     )
     email_config_uid = db.Column(
-        db.Integer, db.ForeignKey(EmailConfig.email_config_uid), nullable=False
+        db.Integer,
+        db.ForeignKey(EmailConfig.email_config_uid, ondelete="CASCADE"),
+        nullable=False,
     )
     date = db.Column(db.Date, nullable=False)
     time = db.Column(TIME, nullable=False)
@@ -210,7 +214,9 @@ class EmailTemplate(db.Model):
     language = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text(), nullable=False)
     email_config_uid = db.Column(
-        db.Integer, db.ForeignKey(EmailConfig.email_config_uid), nullable=False
+        db.Integer,
+        db.ForeignKey(EmailConfig.email_config_uid, ondelete="CASCADE"),
+        nullable=False,
     )
 
     __table_args__ = (
@@ -265,12 +271,14 @@ class EmailTemplateTable(db.Model):
         db.Integer(), primary_key=True, autoincrement=True
     )
     email_template_uid = db.Column(
-        db.Integer(), db.ForeignKey(EmailTemplate.email_template_uid), nullable=False
+        db.Integer(),
+        db.ForeignKey(EmailTemplate.email_template_uid, ondelete="CASCADE"),
+        nullable=False,
     )
 
     table_name = db.Column(db.String(255), nullable=False)
-    column_mapping = db.Column(MutableDict.as_mutable(JSONB), nullable=False)
-    sort_list = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
+    column_mapping = db.Column(MutableDict.as_mutable(JSON), nullable=False)
+    sort_list = db.Column(MutableDict.as_mutable(JSON), nullable=True)
     variable_name = db.Column(db.String(100), nullable=False)
 
     __table_args__ = (
@@ -312,8 +320,13 @@ class EmailTemplateTable(db.Model):
 class EmailTemplateVariable(db.Model):
     __tablename__ = "email_template_variables"
 
+    email_template_variable_uid = db.Column(
+        db.Integer(), primary_key=True, autoincrement=True
+    )
     email_template_uid = db.Column(
-        db.Integer(), db.ForeignKey(EmailTemplate.email_template_uid), nullable=False
+        db.Integer(),
+        db.ForeignKey(EmailTemplate.email_template_uid, ondelete="CASCADE"),
+        nullable=False,
     )
 
     variable_name = db.Column(db.String(100), nullable=False)
@@ -321,7 +334,13 @@ class EmailTemplateVariable(db.Model):
     variable_expression = db.Column(db.String(255), nullable=True)
 
     __table_args__ = (
-        db.PrimaryKeyConstraint("email_template_uid", "variable_name"),
+        db.PrimaryKeyConstraint("email_template_variable_uid"),
+        db.UniqueConstraint(
+            "email_template_uid",
+            "variable_name",
+            "variable_expression",
+            name="email_template_variable_uc",
+        ),
         {"schema": "webapp"},
     )
 
@@ -329,18 +348,15 @@ class EmailTemplateVariable(db.Model):
         self,
         email_template_uid,
         variable_name,
-        source_table,
         variable_expression,
     ):
         self.email_template_uid = email_template_uid
         self.variable_name = variable_name
-        self.source_table = source_table
         self.variable_expression = variable_expression
 
     def to_dict(self):
         return {
             "variable_name": self.variable_name,
-            "source_table": self.source_table,
             "variable_expression": self.variable_expression,
         }
 
@@ -381,39 +397,39 @@ class EmailTableCatalog(db.Model):
 class EmailTableFilter(db.Model):
     __tablename__ = "email_table_filters"
 
+    table_filter_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+
     email_template_table_uid = db.Column(
         db.Integer,
-        db.ForeignKey(EmailTemplateTable.email_template_table_uid),
+        db.ForeignKey(EmailTemplateTable.email_template_table_uid, ondelete="CASCADE"),
         nullable=False,
     )
     filter_group_id = db.Column(db.Integer, nullable=False)
     filter_variable = db.Column(db.String(255), nullable=False)
     filter_operator = db.Column(
-        db.String(16),
+        db.String(64),
         CheckConstraint(
-            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty')",
+            """filter_operator IN 
+            (   'Is',
+                'Is not',
+                'Contains',
+                'Does not contain',
+                'Is Empty',
+                'Is not empty',
+                'Greather than',
+                'Smaller than',
+                'Date: Is Current Date',
+                'Date: In last week',
+                'Date: In last month',
+                'Date: In Date Range')""",
             name="ck_email_table_filter_operator",
         ),
         nullable=False,
     )
-    filter_value = db.Column(db.Text, nullable=False)
-    filter_concatenator = db.Column(
-        db.String(4),
-        CheckConstraint(
-            "filter_concatenator IN ('AND', 'OR')",
-            name="ck_email_table_filter_concatenator",
-        ),
-        nullable=True,
-    )
+    filter_value = db.Column(db.Text, nullable=True)
 
     __table_args__ = (
-        db.PrimaryKeyConstraint(
-            "email_template_table_uid",
-            "filter_group_id",
-            "filter_variable",
-            "filter_operator",
-            "filter_value",
-        ),
+        db.PrimaryKeyConstraint(table_filter_uid),
         {"schema": "webapp"},
     )
 
@@ -424,14 +440,12 @@ class EmailTableFilter(db.Model):
         filter_variable,
         filter_operator,
         filter_value,
-        filter_concatenator,
     ):
         self.email_template_table_uid = email_template_table_uid
         self.filter_group_id = filter_group_id
         self.filter_variable = filter_variable
         self.filter_operator = filter_operator
         self.filter_value = filter_value
-        self.filter_concatenator = filter_concatenator
 
     def to_dict(self):
         return {
@@ -440,45 +454,45 @@ class EmailTableFilter(db.Model):
             "filter_variable": self.filter_variable,
             "filter_operator": self.filter_operator,
             "filter_value": self.filter_value,
-            "filter_concatenator": self.filter_concatenator,
         }
 
 
 class EmailScheduleFilter(db.Model):
     __tablename__ = "email_schedule_filters"
 
+    schedule_filter_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     email_schedule_uid = db.Column(
-        db.Integer, db.ForeignKey(EmailSchedule.email_schedule_uid), nullable=False
+        db.Integer,
+        db.ForeignKey(EmailSchedule.email_schedule_uid, ondelete="CASCADE"),
+        nullable=False,
     )
     table_name = db.Column(db.String(255), nullable=False)
     filter_group_id = db.Column(db.Integer)
     filter_variable = db.Column(db.String(255), nullable=False)
     filter_operator = db.Column(
-        db.String(16),
+        db.String(64),
         CheckConstraint(
-            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty')",
+            """filter_operator IN 
+            (   'Is',
+                'Is not',
+                'Contains',
+                'Does not contain',
+                'Is Empty',
+                'Is not empty',
+                'Greather than',
+                'Smaller than',
+                'Date: Is Current Date',
+                'Date: In last week',
+                'Date: In last month',
+                'Date: In Date Range')""",
             name="ck_email_schedule_filter_operator",
         ),
         nullable=False,
     )
-    filter_value = db.Column(db.Text, nullable=False)
-    filter_concatenator = db.Column(
-        db.String(4),
-        CheckConstraint(
-            "filter_concatenator IN ('AND', 'OR')",
-            name="ck_email_schedule_filter_concatenator",
-        ),
-        nullable=True,
-    )
+    filter_value = db.Column(db.Text, nullable=True)
 
     __table_args__ = (
-        db.PrimaryKeyConstraint(
-            "email_schedule_uid",
-            "filter_group_id",
-            "filter_variable",
-            "filter_operator",
-            "filter_value",
-        ),
+        db.PrimaryKeyConstraint(schedule_filter_uid),
         {"schema": "webapp"},
     )
 
@@ -490,7 +504,6 @@ class EmailScheduleFilter(db.Model):
         filter_variable,
         filter_operator,
         filter_value,
-        filter_concatenator,
     ):
         self.email_schedule_uid = email_schedule_uid
         self.filter_group_id = filter_group_id
@@ -498,7 +511,6 @@ class EmailScheduleFilter(db.Model):
         self.filter_variable = filter_variable
         self.filter_operator = filter_operator
         self.filter_value = filter_value
-        self.filter_concatenator = filter_concatenator
 
     def to_dict(self):
         return {
@@ -508,5 +520,120 @@ class EmailScheduleFilter(db.Model):
             "filter_variable": self.filter_variable,
             "filter_operator": self.filter_operator,
             "filter_value": self.filter_value,
-            "filter_concatenator": self.filter_concatenator,
+        }
+
+
+class EmailDeliveryReport(db.Model):
+    __tablename__ = "email_delivery_reports"
+
+    email_delivery_report_uid = db.Column(
+        db.Integer(), primary_key=True, autoincrement=True
+    )
+    email_schedule_uid = db.Column(
+        db.Integer,
+        db.ForeignKey(EmailSchedule.email_schedule_uid, ondelete="CASCADE"),
+        nullable=True,
+    )
+    manual_email_trigger_uid = db.Column(
+        db.Integer,
+        db.ForeignKey(ManualEmailTrigger.manual_email_trigger_uid, ondelete="CASCADE"),
+        nullable=True,
+    )
+    slot_date = db.Column(db.Date, nullable=False)
+    slot_time = db.Column(TIME, nullable=False)
+    delivery_time = db.Column(db.DateTime, nullable=False)
+    slot_type = db.Column(
+        db.String(100),
+        CheckConstraint(
+            "slot_type IN ('trigger', 'schedule')",
+            name="ck_email_delivery_reports_slot_type",
+        ),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(email_delivery_report_uid),
+        db.UniqueConstraint(
+            "manual_email_trigger_uid",
+            "email_schedule_uid",
+            "slot_type",
+            "slot_date",
+            "slot_time",
+            name="email_delivery_reports_uc",
+        ),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self,
+        email_schedule_uid,
+        manual_email_trigger_uid,
+        slot_type,
+        slot_date,
+        slot_time,
+        delivery_time,
+    ):
+        self.email_schedule_uid = email_schedule_uid
+        self.manual_email_trigger_uid = manual_email_trigger_uid
+        self.slot_type = slot_type
+        self.slot_date = slot_date
+        self.slot_time = slot_time
+        self.delivery_time = delivery_time
+
+    def to_dict(self):
+        return {
+            "email_delivery_report_uid": self.email_delivery_report_uid,
+            "email_schedule_uid": self.email_schedule_uid,
+            "manual_email_trigger_uid": self.manual_email_trigger_uid,
+            "slot_date": self.slot_date,
+            "slot_time": str(self.slot_time),
+            "delivery_time": str(self.delivery_time),
+            "slot_type": self.slot_type,
+        }
+
+
+class EmailEnumeratorDeliveryStatus(db.Model):
+    __tablename__ = "email_enumerator_delivery_status"
+
+    email_delivery_report_uid = db.Column(
+        db.Integer(),
+        db.ForeignKey(
+            EmailDeliveryReport.email_delivery_report_uid, ondelete="CASCADE"
+        ),
+        nullable=False,
+    )
+    enumerator_uid = db.Column(
+        db.Integer,
+        db.ForeignKey(Enumerator.enumerator_uid, ondelete="CASCADE"),
+        nullable=False,
+    )
+    status = db.Column(
+        db.String(100),
+        CheckConstraint(
+            "status IN ( 'sent', 'failed')",
+            name="ck_email_enumerator_status",
+        ),
+        nullable=False,
+    )
+    error_message = db.Column(db.Text, nullable=True)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(email_delivery_report_uid, enumerator_uid),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self, email_delivery_report_uid, enumerator_uid, status, error_message
+    ):
+        self.email_delivery_report_uid = email_delivery_report_uid
+        self.enumerator_uid = enumerator_uid
+        self.status = status
+        self.error_message = error_message
+
+    def to_dict(self):
+        return {
+            "email_delivery_report_uid": self.email_delivery_report_uid,
+            "enumerator_uid": self.enumerator_uid,
+            "status": self.status,
+            "error_message": self.error_message,
         }

@@ -1,7 +1,7 @@
 from app import db
-from app.blueprints.targets.models import TargetColumnConfig, TargetStatus, Target
 from app.blueprints.enumerators.models import EnumeratorColumnConfig
 from app.blueprints.forms.models import Form, SCTOQuestion
+from app.blueprints.targets.models import Target, TargetColumnConfig, TargetStatus
 
 
 class AvailableColumns:
@@ -17,6 +17,7 @@ class AvailableColumns:
         prime_geo_level_uid,
         enumerator_location_configured,
         target_location_configured,
+        role_hierarchy,
     ):
         target_location_columns = []
 
@@ -54,6 +55,23 @@ class AvailableColumns:
 
                 if geo_level.geo_level_uid == prime_geo_level_uid:
                     break
+
+        supervisor_columns = []
+        if role_hierarchy:
+            for i, role in enumerate(role_hierarchy.ordered_roles):
+                column_index = len(role_hierarchy.ordered_roles) - i - 1
+                supervisor_columns.append(
+                    {
+                        "column_key": f"supervisors[{column_index}].supervisor_name",
+                        "column_label": f"""{role["role_name"]} Name""",
+                    }
+                )
+                supervisor_columns.append(
+                    {
+                        "column_key": f"supervisors[{column_index}].supervisor_email",
+                        "column_label": f"""{role["role_name"]} Email""",
+                    }
+                )
 
         result = TargetColumnConfig.query.filter(
             TargetColumnConfig.form_uid == form_uid,
@@ -225,8 +243,8 @@ class AvailableColumns:
                 "column_label": "Completed",
             },
             "scto_fields_placeholder",
+            "supervisors_placeholder",
         ]
-        # "supervisors_placeholder", # Add this back in once we have the supervisor hierarchy in place
 
         self.assignments_main = self.replace_custom_fields_placeholder(
             self.assignments_main, target_custom_fields, "custom_fields_placeholder"
@@ -244,6 +262,10 @@ class AvailableColumns:
 
         self.assignments_main = self.replace_scto_fields_placeholder(
             self.assignments_main, scto_fields
+        )
+
+        self.assignments_main = self.replace_supervisors_placeholder(
+            self.assignments_main, supervisor_columns
         )
 
         self.assignments_surveyors = [
@@ -368,8 +390,8 @@ class AvailableColumns:
                 "column_label": "Completed",
             },
             "scto_fields_placeholder",
+            "supervisors_placeholder",
         ]
-        # "supervisors_placeholder", # Add this back in once we have the supervisor hierarchy in place
 
         self.assignments_review = self.replace_custom_fields_placeholder(
             self.assignments_review, target_custom_fields, "custom_fields_placeholder"
@@ -387,6 +409,10 @@ class AvailableColumns:
 
         self.assignments_review = self.replace_scto_fields_placeholder(
             self.assignments_review, scto_fields
+        )
+
+        self.assignments_review = self.replace_supervisors_placeholder(
+            self.assignments_review, supervisor_columns
         )
 
         self.surveyors = [
@@ -415,7 +441,7 @@ class AvailableColumns:
                 "column_label": "Address",
             },
             "custom_fields_placeholder",
-            # "supervisors_placeholder", # Add this back in once we have the supervisor hierarchy in place
+            "supervisors_placeholder",
         ]
 
         self.surveyors = self.replace_custom_fields_placeholder(
@@ -424,6 +450,9 @@ class AvailableColumns:
 
         self.surveyors = self.replace_locations_placeholder(
             self.surveyors, enumerator_location_columns
+        )
+        self.surveyors = self.replace_supervisors_placeholder(
+            self.surveyors, supervisor_columns
         )
 
         self.targets = [
@@ -466,7 +495,7 @@ class AvailableColumns:
                 "column_label": "Completed",
             },
             "scto_fields_placeholder",
-            # "supervisors_placeholder",  # Add this back in once we have the supervisor hierarchy in place
+            "supervisors_placeholder",
         ]
 
         self.targets = self.replace_custom_fields_placeholder(
@@ -476,8 +505,11 @@ class AvailableColumns:
         self.targets = self.replace_locations_placeholder(
             self.targets, target_location_columns
         )
-
         self.targets = self.replace_scto_fields_placeholder(self.targets, scto_fields)
+
+        self.targets = self.replace_supervisors_placeholder(
+            self.targets, supervisor_columns
+        )
 
     def replace_custom_fields_placeholder(
         self, table_config, custom_fields, placeholder_text
@@ -516,6 +548,19 @@ class AvailableColumns:
         table_config = (
             table_config[0:placeholder_index]
             + scto_fields
+            + table_config[placeholder_index + 1 :]
+        )
+        return table_config
+
+    def replace_supervisors_placeholder(self, table_config, supervisors):
+        """
+        Add the supervisors to the table config
+        """
+
+        placeholder_index = table_config.index("supervisors_placeholder")
+        table_config = (
+            table_config[0:placeholder_index]
+            + supervisors
             + table_config[placeholder_index + 1 :]
         )
         return table_config

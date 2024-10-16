@@ -286,9 +286,9 @@ class TargetsUpload:
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                non_null_columns_df.at[
-                    index, "errors"
-                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                non_null_columns_df.at[index, "errors"] = (
+                    f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                )
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],
@@ -388,9 +388,9 @@ class TargetsUpload:
                     }
                 )
 
-                invalid_location_id_df[
-                    "errors"
-                ] = "Location id not found in uploaded locations data for the survey's bottom level geo level"
+                invalid_location_id_df["errors"] = (
+                    "Location id not found in uploaded locations data for the survey's bottom level geo level"
+                )
                 invalid_records_df = invalid_records_df.merge(
                     invalid_location_id_df["errors"],
                     how="left",

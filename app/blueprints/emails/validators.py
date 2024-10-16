@@ -2,7 +2,14 @@ import re
 from datetime import datetime
 
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
+from wtforms import (
+    BooleanField,
+    DateTimeField,
+    FieldList,
+    FormField,
+    IntegerField,
+    StringField,
+)
 from wtforms.validators import AnyOf, DataRequired, ValidationError
 
 from app.utils.utils import JSONField
@@ -53,20 +60,18 @@ class EmailFilterValidator(FlaskForm):
                     "Does not contain",
                     "Is empty",
                     "Is not empty",
+                    "Greather than",
+                    "Smaller than",
+                    "Date: Is Current Date",
+                    "Date: In last week",
+                    "Date: In last month",
+                    "Date: In Date Range",
                 ],
                 message="Invalid operator. Must be 'Is', 'Is Not', 'Contains', 'Does Not Contain', 'Is Empty', or 'Is Not Empty'",
             ),
         ]
     )
-    filter_value = StringField(validators=[DataRequired()])
-    filter_concatenator = StringField(
-        validators=[
-            AnyOf(
-                ["AND", "OR", None],
-                message="Invalid Concatenator. Must be 'AND' or 'OR'",
-            ),
-        ],
-    )
+    filter_value = StringField()
 
 
 class EmailScheduleFilterValidator(FlaskForm):
@@ -83,20 +88,18 @@ class EmailScheduleFilterValidator(FlaskForm):
                     "Does not contain",
                     "Is empty",
                     "Is not empty",
+                    "Greather than",
+                    "Smaller than",
+                    "Date: Is Current Date",
+                    "Date: In last week",
+                    "Date: In last month",
+                    "Date: In Date Range",
                 ],
                 message="Invalid operator. Must be 'Is', 'Is not', 'Contains', 'Does not contain', 'Is empty', or 'Is not empty'",
             ),
         ]
     )
-    filter_value = StringField(validators=[DataRequired()])
-    filter_concatenator = StringField(
-        validators=[
-            AnyOf(
-                ["AND", "OR", None],
-                message="Invalid Concatenator. Must be 'AND' or 'OR'",
-            ),
-        ],
-    )
+    filter_value = StringField()
 
 
 class EmailFilterGroupValidator(FlaskForm):
@@ -139,9 +142,6 @@ class EmailScheduleValidator(FlaskForm):
                 date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
             except ValueError:
                 raise ValidationError("Invalid date.")
-
-            if date_obj < datetime.now().date():
-                raise ValidationError("Date must be in the future.")
 
 
 class ManualEmailTriggerValidator(FlaskForm):
@@ -213,7 +213,6 @@ class EmailVariableValidator(FlaskForm):
 
     variable_name = StringField(validators=[DataRequired()])
     variable_expression = StringField(default=None)
-    source_table = StringField(validators=[DataRequired()])
 
 
 class EmailTemplateTableValidator(FlaskForm):
@@ -282,7 +281,7 @@ class EmailTableCatalogQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    survey_uid = IntegerField(validators=[DataRequired()])
+    email_config_uid = IntegerField(validators=[DataRequired()])
 
 
 class EmailTableCatalogJSONValidator(FlaskForm):
@@ -295,3 +294,57 @@ class EmailTableCatalogJSONValidator(FlaskForm):
 class EmailTableCatalogValidator(FlaskForm):
     survey_uid = IntegerField(validators=[DataRequired()])
     table_catalog = FieldList(FormField(EmailTableCatalogJSONValidator), default=[])
+
+
+class EmailTemplateSingletonValidator(FlaskForm):
+    subject = StringField(validators=[DataRequired()])
+    language = StringField(validators=[DataRequired()])
+    content = StringField(validators=[DataRequired()])
+    variable_list = FieldList(FormField(EmailVariableValidator), default=[])
+    table_list = FieldList(FormField(EmailTemplateTableValidator), default=[])
+
+
+class EmailTemplateBulkValidator(FlaskForm):
+    templates = FieldList(FormField(EmailTemplateSingletonValidator), default=[])
+    email_config_uid = IntegerField(validators=[DataRequired()])
+
+
+class EnumeratorStatusListValidator(FlaskForm):
+    enumerator_id = StringField(validators=[DataRequired()])
+    status = StringField(
+        AnyOf(["sent", "failed"], message="Status can be sent or failed"),
+        validators=[DataRequired()],
+    )
+    error_message = StringField(default=None)
+
+
+class EmailDeliveryReportValidator(FlaskForm):
+    email_config_uid = IntegerField(validators=[DataRequired()])
+    email_schedule_uid = IntegerField(default=None)
+    manual_email_trigger_uid = IntegerField(default=None)
+    slot_type = StringField(
+        AnyOf(["trigger", "schedule"], message="Invalid slot type"),
+        default=None,
+    )
+    slot_date = StringField(validators=[DataRequired()])
+    slot_time = StringField(validators=[DataRequired()])
+    delivery_time = StringField(validators=[DataRequired()])
+    enumerator_status = FieldList(FormField(EnumeratorStatusListValidator), default=[])
+
+
+class EmailDeliveryReportBulkValidator(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
+    reports = FieldList(FormField(EmailDeliveryReportValidator), default=[])
+
+
+class EmailDeliveryReportQueryValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    email_config_uid = IntegerField(validators=[DataRequired()])
+    email_schedule_uid = IntegerField()
+    manual_email_trigger_uid = IntegerField()
+    slot_type = StringField(
+        AnyOf(["trigger", "schedule"], message="Invalid slot type"),
+        default=None,
+    )
