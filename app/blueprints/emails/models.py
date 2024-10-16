@@ -531,12 +531,12 @@ class EmailDeliveryReport(db.Model):
     )
     email_schedule_uid = db.Column(
         db.Integer,
-        db.ForeignKey(EmailSchedule.email_schedule_uid),
+        db.ForeignKey(EmailSchedule.email_schedule_uid, ondelete="CASCADE"),
         nullable=True,
     )
     manual_email_trigger_uid = db.Column(
         db.Integer,
-        db.ForeignKey(ManualEmailTrigger.manual_email_trigger_uid),
+        db.ForeignKey(ManualEmailTrigger.manual_email_trigger_uid, ondelete="CASCADE"),
         nullable=True,
     )
     slot_date = db.Column(db.Date, nullable=False)
@@ -604,7 +604,7 @@ class EmailEnumeratorDeliveryStatus(db.Model):
     )
     enumerator_uid = db.Column(
         db.Integer,
-        db.ForeignKey(Enumerator.enumerator_uid),
+        db.ForeignKey(Enumerator.enumerator_uid, ondelete="CASCADE"),
         nullable=False,
     )
     status = db.Column(
