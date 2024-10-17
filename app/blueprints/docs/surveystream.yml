@@ -10131,6 +10131,11 @@ paths:
                     An array of SurveyCTO field names that are to be included in the media files output
                   items:
                     type: string
+                mapping_criteria:
+                  type: string
+                  description: >-
+                    Criteria used to split the media files into different Google Sheets. Values can be
+                    'location', 'language' or NULL
               required:
                 - form_uid
                 - file_type
@@ -10170,6 +10175,11 @@ paths:
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      mapping_criteria:
+                        type: string
+                        description: >-
+                          Criteria used to split the media files into different Google Sheets. Values can be
+                          'location', 'language' or NULL
                 required:
                   - success
                   - data
@@ -10240,6 +10250,19 @@ paths:
                             An array of SurveyCTO field names that are to be included in the media files output
                           items:
                             type: string
+                        mapping_criteria:
+                          type: string
+                          description: >-
+                            Criteria used to split the media files into different Google Sheets. Values can be
+                            'location', 'language' or NULL
+                        google_sheet_key:
+                          type: string
+                          description: Unique key for the output Google Sheet where the media file links are published
+                        mapping_google_sheet_key:
+                          type: string
+                          description: >-
+                            Unique key for the Google Sheet  which has the list of mapping criteria values (location/language)
+                            depending on the mapping criteria selected and the corresponding Google Sheet keys
                 required:
                   - success
                   - data
@@ -10309,6 +10332,19 @@ paths:
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      mapping_criteria:
+                        type: string
+                        description: >-
+                          Criteria used to split the media files into different Google Sheets. Values can be
+                          'location', 'language' or NULL
+                      google_sheet_key:
+                        type: string
+                        description: Unique key for the output Google Sheet where the media file links are published
+                      mapping_google_sheet_key:
+                        type: string
+                        description: >-
+                          Unique key for the Google Sheet  which has the list of mapping criteria values (location/language)
+                          depending on the mapping criteria selected and the corresponding Google Sheet keys
                 required:
                   - success
                   - data
@@ -10361,6 +10397,11 @@ paths:
                     An array of SurveyCTO field names that are to be included in the media files output
                   items:
                     type: string
+                mapping_criteria:
+                  type: string
+                  description: >-
+                    Criteria used to split the media files into different Google Sheets. Values can be
+                    'location', 'language' or NULL
               required:
                 - file_type
                 - source
@@ -10402,6 +10443,19 @@ paths:
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      mapping_criteria:
+                        type: string
+                        description: >-
+                          Criteria used to split the media files into different Google Sheets. Values can be
+                          'location', 'language' or NULL
+                      google_sheet_key:
+                        type: string
+                        description: Unique key for the output Google Sheet where the media file links are published
+                      mapping_google_sheet_key:
+                        type: string
+                        description: >-
+                          Unique key for the Google Sheet  which has the list of mapping criteria values (location/language)
+                          depending on the mapping criteria selected and the corresponding Google Sheet keys
                 required:
                   - success
                   - message
