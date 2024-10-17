@@ -28,15 +28,15 @@ def get_media_files_configs(validated_query_params):
 
     survey_uid = validated_query_params.survey_uid.data
 
-    result = db.session.query(
-        MediaFilesConfig,
-        Form
-    ).join(
-        Form,
-        MediaFilesConfig.form_uid == Form.form_uid,
-    ).filter(
-        Form.survey_uid == survey_uid
-    ).all()
+    result = (
+        db.session.query(MediaFilesConfig, Form)
+        .join(
+            Form,
+            MediaFilesConfig.form_uid == Form.form_uid,
+        )
+        .filter(Form.survey_uid == survey_uid)
+        .all()
+    )
 
     data = [
         {
@@ -47,6 +47,8 @@ def get_media_files_configs(validated_query_params):
             "source": media_files_config.source,
             "scto_fields": media_files_config.scto_fields,
             "mapping_criteria": media_files_config.mapping_criteria,
+            "google_sheet_key": media_files_config.google_sheet_key,
+            "mapping_google_sheet_key": media_files_config.mapping_google_sheet_key,
         }
         for media_files_config, form in result
     ]
@@ -106,13 +108,17 @@ def create_media_files_config(validated_payload):
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(
+        return (
+            jsonify(
                 {
                     "success": False,
                     "error": {
                         "message": "A config already exists for this survey with the same scto_form_id, type and source"
-                    }
-                }), 400
+                    },
+                }
+            ),
+            400,
+        )
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -153,13 +159,17 @@ def update_media_files_config(media_files_config_uid, validated_payload):
 
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify(
-            {
-                "success": False,
-                "error": {
-                    "message": "A config already exists for this survey with the same scto_form_id, type and source"
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "A config already exists for this survey with the same scto_form_id, type and source"
+                    },
                 }
-            }), 400
+            ),
+            400,
+        )
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500

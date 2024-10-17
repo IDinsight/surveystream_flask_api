@@ -50,13 +50,26 @@ class MediaFilesConfig(db.Model):
             name="ck_media_files_config_mapping_criteria",
         ),
     )
+    google_sheet_key = db.Column(db.String())
+    mapping_google_sheet_key = db.Column(db.String())
 
-    def __init__(self, form_uid, file_type, source, scto_fields, mapping_criteria):
+    def __init__(
+        self,
+        form_uid,
+        file_type,
+        source,
+        scto_fields,
+        mapping_criteria,
+        google_sheet_key,
+        mapping_google_sheet_key,
+    ):
         self.form_uid = form_uid
         self.file_type = file_type
         self.source = source
         self.scto_fields = scto_fields
         self.mapping_criteria = mapping_criteria
+        self.google_sheet_key = google_sheet_key
+        self.mapping_google_sheet_key = mapping_google_sheet_key
 
     def to_dict(self):
         return {
@@ -66,4 +79,6 @@ class MediaFilesConfig(db.Model):
             "source": self.source,
             "scto_fields": self.scto_fields,
             "mapping_criteria": self.mapping_criteria,
+            "google_sheet_key": self.google_sheet_key,
+            "mapping_google_sheet_key": self.mapping_google_sheet_key,
         }
