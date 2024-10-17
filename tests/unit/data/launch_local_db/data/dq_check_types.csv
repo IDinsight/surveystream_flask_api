@@ -1,0 +1,11 @@
+type_id,name,abbr
+1,Logic,"L"
+2,Constraint,"HC,SC"
+3,Outlier,"OU,OL"
+4,Missing,"M"
+5,Don't know,"DK"
+6,Refusal,"R"
+7,Mismatch,"B"
+8,Protocol violation,"P"
+9,Spotcheck score,"SS"
+10,GPS,"P2P,P2S"
