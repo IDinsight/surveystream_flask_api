@@ -952,6 +952,41 @@ class TestMapping:
         assert response.status_code == 200
 
     @pytest.fixture()
+    def add_target_mapping(
+        self,
+        client,
+        login_test_user,
+        create_target_column_config,
+        upload_targets_csv,
+        add_another_user,
+        csrf_token,
+    ):
+        """
+        Adding a custom target mapping
+        """
+        # Update target_mapping_criteria to gender
+        self.update_target_mapping_criteria(client, csrf_token, ["Gender"])
+
+        # Add mapping
+        payload = {
+            "form_uid": 1,
+            "mappings": [
+                {
+                    "target_uid": 1,
+                    "supervisor_uid": 3,
+                }
+            ],
+        }
+        response = client.put(
+            "/api/mapping/targets-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+    @pytest.fixture()
     def add_enumerator_mapping_config(
         self,
         client,
@@ -990,6 +1025,42 @@ class TestMapping:
 
         response = client.put(
             "/api/mapping/surveyors-mapping-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def add_enumerator_mapping(
+        self,
+        client,
+        login_test_user,
+        create_enumerator_column_config,
+        upload_enumerators_csv,
+        add_another_user,
+        csrf_token,
+    ):
+        """
+        Adding custom surveyor mapping
+        """
+
+        # Update surveyor_mapping_criteria to gender
+        self.update_surveyor_mapping_criteria(client, csrf_token, ["Gender"])
+
+        # Add mapping
+        payload = {
+            "form_uid": 1,
+            "mappings": [
+                {
+                    "enumerator_uid": 1,
+                    "supervisor_uid": 3,
+                }
+            ],
+        }
+        response = client.put(
+            "/api/mapping/surveyors-mapping",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -2218,6 +2289,92 @@ class TestMapping:
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
+    def test_reset_gender_based_target_mapping(
+        self,
+        client,
+        login_test_user,
+        add_target_mapping,
+        request,
+        csrf_token,
+    ):
+        """
+        Test resetting mapping removed the added mapping
+        """
+
+        response = client.delete(
+            "/api/mapping/targets-mapping-config/reset",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        # Test mapping
+        response = client.get(
+            "/api/mapping/targets-mapping",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        expected_response = {
+            "data": [
+                {
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                    "supervisor_email": None,
+                    "supervisor_mapping_criteria_values": {
+                        "criteria": {
+                            "Gender": "Female",
+                        },
+                        "other": {},
+                    },
+                    "supervisor_name": None,
+                    "supervisor_uid": None,
+                    "target_id": "2",
+                    "target_mapping_criteria_values": {
+                        "criteria": {
+                            "Gender": "Female",
+                        },
+                        "other": {},
+                    },
+                    "target_uid": 2,
+                },
+                {
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "location_id": "1",
+                    "location_name": "ADILABAD",
+                    "supervisor_email": None,
+                    "supervisor_mapping_criteria_values": {
+                        "criteria": {
+                            "Gender": "Male",
+                        },
+                        "other": {},
+                    },
+                    "supervisor_name": None,
+                    "supervisor_uid": None,
+                    "target_id": "1",
+                    "target_mapping_criteria_values": {
+                        "criteria": {
+                            "Gender": "Male",
+                        },
+                        "other": {},
+                    },
+                    "target_uid": 1,
+                },
+            ],
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
 
     def test_remove_invalid_mappings(
         self,
@@ -4092,6 +4249,106 @@ class TestMapping:
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
+    def test_reset_gender_based_surveyor_mapping(
+        self,
+        client,
+        login_test_user,
+        add_enumerator_mapping,
+        request,
+        csrf_token,
+    ):
+        """
+        Test getting the surveyor mapping with multiple supervisors
+        """
+
+        response = client.delete(
+            "/api/mapping/surveyors-mapping-config/reset",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        # Test mapping
+        response = client.get(
+            "/api/mapping/surveyors-mapping",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        expected_response = {
+            "data": [
+                {
+                    "enumerator_id": "0294612",
+                    "enumerator_uid": 1,
+                    "gender": "Male",
+                    "language": "English",
+                    "location_id": ["1"],
+                    "location_name": ["ADILABAD"],
+                    "name": "Eric Dodge",
+                    "supervisor_email": None,
+                    "supervisor_mapping_criteria_values": {
+                        "criteria": {"Gender": "Male"},
+                        "other": {},
+                    },
+                    "supervisor_name": None,
+                    "supervisor_uid": None,
+                    "surveyor_mapping_criteria_values": {
+                        "criteria": {"Gender": "Male"},
+                        "other": {},
+                    },
+                },
+                {
+                    "enumerator_id": "0294613",
+                    "enumerator_uid": 2,
+                    "gender": "Female",
+                    "language": "Telugu",
+                    "location_id": ["1"],
+                    "location_name": ["ADILABAD"],
+                    "name": "Jahnavi Meher",
+                    "supervisor_email": None,
+                    "supervisor_mapping_criteria_values": {
+                        "criteria": {"Gender": "Female"},
+                        "other": {},
+                    },
+                    "supervisor_name": None,
+                    "supervisor_uid": None,
+                    "surveyor_mapping_criteria_values": {
+                        "criteria": {"Gender": "Female"},
+                        "other": {},
+                    },
+                },
+                {
+                    "enumerator_id": "0294615",
+                    "enumerator_uid": 4,
+                    "gender": "Male",
+                    "language": "Swahili",
+                    "location_id": ["1"],
+                    "location_name": ["ADILABAD"],
+                    "name": "Griffin Muteti",
+                    "supervisor_email": None,
+                    "supervisor_mapping_criteria_values": {
+                        "criteria": {"Gender": "Male"},
+                        "other": {},
+                    },
+                    "supervisor_name": None,
+                    "supervisor_uid": None,
+                    "surveyor_mapping_criteria_values": {
+                        "criteria": {"Gender": "Male"},
+                        "other": {},
+                    },
+                },
+            ],
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
 
     def test_remove_invalid_surveyor_mappings(
         self,
