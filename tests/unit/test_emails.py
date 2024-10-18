@@ -1,6 +1,10 @@
+import base64
+import json
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import jsondiff
+import pandas as pd
 import pytest
 from utils import (
     create_new_survey_role_with_permissions,
@@ -36,16 +40,43 @@ class TestEmails:
         login_user(client, test_user_credentials)
 
     @pytest.fixture
-    def user_with_email_permissions(self, client, test_user_credentials):
-        # Assign new roles and permissions
-        new_role = create_new_survey_role_with_permissions(
-            # 19 - WRITE Emails
-            client,
-            test_user_credentials,
-            "Emails Role",
-            [19],
-            1,
+    def user_with_email_permissions(
+        self, client, test_user_credentials, csrf_token, create_roles
+    ):
+        # Give existing roles permissions to upload assignments
+        payload = {
+            "roles": [
+                {
+                    "role_uid": 1,
+                    "role_name": "Core User",
+                    "reporting_role_uid": None,
+                    "permissions": [19],
+                },
+                {
+                    "role_uid": 2,
+                    "role_name": "Cluster Coordinator",
+                    "reporting_role_uid": 1,
+                    "permissions": [19],
+                },
+                {
+                    "role_uid": 3,
+                    "role_name": "Regional Coordinator",
+                    "reporting_role_uid": 2,
+                    "permissions": [19],
+                },
+            ],
+            "validate_hierarchy": True,
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
+        assert response.status_code == 200
 
         update_logged_in_user_roles(
             client,
@@ -105,6 +136,7 @@ class TestEmails:
             "planned_start_date": "2021-01-01",
             "planned_end_date": "2021-12-31",
             "state": "Draft",
+            "prime_geo_level_uid": 1,
             "config_status": "In Progress - Configuration",
             "created_by_user_uid": test_user_credentials["user_uid"],
         }
@@ -152,7 +184,12 @@ class TestEmails:
 
     @pytest.fixture()
     def create_form(
-        self, client, login_test_user, csrf_token, create_module_questionnaire
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_survey,
+        create_module_questionnaire,
     ):
         """
         Insert new form as a setup step for the form tests
@@ -181,6 +218,436 @@ class TestEmails:
         assert response.status_code == 201
 
         yield
+
+    @pytest.fixture()
+    def create_roles(self, client, login_test_user, csrf_token):
+        """
+        Insert new roles as a setup step
+        """
+
+        payload = {
+            "roles": [
+                {
+                    "role_uid": None,
+                    "role_name": "Core User",
+                    "reporting_role_uid": None,
+                    "permissions": [9],
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "Cluster Coordinator",
+                    "reporting_role_uid": 1,
+                    "permissions": [9],
+                },
+                {
+                    "role_uid": None,
+                    "role_name": "Regional Coordinator",
+                    "reporting_role_uid": 2,
+                    "permissions": [9],
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/roles",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def add_fsl_1_user(self, client, login_test_user, csrf_token, create_roles):
+        """
+        Add users at with field supervisor level 1 role
+        """
+        # Add core team user
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser1@example.com",
+                "first_name": "Tim",
+                "last_name": "Doe",
+                "roles": [1],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+        assert b"Success: user invited" in response.data
+        response_data = json.loads(response.data)
+        core_user = response_data.get("user")
+
+        return core_user
+
+    @pytest.fixture()
+    def add_fsl_2_user(self, client, login_test_user, csrf_token, create_roles):
+        """
+        Add users at with field supervisor level 2 role
+        """
+        # Add CC user
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser2@example.com",
+                "first_name": "Ron",
+                "last_name": "Doe",
+                "roles": [2],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+        assert b"Success: user invited" in response.data
+        response_data = json.loads(response.data)
+        cc_user = response_data.get("user")
+
+        return cc_user
+
+    @pytest.fixture()
+    def add_fsl_3_user(self, client, login_test_user, csrf_token):
+        """
+        Add users at with field supervisor level 3 role (lowest level)
+        """
+        # Add RC user
+        response = client.post(
+            "/api/users",
+            json={
+                "survey_uid": 1,
+                "email": "newuser3@example.com",
+                "first_name": "John",
+                "last_name": "Doe",
+                "roles": [3],
+                "gender": "Male",
+                "languages": ["Hindi", "Telugu", "English"],
+                "location_uids": [1],
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+        assert b"Success: user invited" in response.data
+        response_data = json.loads(response.data)
+        rc_user = response_data.get("user")
+
+        return rc_user
+
+    @pytest.fixture()
+    def add_user_hierarchy(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_roles,
+        add_fsl_1_user,
+        add_fsl_2_user,
+        add_fsl_3_user,
+    ):
+        """
+        Define user hierarchy dependencies between fsl 1, fsl 2 and fsl 3 users added
+        """
+
+        # Add user hierarchy records between rc and cc
+        payload = {
+            "survey_uid": 1,
+            "role_uid": 3,
+            "user_uid": add_fsl_3_user["user_uid"],
+            "parent_user_uid": add_fsl_2_user["user_uid"],
+        }
+
+        response = client.put(
+            "/api/user-hierarchy",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        # Add user hierarchy records between cc and core user
+        payload = {
+            "survey_uid": 1,
+            "role_uid": 2,
+            "user_uid": add_fsl_2_user["user_uid"],
+            "parent_user_uid": add_fsl_1_user["user_uid"],
+        }
+
+        response = client.put(
+            "/api/user-hierarchy",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+    @pytest.fixture
+    def create_geo_levels_for_enumerators_file(
+        self, client, login_test_user, csrf_token, create_form
+    ):
+        """
+        Insert new geo levels as a setup step for the location upload tests
+        These correspond to the geo levels found in the locations test files
+        """
+
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "Mandal",
+                    "parent_geo_level_uid": 1,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "PSU",
+                    "parent_geo_level_uid": 2,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_locations_for_enumerators_file(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_enumerators_file,
+        csrf_token,
+    ):
+        """
+        Upload locations csv as a setup step for the enumerators upload tests
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            locations_csv = f.read()
+            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        df = pd.read_csv(filepath, dtype=str)
+        df.rename(
+            columns={
+                "district_id": "District ID",
+                "district_name": "District Name",
+                "mandal_id": "Mandal ID",
+                "mandal_name": "Mandal Name",
+                "psu_id": "PSU ID",
+                "psu_name": "PSU Name",
+            },
+            inplace=True,
+        )
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": df.to_dict(orient="records"),
+            },
+            "success": True,
+        }
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    @pytest.fixture()
+    def create_enumerator_column_config(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Upload the enumerators column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "enumerator_id",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "name",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "email",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "mobile_primary",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "personal_details",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "home_address",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "personal_details",
+                    "bulk_editable": False,
+                },
+                {
+                    "column_name": "prime_geo_level_location",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "Mobile (Secondary)",
+                    "column_type": "custom_fields",
+                    "bulk_editable": True,
+                },
+                {
+                    "column_name": "Age",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/enumerators/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def upload_enumerators_csv(
+        self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
+    ):
+        """
+        Upload the enumerators csv
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_small.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id1",
+                "name": "name1",
+                "email": "email1",
+                "mobile_primary": "mobile_primary1",
+                "language": "language1",
+                "home_address": "home_address1",
+                "gender": "gender1",
+                "enumerator_type": "enumerator_type1",
+                "location_id_column": "district_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary1",
+                    },
+                    {
+                        "field_label": "Age",
+                        "column_name": "age1",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
 
     @pytest.fixture
     def create_email_config(
@@ -1402,8 +1869,7 @@ class TestEmails:
                         {
                             "table_name": "test_table",
                             "filter_variable": "test_column2",
-                            "filter_operator": "Is not",
-                            "filter_value": "test_value2",
+                            "filter_operator": "Date: Is Current Date",
                         },
                     ]
                 },
@@ -1504,8 +1970,8 @@ class TestEmails:
                                         "filter_group_id": 2,
                                         "table_name": "test_table",
                                         "filter_variable": "test_column2",
-                                        "filter_operator": "Is not",
-                                        "filter_value": "test_value2",
+                                        "filter_operator": "Date: Is Current Date",
+                                        "filter_value": None,
                                     },
                                 ]
                             },
@@ -3517,4 +3983,525 @@ class TestEmails:
             }
 
             checkdiff = jsondiff.diff(expected_response, get_response.json)
+            assert checkdiff == {}
+
+    def test_email_load_delivery_report(
+        self,
+        client,
+        csrf_token,
+        create_email_schedule,
+        upload_enumerators_csv,
+        user_permissions,
+        request,
+    ):
+        """
+        Test loading delivery report for different user roles
+        Expect the delivery report to be loaded
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "reports": [
+                {
+                    "email_config_uid": 1,
+                    "email_schedule_uid": 1,
+                    "delivery_time": "2021-06-01 00:00:00",
+                    "slot_date": "2021-06-01",
+                    "slot_time": "00:00:00",
+                    "slot_type": "schedule",
+                    "enumerator_status": [
+                        {
+                            "enumerator_id": "0294612",
+                            "status": "sent",
+                        },
+                        {
+                            "enumerator_id": "0294613",
+                            "status": "failed",
+                            "error_message": "Email delivery failed",
+                        },
+                        {
+                            "enumerator_id": "0294614",
+                            "status": "sent",
+                        },
+                    ],
+                }
+            ],
+        }
+
+        response = client.post(
+            "/api/emails/report",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    @pytest.fixture
+    def create_email_delivery_report(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_email_schedule,
+        upload_enumerators_csv,
+        add_user_hierarchy,
+    ):
+        """
+        Insert new survey as a setup step for the form tests
+        """
+
+        payload = {
+            "form_uid": 1,
+            "reports": [
+                {
+                    "email_config_uid": 1,
+                    "email_schedule_uid": 1,
+                    "delivery_time": "2021-06-01 00:00:00",
+                    "slot_date": "2021-06-01",
+                    "slot_time": "00:00:00",
+                    "slot_type": "schedule",
+                    "enumerator_status": [
+                        {
+                            "enumerator_id": "0294612",
+                            "status": "sent",
+                        },
+                        {
+                            "enumerator_id": "0294613",
+                            "status": "failed",
+                            "error_message": "Email delivery failed",
+                        },
+                    ],
+                }
+            ],
+        }
+
+        response = client.post(
+            "/api/emails/report",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        print(response.status_code)
+        assert response.status_code == 200
+
+        yield
+
+    def test_email_get_delivery_report(
+        self,
+        client,
+        csrf_token,
+        create_email_delivery_report,
+        user_permissions,
+        request,
+    ):
+        """
+        Test loading delivery report for different user roles
+        Expect the delivery report to be loaded
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        query_params = {
+            "email_config_uid": 1,
+            "email_schedule_uid": 1,
+            "slot_type": "schedule",
+        }
+        response = client.get(
+            "/api/emails/report",
+            query_string=query_params,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "delivery_time": "2021-06-01 00:00:00",
+                        "email_delivery_report_uid": 1,
+                        "email_schedule_uid": 1,
+                        "enumerator_status": [
+                            {
+                                "enumerator_email": "eric.dodge@idinsight.org",
+                                "enumerator_id": "0294612",
+                                "enumerator_name": "Eric Dodge",
+                                "error_message": None,
+                                "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                            {
+                                "enumerator_email": "jahnavi.meher@idinsight.org",
+                                "enumerator_id": "0294613",
+                                "enumerator_name": "Jahnavi Meher",
+                                "error_message": "Email delivery failed",
+                                "status": "failed",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                        ],
+                        "manual_email_trigger_uid": None,
+                        "slot_date": "Tue, 01 Jun 2021 00:00:00 GMT",
+                        "slot_time": "00:00:00",
+                        "slot_type": "schedule",
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    def test_email_get_delivery_report_exception(
+        self,
+        client,
+        csrf_token,
+        create_email_delivery_report,
+        user_permissions,
+        request,
+    ):
+        """
+        Test loading delivery report for different user roles
+        Expect the delivery report to be loaded
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        query_params = {
+            "email_config_uid": 1,
+            "email_schedule_uid": 1,
+        }
+        response = client.get(
+            "/api/emails/report",
+            query_string=query_params,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 404
+
+            expected_response = {
+                "data": None,
+                "message": "Invalid slot type",
+                "success": False,
+            }
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    def test_email_get_delivery_report_update(
+        self,
+        client,
+        csrf_token,
+        create_email_delivery_report,
+        user_permissions,
+        request,
+    ):
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "reports": [
+                {
+                    "email_config_uid": 1,
+                    "email_schedule_uid": 1,
+                    "delivery_time": "2021-06-01 00:00:00",
+                    "slot_date": "2021-06-01",
+                    "slot_time": "00:00:00",
+                    "slot_type": "schedule",
+                    "enumerator_status": [
+                        {
+                            "enumerator_id": "0294612",
+                            "status": "sent",
+                        },
+                        {
+                            "enumerator_id": "0294613",
+                            "status": "failed",
+                            "error_message": "Email delivery failed",
+                        },
+                        {
+                            "enumerator_id": "0294615",
+                            "status": "sent",
+                        },
+                    ],
+                }
+            ],
+        }
+
+        response = client.post(
+            "/api/emails/report",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            get_response = client.get(
+                "/api/emails/report",
+                query_string={
+                    "email_config_uid": 1,
+                    "email_schedule_uid": 1,
+                    "slot_type": "schedule",
+                },
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            expected_response = {
+                "data": [
+                    {
+                        "delivery_time": "2021-06-01 00:00:00",
+                        "email_delivery_report_uid": 2,
+                        "email_schedule_uid": 1,
+                        "enumerator_status": [
+                            {
+                                "enumerator_email": "eric.dodge@idinsight.org",
+                                "enumerator_id": "0294612",
+                                "enumerator_name": "Eric Dodge",
+                                "error_message": None,
+                                "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                            {
+                                "enumerator_email": "jahnavi.meher@idinsight.org",
+                                "enumerator_id": "0294613",
+                                "enumerator_name": "Jahnavi Meher",
+                                "error_message": "Email delivery failed",
+                                "status": "failed",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                            {
+                                "enumerator_email": "griffin.muteti@idinsight.org",
+                                "enumerator_id": "0294615",
+                                "enumerator_name": "Griffin Muteti",
+                                "error_message": None,
+                                "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                        ],
+                        "manual_email_trigger_uid": None,
+                        "slot_date": "Tue, 01 Jun 2021 00:00:00 GMT",
+                        "slot_time": "00:00:00",
+                        "slot_type": "schedule",
+                    }
+                ],
+                "success": True,
+            }
+            assert get_response.status_code == 200
+
+            print(get_response.json)
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                get_response.json,
+            )
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
+            assert checkdiff == {}
+
+    def test_email_get_delivery_report_update_trigger(
+        self,
+        client,
+        csrf_token,
+        create_email_delivery_report,
+        create_manual_email_trigger,
+        user_permissions,
+        request,
+    ):
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "reports": [
+                {
+                    "email_config_uid": 1,
+                    "manual_email_trigger_uid": 1,
+                    "delivery_time": "2021-06-01 00:00:00",
+                    "slot_date": "2021-06-01",
+                    "slot_time": "00:00:00",
+                    "slot_type": "trigger",
+                    "enumerator_status": [
+                        {
+                            "enumerator_id": "0294612",
+                            "status": "sent",
+                        },
+                        {
+                            "enumerator_id": "0294613",
+                            "status": "failed",
+                            "error_message": "Email delivery failed",
+                        },
+                        {
+                            "enumerator_id": "0294615",
+                            "status": "sent",
+                        },
+                    ],
+                }
+            ],
+        }
+
+        response = client.post(
+            "/api/emails/report",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            get_response = client.get(
+                "/api/emails/report",
+                query_string={
+                    "email_config_uid": 1,
+                    "manual_email_trigger_uid": 1,
+                    "slot_type": "schedule",
+                },
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            expected_response = {
+                "data": [
+                    {
+                        "delivery_time": "2021-06-01 00:00:00",
+                        "email_delivery_report_uid": 2,
+                        "email_schedule_uid": None,
+                        "enumerator_status": [
+                            {
+                                "enumerator_email": "eric.dodge@idinsight.org",
+                                "enumerator_id": "0294612",
+                                "enumerator_name": "Eric Dodge",
+                                "error_message": None,
+                                "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                            {
+                                "enumerator_email": "jahnavi.meher@idinsight.org",
+                                "enumerator_id": "0294613",
+                                "enumerator_name": "Jahnavi Meher",
+                                "error_message": "Email delivery failed",
+                                "status": "failed",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                            {
+                                "enumerator_email": "griffin.muteti@idinsight.org",
+                                "enumerator_id": "0294615",
+                                "enumerator_name": "Griffin Muteti",
+                                "error_message": None,
+                                "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                        ],
+                        "manual_email_trigger_uid": 1,
+                        "slot_date": "Tue, 01 Jun 2021 00:00:00 GMT",
+                        "slot_time": "00:00:00",
+                        "slot_type": "trigger",
+                    }
+                ],
+                "success": True,
+            }
+            assert get_response.status_code == 200
+
+            print(get_response.json)
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                get_response.json,
+            )
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                response.json,
+            )
+
             assert checkdiff == {}

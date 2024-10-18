@@ -157,6 +157,31 @@ class TestUserManagement:
         )
         assert response.status_code == 200
 
+    @pytest.fixture()
+    def update_mapping_criteria_to_gender(
+        self, client, login_test_user, csrf_token, test_user_credentials
+    ):
+        # Update mapping_criteria to specified value
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Gender"],
+            "surveyor_mapping_criteria": ["Gender"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
     @pytest.fixture
     def create_permission(self, client, login_test_user, csrf_token):
         """
@@ -401,6 +426,40 @@ class TestUserManagement:
                 "roles": [2],
                 "gender": "Male",
                 "languages": ["English", "Hindi"],
+                "is_super_admin": True,
+                "active": True,
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        return response.json["user_data"]
+
+    @pytest.fixture
+    def sample_user_with_gender(
+        self,
+        client,
+        csrf_token,
+        sample_user,
+        create_roles,
+        update_mapping_criteria_to_gender,
+    ):
+        """
+        Return the user added by added_user fixture as the sample_user
+        """
+
+        user_uid = sample_user.get("user_uid")
+        response = client.put(
+            f"/api/users/{user_uid}",
+            json={
+                "survey_uid": 1,
+                "email": "updateduser@example.com",
+                "first_name": "Updated",
+                "last_name": "User",
+                "roles": [2],
+                "gender": "Male",
                 "is_super_admin": True,
                 "active": True,
             },
@@ -913,6 +972,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": 3,
+                    "user_name": "John Doe2",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 }
@@ -1029,6 +1089,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": user_uid,
+                    "user_name": "Updated User",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 }
@@ -1066,6 +1127,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": user_uid,
+                    "user_name": "Updated User",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 }
@@ -1103,6 +1165,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": user_uid,
+                    "user_name": "Updated User",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 }
@@ -1149,6 +1212,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": user_uid,
+                    "user_name": "Updated User",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 },
@@ -1201,6 +1265,7 @@ class TestUserManagement:
                 {
                     "location_uid": 1,
                     "user_uid": user_uid,
+                    "user_name": "Updated User",
                     "location_id": "1",
                     "location_name": "ADILABAD",
                 },
@@ -1401,8 +1466,16 @@ class TestUserManagement:
 
         expected_response = {
             "data": [
-                {"language": "English", "user_uid": user_uid},
-                {"language": "Hindi", "user_uid": user_uid},
+                {
+                    "language": "English",
+                    "user_uid": user_uid,
+                    "user_name": "Updated User",
+                },
+                {
+                    "language": "Hindi",
+                    "user_uid": user_uid,
+                    "user_name": "Updated User",
+                },
             ],
             "success": True,
         }
@@ -1425,6 +1498,43 @@ class TestUserManagement:
         # Fetch user languages
         response = client.get(
             "/api/user-languages",
+            query_string={"survey_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {
+                    "language": "Hindi",
+                    "user_uid": user_uid,
+                    "user_name": "Updated User",
+                },
+                {
+                    "language": "English",
+                    "user_uid": user_uid,
+                    "user_name": "Updated User",
+                },
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_user_gender(
+        self, client, login_test_user, csrf_token, sample_user_with_gender
+    ):
+        """
+        Test fetching gender for a user and a survey
+        """
+        user_uid = sample_user_with_gender.get("user_uid")
+
+        # Fetch user languages
+        response = client.get(
+            "/api/user-gender",
             query_string={"survey_uid": 1, "user_uid": user_uid},
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -1434,8 +1544,39 @@ class TestUserManagement:
 
         expected_response = {
             "data": [
-                {"language": "English", "user_uid": user_uid},
-                {"language": "Hindi", "user_uid": user_uid},
+                {"gender": "Male", "user_uid": user_uid, "user_name": "Updated User"},
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_all_user_gender(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        sample_user_with_gender,
+    ):
+        """
+        Test fetching gender for all users in a survey
+        """
+        user_uid = sample_user_with_gender.get("user_uid")
+
+        # Fetch user languages
+        response = client.get(
+            "/api/user-gender",
+            query_string={"survey_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {"gender": "Male", "user_uid": user_uid, "user_name": "Updated User"},
             ],
             "success": True,
         }
