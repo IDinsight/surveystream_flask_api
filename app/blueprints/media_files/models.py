@@ -60,8 +60,8 @@ class MediaFilesConfig(db.Model):
         source,
         scto_fields,
         mapping_criteria,
-        google_sheet_key,
-        mapping_google_sheet_key,
+        google_sheet_key = None,
+        mapping_google_sheet_key = None,
     ):
         self.form_uid = form_uid
         self.file_type = file_type
