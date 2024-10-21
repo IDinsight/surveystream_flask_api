@@ -60,14 +60,14 @@ class EmailFilterValidator(FlaskForm):
                     "Does not contain",
                     "Is empty",
                     "Is not empty",
-                    "Greather than",
+                    "Greater than",
                     "Smaller than",
                     "Date: Is Current Date",
                     "Date: In last week",
                     "Date: In last month",
                     "Date: In Date Range",
                 ],
-                message="Invalid operator. Must be 'Is', 'Is Not', 'Contains', 'Does Not Contain', 'Is Empty', or 'Is Not Empty'",
+                message="Invalid filter operator",
             ),
         ]
     )
@@ -88,14 +88,14 @@ class EmailScheduleFilterValidator(FlaskForm):
                     "Does not contain",
                     "Is empty",
                     "Is not empty",
-                    "Greather than",
+                    "Greater than",
                     "Smaller than",
                     "Date: Is Current Date",
                     "Date: In last week",
                     "Date: In last month",
                     "Date: In Date Range",
                 ],
-                message="Invalid operator. Must be 'Is', 'Is not', 'Contains', 'Does not contain', 'Is empty', or 'Is not empty'",
+                message="Invalid filter operator",
             ),
         ]
     )
