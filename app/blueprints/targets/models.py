@@ -226,6 +226,8 @@ class TargetSCTOQuestion(db.Model):
     SQLAlchemy data model for TargetSCTOQuestion
     """
 
+    __tablename__ = "target_scto_question"
+
     question_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     form_uid = db.Column(
         db.Integer(),
@@ -233,6 +235,11 @@ class TargetSCTOQuestion(db.Model):
         nullable=False,
     )
     question_name = db.Column(db.String(), nullable=False)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("question_uid"),
+        {"schema": "webapp"},
+    )
 
     def __init__(self, form_uid, question_name):
         self.form_uid = form_uid
