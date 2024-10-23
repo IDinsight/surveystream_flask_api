@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import FieldList, IntegerField
-from wtforms.validators import DataRequired
+from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
+from wtforms.validators import AnyOf, DataRequired
 
 from app.blueprints.forms.models import Form
 from app.blueprints.surveys.models import Survey
@@ -74,4 +74,72 @@ class UpdateDQConfigValidator(FlaskForm):
         IntegerField(), validators=[DataRequired(), validate_survey_status_filter]
     )
 
-    paused_check_types = FieldList(IntegerField(), validators=[validate_check_type])
+
+class DQChecksQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
+    type_id = IntegerField(validators=[DataRequired(), validate_check_type])
+
+
+class DQCheckFilterValidator(FlaskForm):
+    question_name = StringField(validators=[DataRequired()])
+    filter_operator = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                [
+                    "Is",
+                    "Is not",
+                    "Contains",
+                    "Does not contain",
+                    "Is empty",
+                    "Is not empty",
+                    "Greather than",
+                    "Smaller than",
+                ],
+                message="Invalid operator. Must be 'Is', 'Is not', 'Contains', 'Does not contain', 'Is empty', or 'Is not empty', 'Greather than', 'Smaller than'",
+            ),
+        ]
+    )
+    filter_value = StringField()
+
+
+class DQCheckFilterGroupValidator(FlaskForm):
+    filter_group = FieldList(FormField(DQCheckFilterValidator), default=[])
+
+
+class AddDQCheckValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
+    type_id = IntegerField(validators=[DataRequired(), validate_check_type])
+    all_questions = BooleanField(validators=[DataRequired()])
+    question_name = StringField()
+    dq_scto_form_uid = IntegerField()
+    module_name = StringField()
+    flag_description = StringField()
+    check_components = FormField()
+    active = BooleanField(validators=[DataRequired()])
+
+    filters = FieldList(FormField(DQCheckFilterGroupValidator), default=[])
+
+
+class UpdateDQCheckValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    check_uid = IntegerField(validators=[DataRequired()])
+    form_uid = IntegerField(validators=[DataRequired()])
+    type_id = IntegerField(validators=[DataRequired(), validate_check_type])
+    all_questions = BooleanField(validators=[DataRequired()])
+    question_name = StringField()
+    dq_scto_form_uid = IntegerField()
+    module_name = StringField()
+    flag_description = StringField()
+    check_components = FormField()
+    active = BooleanField(validators=[DataRequired()])
+
+    filters = FieldList(FormField(DQCheckFilterGroupValidator), default=[])

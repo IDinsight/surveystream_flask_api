@@ -26,7 +26,6 @@ class DQConfig(db.Model):
         db.Integer(), db.ForeignKey(Form.form_uid, ondelete="CASCADE"), nullable=False
     )
     survey_status_filter = db.Column(db.ARRAY(db.Integer), nullable=False)
-    paused_check_types = db.Column(db.ARRAY(db.Integer), default=[], nullable=True)
 
     __table_args__ = (
         db.PrimaryKeyConstraint("form_uid"),
@@ -50,11 +49,7 @@ class DQCheck(db.Model):
     )
     all_questions = db.Column(db.Boolean(), default=False, nullable=False)
 
-    question_name = db.Column(
-        db.String(), nullable=False
-    )  # Should this be a foreign key to the questions table?
-    is_repeat_group = db.Column(db.Boolean(), nullable=False)
-
+    question_name = db.Column(db.String(), nullable=False)
     dq_scto_form_uid = db.Column(
         db.Integer(), db.ForeignKey(Form.form_uid, ondelete="CASCADE"), nullable=True
     )
@@ -64,7 +59,9 @@ class DQCheck(db.Model):
 
     check_components = db.Column(
         db.JSON(), nullable=False
-    )  # Should we create separate tables for this?
+    )  # JSON field to store check specific components
+
+    active = db.Column(db.Boolean(), default=True, nullable=False)
 
     __table_args__ = {"schema": "webapp"}
 
