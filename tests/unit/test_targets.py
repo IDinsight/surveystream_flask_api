@@ -900,9 +900,10 @@ class TestTargets:
         if expected_permission:
             assert response.status_code == 200
             expected_response = {
+                "message": "SurveyCTO input columns refreshed successfully",
                 "success": True,
-                "message": "Surveycto input columns updated successfully",
             }
+
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
         else:
