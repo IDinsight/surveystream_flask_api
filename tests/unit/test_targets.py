@@ -667,7 +667,7 @@ class TestTargets:
     @pytest.fixture()
     def create_target_config(self, client, csrf_token, login_test_user, create_form):
         """
-        Create a target config
+        Load target config table for tests with form inputs
         """
 
         payload = {
@@ -692,7 +692,7 @@ class TestTargets:
         self, client, csrf_token, login_test_user, create_form
     ):
         """
-        Create a target config
+        Load target config table for test with dataset inputs
         """
 
         payload = {
@@ -716,6 +716,9 @@ class TestTargets:
     def create_target_scto_column(
         self, client, csrf_token, login_test_user, create_target_config
     ):
+        """
+        Refresh Target SCTO Columns for form input
+        """
         response = client.post(
             "/api/targets/config/scto-columns/1",
             headers={"X-CSRF-Token": csrf_token},
@@ -727,6 +730,9 @@ class TestTargets:
     def create_target_scto_column_with_dataset(
         self, client, csrf_token, login_test_user, create_target_config_dataset
     ):
+        """
+        Refresh Target scto column for dataset input
+        """
         response = client.post(
             "/api/targets/config/scto-columns/1",
             headers={"X-CSRF-Token": csrf_token},
@@ -742,6 +748,12 @@ class TestTargets:
         user_permissions,
         request,
     ):
+        """
+        Test get target scto columns
+
+        Expect: Success with column list for surveycto dataset
+
+        """
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
@@ -767,6 +779,11 @@ class TestTargets:
     def test_get_target_scto_columns(
         self, client, csrf_token, create_target_scto_column, user_permissions, request
     ):
+        """
+        Test get target scto columns for form input
+
+        Expect: Success with input column list for surveycto form
+        """
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
@@ -868,8 +885,8 @@ class TestTargets:
         self, client, csrf_token, create_target_config, user_permissions, request
     ):
         """
-        Test get target config
-        Expect Success and data
+        Test Update target scto columns
+        Expect Success
         """
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)

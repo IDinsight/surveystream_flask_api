@@ -1262,9 +1262,9 @@ def update_target_config(validated_payload):
 )
 @logged_in_active_user_required
 @custom_permissions_required("WRITE Targets", "path", "form_uid")
-def ingest_scto_form_definition(form_uid):
+def refresh_target_scto_columns(form_uid):
     """
-    Ingest form definition from the SurveyCTO server
+    Refrsh Target input column list from surveycto
     """
     form = Form.query.filter_by(form_uid=form_uid).first()
 
@@ -1375,7 +1375,7 @@ def ingest_scto_form_definition(form_uid):
 )
 @logged_in_active_user_required
 @custom_permissions_required("WRITE Targets", "path", "form_uid")
-def get_scto_columns(form_uid):
+def get_target_scto_columns(form_uid):
     """
     Get the SurveyCTO columns for a form
     """
