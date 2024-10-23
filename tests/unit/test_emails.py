@@ -3486,10 +3486,6 @@ class TestEmails:
                                 "column_name": "Surveyor ID",
                             },
                             {
-                                "column_description": "Enumerators : home_address",
-                                "column_name": "Surveyor Address",
-                            },
-                            {
                                 "column_description": "Enumerators : gender",
                                 "column_name": "Surveyor Gender",
                             },
@@ -3729,10 +3725,6 @@ class TestEmails:
                                 "column_name": "Surveyor ID",
                             },
                             {
-                                "column_description": "Enumerators : home_address",
-                                "column_name": "Surveyor Address",
-                            },
-                            {
                                 "column_description": "Enumerators : gender",
                                 "column_name": "Surveyor Gender",
                             },
@@ -3902,10 +3894,6 @@ class TestEmails:
                             {
                                 "column_description": "Enumerators : enumerator_id",
                                 "column_name": "Surveyor ID",
-                            },
-                            {
-                                "column_description": "Enumerators : home_address",
-                                "column_name": "Surveyor Address",
                             },
                             {
                                 "column_description": "Enumerators : gender",

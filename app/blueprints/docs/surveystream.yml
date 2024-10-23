@@ -7459,9 +7459,55 @@ paths:
         "500":
           description: An unexpected error occurred
     delete:
-      summary: Delete the targets mapping configuration for a form
+      summary: Delete a specific custom targets mapping configuration for a form
       description: >
-        Deletes the targets mapping, both criteria level as well as target level, for a given form from 
+        Deletes a specific custom targets mapping configuration for a given form
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+        - in: query
+          name: mapping_values
+          schema:
+            type: array
+          description: >-
+            The target mapping criteria values to be deleted. Each array item
+            is an object with the criteria name and value
+          required: true
+        - in: query
+          name: mapped_to
+          schema:
+            type: array
+          description: >-
+            The supervisor mapping criteria values to which the target mapping
+            criteria values are mapped. Each array item is an object with the
+            criteria name and value
+          required: true
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+  "/mapping/targets-mapping-config/reset":
+    delete:
+      summary: Resets the targets mapping configuration for a form
+      description: >
+        Deletes all the targets mapping, both criteria level as well as target level, for a given form from 
         the database. This resets the state to auto generated mappings based on the mapping criteria.
       tags:
         - Mapping
@@ -7487,6 +7533,7 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred
+  
   "/mapping/targets-mapping":
     get:
       summary: Get target to supervisor mapping for a form
@@ -7662,6 +7709,7 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred 
+  
   "/mapping/surveyors-mapping-config":
     get:
       summary: Get surveyors mapping configuration for a form
@@ -7807,9 +7855,55 @@ paths:
         "500":
           description: An unexpected error occurred
     delete:
-      summary: Delete the surveyors mapping configuration for a form
+      summary: Delete a specific surveyors mapping configuration for a form
       description: >
-        Deletes the surveyors mapping, both criteria level as well as surveyor level, for a given form from 
+        Deletes a specific custom surveyors mapping configuration for a given form
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+        - in: query
+          name: mapping_values
+          schema:
+            type: array
+          description: >-
+            The surveyor mapping criteria values to be deleted. Each array item
+            is an object with the criteria name and value
+          required: true
+        - in: query
+          name: mapped_to
+          schema:
+            type: array
+          description: >-
+            The supervisor mapping criteria values to which the surveyor mapping
+            criteria values are mapped. Each array item is an object with the
+            criteria name and value
+          required: true
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+  "/mapping/surveyors-mapping-config/reset":
+    delete:
+      summary: Resets the surveyors mapping configuration for a form
+      description: >
+        Deletes all the surveyors mapping, both criteria level as well as surveyor level, for a given form from 
         the database. This resets the state to auto generated mappings based on the mapping criteria.
       tags:
         - Mapping
@@ -7835,6 +7929,7 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred
+  
   "/mapping/surveyors-mapping":
     get:
       summary: Get surveyor to supervisor mapping for a form
@@ -10333,6 +10428,11 @@ paths:
                     An array of SurveyCTO field names that are to be included in the media files output
                   items:
                     type: string
+                mapping_criteria:
+                  type: string
+                  description: >-
+                    Criteria used to split the media files into different Google Sheets. Values can be
+                    'location', 'language' or NULL
               required:
                 - form_uid
                 - file_type
@@ -10372,6 +10472,11 @@ paths:
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      mapping_criteria:
+                        type: string
+                        description: >-
+                          Criteria used to split the media files into different Google Sheets. Values can be
+                          'location', 'language' or NULL
                 required:
                   - success
                   - data
@@ -10442,6 +10547,19 @@ paths:
                             An array of SurveyCTO field names that are to be included in the media files output
                           items:
                             type: string
+                        mapping_criteria:
+                          type: string
+                          description: >-
+                            Criteria used to split the media files into different Google Sheets. Values can be
+                            'location', 'language' or NULL
+                        google_sheet_key:
+                          type: string
+                          description: Unique key for the output Google Sheet where the media file links are published
+                        mapping_google_sheet_key:
+                          type: string
+                          description: >-
+                            Unique key for the Google Sheet  which has the list of mapping criteria values (location/language)
+                            depending on the mapping criteria selected and the corresponding Google Sheet keys
                 required:
                   - success
                   - data
@@ -10511,6 +10629,19 @@ paths:
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      mapping_criteria:
+                        type: string
+                        description: >-
+                          Criteria used to split the media files into different Google Sheets. Values can be
+                          'location', 'language' or NULL
+                      google_sheet_key:
+                        type: string
+                        description: Unique key for the output Google Sheet where the media file links are published
+                      mapping_google_sheet_key:
+                        type: string
+                        description: >-
+                          Unique key for the Google Sheet  which has the list of mapping criteria values (location/language)
+                          depending on the mapping criteria selected and the corresponding Google Sheet keys
                 required:
                   - success
                   - data
@@ -10563,6 +10694,11 @@ paths:
                     An array of SurveyCTO field names that are to be included in the media files output
                   items:
                     type: string
+                mapping_criteria:
+                  type: string
+                  description: >-
+                    Criteria used to split the media files into different Google Sheets. Values can be
+                    'location', 'language' or NULL
               required:
                 - file_type
                 - source
@@ -10604,6 +10740,19 @@ paths:
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      mapping_criteria:
+                        type: string
+                        description: >-
+                          Criteria used to split the media files into different Google Sheets. Values can be
+                          'location', 'language' or NULL
+                      google_sheet_key:
+                        type: string
+                        description: Unique key for the output Google Sheet where the media file links are published
+                      mapping_google_sheet_key:
+                        type: string
+                        description: >-
+                          Unique key for the Google Sheet  which has the list of mapping criteria values (location/language)
+                          depending on the mapping criteria selected and the corresponding Google Sheet keys
                 required:
                   - success
                   - message
