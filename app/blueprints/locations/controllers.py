@@ -1,40 +1,43 @@
-from app.blueprints.surveys.models import Survey
-from flask import jsonify, request
-from app.utils.utils import (
-    logged_in_active_user_required,
-    custom_permissions_required,
-    validate_query_params,
-    validate_payload,
-)
-from flask_login import current_user
-from sqlalchemy import insert, cast, Integer
-from sqlalchemy.sql import case
-from sqlalchemy.exc import IntegrityError
-import pandas as pd
 import base64
+import binascii
+
+import pandas as pd
+from flask import jsonify, request
+from flask_login import current_user
+from sqlalchemy import Integer, cast, insert
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql import case
+
 from app import db
-from .models import GeoLevel, Location
-from .routes import locations_bp
-from .validators import (
-    SurveyGeoLevelsQueryParamValidator,
-    SurveyGeoLevelsPayloadValidator,
-    LocationsFileUploadValidator,
-    LocationsQueryParamValidator,
-    SurveyPrimeGeoLevelValidator,
+from app.blueprints.surveys.models import Survey
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_payload,
+    validate_query_params,
 )
-from .utils import (
-    LocationsUpload,
-    GeoLevelHierarchy,
-    LocationColumnMapping,
-    GeoLevelPayloadItem,
-)
+
 from .errors import (
     HeaderRowEmptyError,
-    InvalidLocationsError,
     InvalidGeoLevelHierarchyError,
     InvalidGeoLevelMappingError,
+    InvalidLocationsError,
 )
-import binascii
+from .models import GeoLevel, Location
+from .routes import locations_bp
+from .utils import (
+    GeoLevelHierarchy,
+    GeoLevelPayloadItem,
+    LocationColumnMapping,
+    LocationsUpload,
+)
+from .validators import (
+    LocationsFileUploadValidator,
+    LocationsQueryParamValidator,
+    SurveyGeoLevelsPayloadValidator,
+    SurveyGeoLevelsQueryParamValidator,
+    SurveyPrimeGeoLevelValidator,
+)
 
 
 @locations_bp.route("/geo-levels", methods=["GET"])
@@ -47,7 +50,6 @@ def get_survey_geo_levels(validated_query_params):
     """
 
     survey_uid = validated_query_params.survey_uid.data
-    user_uid = current_user.user_uid
 
     # Check if the logged in user has permission to access the given survey
 
@@ -202,15 +204,57 @@ def update_prime_geo_level(survey_uid, validated_payload):
     if Survey.query.filter_by(survey_uid=survey_uid).first() is None:
         return jsonify({"error": "Survey not found"}), 404
 
-    Survey.query.filter_by(survey_uid=survey_uid).update(
-        {
-            Survey.prime_geo_level_uid: validated_payload.prime_geo_level_uid.data,
-        },
-        synchronize_session="fetch",
-    )
-    db.session.commit()
+    # Check if the prime geo level is same as input geo level
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
-    return jsonify(survey.to_dict()), 200
+    if survey.prime_geo_level_uid == validated_payload.prime_geo_level_uid.data:
+        return jsonify(survey.to_dict()), 200
+    else:
+        try:
+
+            from app.blueprints.forms.models import Form
+
+            # Update the prime geo level
+            Survey.query.filter_by(survey_uid=survey_uid).update(
+                {
+                    Survey.prime_geo_level_uid: validated_payload.prime_geo_level_uid.data,
+                },
+                synchronize_session="fetch",
+            )
+            db.session.flush()
+
+            # Delete location user mapping table entries
+            from app.blueprints.user_management.models import UserLocation
+
+            UserLocation.query.filter_by(survey_uid=survey_uid).delete()
+
+            # Check if location column in enumerator column config
+            from app.blueprints.enumerators.models import (
+                Enumerator,
+                EnumeratorColumnConfig,
+            )
+
+            check_enumerator_location_column = (
+                EnumeratorColumnConfig.join(
+                    Form, EnumeratorColumnConfig.form_uid == Form.form_uid
+                )
+                .filter(
+                    Form.survey_uid == survey_uid,
+                    EnumeratorColumnConfig.column_type == "location",
+                )
+                .first()
+            )
+            if check_enumerator_location_column:
+                Enumerator.query.join(
+                    Form, Enumerator.form_uid == Form.form_uid
+                ).filter(Form.survey_uid == survey_uid).delete(
+                    synchronize_session=False
+                )
+            db.session.commit()
+            survey = Survey.query.filter_by(survey_uid=survey_uid).first()
+            return jsonify(survey.to_dict()), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 500
 
 
 @locations_bp.route("", methods=["POST"])
@@ -533,7 +577,7 @@ def get_locations(validated_query_params):
                 inplace=True,
             )
 
-    final_df.drop(columns=["location_uid", "parent_location_uid"], inplace=True)
+    # final_df.drop(columns=["location_uid", "parent_location_uid"], inplace=True)
 
     response = jsonify(
         {
@@ -575,22 +619,29 @@ def get_locations_data_long(validated_query_params):
     )
 
     if geo_level_uid is not None:
-        locations_query = locations_query.filter(Location.geo_level_uid == geo_level_uid)
+        locations_query = locations_query.filter(
+            Location.geo_level_uid == geo_level_uid
+        )
 
     locations = locations_query.all()
 
-    return jsonify(
-        {
-            "success": True,
-            "data": [ {
-                "geo_level_uid": location.geo_level_uid,
-                "geo_level_name": location.geo_level_name,
-                "parent_geo_level_uid": location.parent_geo_level_uid,
-                "location_uid": location.location_uid,
-                "location_id": location.location_id,
-                "location_name": location.location_name,
-                "parent_location_uid": location.parent_location_uid,
-            } for location in locations],
-        }
-    ), 200
-    
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": [
+                    {
+                        "geo_level_uid": location.geo_level_uid,
+                        "geo_level_name": location.geo_level_name,
+                        "parent_geo_level_uid": location.parent_geo_level_uid,
+                        "location_uid": location.location_uid,
+                        "location_id": location.location_id,
+                        "location_name": location.location_name,
+                        "parent_location_uid": location.parent_location_uid,
+                    }
+                    for location in locations
+                ],
+            }
+        ),
+        200,
+    )

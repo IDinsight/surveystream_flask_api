@@ -1,10 +1,11 @@
+from sqlalchemy import CheckConstraint
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.orm import backref
+
 from app import db
 from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
-from sqlalchemy import CheckConstraint
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import backref
-from sqlalchemy.ext.mutable import MutableDict
 
 
 class Enumerator(db.Model):
