@@ -1,7 +1,9 @@
 import base64
 import binascii
+import json
 
-from flask import jsonify, request
+import pysurveycto
+from flask import current_app, jsonify, request
 from flask_login import current_user
 from sqlalchemy import cast, update
 from sqlalchemy.dialects.postgresql import JSONB
@@ -16,6 +18,7 @@ from app.blueprints.locations.utils import GeoLevelHierarchy
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.utils.utils import (
     custom_permissions_required,
+    get_aws_secret,
     logged_in_active_user_required,
     validate_payload,
     validate_query_params,
@@ -28,7 +31,13 @@ from .errors import (
     InvalidNewColumnError,
     InvalidTargetRecordsError,
 )
-from .models import Target, TargetColumnConfig, TargetConfig, TargetStatus
+from .models import (
+    Target,
+    TargetColumnConfig,
+    TargetConfig,
+    TargetSCTOQuestion,
+    TargetStatus,
+)
 from .queries import build_bottom_level_locations_with_location_hierarchy_subquery
 from .routes import targets_bp
 from .utils import TargetColumnMapping, TargetsUpload
@@ -1245,3 +1254,154 @@ def update_target_config(validated_payload):
         return jsonify(message=str(e)), 500
 
     return jsonify({"success": True}), 200
+
+
+@targets_bp.route(
+    "/config/scto-columns/<int:form_uid>",
+    methods=["POST"],
+)
+@logged_in_active_user_required
+@custom_permissions_required("WRITE Targets", "path", "form_uid")
+def ingest_scto_form_definition(form_uid):
+    """
+    Ingest form definition from the SurveyCTO server
+    """
+    form = Form.query.filter_by(form_uid=form_uid).first()
+
+    # Verify the form exists
+    if form is None:
+        return jsonify({"error": f"Form with form_uid={form_uid} not found"}), 404
+
+    if form.scto_server_name is None:
+        return (
+            jsonify({"error": "SurveyCTO server name not provided for the form"}),
+            404,
+        )
+
+    # Check if form TargetConfig exists
+    target_config = TargetConfig.query.filter_by(form_uid=form_uid).first()
+    if target_config is None:
+        return (
+            jsonify(
+                {
+                    "error": "Target configuration not found for the form. Please create a target configuration for the form before ingesting the SurveyCTO form definition."
+                }
+            ),
+            404,
+        )
+
+    # Get the SurveyCTO credentials
+    try:
+        scto_credential_response = get_aws_secret(
+            "{scto_server_name}-surveycto-server".format(
+                scto_server_name=form.scto_server_name
+            ),
+            current_app.config["AWS_REGION"],
+            is_global_secret=True,
+        )
+
+        scto_credentials = json.loads(scto_credential_response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    # Check if target_source is form or dataset
+    if target_config.target_source != "scto":
+        return (
+            jsonify(
+                {"error": "Refresh endpoint works only for target source set as scto"}
+            ),
+            412,
+        )
+
+    # Initialize the SurveyCTO object
+    scto = pysurveycto.SurveyCTOObject(
+        form.scto_server_name,
+        scto_credentials["username"],
+        scto_credentials["password"],
+    )
+    if target_config.scto_input_type == "form":
+        scto_form_id = target_config.scto_input_id
+        scto_form_definition = scto.get_form_definition(scto_form_id)
+        survey_tab_columns = scto_form_definition["fieldsRowsAndColumns"][0]
+
+        # Loop through the rows of the `survey` tab of the form definition
+        for row in scto_form_definition["fieldsRowsAndColumns"][1:]:
+            questions_dict = dict(zip(survey_tab_columns, row))
+
+            # Skip questions with disabled = Yes
+            if questions_dict.get("disabled", "No").strip().lower() == "yes":
+                continue
+
+            if questions_dict["name"].strip() != "":
+                # Add the question to the database
+                scto_question = TargetSCTOQuestion(
+                    form_uid=form_uid, question_name=questions_dict["name"]
+                )
+                db.session.add(scto_question)
+
+            try:
+                db.session.flush()
+            except IntegrityError as e:
+                db.session.rollback()
+                return (jsonify({"error": str(e)}), 500)
+    else:
+        scto_dataset_id = target_config.scto_input_id
+        scto_dataset = scto.get_server_dataset(scto_dataset_id, line_breaks="\n")
+        scto_dataset_column_str = scto_dataset.split("\n")[0]
+        scto_dataset_column = scto_dataset_column_str.split(",")
+        for question_name in scto_dataset_column:
+            scto_question = TargetSCTOQuestion(
+                form_uid=form_uid, question_name=question_name
+            )
+            db.session.add(scto_question)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    response = {
+        "success": True,
+        "message": "SurveyCTO input columns refreshed successfully",
+    }
+
+    return jsonify(response), 200
+
+
+@targets_bp.route(
+    "/config/scto-columns/<int:form_uid>",
+    methods=["GET"],
+)
+@logged_in_active_user_required
+@custom_permissions_required("WRITE Targets", "path", "form_uid")
+def get_scto_columns(form_uid):
+    """
+    Get the SurveyCTO columns for a form
+    """
+
+    scto_questions = TargetSCTOQuestion.query.filter_by(form_uid=form_uid).all()
+
+    if scto_questions is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "SurveyCTO columns not found for the form",
+                }
+            ),
+            404,
+        )
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": [
+                    scto_question.question_name for scto_question in scto_questions
+                ],
+            }
+        ),
+        200,
+    )

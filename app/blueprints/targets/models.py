@@ -1,6 +1,7 @@
 from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.orm import backref
 
 from app import db
 from app.blueprints.forms.models import Form
@@ -218,3 +219,27 @@ class TargetConfig(db.Model):
         }
 
         return result
+
+
+class TargetSCTOQuestion(db.Model):
+    """
+    SQLAlchemy data model for TargetSCTOQuestion
+    """
+
+    question_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    form_uid = db.Column(
+        db.Integer(),
+        db.ForeignKey(Form.form_uid, ondelete="CASCADE"),
+        nullable=False,
+    )
+    question_name = db.Column(db.String(), nullable=False)
+
+    def __init__(self, form_uid, question_name):
+        self.form_uid = form_uid
+        self.question_name = question_name
+
+    def to_dict(self):
+        return {
+            "form_uid": self.form_uid,
+            "question_name": self.question_name,
+        }

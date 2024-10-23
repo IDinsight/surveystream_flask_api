@@ -673,8 +673,8 @@ class TestTargets:
         payload = {
             "form_uid": 1,
             "target_source": "scto",
-            "scto_input_type": "dataset",
-            "scto_input_id": "test_dynmaic_target_dataset",
+            "scto_input_type": "form",
+            "scto_input_id": "test_scto_input_output",
             "scto_encryption_flag": False,
         }
 
@@ -686,6 +686,214 @@ class TestTargets:
         )
         print(response.json)
         assert response.status_code == 200
+
+    @pytest.fixture()
+    def create_target_config_dataset(
+        self, client, csrf_token, login_test_user, create_form
+    ):
+        """
+        Create a target config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "target_source": "scto",
+            "scto_input_type": "dataset",
+            "scto_input_id": "test_attached_dataset",
+            "scto_encryption_flag": False,
+        }
+
+        response = client.post(
+            "/api/targets/config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def create_target_scto_column(
+        self, client, csrf_token, login_test_user, create_target_config
+    ):
+        response = client.post(
+            "/api/targets/config/scto-columns/1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def create_target_scto_column_with_dataset(
+        self, client, csrf_token, login_test_user, create_target_config_dataset
+    ):
+        response = client.post(
+            "/api/targets/config/scto-columns/1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+    def test_get_target_scto_columns_with_dataset(
+        self,
+        client,
+        csrf_token,
+        create_target_scto_column_with_dataset,
+        user_permissions,
+        request,
+    ):
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            "/api/targets/config/scto-columns/1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 200
+            expected_response = {"data": ["col1", "col2", "col3"], "success": True}
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+            assert response.json == {
+                "error": "User does not have the required permission: WRITE Targets",
+                "success": False,
+            }
+
+    def test_get_target_scto_columns(
+        self, client, csrf_token, create_target_scto_column, user_permissions, request
+    ):
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            "/api/targets/config/scto-columns/1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 200
+            expected_response = {
+                "data": [
+                    "starttime",
+                    "endtime",
+                    "deviceid",
+                    "subscriberid",
+                    "simid",
+                    "devicephonenum",
+                    "username",
+                    "duration",
+                    "caseid",
+                    "text_audit",
+                    "round_id",
+                    "month",
+                    "monitor_info",
+                    "state_id",
+                    "state_name",
+                    "district_id",
+                    "district_name",
+                    "block_id",
+                    "block_name",
+                    "initial_id",
+                    "enum_first_letter",
+                    "enum_id",
+                    "enum_name",
+                    "designation_id",
+                    "designation",
+                    "monitor_id",
+                    "monitor_name",
+                    "monitor_info",
+                    "dc_id",
+                    "dc_id_long",
+                    "dc_type",
+                    "sc_dc_found",
+                    "sc_dc_found_group",
+                    "sc_dc_open",
+                    "sc_dc_open_group",
+                    "sc_intro",
+                    "sc_paperscarry",
+                    "sc_dc_form_access",
+                    "sc_dc_form_access_group",
+                    "sc_dc_fac_id",
+                    "sc_dc_fac_id_long",
+                    "sc_dc_facility_name",
+                    "sc_dc_form_avail",
+                    "sc_dc_form_month_conf",
+                    "sc_dc_data_entry_group",
+                    "fac_anc_reg_1_trim",
+                    "fac_4anc",
+                    "fac_4hb",
+                    "fac_sev_anem_treat",
+                    "fac_sba_birth",
+                    "fac_insti_birth",
+                    "fac_live_birth_m",
+                    "fac_live_birth_uw",
+                    "fac_bfeeding_1hr",
+                    "fac_full_immu_f",
+                    "sc_dc_fac_dataentry",
+                    "sc_dc_fac_photo_consent",
+                    "sc_dc_fac_photo_num",
+                    "sc_dc_data_entry_group",
+                    "sc_dc_form_access_group",
+                    "sc_dc_open_group",
+                    "sc_dc_found_group",
+                    "sc_note1",
+                    "sc_protocol_rate",
+                    "sc_probing_rate",
+                    "sc_comfort_rate",
+                    "sc_speed_rate",
+                    "sc_note2",
+                    "sc_final_score",
+                    "monitor_comments",
+                    "sc_thankyou_note",
+                ],
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+            assert response.json == {
+                "error": "User does not have the required permission: WRITE Targets",
+                "success": False,
+            }
+
+    def test_update_target_scto_columns(
+        self, client, csrf_token, create_target_config, user_permissions, request
+    ):
+        """
+        Test get target config
+        Expect Success and data
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.post(
+            "/api/targets/config/scto-columns/1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 200
+            expected_response = {
+                "success": True,
+                "message": "Surveycto input columns updated successfully",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            assert response.json == {
+                "error": "User does not have the required permission: WRITE Targets",
+                "success": False,
+            }
 
     def test_get_target_config(
         self, client, csrf_token, create_target_config, user_permissions, request
@@ -711,8 +919,8 @@ class TestTargets:
                 "data": {
                     "form_uid": 1,
                     "scto_encryption_flag": False,
-                    "scto_input_id": "test_dynmaic_target_dataset",
-                    "scto_input_type": "dataset",
+                    "scto_input_id": "test_scto_input_output",
+                    "scto_input_type": "form",
                     "target_source": "scto",
                 },
                 "success": True,
