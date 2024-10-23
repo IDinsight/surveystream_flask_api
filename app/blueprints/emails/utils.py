@@ -161,10 +161,6 @@ def get_default_email_assignments_column(form_uid):
                 "column_name": "Surveyor ID",
             },
             {
-                "column_description": "Enumerators : home_address",
-                "column_name": "Surveyor Address",
-            },
-            {
                 "column_description": "Enumerators : gender",
                 "column_name": "Surveyor Gender",
             },
