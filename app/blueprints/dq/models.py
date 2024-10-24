@@ -11,12 +11,18 @@ class DQCheckTypes(db.Model):
 
     name = db.Column(
         db.String(),
-        primary_key=True,
         nullable=False,
     )
     abbr = db.Column(db.ARRAY(db.String), nullable=False)
 
     __table_args__ = {"schema": "webapp"}
+
+    def to_dict(self):
+        return {
+            "type_id": self.type_id,
+            "name": self.name,
+            "abbr": self.abbr,
+        }
 
 
 class DQConfig(db.Model):
@@ -49,7 +55,7 @@ class DQCheck(db.Model):
     )
     all_questions = db.Column(db.Boolean(), default=False, nullable=False)
 
-    question_name = db.Column(db.String(), nullable=False)
+    question_name = db.Column(db.String(), nullable=True)
     dq_scto_form_uid = db.Column(
         db.Integer(), db.ForeignKey(Form.form_uid, ondelete="CASCADE"), nullable=True
     )
@@ -64,6 +70,42 @@ class DQCheck(db.Model):
     active = db.Column(db.Boolean(), default=True, nullable=False)
 
     __table_args__ = {"schema": "webapp"}
+
+    def __init__(
+        self,
+        form_uid,
+        type_id,
+        all_questions,
+        question_name,
+        dq_scto_form_uid,
+        module_name,
+        flag_description,
+        check_components,
+        active,
+    ):
+        self.form_uid = form_uid
+        self.type_id = type_id
+        self.all_questions = all_questions
+        self.question_name = question_name
+        self.dq_scto_form_uid = dq_scto_form_uid
+        self.module_name = module_name
+        self.flag_description = flag_description
+        self.check_components = check_components
+        self.active = active
+
+    def to_dict(self):
+        return {
+            "dq_check_uid": self.dq_check_uid,
+            "form_uid": self.form_uid,
+            "type_id": self.type_id,
+            "all_questions": self.all_questions,
+            "question_name": self.question_name,
+            "dq_scto_form_uid": self.dq_scto_form_uid,
+            "module_name": self.module_name,
+            "flag_description": self.flag_description,
+            "check_components": self.check_components,
+            "active": self.active,
+        }
 
 
 class DQCheckFilters(db.Model):
@@ -80,8 +122,6 @@ class DQCheckFilters(db.Model):
     filter_group_id = db.Column(db.Integer(), primary_key=True)
 
     question_name = db.Column(db.String(), nullable=False)
-    is_repeat_group = db.Column(db.Boolean(), nullable=False)
-
     filter_operator = db.Column(
         db.String(),
         CheckConstraint(
@@ -93,3 +133,25 @@ class DQCheckFilters(db.Model):
     filter_value = db.Column(db.Text(), nullable=True)
 
     __table_args__ = {"schema": "webapp"}
+
+    def __init__(
+        self,
+        dq_check_uid,
+        filter_group_id,
+        question_name,
+        filter_operator,
+        filter_value,
+    ):
+        self.dq_check_uid = dq_check_uid
+        self.filter_group_id = filter_group_id
+        self.question_name = question_name
+        self.filter_operator = filter_operator
+        self.filter_value = filter_value
+
+    def to_dict(self):
+        return {
+            "filter_group_id": self.filter_group_id,
+            "question_name": self.question_name,
+            "filter_operator": self.filter_operator,
+            "filter_value": self.filter_value,
+        }

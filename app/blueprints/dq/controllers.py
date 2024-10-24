@@ -2,11 +2,12 @@ from itertools import groupby
 from operator import attrgetter
 
 from flask import jsonify, request
-from sqlalchemy import case
+from sqlalchemy import case, literal_column
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.functions import func
 
 from app import db
+from app.blueprints.forms.models import SCTOQuestion
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
@@ -16,19 +17,18 @@ from app.utils.utils import (
 
 from . import dq_bp
 from .models import DQCheck, DQCheckFilters, DQCheckTypes, DQConfig
+from .utils import validate_dq_check
 from .validators import (
-    AddDQCheckValidator,
     DQChecksQueryParamValidator,
+    DQCheckValidator,
     DQConfigQueryParamValidator,
-    UpdateDQCheckValidator,
     UpdateDQConfigValidator,
 )
 
 
 @dq_bp.route("/check-types", methods=["GET"])
 @logged_in_active_user_required
-@validate_query_params(DQConfigQueryParamValidator)
-def get_dq_check_types(validated_query_params):
+def get_dq_check_types():
     """
     Function to get dq check types
 
@@ -49,12 +49,14 @@ def get_dq_check_types(validated_query_params):
         )
 
     # Return the response
-    response = jsonify(
-        {
-            "success": True,
-            "data": check_types.to_dict(),
-        },
-        500,
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": [check.to_dict() for check in check_types],
+            },
+        ),
+        200,
     )
 
 
@@ -106,27 +108,28 @@ def get_dq_config(validated_query_params):
                         [
                             (
                                 dq_checks_subquery.c.all_questions == True,
-                                "All",
+                                literal_column("'All'"),
                             )
                         ],
-                        else_=func.coalesce(dq_checks_subquery.c.num_configured, 0),
+                        else_=str(
+                            func.coalesce(dq_checks_subquery.c.num_configured, 0)
+                        ),
                     ),
                     "num_active",
                     case(
                         [
                             (
-                                dq_checks_subquery.c.all_questions
-                                == True & dq_checks_subquery.c.num_active
-                                > 0,
-                                "All",
+                                (dq_checks_subquery.c.all_questions == True)
+                                & (dq_checks_subquery.c.num_active > 0),
+                                literal_column("'All'"),
                             )
                         ],
-                        else_=func.coalesce(dq_checks_subquery.c.num_active, 0),
+                        else_=str(func.coalesce(dq_checks_subquery.c.num_active, 0)),
                     ),
                 )
             ).label("dq_checks"),
         )
-        .group_by(dq_checks_subquery.cform_uid)
+        .group_by(dq_checks_subquery.c.form_uid)
         .subquery()
     )
 
@@ -140,12 +143,8 @@ def get_dq_config(validated_query_params):
             dq_checks_subquery,
             DQConfig.form_uid == dq_checks_subquery.c.form_uid,
         )
-        .outerjoin(
-            DQCheckTypes,
-            dq_checks_subquery.c.type_id == DQCheckTypes.type_id,
-        )
         .filter(DQConfig.form_uid == form_uid)
-        .all()
+        .first()
     )
 
     # Return 404 if no configs found
@@ -165,7 +164,11 @@ def get_dq_config(validated_query_params):
     response = jsonify(
         {
             "success": True,
-            "data": dq_config.to_dict(),
+            "data": {
+                "form_uid": dq_config.form_uid,
+                "survey_status_filter": dq_config.survey_status_filter,
+                "dq_checks": dq_config.dq_checks,
+            },
         }
     )
 
@@ -174,7 +177,7 @@ def get_dq_config(validated_query_params):
 
 @dq_bp.route("/config", methods=["PUT"])
 @logged_in_active_user_required
-@validate_query_params(UpdateDQConfigValidator)
+@validate_payload(UpdateDQConfigValidator)
 @custom_permissions_required("WRITE Data Quality", "body", "form_uid")
 def update_dq_config(validated_payload):
     """
@@ -220,9 +223,31 @@ def get_dq_checks(validated_query_params):
         DQCheck.type_id == type_id,
     ).all()
 
+    scto_questions = SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).all()
+
     check_data = []
     for check in dq_checks:
         check_dict = check.to_dict()
+
+        # Initialize note and repeat group flag
+        check_dict["note"] = None
+        check_dict["is_repeat_group"] = False
+
+        if not check.all_questions:
+            # Check if questions are available in the form definition and if it is a repeat group variable
+            if check.question_name not in [
+                question.question_name for question in scto_questions
+            ]:
+                check_dict["active"] = False
+                check_dict["note"] = "Question not found in form definition"
+            else:
+                for question in scto_questions:
+                    if question.question_name == check.question_name:
+                        if question.is_repeat_group:
+                            check_dict["is_repeat_group"] = True
+                        else:
+                            check_dict["is_repeat_group"] = False
+                        break
 
         check_filters = DQCheckFilters.query.filter(
             DQCheckFilters.dq_check_uid == check.dq_check_uid
@@ -234,7 +259,18 @@ def get_dq_checks(validated_query_params):
                 check_filters, key=attrgetter("filter_group_id")
             )
         ]
-        check_dict["filter_list"] = filter_list
+
+        # check if all questions used in filters are valid
+        for filter_group in filter_list:
+            for filter_item in filter_group["filter_group"]:
+                if filter_item["question_name"] not in [
+                    question.question_name for question in scto_questions
+                ]:
+                    check_dict["active"] = False
+                    check_dict["note"] = "Filter question not found in form definition"
+                    break
+
+        check_dict["filters"] = filter_list
 
         check_data.append(check_dict)
 
@@ -264,7 +300,7 @@ def get_dq_checks(validated_query_params):
 
 @dq_bp.route("/checks", methods=["POST"])
 @logged_in_active_user_required
-@validate_payload(AddDQCheckValidator)
+@validate_payload(DQCheckValidator)
 @custom_permissions_required("WRITE Data Quality", "body", "form_uid")
 def add_dq_check(validated_payload):
     """
@@ -272,11 +308,24 @@ def add_dq_check(validated_payload):
 
     """
     form_uid = validated_payload.form_uid.data
+    type_id = validated_payload.type_id.data
 
-    # Delete existing checks for the form
-    all_questions = validated_payload.all_questions.data
+    try:
+        validate_dq_check(
+            form_uid,
+            type_id,
+            validated_payload.all_questions.data,
+            validated_payload.question_name.data,
+            validated_payload.dq_scto_form_uid.data,
+            validated_payload.check_components.data,
+            validated_payload.filters.data,
+            validated_payload.active.data,
+        )
+    except Exception as e:
+        return jsonify({"message": str(e), "success": False}), 404
 
-    if all_questions:
+    # Delete existing checks for the form and type if all questions is selected
+    if validated_payload.all_questions.data:
         # Delete all checks for the form and type, this cascades to filters
         db.session.query(DQCheck).filter(
             DQCheck.form_uid == form_uid,
@@ -286,7 +335,7 @@ def add_dq_check(validated_payload):
     dq_check = DQCheck(
         form_uid=form_uid,
         type_id=validated_payload.type_id.data,
-        all_questions=all_questions,
+        all_questions=validated_payload.all_questions.data,
         question_name=validated_payload.question_name.data,
         dq_scto_form_uid=validated_payload.dq_scto_form_uid.data,
         module_name=validated_payload.module_name.data,
@@ -306,7 +355,7 @@ def add_dq_check(validated_payload):
         for filter_group in validated_payload.filters.data:
             max_filter_group_id += 1
 
-            for filter in filter_group:
+            for filter in filter_group.get("filter_group"):
                 dq_check_filter = DQCheckFilters(
                     dq_check_uid=dq_check_uid,
                     filter_group_id=max_filter_group_id,
@@ -331,7 +380,7 @@ def add_dq_check(validated_payload):
 
 @dq_bp.route("/checks/<int:check_uid>", methods=["PUT"])
 @logged_in_active_user_required
-@validate_payload(UpdateDQCheckValidator)
+@validate_payload(DQCheckValidator)
 @custom_permissions_required("WRITE Data Quality", "body", "form_uid")
 def update_dq_check(check_uid, validated_payload):
     """
@@ -339,6 +388,20 @@ def update_dq_check(check_uid, validated_payload):
 
     """
     form_uid = validated_payload.form_uid.data
+
+    try:
+        validate_dq_check(
+            form_uid,
+            validated_payload.type_id.data,
+            validated_payload.all_questions.data,
+            validated_payload.question_name.data,
+            validated_payload.dq_scto_form_uid.data,
+            validated_payload.check_components.data,
+            validated_payload.filters.data,
+            validated_payload.active.data,
+        )
+    except Exception as e:
+        return jsonify({"message": str(e), "success": False}), 404
 
     dq_check = DQCheck.query.filter(
         DQCheck.dq_check_uid == check_uid, DQCheck.form_uid == form_uid
@@ -367,13 +430,13 @@ def update_dq_check(check_uid, validated_payload):
         for filter_group in validated_payload.filters.data:
             max_filter_group_id += 1
 
-            for filter in filter_group:
+            for filter_item in filter_group.get("filter_group"):
                 filter_obj = DQCheckFilters(
                     dq_check_uid=check_uid,
                     filter_group_id=max_filter_group_id,
-                    question_name=filter["question_name"],
-                    filter_operator=filter["filter_operator"],
-                    filter_value=filter["filter_value"],
+                    question_name=filter_item["question_name"],
+                    filter_operator=filter_item["filter_operator"],
+                    filter_value=filter_item["filter_value"],
                 )
                 db.session.add(filter_obj)
         db.session.flush()
