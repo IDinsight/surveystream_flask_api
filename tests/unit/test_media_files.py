@@ -267,6 +267,8 @@ class TestMedaiFiles:
                         "status",
                     ],
                     "mapping_criteria": None,
+                    "google_sheet_key": None,
+                    "mapping_google_sheet_key": None,
                 },
                 "success": True,
             }
@@ -321,6 +323,8 @@ class TestMedaiFiles:
                         "status",
                     ],
                     "mapping_criteria": None,
+                    "google_sheet_key": None,
+                    "mapping_google_sheet_key": None,
                 },
                 "success": True,
             }
@@ -376,6 +380,8 @@ class TestMedaiFiles:
                             "status",
                         ],
                         "mapping_criteria": None,
+                        "google_sheet_key": None,
+                        "mapping_google_sheet_key": None,
                     }
                 ],
                 "success": True,
@@ -440,6 +446,8 @@ class TestMedaiFiles:
                         "media_files_config_uid": 1,
                         "form_uid": 1,
                         **payload,
+                        "google_sheet_key": None,
+                        "mapping_google_sheet_key": None,
                     },
                     "success": True,
                 },

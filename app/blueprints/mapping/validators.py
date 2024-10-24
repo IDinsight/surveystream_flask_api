@@ -77,3 +77,10 @@ class SurveyorMappingValidator(FlaskForm):
 class UpdateSurveyorMappingValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     mappings = FieldList(FormField(SurveyorMappingValidator))
+
+
+class DeleteMappingConfigValidator(FlaskForm):
+
+    form_uid = IntegerField(validators=[DataRequired()])
+    mapping_values = FieldList(FormField(MappingCriteriaValuesValidator))
+    mapped_to = FieldList(FormField(MappingCriteriaValuesValidator))
