@@ -1267,14 +1267,14 @@ def refresh_target_scto_columns(form_uid):
     Refrsh Target input column list from surveycto
     """
     form = Form.query.filter_by(form_uid=form_uid).first()
-
-    # Verify the form exists
-    if form is None:
-        return jsonify({"error": f"Form with form_uid={form_uid} not found"}), 404
-
-    if form.scto_server_name is None:
+    if form.scto_server_name is None or form.scto_server_name == "":
         return (
-            jsonify({"error": "SurveyCTO server name not provided for the form"}),
+            jsonify(
+                {
+                    "error": "SurveyCTO server name not provided for the form",
+                    "success": False,
+                }
+            ),
             404,
         )
 
@@ -1284,7 +1284,8 @@ def refresh_target_scto_columns(form_uid):
         return (
             jsonify(
                 {
-                    "error": "Target configuration not found for the form. Please create a target configuration for the form before ingesting the SurveyCTO form definition."
+                    "error": "Target configuration not found for the form.",
+                    "success": False,
                 }
             ),
             404,
@@ -1309,7 +1310,10 @@ def refresh_target_scto_columns(form_uid):
     if target_config.target_source != "scto":
         return (
             jsonify(
-                {"error": "Refresh endpoint works only for target source set as scto"}
+                {
+                    "error": "Refresh endpoint works only for target source set as scto",
+                    "success": False,
+                }
             ),
             412,
         )
@@ -1381,8 +1385,7 @@ def get_target_scto_columns(form_uid):
     """
 
     scto_questions = TargetSCTOQuestion.query.filter_by(form_uid=form_uid).all()
-
-    if scto_questions is None:
+    if scto_questions is None or len(scto_questions) == 0:
         return (
             jsonify(
                 {

@@ -881,6 +881,40 @@ class TestTargets:
                 "success": False,
             }
 
+    def test_get_target_scto_columns_exception(
+        self, client, csrf_token, create_target_config, user_permissions, request
+    ):
+        """
+        Test Get target scto columns when no target scto columns present in db
+
+        Expect: Error 404: SurveyCTO columns not found for the form
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            "/api/targets/config/scto-columns/1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 404
+            expected_response = {
+                "success": False,
+                "data": None,
+                "message": "SurveyCTO columns not found for the form",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+            assert response.json == {
+                "error": "User does not have the required permission: WRITE Targets",
+                "success": False,
+            }
+
     def test_update_target_scto_columns(
         self, client, csrf_token, create_target_config, user_permissions, request
     ):
@@ -910,6 +944,148 @@ class TestTargets:
             assert response.status_code == 403
             assert response.json == {
                 "error": "User does not have the required permission: WRITE Targets",
+                "success": False,
+            }
+
+    def test_update_target_scto_columns_exception_no_target_config_present(
+        self, client, csrf_token, create_form, user_permissions, request
+    ):
+        """
+        Test Update target scto columns when no target config present for the form
+        Expect Error 404: Target configuration not found for the form
+
+
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.post(
+            "/api/targets/config/scto-columns/1",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.status_code)
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 404
+            expected_response = {
+                "error": "Target configuration not found for the form.",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            assert response.json == {
+                "error": "User does not have the required permission: WRITE Targets",
+                "success": False,
+            }
+
+    def test_update_target_scto_columns_exception_no_scto_server_present(
+        self, client, csrf_token, create_form, user_permissions, request
+    ):
+        """
+        Test Update target scto columns when no scto server name present for the form
+        Expect Error 404: SurveyCTO server name not provided for the form
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+        payload = {
+            "survey_uid": 1,
+            "scto_form_id": "test_scto_input_output",
+            "form_name": "Agrifieldnet Main Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": None,
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
+        }
+
+        response = client.put(
+            "/api/forms/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            response = client.post(
+                "/api/targets/config/scto-columns/1",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            print(response.status_code)
+            print(response.json)
+            assert response.status_code == 404
+            expected_response = {
+                "error": "SurveyCTO server name not provided for the form",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            assert response.json == {
+                "error": "User does not have the required permission: WRITE Data Quality Forms, WRITE Admin Forms",
+                "success": False,
+            }
+
+    def test_update_target_scto_columns_exception_no_scto_credentials_present(
+        self, client, csrf_token, create_target_config, user_permissions, request
+    ):
+        """
+        Test Update target scto columns when no scto credentials present for the server
+        Expect Error 500: ResourceNotFoundException
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+        payload = {
+            "survey_uid": 1,
+            "scto_form_id": "test_scto_input_output",
+            "form_name": "Agrifieldnet Main Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": "random_scto_server",
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
+        }
+
+        response = client.put(
+            "/api/forms/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            response = client.post(
+                "/api/targets/config/scto-columns/1",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            print(response.status_code)
+            print(response.json)
+
+            assert response.status_code == 500
+            expected_response = {
+                "error": "An error occurred (ResourceNotFoundException) when calling the GetSecretValue operation: Secrets Manager can't find the specified secret."
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+            assert response.json == {
+                "error": "User does not have the required permission: WRITE Data Quality Forms, WRITE Admin Forms",
                 "success": False,
             }
 
