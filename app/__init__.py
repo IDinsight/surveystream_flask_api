@@ -48,6 +48,10 @@ def create_app():
     CONFIG_TYPE = os.getenv("CONFIG_TYPE", default="app.config.DevelopmentConfig")
     app.config.from_object(CONFIG_TYPE)
 
+
+    # Disable sorting of JSON keys to maintain order in responses
+    app.json.sort_keys = False
+
     if app.config["ENABLE_CORS"]:
         # initialize cors per environment
         CORS(app, origins=app.config["ORIGINS"], supports_credentials=True)
