@@ -719,8 +719,8 @@ class TestTargets:
         """
         Refresh Target SCTO Columns for form input
         """
-        response = client.post(
-            "/api/targets/config/scto-columns/1",
+        response = client.put(
+            "/api/targets/config/scto-columns?form_uid=1",
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.json)
@@ -733,8 +733,8 @@ class TestTargets:
         """
         Refresh Target scto column for dataset input
         """
-        response = client.post(
-            "/api/targets/config/scto-columns/1",
+        response = client.put(
+            "/api/targets/config/scto-columns?form_uid=1",
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.json)
@@ -758,7 +758,7 @@ class TestTargets:
         request.getfixturevalue(user_fixture)
 
         response = client.get(
-            "/api/targets/config/scto-columns/1",
+            "/api/targets/config/scto-columns?form_uid=1",
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.status_code)
@@ -788,7 +788,7 @@ class TestTargets:
         request.getfixturevalue(user_fixture)
 
         response = client.get(
-            "/api/targets/config/scto-columns/1",
+            "/api/targets/config/scto-columns?form_uid=1",
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.status_code)
@@ -868,6 +868,11 @@ class TestTargets:
                     "sc_final_score",
                     "monitor_comments",
                     "sc_thankyou_note",
+                    "instanceID",
+                    "formdef_version",
+                    "starttime",
+                    "endtime",
+                    "SubmissionDate",
                 ],
                 "success": True,
             }
@@ -893,7 +898,7 @@ class TestTargets:
         request.getfixturevalue(user_fixture)
 
         response = client.get(
-            "/api/targets/config/scto-columns/1",
+            "/api/targets/config/scto-columns?form_uid=1",
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.status_code)
@@ -925,8 +930,8 @@ class TestTargets:
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
-        response = client.post(
-            "/api/targets/config/scto-columns/1",
+        response = client.put(
+            "/api/targets/config/scto-columns?form_uid=1",
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.status_code)
@@ -959,8 +964,8 @@ class TestTargets:
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
-        response = client.post(
-            "/api/targets/config/scto-columns/1",
+        response = client.put(
+            "/api/targets/config/scto-columns?form_uid=1",
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.status_code)
@@ -1014,8 +1019,8 @@ class TestTargets:
         if expected_permission:
             assert response.status_code == 200
 
-            response = client.post(
-                "/api/targets/config/scto-columns/1",
+            response = client.put(
+                "/api/targets/config/scto-columns?form_uid=1",
                 headers={"X-CSRF-Token": csrf_token},
             )
             print(response.status_code)
@@ -1068,8 +1073,8 @@ class TestTargets:
         if expected_permission:
             assert response.status_code == 200
 
-            response = client.post(
-                "/api/targets/config/scto-columns/1",
+            response = client.put(
+                "/api/targets/config/scto-columns?form_uid=1",
                 headers={"X-CSRF-Token": csrf_token},
             )
             print(response.status_code)
@@ -1118,6 +1123,7 @@ class TestTargets:
                     "target_source": "scto",
                 },
                 "success": True,
+                "message": "Target config retrieved successfully",
             }
 
             checkdiff = jsondiff.diff(expected_response, response.json)
@@ -1166,6 +1172,7 @@ class TestTargets:
                     "target_source": "scto",
                 },
                 "success": True,
+                "message": "Target config retrieved successfully",
             }
             get_response = client.get(
                 "/api/targets/config",

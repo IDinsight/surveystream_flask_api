@@ -44,6 +44,7 @@ from .utils import TargetColumnMapping, TargetsUpload
 from .validators import (
     BulkUpdateTargetsValidator,
     TargetConfigQueryValidator,
+    TargetConfigSCTOColumnQueryValidator,
     TargetConfigValidator,
     TargetsFileUploadValidator,
     TargetsQueryParamValidator,
@@ -1192,6 +1193,7 @@ def get_target_config(validated_query_params):
             {
                 "success": True,
                 "data": target_config.to_dict(),
+                "message": "Target config retrieved successfully",
             }
         ),
         200,
@@ -1224,7 +1226,10 @@ def create_target_config(validated_payload):
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
-    return jsonify({"success": True}), 200
+    return (
+        jsonify({"success": True, "message": "Target Config created successfully"}),
+        200,
+    )
 
 
 @targets_bp.route("/config", methods=["PUT"])
@@ -1253,19 +1258,29 @@ def update_target_config(validated_payload):
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
-    return jsonify({"success": True}), 200
+    return (
+        jsonify(
+            {
+                "success": True,
+                "message": "Target Config updated successfully",
+            }
+        ),
+        200,
+    )
 
 
 @targets_bp.route(
-    "/config/scto-columns/<int:form_uid>",
-    methods=["POST"],
+    "/config/scto-columns",
+    methods=["PUT"],
 )
 @logged_in_active_user_required
-@custom_permissions_required("WRITE Targets", "path", "form_uid")
-def refresh_target_scto_columns(form_uid):
+@custom_permissions_required("WRITE Targets", "query", "form_uid")
+@validate_query_params(TargetConfigSCTOColumnQueryValidator)
+def refresh_target_scto_columns(validated_query_params):
     """
     Refrsh Target input column list from surveycto
     """
+    form_uid = validated_query_params.form_uid.data
     form = Form.query.filter_by(form_uid=form_uid).first()
     if form.scto_server_name is None or form.scto_server_name == "":
         return (
@@ -1374,16 +1389,17 @@ def refresh_target_scto_columns(form_uid):
 
 
 @targets_bp.route(
-    "/config/scto-columns/<int:form_uid>",
+    "/config/scto-columns",
     methods=["GET"],
 )
 @logged_in_active_user_required
-@custom_permissions_required("WRITE Targets", "path", "form_uid")
-def get_target_scto_columns(form_uid):
+@validate_query_params(TargetConfigSCTOColumnQueryValidator)
+@custom_permissions_required("WRITE Targets", "query", "form_uid")
+def get_target_scto_columns(validated_query_params):
     """
     Get the SurveyCTO columns for a form
     """
-
+    form_uid = validated_query_params.form_uid.data
     scto_questions = TargetSCTOQuestion.query.filter_by(form_uid=form_uid).all()
     if scto_questions is None or len(scto_questions) == 0:
         return (
@@ -1397,14 +1413,35 @@ def get_target_scto_columns(form_uid):
             404,
         )
 
-    return (
-        jsonify(
-            {
-                "success": True,
-                "data": [
-                    scto_question.question_name for scto_question in scto_questions
-                ],
-            }
-        ),
-        200,
-    )
+    question_names = [scto_question.question_name for scto_question in scto_questions]
+    target_config = TargetConfig.query.filter_by(form_uid=form_uid).first()
+
+    if target_config.scto_input_type == "dataset":
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": question_names,
+                }
+            ),
+            200,
+        )
+    else:
+        # if Input type is form add metadata columns
+        question_names += [
+            "instanceID",
+            "formdef_version",
+            "starttime",
+            "endtime",
+            "SubmissionDate",
+        ]
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": question_names,
+                }
+            ),
+            200,
+        )

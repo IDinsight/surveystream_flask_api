@@ -6775,7 +6775,7 @@ paths:
           required: true
       responses:
         "200":
-          description: Column config retrieved successfully
+          description: Target config retrieved successfully
           content:
             application/json:
               schema:
@@ -6803,7 +6803,7 @@ paths:
                         type: boolean
                         description: The encryption flag for SCTO input- true or false
         "404":
-          description: Form not found
+          description: Target configuration not found for the form
     post:
       summary: Create the targets config for a form
       description: >
@@ -6850,9 +6850,8 @@ paths:
                 - target_source
       responses:
         "200":
-          description: Column config updated successfully
-        "400":
-          description: Request errors
+          description: Target Config created successfully
+
     put:
       summary: Update the targets config for a form
       description: >
@@ -6899,9 +6898,9 @@ paths:
                 - target_source
       responses:
         "200":
-          description: Column config updated successfully
-        "400":
-          description: Request errors
+          description: Target Config updated successfully
+        "404":
+          description: Target Config not found
   
   /targets/config/scto-columns/<int:form_uid>:
     get:
@@ -6961,7 +6960,7 @@ paths:
         "412":
           description: Refresh endpoint works only for target source set as scto
   /targets/column-config:
-    post:
+    put:
       summary: Update the targets column config for a form
       description: >
         Update the column config for targets for a form. The column config

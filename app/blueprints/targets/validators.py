@@ -139,3 +139,10 @@ class TargetConfigQueryValidator(FlaskForm):
         csrf = False
 
     form_uid = IntegerField(validators=[DataRequired()])
+
+
+class TargetConfigSCTOColumnQueryValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
