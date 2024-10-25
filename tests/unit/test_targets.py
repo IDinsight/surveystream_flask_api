@@ -870,8 +870,6 @@ class TestTargets:
                     "sc_thankyou_note",
                     "instanceID",
                     "formdef_version",
-                    "starttime",
-                    "endtime",
                     "SubmissionDate",
                 ],
                 "success": True,
