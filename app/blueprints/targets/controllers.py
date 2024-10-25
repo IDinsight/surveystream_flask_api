@@ -1428,14 +1428,16 @@ def get_target_scto_columns(validated_query_params):
         )
     else:
         # if Input type is form add metadata columns
-        question_names += [
+        metadata_column_list=[
             "instanceID",
             "formdef_version",
             "starttime",
             "endtime",
             "SubmissionDate",
         ]
-
+        for metadata_column in metadata_column_list:
+            if metadata_column not in question_names:
+                question_names.append(metadata_column)
         return (
             jsonify(
                 {

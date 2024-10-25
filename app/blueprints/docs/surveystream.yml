@@ -6902,14 +6902,14 @@ paths:
         "404":
           description: Target Config not found
   
-  /targets/config/scto-columns/<int:form_uid>:
+  /targets/config/scto-columns:
     get:
       summary: Get surveycto input columns for targets
       description: Get surveycto input columns for targets.
       tags:
         - Targets
       parameters:
-        - in: path
+        - in: query
           name: form_uid
           schema:
             type: integer
@@ -6946,7 +6946,7 @@ paths:
           schema:
             type: string
           required: true
-        - in: path
+        - in: query
           name: form_uid
           schema:
             type: integer
