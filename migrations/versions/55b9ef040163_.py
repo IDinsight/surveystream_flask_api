@@ -25,6 +25,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('type_id', name=op.f('pk_dq_check_types')),
     schema='webapp'
     )
+    
     op.create_table('dq_checks',
     sa.Column('dq_check_uid', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('form_uid', sa.Integer(), nullable=False),
@@ -42,18 +43,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('dq_check_uid', name=op.f('pk_dq_checks')),
     schema='webapp'
     )
-    sa.create_check_constraint(
-        "ck_dq_check_filters_filter_operator", 
-            """filter_operator IN 
-            (   'Is',
-                'Is not',
-                'Contains',
-                'Does not contain',
-                'Is Empty',
-                'Is not empty',
-                'Greather than',
-                'Smaller than')"""
-    )
 
     op.create_table('dq_config',
     sa.Column('form_uid', sa.Integer(), nullable=False),
@@ -62,12 +51,28 @@ def upgrade():
     sa.PrimaryKeyConstraint('form_uid', name=op.f('pk_dq_config')),
     schema='webapp'
     )
+
     op.create_table('dq_check_filters',
     sa.Column('filter_uid', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('dq_check_uid', sa.Integer(), nullable=False),
     sa.Column('filter_group_id', sa.Integer(), nullable=False),
     sa.Column('question_name', sa.String(), nullable=False),
-    sa.Column('filter_operator', sa.String(), nullable=False),
+    sa.Column(
+        'filter_operator', 
+        sa.String(), 
+        sa.CheckConstraint(
+            """filter_operator IN 
+            (   'Is',
+                'Is not',
+                'Contains',
+                'Does not contain',
+                'Is Empty',
+                'Is not empty',
+                'Greather than',
+                'Smaller than')""",
+            name="ck_dq_check_filters_filter_operator",
+        ),
+        nullable=False),
     sa.Column('filter_value', sa.Text(), nullable=True),
     sa.ForeignKeyConstraint(['dq_check_uid'], ['webapp.dq_checks.dq_check_uid'], name=op.f('fk_dq_check_filters_dq_check_uid_dq_checks'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('filter_uid', 'dq_check_uid', 'filter_group_id', name=op.f('pk_dq_check_filters')),
