@@ -645,7 +645,6 @@ class TestDQ:
                         "module_name": "test_module",
                         "question_name": None,
                         "type_id": 4,
-                        "check_components": [],
                         "dq_scto_form_uid": None,
                         "is_repeat_group": False,
                         "note": None,
@@ -838,7 +837,6 @@ class TestDQ:
                         "module_name": "test_module",
                         "question_name": "fac_anc_reg_1_trim",
                         "type_id": 4,
-                        "check_components": [],
                         "dq_scto_form_uid": None,
                         "is_repeat_group": False,
                         "note": None,
@@ -988,7 +986,6 @@ class TestDQ:
                     {
                         "active": True,
                         "all_questions": False,
-                        "check_components": {},
                         "dq_check_uid": 1,
                         "dq_scto_form_uid": None,
                         "filters": [
@@ -999,12 +996,14 @@ class TestDQ:
                                         "filter_operator": "Is",
                                         "filter_value": "1",
                                         "question_name": "fac_4anc",
+                                        "is_repeat_group": False,
                                     },
                                     {
                                         "filter_group_id": 1,
                                         "filter_operator": "Is",
                                         "filter_value": "3",
                                         "question_name": "fac_4hb",
+                                        "is_repeat_group": False,
                                     },
                                 ]
                             },
@@ -1015,6 +1014,7 @@ class TestDQ:
                                         "filter_operator": "Greather than",
                                         "filter_value": "0",
                                         "question_name": "fac_sev_anem_treat",
+                                        "is_repeat_group": False,
                                     }
                                 ]
                             },
@@ -1168,6 +1168,7 @@ class TestDQ:
                                     "filter_operator": "Is",
                                     "filter_value": "1",
                                     "question_name": "fac_4anc",
+                                    "is_repeat_group": False,
                                 },
                             ]
                         }
@@ -1379,7 +1380,6 @@ class TestDQ:
                         "module_name": "test_module",
                         "question_name": None,
                         "type_id": 4,
-                        "check_components": [],
                         "dq_scto_form_uid": None,
                         "is_repeat_group": False,
                         "note": None,
@@ -1490,7 +1490,6 @@ class TestDQ:
                         "module_name": "test_module",
                         "question_name": None,
                         "type_id": 4,
-                        "check_components": [],
                         "dq_scto_form_uid": None,
                         "is_repeat_group": False,
                         "note": None,

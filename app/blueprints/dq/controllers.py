@@ -302,19 +302,19 @@ def get_dq_checks(validated_query_params):
 
         if not check.all_questions:
             # Check if questions are available in the form definition and if it is a repeat group variable
-            if check.question_name not in [
-                question.question_name for question in scto_questions
-            ]:
+            question_found = False
+            for question in scto_questions:
+                if question.question_name == check.question_name:
+                    question_found = True
+                    if question.is_repeat_group:
+                        check_dict["is_repeat_group"] = True
+                    else:
+                        check_dict["is_repeat_group"] = False
+                    break
+
+            if not question_found:
                 check_dict["active"] = False
                 check_dict["note"] = "Question not found in form definition"
-            else:
-                for question in scto_questions:
-                    if question.question_name == check.question_name:
-                        if question.is_repeat_group:
-                            check_dict["is_repeat_group"] = True
-                        else:
-                            check_dict["is_repeat_group"] = False
-                        break
 
         check_filters = DQCheckFilters.query.filter(
             DQCheckFilters.dq_check_uid == check.dq_check_uid
@@ -330,12 +330,19 @@ def get_dq_checks(validated_query_params):
         # check if all questions used in filters are valid
         for filter_group in filter_list:
             for filter_item in filter_group["filter_group"]:
-                if filter_item["question_name"] not in [
-                    question.question_name for question in scto_questions
-                ]:
+                filter_question_found = False
+                for question in scto_questions:
+                    if question.question_name == filter_item["question_name"]:
+                        filter_question_found = True
+                        if question.is_repeat_group:
+                            filter_item["is_repeat_group"] = True
+                        else:
+                            filter_item["is_repeat_group"] = False
+                        break
+
+                if not filter_question_found:
                     check_dict["active"] = False
                     check_dict["note"] = "Filter question not found in form definition"
-                    break
 
         check_dict["filters"] = filter_list
 
