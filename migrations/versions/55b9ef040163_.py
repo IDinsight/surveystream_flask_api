@@ -1,4 +1,4 @@
-"""empty message
+"""Adding dq_config, dq_checks, dq_check_types, dq_check_filters tables for data quality checks configuration
 
 Revision ID: 55b9ef040163
 Revises: 48b3877a09e6
