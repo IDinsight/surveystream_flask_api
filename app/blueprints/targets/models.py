@@ -1,10 +1,11 @@
+from sqlalchemy import CheckConstraint
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.orm import backref
+
 from app import db
 from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
-from sqlalchemy import CheckConstraint
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy.orm import backref
-from sqlalchemy.ext.mutable import MutableDict
 
 
 class Target(db.Model):
@@ -159,3 +160,93 @@ class TargetColumnConfig(db.Model):
         db.PrimaryKeyConstraint("form_uid", "column_name"),
         {"schema": "webapp"},
     )
+
+
+class TargetConfig(db.Model):
+    """
+    SQLAlchemy data model for Target configuration
+    """
+
+    __tablename__ = "target_config"
+
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
+    target_source = db.Column(
+        db.String(8),
+        CheckConstraint(
+            "target_source IN ('csv','scto')",
+            name="ck_target_config_target_source",
+        ),
+        nullable=False,
+        server_default="csv",
+    )
+    scto_input_type = db.Column(
+        db.String(8),
+        CheckConstraint(
+            "scto_input_type IN ('form','dataset')",
+            name="ck_target_config_scto_input_type",
+        ),
+        nullable=True,
+    )
+    scto_input_id = db.Column(db.String(256), nullable=True)
+    scto_encryption_flag = db.Column(db.Boolean, nullable=False, server_default="false")
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("form_uid"),
+        {"schema": "webapp"},
+    )
+
+    def __init__(
+        self,
+        form_uid,
+        target_source,
+        scto_input_type,
+        scto_input_id,
+        scto_encryption_flag,
+    ):
+        self.form_uid = form_uid
+        self.target_source = target_source
+        self.scto_input_type = scto_input_type
+        self.scto_input_id = scto_input_id
+        self.scto_encryption_flag = scto_encryption_flag
+
+    def to_dict(self):
+        result = {
+            "form_uid": self.form_uid,
+            "target_source": self.target_source,
+            "scto_input_type": self.scto_input_type,
+            "scto_input_id": self.scto_input_id,
+            "scto_encryption_flag": self.scto_encryption_flag,
+        }
+
+        return result
+
+
+class TargetSCTOQuestion(db.Model):
+    """
+    SQLAlchemy data model for TargetSCTOQuestion
+    """
+
+    __tablename__ = "target_scto_question"
+
+    question_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    form_uid = db.Column(
+        db.Integer(),
+        db.ForeignKey(Form.form_uid, ondelete="CASCADE"),
+        nullable=False,
+    )
+    question_name = db.Column(db.String(), nullable=False)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("question_uid"),
+        {"schema": "webapp"},
+    )
+
+    def __init__(self, form_uid, question_name):
+        self.form_uid = form_uid
+        self.question_name = question_name
+
+    def to_dict(self):
+        return {
+            "form_uid": self.form_uid,
+            "question_name": self.question_name,
+        }
