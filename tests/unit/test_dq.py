@@ -297,6 +297,41 @@ class TestDQ:
 
         yield
 
+    @pytest.fixture()
+    def create_dq_check_inactive(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+    ):
+        """
+        Insert new dq check (missing value check) as a setup step for the tests
+        """
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 4,
+            "all_questions": True,
+            "module_name": "test_module",
+            "flag_description": "test_flag",
+            "filters": [],
+            "active": False,
+            "check_components": {"value": ["Is empty", "is NA"]},
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
     ####################################################
     ## FIXTURES END HERE
     ####################################################
@@ -412,6 +447,55 @@ class TestDQ:
                     "form_uid": 1,
                     "survey_status_filter": [1, 3],
                     "dq_checks": None,
+                },
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_get_dq_config_with_checks(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_check,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to get the DQ config
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            "/api/dq/config",
+            query_string={"form_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "form_uid": 1,
+                    "survey_status_filter": [1, 3],
+                    "dq_checks": [
+                        {"type_id": 4, "num_configured": "All", "num_active": "All"}
+                    ],
                 },
                 "success": True,
             }
@@ -1103,3 +1187,356 @@ class TestDQ:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_get_dq_config_inactive(
+        self,
+        app,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_check,
+        request,
+    ):
+        """
+        Test the endpoint to update the DQ check
+
+        """
+        payload = {
+            "form_uid": 1,
+            "type_id": 4,
+            "all_questions": False,
+            "question_name": "fac_anc_reg_1_trim",
+            "module_name": "test_module",
+            "flag_description": "test_flag_updated",
+            "filters": [
+                {
+                    "filter_group": [
+                        {
+                            "question_name": "fac_4anc",
+                            "filter_operator": "Is",
+                            "filter_value": "1",
+                        },
+                    ]
+                },
+            ],
+            "active": True,
+            "check_components": {"value": ["Is empty", "is NA"]},
+        }
+
+        response = client.put(
+            "/api/dq/checks/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        # Delete the question from the form definition
+        delete_scto_question(app, db, 1, "fac_anc_reg_1_trim")
+
+        # Check if the check is marked as inactive in the dq config
+        response = client.get(
+            "/api/dq/config",
+            query_string={"form_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        expected_response = {
+            "data": {
+                "form_uid": 1,
+                "survey_status_filter": [1, 3],
+                "dq_checks": [{"type_id": 4, "num_configured": "1", "num_active": "0"}],
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_delete_check(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_check,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to delete the DQ check
+
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.delete(
+            "/api/dq/checks",
+            json={
+                "form_uid": 1,
+                "type_id": 4,
+                "check_uids": [1],
+            },
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "success": True,
+                "message": "Success",
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+            # Check if the check was deleted
+            response = client.get(
+                "/api/dq/checks",
+                query_string={"form_uid": 1, "type_id": 4},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert response.status_code == 404
+            print(response.json)
+
+            expected_response = {
+                "success": False,
+                "data": None,
+                "message": "DQ checks not found",
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_deactivate_checks(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_check,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to deactivate the DQ check
+
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.put(
+            "/api/dq/checks/deactivate",
+            json={
+                "form_uid": 1,
+                "type_id": 4,
+                "check_uids": [1],
+            },
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "success": True,
+                "message": "Success",
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+            # Check if the check was deleted
+            response = client.get(
+                "/api/dq/checks",
+                query_string={"form_uid": 1, "type_id": 4},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert response.status_code == 200
+            print(response.json)
+
+            expected_response = {
+                "data": [
+                    {
+                        "active": False,
+                        "all_questions": True,
+                        "dq_check_uid": 1,
+                        "filters": [],
+                        "flag_description": "test_flag",
+                        "form_uid": 1,
+                        "module_name": "test_module",
+                        "question_name": None,
+                        "type_id": 4,
+                        "check_components": [],
+                        "dq_scto_form_uid": None,
+                        "is_repeat_group": False,
+                        "note": None,
+                        "check_components": {"value": ["Is empty", "is NA"]},
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+            # Check if dq config is updated to reflect the change
+            response = client.get(
+                "/api/dq/config",
+                query_string={"form_uid": 1},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            print(response.json)
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "form_uid": 1,
+                    "survey_status_filter": [1, 3],
+                    "dq_checks": [
+                        {
+                            "type_id": 4,
+                            "num_configured": "All",
+                            "num_active": "0",
+                        }
+                    ],
+                },
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_activate_checks(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_check_inactive,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to deactivate the DQ check
+
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.put(
+            "/api/dq/checks/activate",
+            json={
+                "form_uid": 1,
+                "type_id": 4,
+                "check_uids": [1],
+            },
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "success": True,
+                "message": "Success",
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+            # Check if the check was deleted
+            response = client.get(
+                "/api/dq/checks",
+                query_string={"form_uid": 1, "type_id": 4},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert response.status_code == 200
+            print(response.json)
+
+            expected_response = {
+                "data": [
+                    {
+                        "active": True,
+                        "all_questions": True,
+                        "dq_check_uid": 1,
+                        "filters": [],
+                        "flag_description": "test_flag",
+                        "form_uid": 1,
+                        "module_name": "test_module",
+                        "question_name": None,
+                        "type_id": 4,
+                        "check_components": [],
+                        "dq_scto_form_uid": None,
+                        "is_repeat_group": False,
+                        "note": None,
+                        "check_components": {"value": ["Is empty", "is NA"]},
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+            # Check if dq config is updated to reflect the change
+            response = client.get(
+                "/api/dq/config",
+                query_string={"form_uid": 1},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "form_uid": 1,
+                    "survey_status_filter": [1, 3],
+                    "dq_checks": [
+                        {
+                            "type_id": 4,
+                            "num_configured": "All",
+                            "num_active": "All",
+                        }
+                    ],
+                },
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}

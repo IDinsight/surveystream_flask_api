@@ -136,3 +136,13 @@ class DQCheckValidator(FlaskForm):
     active = BooleanField(default=True)
 
     filters = FieldList(FormField(DQCheckFilterGroupValidator), default=[])
+
+
+class UpdateDQChecksStateValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
+    type_id = IntegerField(validators=[DataRequired(), validate_check_type])
+
+    check_uids = FieldList(IntegerField(), validators=[DataRequired()])

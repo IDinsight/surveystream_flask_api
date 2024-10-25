@@ -2,8 +2,9 @@ from itertools import groupby
 from operator import attrgetter
 
 from flask import jsonify, request
-from sqlalchemy import case, literal_column
+from sqlalchemy import String, case, literal_column
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.expression import cast
 from sqlalchemy.sql.functions import func
 
 from app import db
@@ -22,6 +23,7 @@ from .validators import (
     DQChecksQueryParamValidator,
     DQCheckValidator,
     DQConfigQueryParamValidator,
+    UpdateDQChecksStateValidator,
     UpdateDQConfigValidator,
 )
 
@@ -69,21 +71,80 @@ def get_dq_config(validated_query_params):
     Function to get dq configs per form
 
     """
-
     form_uid = validated_query_params.form_uid.data
+
+    # Get checks that are invalid because the question or filter is not found in the form definition
+    filter_invalid_subquery = (
+        (
+            db.session.query(DQCheckFilters.dq_check_uid)
+            .outerjoin(
+                SCTOQuestion,
+                DQCheckFilters.question_name == SCTOQuestion.question_name,
+            )
+            .filter(SCTOQuestion.question_name == None)
+        )
+        .distinct()
+        .subquery()
+    )
+
+    # Get checks that are invalid because the question is not found in the form definition
+    question_invalid_subquery = (
+        (
+            db.session.query(DQCheck.dq_check_uid)
+            .outerjoin(
+                SCTOQuestion,
+                DQCheck.question_name == SCTOQuestion.question_name,
+            )
+            .filter(SCTOQuestion.question_name == None, DQCheck.all_questions == False)
+        )
+        .distinct()
+        .subquery()
+    )
+
+    # Get checks with active status
+    dq_questions_subquery = (
+        db.session.query(
+            DQCheck.form_uid,
+            DQCheck.type_id,
+            DQCheck.dq_check_uid,
+            DQCheck.all_questions,
+            DQCheck.question_name,
+            case(
+                [
+                    (
+                        (DQCheck.active == True)
+                        & (question_invalid_subquery.c.dq_check_uid == None)
+                        & (filter_invalid_subquery.c.dq_check_uid == None),
+                        True,
+                    )
+                ],
+                else_=False,
+            ).label("active"),
+        )
+        .outerjoin(
+            question_invalid_subquery,
+            DQCheck.dq_check_uid == question_invalid_subquery.c.dq_check_uid,
+        )
+        .outerjoin(
+            filter_invalid_subquery,
+            DQCheck.dq_check_uid == filter_invalid_subquery.c.dq_check_uid,
+        )
+        .filter(DQCheck.form_uid == form_uid)
+        .subquery()
+    )
 
     # Get count per check type
     dq_checks_subquery = (
         db.session.query(
-            DQCheck.form_uid,
-            DQCheck.type_id,
-            DQCheck.all_questions,
-            func.count(DQCheck.dq_check_uid).label("num_configured"),
+            dq_questions_subquery.c.form_uid,
+            dq_questions_subquery.c.type_id,
+            dq_questions_subquery.c.all_questions,
+            func.count(dq_questions_subquery.c.dq_check_uid).label("num_configured"),
             func.sum(
                 case(
                     [
                         (
-                            DQCheck.active == True,
+                            dq_questions_subquery.c.active == True,
                             1,
                         )
                     ],
@@ -91,8 +152,11 @@ def get_dq_config(validated_query_params):
                 )
             ).label("num_active"),
         )
-        .group_by(DQCheck.form_uid, DQCheck.type_id, DQCheck.all_questions)
-        .filter(DQCheck.form_uid == form_uid)
+        .group_by(
+            dq_questions_subquery.c.form_uid,
+            dq_questions_subquery.c.type_id,
+            dq_questions_subquery.c.all_questions,
+        )
         .subquery()
     )
 
@@ -111,8 +175,9 @@ def get_dq_config(validated_query_params):
                                 literal_column("'All'"),
                             )
                         ],
-                        else_=str(
-                            func.coalesce(dq_checks_subquery.c.num_configured, 0)
+                        else_=cast(
+                            func.coalesce(dq_checks_subquery.c.num_configured, 0),
+                            String,
                         ),
                     ),
                     "num_active",
@@ -124,7 +189,9 @@ def get_dq_config(validated_query_params):
                                 literal_column("'All'"),
                             )
                         ],
-                        else_=str(func.coalesce(dq_checks_subquery.c.num_active, 0)),
+                        else_=cast(
+                            func.coalesce(dq_checks_subquery.c.num_active, 0), String
+                        ),
                     ),
                 )
             ).label("dq_checks"),
@@ -443,6 +510,138 @@ def update_dq_check(check_uid, validated_payload):
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": str(e), "success": False}), 500
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"message": str(e), "success": False}), 500
+
+    return jsonify({"message": "Success", "success": True}), 200
+
+
+@dq_bp.route("/checks/activate", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(UpdateDQChecksStateValidator)
+@custom_permissions_required("WRITE Data Quality", "body", "form_uid")
+def activate_dq_checks(validated_payload):
+    """
+    Function to mark dq checks as active
+
+    """
+    form_uid = validated_payload.form_uid.data
+    type_id = validated_payload.type_id.data
+    check_uids = validated_payload.check_uids.data
+
+    dq_checks = DQCheck.query.filter(
+        DQCheck.form_uid == form_uid,
+        DQCheck.type_id == type_id,
+        DQCheck.dq_check_uid.in_(check_uids),
+    ).all()
+
+    invalid_checks = []
+
+    for dq_check in dq_checks:
+        if not dq_check.all_questions:
+            # Check if the question is available in the form definition
+            scto_question = SCTOQuestion.query.filter(
+                SCTOQuestion.form_uid == form_uid,
+                SCTOQuestion.question_name == dq_check.question_name,
+            ).first()
+
+            if scto_question is None:
+                invalid_checks.append(dq_check.dq_check_uid)
+                continue
+
+        filters = DQCheckFilters.query.filter(
+            DQCheckFilters.dq_check_uid == dq_check.dq_check_uid
+        ).all()
+
+        # Check if all questions used in filters are valid
+        for filter_item in filters:
+            scto_question = SCTOQuestion.query.filter(
+                SCTOQuestion.form_uid == form_uid,
+                SCTOQuestion.question_name == filter_item.question_name,
+            ).first()
+
+            if scto_question is None:
+                invalid_checks.append(dq_check.dq_check_uid)
+
+    if len(invalid_checks) > 0:
+        return (
+            jsonify(
+                {
+                    "message": "Cannot activate checks with questions that are no longer in the form defintiion",
+                    "success": False,
+                    "invalid_checks": invalid_checks,
+                }
+            ),
+            404,
+        )
+
+    # Else mark the checks as active
+    DQCheck.query.filter(
+        DQCheck.form_uid == form_uid,
+        DQCheck.type_id == type_id,
+        DQCheck.dq_check_uid.in_(check_uids),
+    ).update({"active": True}, synchronize_session=False)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"message": str(e), "success": False}), 500
+
+    return jsonify({"message": "Success", "success": True}), 200
+
+
+@dq_bp.route("/checks/deactivate", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(UpdateDQChecksStateValidator)
+@custom_permissions_required("WRITE Data Quality", "body", "form_uid")
+def deactivate_dq_checks(validated_payload):
+    """
+    Function to mark dq checks as inactive
+
+    """
+    form_uid = validated_payload.form_uid.data
+    type_id = validated_payload.type_id.data
+    check_uids = validated_payload.check_uids.data
+
+    # Mark the checks as inactive
+    DQCheck.query.filter(
+        DQCheck.form_uid == form_uid,
+        DQCheck.type_id == type_id,
+        DQCheck.dq_check_uid.in_(check_uids),
+    ).update({"active": False}, synchronize_session=False)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"message": str(e), "success": False}), 500
+
+    return jsonify({"message": "Success", "success": True}), 200
+
+
+@dq_bp.route("/checks", methods=["DELETE"])
+@logged_in_active_user_required
+@validate_payload(UpdateDQChecksStateValidator)
+@custom_permissions_required("WRITE Data Quality", "body", "form_uid")
+def delete_dq_checks(validated_payload):
+    """
+    Function to delete a dq check
+
+    """
+    form_uid = validated_payload.form_uid.data
+    type_id = validated_payload.type_id.data
+    check_uids = validated_payload.check_uids.data
+
+    DQCheck.query.filter(
+        DQCheck.form_uid == form_uid,
+        DQCheck.type_id == type_id,
+        DQCheck.dq_check_uid.in_(check_uids),
+    ).delete(synchronize_session=False)
 
     try:
         db.session.commit()
