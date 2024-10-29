@@ -15,6 +15,9 @@ login:
 image:
 	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --platform=linux/amd64 -t $(BACKEND_NAME):$(VERSION) .
 
+image-arm:
+	@docker build -f Dockerfile.api --rm --build-arg NAME=$(BACKEND_NAME) --build-arg PORT=$(BACKEND_PORT) --platform=linux/arm64 -t $(BACKEND_NAME):$(VERSION) .
+
 
 data-db-tunnel:
 	# Open a connection to the remote db via the bastion host
@@ -49,14 +52,14 @@ container-up:
 	BACKEND_PORT=${BACKEND_PORT} \
 	VERSION=${VERSION} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.remote-dev-db.yml -f docker-compose/docker-compose.override.yml up -d --force-recreate -V
+	docker compose -f docker-compose/docker-compose.remote-dev-db.yml -f docker-compose/docker-compose.override.yml up -d --force-recreate -V
 
 container-down:
 	@BACKEND_NAME=${BACKEND_NAME} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	VERSION=${VERSION} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.remote-dev-db.yml -f docker-compose/docker-compose.override.yml down -v
+	docker compose -f docker-compose/docker-compose.remote-dev-db.yml -f docker-compose/docker-compose.override.yml down -v
 	@docker system prune --volumes -f
 	
 run-unit-tests:
@@ -65,13 +68,13 @@ run-unit-tests:
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
 	USE_DB_MIGRATIONS=false \
-	docker-compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
+	docker compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
 	
 	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml rm -fsv
+	docker compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml rm -fsv
 
 profile:
 	mkdir -p profiling/outputs
@@ -80,49 +83,49 @@ profile:
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.profiling.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
+	docker compose -f docker-compose/docker-compose.profiling.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
 	
 	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.profiling.yml -f docker-compose/docker-compose.override-unit-test.yml rm -fsv
+	docker compose -f docker-compose/docker-compose.profiling.yml -f docker-compose/docker-compose.override-unit-test.yml rm -fsv
 
 generate-db-migration-dev:
 	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.db-migrate.yml -f docker-compose/docker-compose.override.yml run --rm api ;
+	docker compose -f docker-compose/docker-compose.db-migrate.yml -f docker-compose/docker-compose.override.yml run --rm api ;
 
 	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.db-migrate.yml -f docker-compose/docker-compose.override.yml rm -fsv
+	docker compose -f docker-compose/docker-compose.db-migrate.yml -f docker-compose/docker-compose.override.yml rm -fsv
 
 apply-db-migration-dev:
 	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.db-upgrade.yml -f docker-compose/docker-compose.override.yml run --rm api ;
+	docker compose -f docker-compose/docker-compose.db-upgrade.yml -f docker-compose/docker-compose.override.yml run --rm api ;
 
 	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.db-upgrade.yml -f docker-compose/docker-compose.override.yml rm -fsv
+	docker compose -f docker-compose/docker-compose.db-upgrade.yml -f docker-compose/docker-compose.override.yml rm -fsv
 
 downgrade-db-dev:
 	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.db-downgrade.yml -f docker-compose/docker-compose.override.yml run --rm api ;
+	docker compose -f docker-compose/docker-compose.db-downgrade.yml -f docker-compose/docker-compose.override.yml run --rm api ;
 
 	@BACKEND_NAME=${BACKEND_NAME} \
 	VERSION=${VERSION} \
 	BACKEND_PORT=${BACKEND_PORT} \
 	ADMIN_ACCOUNT=${ADMIN_ACCOUNT} \
-	docker-compose -f docker-compose/docker-compose.db-downgrade.yml -f docker-compose/docker-compose.override.yml rm -fsv
+	docker compose -f docker-compose/docker-compose.db-downgrade.yml -f docker-compose/docker-compose.override.yml rm -fsv

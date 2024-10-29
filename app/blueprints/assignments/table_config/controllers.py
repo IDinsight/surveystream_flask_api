@@ -1,26 +1,35 @@
-from . import table_config_bp
-from app.utils.utils import (
-    logged_in_active_user_required,
-    validate_query_params,
-    validate_payload,
-    custom_permissions_required,
-)
 from flask import jsonify
 from flask_login import current_user
-from .models import TableConfig
-from .validators import UpdateTableConfigValidator, TableConfigQueryParamValidator
-from .default_config import DefaultTableConfig
-from .available_columns import AvailableColumns
-from .utils import validate_table_config
-from .errors import InvalidTableConfigError
+
+from app import db
+from app.blueprints.enumerators.models import EnumeratorColumnConfig
+from app.blueprints.forms.models import Form
+from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.locations.utils import GeoLevelHierarchy
-from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
-from app.blueprints.forms.models import Form
+from app.blueprints.roles.errors import InvalidRoleHierarchyError
+from app.blueprints.roles.models import Role
+from app.blueprints.roles.utils import (
+    RoleHierarchy,
+    check_if_survey_admin,
+    get_user_role,
+)
 from app.blueprints.surveys.models import Survey
-from app.blueprints.enumerators.models import EnumeratorColumnConfig
 from app.blueprints.targets.models import TargetColumnConfig
-from app import db
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_payload,
+    validate_query_params,
+)
+
+from . import table_config_bp
+from .available_columns import AvailableColumns
+from .default_config import DefaultTableConfig
+from .errors import InvalidTableConfigError
+from .models import TableConfig
+from .utils import validate_table_config
+from .validators import TableConfigQueryParamValidator, UpdateTableConfigValidator
 
 
 @table_config_bp.route("", methods=["GET"])
@@ -37,14 +46,12 @@ def get_table_config(validated_query_params):
         Check if the table config row should be excluded because the supervisor is not at a child supervisor level for the logged in user
         """
         is_excluded_supervisor = False
-
         try:
             if (
-                row.column_key.split(".")[0] == "supervisors"
-                and int(row.column_key.split(".")[1].split("_")[1]) <= user_level
+                row.column_key.split("[")[0] == "supervisors"
+                and int(row.column_key.split("[")[1].split("]")[0]) >= user_level
             ):
                 is_excluded_supervisor = True
-
         except:
             pass
 
@@ -52,6 +59,7 @@ def get_table_config(validated_query_params):
 
     user_uid = current_user.user_uid
     form_uid = validated_query_params.form_uid.data
+    filter_supervisors = validated_query_params.filter_supervisors.data
 
     # Get the survey UID from the form UID
     form = Form.query.filter_by(form_uid=form_uid).first()
@@ -64,11 +72,7 @@ def get_table_config(validated_query_params):
 
     survey_uid = form.survey_uid
 
-    # survey_query = build_survey_query(form_uid)
-    # user_level = build_user_level_query(user_uid, survey_query).first().level # TODO: Add this back in once we have the supervisor hierarchy in place
-
     # Figure out if we need to handle location columns
-
     enumerator_location_configured = False
     target_location_configured = False
 
@@ -140,6 +144,40 @@ def get_table_config(validated_query_params):
                 422,
             )
 
+    role_hierarchy = None
+    roles = [
+        role.to_dict() for role in Role.query.filter_by(survey_uid=survey_uid).all()
+    ]
+    if len(roles) > 0:
+        try:
+            role_hierarchy = RoleHierarchy(roles)
+        except InvalidRoleHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "role_hierarchy": e.role_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+
+    user_level = None
+    # If filter_supervisors flag is True, fetch logged in user's role to
+    # filter out supervisors columns to only return the child supervisors
+    if filter_supervisors:
+        is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+        if is_survey_admin:
+            user_level = None
+        else:
+            user_role = get_user_role(user_uid, survey_uid)
+            for i, role in enumerate(role_hierarchy.ordered_roles):
+                if role["role_uid"] == user_role:
+                    user_level = len(role_hierarchy.ordered_roles) - i - 1
+                    break
+
     table_config = {
         "surveyors": [],
         "targets": [],
@@ -167,15 +205,17 @@ def get_table_config(validated_query_params):
                     prime_geo_level_uid,
                     enumerator_location_configured,
                     target_location_configured,
+                    role_hierarchy,
+                    filter_supervisors,
+                    user_level,
                 )
             table_config[key] = getattr(default_table_config, key)
-
         else:
             for row in table_result:
-                # TODO: Add this back in once we have the supervisor hierarchy in place
-                # if is_excluded_supervisor(row, user_level):
-                #     pass
-                # else:
+                # If filter_supervisors flag is True, skip the excluded supervisors columns
+                if filter_supervisors and (user_level is not None):
+                    if is_excluded_supervisor(row, user_level):
+                        continue
 
                 if row.group_label is None:
                     table_config[row.table_name].append(
@@ -316,6 +356,26 @@ def update_table_config(validated_payload):
                 422,
             )
 
+    role_hierarchy = None
+    roles = [
+        role.to_dict() for role in Role.query.filter_by(survey_uid=survey_uid).all()
+    ]
+    if len(roles) > 0:
+        try:
+            role_hierarchy = RoleHierarchy(roles)
+        except InvalidRoleHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "role_hierarchy": e.role_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+
     # Validate the table config
     try:
         validate_table_config(
@@ -325,6 +385,7 @@ def update_table_config(validated_payload):
             prime_geo_level_uid,
             enumerator_location_configured,
             target_location_configured,
+            role_hierarchy,
             survey_uid,
             form_uid,
         )
@@ -377,25 +438,6 @@ def get_available_columns(validated_query_params):
     Returns the full set of available columns for the assignments module tables
     """
 
-    def is_excluded_supervisor(row, user_level):
-        """
-        Check if the table config row should be excluded because the supervisor is not at a child supervisor level for the logged in user
-        """
-        is_excluded_supervisor = False
-
-        try:
-            if (
-                row.column_key.split(".")[0] == "supervisors"
-                and int(row.column_key.split(".")[1].split("_")[1]) <= user_level
-            ):
-                is_excluded_supervisor = True
-
-        except:
-            pass
-
-        return is_excluded_supervisor
-
-    user_uid = current_user.user_uid
     form_uid = validated_query_params.form_uid.data
 
     # Get the survey UID from the form UID
@@ -409,11 +451,7 @@ def get_available_columns(validated_query_params):
 
     survey_uid = form.survey_uid
 
-    # survey_query = build_survey_query(form_uid)
-    # user_level = build_user_level_query(user_uid, survey_query).first().level # TODO: Add this back in once we have the supervisor hierarchy in place
-
     # Figure out if we need to handle location columns
-
     enumerator_location_configured = False
     target_location_configured = False
 
@@ -485,13 +523,24 @@ def get_available_columns(validated_query_params):
                 422,
             )
 
-    # available_columns = {
-    #     "surveyors": [],
-    #     "targets": [],
-    #     "assignments_main": [],
-    #     "assignments_surveyors": [],
-    #     "assignments_review": [],
-    # }
+    roles = [
+        role.to_dict() for role in Role.query.filter_by(survey_uid=survey_uid).all()
+    ]
+    if len(roles) > 0:
+        try:
+            role_hierarchy = RoleHierarchy(roles)
+        except InvalidRoleHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "role_hierarchy": e.role_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
 
     available_columns = AvailableColumns(
         form_uid,
@@ -500,6 +549,7 @@ def get_available_columns(validated_query_params):
         prime_geo_level_uid,
         enumerator_location_configured,
         target_location_configured,
+        role_hierarchy,
     )
 
     return jsonify(available_columns.to_dict())

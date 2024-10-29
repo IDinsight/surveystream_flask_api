@@ -41,6 +41,7 @@ def update_logged_in_user_roles(
     can_create_survey=False,
     is_survey_admin=False,
     survey_uid=None,
+    location_uids=None,
 ):
     """
     Function to update the logged-in user admin status and roles
@@ -61,6 +62,7 @@ def update_logged_in_user_roles(
             "is_survey_admin": is_survey_admin,
             "survey_uid": survey_uid,
             "active": True,
+            "location_uids": location_uids,
         },
         content_type="application/json",
         headers={"X-CSRF-Token": csrf_token},
@@ -103,6 +105,8 @@ def create_new_survey_role_with_permissions(
     - return updated user
     """
     csrf_token = get_csrf_token(client)
+
+    # Give one existing role permissions to write mapping
     payload = {
         "roles": [
             {
@@ -111,9 +115,15 @@ def create_new_survey_role_with_permissions(
                 "reporting_role_uid": None,
                 "permissions": permissions,
             },
-        ]
+            {
+                "role_uid": None,
+                "role_name": "Regional Coordinator",
+                "reporting_role_uid": 1,
+                "permissions": [],
+            },
+        ],
     }
-
+    
     response = client.put(
         "/api/roles",
         query_string={"survey_uid": survey_uid},

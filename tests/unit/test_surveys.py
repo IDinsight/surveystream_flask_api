@@ -83,7 +83,39 @@ class TestSurveys:
         return response_user_survey
 
     @pytest.fixture()
-    def create_parent_form(self, client, login_test_user, csrf_token, create_surveys):
+    def create_module_questionnaire(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_surveys
+    ):
+        """
+        Insert new module_questionnaire to set up mapping criteria needed for assignments
+        """
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_parent_form(
+        self, client, login_test_user, csrf_token, create_module_questionnaire
+    ):
         """
         Insert new form as a setup step for the form tests
         """
@@ -692,7 +724,7 @@ class TestSurveys:
         assert checkdiff == {}
 
     def test_get_surveys_for_non_admin_user_survey_roles(
-        self, client, login_test_user, create_surveys, test_user_credentials
+        self, client, login_test_user, create_surveys, create_module_questionnaire, test_user_credentials
     ):
         """
         Test get surveys for non-admin with roles
@@ -1013,6 +1045,7 @@ class TestSurveys:
                     {"name": "SurveyStream users", "status": "Not Started"},
                     {"name": "Enumerators", "status": "In Progress"},
                     {"name": "Targets", "status": "In Progress"},
+                    {"name": "Mapping", "status": "Not Started"},
                 ],
                 "overall_status": "In Progress - Configuration",
             },

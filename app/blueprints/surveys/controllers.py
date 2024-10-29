@@ -1,21 +1,20 @@
 from flask import jsonify
-from sqlalchemy.exc import IntegrityError
 from flask_login import current_user
+from sqlalchemy.exc import IntegrityError
+
 from app import db
-from .models import Survey
-from app.blueprints.roles.models import Role, SurveyAdmin
 from app.blueprints.locations.models import GeoLevel
-from app.blueprints.module_selection.models import ModuleStatus, Module
-from .routes import surveys_bp
-from .validators import (
-    CreateSurveyValidator,
-    UpdateSurveyValidator,
-)
+from app.blueprints.module_selection.models import Module, ModuleStatus
+from app.blueprints.roles.models import Role, SurveyAdmin
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
     validate_payload,
 )
+
+from .models import Survey
+from .routes import surveys_bp
+from .validators import CreateSurveyValidator, UpdateSurveyValidator
 
 
 @surveys_bp.route("", methods=["GET"])
@@ -184,13 +183,18 @@ def get_survey_config_status(survey_uid):
 
     # Temp: Update module status based on whether data is present in the corresponding backend
     # table because we aren't updating the module status table from each module currently
-    from app.blueprints.forms.models import Form
-    from app.blueprints.enumerators.models import Enumerator
-    from app.blueprints.targets.models import Target
     from app.blueprints.assignments.models import SurveyorAssignment
-    from app.blueprints.target_status_mapping.models import TargetStatusMapping
-    from app.blueprints.media_files.models import MediaFilesConfig
     from app.blueprints.emails.models import EmailConfig
+    from app.blueprints.enumerators.models import Enumerator
+    from app.blueprints.forms.models import Form
+    from app.blueprints.mapping.models import (
+        UserMappingConfig,
+        UserSurveyorMapping,
+        UserTargetMapping,
+    )
+    from app.blueprints.media_files.models import MediaFilesConfig
+    from app.blueprints.target_status_mapping.models import TargetStatusMapping
+    from app.blueprints.targets.models import Target
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     scto_information = Form.query.filter_by(
@@ -206,6 +210,8 @@ def get_survey_config_status(survey_uid):
     media_files_config = None
     email_config = None
     dq_form_config = None
+    admin_form_config = None
+    mapping_config = None
 
     if scto_information is not None:
         enumerators = Enumerator.query.filter_by(
@@ -246,6 +252,35 @@ def get_survey_config_status(survey_uid):
             )
             .first()
         )
+
+        # Check if any saved mapping config is present
+        mapping_config = (
+            db.session.query(UserMappingConfig)
+            .filter(UserMappingConfig.form_uid == scto_information.form_uid)
+            .first()
+        )
+        if mapping_config is None:
+            mapping_config = (
+                db.session.query(UserSurveyorMapping)
+                .filter(UserSurveyorMapping.form_uid == scto_information.form_uid)
+                .first()
+            )
+        if mapping_config is None:
+            mapping_config = (
+                db.session.query(UserTargetMapping)
+                .join(Target, Target.target_uid == UserTargetMapping.target_uid)
+                .filter(Target.form_uid == scto_information.form_uid)
+                .first()
+            )
+
+    admin_form_config = (
+        db.session.query(Form)
+        .filter(
+            Form.survey_uid == survey_uid,
+            Form.form_type == "admin",
+        )
+        .first()
+    )
 
     if enumerators and targets:
         assignments = (
@@ -289,16 +324,11 @@ def get_survey_config_status(survey_uid):
         elif item["name"] == "Target status mapping":
             if target_status_mapping is not None:
                 item["status"] = "In Progress"
+        elif item["name"] == "Mapping":
+            if mapping_config is not None:
+                item["status"] = "In Progress"
 
     if "Module configuration" in data:
-        # Extract the current module_ids and find the maximum
-        current_ids = [
-            item.get("module_id", 0)
-            for item in data["Module configuration"]
-            if isinstance(item, dict)
-        ]
-        next_id = max(current_ids) + 1 if current_ids else 1
-
         for item in data["Module configuration"]:
             if isinstance(item, dict) and "name" in item:
                 if item["name"] == "Assignments":
@@ -312,6 +342,9 @@ def get_survey_config_status(survey_uid):
                         item["status"] = "In Progress"
                 elif item["name"] == "Data quality":
                     if dq_form_config is not None:
+                        item["status"] = "In Progress"
+                elif item["name"] == "Admin forms":
+                    if admin_form_config is not None:
                         item["status"] = "In Progress"
 
     response = {"success": True, "data": data}

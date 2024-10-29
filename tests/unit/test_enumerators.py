@@ -1,8 +1,9 @@
-import jsondiff
-import pytest
 import base64
-import pandas as pd
 from pathlib import Path
+
+import jsondiff
+import pandas as pd
+import pytest
 from utils import (
     create_new_survey_role_with_permissions,
     login_user,
@@ -124,7 +125,39 @@ class TestEnumerators:
         yield
 
     @pytest.fixture()
-    def create_form(self, client, login_test_user, csrf_token, create_survey):
+    def create_module_questionnaire(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Insert new module_questionnaire to set up mapping criteria needed for assignments
+        """
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_form(
+        self, client, login_test_user, csrf_token, create_module_questionnaire
+    ):
         """
         Insert new form as a setup step for the form tests
         """
@@ -414,7 +447,12 @@ class TestEnumerators:
 
     @pytest.fixture()
     def upload_enumerators_csv_no_locations(
-        self, client, login_test_user, create_locations_for_enumerators_file, csrf_token
+        self,
+        client,
+        login_test_user,
+        create_locations_for_enumerators_file,
+        update_surveyor_mapping_criteria_to_language,
+        csrf_token,
     ):
         """
         Upload the enumerators csv with no locations
@@ -464,7 +502,12 @@ class TestEnumerators:
 
     @pytest.fixture()
     def upload_enumerators_csv_no_locations_no_geo_levels_defined(
-        self, client, login_test_user, create_form, csrf_token
+        self,
+        client,
+        login_test_user,
+        create_form,
+        update_surveyor_mapping_criteria_to_gender,
+        csrf_token,
     ):
         """
         Upload the enumerators csv with no locations mapped and no geo levels defined
@@ -668,6 +711,86 @@ class TestEnumerators:
         assert response.status_code == 200
 
         yield
+
+    @pytest.fixture()
+    def update_surveyor_mapping_criteria_to_language(self, client, csrf_token):
+        """
+        Method to update the mapping criteria to Langauge
+        """
+
+        # Update surveyor_mapping_criteria to language
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Language"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def update_surveyor_mapping_criteria_to_gender(self, client, csrf_token):
+        """
+        Method to update the mapping criteria to Gender
+        """
+
+        # Update surveyor_mapping_criteria to gender
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Gender"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def update_surveyor_mapping_criteria_to_none(self, client, csrf_token):
+        """
+        Method to update the mapping criteria to none
+        """
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": None,
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
 
     def test_upload_merge_update_enumerators_csv(
         self, client, create_form, login_test_user, csrf_token, upload_enumerators_csv
@@ -2929,7 +3052,7 @@ class TestEnumerators:
                             "column_key": f"form_productivity.test_scto_input_output.avg_num_completed_per_day",
                             "column_label": "Avg. completed/day",
                         },
-                    ]
+                    ],
                 },
                 "success": True,
             }
@@ -3102,7 +3225,6 @@ class TestEnumerators:
         print(response.json)
 
         if expected_permission:
-
             assert response.status_code == 200
 
             expected_response = {
@@ -4988,3 +5110,189 @@ class TestEnumerators:
         )
 
         login_user(client, test_user_credentials)
+
+    def test_get_enumerator_language(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        csrf_token,
+        user_permissions,
+        request,
+    ):
+        """
+        Test to get list of enumerator languages
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            "/api/enumerators/languages",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": {
+                    "form_uid": 1,
+                    "languages": ["English", "Hindi", "Swahili", "Telugu"],
+                },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Enumerators",
+                "success": False,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_upload_enumerators_csv_missing_location_error(
+        self,
+        client,
+        login_test_user,
+        create_locations_for_enumerators_file,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that the enumerators csv upload fails when the location_id_column is missing
+        when location is in the surveyor mapping criteria
+        """
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_small.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id1",
+                "name": "name1",
+                "email": "email1",
+                "mobile_primary": "mobile_primary1",
+                "language": "language1",
+                "home_address": "home_address1",
+                "gender": "gender1",
+                "enumerator_type": "enumerator_type1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary1",
+                    },
+                    {
+                        "field_label": "Age",
+                        "column_name": "age1",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "column_mapping": [
+                    "Field name 'location_id_column' is missing from the column mapping but is required based on the mapping criteria."
+                ]
+            },
+            "success": False,
+        }
+
+        print(response.json)
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_enumerators_csv_no_mapping_criteria_error(
+        self,
+        client,
+        login_test_user,
+        create_locations_for_enumerators_file,
+        update_surveyor_mapping_criteria_to_none,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that the enumerators csv upload fails when no surveyor mapping criteria is set
+        """
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_small.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id1",
+                "name": "name1",
+                "email": "email1",
+                "mobile_primary": "mobile_primary1",
+                "language": "language1",
+                "gender": "gender1",
+                "home_address": "home_address1",
+                "enumerator_type": "enumerator_type1",
+                "location_id_column": "district_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary1",
+                    },
+                    {
+                        "field_label": "Age",
+                        "column_name": "age1",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "error": "Supervisor to surveyor mapping criteria not found. Cannot upload enumerators without selecting a mapping criteria first.",
+            "success": False,
+        }
+
+        print(response.json)
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}

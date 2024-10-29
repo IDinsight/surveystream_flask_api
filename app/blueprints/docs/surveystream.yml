@@ -88,6 +88,8 @@ tags:
     description: Endpoints related to permissions
   - name: User Hierarchy
     description: Endpoints related to user hierarchy
+  - name: Mapping
+    description: Endpoints related to mapping
   - name: Emails
     description: Endpoints related to emails configuration
   - name: Media Files
@@ -143,6 +145,9 @@ x-tagGroups:
   - name: Locations
     tags:
       - Locations
+  - name: Mapping
+    tags:
+      - Mapping
   - name: Emails
     tags:
       - Emails
@@ -546,6 +551,8 @@ paths:
               properties:
                 email:
                   type: string
+                survey_uid:
+                  type: integer
               required:
                 - email
       responses:
@@ -560,6 +567,59 @@ paths:
                     type: string
                   user:
                     type: object
+                    properties:
+                      user_uid:
+                        type: integer
+                        description: The unique ID of the user
+                      email:
+                        type: string
+                        description: The email address of the user
+                      first_name:
+                        type: string
+                        description: The first name of the user
+                      last_name:
+                        type: string
+                        description: The last name of the user
+                      roles:
+                        type: array
+                        items:
+                          type: integer
+                        description: All roles of the user across all surveys
+                      gender:
+                        type: string
+                        description: Gender of the user
+                      is_super_admin:
+                        type: boolean
+                        description: Super admin status for the user
+                      can_create_survey:
+                        type: boolean
+                        description: Whether the user can create a survey
+                      active:
+                        type: boolean
+                        description: Whether the user is active
+                      is_survey_admin:
+                        type: boolean
+                        description: Whether the user is a survey admin if survey_uid is provided
+                      location_uids:
+                        type: array
+                        items:
+                          type: integer
+                        description: List of unique IDs of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                      location_ids:
+                        type: array
+                        items:
+                          type: integer
+                        description: List of IDs of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                      location_names:
+                        type: array
+                        items:
+                          type: string
+                        description: Names of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                      languages:
+                        type: array
+                        items:
+                          type: string
+                        description: Languages mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
         "403":
           description: X-CSRF-Token required in header
           content:
@@ -599,8 +659,20 @@ paths:
                   type: string
                 last_name:
                   type: string
-                role:
+                roles:
+                  type: array
+                  items:
+                    type: integer
+                gender:
                   type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
+                location_uids:
+                  type: array
+                  items:
+                    type: integer
                 is_super_admin:
                   type: boolean
                 can_create_survey:
@@ -613,7 +685,7 @@ paths:
                 - email
                 - first_name
                 - last_name
-                - role
+                - roles
                 - is_super_admin
       responses:
         "200":
@@ -678,15 +750,54 @@ paths:
                     last_name:
                       type: string
                     roles:
+                      type: array
+                      items:
+                        type: integer
+                    gender:
                       type: string
-                    user_survey_names:
-                      type: string
-                    user_role_names:
-                      type: string
+                    supervisor_uid:
+                      type: integer
+                      description: The unique ID of the supervisor
+                    user_admin_survey_names:
+                      type: list
+                      items:
+                        type: string
+                      description: The names of the surveys the user is a survey admin of
+                    user_survey_role_names:
+                      type: list
+                      items:
+                        type: object
+                        properties:
+                          role_name:
+                            type: string
+                            description: The name of the role
+                          survey_name:
+                            type: string
+                            description: The name of the survey
                     is_super_admin:
                       type: boolean
                     status:
                       type: string
+                    location_uids:
+                      type: array
+                      items:
+                        type: integer
+                      description: List of unique IDs of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                    location_ids:
+                      type: array
+                      items:
+                        type: integer
+                      description: List of IDs of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                    location_names:
+                      type: array
+                      items:
+                        type: string
+                      description: Names of the locations mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
+                    languages:
+                      type: array
+                      items:
+                        type: string
+                      description: Languages mapped to the user for a specific survey if survey_uid is provided. If survey_uid is not provided, it will be an empty array.
         "400":
           description: Survey ID is required for non-super-admin users
           content:
@@ -788,6 +899,10 @@ paths:
                     type: string
                   roles:
                     type: array
+                    items:
+                      type: integer
+                  gender:
+                    type: string
                   is_super_admin:
                     type: boolean
                   active:
@@ -830,6 +945,18 @@ paths:
                   type: string
                 roles:
                   type: array
+                  items:
+                    type: integer
+                gender:
+                  type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
+                location_uids:
+                  type: array
+                  items:
+                    type: integer
                 is_super_admin:
                   type: boolean
                 can_create_survey:
@@ -889,8 +1016,8 @@ paths:
     delete:
       tags:
         - User Management
-      summary: Endpoint to delete a user
-      description: delete a single user
+      summary: Endpoint to deactivate a user
+      description: Deactivate a single user
       parameters:
         - in: header
           name: X-CSRF-TOKEN
@@ -907,7 +1034,7 @@ paths:
 
       responses:
         "200":
-          description: User deleted successfully
+          description: User deactivated successfully
           content:
             application/json:
               schema:
@@ -924,6 +1051,278 @@ paths:
                 properties:
                   message:
                     type: string
+        "500":
+          description: Error deactivating user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  "/user-locations":
+    get:
+      tags:
+        - User Management
+      summary: Get user location details for users with the lowest field supervisor role
+      description: Get user location details for a survey and for a specific user if user_uid is provided
+      parameters:
+        - in: query
+          name: survey_uid
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: user_uid
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User location details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: list
+                    items:
+                      type: object
+                      properties:
+                        user_uid:
+                          type: integer
+                          description: The unique ID of the user
+                        user_name:
+                          type: string
+                          description: The name of the user
+                        location_uid:
+                          type: integer
+                          description: The unique ID of the location
+                        location_id:
+                          type: integer
+                          description: The ID of the location
+                        location_name:
+                          type: string
+                          description: The name of the location
+        "404":
+          description: User locations not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+    put:
+      tags:
+        - User Management
+      summary: Update user locations
+      description: Update user locations for a survey and user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: integer
+                user_uid:
+                  type: integer
+                locations:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - survey_uid
+                - user_uid
+                - locations
+      responses:
+        "200":
+          description: User locations updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user_hierarchy:
+                    type: object
+        "403":
+          description: X-CSRF-Token required in header
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  errors:
+                    type: object
+    delete:
+      tags:
+        - User Management
+      summary: Delete user locations
+      description: Delete user locations for a survey and user
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: survey_uid
+          schema:
+            type: string
+          required: true
+          description: unique id for the survey
+        - in: query
+          name: user_uid
+          schema:
+            type: string
+          required: true
+          description: unique id for the user
+      responses:
+        "200":
+          description: User locations deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: User locations not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  "/user-languages":
+    get:
+      tags:
+        - User Management
+      summary: Get user languages for users with the lowest field supervisor role
+      description: Get user languages for a survey and for a specific user if user_uid is provided
+      parameters:
+        - in: query
+          name: survey_uid
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: user_uid
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User languages retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: list
+                    items:
+                      type: object
+                      properties:
+                        user_uid:
+                          type: integer
+                          description: The unique ID of the user
+                        user_name:
+                          type: string
+                          description: The name of the user
+                        language:
+                          type: string
+                          description: The language of the user
+        "404":
+          description: User languages not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string        
+  
+  "/user-gender":
+    get:
+      tags:
+        - User Management
+      summary: Get user gender for users with the lowest field supervisor role
+      description: Get user gender for a survey and for a specific user if user_uid is provided for users with the lowest field supervisor role
+      parameters:
+        - in: query
+          name: survey_uid
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: user_uid
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User gender retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: list
+                    items:
+                      type: object
+                      properties:
+                        user_uid:
+                          type: integer
+                          description: The unique ID of the user
+                        user_name:
+                          type: string
+                          description: The name of the user
+                        gender:
+                          type: string
+                          description: Gender of the user
+        "404":
+          description: User gender data not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "422":
+          description: Role hierarchy errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  
   /surveys:
     get:
       summary: Get surveys
@@ -1638,7 +2037,7 @@ paths:
                 form_type:
                   type: string
                   description: >-
-                    The type of form. Allowed values are 'parent' and 'dq'
+                    The type of form. Allowed values are 'parent', 'dq' and 'admin'
                 parent_form_uid:
                   type: integer
                   description: >-
@@ -1646,7 +2045,11 @@ paths:
                 dq_form_type:
                   type: string
                   description: >-
-                    The type of DQ form. Allowed values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                    The type of DQ form. Allowed values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Must be null if form_type is 'parent' or 'admin'.
+                admin_form_type:
+                  type: string
+                  description: >-
+                    The type of admin form. Allowed values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Must be null if form_type is 'parent' or 'dq'.
               required:
                 - survey_uid
                 - scto_form_id
@@ -1703,7 +2106,7 @@ paths:
                   form_type:
                     type: string
                     description: >-
-                      The type of form. Allowed values are 'parent' and 'dq'
+                      The type of form. Allowed values are 'parent', 'dq' and 'admin'
                   parent_form_uid:
                     type: integer
                     description: >-
@@ -1711,7 +2114,11 @@ paths:
                   dq_form_type:
                     type: string
                     description: >-
-                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
+                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent' or 'admin'.
+                  admin_form_type:
+                    type: string
+                    description: >-
+                      The type of admin form. Possible values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Will be null if form_type is 'parent' or 'dq'.
         "400":
           description: >-
             A form with the same survey_uid and scto_form_id already exists, or
@@ -1808,15 +2215,19 @@ paths:
                     form_type:
                       type: string
                       description: >-
-                        The type of form. Allowed values are 'parent' and 'dq'
+                        The type of form. Allowed values are 'parent', 'dq' and 'admin'
                     parent_form_uid:
                       type: integer
                       description: >-
-                        The form_uid of the parent form. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                        The form_uid of the parent form. Required if form_type is 'dq'. Must be null if form_type is 'parent' or 'admin'.
                     dq_form_type:
                       type: string
                       description: >-
-                        The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
+                        The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent' or 'admin'.
+                    admin_form_type:
+                      type: string
+                      description: >-
+                        The type of admin form. Possible values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Will be null if form_type is 'parent' or 'dq'.
                     parent_scto_form_id:
                       type: string
                       description: >-
@@ -1895,7 +2306,7 @@ paths:
                   form_type:
                     type: string
                     description: >-
-                      The type of form. Allowed values are 'parent' and 'dq'
+                      The type of form. Allowed values are 'parent', 'dq' and 'admin'
                   parent_form_uid:
                     type: integer
                     description: >-
@@ -1903,7 +2314,11 @@ paths:
                   dq_form_type:
                     type: string
                     description: >-
-                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent'.
+                      The type of DQ form. Possible values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Will be null if form_type is 'parent' or 'admin'.
+                  admin_form_type:
+                    type: string
+                    description: >-
+                      The type of admin form. Possible values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Will be null if form_type is 'parent' or 'dq'.
                   parent_scto_form_id:
                     type: string
                     description: >-
@@ -1980,7 +2395,7 @@ paths:
                 form_type:
                   type: string
                   description: >-
-                    The type of form. Allowed values are 'parent' and 'dq'
+                    The type of form. Allowed values are 'parent', 'dq' and 'admin'
                 parent_form_uid:
                   type: integer
                   description: >-
@@ -1988,7 +2403,11 @@ paths:
                 dq_form_type:
                   type: string
                   description: >-
-                    The type of DQ form. Allowed values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Must be null if form_type is 'parent'.
+                    The type of DQ form. Allowed values are 'audioaudit', 'backcheck' and 'spotcheck'. Required if form_type is 'dq'. Must be null if form_type is 'parent' or 'admin'.
+                admin_form_type:
+                  type: string
+                  description: >-
+                    The type of admin form. Allowed values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Must be null if form_type is 'parent' or 'dq'.
               required:
                 - survey_uid
                 - scto_form_id
@@ -2204,10 +2623,10 @@ paths:
                   description: The form's enumerator ID
                 dq_enumerator_id:
                   type: string
-                  description: The enumerator ID for the enumerator being checked in the DQ form
+                  description: The enumerator ID for the enumerator being checked in the DQ form. Required for DQ forms.
                 target_id:
                   type: string
-                  description: The form's target ID
+                  description: The form's target ID. Required for parent and DQ forms.
                 locations:
                   type: object
                   description: >-
@@ -2215,10 +2634,7 @@ paths:
                     for the form locations
               required:
                 - form_uid
-                - survey_status
-                - revisit_section
                 - enumerator_id
-                - target_id
       responses:
         "200":
           description: OK
@@ -2294,10 +2710,10 @@ paths:
                   description: The form's enumerator ID
                 dq_enumerator_id:
                   type: string
-                  description: The enumerator ID for the enumerator being checked in the DQ form
+                  description: The enumerator ID for the enumerator being checked in the DQ form. Required for DQ forms.
                 target_id:
                   type: string
-                  description: The form's target ID
+                  description: The form's target ID. Required for parent and DQ forms.
                 locations:
                   type: object
                   description: >-
@@ -2305,10 +2721,7 @@ paths:
                     for the form locations
               required:
                 - form_uid
-                - survey_status
-                - revisit_section
                 - enumerator_id
-                - target_id
       responses:
         "200":
           description: OK
@@ -3478,7 +3891,33 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred
-
+  /enumerators/languages:
+    get:
+      summary: Get all languages
+      description: >-
+        Return all languages that are available for selection in the system
+      tags:
+        - Enumerators
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    description: List of all languages
+                    items:
+                      type: string
+                      description: The name of the language
+                    example: ["English", "French", "Spanish"]
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+        "404":
+          description: No languages found for form_uid
   /assignments:
     get:
       summary: Get assignments
@@ -3617,6 +4056,35 @@ paths:
                             {`location`_id: _location_id_, `location`_name:
                             _location_name_} in descending order from highest to
                             lowest level location.
+                        supervisors:
+                          type: array
+                          description: >-
+                            An array of supervisors associated with each target in ascending order of 
+                            their seniority. Only child supervisors of the logged in user as per user 
+                            hierarchy are included in the array.
+                          items:
+                            type: object
+                            properties:
+                              role_name:
+                                type: string
+                                description: The name of the supervisor's role
+                              role_uid:
+                                type: integer
+                                description: The system-assigned unique ID for the supervisor's role
+                              supervisor_name:
+                                type: string
+                                description: The name of the supervisor
+                              supervisor_email:
+                                type: string
+                                description: The email of the supervisor
+        "422":
+          description: >
+            Form errors
+
+            Any errors encountered in linking the targets to other location hierarchy levels or
+            in mapping the targets to supervisors will be returned as an array under the `errors` 
+            key in the response.
+
     post:
       summary: Upload a csv of assignments
       description: |
@@ -3808,6 +4276,12 @@ paths:
                                 items:
                                   type: string
                                   description: The column name in the csv
+                      mapping_errors:
+                        type: array
+                        description: >-
+                          An array of errors encountered in mapping targets/enumerators
+                          with supervisors. Each array item is a string containing the 
+                          error message related to an individual error.
                   success:
                     type: boolean
                     description: Whether the upload was successful
@@ -3944,7 +4418,192 @@ paths:
                         total_completed_targets:
                           type: integer
                           description: Total complete targets for the given survey
-                          
+                        supervisors:
+                          type: array
+                          description: >-
+                            An array of supervisors associated with the enumerator in 
+                            ascending order of their seniority. Only child supervisors of 
+                            the logged in user as per user hierarchy are included in the 
+                            array.
+                          items:
+                            type: object
+                            properties:
+                              role_name:
+                                type: string
+                                description: The name of the supervisor's role
+                              role_uid:
+                                type: integer
+                                description: The system-assigned unique ID for the supervisor's role
+                              supervisor_name:
+                                type: string
+                                description: The name of the supervisor
+                              supervisor_email:
+                                type: string
+                                description: The email of the supervisor
+        "422":
+          description: >
+            Form errors
+
+            Any errors encountered in mapping the surveyors to supervisors will be returned as 
+            an array under the `errors` key in the response.                
+  /assignments/targets:
+    get:
+      summary: Get targets for the logged in user for a form
+      description: Return the logged in user's targets for the given form
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        target_id:
+                          type: string
+                          description: The ID of the target
+                        target_uid:
+                          type: integer
+                          description: The unique ID of the target
+                        language:
+                          type: string
+                          description: The primary language of the target
+                        gender:
+                          type: string
+                          description: The gender of the target
+                        custom_fields:
+                          type: object
+                          description: >-
+                            Any non-standard fields that should be displayed for
+                            the target
+                        location_uid:
+                          type: integer
+                          description: The unique ID of the target's location
+                        target_locations:
+                          type: array
+                          description: >-
+                            The geography of the target.  Each array item is an
+                            object of the form {`location_id`: _location_id_,
+                            `location_name`:  _location_name_, `location_uid`:
+                            __location_uid__, `geo_level_name`:
+                            __geo_level_name__, `geo_level_uid`:
+                            __geo_level_uid__} in descending order from highest 
+                            to lowest level location the target is location in.
+                            Can be null if a location has not been specified for
+                            the target.
+                          items:
+                            type: object
+                            properties:
+                              location_id:
+                                type: integer
+                                description: The user-defined unique ID of the location
+                              location_name:
+                                type: string
+                                description: The name of the location
+                              geo_level_name:
+                                type: string
+                                description: The name of the geo level
+                        completed_flag:
+                          type: boolean
+                          description: >-
+                            Whether the target has been marked as completed
+                        refusal_flag:
+                          type: boolean
+                          description: >-
+                            Whether the target has been flagged as a refusal
+                        num_attempts:
+                          type: integer
+                          description: >-
+                            The number of times the target has been attempted
+                        last_attempt_survey_status:
+                          type: integer
+                          description: >-
+                            The survey status from the target's most recent
+                            SurveyCTO submission
+                        last_attempt_survey_status_label:
+                          type: string
+                          description: >-
+                            The label corresponding to the last_attempt_survey_status
+                            code
+                        final_survey_status:
+                          type: integer
+                          description: >-
+                            The final survey status of the target, calculated based on the survey status 
+                            in its most recent SurveyCTO submission and the completed and refusal flags 
+                            information
+                        final_survey_status_label:
+                          type: string
+                          description: >-
+                            The label corresponding to the final_survey_status
+                            code
+                        target_assignable:
+                          type: boolean
+                          description: >-
+                            Grouping of final_survey_status into assignable/not assignable
+                            categories. Used to determine if the target is
+                            assignable.
+                        webapp_tag_color:
+                          type: string
+                          description: >-
+                            The color that should be used to color the status
+                            tag on the web flask_app
+                        revisit_sections:
+                          type: array
+                          description: The revisit sections for the target
+                          items:
+                            type: string
+                            description: Name of the revisit section for the target
+                        scto_fields:
+                          type: object
+                          description: >-
+                            The required fields from the target's most recent 
+                            SurveyCTO submission
+                        supervisors:
+                          type: array
+                          description: >-
+                            An array of supervisors associated with the target in ascending order 
+                            of their seniority. Only child supervisors of the logged in user as 
+                            per user hierarchy are included in the array.
+                          items:
+                            type: object
+                            properties:
+                              role_name:
+                                type: string
+                                description: The name of the supervisor's role
+                              role_uid:
+                                type: integer
+                                description: The system-assigned unique ID for the supervisor's role
+                              supervisor_name:
+                                type: string
+                                description: The name of the supervisor
+                              supervisor_email:
+                                type: string
+                                description: The email of the supervisor
+        "422":
+          description: >
+            Form errors
+
+            Any errors encountered in linking the targets to other location hierarchy levels or
+            in mapping the targets to supervisors will be returned as an array under the `errors` 
+            key in the response.
+    
+
   /assignments/schedule-email:
     post:
       summary: Schedule assignment emails
@@ -4004,6 +4663,14 @@ paths:
           schema:
             type: integer
           description: Unique ID of the form
+        - in: query
+          name: filter_supervisors
+          schema:
+            type: boolean
+          description: >-
+            Whether to filter the supervisor columns based on the logged in user's
+            hierarchy. Defaults to false. When set to true, only child supervisors
+            of the logged in user as per user hierarchy are included in the response.
       responses:
         "200":
           description: OK
@@ -4225,11 +4892,12 @@ paths:
                               "completed_flag",
                               "refusal_flag",
                               "num_attempts",
-                              "last_attempt_survey_status",
-                              "last_attempt_survey_status_label",
+                              "final_survey_status",
+                              "final_survey_status_label",
                               "target_assignable",
                               "revisit_sections",
                               "target_locations",
+                              "supervisors",
                           ]
 
                           "assignments_surveyors": [
@@ -4266,6 +4934,7 @@ paths:
                               "custom_fields",
                               "surveyor_status",
                               "surveyor_locations",
+                              "supervisors",
                           ]
 
                           "targets": [
@@ -4277,11 +4946,12 @@ paths:
                               "completed_flag",
                               "refusal_flag",
                               "num_attempts",
-                              "last_attempt_survey_status",
-                              "last_attempt_survey_status_label",
+                              "final_survey_status",
+                              "final_survey_status_label",
                               "target_assignable",
                               "revisit_sections",
                               "target_locations",
+                              "supervisors",
                           ]
 
                           Note that the following "special" column keys must be formatted as follows:
@@ -4297,6 +4967,14 @@ paths:
                           Note that <geo_level_index> is the index (starting at zero) of the geo level in descending order. Take an example where 
                           the geo levels for the survey are District, Mandal, and Polling Station. The geo level index for District is 0, Mandal is 1, and Polling Station is 2.
                           So if you want to show the Mandal ID column in the surveyors table, you would set the column_key to surveyor_locations[1].location_id.
+
+                          *Supervisors*
+                          supervisors[<supervisor_index>].supervisor_name or supervisors[<supervisor_index>].supervisor_email
+
+                          Note that <supervisor_index> is the index (starting at zero) of the supervisor in ascending order of their seniority. 
+                          Take an example where roles defined in the system are Core User, Cluster Coordinator and Regional Coordinator. The supervisor 
+                          index for Regional Coordinator is 0, Cluster Coordinator is 1, and Core User is 2. So if you want to show the Cluster Coordinator's 
+                          name in the surveyors table, you would set the column_key to supervisors[1].supervisor_name.
 
                           *Form Productivity*
                           form_productivity.<scto_form_id>.total_assigned_targets
@@ -4476,11 +5154,19 @@ paths:
                           example:
                             - Location
                             - Gender
-                        supervisor_assignment_criteria:
+                        target_mapping_criteria:
                           type: array
                           description: >-
                             Array of selected criteria for supervisor to
-                            enumerator assignments
+                            target mapping
+                          example:
+                            - Location
+                            - Gender
+                        surveyor_mapping_criteria:
+                          type: array
+                          description: >-
+                            Array of selected criteria for supervisor to
+                            surveyor mapping
                           example:
                             - Location
                             - Gender
@@ -4553,11 +5239,19 @@ paths:
                   example:
                     - Location
                     - Gender
-                supervisor_assignment_criteria:
+                target_mapping_criteria:
                   type: array
                   description: >-
-                    Array of selected criteria for supervisor to enumerator
-                    assignments
+                    Array of selected criteria for supervisor to target
+                    mapping
+                  example:
+                    - Location
+                    - Gender
+                surveyor_mapping_criteria:
+                  type: array
+                  description: >-
+                    Array of selected criteria for supervisor to surveyor
+                    mapping
                   example:
                     - Location
                     - Gender
@@ -4709,11 +5403,21 @@ paths:
             Form errors Form errors When `validate_hierarchy` is set to true,
             any validation errors will be returned as an array under the
             `errors` key in the response.
+
   "/permissions":
     get:
       tags:
         - Permissions
-      description: Get all permissions
+      description: Get all permissions. Optionally, a
+        `?survey_uid=<survey_uid>` query parameter can be provided to return
+        permisions applicable for a specific survey based on modules selected.
+      parameters:
+        - in: query
+          name: survey_uid
+          schema:
+            type: integer
+          required: false
+          description: Unique ID of the survey to return permissions for.
       responses:
         "200":
           description: Permissions retrieved successfully
@@ -5257,6 +5961,7 @@ paths:
 
             When `validate_hierarchy` is set to true, any validation errors will
             be returned as an array under the `errors` key in the response.
+
   /locations:
     get:
       tags:
@@ -5403,6 +6108,73 @@ paths:
 
             Note that the file validation will only be run if the geo level
             mapping is valid.
+  
+  /locations/long:
+    get:
+      tags:
+        - Locations
+      summary: Get locations for a survey in long format
+      description: |
+        Returns the locations for a given survey in long format where each row is a location at a specific geo level
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+        - name: geo_level_uid
+          in: query
+          description: The unique ID of the geo level.
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Returns the locations for a given survey for a specific geo level if geo_level_uid parameter is provided.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of locations for the given survey
+                    items:
+                      type: object
+                      properties:
+                        geo_level_name:
+                          type: string
+                          description: The name of the geo level.
+                        geo_level_uid:
+                          type: integer
+                          description: The unique ID of the geo level.
+                        location_id:
+                          type: string
+                          description: The ID of the location.
+                        location_name:
+                          type: string
+                          description: The name of the location.
+                        location_uid:
+                          type: integer
+                          description: The unique ID of the location.
+                        parent_geo_level_uid:
+                          type: integer
+                          description: >-
+                            The unique ID of the parent geo level of the given
+                            geo level.
+                        parent_location_uid:
+                          type: integer
+                          description: >-
+                            The unique ID of the parent location of the given
+                            location.
+        "500":
+          description: >
+            Error message indicating that the locations could not be retrieved.
+  
   /target-status-mapping:
     get:
       tags:
@@ -5545,7 +6317,7 @@ paths:
             type: integer
           description: >-
             The page number of the results to return. Results will be paginated
-            only if `page` and `per_page` are both specified.\
+            only if `page` and `per_page` are both specified.
           required: false
         - in: query
           name: per_page
@@ -6340,6 +7112,801 @@ paths:
         "500":
           description: An unexpected error occurred
 
+  "/mapping/targets-mapping-config":
+    get:
+      summary: Get targets mapping configuration for a form
+      description: >
+        Returns the targets mapping configuration for a given form that is, how mapping criteria values of targets are mapped to mapping criteria values of supervisors and the status of the mapping for each mapping criteria value.
+      tags:
+        - Mapping
+      parameters:
+        - name: form_uid
+          in: query
+          description: The unique ID of a parent form.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Returns the targets mapping config for a given form.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        target_mapping_criteria_values:
+                          type: object
+                          description: The target to supervisor mapping criteria values for the target
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each target to supervisor mapping criteria for the target. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                        target_count:
+                          type: integer
+                          description: The number of targets that match the target mapping criteria
+                        supervisor_mapping_criteria_values:
+                          type: object
+                          description: The target to supervisor mapping criteria values for the supervisor
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each target to supervisor mapping criteria for the supervisor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                        supervisor_count:
+                          type: integer
+                          description: The number of supervisors that match the supervisor mapping criteria
+                        mapping_status:
+                          type: string
+                          description: The status of the mapping. Can be one of `Complete` or `Pending` depending on whether the mapping has been completed or not.
+        "422":
+          description: Mapping errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to mapping. 
+                    properties:
+                      mapping_errors:
+                        type: array
+                        description: >-
+                          An array of errors encountered in mapping. Each array
+                          item is a string containing the error message related
+                          to an individual error.
+    post:
+      summary: Save the targets mapping configuration for a form
+      description: >
+        Saves the configuration for linking a mapping criteria 
+        value of targets to a mapping criteria value of a supervisor.
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: JSON object containing the targets mapping configuration for the form.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique ID of the form
+                mapping_config:
+                  type: array
+                  description: Full list mapping configurations
+                  items:
+                    type: object
+                    properties:
+                      mapping_values:
+                        type: array
+                        description: The target mapping criteria values
+                        items:
+                          type: object
+                          properties:
+                            criteria:
+                              type: string
+                              description: Mapping criteria. Can be one of "Gender", "Language", "Location", "Manual"
+                            value:
+                              type: string
+                              description: The value of the target mapping criteria
+                      mapped_to:
+                        type: array
+                        description: The supervisor mapping criteria values to which the target mapping criteria values will be mapped
+                        items:
+                          type: object
+                          properties:
+                            criteria:
+                              type: string
+                              description: Mapping criteria. Can be one of "Gender", "Language", "Location", "Manual"
+                            value:
+                              type: string
+                              description: The corresponding value of the supervisor mapping criteria
+              required:
+                - form_uid
+                - mapping_config
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+    delete:
+      summary: Delete a specific custom targets mapping configuration for a form
+      description: >
+        Deletes a specific custom targets mapping configuration for a given form
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+        - in: query
+          name: mapping_values
+          schema:
+            type: array
+          description: >-
+            The target mapping criteria values to be deleted. Each array item
+            is an object with the criteria name and value
+          required: true
+        - in: query
+          name: mapped_to
+          schema:
+            type: array
+          description: >-
+            The supervisor mapping criteria values to which the target mapping
+            criteria values are mapped. Each array item is an object with the
+            criteria name and value
+          required: true
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+  "/mapping/targets-mapping-config/reset":
+    delete:
+      summary: Resets the targets mapping configuration for a form
+      description: >
+        Deletes all the targets mapping, both criteria level as well as target level, for a given form from 
+        the database. This resets the state to auto generated mappings based on the mapping criteria.
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+  
+  "/mapping/targets-mapping":
+    get:
+      summary: Get target to supervisor mapping for a form
+      description: |
+        Returns the target to supervisor mapping for a given form.
+      tags:
+        - Mapping
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: The unique ID of a parent form.
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: >-
+            The page number of the results to return. Results will be paginated only if `page` and `per_page` are both specified.
+          required: false
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: >-
+            The number of results to return per page. Results will be paginated only if `page` and `per_page` are both specified.
+          required: false
+      responses:
+        "200":
+          description: Returns the target to supervisor mappings for a given form.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        target_uid:
+                          type: integer
+                          description: The system-assigned unique ID of the target
+                        target_id:
+                          type: string
+                          description: The user-assigned unique ID of the target
+                        gender:
+                          type: string
+                          description: The gender of the target
+                        language:
+                          type: string
+                          description: The primary language of the target
+                        location_id:
+                          type: integer
+                          description: The unique ID of the target's prime geo level location
+                        location_name:
+                          type: string
+                          description: The name of the target's prime geo level location
+                        target_mapping_criteria_values:
+                          type: object
+                          description: The target to supervisor mapping criteria values for the target
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each target to supervisor mapping criteria for the target. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                        supervisor_uid:
+                          type: integer
+                          description: The system-assigned unique ID of the supervisor
+                        supervisor_email:
+                          type: string
+                          description: The email of the supervisor
+                        supervisor_name:
+                          type: string
+                          description: The full name of the supervisor
+                        supervisor_mapping_criteria_values:
+                          type: object
+                          description: The target to supervisor mapping criteria values for the supervisor
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each target to supervisor mapping criteria for the supervisor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                  paginate:
+                    type: object
+                    description: >-
+                      Pagination details. Will only be included if `page` and
+                      `per_page` are both specified in the query parameters.
+                    properties:
+                      page:
+                        type: integer
+                        description: The page number of the results
+                      per_page:
+                        type: integer
+                        description: The number of results per page
+                      count:
+                        type: integer
+                        description: The total number of results
+                      pages:
+                        type: integer
+                        description: The total number of pages
+        "422":
+          description: Mapping errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to mapping. 
+                    properties:
+                      mapping_errors:
+                        type: array
+                        description: >-
+                          An array of errors encountered in mapping. Each array
+                          item is a string containing the error message related
+                          to an individual error.
+    post:
+      summary: Save the target to supervisor mappings for a form
+      description: >
+        Save the targets to supervisor mapping for a given form to the database.
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: JSON object containing the target to supervisor mapping for the form.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique ID of the form
+                mappings:
+                  type: array
+                  description: List of target to supervisor mappings for the given survey
+                  items:
+                    type: object
+                    properties:
+                      target_uid:
+                        type: integer
+                        description: The system-assigned unique ID of the target
+                      supervisor_uid:
+                        type: integer
+                        description: The system-assigned unique ID of the supervisor
+              required:
+                - form_uid
+                - mappings
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred 
+  
+  "/mapping/surveyors-mapping-config":
+    get:
+      summary: Get surveyors mapping configuration for a form
+      description: >
+        Returns the surveyors mapping configuration for a given form that is, how mapping criteria values of surveyors are mapped to mapping criteria values of supervisors and the status of the mapping for each mapping criteria value.
+      tags:
+        - Mapping
+      parameters:
+        - name: form_uid
+          in: query
+          description: The unique ID of a parent form.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Returns the surveyors mapping config for a given form.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        surveyor_mapping_criteria_values:
+                          type: object
+                          description: The surveyor to supervisor mapping criteria values for the surveyor
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each surveyor to supervisor mapping criteria for the surveyor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                        surveyor_count:
+                          type: integer
+                          description: The number of surveyors that match the surveyor mapping criteria
+                        supervisor_mapping_criteria_values:
+                          type: object
+                          description: The surveyor to supervisor mapping criteria values for the supervisor
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each surveyor to supervisor mapping criteria for the supervisor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                        supervisor_count:
+                          type: integer
+                          description: The number of supervisors that match the supervisor mapping criteria
+                        mapping_status:
+                          type: string
+                          description: The status of the mapping. Can be one of `Complete` or `Pending` depending on whether the mapping has been completed or not.
+        "422":
+          description: Mapping errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to mapping. 
+                    properties:
+                      mapping_errors:
+                        type: array
+                        description: >-
+                          An array of errors encountered in mapping. Each array
+                          item is a string containing the error message related
+                          to an individual error.
+    post:
+      summary: Save the surveyors mapping configuration for a form
+      description: >
+        Saves the configuration for linking a mapping criteria 
+        value of surveyors to a mapping criteria value of a supervisor.
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: JSON object containing the surveyors mapping configuration for the form.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique ID of the form
+                mapping_config:
+                  type: array
+                  description: Full list mapping configurations
+                  items:
+                    type: object
+                    properties:
+                      mapping_values:
+                        type: array
+                        description: The surveyor mapping criteria values
+                        items:
+                          type: object
+                          properties:
+                            criteria:
+                              type: string
+                              description: Mapping criteria. Can be one of "Gender", "Language", "Location", "Manual"
+                            value:
+                              type: string
+                              description: The value of the surveyor mapping criteria
+                      mapped_to:
+                        type: array
+                        description: The supervisor mapping criteria values to which the surveyor mapping criteria values will be mapped
+                        items:
+                          type: object
+                          properties:
+                            criteria:
+                              type: string
+                              description: Mapping criteria. Can be one of "Gender", "Language", "Location", "Manual"
+                            value:
+                              type: string
+                              description: The corresponding value of the supervisor mapping criteria
+              required:
+                - form_uid
+                - mapping_config
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+    delete:
+      summary: Delete a specific surveyors mapping configuration for a form
+      description: >
+        Deletes a specific custom surveyors mapping configuration for a given form
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+        - in: query
+          name: mapping_values
+          schema:
+            type: array
+          description: >-
+            The surveyor mapping criteria values to be deleted. Each array item
+            is an object with the criteria name and value
+          required: true
+        - in: query
+          name: mapped_to
+          schema:
+            type: array
+          description: >-
+            The supervisor mapping criteria values to which the surveyor mapping
+            criteria values are mapped. Each array item is an object with the
+            criteria name and value
+          required: true
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+  "/mapping/surveyors-mapping-config/reset":
+    delete:
+      summary: Resets the surveyors mapping configuration for a form
+      description: >
+        Deletes all the surveyors mapping, both criteria level as well as surveyor level, for a given form from 
+        the database. This resets the state to auto generated mappings based on the mapping criteria.
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+  
+  "/mapping/surveyors-mapping":
+    get:
+      summary: Get surveyor to supervisor mapping for a form
+      description: |
+        Returns the surveyor to supervisor mapping for a given form.
+      tags:
+        - Mapping
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: The unique ID of a parent form.
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: >-
+            The page number of the results to return. Results will be paginated only if `page` and `per_page` are both specified.
+          required: false
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: >-
+            The number of results to return per page. Results will be paginated only if `page` and `per_page` are both specified.
+          required: false
+      responses:
+        "200":
+          description: Returns the surveyor to supervisor mappings for a given form.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        enumerator_uid:
+                          type: integer
+                          description: The system-assigned unique ID of the surveyor
+                        enumerator_id:
+                          type: string
+                          description: The user-assigned unique ID of the surveyor
+                        name:
+                          type: string
+                          description: The full name of the surveyor
+                        gender:
+                          type: string
+                          description: The gender of the surveyor
+                        language:
+                          type: string
+                          description: The primary language of the surveyor
+                        location_id:
+                          type: array
+                          description: List of unique IDs of the surveyor's prime geo level locations
+                        location_name:
+                          type: array
+                          description: List of names of the surveyor's prime geo level locations
+                        surveyor_mapping_criteria_values:
+                          type: object
+                          description: The surveyor to supervisor mapping criteria values for the surveyor
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each surveyor to supervisor mapping criteria for the surveyor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                        supervisor_uid:
+                          type: integer
+                          description: The system-assigned unique ID of the supervisor
+                        supervisor_email:
+                          type: string
+                          description: The email of the supervisor
+                        supervisor_name:
+                          type: string
+                          description: The full name of the supervisor
+                        supervisor_mapping_criteria_values:
+                          type: object
+                          description: The surveyor to supervisor mapping criteria values for the supervisor
+                          properties:
+                            criteria:
+                              type: object
+                              description: Value for each surveyor to supervisor mapping criteria for the supervisor. Key is the criteria name (`Gender`, `Location`, `Language` or `Manual`) and value is the criteria value
+                            other:
+                              type: object
+                              description: When Location is in the mapping criteria, this will have the `location_id` and `location_name`
+                  paginate:
+                    type: object
+                    description: >-
+                      Pagination details. Will only be included if `page` and
+                      `per_page` are both specified in the query parameters.
+                    properties:
+                      page:
+                        type: integer
+                        description: The page number of the results
+                      per_page:
+                        type: integer
+                        description: The number of results per page
+                      count:
+                        type: integer
+                        description: The total number of results
+                      pages:
+                        type: integer
+                        description: The total number of pages
+        "422":
+          description: Mapping errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    description: >-
+                      An object with information on errors related to mapping. 
+                    properties:
+                      mapping_errors:
+                        type: array
+                        description: >-
+                          An array of errors encountered in mapping. Each array
+                          item is a string containing the error message related
+                          to an individual error.
+    post:
+      summary: Save the surveyor to supervisor mappings for a form
+      description: >
+        Save the surveyors to supervisor mapping for a given form to the database.
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: JSON object containing the surveyor to supervisor mapping for the form.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique ID of the form
+                mappings:
+                  type: array
+                  description: List of surveyor to supervisor mappings for the given survey
+                  items:
+                    type: object
+                    properties:
+                      enumerator_uid:
+                        type: integer
+                        description: The system-assigned unique ID of the surveyor
+                      supervisor_uid:
+                        type: integer
+                        description: The system-assigned unique ID of the supervisor
+              required:
+                - form_uid
+                - mappings
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred 
+
   /emails:
     get:
       tags:
@@ -6373,7 +7940,7 @@ paths:
                         email_config_uid:
                           type: integer
                           example: 123
-                        config_type:
+                        config_name:
                           type: string
                           example: "assignments"
                         form_uid:
@@ -6401,6 +7968,18 @@ paths:
                           items:
                             type: string
                           example: [ "column1", "column2" ]
+                        cc_user:
+                          type: array
+                          example: [1, 2, 3]
+                        pdf_attachment:
+                          type: boolean
+                          example: true
+                        pdf_encryption:
+                          type: boolean
+                          example: true
+                        pdf_encryption_password_type:
+                          type: string
+                          example: "Password"
                         schedules:
                           type: array
                           items:
@@ -6425,6 +8004,33 @@ paths:
                                 type: string
                                 format: time
                                 example: "12:00:00"
+                              filter_list:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    table_name:
+                                      type: string
+                                      example: "Assignments"
+                                    filter_list:
+                                      type: array
+                                      items:
+                                        type: object
+                                        properties:
+                                          filter_group:
+                                            type: array
+                                            items:
+                                              type: object
+                                              properties:
+                                                table_name:
+                                                  type: string
+                                                filter_variable:
+                                                  type: string
+                                                  example: "="
+                                                filter_operator:
+                                                  type: string
+                                                filter_value:
+                                                  type: string
                         templates:
                           type: array
                           items:
@@ -6503,9 +8109,9 @@ paths:
                   type: string
                   description: UID of the form
                   example: 123
-                config_type:
+                config_name:
                   type: string
-                  description: Type of the email config
+                  description: Name of the email config
                   example: "assignments"
                 report_users:
                   type: array
@@ -6531,8 +8137,24 @@ paths:
                   type: string
                   description: Tablename for emails (Redshift email table), If not provided, default to assignments data
                   example: "survey_id_email_stats"
+                cc_user:
+                  type: array
+                  description: List of user UIDs to CC the email
+                  example: [1, 2, 3]
+                pdf_attachment:
+                  type: boolean
+                  description: Whether to attach a PDF of tables to the email
+                  example: true
+                pdf_encryption:
+                  type: boolean
+                  description: Whether to encrypt the PDF attachment
+                  example: true
+                pdf_encryption_password_type:
+                  type: string
+                  description: Type of password to use for PDF encryption- Pattern or Password
+                  example: "Password"
               required:
-                - config_type
+                - config_name
                 - form_uid
                 - email_source
       responses:
@@ -6553,9 +8175,9 @@ paths:
                         type: integer
                         description: UID of the email config
                         example: 123
-                      config_type:
+                      config_name:
                         type: string
-                        description: Type of the email config
+                        description: Name of the email config
                         example: "assignments"
                       form_uid:
                         type: integer
@@ -6585,7 +8207,22 @@ paths:
                         type: string
                         description: Tablename for emails (Redshift email table), If not provided, default to assignments data
                         example: "survey_id_email_stats"
-                                           
+                      cc_user:
+                        type: array
+                        description: List of user UIDs to CC the email
+                        example: [1, 2, 3]
+                      pdf_attachment:
+                        type: boolean
+                        description: Whether to attach a PDF of tables to the email
+                        example: true
+                      pdf_encryption:
+                        type: boolean
+                        description: Whether to encrypt the PDF attachment
+                        example: true
+                      pdf_encryption_password_type:
+                        type: string
+                        description: Type of password to use for PDF encryption- Pattern or Password
+                        example: "Password"
                 required:
                   - success
                   - data
@@ -6654,9 +8291,9 @@ paths:
                           type: integer
                           description: UID of the email config
                           example: 123
-                        config_type:
+                        config_name:
                           type: string
-                          description: Type of the email config
+                          description: Name of the email config
                           example: "assignments"
                         form_uid:
                           type: integer
@@ -6685,7 +8322,23 @@ paths:
                         email_source_tablename:
                           type: string
                           description: Tablename for emails (Redshift email table), If not provided, default to assignments data
-                          example: "survey_id_email_stats"                
+                          example: "survey_id_email_stats"
+                        cc_user:
+                          type: array
+                          description: List of user UIDs to CC the email
+                          example: [1, 2, 3]
+                        pdf_attachment:
+                          type: boolean
+                          description: Whether to attach a PDF of tables to the email
+                          example: true
+                        pdf_encryption:
+                          type: boolean
+                          description: Whether to encrypt the PDF attachment
+                          example: true
+                        pdf_encryption_password_type:
+                          type: string
+                          description: Type of password to use for PDF encryption- Pattern or Password
+                          example: "Password"             
                 required:
                   - success
                   - data
@@ -6740,9 +8393,9 @@ paths:
                         type: integer
                         description: UID of the email config
                         example: 123
-                      config_type:
+                      config_name:
                         type: string
-                        description: Type of the email config
+                        description: Name of the email config
                         example: "assignments"
                       form_uid:
                         type: integer
@@ -6772,6 +8425,22 @@ paths:
                         type: string
                         description: Tablename for emails (Redshift email table), If not provided, default to assignments data
                         example: "survey_id_email_stats"
+                      cc_user:
+                        type: array
+                        description: List of user UIDs to CC the email
+                        example: [1, 2, 3]
+                      pdf_attachment:
+                        type: boolean
+                        description: Whether to attach a PDF of tables to the email
+                        example: true
+                      pdf_encryption:
+                        type: boolean
+                        description: Whether to encrypt the PDF attachment
+                        example: true
+                      pdf_encryption_password_type:
+                        type: string
+                        description: Type of password to use for PDF encryption- Pattern or Password
+                        example: "Password"
                 required:
                   - success
                   - data
@@ -6813,9 +8482,9 @@ paths:
             schema:
               type: object
               properties:
-                config_type:
+                config_name:
                   type: string
-                  description: Type of the email config
+                  description: Name of the email config
                   example: "assignments"
                 form_uid:
                   type: integer
@@ -6846,7 +8515,7 @@ paths:
                   description: Tablename for emails (Redshift email table), If not provided, default to assignments data
                   example: "survey_id_email_stats"
               required:
-                - config_type
+                - config_name
                 - form_uid
       responses:
         "200":
@@ -6869,9 +8538,9 @@ paths:
                         type: integer
                         description: UID of the email config
                         example: 123
-                      config_type:
+                      config_name:
                         type: string
-                        description: Type of the email config
+                        description: Name of the email config
                         example: "assignments"
                       form_uid:
                         type: integer
@@ -6901,6 +8570,22 @@ paths:
                         type: string
                         description: Tablename for emails (Redshift email table), If not provided, default to assignments data
                         example: "survey_id_email_stats"
+                      cc_user:
+                        type: array
+                        description: List of user UIDs to CC the email
+                        example: [1, 2, 3]
+                      pdf_attachment:
+                        type: boolean
+                        description: Whether to attach a PDF of tables to the email
+                        example: true
+                      pdf_encryption:
+                        type: boolean
+                        description: Whether to encrypt the PDF attachment
+                        example: true
+                      pdf_encryption_password_type:
+                        type: string
+                        description: Type of password to use for PDF encryption- Pattern or Password
+                        example: "Password"
                 required:
                   - success
                   - message
@@ -6982,6 +8667,24 @@ paths:
                 time:
                   type: string
                   format: time
+                filter_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      filter_group:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            table_name:
+                              type: string
+                            filter_variable:
+                              type: string
+                            filter_operator:
+                              type: string
+                            filter_value:
+                              type: string
               required:
                 - email_config_uid
                 - dates
@@ -7006,6 +8709,24 @@ paths:
                   time:
                     type: string
                     format: time
+                  filter_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filter_group:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              table_name:
+                                type: string                        
+                              filter_variable:
+                                type: string
+                              filter_operator:
+                                type: string
+                              filter_value:
+                                type: string
                 required:
                   - email_config_uid
                   - dates
@@ -7043,6 +8764,25 @@ paths:
                     time:
                       type: string
                       format: time
+                    filter_list:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          filter_group:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                table_name:
+                                  type: string
+                                filter_variable:
+                                  type: string
+                                filter_operator:
+                                  type: string
+                                filter_value:
+                                  type: string
+                                
 
   /emails/schedule/{email_schedule_uid}:
     get:
@@ -7076,6 +8816,24 @@ paths:
                   time:
                     type: string
                     format: time
+                  filter_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filter_group:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              table_name:
+                                type: string
+                              filter_variable:
+                                type: string
+                              filter_operator:
+                                type: string
+                              filter_value:
+                                type: string
     put:
       summary: Update a specific email schedule
       tags:
@@ -7106,6 +8864,24 @@ paths:
                 time:
                   type: string
                   format: time
+                filter_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      filter_group:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            table_name:
+                              type: string
+                            filter_variable:
+                              type: string
+                            filter_operator:
+                              type: string
+                            filter_value:
+                              type: string
               required:
                 - email_config_uid
                 - dates
@@ -7130,6 +8906,24 @@ paths:
                   time:
                     type: string
                     format: time
+                  filter_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filter_group:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              table_name:
+                                type: string
+                              filter_variable:
+                                type: string
+                              filter_operator:
+                                type: string
+                              filter_value:
+                                type: string
                 required:
                   - email_config_uid
                   - dates
@@ -7403,7 +9197,135 @@ paths:
                   - date
                   - time
                   - status
-
+  /emails/templates:
+    post:
+      summary: Create multiple new email templates
+      tags:
+        - Emails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_config_uid:
+                  type: integer
+                templates:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      language:
+                        type: string
+                      subject:
+                        type: string
+                      content:
+                        type: string
+                      variable_list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            variable_name:
+                              type: string
+                            source_table:
+                              type: string
+                            variable_expression:
+                              type: string
+                      table_list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            table_name:
+                              type: string
+                            column_list:
+                              type: object
+                            sort_list:
+                              type: object
+                            variable_name:
+                              type: string
+                            filter_list:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  filter_group:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        filter_variable:
+                                          type: string
+                                        filter_operator:
+                                          type: string
+                                        filter_value:
+                                          type: string
+              required:
+                - language
+                - email_config_uid
+                - subject
+                - content
+      responses:
+        "201":
+          description: Email templates created successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    email_config_uid:
+                      type: integer
+                    subject:
+                      type: string
+                    language:
+                      type: string
+                    content:
+                      type: string
+                    variable_list:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          variable_name:
+                            type: string
+                          source_table:
+                            type: string
+                          variable_expression:
+                            type: string
+                    table_list:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          table_name:
+                            type: string
+                          column_list:
+                            type: object
+                          sort_list:
+                            type: object
+                          variable_name:
+                            type: string
+                          filter_list:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                filter_group:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      filter_variable:
+                                        type: string
+                                      filter_operator:
+                                        type: string
+                                      filter_value:
+                                        type: string
+    
   /emails/template:
     post:
       summary: Create a new email template
@@ -7431,14 +9353,39 @@ paths:
                     properties:
                       variable_name:
                         type: string
-                      variable_type:
-                        type: string
                       source_table:
                         type: string
                       variable_expression:
                         type: string
-                      table_column_mapping:
+                table_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      table_name:
+                        type: string
+                      column_list:
                         type: object
+                      sort_list:
+                        type: object
+                      variable_name:
+                        type: string
+                      filter_list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            filter_group:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  filter_variable:
+                                    type: string
+                                  filter_operator:
+                                    type: string
+                                  filter_value:
+                                    type: string
               required:
                 - language
                 - email_config_uid
@@ -7467,14 +9414,39 @@ paths:
                       properties:
                         variable_name:
                           type: string
-                        variable_type:
-                          type: string
                         source_table:
                           type: string
                         variable_expression:
                           type: string
-                        table_column_mapping:
+                  table_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        table_name:
+                          type: string
+                        column_list:
                           type: object
+                        sort_list:
+                          type: object
+                        variable_name:
+                          type: string
+                        filter_list:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              filter_group:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    filter_variable:
+                                      type: string
+                                    filter_operator:
+                                      type: string
+                                    filter_value:
+                                      type: string
                 required:
                   - email_config_uid
                   - subject
@@ -7516,14 +9488,39 @@ paths:
                         properties:
                           variable_name:
                             type: string
-                          variable_type:
-                            type: string
                           source_table:
                             type: string
                           variable_expression:
                             type: string
-                          table_column_mapping:
+                    table_list:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          table_name:
+                            type: string
+                          column_list:
                             type: object
+                          sort_list:
+                            type: object
+                          variable_name:
+                            type: string
+                          filter_list:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                filter_group:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      filter_variable:
+                                        type: string
+                                      filter_operator:
+                                        type: string
+                                      filter_value:
+                                        type: string
                   required:
                     - email_config_uid
                     - subject
@@ -7570,14 +9567,40 @@ paths:
                       properties:
                         variable_name:
                           type: string
-                        variable_type:
-                          type: string
                         source_table:
                           type: string
                         variable_expression:
                           type: string
-                        table_column_mapping:
+                  table_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        table_name:
+                          type: string
+                        column_list:
                           type: object
+                        sort_list:
+                          type: object
+                        variable_name:
+                          type: string
+                        filter_list:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              filter_group:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    filter_variable:
+                                      type: string
+                                    filter_operator:
+                                      type: string
+                                    filter_value:
+                                      type: string
+                                    
                 required:
                   - email_config_uid
                   - subject
@@ -7622,14 +9645,40 @@ paths:
                     properties:
                       variable_name:
                         type: string
-                      variable_type:
-                        type: string
                       source_table:
                         type: string
                       variable_expression:
                         type: string
-                      table_column_mapping:
+                table_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      table_name:
+                        type: string
+                      column_list:
                         type: object
+                      sort_list:
+                        type: object
+                      variable_name:
+                        type: string
+                      filter_list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            filter_group:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  filter_variable:
+                                    type: string
+                                  filter_operator:
+                                    type: string
+                                  filter_value:
+                                    type: string
+                                  
               required:
                 - email_config_uid
                 - subject
@@ -7658,14 +9707,40 @@ paths:
                       properties:
                         variable_name:
                           type: string
-                        variable_type:
-                          type: string
                         source_table:
                           type: string
                         variable_expression:
                           type: string
-                        table_column_mapping:
+                  table_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        table_name:
+                          type: string
+                        column_list:
                           type: object
+                        sort_list:
+                          type: object
+                        variable_name:
+                          type: string
+                        filter_list:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              filter_group:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    filter_variable:
+                                      type: string
+                                    filter_operator:
+                                      type: string
+                                    filter_value:
+                                      type: string
+                                    
                 required:
                   - email_config_uid
                   - subject
@@ -7693,7 +9768,7 @@ paths:
           description: Email template deleted successfully
   
   /emails/gsheet:
-    get:
+    post:
       summary: Get Google Sheet column Headers
       tags:
         - Emails
@@ -7803,11 +9878,11 @@ paths:
     get:
       tags:
         - Emails
-      summary: Get all table catalog for a specific survey
+      summary: Get all table catalog for a specific email config
       parameters:
-        - name: survey_uid
+        - name: email_config_uid
           in: query
-          description: Unique identifier for the survey
+          description: Unique identifier for the email config
           required: true
           schema:
             type: integer
@@ -7835,22 +9910,12 @@ paths:
                           type: string
                           description: Name of the table
                           example: "table_name"
-                        table_description:
-                          type: string
-                          description: Description of the table
-                          example: "table_description"
-                        column_name:
-                          type: string
-                          description: Name of the column
-                          example: "column_name"
-                        column_description:
-                          type: string
-                          description: Description of the column
-                          example: "column_description"
-                        column_type:
-                          type: string
-                          description: Type of the column
-                          example: "column_type"
+                        column_list:
+                          type: array
+                          items:
+                            type: string
+                            description: List of columns in the table
+                            example: ["column1", "column2"]
     put:
       tags:
         - Emails
@@ -7934,7 +9999,205 @@ paths:
                 required:
                   - success
                   - data
-                              
+
+  /emails/report:
+    post:
+      summary: Create a new email delivery report
+      tags:
+        - Emails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_config_uid:
+                  type: integer
+                email_schedule_uid:
+                  type: integer
+                manual_trigger_uid:
+                  type: integer
+                slot_type:
+                  type: string
+                  enum:
+                    - schedule
+                    - trigger
+                slot_date:
+                  type: string
+                  format: date
+                slot_time:
+                  type: string
+                  format: time
+                delivery_time:
+                  type: string
+                  format: datetime
+                enumerator_status:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      enumerator_id:
+                        type: string
+                      status:
+                        type: string
+                        enum:
+                          - sent
+                          - failed
+                      error_description:
+                        type: string
+      responses:
+        "200":
+          description: Email Delivery Report created successfully
+        "404":
+          description: Invalid slot type
+
+    get:
+      tags:
+        - Emails
+      summary: Get email delivery reports for a specific email schedule/trigger
+      parameters:
+        - name: email_config_uid
+          in: query
+          description: Unique identifier for the email config
+          required: true
+          schema:
+            type: integer
+        - name: email_schedule_uid
+          in: query
+          description: Unique identifier for the email schedule
+          required: true
+          schema:
+            type: integer
+        - name: manual_trigger_uid
+          in: query
+          description: Unique identifier for the manual trigger
+          required: true
+          schema:
+            type: integer
+        - name: slot_type
+          in: query
+          description: Type of slot - schedule or trigger
+          required: true
+          schema:
+            type: string
+            enum:
+              - schedule
+              - trigger
+      responses:
+        "200":
+          description: Email delivery reports retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    email_schedule_uid:
+                      type: integer
+                    manual_trigger_uid:
+                      type: integer
+                    slot_type:
+                      type: string
+                      enum:
+                        - schedule
+                        - trigger
+                    slot_date:
+                      type: string
+                      format: date
+                    slot_time:
+                      type: string
+                      format: time
+                    delivery_time:
+                      type: string
+                      format: datetime
+                    enumerator_status:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          enumerator_id:
+                            type: string
+                          enumerator_name:
+                            type: string
+                          enumerator_email:
+                            type: string
+                          supervisor_name:
+                            type: string
+                          supervisor_email:
+                            type: string
+                          status:
+                            type: string
+                            enum:
+                              - sent
+                              - failed
+                          error_message:
+                            type: string
+        "404":
+          description: Email delivery reports not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Not Found"
+                  message:
+                    type: string
+                    description: Description of the error
+                    example: "Email delivery reports not found"
+                required:
+                  - error
+                  - message
+
+
+                                
+  /emails/tablecatalog/schedules:
+      get:
+        tags:
+          - Emails
+        summary: Get table catalog for a specific email config containing only tables which have been used in config templates
+        parameters:
+          - name: email_config_uid
+            in: query
+            description: Unique identifier for the email config
+            required: true
+        responses:
+        "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+          schema:
+            type: integer
+            success:
+              type: boolean
+              example: true
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  survey_uid:
+                    type: integer
+                    description: Unique identifier of the survey
+                    example: 123
+                  table_name:
+                    type: string
+                    description: Name of the table
+                    example: "table_name"
+                  column_list:
+                    type: array
+                    items:
+                      type: string
+                      description: List of columns in the table
+                      example: ["column1", "column2"]
+                            
   /media-files:
     post:
       tags:
@@ -7963,6 +10226,11 @@ paths:
                     An array of SurveyCTO field names that are to be included in the media files output
                   items:
                     type: string
+                mapping_criteria:
+                  type: string
+                  description: >-
+                    Criteria used to split the media files into different Google Sheets. Values can be
+                    'location', 'language' or NULL
               required:
                 - form_uid
                 - file_type
@@ -8002,6 +10270,11 @@ paths:
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      mapping_criteria:
+                        type: string
+                        description: >-
+                          Criteria used to split the media files into different Google Sheets. Values can be
+                          'location', 'language' or NULL
                 required:
                   - success
                   - data
@@ -8072,6 +10345,19 @@ paths:
                             An array of SurveyCTO field names that are to be included in the media files output
                           items:
                             type: string
+                        mapping_criteria:
+                          type: string
+                          description: >-
+                            Criteria used to split the media files into different Google Sheets. Values can be
+                            'location', 'language' or NULL
+                        google_sheet_key:
+                          type: string
+                          description: Unique key for the output Google Sheet where the media file links are published
+                        mapping_google_sheet_key:
+                          type: string
+                          description: >-
+                            Unique key for the Google Sheet  which has the list of mapping criteria values (location/language)
+                            depending on the mapping criteria selected and the corresponding Google Sheet keys
                 required:
                   - success
                   - data
@@ -8141,6 +10427,19 @@ paths:
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      mapping_criteria:
+                        type: string
+                        description: >-
+                          Criteria used to split the media files into different Google Sheets. Values can be
+                          'location', 'language' or NULL
+                      google_sheet_key:
+                        type: string
+                        description: Unique key for the output Google Sheet where the media file links are published
+                      mapping_google_sheet_key:
+                        type: string
+                        description: >-
+                          Unique key for the Google Sheet  which has the list of mapping criteria values (location/language)
+                          depending on the mapping criteria selected and the corresponding Google Sheet keys
                 required:
                   - success
                   - data
@@ -8193,6 +10492,11 @@ paths:
                     An array of SurveyCTO field names that are to be included in the media files output
                   items:
                     type: string
+                mapping_criteria:
+                  type: string
+                  description: >-
+                    Criteria used to split the media files into different Google Sheets. Values can be
+                    'location', 'language' or NULL
               required:
                 - file_type
                 - source
@@ -8234,6 +10538,19 @@ paths:
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      mapping_criteria:
+                        type: string
+                        description: >-
+                          Criteria used to split the media files into different Google Sheets. Values can be
+                          'location', 'language' or NULL
+                      google_sheet_key:
+                        type: string
+                        description: Unique key for the output Google Sheet where the media file links are published
+                      mapping_google_sheet_key:
+                        type: string
+                        description: >-
+                          Unique key for the Google Sheet  which has the list of mapping criteria values (location/language)
+                          depending on the mapping criteria selected and the corresponding Google Sheet keys
                 required:
                   - success
                   - message

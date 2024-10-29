@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import FieldList, FormField, IntegerField, StringField, BooleanField
-from wtforms.validators import DataRequired, AnyOf
+from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
+from wtforms.validators import AnyOf, DataRequired
 
 
 class SurveyGeoLevelsQueryParamValidator(FlaskForm):
@@ -246,6 +246,13 @@ class UpdateSurveyorStats(FlaskForm):
 
 
 class SurveyorStatsQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
+
+
+class EnumeratorLanguageQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 

@@ -1,8 +1,10 @@
 import random
 import string
-from app import mail
-from flask_mail import Message
+
 from flask import current_app
+from flask_mail import Message
+
+from app import mail
 
 
 def generate_invite_code():

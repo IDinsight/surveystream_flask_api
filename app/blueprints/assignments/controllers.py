@@ -4,13 +4,13 @@ from datetime import datetime
 
 from flask import jsonify
 from flask_login import current_user
-from sqlalchemy import func
+from sqlalchemy import Integer, column, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.sql.expression import cast
+from sqlalchemy.sql import Values
 
 from app import db
-from app.blueprints.emails.models import EmailConfig, EmailSchedule, ManualEmailTrigger
+from app.blueprints.emails.models import EmailConfig, ManualEmailTrigger
 from app.blueprints.enumerators.models import Enumerator, SurveyorForm, SurveyorLocation
 from app.blueprints.enumerators.queries import (
     build_prime_locations_with_location_hierarchy_subquery,
@@ -19,6 +19,9 @@ from app.blueprints.forms.models import Form
 from app.blueprints.locations.errors import InvalidGeoLevelHierarchyError
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.locations.utils import GeoLevelHierarchy
+from app.blueprints.mapping.errors import MappingError
+from app.blueprints.mapping.utils import SurveyorMapping, TargetMapping
+from app.blueprints.roles.utils import check_if_survey_admin
 from app.blueprints.surveys.models import Survey
 from app.blueprints.targets.models import Target, TargetStatus
 from app.blueprints.targets.queries import (
@@ -39,7 +42,10 @@ from .errors import (
     InvalidFileStructureError,
 )
 from .models import SurveyorAssignment
-from .queries import build_surveyor_formwise_productivity_subquery
+from .queries import (
+    build_child_users_with_supervisors_query,
+    build_surveyor_formwise_productivity_subquery,
+)
 from .utils import (
     AssignmentsColumnMapping,
     AssignmentsUpload,
@@ -106,12 +112,51 @@ def view_assignments(validated_query_params):
         )
     )
 
+    # Get the mapping of targets to the smallest supervisor level
+    # This is used filter out targets mapped to the current user
+    # or to their child supervisors
+    try:
+        target_mapping = TargetMapping(form_uid)
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
+        )
+    mappings = target_mapping.generate_mappings()
+    mappings_query = select(
+        Values(
+            column("target_uid", Integer),
+            column("supervisor_uid", Integer),
+            name="mappings",
+        ).data(
+            [(mapping["target_uid"], mapping["supervisor_uid"]) for mapping in mappings]
+            if len(mappings) > 0
+            else [
+                (0, 0)
+            ]  # If there are no mappings, we still need to return a row with 0 values
+        )
+    ).subquery()
+
+    # Get the child supervisors for the current logged in user
+    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+    )
+
     assignments_query = (
         db.session.query(
             Target,
             TargetStatus,
             Enumerator,
             target_locations_subquery.c.locations,
+            child_users_with_supervisors_query.c.supervisors,
         )
         .outerjoin(
             SurveyorAssignment,
@@ -128,6 +173,15 @@ def view_assignments(validated_query_params):
         .outerjoin(
             target_locations_subquery,
             Target.location_uid == target_locations_subquery.c.location_uid,
+        )
+        .join(
+            mappings_query,
+            Target.target_uid == mappings_query.c.target_uid,
+        )
+        .join(
+            child_users_with_supervisors_query,
+            mappings_query.c.supervisor_uid
+            == child_users_with_supervisors_query.c.user_uid,
         )
         .filter(Target.form_uid == form_uid)
     )
@@ -200,8 +254,9 @@ def view_assignments(validated_query_params):
                         "scto_fields": getattr(target_status, "scto_fields", None),
                     },
                     "target_locations": target_locations,
+                    "supervisors": supervisors,
                 }
-                for target, target_status, enumerator, target_locations in assignments_query.all()
+                for target, target_status, enumerator, target_locations, supervisors in assignments_query.all()
             ],
         }
     )
@@ -223,18 +278,55 @@ def view_assignments_enumerators(validated_query_params):
 
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
-    prime_geo_level_uid = (
-        Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
-    )
+    # Get the mapping of surveyors to the smallest supervisor level
+    # This is used filter out surveyors mapped to the current user
+    # or to their child supervisors
+    try:
+        surveyor_mapping = SurveyorMapping(form_uid)
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
+        )
+    surveyor_mappings = surveyor_mapping.generate_mappings()
+    surveyor_mappings_query = select(
+        Values(
+            column("enumerator_uid", Integer),
+            column("supervisor_uid", Integer),
+            name="mappings",
+        ).data(
+            [
+                (mapping["enumerator_uid"], mapping["supervisor_uid"])
+                for mapping in surveyor_mappings
+            ]
+            if len(surveyor_mappings) > 0
+            else [
+                (0, 0)
+            ]  # If there are no mappings, we still need to return a row with 0 values
+        )
+    ).subquery()
 
+    prime_geo_level_uid = surveyor_mapping.prime_geo_level_uid
     prime_locations_with_location_hierarchy_subquery = (
         build_prime_locations_with_location_hierarchy_subquery(
             survey_uid, prime_geo_level_uid
         )
     )
-
     surveyor_formwise_productivity_subquery = (
         build_surveyor_formwise_productivity_subquery(survey_uid)
+    )
+
+    # Get the child supervisors for the current logged in user
+    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+        user_uid, survey_uid, surveyor_mapping.bottom_level_role_uid, is_survey_admin
     )
 
     assignment_enumerators_query = (
@@ -243,6 +335,7 @@ def view_assignments_enumerators(validated_query_params):
             SurveyorForm,
             prime_locations_with_location_hierarchy_subquery.c.locations,
             surveyor_formwise_productivity_subquery.c.form_productivity,
+            child_users_with_supervisors_query.c.supervisors,
         )
         .join(SurveyorForm, Enumerator.enumerator_uid == SurveyorForm.enumerator_uid)
         .outerjoin(
@@ -260,9 +353,17 @@ def view_assignments_enumerators(validated_query_params):
             Enumerator.enumerator_uid
             == surveyor_formwise_productivity_subquery.c.enumerator_uid,
         )
+        .join(
+            surveyor_mappings_query,
+            Enumerator.enumerator_uid == surveyor_mappings_query.c.enumerator_uid,
+        )
+        .join(
+            child_users_with_supervisors_query,
+            surveyor_mappings_query.c.supervisor_uid
+            == child_users_with_supervisors_query.c.user_uid,
+        )
         .filter(
             SurveyorForm.form_uid == form_uid,
-            SurveyorForm.status.in_(["Active", "Temp. Inactive"]),
         )
     )
 
@@ -275,8 +376,172 @@ def view_assignments_enumerators(validated_query_params):
                     "surveyor_status": surveyor_form.status,
                     "surveyor_locations": locations,
                     "form_productivity": form_productivity,
+                    "supervisors": supervisors,
                 }
-                for enumerator, surveyor_form, locations, form_productivity in assignment_enumerators_query.all()
+                for enumerator, surveyor_form, locations, form_productivity, supervisors in assignment_enumerators_query.all()
+            ],
+        }
+    )
+
+    return response, 200
+
+
+@assignments_bp.route("/targets", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(AssignmentsQueryParamValidator)
+@custom_permissions_required("READ Assignments", "query", "form_uid")
+def view_assignments_targets(validated_query_params):
+    """
+    Returns targets eligible to be assigned for a form and user
+    """
+
+    form_uid = validated_query_params.form_uid.data
+    user_uid = current_user.user_uid
+
+    survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
+
+    # We need to get the bottom level geo level UID for the survey in order to join in the location information
+    if (
+        Target.query.filter(
+            Target.form_uid == form_uid, Target.location_uid.isnot(None)
+        ).first()
+        is not None
+    ):
+        # Get the geo levels for the survey
+        geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+
+        try:
+            geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
+        except InvalidGeoLevelHierarchyError as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "geo_level_hierarchy": e.geo_level_hierarchy_errors,
+                        },
+                    }
+                ),
+                422,
+            )
+
+        bottom_level_geo_level_uid = geo_level_hierarchy.ordered_geo_levels[
+            -1
+        ].geo_level_uid
+
+    else:
+        bottom_level_geo_level_uid = None
+
+    target_locations_subquery = (
+        build_bottom_level_locations_with_location_hierarchy_subquery(
+            survey_uid, bottom_level_geo_level_uid
+        )
+    )
+
+    # Get the mapping of targets to the smallest supervisor level
+    # This is used filter out targets mapped to the current user
+    # or to their child supervisors
+    try:
+        target_mapping = TargetMapping(form_uid)
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
+        )
+
+    target_mappings = target_mapping.generate_mappings()
+    mappings_query = select(
+        Values(
+            column("target_uid", Integer),
+            column("supervisor_uid", Integer),
+            name="mappings",
+        ).data(
+            [
+                (mapping["target_uid"], mapping["supervisor_uid"])
+                for mapping in target_mappings
+            ]
+            if len(target_mappings) > 0
+            else [
+                (0, 0)
+            ]  # If there are no mappings, we still need to return a row with 0 values
+        )
+    ).subquery()
+
+    # Get the child supervisors for the current logged in user
+    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+    )
+
+    assignment_targets_query = (
+        db.session.query(
+            Target,
+            TargetStatus,
+            target_locations_subquery.c.locations.label("target_locations"),
+            child_users_with_supervisors_query.c.supervisors,
+        )
+        .outerjoin(
+            TargetStatus,
+            Target.target_uid == TargetStatus.target_uid,
+        )
+        .outerjoin(
+            target_locations_subquery,
+            Target.location_uid == target_locations_subquery.c.location_uid,
+        )
+        .join(
+            mappings_query,
+            Target.target_uid == mappings_query.c.target_uid,
+        )
+        .join(
+            child_users_with_supervisors_query,
+            mappings_query.c.supervisor_uid
+            == child_users_with_supervisors_query.c.user_uid,
+        )
+        .filter(Target.form_uid == form_uid)
+    )
+
+    response = jsonify(
+        {
+            "success": True,
+            "data": [
+                {
+                    **target.to_dict(),
+                    "completed_flag": getattr(target_status, "completed_flag", None),
+                    "refusal_flag": getattr(target_status, "refusal_flag", None),
+                    "num_attempts": getattr(target_status, "num_attempts", None),
+                    "last_attempt_survey_status": getattr(
+                        target_status, "last_attempt_survey_status", None
+                    ),
+                    "last_attempt_survey_status_label": getattr(
+                        target_status, "last_attempt_survey_status_label", None
+                    ),
+                    "final_survey_status": getattr(
+                        target_status, "final_survey_status", None
+                    ),
+                    "final_survey_status_label": getattr(
+                        target_status, "final_survey_status_label", None
+                    ),
+                    "target_assignable": getattr(
+                        target_status, "target_assignable", None
+                    ),
+                    "webapp_tag_color": getattr(
+                        target_status, "webapp_tag_color", None
+                    ),
+                    "revisit_sections": getattr(
+                        target_status, "revisit_sections", None
+                    ),
+                    "scto_fields": getattr(target_status, "scto_fields", None),
+                    "target_locations": target_locations,
+                    "supervisors": supervisors,
+                }
+                for target, target_status, target_locations, supervisors in assignment_targets_query.all()
             ],
         }
     )
@@ -295,11 +560,75 @@ def update_assignments(validated_payload):
     form_uid = validated_payload.form_uid.data
     assignments = validated_payload.assignments.data
 
+    user_uid = current_user.user_uid
+    survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
+
+    try:
+        target_mapping = TargetMapping(form_uid)
+        surveyor_mapping = SurveyorMapping(form_uid)
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
+        )
+
+    target_mappings = target_mapping.generate_mappings()
+    surveyor_mappings = surveyor_mapping.generate_mappings()
+
+    target_mappings_query = select(
+        Values(
+            column("target_uid", Integer),
+            column("supervisor_uid", Integer),
+            name="mappings",
+        ).data(
+            [
+                (mapping["target_uid"], mapping["supervisor_uid"])
+                for mapping in target_mappings
+            ]
+            if len(target_mappings) > 0
+            else [
+                (0, 0)
+            ]  # If there are no mappings, we still need to return a row with 0 values
+        )
+    ).subquery()
+    surveyor_mappings_query = select(
+        Values(
+            column("enumerator_uid", Integer),
+            column("supervisor_uid", Integer),
+            name="mappings",
+        ).data(
+            [
+                (mapping["enumerator_uid"], mapping["supervisor_uid"])
+                for mapping in surveyor_mappings
+            ]
+            if len(surveyor_mappings) > 0
+            else [
+                (0, 0)
+            ]  # If there are no mappings, we still need to return a row with 0 values
+        )
+    ).subquery()
+
+    # Get the child supervisors for the current logged in user
+    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+    )
+
     # Run database-backed validations on the assignment inputs
     dropout_enumerator_uids = []
     not_found_enumerator_uids = []
     not_found_target_uids = []
     unassignable_target_uids = []
+    not_mapped_target_uids = []
+    incorrect_mapping_target_uids = []
+
     for assignment in assignments:
         if assignment["enumerator_uid"] is not None:
             enumerator_result = (
@@ -337,18 +666,81 @@ def update_assignments(validated_payload):
         ):
             unassignable_target_uids.append(assignment["target_uid"])
 
+        target_supervisor_uid = (
+            db.session.query(target_mappings_query.c.supervisor_uid)
+            .filter(target_mappings_query.c.target_uid == assignment["target_uid"])
+            .first()
+        )
+        if target_supervisor_uid is not None:
+            # Check if current user is eligible to assign the target
+            supervisors = (
+                db.session.query(
+                    child_users_with_supervisors_query.c.user_uid,
+                    child_users_with_supervisors_query.c.supervisors,
+                )
+                .filter(
+                    child_users_with_supervisors_query.c.user_uid
+                    == target_supervisor_uid.supervisor_uid
+                )
+                .first()
+            )
+
+            if supervisors is None:
+                not_mapped_target_uids.append(assignment["target_uid"])
+
+        if assignment["enumerator_uid"] is not None:
+            # Check if the target and enumerator are mapped to the same supervisor
+            enumerator_supervisor_uid = (
+                db.session.query(surveyor_mappings_query.c.supervisor_uid)
+                .filter(
+                    surveyor_mappings_query.c.enumerator_uid
+                    == assignment["enumerator_uid"]
+                )
+                .first()
+            )
+
+            if target_supervisor_uid is None or enumerator_supervisor_uid is None:
+                incorrect_mapping_target_uids.append(assignment["target_uid"])
+            elif (
+                target_supervisor_uid.supervisor_uid
+                != enumerator_supervisor_uid.supervisor_uid
+            ):
+                incorrect_mapping_target_uids.append(assignment["target_uid"])
+
     if len(dropout_enumerator_uids) > 0:
+        enumerator_ids = (
+            db.session.query(Enumerator.enumerator_id)
+            .filter(Enumerator.enumerator_uid.in_(dropout_enumerator_uids))
+            .all()
+        )
         return (
             jsonify(
-                message=f'The following enumerator_uid\'s have status "Dropout" and are ineligible for assignment: {", ".join(str(enumerator_uid) for enumerator_uid in dropout_enumerator_uids)}'
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"The following enumerator ID's have status 'Dropout' and are ineligible for assignment: {', '.join(str(enumerator_id.enumerator_id) for enumerator_id in enumerator_ids)}",
+                        "dropout_enumerator_uids": dropout_enumerator_uids,
+                    },
+                }
             ),
             422,
         )
 
     if len(unassignable_target_uids) > 0:
+        target_ids = (
+            db.session.query(Target.target_id)
+            .filter(Target.target_uid.in_(unassignable_target_uids))
+            .all()
+        )
         return (
             jsonify(
-                message=f"The following target_uid's are not assignable for this form (most likely because they are complete): {', '.join(str(target_uid) for target_uid in unassignable_target_uids)}"
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"The following target ID's are not assignable for this form (most likely because they are complete): {', '.join(str(target_id.target_id) for target_id in target_ids)}",
+                        "unassignable_target_uids": unassignable_target_uids,
+                    },
+                }
             ),
             422,
         )
@@ -356,7 +748,13 @@ def update_assignments(validated_payload):
     if len(not_found_enumerator_uids) > 0:
         return (
             jsonify(
-                message=f"The following enumerator_uid's were not found for this form: {', '.join(str(enumerator_uid) for enumerator_uid in not_found_enumerator_uids)}"
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"Some of the enumerator ID's provided were not found for this form. Kindly refresh and try again.",
+                        "not_found_enumerator_uids": not_found_enumerator_uids,
+                    },
+                }
             ),
             404,
         )
@@ -364,9 +762,53 @@ def update_assignments(validated_payload):
     if len(not_found_target_uids) > 0:
         return (
             jsonify(
-                message=f"The following target_uid's were not found for this form: {', '.join(str(target_uid) for target_uid in not_found_target_uids)}"
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"Some of the target ID's provided were not found for this form. Kindly refresh and try again.",
+                        "not_found_target_uids": not_found_target_uids,
+                    },
+                }
             ),
             404,
+        )
+
+    if len(incorrect_mapping_target_uids) > 0:
+        target_ids = (
+            db.session.query(Target.target_id)
+            .filter(Target.target_uid.in_(incorrect_mapping_target_uids))
+            .all()
+        )
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"The following target ID's are assigned to enumerators mapped to a different supervisor: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Please ensure that the target and assigned enumerator are mapped to the same supervisor.",
+                        "incorrect_mapping_target_uids": incorrect_mapping_target_uids,
+                    },
+                }
+            ),
+            422,
+        )
+
+    if len(not_mapped_target_uids) > 0:
+        target_ids = (
+            db.session.query(Target.target_id)
+            .filter(Target.target_uid.in_(not_mapped_target_uids))
+            .all()
+        )
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"The following target ID's are not assignable by the current user: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Kindly refresh and try again.",
+                        "not_mapped_target_uids": not_mapped_target_uids,
+                    },
+                }
+            ),
+            422,
         )
 
     re_assignments_count = 0
@@ -461,14 +903,14 @@ def schedule_assignments_email(validated_payload):
     # Find the assignments email_config_uid using the form_uid - if none create one
 
     email_config = EmailConfig.query.filter(
-        func.lower(EmailConfig.config_type) == "assignments",
+        func.lower(EmailConfig.config_name) == "assignments",
         EmailConfig.form_uid == form_uid,
     ).first()
 
     if email_config is None:
         try:
             email_config = EmailConfig(
-                config_type="assignments",
+                config_name="assignments",
                 form_uid=form_uid,
                 email_source="SurveyStream Data",
             )
@@ -477,7 +919,7 @@ def schedule_assignments_email(validated_payload):
         except IntegrityError:
             db.session.rollback()
             email_config = EmailConfig.query.filter(
-                func.lower(EmailConfig.config_type) == "assignments", form_uid=form_uid
+                func.lower(EmailConfig.config_name) == "assignments", form_uid=form_uid
             ).first()
 
     time_str = validated_payload.time.data
@@ -517,6 +959,7 @@ def upload_assignments(validated_query_params, validated_payload):
     """
 
     form_uid = validated_query_params.form_uid.data
+    user_uid = current_user.user_uid
 
     # Get the survey UID from the form UID
     form = Form.query.filter_by(form_uid=form_uid).first()
@@ -557,6 +1000,7 @@ def upload_assignments(validated_query_params, validated_payload):
             column_mapping=column_mapping,
             survey_uid=survey_uid,
             form_uid=form_uid,
+            user_uid=user_uid,
         )
     except binascii.Error:
         return (
@@ -624,6 +1068,18 @@ def upload_assignments(validated_query_params, validated_payload):
                     "success": False,
                     "errors": {
                         "record_errors": e.record_errors,
+                    },
+                }
+            ),
+            422,
+        )
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping_errors": e.mapping_errors,
                     },
                 }
             ),

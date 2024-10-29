@@ -2,14 +2,21 @@ import re
 from datetime import datetime
 
 from flask_wtf import FlaskForm
-from wtforms import FieldList, FormField, IntegerField, StringField
+from wtforms import (
+    BooleanField,
+    DateTimeField,
+    FieldList,
+    FormField,
+    IntegerField,
+    StringField,
+)
 from wtforms.validators import AnyOf, DataRequired, ValidationError
 
 from app.utils.utils import JSONField
 
 
 class EmailConfigValidator(FlaskForm):
-    config_type = StringField(validators=[DataRequired()])
+    config_name = StringField(validators=[DataRequired()])
     form_uid = IntegerField(validators=[DataRequired()])
     report_users = FieldList(IntegerField(), default=[])
     email_source = StringField(
@@ -27,6 +34,80 @@ class EmailConfigValidator(FlaskForm):
     email_source_gsheet_header_row = IntegerField(default=None)
     email_source_tablename = StringField(default=None)
     email_source_columns = FieldList(StringField(), default=[])
+    cc_users = FieldList(IntegerField(), default=[])
+    pdf_attachment = BooleanField(default=False)
+    pdf_encryption = BooleanField(default=False)
+    pdf_encryption_password_type = StringField(
+        AnyOf(
+            ["Pattern", "Password", None],
+            message="Invalid pdf encryption password type . Must be 'Pattern' or 'Password'",
+        ),
+        default=None,
+    )
+
+
+class EmailFilterValidator(FlaskForm):
+
+    filter_variable = StringField(validators=[DataRequired()])
+    filter_operator = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                [
+                    "Is",
+                    "Is not",
+                    "Contains",
+                    "Does not contain",
+                    "Is empty",
+                    "Is not empty",
+                    "Greater than",
+                    "Smaller than",
+                    "Date: Is Current Date",
+                    "Date: In last week",
+                    "Date: In last month",
+                    "Date: In Date Range",
+                ],
+                message="Invalid filter operator",
+            ),
+        ]
+    )
+    filter_value = StringField()
+
+
+class EmailScheduleFilterValidator(FlaskForm):
+    table_name = StringField(validators=[DataRequired()])
+    filter_variable = StringField(validators=[DataRequired()])
+    filter_operator = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                [
+                    "Is",
+                    "Is not",
+                    "Contains",
+                    "Does not contain",
+                    "Is empty",
+                    "Is not empty",
+                    "Greater than",
+                    "Smaller than",
+                    "Date: Is Current Date",
+                    "Date: In last week",
+                    "Date: In last month",
+                    "Date: In Date Range",
+                ],
+                message="Invalid filter operator",
+            ),
+        ]
+    )
+    filter_value = StringField()
+
+
+class EmailFilterGroupValidator(FlaskForm):
+    filter_group = FieldList(FormField(EmailFilterValidator), default=[])
+
+
+class EmailScheduleFilterGroupValidator(FlaskForm):
+    filter_group = FieldList(FormField(EmailScheduleFilterValidator), default=[])
 
 
 class EmailScheduleValidator(FlaskForm):
@@ -34,6 +115,7 @@ class EmailScheduleValidator(FlaskForm):
     time = StringField(validators=[DataRequired()])
     email_config_uid = IntegerField(validators=[DataRequired()])
     email_schedule_name = StringField(validators=[DataRequired()])
+    filter_list = FieldList(FormField(EmailScheduleFilterGroupValidator), default=[])
 
     def validate_time(self, field):
         """
@@ -60,9 +142,6 @@ class EmailScheduleValidator(FlaskForm):
                 date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
             except ValueError:
                 raise ValidationError("Invalid date.")
-
-            if date_obj < datetime.now().date():
-                raise ValidationError("Date must be in the future.")
 
 
 class ManualEmailTriggerValidator(FlaskForm):
@@ -133,19 +212,16 @@ class EmailVariableValidator(FlaskForm):
         csrf = False
 
     variable_name = StringField(validators=[DataRequired()])
-    variable_type = StringField(
-        validators=[
-            DataRequired(),
-            AnyOf(
-                ["string", "table"],
-                message="Invalid variable type. Must be 'text' or 'table'",
-            ),
-        ],
-        default="string",
-    )
     variable_expression = StringField(default=None)
-    source_table = StringField(validators=[DataRequired()])
-    table_column_mapping = JSONField(default={})
+
+
+class EmailTemplateTableValidator(FlaskForm):
+
+    table_name = StringField(validators=[DataRequired()])
+    column_mapping = JSONField(validators=[DataRequired()])
+    sort_list = JSONField()
+    variable_name = StringField(validators=[DataRequired()])
+    filter_list = FieldList(FormField(EmailFilterGroupValidator), default=[])
 
 
 class EmailTemplateValidator(FlaskForm):
@@ -154,6 +230,7 @@ class EmailTemplateValidator(FlaskForm):
     email_config_uid = IntegerField(validators=[DataRequired()])
     content = StringField(validators=[DataRequired()])
     variable_list = FieldList(FormField(EmailVariableValidator), default=[])
+    table_list = FieldList(FormField(EmailTemplateTableValidator), default=[])
 
 
 class EmailConfigQueryParamValidator(FlaskForm):
@@ -204,7 +281,7 @@ class EmailTableCatalogQueryParamValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    survey_uid = IntegerField(validators=[DataRequired()])
+    email_config_uid = IntegerField(validators=[DataRequired()])
 
 
 class EmailTableCatalogJSONValidator(FlaskForm):
@@ -217,3 +294,57 @@ class EmailTableCatalogJSONValidator(FlaskForm):
 class EmailTableCatalogValidator(FlaskForm):
     survey_uid = IntegerField(validators=[DataRequired()])
     table_catalog = FieldList(FormField(EmailTableCatalogJSONValidator), default=[])
+
+
+class EmailTemplateSingletonValidator(FlaskForm):
+    subject = StringField(validators=[DataRequired()])
+    language = StringField(validators=[DataRequired()])
+    content = StringField(validators=[DataRequired()])
+    variable_list = FieldList(FormField(EmailVariableValidator), default=[])
+    table_list = FieldList(FormField(EmailTemplateTableValidator), default=[])
+
+
+class EmailTemplateBulkValidator(FlaskForm):
+    templates = FieldList(FormField(EmailTemplateSingletonValidator), default=[])
+    email_config_uid = IntegerField(validators=[DataRequired()])
+
+
+class EnumeratorStatusListValidator(FlaskForm):
+    enumerator_id = StringField(validators=[DataRequired()])
+    status = StringField(
+        AnyOf(["sent", "failed"], message="Status can be sent or failed"),
+        validators=[DataRequired()],
+    )
+    error_message = StringField(default=None)
+
+
+class EmailDeliveryReportValidator(FlaskForm):
+    email_config_uid = IntegerField(validators=[DataRequired()])
+    email_schedule_uid = IntegerField(default=None)
+    manual_email_trigger_uid = IntegerField(default=None)
+    slot_type = StringField(
+        AnyOf(["trigger", "schedule"], message="Invalid slot type"),
+        default=None,
+    )
+    slot_date = StringField(validators=[DataRequired()])
+    slot_time = StringField(validators=[DataRequired()])
+    delivery_time = StringField(validators=[DataRequired()])
+    enumerator_status = FieldList(FormField(EnumeratorStatusListValidator), default=[])
+
+
+class EmailDeliveryReportBulkValidator(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
+    reports = FieldList(FormField(EmailDeliveryReportValidator), default=[])
+
+
+class EmailDeliveryReportQueryValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    email_config_uid = IntegerField(validators=[DataRequired()])
+    email_schedule_uid = IntegerField()
+    manual_email_trigger_uid = IntegerField()
+    slot_type = StringField(
+        AnyOf(["trigger", "schedule"], message="Invalid slot type"),
+        default=None,
+    )
