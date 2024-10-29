@@ -16,7 +16,7 @@ class SurveyorAssignmentValidator(FlaskForm):
 class UpdateSurveyorAssignmentsValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     assignments = FieldList(FormField(SurveyorAssignmentValidator))
-    validate_mapping = BooleanField(default=True)
+    validate_mapping = BooleanField()
 
 
 class AssignmentsQueryParamValidator(FlaskForm):
@@ -68,4 +68,4 @@ class AssignmentsFileUploadValidator(FlaskForm):
             DataRequired(),
         ]
     )
-    validate_mapping = BooleanField(default=True)
+    validate_mapping = BooleanField()
