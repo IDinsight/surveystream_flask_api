@@ -1107,6 +1107,7 @@ def upload_assignments(validated_query_params, validated_payload):
         assignments_upload.validate_records(
             column_mapping,
             validated_payload.mode.data,
+            validated_payload.validate_mapping.data,
         )
     except InvalidFileStructureError as e:
         return (

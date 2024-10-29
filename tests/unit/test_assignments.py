@@ -9906,6 +9906,7 @@ class TestAssignments:
             },
             "file": assignments_csv_encoded,
             "mode": "merge",
+            "validate_mapping": True,
         }
 
         response = client.post(
@@ -10284,6 +10285,7 @@ class TestAssignments:
             },
             "file": assignments_csv_encoded,
             "mode": "overwrite",
+            "validate_mapping": True,
         }
 
         response = client.post(
@@ -11265,6 +11267,7 @@ class TestAssignments:
             },
             "file": assignments_csv_encoded,
             "mode": "merge",
+            "validate_mapping": True,
         }
 
         response = client.post(

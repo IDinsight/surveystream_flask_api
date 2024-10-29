@@ -68,3 +68,4 @@ class AssignmentsFileUploadValidator(FlaskForm):
             DataRequired(),
         ]
     )
+    validate_mapping = BooleanField(default=True)

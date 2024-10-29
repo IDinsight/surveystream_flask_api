@@ -201,7 +201,7 @@ class AssignmentsUpload:
 
         return target_supervisor_uid == surveyor_supervisor_uid
 
-    def validate_records(self, column_mapping, write_mode):
+    def validate_records(self, column_mapping, write_mode, validate_mapping):
         """
         Method to run validations on the assignments data
 
@@ -272,9 +272,9 @@ class AssignmentsUpload:
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                non_null_columns_df.at[index, "errors"] = (
-                    f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
-                )
+                non_null_columns_df.at[
+                    index, "errors"
+                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],
@@ -374,9 +374,9 @@ class AssignmentsUpload:
                 }
             )
 
-            invalid_target_id_df["errors"] = (
-                "Target id not found in uploaded targets data for the form"
-            )
+            invalid_target_id_df[
+                "errors"
+            ] = "Target id not found in uploaded targets data for the form"
             invalid_records_df = invalid_records_df.merge(
                 invalid_target_id_df["errors"],
                 how="left",
@@ -423,9 +423,9 @@ class AssignmentsUpload:
                 }
             )
 
-            not_assignable_target_id_df["errors"] = (
-                "Target id not assignable for this form (most likely because they are complete)"
-            )
+            not_assignable_target_id_df[
+                "errors"
+            ] = "Target id not assignable for this form (most likely because they are complete)"
             invalid_records_df = invalid_records_df.merge(
                 not_assignable_target_id_df["errors"],
                 how="left",
@@ -469,9 +469,9 @@ class AssignmentsUpload:
                 }
             )
 
-            invalid_enumerator_id_df["errors"] = (
-                "Enumerator id not found in uploaded enumerators data for the form"
-            )
+            invalid_enumerator_id_df[
+                "errors"
+            ] = "Enumerator id not found in uploaded enumerators data for the form"
             invalid_records_df = invalid_records_df.merge(
                 invalid_enumerator_id_df["errors"],
                 how="left",
@@ -507,9 +507,9 @@ class AssignmentsUpload:
                 }
             )
 
-            dropout_enumerator_id_df["errors"] = (
-                "Enumerator id has status 'Dropout' and are ineligible for assignment"
-            )
+            dropout_enumerator_id_df[
+                "errors"
+            ] = "Enumerator id has status 'Dropout' and are ineligible for assignment"
             invalid_records_df = invalid_records_df.merge(
                 dropout_enumerator_id_df["errors"],
                 how="left",
@@ -527,178 +527,197 @@ class AssignmentsUpload:
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
         # Mapping criteria based checks
+        if validate_mapping:
+            try:
+                target_mapping = TargetMapping(self.form_uid)
+                surveyor_mapping = SurveyorMapping(self.form_uid)
+            except MappingError as e:
+                raise e
 
-        try:
-            target_mapping = TargetMapping(self.form_uid)
-            surveyor_mapping = SurveyorMapping(self.form_uid)
-        except MappingError as e:
-            raise e
+            target_mappings = target_mapping.generate_mappings()
+            target_mappings_query = select(
+                Values(
+                    column("target_uid", Integer),
+                    column("supervisor_uid", Integer),
+                    name="mappings",
+                ).data(
+                    [
+                        (mapping["target_uid"], mapping["supervisor_uid"])
+                        for mapping in target_mappings
+                    ]
+                    if len(target_mappings) > 0
+                    else [
+                        (0, 0)
+                    ]  # If there are no mappings, we still need to return a row with 0 values
+                )
+            ).subquery()
 
-        target_mappings = target_mapping.generate_mappings()
-        target_mappings_query = select(
-            Values(
-                column("target_uid", Integer),
-                column("supervisor_uid", Integer),
-                name="mappings",
-            ).data(
-                [
-                    (mapping["target_uid"], mapping["supervisor_uid"])
-                    for mapping in target_mappings
-                ]
-                if len(target_mappings) > 0
-                else [
-                    (0, 0)
-                ]  # If there are no mappings, we still need to return a row with 0 values
-            )
-        ).subquery()
-
-        is_survey_admin = check_if_survey_admin(self.user_uid, self.survey_uid)
-        child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-            self.user_uid,
-            self.survey_uid,
-            target_mapping.bottom_level_role_uid,
-            is_survey_admin,
-        )
-
-        targets_mapped_to_current_user = (
-            db.session.query(Target.target_id, target_mappings_query.c.supervisor_uid)
-            .join(
-                target_mappings_query,
-                Target.target_uid == target_mappings_query.c.target_uid,
-            )
-            .join(
-                child_users_with_supervisors_query,
-                target_mappings_query.c.supervisor_uid
-                == child_users_with_supervisors_query.c.user_uid,
-            )
-            .filter(
-                Target.form_uid == self.form_uid,
-            )
-            .all()
-        )
-
-        surveyor_mappings = surveyor_mapping.generate_mappings()
-        surveyor_mappings_query = select(
-            Values(
-                column("enumerator_uid", Integer),
-                column("supervisor_uid", Integer),
-                name="mappings",
-            ).data(
-                [
-                    (mapping["enumerator_uid"], mapping["supervisor_uid"])
-                    for mapping in surveyor_mappings
-                ]
-                if len(surveyor_mappings) > 0
-                else [
-                    (0, 0)
-                ]  # If there are no mappings, we still need to return a row with 0 values
-            )
-        ).subquery()
-        surveyors_mapped_to_current_user = (
-            db.session.query(
-                Enumerator.enumerator_id, surveyor_mappings_query.c.supervisor_uid
-            )
-            .join(
-                surveyor_mappings_query,
-                (Enumerator.enumerator_uid == surveyor_mappings_query.c.enumerator_uid)
-                & (Enumerator.form_uid == self.form_uid),
-            )
-            .join(
-                child_users_with_supervisors_query,
-                surveyor_mappings_query.c.supervisor_uid
-                == child_users_with_supervisors_query.c.user_uid,
-            )
-            .all()
-        )
-
-        # Check each target is assignable by the current supervisor as per the mappings
-        not_mapped_to_current_user_df = self.assignments_df[
-            ~self.assignments_df[column_mapping.target_id].isin(
-                [
-                    target_id
-                    for target_id, supervisor_uid in targets_mapped_to_current_user
-                ]
-            )
-            & self.assignments_df[column_mapping.target_id].isin(
-                [row[0] for row in target_id_query.all()]
-            )  # Only check targets that are in the database
-        ]
-        if len(not_mapped_to_current_user_df) > 0:
-            record_errors["summary_by_error_type"].append(
-                {
-                    "error_type": "Not mapped target_id's",
-                    "error_message": f"The file contains {len(not_mapped_to_current_user_df)} target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_current_user_df.index.to_list())}",
-                    "error_count": len(not_mapped_to_current_user_df),
-                    "row_numbers_with_errors": not_mapped_to_current_user_df.index.to_list(),
-                }
+            is_survey_admin = check_if_survey_admin(self.user_uid, self.survey_uid)
+            child_users_with_supervisors_query = (
+                build_child_users_with_supervisors_query(
+                    self.user_uid,
+                    self.survey_uid,
+                    target_mapping.bottom_level_role_uid,
+                    is_survey_admin,
+                )
             )
 
-            not_mapped_to_current_user_df["errors"] = (
-                "Target is not mapped to current logged in user and hence cannot be assigned"
-            )
-            invalid_records_df = invalid_records_df.merge(
-                not_mapped_to_current_user_df["errors"],
-                how="left",
-                left_index=True,
-                right_index=True,
-            )
-            # Replace NaN with empty string
-            invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna("")
-            invalid_records_df["errors"] = invalid_records_df[
-                ["errors_x", "errors_y"]
-            ].apply("; ".join, axis=1)
-            invalid_records_df = invalid_records_df.drop(
-                columns=["errors_x", "errors_y"]
-            )
-            invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
-
-        # Check if enumerator is mapped to the same supervisor as the target
-        not_mapped_to_same_supervisor_df = self.assignments_df[
-            ~self.assignments_df.apply(
-                lambda x: self.__check_if_mapped_to_same_supervisor(
-                    x[column_mapping.target_id],
-                    x[column_mapping.enumerator_id],
-                    targets_mapped_to_current_user,
-                    surveyors_mapped_to_current_user,
-                ),
-                axis=1,
-            )
-            & self.assignments_df[column_mapping.target_id].isin(
-                [row[0] for row in target_id_query.all()]
-            )  # Only check targets that are in the database
-            & self.assignments_df[column_mapping.enumerator_id].isin(
-                [enumerator_id for enumerator_id, status in enumerator_id_query.all()]
-            )  # Only check enumerators that are in the database
-        ]
-
-        if len(not_mapped_to_same_supervisor_df) > 0:
-            record_errors["summary_by_error_type"].append(
-                {
-                    "error_type": "Incorrectly mappings target_id's",
-                    "error_message": f"The file contains {len(not_mapped_to_same_supervisor_df)} target_id(s) that are assigned to enumerators mapped to a different supervisor. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_same_supervisor_df.index.to_list())}",
-                    "error_count": len(not_mapped_to_same_supervisor_df),
-                    "row_numbers_with_errors": not_mapped_to_same_supervisor_df.index.to_list(),
-                }
+            targets_mapped_to_current_user = (
+                db.session.query(
+                    Target.target_id, target_mappings_query.c.supervisor_uid
+                )
+                .join(
+                    target_mappings_query,
+                    Target.target_uid == target_mappings_query.c.target_uid,
+                )
+                .join(
+                    child_users_with_supervisors_query,
+                    target_mappings_query.c.supervisor_uid
+                    == child_users_with_supervisors_query.c.user_uid,
+                )
+                .filter(
+                    Target.form_uid == self.form_uid,
+                )
+                .all()
             )
 
-            not_mapped_to_same_supervisor_df["errors"] = (
-                "Target is assigned to an enumerator mapped to a different supervisor"
+            surveyor_mappings = surveyor_mapping.generate_mappings()
+            surveyor_mappings_query = select(
+                Values(
+                    column("enumerator_uid", Integer),
+                    column("supervisor_uid", Integer),
+                    name="mappings",
+                ).data(
+                    [
+                        (mapping["enumerator_uid"], mapping["supervisor_uid"])
+                        for mapping in surveyor_mappings
+                    ]
+                    if len(surveyor_mappings) > 0
+                    else [
+                        (0, 0)
+                    ]  # If there are no mappings, we still need to return a row with 0 values
+                )
+            ).subquery()
+
+            surveyors_mapped_to_current_user = (
+                db.session.query(
+                    Enumerator.enumerator_id, surveyor_mappings_query.c.supervisor_uid
+                )
+                .join(
+                    surveyor_mappings_query,
+                    (
+                        Enumerator.enumerator_uid
+                        == surveyor_mappings_query.c.enumerator_uid
+                    )
+                    & (Enumerator.form_uid == self.form_uid),
+                )
+                .join(
+                    child_users_with_supervisors_query,
+                    surveyor_mappings_query.c.supervisor_uid
+                    == child_users_with_supervisors_query.c.user_uid,
+                )
+                .all()
             )
-            invalid_records_df = invalid_records_df.merge(
-                not_mapped_to_same_supervisor_df["errors"],
-                how="left",
-                left_index=True,
-                right_index=True,
-            )
-            # Replace NaN with empty string
-            invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna("")
-            invalid_records_df["errors"] = invalid_records_df[
-                ["errors_x", "errors_y"]
-            ].apply("; ".join, axis=1)
-            invalid_records_df = invalid_records_df.drop(
-                columns=["errors_x", "errors_y"]
-            )
-            invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
+
+            # Check each target is assignable by the current supervisor as per the mappings
+            not_mapped_to_current_user_df = self.assignments_df[
+                ~self.assignments_df[column_mapping.target_id].isin(
+                    [
+                        target_id
+                        for target_id, supervisor_uid in targets_mapped_to_current_user
+                    ]
+                )
+                & self.assignments_df[column_mapping.target_id].isin(
+                    [row[0] for row in target_id_query.all()]
+                )  # Only check targets that are in the database
+            ]
+            if len(not_mapped_to_current_user_df) > 0:
+                record_errors["summary_by_error_type"].append(
+                    {
+                        "error_type": "Not mapped target_id's",
+                        "error_message": f"The file contains {len(not_mapped_to_current_user_df)} target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_current_user_df.index.to_list())}",
+                        "error_count": len(not_mapped_to_current_user_df),
+                        "row_numbers_with_errors": not_mapped_to_current_user_df.index.to_list(),
+                    }
+                )
+
+                not_mapped_to_current_user_df[
+                    "errors"
+                ] = "Target is not mapped to current logged in user and hence cannot be assigned"
+                invalid_records_df = invalid_records_df.merge(
+                    not_mapped_to_current_user_df["errors"],
+                    how="left",
+                    left_index=True,
+                    right_index=True,
+                )
+                # Replace NaN with empty string
+                invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna(
+                    ""
+                )
+                invalid_records_df["errors"] = invalid_records_df[
+                    ["errors_x", "errors_y"]
+                ].apply("; ".join, axis=1)
+                invalid_records_df = invalid_records_df.drop(
+                    columns=["errors_x", "errors_y"]
+                )
+                invalid_records_df["errors"] = invalid_records_df["errors"].str.strip(
+                    "; "
+                )
+
+            # Check if enumerator is mapped to the same supervisor as the target
+            not_mapped_to_same_supervisor_df = self.assignments_df[
+                ~self.assignments_df.apply(
+                    lambda x: self.__check_if_mapped_to_same_supervisor(
+                        x[column_mapping.target_id],
+                        x[column_mapping.enumerator_id],
+                        targets_mapped_to_current_user,
+                        surveyors_mapped_to_current_user,
+                    ),
+                    axis=1,
+                )
+                & self.assignments_df[column_mapping.target_id].isin(
+                    [row[0] for row in target_id_query.all()]
+                )  # Only check targets that are in the database
+                & self.assignments_df[column_mapping.enumerator_id].isin(
+                    [
+                        enumerator_id
+                        for enumerator_id, status in enumerator_id_query.all()
+                    ]
+                )  # Only check enumerators that are in the database
+            ]
+
+            if len(not_mapped_to_same_supervisor_df) > 0:
+                record_errors["summary_by_error_type"].append(
+                    {
+                        "error_type": "Incorrectly mappings target_id's",
+                        "error_message": f"The file contains {len(not_mapped_to_same_supervisor_df)} target_id(s) that are assigned to enumerators mapped to a different supervisor. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_same_supervisor_df.index.to_list())}",
+                        "error_count": len(not_mapped_to_same_supervisor_df),
+                        "row_numbers_with_errors": not_mapped_to_same_supervisor_df.index.to_list(),
+                    }
+                )
+
+                not_mapped_to_same_supervisor_df[
+                    "errors"
+                ] = "Target is assigned to an enumerator mapped to a different supervisor"
+                invalid_records_df = invalid_records_df.merge(
+                    not_mapped_to_same_supervisor_df["errors"],
+                    how="left",
+                    left_index=True,
+                    right_index=True,
+                )
+                # Replace NaN with empty string
+                invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna(
+                    ""
+                )
+                invalid_records_df["errors"] = invalid_records_df[
+                    ["errors_x", "errors_y"]
+                ].apply("; ".join, axis=1)
+                invalid_records_df = invalid_records_df.drop(
+                    columns=["errors_x", "errors_y"]
+                )
+                invalid_records_df["errors"] = invalid_records_df["errors"].str.strip(
+                    "; "
+                )
 
         if len(record_errors["summary_by_error_type"]) > 0:
             record_errors["summary"]["total_correct_rows"] = len(
