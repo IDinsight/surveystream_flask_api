@@ -10199,8 +10199,31 @@ class TestAssignments:
                 assert response.status_code == 422
 
                 expected_response = {
+                    "success": False,
                     "errors": {
                         "record_errors": {
+                            "summary": {
+                                "total_rows": 1,
+                                "total_correct_rows": 0,
+                                "total_rows_with_errors": 1,
+                                "error_count": 2,
+                            },
+                            "summary_by_error_type": [
+                                {
+                                    "error_type": "Not mapped target_id's",
+                                    "error_message": "The file contains 1 target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: 2",
+                                    "error_count": 1,
+                                    "row_numbers_with_errors": [2],
+                                    "can_be_ignored": False,
+                                },
+                                {
+                                    "error_type": "Incorrectly mapped target and enumerator id's",
+                                    "error_message": "The file contains 1 target_id(s) that are assigned to enumerators mapped to a different supervisor or the target/enumerator/both are not mapped. The following row numbers contain such target_id's: 2",
+                                    "error_count": 1,
+                                    "row_numbers_with_errors": [2],
+                                    "can_be_ignored": True,
+                                },
+                            ],
                             "invalid_records": {
                                 "ordered_columns": [
                                     "row_number",
@@ -10210,31 +10233,15 @@ class TestAssignments:
                                 ],
                                 "records": [
                                     {
-                                        "enumerator_id1": "0294615",
-                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned",
-                                        "row_number": 2,
                                         "target_id1": "1",
+                                        "enumerator_id1": "0294615",
+                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned; Target is assigned to an enumerator mapped to a different supervisor",
+                                        "row_number": 2,
                                     }
                                 ],
                             },
-                            "summary": {
-                                "error_count": 1,
-                                "total_correct_rows": 0,
-                                "total_rows": 1,
-                                "total_rows_with_errors": 1,
-                            },
-                            "summary_by_error_type": [
-                                {
-                                    "error_count": 1,
-                                    "error_message": "The file contains 1 target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: 2",
-                                    "error_type": "Not mapped target_id's",
-                                    "row_numbers_with_errors": [2],
-                                    "can_be_ignored": False,
-                                }
-                            ],
                         }
                     },
-                    "success": False,
                 }
                 print(response.json)
                 checkdiff = jsondiff.diff(expected_response, response.json)
@@ -10580,8 +10587,31 @@ class TestAssignments:
                 assert response.status_code == 422
 
                 expected_response = {
+                    "success": False,
                     "errors": {
                         "record_errors": {
+                            "summary": {
+                                "total_rows": 2,
+                                "total_correct_rows": 0,
+                                "total_rows_with_errors": 2,
+                                "error_count": 4,
+                            },
+                            "summary_by_error_type": [
+                                {
+                                    "error_type": "Not mapped target_id's",
+                                    "error_message": "The file contains 2 target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: 2, 3",
+                                    "error_count": 2,
+                                    "row_numbers_with_errors": [2, 3],
+                                    "can_be_ignored": False,
+                                },
+                                {
+                                    "error_type": "Incorrectly mapped target and enumerator id's",
+                                    "error_message": "The file contains 2 target_id(s) that are assigned to enumerators mapped to a different supervisor or the target/enumerator/both are not mapped. The following row numbers contain such target_id's: 2, 3",
+                                    "error_count": 2,
+                                    "row_numbers_with_errors": [2, 3],
+                                    "can_be_ignored": True,
+                                },
+                            ],
                             "invalid_records": {
                                 "ordered_columns": [
                                     "row_number",
@@ -10591,37 +10621,21 @@ class TestAssignments:
                                 ],
                                 "records": [
                                     {
-                                        "enumerator_id1": "0294613",
-                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned",
-                                        "row_number": 2,
                                         "target_id1": "1",
+                                        "enumerator_id1": "0294613",
+                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned; Target is assigned to an enumerator mapped to a different supervisor",
+                                        "row_number": 2,
                                     },
                                     {
-                                        "enumerator_id1": "0294615",
-                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned",
-                                        "row_number": 3,
                                         "target_id1": "2",
+                                        "enumerator_id1": "0294615",
+                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned; Target is assigned to an enumerator mapped to a different supervisor",
+                                        "row_number": 3,
                                     },
                                 ],
                             },
-                            "summary": {
-                                "error_count": 2,
-                                "total_correct_rows": 0,
-                                "total_rows": 2,
-                                "total_rows_with_errors": 2,
-                            },
-                            "summary_by_error_type": [
-                                {
-                                    "error_count": 2,
-                                    "error_message": "The file contains 2 target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: 2, 3",
-                                    "error_type": "Not mapped target_id's",
-                                    "row_numbers_with_errors": [2, 3],
-                                    "can_be_ignored": False,
-                                }
-                            ],
                         }
                     },
-                    "success": False,
                 }
 
                 print(response.json)

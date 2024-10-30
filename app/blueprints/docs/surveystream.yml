@@ -4146,6 +4146,14 @@ paths:
                     file. In 'merge' mode, the new assignments from the CSV will
                     be added to the existing ones.  Any existing records
                     included in the upload will also be updated.
+                validate_mapping:
+                  type: boolean
+                  default: false
+                  description: >-
+                    Whether to validate the mapping of targets/enumerators with
+                    supervisors. If set to true, the endpoint will validate the
+                    mapping of targets/enumerators with supervisors and return
+                    any errors encountered in the mapping.
               required:
                 - column_mapping
                 - file
@@ -4312,22 +4320,32 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              description: A list of target/enumerator pairs
-              items:
                 type: object
                 properties:
                   form_uid:
                     type: integer
                     description: The unique ID of the form
-                  target_uid:
-                    type: integer
-                  enumerator_uid:
-                    type: integer
+                  assignments:
+                    type: array
+                    description: A list of target/enumerator pairs
+                    items:
+                      type: object
+                      properties:
+                        target_uid:
+                          type: integer
+                        enumerator_uid:
+                          type: integer
+                  validate_mapping:
+                    type: boolean
+                    default: false
+                    description: >-
+                      Whether to validate the mapping of targets/enumerators with
+                      supervisors. If set to true, the endpoint will validate the
+                      mapping of targets/enumerators with supervisors and return
+                      any errors encountered in the mapping.
                 required:
                   - form_uid
-                  - target_uid
-                  - enumerator_uid
+                  - assignments
       responses:
         "200":
           description: Success
