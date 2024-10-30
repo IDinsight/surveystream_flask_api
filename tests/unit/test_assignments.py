@@ -10229,6 +10229,7 @@ class TestAssignments:
                                     "error_message": "The file contains 1 target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: 2",
                                     "error_type": "Not mapped target_id's",
                                     "row_numbers_with_errors": [2],
+                                    "can_be_ignored": False,
                                 }
                             ],
                         }
@@ -10615,6 +10616,7 @@ class TestAssignments:
                                     "error_message": "The file contains 2 target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: 2, 3",
                                     "error_type": "Not mapped target_id's",
                                     "row_numbers_with_errors": [2, 3],
+                                    "can_be_ignored": False,
                                 }
                             ],
                         }
@@ -10716,12 +10718,14 @@ class TestAssignments:
                             "error_message": "The file contains 1 target_id(s) that were not found in the uploaded targets data. The following row numbers contain invalid target_id's: 3",
                             "error_type": "Invalid target_id's",
                             "row_numbers_with_errors": [3],
+                            "can_be_ignored": False,
                         },
                         {
                             "error_count": 1,
                             "error_message": "The file contains 1 enumerator_id(s) that were not found in the uploaded enumerators data. The following row numbers contain invalid enumerator_id's: 2",
                             "error_type": "Invalid enumerator_id's",
                             "row_numbers_with_errors": [2],
+                            "can_be_ignored": False,
                         },
                     ],
                 }
@@ -10822,6 +10826,7 @@ class TestAssignments:
                             "error_message": "The file contains 1 enumerator_id(s) that have status 'Dropout' and are ineligible for assignment. The following row numbers contain dropout enumerator_id's: 2",
                             "error_type": "Dropout enumerator_id's",
                             "row_numbers_with_errors": [2],
+                            "can_be_ignored": False,
                         }
                     ],
                 }
@@ -10909,6 +10914,7 @@ class TestAssignments:
                             "error_message": "The file contains 1 target_id(s) that were not assignable for this form (most likely because they are complete). The following row numbers contain not assignable target_id's: 2",
                             "error_type": "Not Assignable target_id's",
                             "row_numbers_with_errors": [2],
+                            "can_be_ignored": False,
                         }
                     ],
                 }
@@ -11045,12 +11051,14 @@ class TestAssignments:
                             "error_message": "Blank values are not allowed in the following columns: enumerator_id1, target_id1. Blank values in these columns were found for the following row(s): 3",
                             "error_type": "Blank field",
                             "row_numbers_with_errors": [3],
+                            "can_be_ignored": False,
                         },
                         {
                             "error_count": 1,
                             "error_message": "The file contains 1 enumerator_id(s) that were not found in the uploaded enumerators data. The following row numbers contain invalid enumerator_id's: 3",
                             "error_type": "Invalid enumerator_id's",
                             "row_numbers_with_errors": [3],
+                            "can_be_ignored": False,
                         },
                     ],
                 }
@@ -11308,9 +11316,10 @@ class TestAssignments:
                     "summary_by_error_type": [
                         {
                             "error_count": 1,
-                            "error_message": "The file contains 1 target_id(s) that are assigned to enumerators mapped to a different supervisor. The following row numbers contain such target_id's: 2",
-                            "error_type": "Incorrectly mappings target_id's",
+                            "error_message": "The file contains 1 target_id(s) that are assigned to enumerators mapped to a different supervisor or the target/enumerator/both are not mapped. The following row numbers contain such target_id's: 2",
+                            "error_type": "Incorrectly mapped target and enumerator id's",
                             "row_numbers_with_errors": [2],
+                            "can_be_ignored": True,
                         }
                     ],
                 }

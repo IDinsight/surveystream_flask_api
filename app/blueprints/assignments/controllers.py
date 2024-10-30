@@ -619,64 +619,63 @@ def update_assignments(validated_payload):
     user_uid = current_user.user_uid
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
-    if validate_mapping:
-        try:
-            target_mapping = TargetMapping(form_uid)
-            surveyor_mapping = SurveyorMapping(form_uid)
-        except MappingError as e:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "errors": {
-                            "mapping_errors": e.mapping_errors,
-                        },
-                    }
-                ),
-                422,
-            )
-
-        target_mappings = target_mapping.generate_mappings()
-        surveyor_mappings = surveyor_mapping.generate_mappings()
-
-        target_mappings_query = select(
-            Values(
-                column("target_uid", Integer),
-                column("supervisor_uid", Integer),
-                name="mappings",
-            ).data(
-                [
-                    (mapping["target_uid"], mapping["supervisor_uid"])
-                    for mapping in target_mappings
-                ]
-                if len(target_mappings) > 0
-                else [
-                    (0, 0)
-                ]  # If there are no mappings, we still need to return a row with 0 values
-            )
-        ).subquery()
-        surveyor_mappings_query = select(
-            Values(
-                column("enumerator_uid", Integer),
-                column("supervisor_uid", Integer),
-                name="mappings",
-            ).data(
-                [
-                    (mapping["enumerator_uid"], mapping["supervisor_uid"])
-                    for mapping in surveyor_mappings
-                ]
-                if len(surveyor_mappings) > 0
-                else [
-                    (0, 0)
-                ]  # If there are no mappings, we still need to return a row with 0 values
-            )
-        ).subquery()
-
-        # Get the child supervisors for the current logged in user
-        is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
-        child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-            user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+    try:
+        target_mapping = TargetMapping(form_uid)
+        surveyor_mapping = SurveyorMapping(form_uid)
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
         )
+
+    target_mappings = target_mapping.generate_mappings()
+    surveyor_mappings = surveyor_mapping.generate_mappings()
+
+    target_mappings_query = select(
+        Values(
+            column("target_uid", Integer),
+            column("supervisor_uid", Integer),
+            name="mappings",
+        ).data(
+            [
+                (mapping["target_uid"], mapping["supervisor_uid"])
+                for mapping in target_mappings
+            ]
+            if len(target_mappings) > 0
+            else [
+                (0, 0)
+            ]  # If there are no mappings, we still need to return a row with 0 values
+        )
+    ).subquery()
+    surveyor_mappings_query = select(
+        Values(
+            column("enumerator_uid", Integer),
+            column("supervisor_uid", Integer),
+            name="mappings",
+        ).data(
+            [
+                (mapping["enumerator_uid"], mapping["supervisor_uid"])
+                for mapping in surveyor_mappings
+            ]
+            if len(surveyor_mappings) > 0
+            else [
+                (0, 0)
+            ]  # If there are no mappings, we still need to return a row with 0 values
+        )
+    ).subquery()
+
+    # Get the child supervisors for the current logged in user
+    is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+    )
 
     # Run database-backed validations on the assignment inputs
     dropout_enumerator_uids = []
@@ -723,47 +722,50 @@ def update_assignments(validated_payload):
         ):
             unassignable_target_uids.append(assignment["target_uid"])
 
-        if validate_mapping:
-            target_supervisor_uid = (
-                db.session.query(target_mappings_query.c.supervisor_uid)
-                .filter(target_mappings_query.c.target_uid == assignment["target_uid"])
+        target_supervisor_uid = (
+            db.session.query(target_mappings_query.c.supervisor_uid)
+            .filter(target_mappings_query.c.target_uid == assignment["target_uid"])
+            .first()
+        )
+        if target_supervisor_uid is not None:
+            # Check if current user is eligible to assign the target
+            supervisors = (
+                db.session.query(
+                    child_users_with_supervisors_query.c.user_uid,
+                    child_users_with_supervisors_query.c.supervisors,
+                )
+                .filter(
+                    child_users_with_supervisors_query.c.user_uid
+                    == target_supervisor_uid.supervisor_uid
+                )
                 .first()
             )
-            if target_supervisor_uid is not None:
-                # Check if current user is eligible to assign the target
-                supervisors = (
-                    db.session.query(
-                        child_users_with_supervisors_query.c.user_uid,
-                        child_users_with_supervisors_query.c.supervisors,
-                    )
-                    .filter(
-                        child_users_with_supervisors_query.c.user_uid
-                        == target_supervisor_uid.supervisor_uid
-                    )
-                    .first()
-                )
 
-                if supervisors is None:
-                    not_mapped_target_uids.append(assignment["target_uid"])
+            if supervisors is None:
+                not_mapped_target_uids.append(assignment["target_uid"])
 
-            if assignment["enumerator_uid"] is not None:
-                # Check if the target and enumerator are mapped to the same supervisor
-                enumerator_supervisor_uid = (
-                    db.session.query(surveyor_mappings_query.c.supervisor_uid)
-                    .filter(
-                        surveyor_mappings_query.c.enumerator_uid
-                        == assignment["enumerator_uid"]
+            if validate_mapping:
+                if assignment["enumerator_uid"] is not None:
+                    # Check if the target and enumerator are mapped to the same supervisor
+                    enumerator_supervisor_uid = (
+                        db.session.query(surveyor_mappings_query.c.supervisor_uid)
+                        .filter(
+                            surveyor_mappings_query.c.enumerator_uid
+                            == assignment["enumerator_uid"]
+                        )
+                        .first()
                     )
-                    .first()
-                )
 
-                if target_supervisor_uid is None or enumerator_supervisor_uid is None:
-                    incorrect_mapping_target_uids.append(assignment["target_uid"])
-                elif (
-                    target_supervisor_uid.supervisor_uid
-                    != enumerator_supervisor_uid.supervisor_uid
-                ):
-                    incorrect_mapping_target_uids.append(assignment["target_uid"])
+                    if (
+                        target_supervisor_uid is None
+                        or enumerator_supervisor_uid is None
+                    ):
+                        incorrect_mapping_target_uids.append(assignment["target_uid"])
+                    elif (
+                        target_supervisor_uid.supervisor_uid
+                        != enumerator_supervisor_uid.supervisor_uid
+                    ):
+                        incorrect_mapping_target_uids.append(assignment["target_uid"])
 
     if len(dropout_enumerator_uids) > 0:
         enumerator_ids = (
@@ -831,6 +833,25 @@ def update_assignments(validated_payload):
             404,
         )
 
+    if len(not_mapped_target_uids) > 0:
+        target_ids = (
+            db.session.query(Target.target_id)
+            .filter(Target.target_uid.in_(not_mapped_target_uids))
+            .all()
+        )
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"The following target ID's are not assignable by the current user: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Kindly refresh and try again.",
+                        "not_mapped_target_uids": not_mapped_target_uids,
+                    },
+                }
+            ),
+            422,
+        )
+
     if validate_mapping:
         if len(incorrect_mapping_target_uids) > 0:
             target_ids = (
@@ -845,25 +866,6 @@ def update_assignments(validated_payload):
                         "errors": {
                             "message": f"The following target ID's are assigned to enumerators mapped to a different supervisor: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Please ensure that the target and assigned enumerator are mapped to the same supervisor.",
                             "incorrect_mapping_target_uids": incorrect_mapping_target_uids,
-                        },
-                    }
-                ),
-                422,
-            )
-
-        if len(not_mapped_target_uids) > 0:
-            target_ids = (
-                db.session.query(Target.target_id)
-                .filter(Target.target_uid.in_(not_mapped_target_uids))
-                .all()
-            )
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "errors": {
-                            "message": f"The following target ID's are not assignable by the current user: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Kindly refresh and try again.",
-                            "not_mapped_target_uids": not_mapped_target_uids,
                         },
                     }
                 ),

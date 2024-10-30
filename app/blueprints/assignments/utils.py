@@ -199,7 +199,12 @@ class AssignmentsUpload:
         target_supervisor_uid = [s for t, s in target_mappings if t == target_id]
         surveyor_supervisor_uid = [s for e, s in surveyor_mappings if e == surveyor_id]
 
-        return target_supervisor_uid == surveyor_supervisor_uid
+        same_supervisor = False
+        if len(target_supervisor_uid) > 0 and len(surveyor_supervisor_uid) > 0:
+            if target_supervisor_uid == surveyor_supervisor_uid:
+                same_supervisor = True
+
+        return same_supervisor
 
     def validate_records(self, column_mapping, write_mode, validate_mapping):
         """
@@ -259,6 +264,7 @@ class AssignmentsUpload:
                     "error_message": f"Blank values are not allowed in the following columns: {', '.join(non_null_columns)}. Blank values in these columns were found for the following row(s): {', '.join(str(row_number) for row_number in non_null_columns_df.index.to_list())}",
                     "error_count": 0,
                     "row_numbers_with_errors": non_null_columns_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
@@ -304,6 +310,7 @@ class AssignmentsUpload:
                     "error_message": f"The file has {len(duplicates_df)} duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
                     "error_count": len(duplicates_df),
                     "row_numbers_with_errors": duplicates_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
@@ -334,6 +341,7 @@ class AssignmentsUpload:
                     "error_message": f"The file has {len(duplicates_df)} duplicate target_id(s). The following row numbers contain target_id duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
                     "error_count": len(duplicates_df),
                     "row_numbers_with_errors": duplicates_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
@@ -371,6 +379,7 @@ class AssignmentsUpload:
                     "error_message": f"The file contains {len(invalid_target_id_df)} target_id(s) that were not found in the uploaded targets data. The following row numbers contain invalid target_id's: {', '.join(str(row_number) for row_number in invalid_target_id_df.index.to_list())}",
                     "error_count": len(invalid_target_id_df),
                     "row_numbers_with_errors": invalid_target_id_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
@@ -420,6 +429,7 @@ class AssignmentsUpload:
                     "error_message": f"The file contains {len(not_assignable_target_id_df)} target_id(s) that were not assignable for this form (most likely because they are complete). The following row numbers contain not assignable target_id's: {', '.join(str(row_number) for row_number in not_assignable_target_id_df.index.to_list())}",
                     "error_count": len(not_assignable_target_id_df),
                     "row_numbers_with_errors": not_assignable_target_id_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
@@ -466,6 +476,7 @@ class AssignmentsUpload:
                     "error_message": f"The file contains {len(invalid_enumerator_id_df)} enumerator_id(s) that were not found in the uploaded enumerators data. The following row numbers contain invalid enumerator_id's: {', '.join(str(row_number) for row_number in invalid_enumerator_id_df.index.to_list())}",
                     "error_count": len(invalid_enumerator_id_df),
                     "row_numbers_with_errors": invalid_enumerator_id_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
@@ -504,6 +515,7 @@ class AssignmentsUpload:
                     "error_message": f"The file contains {len(dropout_enumerator_id_df)} enumerator_id(s) that have status 'Dropout' and are ineligible for assignment. The following row numbers contain dropout enumerator_id's: {', '.join(str(row_number) for row_number in dropout_enumerator_id_df.index.to_list())}",
                     "error_count": len(dropout_enumerator_id_df),
                     "row_numbers_with_errors": dropout_enumerator_id_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
@@ -527,98 +539,93 @@ class AssignmentsUpload:
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
         # Mapping criteria based checks
-        if validate_mapping:
-            try:
-                target_mapping = TargetMapping(self.form_uid)
-                surveyor_mapping = SurveyorMapping(self.form_uid)
-            except MappingError as e:
-                raise e
+        try:
+            target_mapping = TargetMapping(self.form_uid)
+            surveyor_mapping = SurveyorMapping(self.form_uid)
+        except MappingError as e:
+            raise e
 
-            target_mappings = target_mapping.generate_mappings()
-            target_mappings_query = select(
-                Values(
-                    column("target_uid", Integer),
-                    column("supervisor_uid", Integer),
-                    name="mappings",
-                ).data(
-                    [
-                        (mapping["target_uid"], mapping["supervisor_uid"])
-                        for mapping in target_mappings
-                    ]
-                    if len(target_mappings) > 0
-                    else [
-                        (0, 0)
-                    ]  # If there are no mappings, we still need to return a row with 0 values
-                )
-            ).subquery()
-
-            is_survey_admin = check_if_survey_admin(self.user_uid, self.survey_uid)
-            child_users_with_supervisors_query = (
-                build_child_users_with_supervisors_query(
-                    self.user_uid,
-                    self.survey_uid,
-                    target_mapping.bottom_level_role_uid,
-                    is_survey_admin,
-                )
+        target_mappings = target_mapping.generate_mappings()
+        target_mappings_query = select(
+            Values(
+                column("target_uid", Integer),
+                column("supervisor_uid", Integer),
+                name="mappings",
+            ).data(
+                [
+                    (mapping["target_uid"], mapping["supervisor_uid"])
+                    for mapping in target_mappings
+                ]
+                if len(target_mappings) > 0
+                else [
+                    (0, 0)
+                ]  # If there are no mappings, we still need to return a row with 0 values
             )
+        ).subquery()
 
-            targets_mapped_to_current_user = (
-                db.session.query(
-                    Target.target_id, target_mappings_query.c.supervisor_uid
-                )
-                .join(
-                    target_mappings_query,
-                    Target.target_uid == target_mappings_query.c.target_uid,
-                )
-                .join(
-                    child_users_with_supervisors_query,
-                    target_mappings_query.c.supervisor_uid
-                    == child_users_with_supervisors_query.c.user_uid,
-                )
-                .filter(
-                    Target.form_uid == self.form_uid,
-                )
-                .all()
+        is_survey_admin = check_if_survey_admin(self.user_uid, self.survey_uid)
+        child_users_with_supervisors_query = build_child_users_with_supervisors_query(
+            self.user_uid,
+            self.survey_uid,
+            target_mapping.bottom_level_role_uid,
+            is_survey_admin,
+        )
+
+        targets_mapped_to_current_user = (
+            db.session.query(Target.target_id, target_mappings_query.c.supervisor_uid)
+            .join(
+                target_mappings_query,
+                Target.target_uid == target_mappings_query.c.target_uid,
             )
-
-            surveyor_mappings = surveyor_mapping.generate_mappings()
-            surveyor_mappings_query = select(
-                Values(
-                    column("enumerator_uid", Integer),
-                    column("supervisor_uid", Integer),
-                    name="mappings",
-                ).data(
-                    [
-                        (mapping["enumerator_uid"], mapping["supervisor_uid"])
-                        for mapping in surveyor_mappings
-                    ]
-                    if len(surveyor_mappings) > 0
-                    else [
-                        (0, 0)
-                    ]  # If there are no mappings, we still need to return a row with 0 values
-                )
-            ).subquery()
-
-            surveyors_mapped_to_current_user = (
-                db.session.query(
-                    Enumerator.enumerator_id, surveyor_mappings_query.c.supervisor_uid
-                )
-                .join(
-                    surveyor_mappings_query,
-                    (
-                        Enumerator.enumerator_uid
-                        == surveyor_mappings_query.c.enumerator_uid
-                    )
-                    & (Enumerator.form_uid == self.form_uid),
-                )
-                .join(
-                    child_users_with_supervisors_query,
-                    surveyor_mappings_query.c.supervisor_uid
-                    == child_users_with_supervisors_query.c.user_uid,
-                )
-                .all()
+            .join(
+                child_users_with_supervisors_query,
+                target_mappings_query.c.supervisor_uid
+                == child_users_with_supervisors_query.c.user_uid,
             )
+            .filter(
+                Target.form_uid == self.form_uid,
+            )
+            .all()
+        )
 
+        surveyor_mappings = surveyor_mapping.generate_mappings()
+        surveyor_mappings_query = select(
+            Values(
+                column("enumerator_uid", Integer),
+                column("supervisor_uid", Integer),
+                name="mappings",
+            ).data(
+                [
+                    (mapping["enumerator_uid"], mapping["supervisor_uid"])
+                    for mapping in surveyor_mappings
+                ]
+                if len(surveyor_mappings) > 0
+                else [
+                    (0, 0)
+                ]  # If there are no mappings, we still need to return a row with 0 values
+            )
+        ).subquery()
+
+        surveyors_mapped_to_current_user = (
+            db.session.query(
+                Enumerator.enumerator_id, surveyor_mappings_query.c.supervisor_uid
+            )
+            .join(
+                surveyor_mappings_query,
+                (Enumerator.enumerator_uid == surveyor_mappings_query.c.enumerator_uid)
+                & (Enumerator.form_uid == self.form_uid),
+            )
+            .join(
+                child_users_with_supervisors_query,
+                surveyor_mappings_query.c.supervisor_uid
+                == child_users_with_supervisors_query.c.user_uid,
+            )
+            .all()
+        )
+
+        # Check only if the user is not a survey admin
+        # Survey admins can assign any target
+        if not is_survey_admin:
             # Check each target is assignable by the current supervisor as per the mappings
             not_mapped_to_current_user_df = self.assignments_df[
                 ~self.assignments_df[column_mapping.target_id].isin(
@@ -638,6 +645,7 @@ class AssignmentsUpload:
                         "error_message": f"The file contains {len(not_mapped_to_current_user_df)} target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_current_user_df.index.to_list())}",
                         "error_count": len(not_mapped_to_current_user_df),
                         "row_numbers_with_errors": not_mapped_to_current_user_df.index.to_list(),
+                        "can_be_ignored": False,
                     }
                 )
 
@@ -664,6 +672,7 @@ class AssignmentsUpload:
                     "; "
                 )
 
+        if validate_mapping:
             # Check if enumerator is mapped to the same supervisor as the target
             not_mapped_to_same_supervisor_df = self.assignments_df[
                 ~self.assignments_df.apply(
@@ -689,10 +698,11 @@ class AssignmentsUpload:
             if len(not_mapped_to_same_supervisor_df) > 0:
                 record_errors["summary_by_error_type"].append(
                     {
-                        "error_type": "Incorrectly mappings target_id's",
-                        "error_message": f"The file contains {len(not_mapped_to_same_supervisor_df)} target_id(s) that are assigned to enumerators mapped to a different supervisor. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_same_supervisor_df.index.to_list())}",
+                        "error_type": "Incorrectly mapped target and enumerator id's",
+                        "error_message": f"The file contains {len(not_mapped_to_same_supervisor_df)} target_id(s) that are assigned to enumerators mapped to a different supervisor or the target/enumerator/both are not mapped. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_same_supervisor_df.index.to_list())}",
                         "error_count": len(not_mapped_to_same_supervisor_df),
                         "row_numbers_with_errors": not_mapped_to_same_supervisor_df.index.to_list(),
+                        "can_be_ignored": True,
                     }
                 )
 
