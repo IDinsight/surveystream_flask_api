@@ -1245,6 +1245,7 @@ class TestMapping:
             expected_response = {
                 "data": [
                     {
+                        "config_uid": None,
                         "mapping_status": "Complete",
                         "supervisor_mapping_criteria_values": {
                             "criteria": {
@@ -1390,6 +1391,7 @@ class TestMapping:
         expected_response = {
             "data": [
                 {
+                    "config_uid": None,
                     "mapping_status": "Complete",
                     "supervisor_mapping_criteria_values": {
                         "criteria": {
@@ -1407,6 +1409,7 @@ class TestMapping:
                     "target_count": 1,
                 },
                 {
+                    "config_uid": None,
                     "mapping_status": "Pending",
                     "supervisor_mapping_criteria_values": None,
                     "supervisor_count": None,
@@ -1553,23 +1556,7 @@ class TestMapping:
             expected_response = {
                 "data": [
                     {
-                        "mapping_status": "Complete",
-                        "supervisor_mapping_criteria_values": {
-                            "criteria": {
-                                "Language": "Hindi",
-                            },
-                            "other": {},
-                        },
-                        "supervisor_count": 1,
-                        "target_mapping_criteria_values": {
-                            "criteria": {
-                                "Language": "Hindi",
-                            },
-                            "other": {},
-                        },
-                        "target_count": 1,
-                    },
-                    {
+                        "config_uid": 1,
                         "mapping_status": "Complete",
                         "supervisor_mapping_criteria_values": {
                             "criteria": {
@@ -1581,6 +1568,24 @@ class TestMapping:
                         "target_mapping_criteria_values": {
                             "criteria": {
                                 "Language": "Telugu",
+                            },
+                            "other": {},
+                        },
+                        "target_count": 1,
+                    },
+                    {
+                        "config_uid": None,
+                        "mapping_status": "Complete",
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Hindi",
+                            },
+                            "other": {},
+                        },
+                        "supervisor_count": 1,
+                        "target_mapping_criteria_values": {
+                            "criteria": {
+                                "Language": "Hindi",
                             },
                             "other": {},
                         },
@@ -1709,6 +1714,7 @@ class TestMapping:
             expected_response = {
                 "data": [
                     {
+                        "config_uid": None,
                         "mapping_status": "Complete",
                         "supervisor_mapping_criteria_values": {
                             "criteria": {
@@ -1726,6 +1732,7 @@ class TestMapping:
                         "target_count": 1,
                     },
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_mapping_criteria_values": None,
                         "supervisor_count": None,
@@ -1775,8 +1782,7 @@ class TestMapping:
             "/api/mapping/targets-mapping-config",
             query_string={
                 "form_uid": 1,
-                "mapping_values": [{"criteria": "Language", "value": "Telugu"}],
-                "mapped_to": [{"criteria": "Language", "value": "Hindi"}],
+                "config_uid": 1,
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -1859,6 +1865,7 @@ class TestMapping:
             expected_response = {
                 "data": [
                     {
+                        "config_uid": None,
                         "mapping_status": "Complete",
                         "supervisor_mapping_criteria_values": {
                             "criteria": {
@@ -1876,6 +1883,7 @@ class TestMapping:
                         "target_count": 1,
                     },
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_mapping_criteria_values": None,
                         "supervisor_count": None,
@@ -2094,6 +2102,7 @@ class TestMapping:
         expected_response = {
             "data": [
                 {
+                    "config_uid": None,
                     "mapping_status": "Pending",
                     "supervisor_mapping_criteria_values": None,
                     "supervisor_count": None,
@@ -2106,6 +2115,7 @@ class TestMapping:
                     "target_count": 1,
                 },
                 {
+                    "config_uid": None,
                     "mapping_status": "Pending",
                     "supervisor_mapping_criteria_values": {
                         "criteria": {
@@ -2245,6 +2255,7 @@ class TestMapping:
             expected_response = {
                 "data": [
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_mapping_criteria_values": None,
                         "supervisor_count": None,
@@ -2257,6 +2268,7 @@ class TestMapping:
                         "target_count": 1,
                     },
                     {
+                        "config_uid": None,
                         "mapping_status": "Complete",
                         "supervisor_mapping_criteria_values": {
                             "criteria": {
@@ -3103,6 +3115,7 @@ class TestMapping:
             expected_response = {
                 "data": [
                     {
+                        "config_uid": None,
                         "mapping_status": "Complete",
                         "supervisor_mapping_criteria_values": {
                             "criteria": {
@@ -3261,6 +3274,7 @@ class TestMapping:
         expected_response = {
             "data": [
                 {
+                    "config_uid": None,
                     "mapping_status": "Pending",
                     "supervisor_count": None,
                     "supervisor_mapping_criteria_values": None,
@@ -3271,6 +3285,7 @@ class TestMapping:
                     },
                 },
                 {
+                    "config_uid": None,
                     "mapping_status": "Pending",
                     "supervisor_count": None,
                     "supervisor_mapping_criteria_values": None,
@@ -3281,6 +3296,7 @@ class TestMapping:
                     },
                 },
                 {
+                    "config_uid": None,
                     "mapping_status": "Pending",
                     "supervisor_count": None,
                     "supervisor_mapping_criteria_values": None,
@@ -3440,6 +3456,21 @@ class TestMapping:
             expected_response = {
                 "data": [
                     {
+                        "config_uid": 1,
+                        "mapping_status": "Complete",
+                        "supervisor_count": 1,
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": {"Language": "Hindi"},
+                            "other": {},
+                        },
+                        "surveyor_count": 1,
+                        "surveyor_mapping_criteria_values": {
+                            "criteria": {"Language": "Telugu"},
+                            "other": {},
+                        },
+                    },
+                    {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_count": None,
                         "supervisor_mapping_criteria_values": None,
@@ -3450,25 +3481,13 @@ class TestMapping:
                         },
                     },
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_count": None,
                         "supervisor_mapping_criteria_values": None,
                         "surveyor_count": 1,
                         "surveyor_mapping_criteria_values": {
                             "criteria": {"Language": "Swahili"},
-                            "other": {},
-                        },
-                    },
-                    {
-                        "mapping_status": "Complete",
-                        "supervisor_count": 1,
-                        "supervisor_mapping_criteria_values": {
-                            "criteria": {"Language": "Hindi"},
-                            "other": {},
-                        },
-                        "surveyor_count": 1,
-                        "surveyor_mapping_criteria_values": {
-                            "criteria": {"Language": "Telugu"},
                             "other": {},
                         },
                     },
@@ -3610,6 +3629,7 @@ class TestMapping:
             expected_response = {
                 "data": [
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_count": None,
                         "supervisor_mapping_criteria_values": None,
@@ -3620,6 +3640,7 @@ class TestMapping:
                         },
                     },
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_count": None,
                         "supervisor_mapping_criteria_values": None,
@@ -3630,6 +3651,7 @@ class TestMapping:
                         },
                     },
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_count": None,
                         "supervisor_mapping_criteria_values": None,
@@ -3678,8 +3700,7 @@ class TestMapping:
             "/api/mapping/surveyors-mapping-config",
             query_string={
                 "form_uid": 1,
-                "mapping_values": [{"criteria": "Language", "value": "Telugu"}],
-                "mapped_to": [{"criteria": "Language", "value": "Hindi"}],
+                "config_uid": 1,
             },
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -3776,6 +3797,7 @@ class TestMapping:
             expected_response = {
                 "data": [
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_count": None,
                         "supervisor_mapping_criteria_values": None,
@@ -3786,6 +3808,7 @@ class TestMapping:
                         },
                     },
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_count": None,
                         "supervisor_mapping_criteria_values": None,
@@ -3796,6 +3819,7 @@ class TestMapping:
                         },
                     },
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_count": None,
                         "supervisor_mapping_criteria_values": None,
@@ -4040,6 +4064,7 @@ class TestMapping:
         expected_response = {
             "data": [
                 {
+                    "config_uid": None,
                     "mapping_status": "Pending",
                     "supervisor_mapping_criteria_values": None,
                     "supervisor_count": None,
@@ -4052,6 +4077,7 @@ class TestMapping:
                     "surveyor_count": 1,
                 },
                 {
+                    "config_uid": None,
                     "mapping_status": "Pending",
                     "supervisor_mapping_criteria_values": {
                         "criteria": {
@@ -4205,6 +4231,7 @@ class TestMapping:
             expected_response = {
                 "data": [
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_mapping_criteria_values": None,
                         "supervisor_count": None,
@@ -4217,6 +4244,7 @@ class TestMapping:
                         "surveyor_count": 1,
                     },
                     {
+                        "config_uid": None,
                         "mapping_status": "Pending",
                         "supervisor_mapping_criteria_values": {
                             "criteria": {
