@@ -7343,6 +7343,9 @@ paths:
                     items:
                       type: object
                       properties:
+                        config_uid:
+                          type: integer
+                          description: The unique ID of a custom targets mapping configuration. Value is null for auto mapped values.
                         target_mapping_criteria_values:
                           type: object
                           description: The target to supervisor mapping criteria values for the target
@@ -7477,21 +7480,11 @@ paths:
           description: Unique ID of the form
           required: true
         - in: query
-          name: mapping_values
+          name: config_uid
           schema:
-            type: array
+            type: integer
           description: >-
-            The target mapping criteria values to be deleted. Each array item
-            is an object with the criteria name and value
-          required: true
-        - in: query
-          name: mapped_to
-          schema:
-            type: array
-          description: >-
-            The supervisor mapping criteria values to which the target mapping
-            criteria values are mapped. Each array item is an object with the
-            criteria name and value
+            Unique ID of the custom targets mapping configuration to be deleted
           required: true
       responses:
         "200":
@@ -7739,6 +7732,9 @@ paths:
                     items:
                       type: object
                       properties:
+                        config_uid:
+                          type: integer
+                          description: The unique ID of a custom surveyors mapping configuration. Value is null for auto mapped values.
                         surveyor_mapping_criteria_values:
                           type: object
                           description: The surveyor to supervisor mapping criteria values for the surveyor
@@ -7873,21 +7869,11 @@ paths:
           description: Unique ID of the form
           required: true
         - in: query
-          name: mapping_values
+          name: config_uid
           schema:
-            type: array
+            type: integer
           description: >-
-            The surveyor mapping criteria values to be deleted. Each array item
-            is an object with the criteria name and value
-          required: true
-        - in: query
-          name: mapped_to
-          schema:
-            type: array
-          description: >-
-            The supervisor mapping criteria values to which the surveyor mapping
-            criteria values are mapped. Each array item is an object with the
-            criteria name and value
+            Unique ID of the custom surveyors mapping configuration to be deleted
           required: true
       responses:
         "200":
