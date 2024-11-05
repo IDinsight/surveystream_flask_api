@@ -72,6 +72,7 @@ class ColumnConfigValidator(FlaskForm):
         ),
         validators=[DataRequired()],
     )
+    column_source = StringField(validators=[DataRequired()])
 
 
 class UpdateTargetsColumnConfig(FlaskForm):

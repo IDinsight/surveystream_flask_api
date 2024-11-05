@@ -139,7 +139,7 @@ class TestAssignments:
         )
 
         login_user(client, test_user_credentials)
-        
+
     @pytest.fixture
     def user_with_no_permissions(self, client, test_user_credentials):
         # Assign no roles and permissions
@@ -187,6 +187,7 @@ class TestAssignments:
     )
     def user_permissions_with_upload(self, request):
         return request.param
+
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -1353,42 +1354,49 @@ class TestAssignments:
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": False,
+                    "column_source": "target_id1",
                 },
                 {
                     "column_name": "language",
                     "column_type": "basic_details",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "language",
                 },
                 {
                     "column_name": "gender",
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "gender",
                 },
                 {
                     "column_name": "Name",
                     "column_type": "custom_fields",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "name",
                 },
                 {
                     "column_name": "Mobile no.",
                     "column_type": "custom_fields",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "mobile_primary",
                 },
                 {
                     "column_name": "Address",
                     "column_type": "custom_fields",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "address",
                 },
                 {
                     "column_name": "bottom_geo_level_location",
                     "column_type": "location",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "psu_id",
                 },
             ],
         }
@@ -1421,36 +1429,42 @@ class TestAssignments:
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": False,
+                    "column_source": "target_id1",
                 },
                 {
                     "column_name": "language",
                     "column_type": "basic_details",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "language",
                 },
                 {
                     "column_name": "gender",
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "gender",
                 },
                 {
                     "column_name": "Name",
                     "column_type": "custom_fields",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "name",
                 },
                 {
                     "column_name": "Mobile no.",
                     "column_type": "custom_fields",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "mobile_primary",
                 },
                 {
                     "column_name": "Address",
                     "column_type": "custom_fields",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "address",
                 },
             ],
         }
@@ -1483,24 +1497,28 @@ class TestAssignments:
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": False,
+                    "column_source": "target_id1",
                 },
                 {
                     "column_name": "language",
                     "column_type": "basic_details",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "language",
                 },
                 {
                     "column_name": "gender",
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "gender",
                 },
                 {
                     "column_name": "bottom_geo_level_location",
                     "column_type": "location",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "psu_id",
                 },
             ],
         }

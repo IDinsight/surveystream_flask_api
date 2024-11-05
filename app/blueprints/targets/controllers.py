@@ -973,6 +973,7 @@ def update_target_column_config(validated_payload):
                 column_type=column["column_type"],
                 bulk_editable=column["bulk_editable"],
                 contains_pii=column["contains_pii"],
+                column_source=column["column_source"],
             )
         )
 
@@ -1004,6 +1005,7 @@ def get_target_column_config(validated_query_params):
             "column_type": column.column_type,
             "bulk_editable": column.bulk_editable,
             "contains_pii": column.contains_pii,
+            "column_source": column.column_source,
         }
         for column in column_config
     ]
@@ -1339,6 +1341,10 @@ def refresh_target_scto_columns(validated_query_params):
         scto_credentials["username"],
         scto_credentials["password"],
     )
+
+    # Delete existing data
+    TargetSCTOQuestion.query.filter_by(form_uid=form_uid).delete()
+
     if target_config.scto_input_type == "form":
         scto_form_id = target_config.scto_input_id
         scto_form_definition = scto.get_form_definition(scto_form_id)
@@ -1428,7 +1434,7 @@ def get_target_scto_columns(validated_query_params):
         )
     else:
         # if Input type is form add metadata columns
-        metadata_column_list=[
+        metadata_column_list = [
             "instanceID",
             "formdef_version",
             "starttime",
