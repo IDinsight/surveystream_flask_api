@@ -6763,6 +6763,207 @@ paths:
           description: Form not found
         "422":
           description: Form errors
+  
+  /targets/config:
+    get:
+      summary: Get the targets config for a form
+      description: >
+        Get the targets config for a form.
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: The form UID of the target config to be updated.
+          required: true
+      responses:
+        "200":
+          description: Target config retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates if the request was successful.
+                  data:
+                    type: object
+                    properties:
+                      form_uid:
+                        type: integer
+                        description: The form UID of the targets config
+                      target_source:
+                        type: string
+                        description: The source of the targets- csv or scto
+                      scto_input_type:
+                        type: string
+                        description: The type of SCTO input- form or dataset
+                      scto_input_id:
+                        type: string
+                        description: The ID of the SCTO input, i.e. scto form id or dataset id
+                      scto_encryption_flag:
+                        type: boolean
+                        description: The encryption flag for SCTO input- true or false
+        "404":
+          description: Target configuration not found for the form
+    post:
+      summary: Create the targets config for a form
+      description: >
+        Create the targets config for a form.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The form UID of the targets to be updated.
+                target_source:
+                  type: string
+                  description: The source of the targets- csv or scto
+                  values:
+                    - csv
+                    - scto
+                scto_input_type:
+                  type: string
+                  description: The type of SCTO input- form or dataset
+                  values:
+                    - form
+                    - dataset
+                scto_input_id:
+                  type: string
+                  description: The ID of the SCTO input, i.e. scto form id or dataset id
+                scto_encryption_flag:
+                  type: boolean
+                  description: The encryption flag for SCTO input- true or false
+              required:
+                - form_uid
+                - target_source
+      responses:
+        "200":
+          description: Target Config created successfully
+
+    put:
+      summary: Update the targets config for a form
+      description: >
+        Update the targets config for a form.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The form UID of the targets to be updated.
+                target_source:
+                  type: string
+                  description: The source of the targets- csv or scto
+                  values:
+                    - csv
+                    - scto
+                scto_input_type:
+                  type: string
+                  description: The type of SCTO input- form or dataset
+                  values:
+                    - form
+                    - dataset
+                scto_input_id:
+                  type: string
+                  description: The ID of the SCTO input, i.e. scto form id or dataset id
+                scto_encryption_flag:
+                  type: boolean
+                  description: The encryption flag for SCTO input- true or false
+              required:
+                - form_uid
+                - target_source
+      responses:
+        "200":
+          description: Target Config updated successfully
+        "404":
+          description: Target Config not found
+  
+  /targets/config/scto-columns:
+    get:
+      summary: Get surveycto input columns for targets
+      description: Get surveycto input columns for targets.
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: Surveycto input columns retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of surveycto input columns
+                    items:
+                      type: string
+    
+    put:
+      summary: Update surveycto input columns for targets
+      description: >
+        Update surveycto input columns for targets by
+        refreshing target source form definition/dataset from surveycto
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: Surveycto input columns updated successfully
+        "404":
+          description: Form with form_uid={form_uid} not found
+        "412":
+          description: Refresh endpoint works only for target source set as scto
   /targets/column-config:
     put:
       summary: Update the targets column config for a form
@@ -7262,9 +7463,55 @@ paths:
         "500":
           description: An unexpected error occurred
     delete:
-      summary: Delete the targets mapping configuration for a form
+      summary: Delete a specific custom targets mapping configuration for a form
       description: >
-        Deletes the targets mapping, both criteria level as well as target level, for a given form from 
+        Deletes a specific custom targets mapping configuration for a given form
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+        - in: query
+          name: mapping_values
+          schema:
+            type: array
+          description: >-
+            The target mapping criteria values to be deleted. Each array item
+            is an object with the criteria name and value
+          required: true
+        - in: query
+          name: mapped_to
+          schema:
+            type: array
+          description: >-
+            The supervisor mapping criteria values to which the target mapping
+            criteria values are mapped. Each array item is an object with the
+            criteria name and value
+          required: true
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+  "/mapping/targets-mapping-config/reset":
+    delete:
+      summary: Resets the targets mapping configuration for a form
+      description: >
+        Deletes all the targets mapping, both criteria level as well as target level, for a given form from 
         the database. This resets the state to auto generated mappings based on the mapping criteria.
       tags:
         - Mapping
@@ -7290,6 +7537,7 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred
+  
   "/mapping/targets-mapping":
     get:
       summary: Get target to supervisor mapping for a form
@@ -7465,6 +7713,7 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred 
+  
   "/mapping/surveyors-mapping-config":
     get:
       summary: Get surveyors mapping configuration for a form
@@ -7610,9 +7859,55 @@ paths:
         "500":
           description: An unexpected error occurred
     delete:
-      summary: Delete the surveyors mapping configuration for a form
+      summary: Delete a specific surveyors mapping configuration for a form
       description: >
-        Deletes the surveyors mapping, both criteria level as well as surveyor level, for a given form from 
+        Deletes a specific custom surveyors mapping configuration for a given form
+      tags:
+        - Mapping
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+        - in: query
+          name: mapping_values
+          schema:
+            type: array
+          description: >-
+            The surveyor mapping criteria values to be deleted. Each array item
+            is an object with the criteria name and value
+          required: true
+        - in: query
+          name: mapped_to
+          schema:
+            type: array
+          description: >-
+            The supervisor mapping criteria values to which the surveyor mapping
+            criteria values are mapped. Each array item is an object with the
+            criteria name and value
+          required: true
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: Form errors
+        "500":
+          description: An unexpected error occurred
+  "/mapping/surveyors-mapping-config/reset":
+    delete:
+      summary: Resets the surveyors mapping configuration for a form
+      description: >
+        Deletes all the surveyors mapping, both criteria level as well as surveyor level, for a given form from 
         the database. This resets the state to auto generated mappings based on the mapping criteria.
       tags:
         - Mapping
@@ -7638,6 +7933,7 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred
+  
   "/mapping/surveyors-mapping":
     get:
       summary: Get surveyor to supervisor mapping for a form
