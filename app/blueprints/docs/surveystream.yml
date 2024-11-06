@@ -94,6 +94,8 @@ tags:
     description: Endpoints related to emails configuration
   - name: Media Files
     description: Endpoints related to media files
+  - name: Data Quality
+    description: Endpoints related to data quality configuration
 
 x-tagGroups:
   - name: User Management
@@ -154,6 +156,9 @@ x-tagGroups:
   - name: Media Files
     tags:
       - Media Files
+  - name: Data Quality
+    tags:
+      - Data Quality
 
 paths:
   /healthcheck:
@@ -10807,3 +10812,719 @@ paths:
       responses:
         "200":
           description: Media files config deleted successfully
+
+  /dq/check-types:
+    get:
+      summary: Get all DQ check types
+      description: Retrieve a list of all available Data Quality (DQ) check types.
+      tags:
+        - Data Quality
+      responses:
+        "200":
+          description: Successfully returns a list of DQ check types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type_id:
+                          type: integer
+                          description: Unique identifier for the DQ check type
+                          example: 1
+                        name:
+                          type: string
+                          description: Name of the DQ check type
+                          example: "Missing"
+                        abbr:
+                          type: list
+                          description: List of abbreviations linked to the DQ check type
+                          example: ["M"]
+        "404":
+          description: DQ check types not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  data:
+                    type: null
+                    example: null
+                  message:
+                    type: string
+                    example: "DQ check types not found"
+
+  /dq/config:
+    get:
+      summary: Get DQ configuration for a form
+      description: Retrieve the DQ configuration for a specific form.
+      tags:
+        - Data Quality
+      parameters:
+        - name: form_uid
+          in: query
+          description: Unique identifier for the form
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully returns the DQ configuration for the form
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        form_uid:
+                          type: integer
+                          description: Unique identifier for the form
+                          example: 123
+                        survey_status_filter:
+                          type: list
+                          description: List of survey statuses to filter the data
+                          example: ["1", "2"]
+                        dq_checks:
+                          type: array
+                          description: List of DQ checks configured for the form
+                          items:
+                            type: object
+                            properties:
+                              type_id:
+                                type: integer
+                                description: Unique identifier for the DQ check type
+                                example: 1
+                              num_configured:
+                                type: string
+                                description: Number of checks configured for the DQ check type. Value is "All" if check is applies on all variables in the form
+                              num_active:
+                                type: integer
+                                description: Number of checks that are active for the DQ check type. Value is "All" if check is applies on all variables in the form
+        "404":
+          description: No DQ configs found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  data:
+                    type: null
+                    example: null
+                  message:
+                    type: string
+                    example: "DQ configs not found"
+
+    put:
+      summary: Create/update new DQ configuration for a form
+      description: Create or update the DQ configuration for a specific form.
+      tags:
+        - Data Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                survey_status_filter:
+                  type: list
+                  description: List of survey statuses to filter the data
+                  example: ["1", "2"]
+              required:
+                - form_uid
+                - survey_status_filter
+      responses:
+        "201":
+          description: DQ configuration created/updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ configuration created/updated successfully"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while creating/updating the DQ configuration"
+                  
+  /dq/checks:
+    get:
+      summary: Get DQ checks for a form and type
+      description: Retrieve the DQ checks for a specific form and check type.
+      tags:
+        - Data Quality
+      parameters:
+        - name: form_uid
+          in: query
+          description: Unique identifier for the form
+          required: true
+          schema:
+            type: integer
+        - name: type_id
+          in: query
+          description: Unique identifier for the DQ check type
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully returns the DQ checks for the form
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        form_uid:
+                          type: integer
+                          description: Unique identifier for the form
+                          example: 123
+                        type_id:
+                          type: integer
+                          description: Unique identifier for the DQ check type
+                          example: 1
+                        dq_check_uid:
+                          type: integer
+                          description: Unique identifier for the DQ check
+                          example: 123
+                        all_questions:
+                          type: boolean
+                          description: Indicates if the DQ check applies to all questions in the form
+                          example: true
+                        question_name:
+                          type: string
+                          description: Name of the question the DQ check applies to. Value is None if check applies to all questions
+                          example: "district_name"
+                        is_repeat_group:
+                          type: boolean
+                          description: Indicates if the question is a repeat group
+                          example: true
+                        dq_scto_form_uid:
+                          type: integer
+                          description: Unique identifier for the Data Quality SurveyCTO form. This is provided for Mismatch, protocol violations and spotcheck score checks
+                          example: 123
+                        flag_description:
+                          type: string
+                          description: Description of the flag
+                          example: "Flags if the district name is missing"
+                        module_name:
+                          type: string
+                          description: Name of the module used for grouping the DQ check output
+                          example: "Agriculture"
+                        filters:
+                          type: array
+                          description: List of filters groups to be applied to the DQ check joined by an OR condition
+                          items:
+                            type: object
+                            description: Filter group
+                            properties:
+                              filter_group:
+                                type: array
+                                description: List of filters in the filter group joined by an AND condition
+                                items:
+                                  type: object
+                                  properties:
+                                    question_name:
+                                      type: string
+                                      description: Name of the question to apply filter on
+                                      example: "age"
+                                    filter_operator:
+                                      type: string
+                                      description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than'
+                                      example: "Is empty"
+                                    filter_value:
+                                      type: string
+                                      description: Value to filter on
+                                    is_repeat_group:
+                                      type: boolean
+                                      description: Indicates if the filter question is a repeat group
+                                      example: true
+                        check_components:
+                          type: object
+                          description: JSON object containing the check components based on the DQ check type
+                          properties:
+                            value:
+                              type: array
+                              description: List of values for checking missing, don't know and refusal checks
+                              items:
+                                type: string
+                                example: ["Is empty", "is NA"]
+                        active:
+                          type: boolean
+                          description: Indicates if the DQ check is active or not
+                          example: true
+                        note:
+                          type: string
+                          description: Additional notes for the DQ check added by the system
+                          example: "Question not found in form definition"
+        "404":
+          description: No DQ checks found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  data:
+                    type: null
+                    example: null
+                  message:
+                    type: string
+                    example: "DQ checks not found"
+
+    post:
+      summary: Create new DQ check for a form
+      description: Create a new DQ check for a specific form.
+      tags:
+        - Data Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                type_id:
+                  type: integer
+                  description: Unique identifier for the DQ check type
+                  example: 1
+                all_questions:
+                  type: boolean
+                  description: Indicates if the DQ check applies to all questions in the form
+                  example: true
+                question_name:
+                  type: string
+                  description: Name of the question the DQ check applies to. Value is None if check applies to all questions
+                  example: "district_name"
+                module_name:
+                  type: string
+                  description: Name of the module used for grouping the DQ check output
+                  example: "Agriculture"
+                flag_description:
+                  type: string
+                  description: Description of the flag
+                  example: "Flags if the district name is missing"
+                filters:
+                  type: array
+                  description: List of filters groups to be applied to the DQ check joined by an OR condition
+                  items:
+                    type: object
+                    description: Filter group
+                    properties:
+                      filter_group:
+                        type: array
+                        description: List of filters in the filter group joined by an AND condition
+                        items:
+                          type: object
+                          properties:
+                            question_name:
+                              type: string
+                              description: Name of the question to apply filter on
+                              example: "age"
+                            filter_operator:
+                              type: string
+                              description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than'
+                              example: "Is empty"
+                            filter_value:
+                              type: string
+                              description: Value to filter on
+                check_components:
+                  type: object
+                  description: JSON object containing the check components based on the DQ check type
+                  properties:
+                    value:
+                      type: array
+                      description: List of values for checking missing, don't know and refusal checks
+                      items:
+                        type: string
+                        example: ["Is empty", "is NA"]
+                active:
+                  type: boolean
+                  description: Indicates if the DQ check is active or not
+                  example: true
+
+              required:
+                - form_uid
+                - type_id
+
+      responses:
+        "200":
+          description: DQ check created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ check created successfully"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while creating the DQ check"
+
+    delete:
+      summary: Delete DQ checks for a form
+      description: Delete DQ checks for a specific form.
+      tags:
+        - Data Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                type_id:
+                  type: integer
+                  description: Unique identifier for the DQ check type
+                  example: 1
+                check_uids:
+                  type: array
+                  description: List of unique identifiers for the DQ checks to be deleted
+                  items:
+                    type: integer
+                    example: 123
+              required:
+                - form_uid
+                - type_id
+                - check_uids
+      responses:
+        "200":
+          description: DQ check deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ check deleted successfully"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while deleting the DQ check"
+
+  /dq/checks/{dq_check_uid}:
+    put:
+      summary: Update DQ check for a form
+      description: Update a DQ check for a specific form.
+      tags:
+        - Data Quality
+      parameters:
+        - in: path
+          name: dq_check_uid
+          required: true
+          description: Unique identifier for the DQ check
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                type_id:
+                  type: integer
+                  description: Unique identifier for the DQ check type
+                  example: 1
+                all_questions:
+                  type: boolean
+                  description: Indicates if the DQ check applies to all questions in the form
+                  example: true
+                question_name:
+                  type: string
+                  description: Name of the question the DQ check applies to. Value is None if check applies to all questions
+                  example: "district_name"
+                module_name:
+                  type: string
+                  description: Name of the module used for grouping the DQ check output
+                  example: "Agriculture"
+                flag_description:
+                  type: string
+                  description: Description of the flag
+                  example: "Flags if the district name is missing"
+                filters:
+                  type: array
+                  description: List of filters groups to be applied to the DQ check joined by an OR condition
+                  items:
+                    type: object
+                    description: Filter group
+                    properties:
+                      filter_group:
+                        type: array
+                        description: List of filters in the filter group joined by an AND condition
+                        items:
+                          type: object
+                          properties:
+                            question_name:
+                              type: string
+                              description: Name of the question to apply filter on
+                              example: "age"
+                            filter_operator:
+                              type: string
+                              description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than'
+                              example: "Is empty"
+                            filter_value:
+                              type: string
+                              description: Value to filter on
+                check_components:
+                  type: object
+                  description: JSON object containing the check components based on the DQ check type
+                  properties:
+                    value:
+                      type: array
+                      description: List of values for checking missing, don't know and refusal checks
+                      items:
+                        type: string
+                        example: ["Is empty", "is NA"]
+                active:
+                  type: boolean
+
+              required:
+                - form_uid
+                - type_id
+      responses:
+        "200":
+          description: DQ check updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ check updated successfully"
+        "404":
+          description: DQ check not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "DQ check not found"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while updating the DQ check"
+  
+  /dq/checks/activate:
+    put:
+      summary: Activate DQ checks for a form
+      description: Activate DQ checks for a specific form.
+      tags:
+        - Data Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                type_id:
+                  type: integer
+                  description: Unique identifier for the DQ check type
+                  example: 1
+                check_uids:
+                  type: array
+                  description: List of unique identifiers for the DQ checks to be activated
+                  items:
+                    type: integer
+                    example: 123
+              required:
+                - form_uid
+                - type_id
+                - check_uids
+      responses:
+        "200":
+          description: DQ checks activated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ checks activated successfully"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while activating the DQ checks"
+  
+  /dq/checks/deactivate:
+    put:
+      summary: Deactivate DQ checks for a form
+      description: Deactivate DQ checks for a specific form.
+      tags:
+        - Data Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                type_id:
+                  type: integer
+                  description: Unique identifier for the DQ check type
+                  example: 1
+                check_uids:
+                  type: array
+                  description: List of unique identifiers for the DQ checks to be deactivated
+                  items:
+                    type: integer
+                    example: 123
+              required:
+                - form_uid
+                - type_id
+                - check_uids
+      responses:
+        "200":
+          description: DQ checks deactivated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ checks deactivated successfully"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while deactivating the DQ checks"
+  
