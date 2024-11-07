@@ -2,7 +2,7 @@
 Target Column Config- Add column_source column to store input column name
 
 Revision ID: 92e3720f48ba
-Revises: 9f4edc77675a
+Revises: 55b9ef040163
 Create Date: 2024-11-05 15:46:51.016399
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "92e3720f48ba"
-down_revision = "9f4edc77675a"
+down_revision = "55b9ef040163"
 branch_labels = None
 depends_on = None
 
