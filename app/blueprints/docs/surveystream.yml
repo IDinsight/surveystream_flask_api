@@ -3518,10 +3518,16 @@ paths:
                       bulk_editable:
                         type: boolean
                         description: Whether the field is bulk editable or not
+                      column_source:
+                        type: string
+                        description: >-
+                          column_name in input source, if csv input then column header
+                          if scto output then question name.
                     required:
                       - column_name
                       - column_type
                       - bulk_editable
+                      - column_source
               required:
                 - form_uid
                 - column_config
@@ -3582,6 +3588,11 @@ paths:
                             bulk_editable:
                               type: boolean
                               description: Whether the field is bulk editable or not.
+                            column_source:
+                              type: string
+                              description: >-
+                                column_name in input source, if csv input then column header
+                                if scto output then question name.
                       location_columns:
                         type: array
                         description: An array of column config objects for the location columns.

@@ -155,7 +155,10 @@ class TargetColumnConfig(db.Model):
     )
     bulk_editable = db.Column(db.Boolean(), nullable=False, default=False)
     contains_pii = db.Column(db.Boolean(), nullable=True)
-
+    column_source = db.Column(
+        db.String(),
+        nullable=False,
+    )
     __table_args__ = (
         db.PrimaryKeyConstraint("form_uid", "column_name"),
         {"schema": "webapp"},
