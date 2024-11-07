@@ -22,7 +22,35 @@ def upgrade():
     with op.batch_alter_table("target_column_config", schema="webapp") as batch_op:
         batch_op.add_column(sa.Column("column_source", sa.String()))
 
-    op.execute("UPDATE webapp.target_column_config SET column_source = column_name")
+    op.execute(
+        """
+            UPDATE webapp.target_column_config
+            SET column_source = column_name
+            WHERE column_type = 'custom_fields'"""
+    )
+    op.execute(
+        """
+        UPDATE webapp.target_column_config b
+        SET column_source = CASE
+            WHEN b.column_name = 'target_id' THEN a.target_id
+            WHEN b.column_name = 'gender' THEN a.gender
+            WHEN b.column_name = 'language' THEN a.language
+            WHEN b.column_name = 'bottom_geo_level_location' THEN a.bottom_geo_level_location
+        END
+        FROM (
+            SELECT DISTINCT form_uid,
+                            MAX(custom_fields->'column_mapping'->>'target_id') as target_id,
+                            MAX(custom_fields->'column_mapping'->>'gender') as gender,
+                            MAX(custom_fields->'column_mapping'->>'language') as language,
+                            MAX(custom_fields->'column_mapping'->>'location_id_column') as bottom_geo_level_location
+            FROM webapp.targets
+            GROUP BY form_uid
+        ) as a
+        WHERE a.form_uid = b.form_uid
+        AND b.column_name IN ('target_id', 'gender', 'language','bottom_geo_level_location')
+        AND b.column_type IN ('basic_details','location')
+        """
+    )
 
     with op.batch_alter_table("target_column_config", schema="webapp") as batch_op:
         batch_op.alter_column("column_source", nullable=False)
