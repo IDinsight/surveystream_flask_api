@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask_wtf import FlaskForm
-from wtforms import FieldList, FormField, IntegerField, StringField
+from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired, ValidationError
 
 
@@ -16,6 +16,7 @@ class SurveyorAssignmentValidator(FlaskForm):
 class UpdateSurveyorAssignmentsValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     assignments = FieldList(FormField(SurveyorAssignmentValidator))
+    validate_mapping = BooleanField()
 
 
 class AssignmentsQueryParamValidator(FlaskForm):
@@ -67,3 +68,4 @@ class AssignmentsFileUploadValidator(FlaskForm):
             DataRequired(),
         ]
     )
+    validate_mapping = BooleanField()

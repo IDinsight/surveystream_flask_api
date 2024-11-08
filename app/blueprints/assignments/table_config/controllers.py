@@ -173,10 +173,11 @@ def get_table_config(validated_query_params):
             user_level = None
         else:
             user_role = get_user_role(user_uid, survey_uid)
-            for i, role in enumerate(role_hierarchy.ordered_roles):
-                if role["role_uid"] == user_role:
-                    user_level = len(role_hierarchy.ordered_roles) - i - 1
-                    break
+            if role_hierarchy:
+                for i, role in enumerate(role_hierarchy.ordered_roles):
+                    if role["role_uid"] == user_role:
+                        user_level = len(role_hierarchy.ordered_roles) - i - 1
+                        break
 
     table_config = {
         "surveyors": [],
