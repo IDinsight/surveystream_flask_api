@@ -1,12 +1,14 @@
 import io
-import pandas as pd
-import numpy as np
 from csv import DictReader
+
+import numpy as np
+import pandas as pd
+
 from .errors import (
     HeaderRowEmptyError,
-    InvalidLocationsError,
     InvalidGeoLevelHierarchyError,
     InvalidGeoLevelMappingError,
+    InvalidLocationsError,
 )
 
 
@@ -247,8 +249,8 @@ class LocationsUpload:
     def __init__(self, csv_string):
         try:
             self.col_names = self.__get_col_names(csv_string)
-        except:
-            raise
+        except HeaderRowEmptyError as e:
+            raise e
         self.locations_df = self.__build_locations_df(csv_string)
 
     def __get_col_names(self, csv_string):
@@ -294,7 +296,11 @@ class LocationsUpload:
         return locations_df
 
     def validate_records(
-        self, expected_columns, ordered_geo_levels, geo_level_mapping_lookup
+        self,
+        expected_columns,
+        ordered_geo_levels,
+        geo_level_mapping_lookup,
+        existing_location_df=None,
     ):
         """
         Method to run validations on the locations data
@@ -332,6 +338,26 @@ class LocationsUpload:
                 f"The file has {len(duplicates_df)} duplicate rows. Duplicate rows are not allowed. The following rows are duplicates:\n{duplicates_df.to_string()}"
             )
 
+        if existing_location_df is not None:
+            # This is needed to check for duplicate location id's across the existing and uploaded data
+            # Check for duplicate location ids across existing and uploaded data
+            intersection_df = pd.merge(
+                self.locations_df,
+                existing_location_df,
+                how="inner",
+                on=expected_columns,
+                suffixes=("_uploaded", "_existing"),
+            )
+            if not intersection_df.empty:
+                file_errors.append(
+                    f"The uploaded file contains {len(intersection_df)} rows that are already present in the existing data. Duplicate rows are not allowed, you can use reupload methood, if you want to insert all data. \n The following rows are duplicates:\n{intersection_df.to_string()}"
+                )
+
+            # Combine the existing and uploaded dataframes for geo level based checks
+            combined_df = pd.concat([self.locations_df, existing_location_df])
+        else:
+            combined_df = self.locations_df
+
         # A location (defined by location_id) cannot be assigned to multiple parents
         # Note that this is a check on duplicate location id's
         # Because of the wide structure of the sheet, a location id can appear multiple times in the same column
@@ -348,8 +374,8 @@ class LocationsUpload:
                 # If we deduplicate on the parent location id column and the location id column, the number of rows should be the same as just deduplicating on the location id column
                 # If this check fails we know that the location id column has locations that are mapped to more than one parent
                 if len(
-                    self.locations_df[
-                        self.locations_df.duplicated(
+                    combined_df[
+                        combined_df.duplicated(
                             subset=[
                                 parent_geo_level_id_column_name,
                                 geo_level_id_column_name,
@@ -357,14 +383,14 @@ class LocationsUpload:
                         )
                     ]
                 ) != len(
-                    self.locations_df[
-                        self.locations_df.duplicated(
+                    combined_df[
+                        combined_df.duplicated(
                             subset=[geo_level_id_column_name],
                         )
                     ]
                 ):
                     file_errors.append(
-                        f"Location type {geo_level.geo_level_name} has location id's that are mapped to more than one parent location in column {parent_geo_level_id_column_name}. A location (defined by the location id column) cannot be assigned to multiple parents. Make sure to use a unique location id for each location. The following rows have location id's that are mapped to more than one parent location:\n{self.locations_df[self.locations_df.drop_duplicates(subset=[parent_geo_level_id_column_name, geo_level_id_column_name]).duplicated(subset=[geo_level_id_column_name], keep=False).reindex(self.locations_df.index, fill_value=False)].to_string()}"
+                        f"Location type {geo_level.geo_level_name} has location id's that are mapped to more than one parent location in column {parent_geo_level_id_column_name}. A location (defined by the location id column) cannot be assigned to multiple parents. Make sure to use a unique location id for each location. The following rows have location id's that are mapped to more than one parent location:\n{combined_df[combined_df.drop_duplicates(subset=[parent_geo_level_id_column_name, geo_level_id_column_name]).duplicated(subset=[geo_level_id_column_name], keep=False).reindex(self.locations_df.index, fill_value=False)].to_string()}"
                     )
 
         # A location (defined by location_id) cannot have multiple location names
@@ -380,20 +406,20 @@ class LocationsUpload:
             # If we deduplicate on the location id column and the location name column, the number of rows should be the same as just deduplicating on the location id column
             # If this check fails we know that the location id column is being reused for different location names
             if len(
-                self.locations_df[
-                    self.locations_df.duplicated(
+                combined_df[
+                    combined_df.duplicated(
                         subset=[geo_level_id_column_name, geo_level_name_column_name],
                     )
                 ]
             ) != len(
-                self.locations_df[
-                    self.locations_df.duplicated(
+                combined_df[
+                    combined_df.duplicated(
                         subset=[geo_level_id_column_name],
                     )
                 ]
             ):
                 file_errors.append(
-                    f"Location type {geo_level.geo_level_name} has location id's that have more than one location name. Make sure to use a unique location name for each location id. The following rows have location id's that have more than one location name:\n{self.locations_df[self.locations_df.drop_duplicates(subset=[geo_level_id_column_name, geo_level_name_column_name]).duplicated(subset=[geo_level_id_column_name], keep=False).reindex(self.locations_df.index, fill_value=False)].to_string()}"
+                    f"Location type {geo_level.geo_level_name} has location id's that have more than one location name. Make sure to use a unique location name for each location id. The following rows have location id's that have more than one location name:\n{combined_df[combined_df.drop_duplicates(subset=[geo_level_id_column_name, geo_level_name_column_name]).duplicated(subset=[geo_level_id_column_name], keep=False).reindex(self.locations_df.index, fill_value=False)].to_string()}"
                 )
 
         if len(file_errors) > 0:

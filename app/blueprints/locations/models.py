@@ -1,6 +1,7 @@
+from sqlalchemy.orm import backref
+
 from app import db
 from app.blueprints.surveys.models import Survey
-from sqlalchemy.orm import backref
 
 
 class GeoLevel(db.Model):
@@ -75,6 +76,8 @@ class Location(db.Model):
         nullable=False,
     )
     parent_location_uid = db.Column(db.Integer(), db.ForeignKey(location_uid))
+
+    # Relationships
     surveys = db.relationship(
         Survey, backref=backref("locations", passive_deletes=True)
     )
