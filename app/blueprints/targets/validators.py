@@ -2,6 +2,8 @@ from flask_wtf import FlaskForm
 from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired, Optional
 
+from app.utils.utils import JSONField
+
 
 class CustomColumnsValidator(FlaskForm):
     class Meta:
@@ -70,6 +72,7 @@ class ColumnConfigValidator(FlaskForm):
         ),
         validators=[DataRequired()],
     )
+    column_source = StringField(validators=[DataRequired()])
 
 
 class UpdateTargetsColumnConfig(FlaskForm):
@@ -103,3 +106,44 @@ class TargetStatusValidator(FlaskForm):
 class UpdateTargetStatus(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     target_status = FieldList(FormField(TargetStatusValidator))
+
+
+class TargetConfigValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
+    target_source = StringField(
+        validators=[
+            AnyOf(
+                ["csv", "scto"],
+                message="Value must be one of %(values)s",
+            ),
+            DataRequired(),
+        ]
+    )
+    scto_input_type = StringField(
+        validators=[
+            AnyOf(
+                ["form", "dataset"],
+                message="Value must be one of %(values)s",
+            ),
+            DataRequired(),
+        ]
+    )
+    scto_input_id = StringField(DataRequired())
+    scto_encryption_flag = BooleanField(default=False)
+
+
+class TargetConfigQueryValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
+
+
+class TargetConfigSCTOColumnQueryValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])

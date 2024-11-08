@@ -1,7 +1,7 @@
 import json
 
 from flask import jsonify, request
-from sqlalchemy import distinct, func
+from sqlalchemy import JSON, distinct, func, type_coerce
 from sqlalchemy.exc import IntegrityError
 
 from app import db
@@ -20,6 +20,7 @@ from .models import UserMappingConfig, UserSurveyorMapping, UserTargetMapping
 from .routes import mapping_bp
 from .utils import SurveyorMapping, TargetMapping
 from .validators import (
+    DeleteMappingConfigValidator,
     GetMappingParamValidator,
     MappingConfigQueryParamValidator,
     UpdateMappingConfigValidator,
@@ -187,11 +188,11 @@ def update_target_mapping_config(validated_payload):
     return jsonify({"message": "Success", "success": True}), 200
 
 
-@mapping_bp.route("/targets-mapping-config", methods=["DELETE"])
+@mapping_bp.route("/targets-mapping-config/reset", methods=["DELETE"])
 @logged_in_active_user_required
 @validate_query_params(MappingConfigQueryParamValidator)
 @custom_permissions_required("WRITE Mapping", "query", "form_uid")
-def delete_target_mapping_config(validated_query_params):
+def reset_target_mapping_config(validated_query_params):
     """
     Method to delete mapping configurations for a target to supervisor mapping for a form
 
@@ -210,6 +211,96 @@ def delete_target_mapping_config(validated_query_params):
             db.session.query(Target.target_uid).filter(Target.form_uid == form_uid)
         )
     ).delete(synchronize_session=False)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"message": str(e), "success": False}), 500
+
+    return jsonify({"message": "Success", "success": True}), 200
+
+
+@mapping_bp.route("/targets-mapping-config", methods=["DELETE"])
+@logged_in_active_user_required
+@validate_query_params(DeleteMappingConfigValidator)
+@custom_permissions_required("WRITE Mapping", "query", "form_uid")
+def delete_target_mapping_config(validated_query_params):
+    """
+    Method to delete a specific mapping configuration for target to supervisor mapping
+
+    """
+    form_uid = validated_query_params.form_uid.data
+    mapping_values = {
+        item["criteria"]: item["value"]
+        for item in validated_query_params.mapping_values.data
+    }
+    mapped_to = {
+        item["criteria"]: item["value"]
+        for item in validated_query_params.mapped_to.data
+    }
+
+    # First find all mappings for the form
+    try:
+        target_mapping = TargetMapping(form_uid)
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
+        )
+    targets_subquery = target_mapping.get_targets_with_mapped_to_subquery()
+
+    # Find all targets that have the specified mapping configuration
+    targets = (
+        db.session.query(
+            targets_subquery.c.target_uid,
+        )
+        .filter(
+            *[
+                type_coerce(targets_subquery.c.mapping_criteria_values, JSON)[
+                    "criteria"
+                ][criteria]
+                == mapping_values[criteria]
+                for criteria in mapping_values.keys()
+            ],
+            *[
+                type_coerce(targets_subquery.c.mapped_to_values, JSON)["criteria"][
+                    criteria
+                ]
+                == mapped_to[criteria]
+                for criteria in mapped_to.keys()
+            ],
+        )
+        .all()
+    )
+
+    # Delete saved target to supervisor mappings for these targets
+    db.session.query(UserTargetMapping).filter(
+        UserTargetMapping.target_uid.in_([target.target_uid for target in targets])
+    ).delete(synchronize_session=False)
+
+    # Delete the specified mapping configuration for the form
+    db.session.query(UserMappingConfig).filter(
+        UserMappingConfig.form_uid == form_uid,
+        UserMappingConfig.mapping_type == "target",
+        *[
+            type_coerce(UserMappingConfig.mapping_values, JSON)[criteria]
+            == mapping_values[criteria]
+            for criteria in mapping_values.keys()
+        ],
+        *[
+            type_coerce(UserMappingConfig.mapped_to, JSON)[criteria]
+            == mapped_to[criteria]
+            for criteria in mapped_to.keys()
+        ],
+    ).delete()
 
     try:
         db.session.commit()
@@ -663,11 +754,11 @@ def update_surveyor_mapping_config(validated_payload):
     return jsonify({"message": "Success", "success": True}), 200
 
 
-@mapping_bp.route("/surveyors-mapping-config", methods=["DELETE"])
+@mapping_bp.route("/surveyors-mapping-config/reset", methods=["DELETE"])
 @logged_in_active_user_required
 @validate_query_params(MappingConfigQueryParamValidator)
 @custom_permissions_required("WRITE Mapping", "query", "form_uid")
-def delete_surveyor_mapping_config(validated_query_params):
+def reset_surveyor_mapping_config(validated_query_params):
     """
     Method to delete mapping configurations for a surveyor to supervisor mapping for a form
 
@@ -684,6 +775,98 @@ def delete_surveyor_mapping_config(validated_query_params):
     db.session.query(UserSurveyorMapping).filter(
         UserSurveyorMapping.form_uid == form_uid
     ).delete(synchronize_session=False)
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"message": str(e), "success": False}), 500
+
+    return jsonify({"message": "Success", "success": True}), 200
+
+
+@mapping_bp.route("/surveyors-mapping-config", methods=["DELETE"])
+@logged_in_active_user_required
+@validate_query_params(DeleteMappingConfigValidator)
+@custom_permissions_required("WRITE Mapping", "query", "form_uid")
+def delete_surveyor_mapping_config(validated_query_params):
+    """
+    Method to delete a specific mapping configuration for surveyor to supervisor mapping
+
+    """
+    form_uid = validated_query_params.form_uid.data
+    mapping_values = {
+        item["criteria"]: item["value"]
+        for item in validated_query_params.mapping_values.data
+    }
+    mapped_to = {
+        item["criteria"]: item["value"]
+        for item in validated_query_params.mapped_to.data
+    }
+
+    # First find all mappings for the form
+    try:
+        surveyor_mapping = SurveyorMapping(form_uid)
+    except MappingError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
+        )
+    surveyors_subquery = surveyor_mapping.get_surveyors_with_mapped_to_subquery()
+
+    # Find all surveyors that have the specified mapping configuration
+    surveyors = (
+        db.session.query(
+            surveyors_subquery.c.enumerator_uid,
+        )
+        .filter(
+            *[
+                type_coerce(surveyors_subquery.c.mapping_criteria_values, JSON)[
+                    "criteria"
+                ][criteria]
+                == mapping_values[criteria]
+                for criteria in mapping_values.keys()
+            ],
+            *[
+                type_coerce(surveyors_subquery.c.mapped_to_values, JSON)["criteria"][
+                    criteria
+                ]
+                == mapped_to[criteria]
+                for criteria in mapped_to.keys()
+            ],
+        )
+        .all()
+    )
+
+    # Delete saved surveyor to supervisor mappings for these targets
+    db.session.query(UserSurveyorMapping).filter(
+        UserSurveyorMapping.enumerator_uid.in_(
+            [surveyor.enumerator_uid for surveyor in surveyors]
+        )
+    ).delete(synchronize_session=False)
+
+    # Delete the specified mapping configuration for the form
+    db.session.query(UserMappingConfig).filter(
+        UserMappingConfig.form_uid == form_uid,
+        UserMappingConfig.mapping_type == "surveyor",
+        *[
+            type_coerce(UserMappingConfig.mapping_values, JSON)[criteria]
+            == mapping_values[criteria]
+            for criteria in mapping_values.keys()
+        ],
+        *[
+            type_coerce(UserMappingConfig.mapped_to, JSON)[criteria]
+            == mapped_to[criteria]
+            for criteria in mapped_to.keys()
+        ],
+    ).delete()
 
     try:
         db.session.commit()

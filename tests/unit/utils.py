@@ -123,7 +123,7 @@ def create_new_survey_role_with_permissions(
             },
         ],
     }
-    
+
     response = client.put(
         "/api/roles",
         query_string={"survey_uid": survey_uid},
@@ -240,6 +240,19 @@ def load_reference_data(filename_stub):
         reference_data = json.load(json_file)
 
     return reference_data
+
+
+def delete_scto_question(app, db, form_uid, question_name):
+    """
+    Delete a question directly in the database. Needed to set up certain tests.
+    """
+
+    with app.app_context():
+        db.session.execute(
+            "DELETE FROM webapp.scto_form_questions WHERE form_uid=:form_uid AND question_name=:question_name",
+            {"form_uid": form_uid, "question_name": question_name},
+        )
+        db.session.commit()
 
 
 def delete_user(app, db, email):

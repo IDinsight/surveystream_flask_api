@@ -48,6 +48,10 @@ def create_app():
     CONFIG_TYPE = os.getenv("CONFIG_TYPE", default="app.config.DevelopmentConfig")
     app.config.from_object(CONFIG_TYPE)
 
+
+    # Disable sorting of JSON keys to maintain order in responses
+    app.json.sort_keys = False
+
     if app.config["ENABLE_CORS"]:
         # initialize cors per environment
         CORS(app, origins=app.config["ORIGINS"], supports_credentials=True)
@@ -122,6 +126,7 @@ def register_blueprints(app):
     from app.blueprints.emails import emails_bp
     from app.blueprints.media_files import media_files_bp
     from app.blueprints.mapping import mapping_bp
+    from app.blueprints.dq import dq_bp
 
     # Auth needs to be registered first to avoid circular imports
     app.register_blueprint(auth_bp)
@@ -143,6 +148,7 @@ def register_blueprints(app):
     app.register_blueprint(emails_bp)
     app.register_blueprint(media_files_bp)
     app.register_blueprint(mapping_bp)
+    app.register_blueprint(dq_bp)
 
 
 def register_error_handlers(app):
