@@ -2,10 +2,11 @@ import base64
 import binascii
 
 import pandas as pd
-from flask import jsonify
+from flask import jsonify, request
 from flask_login import current_user
-from sqlalchemy import insert
+from sqlalchemy import Integer, cast, insert
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql import case
 
 from app import db
 from app.blueprints.surveys.models import Survey
@@ -95,10 +96,12 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
     user_uid = current_user.user_uid
     input_geo_levels = validated_payload.geo_levels.data
 
-    # If validate_hierarchy is true, validate the hierarchy of the geo levels
-    geo_levels = [GeoLevelPayloadItem(item) for item in input_geo_levels]
+    payload = request.get_json()
 
-    if len(geo_levels) > 0:
+    if payload.get("validate_hierarchy", False):
+        geo_levels = [
+            GeoLevelPayloadItem(item) for item in validated_payload.geo_levels.data
+        ]
         try:
             geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
         except InvalidGeoLevelHierarchyError as e:
@@ -106,24 +109,42 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                 jsonify({"success": False, "errors": e.geo_level_hierarchy_errors}),
                 422,
             )
-    else:
-        return jsonify({"success": False, "errors": ["No geo levels provided"]}), 422
 
     # Get the geo level data in the db for the given survey
     existing_geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
 
-    # Create a GeoLevelHierarchy object from the existing geo levels
-    existing_geo_level_hierarchy = GeoLevelHierarchy(
-        [GeoLevelPayloadItem(geo_level.to_dict()) for geo_level in existing_geo_levels]
-    )
-    existing_geo_level_ordered = [
-        geo_level.geo_level_uid
-        for geo_level in existing_geo_level_hierarchy.ordered_geo_levels
-    ]
-
-    input_geo_levels_ordered = [
-        geo_level.geo_level_uid for geo_level in geo_level_hierarchy.ordered_geo_levels
-    ]
+    geo_level_hierarchy_changed = False
+    if existing_geo_levels is None or len(existing_geo_levels) == 0:
+        geo_level_hierarchy_changed = True
+    else:
+        # Check if geo level hierarchy exists
+        existing_hierarchy = [
+            geo_level
+            for geo_level in existing_geo_levels
+            if geo_level.parent_geo_level_uid is None
+        ]
+        if len(existing_hierarchy) <= 1:
+            # Create a GeoLevelHierarchy object from the existing geo levels
+            existing_geo_level_hierarchy = GeoLevelHierarchy(
+                [
+                    GeoLevelPayloadItem(geo_level.to_dict())
+                    for geo_level in existing_geo_levels
+                ]
+            )
+            existing_geo_level_ordered = [
+                geo_level.geo_level_uid
+                for geo_level in existing_geo_level_hierarchy.ordered_geo_levels
+            ]
+            if payload.get("validate_hierarchy", False):
+                input_geo_levels_ordered = [
+                    geo_level.geo_level_uid
+                    for geo_level in geo_level_hierarchy.ordered_geo_levels
+                ]
+            else:
+                input_geo_levels_ordered = []
+            geo_level_hierarchy_changed = (
+                existing_geo_level_ordered != input_geo_levels_ordered
+            )
 
     # Check if there are any new geo levels that need to be inserted
     new_geo_levels = [
@@ -133,25 +154,37 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
     ]
 
     try:
-        if (
-            len(new_geo_levels) > 0
-            or existing_geo_level_ordered != input_geo_levels_ordered
-        ):
-
+        if geo_level_hierarchy_changed or (len(new_geo_levels) > 0):
             # Delete existing target,enumerator,location mapping data
-            from app.blueprints.enumerators.models import Enumerator
+            from app.blueprints.enumerators.models import (
+                MonitorLocation,
+                SurveyorLocation,
+            )
             from app.blueprints.forms.models import Form, SCTOQuestionMapping
             from app.blueprints.targets.models import Target
             from app.blueprints.user_management.models import UserLocation
 
-            form_uid = Form.query.filter_by(survey_uid=survey_uid).first().form_uid
+            form = Form.query.filter_by(survey_uid=survey_uid).first()
+            if form is None:
+                return (
+                    jsonify(
+                        {
+                            "error": "Form not found",
+                        }
+                    ),
+                    404,
+                )
+            form_uid = form.form_uid
 
             Target.query.filter(
                 Target.form_uid == form_uid, Target.location_uid is not None
             ).delete()
-            Enumerator.query.filter(
-                Enumerator.form_uid == form_uid, Enumerator.location_uid is not None
+
+            MonitorLocation.query.filter(MonitorLocation.form_uid == form_uid).delete()
+            SurveyorLocation.query.filter(
+                SurveyorLocation.form_uid == form_uid
             ).delete()
+
             UserLocation.query.filter_by(survey_uid=survey_uid).delete()
 
             # Set location in SCTOQuestionMapping to None
@@ -165,36 +198,52 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
             # Delete the existing geo levels - Also deletes all locations due to cascade
             GeoLevel.query.filter_by(survey_uid=survey_uid).delete()
 
+            db.session.flush()
+
             # Insert the new geo levels
             for geo_level in input_geo_levels:
-                statement = insert(GeoLevel).values(
-                    geo_level_name=geo_level["geo_level_name"],
+                new_geo_level = GeoLevel(
                     survey_uid=survey_uid,
+                    geo_level_uid=geo_level["geo_level_uid"],
+                    geo_level_name=geo_level["geo_level_name"],
                     parent_geo_level_uid=geo_level["parent_geo_level_uid"],
                     user_uid=user_uid,
                 )
 
-                db.session.execute(statement)
-                db.session.commit()
+                db.session.add(new_geo_level)
+            db.session.commit()
 
         else:
-
             # ONLY NAME IS UPDATED
             # Update the geo levels
-            for geo_level in input_geo_levels:
-                statement = GeoLevel.query.filter_by(
-                    geo_level_uid=geo_level["geo_level_uid"]
-                ).update(
-                    {
-                        GeoLevel.geo_level_name: geo_level["geo_level_name"],
-                        GeoLevel.parent_geo_level_uid: geo_level[
-                            "parent_geo_level_uid"
-                        ],
-                        GeoLevel.user_uid: user_uid,
-                    },
-                    synchronize_session=False,
+            GeoLevel.query.filter(
+                GeoLevel.geo_level_uid.in_(
+                    [geo_level["geo_level_uid"] for geo_level in input_geo_levels]
                 )
+            ).update(
+                {
+                    GeoLevel.geo_level_name: case(
+                        {
+                            geo_level["geo_level_uid"]: geo_level["geo_level_name"]
+                            for geo_level in input_geo_levels
+                        },
+                        value=GeoLevel.geo_level_uid,
+                    ),
+                    GeoLevel.parent_geo_level_uid: case(
+                        {
+                            geo_level["geo_level_uid"]: cast(
+                                geo_level["parent_geo_level_uid"], Integer
+                            )
+                            for geo_level in input_geo_levels
+                        },
+                        value=GeoLevel.geo_level_uid,
+                    ),
+                    GeoLevel.user_uid: user_uid,
+                },
+                synchronize_session=False,
+            )
             db.session.commit()
+        return jsonify(message="Success"), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -233,26 +282,28 @@ def update_prime_geo_level(survey_uid, validated_payload):
 
             # Check if location column in enumerator column config
             from app.blueprints.enumerators.models import (
-                Enumerator,
-                EnumeratorColumnConfig,
+                MonitorLocation,
+                SurveyorLocation,
             )
 
-            check_enumerator_location_column = (
-                EnumeratorColumnConfig.join(
-                    Form, EnumeratorColumnConfig.form_uid == Form.form_uid
+            form = Form.query.filter_by(survey_uid=survey_uid).first()
+            if form is None:
+                return (
+                    jsonify(
+                        {
+                            "error": "Form not found",
+                        }
+                    ),
+                    404,
                 )
-                .filter(
-                    Form.survey_uid == survey_uid,
-                    EnumeratorColumnConfig.column_type == "location",
-                )
-                .first()
-            )
-            if check_enumerator_location_column:
-                Enumerator.query.join(
-                    Form, Enumerator.form_uid == Form.form_uid
-                ).filter(Form.survey_uid == survey_uid).delete(
-                    synchronize_session=False
-                )
+            form_uid = form.form_uid
+
+            # Delete the existing target,enumerator,location mapping data
+            MonitorLocation.query.filter(MonitorLocation.form_uid == form_uid).delete()
+            SurveyorLocation.query.filter(
+                SurveyorLocation.form_uid == form_uid
+            ).delete()
+
             db.session.commit()
             survey = Survey.query.filter_by(survey_uid=survey_uid).first()
             return jsonify(survey.to_dict()), 200
@@ -391,7 +442,7 @@ def upload_locations(validated_query_params, validated_payload):
 
     # We will have to delete the existing locations and dependent data for the survey
     # Delete existing target,enumerator,location mapping data
-    from app.blueprints.enumerators.models import Enumerator
+    from app.blueprints.enumerators.models import MonitorLocation, SurveyorLocation
     from app.blueprints.forms.models import Form
     from app.blueprints.targets.models import Target
     from app.blueprints.user_management.models import UserLocation
@@ -402,13 +453,14 @@ def upload_locations(validated_query_params, validated_payload):
         Target.form_uid == form_uid, Target.location_uid is not None
     ).delete()
 
-    Enumerator.query.filter(
-        Enumerator.form_uid == form_uid, Enumerator.location_uid is not None
-    ).delete()
+    MonitorLocation.query.filter(MonitorLocation.form_uid == form_uid).delete()
+    SurveyorLocation.query.filter(SurveyorLocation.form_uid == form_uid).delete()
 
     UserLocation.query.filter_by(survey_uid=survey_uid).delete()
 
     Location.query.filter_by(survey_uid=survey_uid).delete()
+
+    db.session.flush()
 
     for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
         # Get the location_id and location_name column names for the geo level
@@ -599,7 +651,7 @@ def get_locations(validated_query_params):
                 inplace=True,
             )
 
-    # final_df.drop(columns=["location_uid", "parent_location_uid"], inplace=True)
+    final_df.drop(columns=["location_uid", "parent_location_uid"], inplace=True)
 
     response = jsonify(
         {
@@ -777,11 +829,6 @@ def update_locations(validated_query_params, validated_payload):
         )
 
     # Get the existing locations for the survey
-    # Get the expected columns from the mapped column names
-    expected_columns = []
-    for geo_level in geo_level_hierarchy.ordered_geo_levels:
-        expected_columns.append(geo_level.geo_level_name + " ID")
-        expected_columns.append(geo_level.geo_level_name + " Name")
 
     existing_locations_df = pd.DataFrame()
     for i, geo_level in enumerate(geo_level_hierarchy.ordered_geo_levels):
@@ -797,18 +844,9 @@ def update_locations(validated_query_params, validated_payload):
         )
 
         if locations is None or len(locations) == 0:
-            return (
-                jsonify(
-                    {
-                        "success": True,
-                        "data": {
-                            "records": [],
-                            "ordered_columns": expected_columns,
-                        },
-                    }
-                ),
-                200,
-            )
+            continue
+
+        location_column_mapping = column_mapping.get_by_uid(geo_level.geo_level_uid)
 
         df = pd.DataFrame(
             [
@@ -822,8 +860,8 @@ def update_locations(validated_query_params, validated_payload):
             ]
         ).rename(
             columns={
-                "location_id": geo_level.geo_level_name + " ID",
-                "location_name": geo_level.geo_level_name + " Name",
+                "location_id": location_column_mapping["location_id_column"],
+                "location_name": location_column_mapping["location_name_column"],
             }
         )
 
@@ -851,6 +889,12 @@ def update_locations(validated_query_params, validated_payload):
                 inplace=True,
             )
 
+    existing_locations_df.drop(
+        columns=["location_uid", "parent_location_uid"], inplace=True
+    )
+
+    print("Expected columns: ", expected_columns)
+    print("column mapping: ", column_mapping.geo_level_mapping_lookup)
     # Validate the locations data
     try:
         locations_upload.validate_records(
@@ -909,6 +953,12 @@ def update_locations(validated_query_params, validated_payload):
             parent_location_uid = None
             if parent_geo_level_uid is not None:
                 parent_location_uid = parent_locations.get(str(row[3]))
+
+            # TODO : Check if the location already exists in the database
+            # TODO : Use existing location_df to check this
+
+            if row[1] in existing_locations_df[location_id_column_name].values:
+                continue
 
             location_records_to_insert.append(
                 {

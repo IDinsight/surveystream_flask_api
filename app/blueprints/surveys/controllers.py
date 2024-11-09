@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.blueprints.locations.models import GeoLevel
+from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.blueprints.module_selection.models import Module, ModuleStatus
 from app.blueprints.roles.models import Role, SurveyAdmin
 from app.utils.utils import (
@@ -399,6 +400,9 @@ def delete_survey(survey_uid):
         return jsonify({"error": "Survey not found"}), 404
 
     ModuleStatus.query.filter(ModuleStatus.survey_uid == survey_uid).delete()
+    ModuleQuestionnaire.query.filter(
+        ModuleQuestionnaire.survey_uid == survey_uid
+    ).delete()
     db.session.delete(survey)
 
     db.session.commit()

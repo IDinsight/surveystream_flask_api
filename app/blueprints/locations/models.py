@@ -37,8 +37,16 @@ class GeoLevel(db.Model):
     )
 
     def __init__(
-        self, survey_uid, geo_level_name, parent_geo_level_uid, user_uid, to_delete
+        self,
+        survey_uid,
+        geo_level_name,
+        parent_geo_level_uid,
+        user_uid,
+        to_delete=0,
+        geo_level_uid=None,
     ):
+        if geo_level_uid:
+            self.geo_level_uid = geo_level_uid
         self.survey_uid = survey_uid
         self.geo_level_name = geo_level_name
         self.parent_geo_level_uid = parent_geo_level_uid

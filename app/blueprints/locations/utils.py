@@ -63,7 +63,19 @@ class GeoLevelHierarchy:
             raise InvalidGeoLevelHierarchyError(errors_list)
 
         # There should be no duplicates on geo_level_uid
-        geo_level_uids = [geo_level.geo_level_uid for geo_level in self.geo_levels]
+        geo_level_uids = [
+            geo_level.geo_level_uid
+            for geo_level in self.geo_levels
+            if geo_level.geo_level_uid is not None
+        ]
+        payload = [
+            (
+                geo_level.geo_level_uid,
+                geo_level.geo_level_name,
+                geo_level.parent_geo_level_uid,
+            )
+            for geo_level in self.geo_levels
+        ]
         for geo_level_uid in geo_level_uids:
             if geo_level_uids.count(geo_level_uid) > 1:
                 error_message = f"Each location type unique id defined in the location type hierarchy should appear exactly once in the hierarchy. Location type with geo_level_uid='{geo_level_uid}' appears {geo_level_uids.count(geo_level_uid)} times in the hierarchy."
@@ -127,7 +139,7 @@ class GeoLevelHierarchy:
                     geo_level.geo_level_uid for geo_level in visited_nodes
                 ]:
                     errors_list.append(
-                        f"The location type hierarchy should not have any cycles. The current hierarchy has a cycle starting with location type '{child_nodes[0].geo_level_name}'."
+                        f"The location type hierarchy should not have any cycles. The current hierarchy has a cycle starting with location type '{child_nodes[0].geo_level_name}' , child_nodes = '{child_nodes}' \n payload = '{payload}'."
                     )
                     raise InvalidGeoLevelHierarchyError(errors_list)
                 visited_nodes.append(child_nodes[0])
@@ -314,6 +326,7 @@ class LocationsUpload:
 
         # Each mapped column should appear in the csv file exactly once
         file_columns = self.locations_df.columns.to_list()
+
         for column_name in expected_columns:
             if file_columns.count(column_name) != 1:
                 file_errors.append(
