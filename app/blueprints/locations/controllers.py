@@ -991,16 +991,15 @@ def update_locations(validated_query_params, validated_payload):
     return jsonify(message="Success"), 200
 
 
-@locations_bp.route("/<int:location_uid>/", methods=["PUT"])
+@locations_bp.route("/<int:location_uid>", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(LocationUpdateParamValidator)
 @custom_permissions_required("WRITE Survey Locations", "body", "survey_uid")
-def update_location(validated_payload):
+def update_location(location_uid, validated_payload):
     """
     Update individual location details
 
     """
-    location_uid = validated_payload.location_uid.data
     location_id = validated_payload.location_id.data
     location_name = validated_payload.location_name.data
     parent_location_uid = validated_payload.parent_location_uid.data

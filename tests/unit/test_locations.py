@@ -2686,7 +2686,6 @@ class TestLocations:
 
             assert checkdiff == {}
 
-    """
     def test_update_location_name(
         self,
         client,
@@ -2696,7 +2695,6 @@ class TestLocations:
         user_permissions,
         request,
     ):
-
 
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
@@ -2721,9 +2719,13 @@ class TestLocations:
             assert response.status_code == 200
 
             expected_response = {
-                "data": {
-                    "location_name": "ADILABAD RURAL UPDATED",
-                    "location_uid": 2,
+                "location": {
+                    "location_uid": 1,
+                    "survey_uid": 1,
+                    "location_name": "NEW ADILABAD",
+                    "location_id": "1",
+                    "geo_level_uid": 1,
+                    "parent_location_uid": None,
                 },
                 "success": True,
             }
@@ -2735,14 +2737,69 @@ class TestLocations:
             assert response.status_code == 403
             expected_response = {
                 "success": False,
-                "error": f"User does not have the required permission: UPDATE Survey Locations",
+                "error": f"User does not have the required permission: WRITE Survey Locations",
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
 
             assert checkdiff == {}
-    """
+
+    def test_update_location_parent_location_uid(
+        self,
+        client,
+        login_test_user,
+        upload_locations_csv,
+        csrf_token,
+        user_permissions,
+        request,
+    ):
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "survey_uid": 1,
+            "location_uid": 4,
+            "location_id": "3",
+            "location_name": "NEW ANKOLI",
+            "parent_location_uid": 3,
+        }
+
+        response = client.put(
+            "/api/locations/4",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "location": {
+                    "survey_uid": 1,
+                    "location_uid": 4,
+                    "location_id": "3",
+                    "location_name": "NEW ANKOLI",
+                    "parent_location_uid": 3,
+                    "geo_level_uid": 3,
+                },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Survey Locations",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+
+            assert checkdiff == {}
 
 
-# TODO - Add tests for updating location names
 # TODO - Add tests for ERRORS ON location append csv
 # TODO - Rethink on location PUT DESIGN
