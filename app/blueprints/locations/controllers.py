@@ -1000,7 +1000,6 @@ def update_location(location_uid, validated_payload):
     Update individual location details
 
     """
-    location_id = validated_payload.location_id.data
     location_name = validated_payload.location_name.data
     parent_location_uid = validated_payload.parent_location_uid.data
 
@@ -1009,7 +1008,6 @@ def update_location(location_uid, validated_payload):
     if location is None:
         return jsonify({"error": "Location not found"}), 404
 
-    location.location_id = location_id
     location.location_name = location_name
     location.parent_location_uid = parent_location_uid
 
