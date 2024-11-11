@@ -60,6 +60,7 @@ def get_target_mapping_config(validated_query_params):
 
     targets = (
         db.session.query(
+            targets_subquery.c.config_uid,
             targets_subquery.c.mapping_criteria_values,
             targets_subquery.c.mapped_to_values,
             func.coalesce(func.count(distinct(targets_subquery.c.target_uid)), 0).label(
@@ -72,6 +73,7 @@ def get_target_mapping_config(validated_query_params):
             targets_subquery.c.target_uid == UserTargetMapping.target_uid,
         )
         .group_by(
+            targets_subquery.c.config_uid,
             targets_subquery.c.mapping_criteria_values,
             targets_subquery.c.mapped_to_values,
         )
@@ -115,6 +117,7 @@ def get_target_mapping_config(validated_query_params):
             ):
                 data.append(
                     {
+                        "config_uid": target_group.config_uid,
                         "target_mapping_criteria_values": target_group.mapping_criteria_values,
                         "target_count": target_group.target_count,
                         "supervisor_mapping_criteria_values": supervisor_group.mapping_criteria_values,
@@ -129,6 +132,7 @@ def get_target_mapping_config(validated_query_params):
         if not mapping_found:
             data.append(
                 {
+                    "config_uid": target_group.config_uid,
                     "target_mapping_criteria_values": target_group.mapping_criteria_values,
                     "target_count": target_group.target_count,
                     "supervisor_mapping_criteria_values": None,
@@ -231,14 +235,21 @@ def delete_target_mapping_config(validated_query_params):
 
     """
     form_uid = validated_query_params.form_uid.data
-    mapping_values = {
-        item["criteria"]: item["value"]
-        for item in validated_query_params.mapping_values.data
-    }
-    mapped_to = {
-        item["criteria"]: item["value"]
-        for item in validated_query_params.mapped_to.data
-    }
+    config_uid = validated_query_params.config_uid.data
+
+    # Fetch the mapping configuration details to delete target level mappings following the configuration
+    mapping_config = (
+        db.session.query(UserMappingConfig)
+        .filter(
+            UserMappingConfig.form_uid == form_uid,
+            UserMappingConfig.mapping_type == "target",
+            UserMappingConfig.config_uid == config_uid,
+        )
+        .first()
+    )
+
+    mapping_values = mapping_config.mapping_values
+    mapped_to = mapping_config.mapped_to
 
     # First find all mappings for the form
     try:
@@ -264,17 +275,21 @@ def delete_target_mapping_config(validated_query_params):
         )
         .filter(
             *[
-                type_coerce(targets_subquery.c.mapping_criteria_values, JSON)[
-                    "criteria"
-                ][criteria]
-                == mapping_values[criteria]
+                str(
+                    type_coerce(targets_subquery.c.mapping_criteria_values, JSON)[
+                        "criteria"
+                    ][criteria]
+                )
+                == str(mapping_values[criteria])
                 for criteria in mapping_values.keys()
             ],
             *[
-                type_coerce(targets_subquery.c.mapped_to_values, JSON)["criteria"][
-                    criteria
-                ]
-                == mapped_to[criteria]
+                str(
+                    type_coerce(targets_subquery.c.mapped_to_values, JSON)["criteria"][
+                        criteria
+                    ]
+                )
+                == str(mapped_to[criteria])
                 for criteria in mapped_to.keys()
             ],
         )
@@ -290,16 +305,7 @@ def delete_target_mapping_config(validated_query_params):
     db.session.query(UserMappingConfig).filter(
         UserMappingConfig.form_uid == form_uid,
         UserMappingConfig.mapping_type == "target",
-        *[
-            type_coerce(UserMappingConfig.mapping_values, JSON)[criteria]
-            == mapping_values[criteria]
-            for criteria in mapping_values.keys()
-        ],
-        *[
-            type_coerce(UserMappingConfig.mapped_to, JSON)[criteria]
-            == mapped_to[criteria]
-            for criteria in mapped_to.keys()
-        ],
+        UserMappingConfig.config_uid == config_uid,
     ).delete()
 
     try:
@@ -623,6 +629,7 @@ def get_surveyor_mapping_config(validated_query_params):
 
     surveyors = (
         db.session.query(
+            surveyors_subquery.c.config_uid,
             surveyors_subquery.c.mapping_criteria_values,
             surveyors_subquery.c.mapped_to_values,
             func.coalesce(
@@ -638,6 +645,7 @@ def get_surveyor_mapping_config(validated_query_params):
             & (UserSurveyorMapping.form_uid == form_uid),
         )
         .group_by(
+            surveyors_subquery.c.config_uid,
             surveyors_subquery.c.mapping_criteria_values,
             surveyors_subquery.c.mapped_to_values,
         )
@@ -681,6 +689,7 @@ def get_surveyor_mapping_config(validated_query_params):
             ):
                 data.append(
                     {
+                        "config_uid": surveyor_group.config_uid,
                         "surveyor_mapping_criteria_values": surveyor_group.mapping_criteria_values,
                         "surveyor_count": surveyor_group.surveyor_count,
                         "supervisor_mapping_criteria_values": supervisor_group.mapping_criteria_values,
@@ -695,6 +704,7 @@ def get_surveyor_mapping_config(validated_query_params):
         if not mapping_found:
             data.append(
                 {
+                    "config_uid": surveyor_group.config_uid,
                     "surveyor_mapping_criteria_values": surveyor_group.mapping_criteria_values,
                     "surveyor_count": surveyor_group.surveyor_count,
                     "supervisor_mapping_criteria_values": None,
@@ -795,14 +805,21 @@ def delete_surveyor_mapping_config(validated_query_params):
 
     """
     form_uid = validated_query_params.form_uid.data
-    mapping_values = {
-        item["criteria"]: item["value"]
-        for item in validated_query_params.mapping_values.data
-    }
-    mapped_to = {
-        item["criteria"]: item["value"]
-        for item in validated_query_params.mapped_to.data
-    }
+    config_uid = validated_query_params.config_uid.data
+
+    # Fetch the mapping configuration details to delete surveyor level mappings following the configuration
+    mapping_config = (
+        db.session.query(UserMappingConfig)
+        .filter(
+            UserMappingConfig.form_uid == form_uid,
+            UserMappingConfig.mapping_type == "surveyor",
+            UserMappingConfig.config_uid == config_uid,
+        )
+        .first()
+    )
+
+    mapping_values = mapping_config.mapping_values
+    mapped_to = mapping_config.mapped_to
 
     # First find all mappings for the form
     try:
@@ -828,17 +845,21 @@ def delete_surveyor_mapping_config(validated_query_params):
         )
         .filter(
             *[
-                type_coerce(surveyors_subquery.c.mapping_criteria_values, JSON)[
-                    "criteria"
-                ][criteria]
-                == mapping_values[criteria]
+                str(
+                    type_coerce(surveyors_subquery.c.mapping_criteria_values, JSON)[
+                        "criteria"
+                    ][criteria]
+                )
+                == str(mapping_values[criteria])
                 for criteria in mapping_values.keys()
             ],
             *[
-                type_coerce(surveyors_subquery.c.mapped_to_values, JSON)["criteria"][
-                    criteria
-                ]
-                == mapped_to[criteria]
+                str(
+                    type_coerce(surveyors_subquery.c.mapped_to_values, JSON)[
+                        "criteria"
+                    ][criteria]
+                )
+                == str(mapped_to[criteria])
                 for criteria in mapped_to.keys()
             ],
         )
@@ -856,16 +877,7 @@ def delete_surveyor_mapping_config(validated_query_params):
     db.session.query(UserMappingConfig).filter(
         UserMappingConfig.form_uid == form_uid,
         UserMappingConfig.mapping_type == "surveyor",
-        *[
-            type_coerce(UserMappingConfig.mapping_values, JSON)[criteria]
-            == mapping_values[criteria]
-            for criteria in mapping_values.keys()
-        ],
-        *[
-            type_coerce(UserMappingConfig.mapped_to, JSON)[criteria]
-            == mapped_to[criteria]
-            for criteria in mapped_to.keys()
-        ],
+        UserMappingConfig.config_uid == config_uid,
     ).delete()
 
     try:
