@@ -2759,7 +2759,7 @@ class TestLocations:
         payload = {
             "survey_uid": 1,
             "location_uid": 4,
-            "location_id": "3",
+            "location_id": "17101102",
             "location_name": "NEW ANKOLI",
             "parent_location_uid": 3,
         }
@@ -2779,7 +2779,7 @@ class TestLocations:
                 "location": {
                     "survey_uid": 1,
                     "location_uid": 4,
-                    "location_id": "3",
+                    "location_id": "17101102",
                     "location_name": "NEW ANKOLI",
                     "parent_location_uid": 3,
                     "geo_level_uid": 3,
