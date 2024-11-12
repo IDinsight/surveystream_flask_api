@@ -6142,6 +6142,85 @@ paths:
 
             Note that the file validation will only be run if the geo level
             mapping is valid.
+    put:
+      tags:
+        - Locations
+      summary: Append locations csv to existing locations database
+      description: >
+        Appends the locations csv to the existing locations data in database.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: >-
+          JSON object containing locations file content and geo level column
+          mapping.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                geo_level_mapping:
+                  type: array
+                  description: >-
+                    An array of objects mapping the columns in the CSV file to
+                    the geo levels for the given survey.
+                  items:
+                    type: object
+                    properties:
+                      geo_level_uid:
+                        type: integer
+                        nullable: false
+                        description: The unique ID of the geo level.
+                      location_id_column:
+                        type: string
+                        nullable: false
+                        description: >-
+                          The name of the column in the CSV file that contains
+                          the location id for the given geo level.
+                      location_name_column:
+                        type: integer
+                        nullable: false
+                        description: >-
+                          The name of the column in the CSV file that contains
+                          the location name for the given geo level.
+                    required:
+                      - geo_level_uid
+                      - location_id_column
+                      - location_name_column
+                file:
+                  type: string
+                  description: Base64 encoded CSV file content
+              required:
+                - geo_level_mapping
+                - file
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: >
+            Form errors
+
+            Validation errors for the geo level mapping will be returned as an
+            array under the `geo_level_mapping` key in the `errors` key of the
+            response.
+
+            Validation errors for the file will be returned as an array under
+            the `file` key in the `errors` key of the response.
+
+            Validation errors for the location type hierarchy will be returned
+            as an array under the `geo_level_hierarchy` key in the `errors` key
+            of the response.
+
+            Note that the file validation will only be run if the geo level
+            mapping is valid.
   
   /locations/long:
     get:
@@ -6208,7 +6287,74 @@ paths:
         "500":
           description: >
             Error message indicating that the locations could not be retrieved.
-  
+
+
+  /locations/uid:
+    get:
+      tags:
+        - Locations
+      summary: Get locations for a survey with location uids
+      description: |
+        Returns the locations for a given survey.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Returns the locations for a given survey.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: object
+                    properties:
+                      ordered_columns:
+                        type: array
+                        description: >
+                          List of columns to display in the table in the correct
+                          order. 
+
+                          These will be of the form [<geo level 1 name> ID, <geo
+                          level 1 name> Name,<geo level 1 name> UID, <geo level 2 name> ID, <geo level
+                          2 name> Name,<geo level 2 name> UID, ...]. 
+
+                          For example, ["State ID", "State Name","State UID", "District ID",
+                          "District Name","District UID", "Block ID", "Block Name","Block UID"].
+
+                          The order of geo levels will be descending from the
+                          top level geo level to the lowest level geo level.
+
+                          Will be empty if no geo levels have been configured
+                          for the given survey.
+                      records:
+                        type: array
+                        description: >
+                          List of location objects for the given survey. Each
+                          location object contains keys corresponding to the
+                          columns in the `ordered_columns` array.
+
+                          The columns are determined by the geo levels for the
+                          given survey, so columns will vary from survey to
+                          survey.
+
+                          Will be empty of no geo levels or no locations have
+                          been configured for the given survey.
+        "500":
+          description: >
+            Error message indicating that the locations could not be retrieved.
+
+            If the location type hierarchy is invalid, the `errors` key will
+            contain a `geo_level_hierarchy` key with an error message string.
+    
   /target-status-mapping:
     get:
       tags:

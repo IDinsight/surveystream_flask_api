@@ -726,7 +726,7 @@ def get_locations_data_long(validated_query_params):
 @validate_query_params(LocationsQueryParamValidator)
 @validate_payload(LocationsFileUploadValidator)
 @custom_permissions_required("WRITE Survey Locations", "query", "survey_uid")
-def update_locations(validated_query_params, validated_payload):
+def append_locations(validated_query_params, validated_payload):
     """
     Method to validate the uploaded locations file and save it
     to the database
@@ -993,7 +993,6 @@ def update_locations(validated_query_params, validated_payload):
 def update_location(location_uid, validated_payload):
     """
     Update individual location details
-
     """
     location_name = validated_payload.location_name.data
     parent_location_uid = validated_payload.parent_location_uid.data

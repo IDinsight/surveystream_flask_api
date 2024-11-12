@@ -1724,7 +1724,8 @@ class TestLocations:
         self, client, login_test_user, upload_locations_csv, csrf_token
     ):
         """
-        Test that the locations csv can be uploaded twice
+        Test that the locations csv can be appended to existing data
+        Expect success with new rows appended to locations
         """
 
         # Append a new locations csv to the existing locations
@@ -1761,9 +1762,6 @@ class TestLocations:
             "file": append_locations_csv_encoded,
         }
 
-        print("-----------------")
-        print("-----------------")
-        print("Starting append")
         response = client.put(
             "/api/locations",
             query_string={"survey_uid": 1},
@@ -1813,6 +1811,58 @@ class TestLocations:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_append_locations_csv_with_error(
+        self, client, login_test_user, upload_locations_csv, csrf_token
+    ):
+        """
+        Test appending a locations csv with errors
+        Expect Fail with a 422
+        """
+
+        # Append a new locations csv to the existing locations
+        append_input_filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(append_input_filepath, "rb") as f:
+            append_locations_csv = f.read()
+            append_locations_csv_encoded = base64.b64encode(
+                append_locations_csv
+            ).decode("utf-8")
+
+        append_payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": append_locations_csv_encoded,
+        }
+
+        response = client.put(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=append_payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 422
 
     def test_locations_validations_geo_level_mapping_errors(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
@@ -2695,6 +2745,10 @@ class TestLocations:
         user_permissions,
         request,
     ):
+        """
+        Test that the location name can be updated
+        Expect success
+        """
 
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
@@ -2752,6 +2806,10 @@ class TestLocations:
         user_permissions,
         request,
     ):
+        """
+        Test that the parent_location_uid can be updated
+        Expect success
+        """
 
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
