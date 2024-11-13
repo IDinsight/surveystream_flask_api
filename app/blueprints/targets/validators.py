@@ -2,8 +2,6 @@ from flask_wtf import FlaskForm
 from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired, Optional
 
-from app.utils.utils import JSONField
-
 
 class CustomColumnsValidator(FlaskForm):
     class Meta:

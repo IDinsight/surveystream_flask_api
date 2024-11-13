@@ -1,12 +1,11 @@
 import base64
 import binascii
-import csv
-import io
 import json
 from datetime import datetime
 from itertools import groupby
 from operator import attrgetter
 
+import pandas as pd
 import pysurveycto
 from flask import current_app, jsonify, request
 from flask_login import current_user
@@ -194,7 +193,6 @@ def upload_targets(validated_query_params, validated_payload):
 
             if target_config.target_source == "scto":
                 scto_input_type = target_config.scto_input_type
-                print(scto_input_type)
                 if scto_input_type == "dataset":
                     scto_dataset_id = target_config.scto_input_id
                     scto_dataset = scto.get_server_dataset(scto_dataset_id)
@@ -210,36 +208,16 @@ def upload_targets(validated_query_params, validated_payload):
                             current_app.config["AWS_REGION"],
                             is_global_secret=True,
                         )
-                        print("Encryption key loaded")
                         scto_form = scto.get_form_data(
                             scto_form_id,
                             format="json",
                             key=encryption_key,
                             oldest_completion_date=oldest_date,
                         )
-                        print("Form data loaded")
-                        try:
-                            # Convert JSON to CSV
-                            import pandas as pd
+                        # Convert JSON to CSV
 
-                            df = pd.DataFrame.from_dict(scto_form[:100])
-                            csv_string = df.to_csv(index=False)
-
-                        except Exception as e:
-                            return (
-                                jsonify(
-                                    {
-                                        "success": False,
-                                        "errors": {
-                                            "surveycto_errors": [
-                                                "Error converting JSON to CSV: "
-                                                + str(e)
-                                            ],
-                                        },
-                                    }
-                                ),
-                                422,
-                            )
+                        df = pd.DataFrame.from_dict(scto_form[:100])
+                        csv_string = df.to_csv(index=False)
 
                     else:
                         scto_form = scto.get_form_data(

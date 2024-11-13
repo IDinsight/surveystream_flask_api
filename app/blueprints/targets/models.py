@@ -265,7 +265,7 @@ class TargetSCTOFilters(db.Model):
         db.String(),
         CheckConstraint(
             "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than')",
-            name="ck_dq_check_filters_filter_operator",
+            name="ck_target_scto_filters_filter_operator",
         ),
         nullable=False,
     )
