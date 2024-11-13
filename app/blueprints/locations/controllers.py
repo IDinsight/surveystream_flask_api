@@ -123,7 +123,7 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
             for geo_level in existing_geo_levels
             if geo_level.parent_geo_level_uid is None
         ]
-        if len(existing_hierarchy) <= 1:
+        if len(existing_hierarchy) == 1:
             # Create a GeoLevelHierarchy object from the existing geo levels
             existing_geo_level_hierarchy = GeoLevelHierarchy(
                 [
@@ -145,7 +145,6 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
             geo_level_hierarchy_changed = (
                 existing_geo_level_ordered != input_geo_levels_ordered
             )
-
     # Check if there are any new geo levels that need to be inserted
     new_geo_levels = [
         geo_level
@@ -178,7 +177,12 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
 
             Target.query.filter(
                 Target.form_uid == form_uid, Target.location_uid is not None
-            ).delete()
+            ).update(
+                {
+                    Target.location_uid: None,
+                },
+                synchronize_session=False,
+            )
 
             MonitorLocation.query.filter(MonitorLocation.form_uid == form_uid).delete()
             SurveyorLocation.query.filter(
@@ -214,7 +218,6 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
             db.session.commit()
 
         else:
-            # ONLY NAME IS UPDATED
             # Update the geo levels
             GeoLevel.query.filter(
                 GeoLevel.geo_level_uid.in_(
@@ -271,7 +274,7 @@ def update_prime_geo_level(survey_uid, validated_payload):
                 {
                     Survey.prime_geo_level_uid: validated_payload.prime_geo_level_uid.data,
                 },
-                synchronize_session="fetch",
+                synchronize_session=False,
             )
             db.session.flush()
 
@@ -451,7 +454,12 @@ def upload_locations(validated_query_params, validated_payload):
 
     Target.query.filter(
         Target.form_uid == form_uid, Target.location_uid is not None
-    ).delete()
+    ).update(
+        {
+            Target.location_uid: None,
+        },
+        synchronize_session=False,
+    )
 
     MonitorLocation.query.filter(MonitorLocation.form_uid == form_uid).delete()
     SurveyorLocation.query.filter(SurveyorLocation.form_uid == form_uid).delete()
