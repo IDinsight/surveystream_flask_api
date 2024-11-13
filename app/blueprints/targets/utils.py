@@ -140,8 +140,8 @@ class TargetsUpload:
     def __init__(self, csv_string, column_mapping, survey_uid, form_uid):
         try:
             self.col_names = self.__get_col_names(csv_string)
-        except:
-            raise
+        except Exception as e:
+            raise e
 
         self.survey_uid = survey_uid
         self.form_uid = form_uid
