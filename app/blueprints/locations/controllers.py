@@ -56,7 +56,9 @@ def get_survey_geo_levels(validated_query_params):
 
     # Get the geo levels for the survey
     geo_levels = (
-        GeoLevel.query.filter_by(survey_uid=survey_uid)
+        GeoLevel.query.filter(
+            GeoLevel.survey_uid == survey_uid, GeoLevel.to_delete == 0
+        )
         .order_by(GeoLevel.geo_level_uid)
         .all()
     )
@@ -80,23 +82,16 @@ def get_survey_geo_levels(validated_query_params):
 def update_survey_geo_levels(validated_query_params, validated_payload):
     """
     Method to update the geo levels for a given survey
-
-    Update Logic:
-
-    IF New geo level added or existing geo levels deleted or geo level hierarchy is changed:
-        All locations and dependent data is deleted
-        Insert query for all geo levels
-
-    ELSE Only geo level name is changed:
-        No data is deleted
-        Update query for geo levels
     """
 
     survey_uid = validated_query_params.survey_uid.data
     user_uid = current_user.user_uid
     input_geo_levels = validated_payload.geo_levels.data
+    existing_geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
 
     payload = request.get_json()
+
+    # Validate the geo level hierarchy if the payload has the validate_hierarchy flag
 
     if payload.get("validate_hierarchy", False):
         geo_levels = [
@@ -109,147 +104,208 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                 jsonify({"success": False, "errors": e.geo_level_hierarchy_errors}),
                 422,
             )
+        geo_level_hierarchy_changed = False
+        try:
+            existing_geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
 
-    # Get the geo level data in the db for the given survey
-    existing_geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
+            if (
+                existing_geo_level_hierarchy.ordered_geo_levels
+                != geo_level_hierarchy.ordered_geo_levels
+            ):
+                geo_level_hierarchy_changed = True
+        except InvalidGeoLevelHierarchyError:
+            geo_level_hierarchy_changed = True
 
-    geo_level_hierarchy_changed = False
-    if existing_geo_levels is None or len(existing_geo_levels) == 0:
-        geo_level_hierarchy_changed = True
+        if geo_level_hierarchy_changed:
+
+            try:
+                # Delete existing target,enumerator,location mapping data
+                from app.blueprints.enumerators.models import (
+                    MonitorLocation,
+                    SurveyorLocation,
+                )
+                from app.blueprints.forms.models import Form, SCTOQuestionMapping
+                from app.blueprints.surveys.models import Survey
+                from app.blueprints.targets.models import Target
+                from app.blueprints.user_management.models import UserLocation
+
+                form = Form.query.filter_by(survey_uid=survey_uid).first()
+                if form is None:
+                    return (
+                        jsonify(
+                            {
+                                "error": "Form not found",
+                            }
+                        ),
+                        404,
+                    )
+                form_uid = form.form_uid
+
+                Target.query.filter(
+                    Target.form_uid == form_uid, Target.location_uid is not None
+                ).update(
+                    {
+                        Target.location_uid: None,
+                    },
+                    synchronize_session=False,
+                )
+
+                MonitorLocation.query.filter(
+                    MonitorLocation.form_uid == form_uid
+                ).delete()
+                SurveyorLocation.query.filter(
+                    SurveyorLocation.form_uid == form_uid
+                ).delete()
+
+                UserLocation.query.filter_by(survey_uid=survey_uid).delete()
+
+                # Set location in SCTOQuestionMapping to None
+                SCTOQuestionMapping.query.filter_by(form_uid=form_uid).update(
+                    {
+                        SCTOQuestionMapping.locations: None,
+                    },
+                    synchronize_session=False,
+                )
+
+                Survey.query.filter_by(survey_uid=survey_uid).update(
+                    {
+                        Survey.prime_geo_level_uid: None,
+                    },
+                    synchronize_session=False,
+                )
+
+                # Delete the existing geo levels - Also deletes all locations due to cascade
+                GeoLevel.query.filter_by(survey_uid=survey_uid).delete()
+
+                db.session.flush()
+
+                # Insert the new geo levels
+                for geo_level in input_geo_levels:
+                    new_geo_level = GeoLevel(
+                        survey_uid=survey_uid,
+                        geo_level_uid=geo_level["geo_level_uid"],
+                        geo_level_name=geo_level["geo_level_name"],
+                        parent_geo_level_uid=geo_level["parent_geo_level_uid"],
+                        user_uid=user_uid,
+                    )
+
+                    db.session.add(new_geo_level)
+                db.session.commit()
+                return jsonify({"success": True}), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error": str(e)}), 500
+
     else:
-        # Check if geo level hierarchy exists
-        existing_hierarchy = [
+        # Get the geo levels that need to be deleted
+        deleted_geo_levels = [
             geo_level
             for geo_level in existing_geo_levels
-            if geo_level.parent_geo_level_uid is None
+            if geo_level.geo_level_uid
+            not in [geo_level["geo_level_uid"] for geo_level in input_geo_levels]
         ]
-        if len(existing_hierarchy) == 1:
-            # Create a GeoLevelHierarchy object from the existing geo levels
-            existing_geo_level_hierarchy = GeoLevelHierarchy(
-                [
-                    GeoLevelPayloadItem(geo_level.to_dict())
-                    for geo_level in existing_geo_levels
-                ]
-            )
-            existing_geo_level_ordered = [
-                geo_level.geo_level_uid
-                for geo_level in existing_geo_level_hierarchy.ordered_geo_levels
-            ]
-            if payload.get("validate_hierarchy", False):
-                input_geo_levels_ordered = [
-                    geo_level.geo_level_uid
-                    for geo_level in geo_level_hierarchy.ordered_geo_levels
-                ]
-            else:
-                input_geo_levels_ordered = []
-            geo_level_hierarchy_changed = (
-                existing_geo_level_ordered != input_geo_levels_ordered
-            )
-    # Check if there are any new geo levels that need to be inserted
-    new_geo_levels = [
-        geo_level
-        for geo_level in input_geo_levels
-        if geo_level["geo_level_uid"] is None
-    ]
 
-    try:
-        if geo_level_hierarchy_changed or (len(new_geo_levels) > 0):
-            # Delete existing target,enumerator,location mapping data
-            from app.blueprints.enumerators.models import (
-                MonitorLocation,
-                SurveyorLocation,
-            )
-            from app.blueprints.forms.models import Form, SCTOQuestionMapping
-            from app.blueprints.targets.models import Target
-            from app.blueprints.user_management.models import UserLocation
+        # Get the geo levels that need to be updated
+        geo_levels_to_update = [
+            geo_level
+            for geo_level in input_geo_levels
+            if geo_level["geo_level_uid"] is not None
+        ]
 
-            form = Form.query.filter_by(survey_uid=survey_uid).first()
-            if form is None:
-                return (
-                    jsonify(
-                        {
-                            "error": "Form not found",
-                        }
-                    ),
-                    404,
+        # Get the geo levels that need to be inserted
+        new_geo_levels = [
+            geo_level
+            for geo_level in input_geo_levels
+            if geo_level["geo_level_uid"] is None
+        ]
+
+        # Delete the geo levels that need to be deleted
+        if len(deleted_geo_levels) > 0:
+            try:
+                # Update the geo level records so their deletion gets captured by the table logging triggers
+                GeoLevel.query.filter(
+                    GeoLevel.geo_level_uid.in_(
+                        [geo_level.geo_level_uid for geo_level in deleted_geo_levels]
+                    )
+                ).update(
+                    {
+                        GeoLevel.user_uid: user_uid,
+                        GeoLevel.to_delete: 1,
+                    },
+                    synchronize_session=False,
                 )
-            form_uid = form.form_uid
+                # Delete the geo level records
+                GeoLevel.query.filter(
+                    GeoLevel.geo_level_uid.in_(
+                        [geo_level.geo_level_uid for geo_level in deleted_geo_levels]
+                    )
+                ).delete(synchronize_session=False)
+                # Can cause an IntegrityError if there are dependent records for location foreign key
+                db.session.flush()
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error": str(e)}), 500
 
-            Target.query.filter(
-                Target.form_uid == form_uid, Target.location_uid is not None
-            ).update(
-                {
-                    Target.location_uid: None,
-                },
-                synchronize_session=False,
-            )
-
-            MonitorLocation.query.filter(MonitorLocation.form_uid == form_uid).delete()
-            SurveyorLocation.query.filter(
-                SurveyorLocation.form_uid == form_uid
-            ).delete()
-
-            UserLocation.query.filter_by(survey_uid=survey_uid).delete()
-
-            # Set location in SCTOQuestionMapping to None
-            SCTOQuestionMapping.query.filter_by(form_uid=form_uid).update(
-                {
-                    SCTOQuestionMapping.locations: None,
-                },
-                synchronize_session=False,
-            )
-
-            # Delete the existing geo levels - Also deletes all locations due to cascade
-            GeoLevel.query.filter_by(survey_uid=survey_uid).delete()
-
-            db.session.flush()
-
-            # Insert the new geo levels
-            for geo_level in input_geo_levels:
-                new_geo_level = GeoLevel(
-                    survey_uid=survey_uid,
-                    geo_level_uid=geo_level["geo_level_uid"],
-                    geo_level_name=geo_level["geo_level_name"],
-                    parent_geo_level_uid=geo_level["parent_geo_level_uid"],
-                    user_uid=user_uid,
+        if len(geo_levels_to_update) > 0:
+            try:
+                GeoLevel.query.filter(
+                    GeoLevel.geo_level_uid.in_(
+                        [
+                            geo_level["geo_level_uid"]
+                            for geo_level in geo_levels_to_update
+                        ]
+                    )
+                ).update(
+                    {
+                        GeoLevel.geo_level_name: case(
+                            {
+                                geo_level["geo_level_uid"]: geo_level["geo_level_name"]
+                                for geo_level in geo_levels_to_update
+                            },
+                            value=GeoLevel.geo_level_uid,
+                        ),
+                        GeoLevel.parent_geo_level_uid: case(
+                            {
+                                geo_level["geo_level_uid"]: cast(
+                                    geo_level["parent_geo_level_uid"], Integer
+                                )
+                                for geo_level in geo_levels_to_update
+                            },
+                            value=GeoLevel.geo_level_uid,
+                        ),
+                        GeoLevel.user_uid: user_uid,
+                    },
+                    synchronize_session=False,
                 )
+                db.session.flush()
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error": str(e)}), 500
 
-                db.session.add(new_geo_level)
+        if len(new_geo_levels) > 0:
+            try:
+                for geo_level in new_geo_levels:
+                    new_geo_level = GeoLevel(
+                        survey_uid=survey_uid,
+                        geo_level_name=geo_level["geo_level_name"],
+                        parent_geo_level_uid=geo_level["parent_geo_level_uid"],
+                        user_uid=user_uid,
+                    )
+                    db.session.add(new_geo_level)
+                db.session.flush()
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error": str(e)}), 500
+
+        try:
             db.session.commit()
-
-        else:
-            # Update the geo levels
-            GeoLevel.query.filter(
-                GeoLevel.geo_level_uid.in_(
-                    [geo_level["geo_level_uid"] for geo_level in input_geo_levels]
-                )
-            ).update(
-                {
-                    GeoLevel.geo_level_name: case(
-                        {
-                            geo_level["geo_level_uid"]: geo_level["geo_level_name"]
-                            for geo_level in input_geo_levels
-                        },
-                        value=GeoLevel.geo_level_uid,
-                    ),
-                    GeoLevel.parent_geo_level_uid: case(
-                        {
-                            geo_level["geo_level_uid"]: cast(
-                                geo_level["parent_geo_level_uid"], Integer
-                            )
-                            for geo_level in input_geo_levels
-                        },
-                        value=GeoLevel.geo_level_uid,
-                    ),
-                    GeoLevel.user_uid: user_uid,
-                },
-                synchronize_session=False,
-            )
-            db.session.commit()
-        return jsonify(message="Success"), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        except IntegrityError as e:
+            db.session.rollback()
+            return jsonify(message=str(e)), 500
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 500
+    return jsonify({"success": True}), 200
 
 
 @locations_bp.route("/<int:survey_uid>/prime-geo-level", methods=["PUT"])
