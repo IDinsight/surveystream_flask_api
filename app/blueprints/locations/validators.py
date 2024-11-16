@@ -55,6 +55,5 @@ class LocationUpdateParamValidator(FlaskForm):
 
     survey_uid = IntegerField(validators=[DataRequired()])
     location_uid = IntegerField(validators=[DataRequired()])
-    location_id = StringField(validators=[DataRequired()])
     location_name = StringField(validators=[DataRequired()])
     parent_location_uid = StringField()
