@@ -332,6 +332,42 @@ class TestDQ:
 
         yield
 
+    @pytest.fixture()
+    def create_another_dq_check(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+    ):
+        """
+        Insert new dq check (don't know check) as a setup step for the tests
+        """
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 5,
+            "all_questions": False,
+            "module_name": "test_module_1",
+            "question_name": "fac_anc_reg_1_trim",
+            "flag_description": "test_dont_know_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {"value": ["-888"]},
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
     ####################################################
     ## FIXTURES END HERE
     ####################################################
@@ -1534,6 +1570,53 @@ class TestDQ:
 
             expected_response = {
                 "error": "User does not have the required permission: WRITE Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_get_dq_module_names(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_check,
+        create_another_dq_check,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to get the DQ config
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        response = client.get(
+            "/api/dq/checks/module-names",
+            query_string={"form_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    "test_module",
+                    "test_module_1",
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: READ Data Quality",
                 "success": False,
             }
 
