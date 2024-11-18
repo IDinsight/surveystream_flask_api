@@ -146,3 +146,10 @@ class UpdateDQChecksStateValidator(FlaskForm):
     type_id = IntegerField(validators=[DataRequired(), validate_check_type])
 
     check_uids = FieldList(IntegerField(), validators=[DataRequired()])
+
+
+class DQModuleNamesQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
