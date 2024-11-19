@@ -1,7 +1,7 @@
 import base64
 import binascii
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import groupby
 from operator import attrgetter
 
@@ -45,7 +45,7 @@ from .models import (
 )
 from .queries import build_bottom_level_locations_with_location_hierarchy_subquery
 from .routes import targets_bp
-from .utils import TargetColumnMapping, TargetsUpload
+from .utils import TargetColumnMapping, TargetsUpload, apply_target_scto_filters
 from .validators import (
     BulkUpdateTargetsValidator,
     TargetConfigQueryValidator,
@@ -174,6 +174,7 @@ def upload_targets(validated_query_params, validated_payload):
                     ),
                     404,
                 )
+
             scto_credential_response = get_aws_secret(
                 "{scto_server_name}-surveycto-server".format(
                     scto_server_name=form.scto_server_name
@@ -200,7 +201,20 @@ def upload_targets(validated_query_params, validated_payload):
                 else:
                     scto_form_id = target_config.scto_input_id
                     scto_encryption_flag = target_config.scto_encryption_flag
-                    oldest_date = datetime.strptime("2024-02-15", "%Y-%m-%d")
+
+                    # Set completion date intervals as - 1 week , 2 week, 1 month, 2 month, Fixed date - 2024-01-01
+                    # Iterate through the oldest date till reaching row_threshold
+                    date_today = datetime.today()
+                    oldest_date_array = [
+                        date_today - timedelta(weeks=1),
+                        date_today - timedelta(weeks=2),
+                        date_today - timedelta(weeks=4),
+                        date_today - timedelta(weeks=8),
+                        datetime(2024, 1, 1),
+                    ]
+
+                    row_threshold = 100
+
                     if scto_encryption_flag:
                         # Get the encrypted form data
                         encryption_key = get_aws_secret(
@@ -208,25 +222,47 @@ def upload_targets(validated_query_params, validated_payload):
                             current_app.config["AWS_REGION"],
                             is_global_secret=True,
                         )
-                        scto_form = scto.get_form_data(
-                            scto_form_id,
-                            format="json",
-                            key=encryption_key,
-                            oldest_completion_date=oldest_date,
-                        )
-                        # Convert JSON to CSV
 
+                        for oldest_date in oldest_date_array:
+                            scto_form = scto.get_form_data(
+                                scto_form_id,
+                                format="json",
+                                key=encryption_key,
+                                oldest_completion_date=oldest_date,
+                            )
+                            if len(scto_form) >= row_threshold:
+                                break
+
+                        # Convert JSON to CSV
                         df = pd.DataFrame.from_dict(scto_form[:100])
                         csv_string = df.to_csv(index=False)
 
                     else:
-                        scto_form = scto.get_form_data(
-                            scto_form_id,
-                            format="csv",
-                            oldest_completion_date=oldest_date,
-                        )
+                        for oldest_date in oldest_date_array:
+                            scto_form = scto.get_form_data(
+                                scto_form_id,
+                                format="csv",
+                                oldest_completion_date=oldest_date,
+                            )
+                            if len(scto_form) >= row_threshold:
+                                break
                         csv_string = scto_form
 
+                # Apply filters to the SCTO data
+                target_scto_filters = TargetSCTOFilters.query.filter_by(
+                    form_uid=form_uid
+                ).all()
+                target_scto_filter_list = [
+                    {"filter_group": [filter.to_dict() for filter in filter_group]}
+                    for key, filter_group in groupby(
+                        target_scto_filters, key=attrgetter("filter_group_id")
+                    )
+                ]
+
+                if target_scto_filter_list and len(target_scto_filter_list) > 0:
+                    csv_string = apply_target_scto_filters(
+                        csv_string, target_scto_filter_list
+                    )
         else:
             csv_string = base64.b64decode(
                 validated_payload.file.data, validate=True
