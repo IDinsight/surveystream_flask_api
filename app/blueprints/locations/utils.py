@@ -330,7 +330,8 @@ class LocationsUpload:
         for column_name in expected_columns:
             if file_columns.count(column_name) != 1:
                 file_errors.append(
-                    f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} times in the uploaded file. It should appear exactly once."
+                    f"Column name '{column_name}' from the column mapping appears "
+                    f"{file_columns.count(column_name)} times in the uploaded file. It should appear exactly once."
                 )
 
         # The file should contain no blank fields
@@ -341,14 +342,16 @@ class LocationsUpload:
         if len(blank_fields) > 0:
             blank_fields_formatted = "\n".join(item for item in blank_fields)
             file_errors.append(
-                f"The file contains {len(blank_fields)} blank fields. Blank fields are not allowed. Blank fields are found in the following columns and rows:\n{blank_fields_formatted}"
+                f"The file contains {len(blank_fields)} blank fields. Blank fields are not allowed. "
+                f"Blank fields are found in the following columns and rows:\n{blank_fields_formatted}"
             )
 
         # The file should have no duplicate rows
         duplicates_df = self.locations_df[self.locations_df.duplicated(keep=False)]
         if len(duplicates_df) > 0:
             file_errors.append(
-                f"The file has {len(duplicates_df)} duplicate rows. Duplicate rows are not allowed. The following rows are duplicates:\n{duplicates_df.to_string()}"
+                f"The file has {len(duplicates_df)} duplicate rows. Duplicate rows are not allowed. "
+                f"The following rows are duplicates:\n{duplicates_df.to_string()}"
             )
 
         if existing_location_df is not None:
@@ -363,11 +366,15 @@ class LocationsUpload:
             )
             if not intersection_df.empty:
                 file_errors.append(
-                    f"The uploaded file contains {len(intersection_df)} rows that are already present in the existing data. Duplicate rows are not allowed, you can use reupload methood, if you want to insert all data. \n The following rows are duplicates:\n{intersection_df.to_string()}"
+                    f"The uploaded file contains {len(intersection_df)} rows that are already present "
+                    f"in the existing data. Duplicate rows are not allowed, you can use reupload method, "
+                    f"if you want to insert all data. \nThe following rows are duplicates:\n"
+                    f"{intersection_df.to_string()}"
                 )
 
             # Combine the existing and uploaded dataframes for geo level based checks
             combined_df = pd.concat([self.locations_df, existing_location_df])
+            combined_df.reset_index(inplace=True, drop=True)
         else:
             combined_df = self.locations_df
 
@@ -402,8 +409,24 @@ class LocationsUpload:
                         )
                     ]
                 ):
+
+                    error_str = combined_df[
+                        combined_df.drop_duplicates(
+                            subset=[
+                                parent_geo_level_id_column_name,
+                                geo_level_id_column_name,
+                            ]
+                        )
+                        .duplicated(subset=[geo_level_id_column_name], keep=False)
+                        .reindex(combined_df.index, fill_value=False)
+                    ].to_string()
+
                     file_errors.append(
-                        f"Location type {geo_level.geo_level_name} has location id's that are mapped to more than one parent location in column {parent_geo_level_id_column_name}. A location (defined by the location id column) cannot be assigned to multiple parents. Make sure to use a unique location id for each location. The following rows have location id's that are mapped to more than one parent location:\n{combined_df[combined_df.drop_duplicates(subset=[parent_geo_level_id_column_name, geo_level_id_column_name]).duplicated(subset=[geo_level_id_column_name], keep=False).reindex(self.locations_df.index, fill_value=False)].to_string()}"
+                        f"Location type {geo_level.geo_level_name} has location id's that are mapped to more than "
+                        f"one parent location in column {parent_geo_level_id_column_name}. "
+                        f"A location (defined by the location id column) cannot be assigned to multiple parents. "
+                        f"Make sure to use a unique location id for each location. "
+                        f"The following rows have location id's that are mapped to more than one parent location:\n{error_str}",
                     )
 
         # A location (defined by location_id) cannot have multiple location names
@@ -431,8 +454,19 @@ class LocationsUpload:
                     )
                 ]
             ):
+                error_str = combined_df[
+                    combined_df.drop_duplicates(
+                        subset=[geo_level_id_column_name, geo_level_name_column_name]
+                    )
+                    .duplicated(subset=[geo_level_id_column_name], keep=False)
+                    .reindex(combined_df.index, fill_value=False)
+                ].to_string()
+
                 file_errors.append(
-                    f"Location type {geo_level.geo_level_name} has location id's that have more than one location name. Make sure to use a unique location name for each location id. The following rows have location id's that have more than one location name:\n{combined_df[combined_df.drop_duplicates(subset=[geo_level_id_column_name, geo_level_name_column_name]).duplicated(subset=[geo_level_id_column_name], keep=False).reindex(self.locations_df.index, fill_value=False)].to_string()}"
+                    f"Location type {geo_level.geo_level_name} has location id's that have more than one "
+                    f"location name. Make sure to use a unique location name for each location id. "
+                    f"The following rows have location id's that have more than one location name:\n"
+                    f"{error_str}",
                 )
 
         if len(file_errors) > 0:
