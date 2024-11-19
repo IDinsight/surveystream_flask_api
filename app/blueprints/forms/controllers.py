@@ -624,6 +624,9 @@ def ingest_scto_form_definition(form_uid):
                 )
                 db.session.add(scto_choice_label)
 
+    # There can be nested repeat groups, so we need to keep track of the depth in order to determine if a question is part of a repeat group
+    repeat_group_depth = 0
+
     # Loop through the rows of the `survey` tab of the form definition
     for row in scto_form_definition["fieldsRowsAndColumns"][1:]:
         questions_dict = dict(zip(survey_tab_columns, row))
@@ -633,8 +636,6 @@ def ingest_scto_form_definition(form_uid):
             continue
 
         if questions_dict["name"].strip() != "":
-            # There can be nested repeat groups, so we need to keep track of the depth in order to determine if a question is part of a repeat group
-            repeat_group_depth = 0
             # Handle the questions
             list_uid = None
             list_name = None

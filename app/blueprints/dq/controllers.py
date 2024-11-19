@@ -25,6 +25,7 @@ from .validators import (
     DQConfigQueryParamValidator,
     UpdateDQChecksStateValidator,
     UpdateDQConfigValidator,
+    DQModuleNamesQueryParamValidator,
 )
 
 
@@ -657,3 +658,46 @@ def delete_dq_checks(validated_payload):
         return jsonify({"message": str(e), "success": False}), 500
 
     return jsonify({"message": "Success", "success": True}), 200
+
+
+@dq_bp.route("/checks/module-names", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(DQModuleNamesQueryParamValidator)
+@custom_permissions_required("READ Data Quality", "query", "form_uid")
+def get_dq_module_names(validated_query_params):
+    """
+    Function to get dq module names
+
+    """
+    form_uid = validated_query_params.form_uid.data
+
+    module_names = (
+        db.session.query(DQCheck.module_name)
+        .filter(DQCheck.form_uid == form_uid)
+        .distinct()
+        .all()
+    )
+
+    # Return 404 if no module names found
+    if not module_names:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "DQ module names not found",
+                }
+            ),
+            404,
+        )
+
+    # Return the response
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": [module_name[0] for module_name in module_names],
+            },
+        ),
+        200,
+    )
