@@ -11591,3 +11591,49 @@ paths:
                     type: string
                     example: "An error occurred while deactivating the DQ checks"
   
+  /dq/checks/module-names:
+    get:
+      summary: Get module names added for DQ checks for a form
+      description: Retrieve a list of all available module names added for DQ checks for a specific form.
+      tags:
+        - Data Quality
+      parameters:
+        - name: form_uid
+          in: query
+          description: Unique identifier for the form
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully returns a list of module names
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: string
+                      description: Name of the module
+                      example: "Agriculture"
+        "404":
+          description: DQ module names not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  data:
+                    type: null
+                    example: null
+                  message:
+                    type: string
+                    example: "DQ module names not found"
