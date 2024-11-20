@@ -140,8 +140,8 @@ class TargetsUpload:
     def __init__(self, csv_string, column_mapping, survey_uid, form_uid):
         try:
             self.col_names = self.__get_col_names(csv_string)
-        except:
-            raise
+        except Exception as e:
+            raise e
 
         self.survey_uid = survey_uid
         self.form_uid = form_uid
@@ -641,3 +641,105 @@ class TargetsUpload:
             target_dict["custom_fields"] = custom_fields
 
         return target_dict
+
+
+def apply_target_scto_filters(csv_string, target_filters, json_string=None):
+    """
+    Create a new CSV string with the target records filtered based on the filter input
+
+    CSV is read in chunks and filters are applied till the end of the file or a threshold is reached
+
+    Args:
+        csv_string: The CSV string containing the target records
+        target_filters: The filters to apply to the target records, Array of TargetSCTOFilter objects
+        json_string: The JSON string containing the target records, if data format is JSON
+    """
+
+    # Create filter strings
+    final_filter_string = ""
+    filter_count = 0
+    for filter_group_arr in target_filters:
+        group_count = 0
+        filter_group = filter_group_arr["filter_group"]
+        # Initialize
+        filter_string = " ( "
+        for filter in filter_group:
+            column_name = filter["variable_name"]
+            filter_value = filter["filter_value"]
+            filter_operator = filter["filter_operator"]
+
+            if group_count > 0:
+                filter_string += " & "
+            group_count += 1
+
+            if filter_value:
+                filter_value = "'" + filter_value + "'"
+
+            if filter_operator == "Is":
+                filter_string += (
+                    "( chunk_df['" + column_name + "'] == " + filter_value + " )"
+                )
+            elif filter_operator == "Is not":
+                filter_string += (
+                    "( chunk_df['" + column_name + "'] != " + filter_value + " )"
+                )
+            elif filter_operator == "Contains":
+                filter_string += (
+                    "(  chunk_df['"
+                    + column_name
+                    + "'].str.contains('"
+                    + str(filter_value)
+                    + "')  )"
+                )
+            elif filter_operator == "Does not contain":
+                filter_string += (
+                    "(  ~chunk_df['"
+                    + column_name
+                    + "'].str.contains('"
+                    + str(filter_value)
+                    + "') )"
+                )
+            elif filter_operator == "Is empty":
+                filter_string += "(  chunk_df['" + column_name + "'].isnull() )"
+            elif filter_operator == "Is not empty":
+                filter_string += "(  ~chunk_df['" + column_name + "'].isnull() )"
+
+        filter_string += " ) "
+        if filter_count > 0:
+            final_filter_string = final_filter_string + " | "
+
+        final_filter_string += filter_string
+        filter_count += 1
+
+    # Read the CSV string in chunks of 100 rows at a time
+    chunk_size = 100
+    filtered_data = pd.DataFrame()
+
+    if json_string is None:
+        for chunk_df in pd.read_csv(
+            io.StringIO(csv_string), chunksize=chunk_size, dtype=str
+        ):
+            chunk_df = chunk_df.replace("", np.nan)
+
+            # Apply the filter string to the chunk
+            filtered_chunk = chunk_df[eval(final_filter_string)]
+
+            filtered_data = pd.concat([filtered_data, filtered_chunk])
+            if len(filtered_data) >= 20:
+                break
+    else:
+        for chunk_df in pd.read_json(
+            io.StringIO(json_string), chunksize=chunk_size, dtype=str
+        ):
+            chunk_df = chunk_df.replace("", np.nan)
+
+            # Apply the filter string to the chunk
+            filtered_chunk = chunk_df[eval(final_filter_string)]
+
+            filtered_data = pd.concat([filtered_data, filtered_chunk])
+            if len(filtered_data) >= 20:
+                break
+
+    # Convert the filtered data back to a CSV string
+    filtered_csv_string = filtered_data.to_csv(index=False)
+    return filtered_csv_string

@@ -1,7 +1,6 @@
 from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy.orm import backref
 
 from app import db
 from app.blueprints.forms.models import Form
@@ -252,4 +251,46 @@ class TargetSCTOQuestion(db.Model):
         return {
             "form_uid": self.form_uid,
             "question_name": self.question_name,
+        }
+
+
+class TargetSCTOFilters(db.Model):
+    __tablename__ = "target_scto_filters"
+
+    filter_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
+    filter_group_id = db.Column(db.Integer(), primary_key=True)
+    variable_name = db.Column(db.String(), nullable=False)
+    filter_operator = db.Column(
+        db.String(),
+        CheckConstraint(
+            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than')",
+            name="ck_target_scto_filters_filter_operator",
+        ),
+        nullable=False,
+    )
+    filter_value = db.Column(db.Text(), nullable=True)
+
+    __table_args__ = {"schema": "webapp"}
+
+    def __init__(
+        self,
+        form_uid,
+        filter_group_id,
+        variable_name,
+        filter_operator,
+        filter_value,
+    ):
+        self.form_uid = form_uid
+        self.filter_group_id = filter_group_id
+        self.variable_name = variable_name
+        self.filter_operator = filter_operator
+        self.filter_value = filter_value
+
+    def to_dict(self):
+        return {
+            "filter_group_id": self.filter_group_id,
+            "variable_name": self.variable_name,
+            "filter_operator": self.filter_operator,
+            "filter_value": self.filter_value,
         }
