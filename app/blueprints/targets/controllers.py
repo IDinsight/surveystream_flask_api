@@ -194,10 +194,27 @@ def upload_targets(validated_query_params, validated_payload):
 
             if target_config.target_source == "scto":
                 scto_input_type = target_config.scto_input_type
+
+                # Fetch filters to the SCTO data
+                target_scto_filters = TargetSCTOFilters.query.filter_by(
+                    form_uid=form_uid
+                ).all()
+                target_scto_filter_list = [
+                    {"filter_group": [filter.to_dict() for filter in filter_group]}
+                    for key, filter_group in groupby(
+                        target_scto_filters, key=attrgetter("filter_group_id")
+                    )
+                ]
+
                 if scto_input_type == "dataset":
                     scto_dataset_id = target_config.scto_input_id
                     scto_dataset = scto.get_server_dataset(scto_dataset_id)
                     csv_string = scto_dataset
+
+                    if target_scto_filter_list and len(target_scto_filter_list) > 0:
+                        csv_string = apply_target_scto_filters(
+                            csv_string, target_scto_filter_list
+                        )
                 else:
                     scto_form_id = target_config.scto_input_id
                     scto_encryption_flag = target_config.scto_encryption_flag
@@ -213,7 +230,7 @@ def upload_targets(validated_query_params, validated_payload):
                         datetime(2024, 1, 1),
                     ]
 
-                    row_threshold = 100
+                    row_threshold = 10
 
                     if scto_encryption_flag:
                         # Get the encrypted form data
@@ -230,12 +247,21 @@ def upload_targets(validated_query_params, validated_payload):
                                 key=encryption_key,
                                 oldest_completion_date=oldest_date,
                             )
-                            if len(scto_form) >= row_threshold:
-                                break
-
-                        # Convert JSON to CSV
-                        df = pd.DataFrame.from_dict(scto_form[:100])
-                        csv_string = df.to_csv(index=False)
+                            if (
+                                target_scto_filter_list
+                                and len(target_scto_filter_list) > 0
+                            ):
+                                csv_string = apply_target_scto_filters(
+                                    csv_string, target_scto_filter_list
+                                )
+                                if len(csv_string) > row_threshold:
+                                    break
+                            else:
+                                # Convert JSON to CSV
+                                df = pd.DataFrame.from_dict(scto_form[:row_threshold])
+                                csv_string = df.to_csv(index=False)
+                                if len(df) > row_threshold:
+                                    break
 
                     else:
                         for oldest_date in oldest_date_array:
@@ -244,25 +270,17 @@ def upload_targets(validated_query_params, validated_payload):
                                 format="csv",
                                 oldest_completion_date=oldest_date,
                             )
-                            if len(scto_form) >= row_threshold:
+                            csv_string = scto_form
+                            if (
+                                target_scto_filter_list
+                                and len(target_scto_filter_list) > 0
+                            ):
+                                csv_string = apply_target_scto_filters(
+                                    csv_string, target_scto_filter_list
+                                )
+                            if len(csv_string) > row_threshold:
                                 break
-                        csv_string = scto_form
 
-                # Apply filters to the SCTO data
-                target_scto_filters = TargetSCTOFilters.query.filter_by(
-                    form_uid=form_uid
-                ).all()
-                target_scto_filter_list = [
-                    {"filter_group": [filter.to_dict() for filter in filter_group]}
-                    for key, filter_group in groupby(
-                        target_scto_filters, key=attrgetter("filter_group_id")
-                    )
-                ]
-
-                if target_scto_filter_list and len(target_scto_filter_list) > 0:
-                    csv_string = apply_target_scto_filters(
-                        csv_string, target_scto_filter_list
-                    )
         else:
             csv_string = base64.b64decode(
                 validated_payload.file.data, validate=True

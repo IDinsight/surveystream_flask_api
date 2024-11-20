@@ -643,7 +643,7 @@ class TargetsUpload:
         return target_dict
 
 
-def apply_target_scto_filters(csv_string, target_filters):
+def apply_target_scto_filters(csv_string, target_filters, json_string=None):
     """
     Create a new CSV string with the target records filtered based on the filter input
 
@@ -652,6 +652,7 @@ def apply_target_scto_filters(csv_string, target_filters):
     Args:
         csv_string: The CSV string containing the target records
         target_filters: The filters to apply to the target records, Array of TargetSCTOFilter objects
+        json_string: The JSON string containing the target records, if data format is JSON
     """
 
     # Create filter strings
@@ -714,17 +715,30 @@ def apply_target_scto_filters(csv_string, target_filters):
     chunk_size = 100
     filtered_data = pd.DataFrame()
 
-    for chunk_df in pd.read_csv(
-        io.StringIO(csv_string), chunksize=chunk_size, dtype=str
-    ):
-        chunk_df = chunk_df.replace("", np.nan)
+    if json_string is None:
+        for chunk_df in pd.read_csv(
+            io.StringIO(csv_string), chunksize=chunk_size, dtype=str
+        ):
+            chunk_df = chunk_df.replace("", np.nan)
 
-        # Apply the filter string to the chunk
-        filtered_chunk = chunk_df[eval(final_filter_string)]
+            # Apply the filter string to the chunk
+            filtered_chunk = chunk_df[eval(final_filter_string)]
 
-        filtered_data = pd.concat([filtered_data, filtered_chunk])
-        if len(filtered_data) >= 20:
-            break
+            filtered_data = pd.concat([filtered_data, filtered_chunk])
+            if len(filtered_data) >= 20:
+                break
+    else:
+        for chunk_df in pd.read_json(
+            io.StringIO(json_string), chunksize=chunk_size, dtype=str
+        ):
+            chunk_df = chunk_df.replace("", np.nan)
+
+            # Apply the filter string to the chunk
+            filtered_chunk = chunk_df[eval(final_filter_string)]
+
+            filtered_data = pd.concat([filtered_data, filtered_chunk])
+            if len(filtered_data) >= 20:
+                break
 
     # Convert the filtered data back to a CSV string
     filtered_csv_string = filtered_data.to_csv(index=False)
