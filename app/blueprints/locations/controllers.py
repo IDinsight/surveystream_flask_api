@@ -260,6 +260,7 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                 ).update(
                     {
                         GeoLevel.user_uid: user_uid,
+                        GeoLevel.to_delete: 1,
                     },
                     synchronize_session=False,
                 )
@@ -317,7 +318,6 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                     SurveyorLocation.form_uid == form_uid,
                     SurveyorLocation.location_uid.in_(location_uid_list),
                 ).delete()
-                db.session.commit()
                 UserLocation.query.filter(
                     UserLocation.survey_uid == survey_uid,
                     UserLocation.location_uid.in_(location_uid_list),
