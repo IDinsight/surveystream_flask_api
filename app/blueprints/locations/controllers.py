@@ -289,20 +289,8 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                     )
                 form_uid = form.form_uid
 
-                locations_set_for_deletion = (
-                    Location.query.with_entities(Location.location_uid)
-                    .filter(
-                        Location.survey_uid == survey_uid,
-                        Location.geo_level_uid.in_(geo_level_uid_for_deletion),
-                    )
-                    .all()
-                )
-                location_uid_list = [
-                    location.location_uid for location in locations_set_for_deletion
-                ]
                 Target.query.filter(
                     Target.form_uid == form_uid,
-                    Target.location_uid.in_(location_uid_list),
                 ).update(
                     {
                         Target.location_uid: None,
@@ -312,15 +300,12 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
 
                 MonitorLocation.query.filter(
                     MonitorLocation.form_uid == form_uid,
-                    MonitorLocation.location_uid.in_(location_uid_list),
                 ).delete()
                 SurveyorLocation.query.filter(
                     SurveyorLocation.form_uid == form_uid,
-                    SurveyorLocation.location_uid.in_(location_uid_list),
                 ).delete()
                 UserLocation.query.filter(
                     UserLocation.survey_uid == survey_uid,
-                    UserLocation.location_uid.in_(location_uid_list),
                 ).delete()
 
                 # Set location in SCTOQuestionMapping to None
@@ -342,6 +327,10 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                     },
                     synchronize_session=False,
                 )
+
+                Location.query.filter(
+                    Location.survey_uid == survey_uid,
+                ).delete()
 
                 GeoLevel.query.filter(
                     GeoLevel.survey_uid == survey_uid,
