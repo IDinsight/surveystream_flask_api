@@ -643,7 +643,7 @@ class TargetsUpload:
         return target_dict
 
 
-def apply_target_scto_filters(csv_string, target_filters, json_string=None):
+def apply_target_scto_filters(csv_string, target_filters, data_format="csv"):
     """
     Create a new CSV string with the target records filtered based on the filter input
 
@@ -712,10 +712,11 @@ def apply_target_scto_filters(csv_string, target_filters, json_string=None):
         filter_count += 1
 
     # Read the CSV string in chunks of 100 rows at a time
-    chunk_size = 100
+
+    chunk_size = 500
     filtered_data = pd.DataFrame()
 
-    if json_string is None:
+    if data_format == "csv":
         for chunk_df in pd.read_csv(
             io.StringIO(csv_string), chunksize=chunk_size, dtype=str
         ):
@@ -725,19 +726,20 @@ def apply_target_scto_filters(csv_string, target_filters, json_string=None):
             filtered_chunk = chunk_df[eval(final_filter_string)]
 
             filtered_data = pd.concat([filtered_data, filtered_chunk])
-            if len(filtered_data) >= 20:
+            if len(filtered_data) >= 10:
                 break
     else:
-        for chunk_df in pd.read_json(
-            io.StringIO(json_string), chunksize=chunk_size, dtype=str
-        ):
-            chunk_df = chunk_df.replace("", np.nan)
+        row_number = len(csv_string)
+
+        for i in range(0, row_number, chunk_size):
+            chunk_df = pd.DataFrame.from_dict(csv_string[i : i + row_number], dtype=str)
+            chunk_df.replace("", np.nan)
 
             # Apply the filter string to the chunk
             filtered_chunk = chunk_df[eval(final_filter_string)]
 
             filtered_data = pd.concat([filtered_data, filtered_chunk])
-            if len(filtered_data) >= 20:
+            if len(filtered_data) >= 10:
                 break
 
     # Convert the filtered data back to a CSV string

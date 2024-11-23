@@ -158,6 +158,8 @@ def upload_targets(validated_query_params, validated_payload):
             )
     else:
         geo_level_hierarchy = None
+
+    csv_string = ""
     try:
         # Check if we need to load the targets from SCTO
         if validated_payload.load_from_scto.data:
@@ -247,12 +249,17 @@ def upload_targets(validated_query_params, validated_payload):
                                 key=encryption_key,
                                 oldest_completion_date=oldest_date,
                             )
+                            if len(scto_form) == 0:
+                                continue
+
                             if (
                                 target_scto_filter_list
                                 and len(target_scto_filter_list) > 0
                             ):
                                 csv_string = apply_target_scto_filters(
-                                    csv_string, target_scto_filter_list
+                                    scto_form,
+                                    target_scto_filter_list,
+                                    data_format="json",
                                 )
                                 if len(csv_string) > row_threshold:
                                     break
@@ -1254,7 +1261,6 @@ def get_target_column_config(validated_query_params):
         survey_uid = form.survey_uid
         geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
 
-        target_scto_filter_list = []
         if geo_levels:
             try:
                 geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
@@ -1280,17 +1286,18 @@ def get_target_column_config(validated_query_params):
                     ]
                 )
 
-            # Get filters on Targets SCTO Data
+    target_scto_filter_list = []
+    # Get filters on Targets SCTO Data
 
-            target_scto_filters = TargetSCTOFilters.query.filter(
-                TargetSCTOFilters.form_uid == form_uid,
-            ).all()
-            target_scto_filter_list = [
-                {"filter_group": [filter.to_dict() for filter in filter_group]}
-                for key, filter_group in groupby(
-                    target_scto_filters, key=attrgetter("filter_group_id")
-                )
-            ]
+    target_scto_filters = TargetSCTOFilters.query.filter(
+        TargetSCTOFilters.form_uid == form_uid,
+    ).all()
+    target_scto_filter_list = [
+        {"filter_group": [filter.to_dict() for filter in filter_group]}
+        for key, filter_group in groupby(
+            target_scto_filters, key=attrgetter("filter_group_id")
+        )
+    ]
 
     # Add target_status columns
     target_status_columns = [
