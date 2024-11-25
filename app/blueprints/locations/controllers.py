@@ -143,7 +143,7 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                 form = Form.query.filter(
                     Form.survey_uid == survey_uid, Form.form_type == "parent"
                 ).first()
-                if form is not None:
+                if form:
 
                     form_uid = form.form_uid
 
