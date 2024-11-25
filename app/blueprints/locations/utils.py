@@ -63,19 +63,8 @@ class GeoLevelHierarchy:
             raise InvalidGeoLevelHierarchyError(errors_list)
 
         # There should be no duplicates on geo_level_uid
-        geo_level_uids = [
-            geo_level.geo_level_uid
-            for geo_level in self.geo_levels
-            if geo_level.geo_level_uid is not None
-        ]
-        payload = [
-            (
-                geo_level.geo_level_uid,
-                geo_level.geo_level_name,
-                geo_level.parent_geo_level_uid,
-            )
-            for geo_level in self.geo_levels
-        ]
+        geo_level_uids = [geo_level.geo_level_uid for geo_level in self.geo_levels]
+
         for geo_level_uid in geo_level_uids:
             if geo_level_uids.count(geo_level_uid) > 1:
                 error_message = f"Each location type unique id defined in the location type hierarchy should appear exactly once in the hierarchy. Location type with geo_level_uid='{geo_level_uid}' appears {geo_level_uids.count(geo_level_uid)} times in the hierarchy."
@@ -139,7 +128,7 @@ class GeoLevelHierarchy:
                     geo_level.geo_level_uid for geo_level in visited_nodes
                 ]:
                     errors_list.append(
-                        f"The location type hierarchy should not have any cycles. The current hierarchy has a cycle starting with location type '{child_nodes[0].geo_level_name}' , child_nodes = '{child_nodes}' \n payload = '{payload}'."
+                        f"The location type hierarchy should not have any cycles. The current hierarchy has a cycle starting with location type '{child_nodes[0].geo_level_name}'."
                     )
                     raise InvalidGeoLevelHierarchyError(errors_list)
                 visited_nodes.append(child_nodes[0])
@@ -364,12 +353,16 @@ class LocationsUpload:
                 on=expected_columns,
                 suffixes=("_uploaded", "_existing"),
             )
+
             if not intersection_df.empty:
+                duplicate_rows_with_details = [row + 1 for row in intersection_df.index]
+
                 file_errors.append(
-                    f"The uploaded file contains {len(intersection_df)} rows that are already present "
-                    f"in the existing data. Duplicate rows are not allowed, you can use reupload method, "
-                    f"if you want to insert all data. \nThe following rows are duplicates:\n"
-                    f"{intersection_df.to_string()}"
+                    f"The uploaded file has some rows that are already in our data. "
+                    f"Please remove these rows and upload the file again. "
+                    f"You can also edit the existing data on the screen or use the "
+                    f"fresh upload method if you want to delete the existing data. "
+                    f"The following row number in the uploaded file are duplicates of existing data: {duplicate_rows_with_details}"
                 )
 
             # Combine the existing and uploaded dataframes for geo level based checks

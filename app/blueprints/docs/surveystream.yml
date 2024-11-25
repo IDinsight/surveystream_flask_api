@@ -6287,6 +6287,39 @@ paths:
         "500":
           description: >
             Error message indicating that the locations could not be retrieved.
+  
+  /locations/<int:location_uid>:
+    put:
+      tags:
+          - Locations
+      summary: Updates a location based on location_uid
+      parameters:
+        - in: path
+          name: location_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the location
+      requestBody:
+        description: JSON object containing the location details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: integer
+                  description: Unique ID of the survey
+                location_name:
+                  type: string
+                  description: The name of the location
+                location_uid:
+                  type: string
+                  description: The Unique ID of the location
+                parent_location_uid:
+                  type: integer
+                  description: The unique ID of the parent location  
 
   /target-status-mapping:
     get:
