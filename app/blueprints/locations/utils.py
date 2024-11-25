@@ -358,7 +358,7 @@ class LocationsUpload:
                 duplicate_rows_with_details = [row + 1 for row in intersection_df.index]
 
                 file_errors.append(
-                    f"The uploaded file has some rows that are already in our data. "
+                    f"The uploaded file has some rows that already exist in SurveyStream. "
                     f"Please remove these rows and upload the file again. "
                     f"You can also edit the existing data on the screen or use the "
                     f"fresh upload method if you want to delete the existing data. "
