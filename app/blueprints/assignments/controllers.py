@@ -21,7 +21,7 @@ from app.blueprints.locations.models import GeoLevel
 from app.blueprints.locations.utils import GeoLevelHierarchy
 from app.blueprints.mapping.errors import MappingError
 from app.blueprints.mapping.utils import SurveyorMapping, TargetMapping
-from app.blueprints.roles.utils import check_if_survey_admin
+from app.blueprints.roles.utils import check_if_survey_admin, get_user_role
 from app.blueprints.surveys.models import Survey
 from app.blueprints.targets.models import Target, TargetStatus
 from app.blueprints.targets.queries import (
@@ -145,9 +145,16 @@ def view_assignments(validated_query_params):
     ).subquery()
 
     # Get the child supervisors for the current logged in user
+    user_role = get_user_role(user_uid, survey_uid)
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    is_super_admin = current_user.is_super_admin
     child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+        user_uid,
+        survey_uid,
+        target_mapping.bottom_level_role_uid,
+        user_role,
+        is_survey_admin,
+        is_super_admin,
     )
 
     assignments_query = (
@@ -176,8 +183,8 @@ def view_assignments(validated_query_params):
         )
     )
 
-    # If the user is a survey admin, we want to show all targets, even if they are not assigned
-    if is_survey_admin:
+    # If the user is a survey admin or super admin without a specific survey role, we want to show all targets, even if they are not assigned
+    if is_survey_admin or (is_super_admin and user_role is None):
         assignments_query = (
             assignments_query.outerjoin(
                 mappings_query,
@@ -343,9 +350,16 @@ def view_assignments_enumerators(validated_query_params):
     )
 
     # Get the child supervisors for the current logged in user
+    user_role = get_user_role(user_uid, survey_uid)
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    is_super_admin = current_user.is_super_admin
     child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, surveyor_mapping.bottom_level_role_uid, is_survey_admin
+        user_uid,
+        survey_uid,
+        surveyor_mapping.bottom_level_role_uid,
+        user_role,
+        is_survey_admin,
+        is_super_admin,
     )
 
     assignment_enumerators_query = (
@@ -513,9 +527,16 @@ def view_assignments_targets(validated_query_params):
     ).subquery()
 
     # Get the child supervisors for the current logged in user
+    user_role = get_user_role(user_uid, survey_uid)
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    is_super_admin = current_user.is_super_admin
     child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+        user_uid,
+        survey_uid,
+        target_mapping.bottom_level_role_uid,
+        user_role,
+        is_survey_admin,
+        is_super_admin,
     )
 
     assignment_targets_query = (
@@ -672,9 +693,16 @@ def update_assignments(validated_payload):
     ).subquery()
 
     # Get the child supervisors for the current logged in user
+    user_role = get_user_role(user_uid, survey_uid)
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    is_super_admin = current_user.is_super_admin
     child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+        user_uid,
+        survey_uid,
+        target_mapping.bottom_level_role_uid,
+        user_role,
+        is_survey_admin,
+        is_super_admin,
     )
 
     # Run database-backed validations on the assignment inputs

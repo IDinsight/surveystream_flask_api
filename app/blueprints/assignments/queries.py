@@ -139,7 +139,12 @@ def build_surveyor_formwise_productivity_subquery(survey_uid):
 
 
 def build_child_users_with_supervisors_query(
-    user_uid, survey_uid, bottom_level_role_uid, is_survey_admin=False
+    user_uid,
+    survey_uid,
+    bottom_level_role_uid,
+    user_role=None,
+    is_survey_admin=False,
+    is_super_admin=False,
 ):
     """
     Build a subquery that returns all the FSLn child supervisors for the given user
@@ -151,7 +156,12 @@ def build_child_users_with_supervisors_query(
     This will be used to join with the targets and enumerators to get their supervisor
     information (restricted to the supervisors underneath the current user)
     """
-    if not is_survey_admin:
+
+    # Fetch all users if the user is a survey admin
+    # or if user is super admin not having a specific role in the survey
+    is_admin = is_survey_admin or (is_super_admin and not user_role)
+
+    if not is_admin:
         # Assemble the first part of the recursive query
         # This returns the user uid with an empty array for the
         # user's supervisors to start the recursive query
