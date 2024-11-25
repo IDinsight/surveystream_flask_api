@@ -129,7 +129,6 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
             geo_level_hierarchy_changed = True
 
         if geo_level_hierarchy_changed:
-
             try:
                 # Delete existing target,enumerator,location mapping data
                 from app.blueprints.enumerators.models import (
@@ -144,42 +143,28 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                 form = Form.query.filter(
                     Form.survey_uid == survey_uid, Form.form_type == "parent"
                 ).first()
-                if form is None:
-                    return (
-                        jsonify(
-                            {
-                                "error": "Form not found",
-                            }
-                        ),
-                        404,
+                if form is not None:
+
+                    form_uid = form.form_uid
+
+                    # Delete the existing target,enumerator location mapping data
+                    Target.query.filter(
+                        Target.form_uid == form_uid, Target.location_uid is not None
+                    ).update(
+                        {
+                            Target.location_uid: None,
+                        },
+                        synchronize_session=False,
                     )
-                form_uid = form.form_uid
 
-                Target.query.filter(
-                    Target.form_uid == form_uid, Target.location_uid is not None
-                ).update(
-                    {
-                        Target.location_uid: None,
-                    },
-                    synchronize_session=False,
-                )
-
-                MonitorLocation.query.filter(
-                    MonitorLocation.form_uid == form_uid
-                ).delete()
-                SurveyorLocation.query.filter(
-                    SurveyorLocation.form_uid == form_uid
-                ).delete()
+                    MonitorLocation.query.filter(
+                        MonitorLocation.form_uid == form_uid
+                    ).delete()
+                    SurveyorLocation.query.filter(
+                        SurveyorLocation.form_uid == form_uid
+                    ).delete()
 
                 UserLocation.query.filter_by(survey_uid=survey_uid).delete()
-
-                # Set location in SCTOQuestionMapping to None
-                SCTOQuestionMapping.query.filter_by(form_uid=form_uid).update(
-                    {
-                        SCTOQuestionMapping.locations: None,
-                    },
-                    synchronize_session=False,
-                )
 
                 Survey.query.filter_by(survey_uid=survey_uid).update(
                     {
@@ -255,6 +240,7 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                 geo_level_uid_for_deletion = [
                     geo_level.geo_level_uid for geo_level in deleted_geo_levels
                 ]
+
                 GeoLevel.query.filter(
                     GeoLevel.geo_level_uid.in_(geo_level_uid_for_deletion)
                 ).update(
@@ -278,45 +264,35 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                 form = Form.query.filter(
                     Form.survey_uid == survey_uid, Form.form_type == "parent"
                 ).first()
-                if form is None:
-                    return (
-                        jsonify(
-                            {
-                                "error": "Form not found",
-                            }
-                        ),
-                        404,
+                if form:
+                    form_uid = form.form_uid
+
+                    Target.query.filter(
+                        Target.form_uid == form_uid,
+                    ).update(
+                        {
+                            Target.location_uid: None,
+                        },
+                        synchronize_session=False,
                     )
-                form_uid = form.form_uid
 
-                Target.query.filter(
-                    Target.form_uid == form_uid,
-                ).update(
-                    {
-                        Target.location_uid: None,
-                    },
-                    synchronize_session=False,
-                )
-
-                MonitorLocation.query.filter(
-                    MonitorLocation.form_uid == form_uid,
-                ).delete()
-                SurveyorLocation.query.filter(
-                    SurveyorLocation.form_uid == form_uid,
-                ).delete()
-                UserLocation.query.filter(
-                    UserLocation.survey_uid == survey_uid,
-                ).delete()
-
-                # Set location in SCTOQuestionMapping to None
-                SCTOQuestionMapping.query.filter(
-                    SCTOQuestionMapping.form_uid == form_uid
-                ).update(
-                    {
-                        SCTOQuestionMapping.locations: None,
-                    },
-                    synchronize_session=False,
-                )
+                    MonitorLocation.query.filter(
+                        MonitorLocation.form_uid == form_uid,
+                    ).delete()
+                    SurveyorLocation.query.filter(
+                        SurveyorLocation.form_uid == form_uid,
+                    ).delete()
+                    UserLocation.query.filter(
+                        UserLocation.survey_uid == survey_uid,
+                    ).delete()
+                    # Set location in SCTOQuestionMapping to None
+                    SCTOQuestionMapping.query.filter_by(form_uid=form_uid).update(
+                        {
+                            SCTOQuestionMapping.locations: None,
+                        },
+                        synchronize_session=False,
+                    )
+                db.session.flush()
 
                 Survey.query.filter(
                     Survey.survey_uid == survey_uid,
@@ -385,6 +361,7 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                     },
                     synchronize_session=False,
                 )
+
                 db.session.flush()
             except Exception as e:
                 db.session.rollback()
