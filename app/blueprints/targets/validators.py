@@ -149,16 +149,22 @@ class TargetConfigValidator(FlaskForm):
             DataRequired(),
         ]
     )
-    scto_input_type = StringField(
-        validators=[
+
+    def validate_scto_input_type(form, field):
+        if form.target_source.data == "scto":
             AnyOf(
                 ["form", "dataset"],
                 message="Value must be one of %(values)s",
-            ),
-            DataRequired(),
-        ]
-    )
-    scto_input_id = StringField(DataRequired())
+            )(form, field)
+
+    def validate_scto_input_id(form, field):
+        if form.target_source.data == "scto":
+            DataRequired()(form, field)
+
+    scto_input_type = StringField(validators=[validate_scto_input_type])
+
+    scto_input_id = StringField(validators=[validate_scto_input_id])
+
     scto_encryption_flag = BooleanField(default=False)
 
 
