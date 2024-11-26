@@ -6705,6 +6705,13 @@ paths:
                     records if validations for any record fails. If True, the
                     upload will load the successful records and return the
                     failed records in the response.
+                load_from_scto:
+                  type: boolean
+                  default: False
+                  description: >-
+                    Whether to load the targets from SurveyCTO.
+                    If True, the `file` parameter will be ignored.
+                    Targets will be loaded from source defined in TargetConfig
               required:
                 - column_mapping
                 - file
@@ -7167,6 +7174,27 @@ paths:
                       - column_name
                       - column_type
                       - bulk_editable
+                filters:
+                  type: array
+                  description: >-
+                    An object containing the filter data for the Target config.
+                    The filter data is used to filter the targets based on the
+                    provided filter data.
+                  items:
+                    type: object
+                    properties:
+                      filter_group:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            variable_name:
+                              type: string
+                              example: "target_sample"
+                            filter_operator:
+                              type: string
+                            filter_value:
+                              type: string
               required:
                 - form_uid
                 - column_config
@@ -7242,7 +7270,27 @@ paths:
                             column_label:
                               type: string
                               description: The label for the location column.
-
+                      target_scto_filter_list:
+                        type: array
+                        description: >-
+                          An object containing the filter data for the Target config.
+                          The filter data is used to filter the targets based on the
+                          provided filter data.
+                        items:
+                          type: object
+                          properties:
+                            filter_group:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  variable_name:
+                                    type: string
+                                    example: "target_sample"
+                                  filter_operator:
+                                    type: string
+                                  filter_value:
+                                    type: string
         "400":
           description: Request errors
         "404":

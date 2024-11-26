@@ -2,8 +2,6 @@ from flask_wtf import FlaskForm
 from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired, Optional
 
-from app.utils.utils import JSONField
-
 
 class CustomColumnsValidator(FlaskForm):
     class Meta:
@@ -26,7 +24,7 @@ class ColumnMappingValidator(FlaskForm):
 
 class TargetsFileUploadValidator(FlaskForm):
     column_mapping = FormField(ColumnMappingValidator)
-    file = StringField(validators=[DataRequired()])
+    file = StringField()
     mode = StringField(
         validators=[
             AnyOf(
@@ -37,6 +35,7 @@ class TargetsFileUploadValidator(FlaskForm):
         ]
     )
     load_successful = BooleanField(validators=[Optional()], default=False)
+    load_from_scto = BooleanField(validators=[Optional()], default=False)
 
 
 class TargetsQueryParamValidator(FlaskForm):
@@ -75,9 +74,37 @@ class ColumnConfigValidator(FlaskForm):
     column_source = StringField(validators=[DataRequired()])
 
 
+class TargetSCTOFilterValidator(FlaskForm):
+    variable_name = StringField(validators=[DataRequired()])
+    filter_operator = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                [
+                    "Is",
+                    "Is not",
+                    "Contains",
+                    "Does not contain",
+                    "Is empty",
+                    "Is not empty",
+                    "Greather than",
+                    "Smaller than",
+                ],
+                message="Invalid operator. Must be 'Is', 'Is not', 'Contains', 'Does not contain', 'Is empty', or 'Is not empty', 'Greather than', 'Smaller than'",
+            ),
+        ]
+    )
+    filter_value = StringField()
+
+
+class TargetSCTOFilterGroupValidator(FlaskForm):
+    filter_group = FieldList(FormField(TargetSCTOFilterValidator), default=[])
+
+
 class UpdateTargetsColumnConfig(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     column_config = FieldList(FormField(ColumnConfigValidator))
+    filters = FieldList(FormField(TargetSCTOFilterGroupValidator), default=[])
 
 
 class SctoFieldsValidator(FlaskForm):

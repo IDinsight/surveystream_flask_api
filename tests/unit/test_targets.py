@@ -150,6 +150,7 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
         yield
@@ -222,6 +223,8 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
+
         assert response.status_code == 200
 
         yield
@@ -312,6 +315,126 @@ class TestTargets:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    @pytest.fixture()
+    def create_locations_for_dynamic_targets(
+        self,
+        client,
+        login_test_user,
+        create_form,
+        csrf_token,
+    ):
+        """
+        Upload locations csv as a setup step for the targets upload tests
+        """
+
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "State",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": 1,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "Block",
+                    "parent_geo_level_uid": 2,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_dynamic_targets.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            locations_csv = f.read()
+            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "state_name",
+                    "location_id_column": "state_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "block_name",
+                    "location_id_column": "block_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        df = pd.read_csv(filepath, dtype=str)
+        df.rename(
+            columns={
+                "state_id": "State ID",
+                "state_name": "State Name",
+                "district_id": "District ID",
+                "district_name": "District Name",
+                "block_id": "Block ID",
+                "block_name": "Block Name",
+            },
+            inplace=True,
+        )
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "State ID",
+                    "State Name",
+                    "District ID",
+                    "District Name",
+                    "Block ID",
+                    "Block Name",
+                ],
+                "records": df.to_dict(orient="records"),
+            },
+            "success": True,
+        }
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        yield
 
     @pytest.fixture()
     def create_target_column_config(
@@ -591,7 +714,9 @@ class TestTargets:
         assert response.status_code == 200
 
     @pytest.fixture()
-    def update_target_mapping_criteria_to_language(self, client, csrf_token):
+    def update_target_mapping_criteria_to_language(
+        self, login_test_user, client, csrf_token, create_survey
+    ):
         """
         Method to update the mapping criteria to Langauge
         """
@@ -615,6 +740,7 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
     @pytest.fixture()
@@ -693,6 +819,524 @@ class TestTargets:
         )
         print(response.json)
         assert response.status_code == 200
+
+    @pytest.fixture()
+    def create_target_config_for_dynamic_targets(
+        self, client, csrf_token, login_test_user, create_form
+    ):
+        """
+        Load target config table for tests with form inputs
+        """
+
+        payload = {
+            "form_uid": 1,
+            "target_source": "scto",
+            "scto_input_type": "form",
+            "scto_input_id": "test_scto_input_output",
+            "scto_encryption_flag": False,
+        }
+
+        response = client.post(
+            "/api/targets/config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def create_dynamic_target_column_config_with_filter(
+        self,
+        client,
+        csrf_token,
+        create_target_config_for_dynamic_targets,
+        create_locations_for_dynamic_targets,
+    ):
+        """
+        Upload the targets column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "target_id",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": False,
+                    "column_source": "enum_id",
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "basic_details",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "designation",
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "dc_type",
+                },
+                {
+                    "column_name": "Name",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "enum_name",
+                },
+                {
+                    "column_name": "bottom_geo_level_location",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "block_id",
+                },
+            ],
+            "filters": [
+                {
+                    "filter_group": [
+                        {
+                            "variable_name": "state_id",
+                            "filter_operator": "Is",
+                            "filter_value": "21",
+                        }
+                    ]
+                }
+            ],
+        }
+
+        response = client.put(
+            "/api/targets/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    def test_load_dynamic_targets_from_scto(
+        self,
+        client,
+        user_permissions,
+        request,
+        create_locations_for_dynamic_targets,
+        update_target_mapping_criteria_to_language,
+        create_target_config_for_dynamic_targets,
+        csrf_token,
+    ):
+        """
+        Test load dynamic targets from SCTO
+        Expect Successfull with targets db updated
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "column_mapping": {
+                "target_id": "enum_id",
+                "gender": "designation",
+                "language": "dc_type",
+                "location_id_column": "block_id",
+                "custom_fields": [
+                    {
+                        "field_label": "enum_name",
+                        "column_name": "enum_name",
+                    },
+                ],
+            },
+            "file": " ",
+            "mode": "overwrite",
+            "load_from_scto": True,
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 200
+            get_targets_response = client.get(
+                "/api/targets", query_string={"form_uid": 1}
+            )
+            expected_response = {
+                "success": True,
+                "data": [
+                    {
+                        "target_uid": 1,
+                        "target_id": "6ce2457eec",
+                        "language": "CHC_CHANDRAPUR",
+                        "gender": "Cluster Coordinator",
+                        "location_uid": 6,
+                        "form_uid": 1,
+                        "custom_fields": {
+                            "enum_name": "Amit kumar padhi",
+                            "column_mapping": {
+                                "gender": "designation",
+                                "language": "dc_type",
+                                "target_id": "enum_id",
+                                "custom_fields": [
+                                    {
+                                        "column_name": "enum_name",
+                                        "field_label": "enum_name",
+                                    }
+                                ],
+                                "location_id_column": "block_id",
+                            },
+                        },
+                        "completed_flag": None,
+                        "refusal_flag": None,
+                        "num_attempts": None,
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": None,
+                        "final_survey_status": None,
+                        "final_survey_status_label": None,
+                        "target_assignable": None,
+                        "webapp_tag_color": None,
+                        "revisit_sections": None,
+                        "scto_fields": None,
+                        "target_locations": [
+                            {
+                                "location_id": "21",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "Odisha",
+                                "geo_level_name": "State",
+                            },
+                            {
+                                "location_id": "396",
+                                "location_uid": 3,
+                                "geo_level_uid": 2,
+                                "location_name": "Rayagada",
+                                "geo_level_name": "District",
+                            },
+                            {
+                                "location_id": "2",
+                                "location_uid": 6,
+                                "geo_level_uid": 3,
+                                "location_name": "Indira Nagar",
+                                "geo_level_name": "Block",
+                            },
+                        ],
+                    },
+                    {
+                        "target_uid": 2,
+                        "target_id": "df950a3da8",
+                        "language": "CHC_CHANDRAPUR",
+                        "gender": "Regional Coordinator",
+                        "location_uid": 6,
+                        "form_uid": 1,
+                        "custom_fields": {
+                            "enum_name": "BABULA GARADIA",
+                            "column_mapping": {
+                                "gender": "designation",
+                                "language": "dc_type",
+                                "target_id": "enum_id",
+                                "custom_fields": [
+                                    {
+                                        "column_name": "enum_name",
+                                        "field_label": "enum_name",
+                                    }
+                                ],
+                                "location_id_column": "block_id",
+                            },
+                        },
+                        "completed_flag": None,
+                        "refusal_flag": None,
+                        "num_attempts": None,
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": None,
+                        "final_survey_status": None,
+                        "final_survey_status_label": None,
+                        "target_assignable": None,
+                        "webapp_tag_color": None,
+                        "revisit_sections": None,
+                        "scto_fields": None,
+                        "target_locations": [
+                            {
+                                "location_id": "21",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "Odisha",
+                                "geo_level_name": "State",
+                            },
+                            {
+                                "location_id": "396",
+                                "location_uid": 3,
+                                "geo_level_uid": 2,
+                                "location_name": "Rayagada",
+                                "geo_level_name": "District",
+                            },
+                            {
+                                "location_id": "2",
+                                "location_uid": 6,
+                                "geo_level_uid": 3,
+                                "location_name": "Indira Nagar",
+                                "geo_level_name": "Block",
+                            },
+                        ],
+                    },
+                    {
+                        "target_uid": 3,
+                        "target_id": "89732bda71",
+                        "language": "PHC_CHARDANA",
+                        "gender": "Monitor",
+                        "location_uid": 6,
+                        "form_uid": 1,
+                        "custom_fields": {
+                            "enum_name": "Aman Kaur",
+                            "column_mapping": {
+                                "gender": "designation",
+                                "language": "dc_type",
+                                "target_id": "enum_id",
+                                "custom_fields": [
+                                    {
+                                        "column_name": "enum_name",
+                                        "field_label": "enum_name",
+                                    }
+                                ],
+                                "location_id_column": "block_id",
+                            },
+                        },
+                        "completed_flag": None,
+                        "refusal_flag": None,
+                        "num_attempts": None,
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": None,
+                        "final_survey_status": None,
+                        "final_survey_status_label": None,
+                        "target_assignable": None,
+                        "webapp_tag_color": None,
+                        "revisit_sections": None,
+                        "scto_fields": None,
+                        "target_locations": [
+                            {
+                                "location_id": "21",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "Odisha",
+                                "geo_level_name": "State",
+                            },
+                            {
+                                "location_id": "396",
+                                "location_uid": 3,
+                                "geo_level_uid": 2,
+                                "location_name": "Rayagada",
+                                "geo_level_name": "District",
+                            },
+                            {
+                                "location_id": "2",
+                                "location_uid": 6,
+                                "geo_level_uid": 3,
+                                "location_name": "Indira Nagar",
+                                "geo_level_name": "Block",
+                            },
+                        ],
+                    },
+                ],
+            }
+            assert get_targets_response.status_code == 200
+            assert get_targets_response.json == expected_response
+
+        else:
+            assert response.status_code == 403
+
+    def test_load_dynamic_targets_from_scto_with_filters(
+        self,
+        client,
+        user_permissions,
+        request,
+        create_dynamic_target_column_config_with_filter,
+        update_target_mapping_criteria_to_language,
+        csrf_token,
+    ):
+        """
+        Test load dynamic targets from SCTO
+        Expect Successfull with targets db updated
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "column_mapping": {
+                "target_id": "enum_id",
+                "gender": "designation",
+                "language": "dc_type",
+                "location_id_column": "block_id",
+                "custom_fields": [
+                    {
+                        "field_label": "enum_name",
+                        "column_name": "enum_name",
+                    },
+                ],
+            },
+            "filters": [
+                {
+                    "filter_group": [
+                        {
+                            "variable_name": "state_id",
+                            "filter_operator": "Is",
+                            "filter_value": "21",
+                        }
+                    ]
+                }
+            ],
+            "file": " ",
+            "mode": "overwrite",
+            "load_from_scto": True,
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        if expected_permission:
+            assert response.status_code == 200
+            get_targets_response = client.get(
+                "/api/targets", query_string={"form_uid": 1}
+            )
+            print(get_targets_response.json)
+            expected_response = {
+                "success": True,
+                "data": [
+                    {
+                        "target_uid": 1,
+                        "target_id": "6ce2457eec",
+                        "language": "CHC_CHANDRAPUR",
+                        "gender": "Cluster Coordinator",
+                        "location_uid": 6,
+                        "form_uid": 1,
+                        "custom_fields": {
+                            "enum_name": "Amit kumar padhi",
+                            "column_mapping": {
+                                "gender": "designation",
+                                "language": "dc_type",
+                                "target_id": "enum_id",
+                                "custom_fields": [
+                                    {
+                                        "column_name": "enum_name",
+                                        "field_label": "enum_name",
+                                    }
+                                ],
+                                "location_id_column": "block_id",
+                            },
+                        },
+                        "completed_flag": None,
+                        "refusal_flag": None,
+                        "num_attempts": None,
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": None,
+                        "final_survey_status": None,
+                        "final_survey_status_label": None,
+                        "target_assignable": None,
+                        "webapp_tag_color": None,
+                        "revisit_sections": None,
+                        "scto_fields": None,
+                        "target_locations": [
+                            {
+                                "location_id": "21",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "Odisha",
+                                "geo_level_name": "State",
+                            },
+                            {
+                                "location_id": "396",
+                                "location_uid": 3,
+                                "geo_level_uid": 2,
+                                "location_name": "Rayagada",
+                                "geo_level_name": "District",
+                            },
+                            {
+                                "location_id": "2",
+                                "location_uid": 6,
+                                "geo_level_uid": 3,
+                                "location_name": "Indira Nagar",
+                                "geo_level_name": "Block",
+                            },
+                        ],
+                    },
+                    {
+                        "target_uid": 2,
+                        "target_id": "df950a3da8",
+                        "language": "CHC_CHANDRAPUR",
+                        "gender": "Regional Coordinator",
+                        "location_uid": 6,
+                        "form_uid": 1,
+                        "custom_fields": {
+                            "enum_name": "BABULA GARADIA",
+                            "column_mapping": {
+                                "gender": "designation",
+                                "language": "dc_type",
+                                "target_id": "enum_id",
+                                "custom_fields": [
+                                    {
+                                        "column_name": "enum_name",
+                                        "field_label": "enum_name",
+                                    }
+                                ],
+                                "location_id_column": "block_id",
+                            },
+                        },
+                        "completed_flag": None,
+                        "refusal_flag": None,
+                        "num_attempts": None,
+                        "last_attempt_survey_status": None,
+                        "last_attempt_survey_status_label": None,
+                        "final_survey_status": None,
+                        "final_survey_status_label": None,
+                        "target_assignable": None,
+                        "webapp_tag_color": None,
+                        "revisit_sections": None,
+                        "scto_fields": None,
+                        "target_locations": [
+                            {
+                                "location_id": "21",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "Odisha",
+                                "geo_level_name": "State",
+                            },
+                            {
+                                "location_id": "396",
+                                "location_uid": 3,
+                                "geo_level_uid": 2,
+                                "location_name": "Rayagada",
+                                "geo_level_name": "District",
+                            },
+                            {
+                                "location_id": "2",
+                                "location_uid": 6,
+                                "geo_level_uid": 3,
+                                "location_name": "Indira Nagar",
+                                "geo_level_name": "Block",
+                            },
+                        ],
+                    },
+                ],
+            }
+            assert get_targets_response.status_code == 200
+            assert get_targets_response.json == expected_response
+
+        else:
+            assert response.status_code == 403
 
     @pytest.fixture()
     def create_target_config_dataset(
@@ -1098,6 +1742,229 @@ class TestTargets:
                 "error": "User does not have the required permission: WRITE Data Quality Forms, WRITE Admin Forms",
                 "success": False,
             }
+
+    def test_create_target_column_config_with_filter(
+        self,
+        client,
+        user_permissions,
+        request,
+        create_geo_levels_for_targets_file,
+        csrf_token,
+    ):
+        """
+        Upload the targets column config
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "target_id",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": False,
+                    "column_source": "target_id1",
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "basic_details",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "language",
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "gender",
+                },
+                {
+                    "column_name": "Name",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "name",
+                },
+                {
+                    "column_name": "Mobile no.",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "mobile_primary",
+                },
+                {
+                    "column_name": "Address",
+                    "column_type": "custom_fields",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "address",
+                },
+                {
+                    "column_name": "bottom_geo_level_location",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "psu_id",
+                },
+            ],
+            "filters": [
+                {
+                    "filter_group": [
+                        {
+                            "variable_name": "target_sample",
+                            "filter_operator": "Is",
+                            "filter_value": "Valid",
+                        }
+                    ]
+                }
+            ],
+        }
+
+        response = client.put(
+            "/api/targets/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            get_response = client.get(
+                "/api/targets/column-config",
+                query_string={"form_uid": 1},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            print(get_response.json)
+            expected_response = {
+                "success": True,
+                "data": {
+                    "file_columns": [
+                        {
+                            "column_name": "target_id",
+                            "column_type": "basic_details",
+                            "bulk_editable": False,
+                            "contains_pii": False,
+                            "column_source": "target_id1",
+                        },
+                        {
+                            "column_name": "language",
+                            "column_type": "basic_details",
+                            "bulk_editable": True,
+                            "contains_pii": True,
+                            "column_source": "language",
+                        },
+                        {
+                            "column_name": "gender",
+                            "column_type": "basic_details",
+                            "bulk_editable": False,
+                            "contains_pii": True,
+                            "column_source": "gender",
+                        },
+                        {
+                            "column_name": "Name",
+                            "column_type": "custom_fields",
+                            "bulk_editable": False,
+                            "contains_pii": True,
+                            "column_source": "name",
+                        },
+                        {
+                            "column_name": "Mobile no.",
+                            "column_type": "custom_fields",
+                            "bulk_editable": False,
+                            "contains_pii": True,
+                            "column_source": "mobile_primary",
+                        },
+                        {
+                            "column_name": "Address",
+                            "column_type": "custom_fields",
+                            "bulk_editable": True,
+                            "contains_pii": True,
+                            "column_source": "address",
+                        },
+                        {
+                            "column_name": "bottom_geo_level_location",
+                            "column_type": "location",
+                            "bulk_editable": True,
+                            "contains_pii": True,
+                            "column_source": "psu_id",
+                        },
+                    ],
+                    "location_columns": [
+                        {
+                            "column_key": "target_locations[0].location_id",
+                            "column_label": "District ID",
+                        },
+                        {
+                            "column_key": "target_locations[0].location_name",
+                            "column_label": "District Name",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_id",
+                            "column_label": "Mandal ID",
+                        },
+                        {
+                            "column_key": "target_locations[1].location_name",
+                            "column_label": "Mandal Name",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_id",
+                            "column_label": "PSU ID",
+                        },
+                        {
+                            "column_key": "target_locations[2].location_name",
+                            "column_label": "PSU Name",
+                        },
+                    ],
+                    "target_status_columns": [
+                        {
+                            "column_key": "num_attempts",
+                            "column_label": "Number of Attempts",
+                        },
+                        {
+                            "column_key": "final_survey_status",
+                            "column_label": "Final Survey Status",
+                        },
+                        {
+                            "column_key": "final_survey_status_label",
+                            "column_label": "Final Survey Status Label",
+                        },
+                        {
+                            "column_key": "revisit_sections",
+                            "column_label": "Revisit Sections",
+                        },
+                    ],
+                    "target_scto_filter_list": [
+                        {
+                            "filter_group": [
+                                {
+                                    "filter_group_id": 1,
+                                    "variable_name": "target_sample",
+                                    "filter_operator": "Is",
+                                    "filter_value": "Valid",
+                                }
+                            ]
+                        }
+                    ],
+                },
+            }
+            assert get_response.status_code == 200
+            checkdiff = jsondiff.diff(expected_response, get_response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Targets",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
     def test_get_target_config(
         self, client, csrf_token, create_target_config, user_permissions, request
@@ -2955,6 +3822,7 @@ class TestTargets:
                             "column_label": "Revisit Sections",
                         },
                     ],
+                    "target_scto_filter_list": [],
                 },
                 "success": True,
             }
