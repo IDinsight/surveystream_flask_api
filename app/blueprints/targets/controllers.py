@@ -1578,51 +1578,57 @@ def refresh_target_scto_columns(validated_query_params):
             412,
         )
 
-    # Initialize the SurveyCTO object
-    scto = pysurveycto.SurveyCTOObject(
-        form.scto_server_name,
-        scto_credentials["username"],
-        scto_credentials["password"],
-    )
+    try:
+        # Initialize the SurveyCTO object
+        scto = pysurveycto.SurveyCTOObject(
+            form.scto_server_name,
+            scto_credentials["username"],
+            scto_credentials["password"],
+        )
 
-    # Delete existing data
-    TargetSCTOQuestion.query.filter_by(form_uid=form_uid).delete()
+        # Delete existing data
+        TargetSCTOQuestion.query.filter_by(form_uid=form_uid).delete()
 
-    if target_config.scto_input_type == "form":
-        scto_form_id = target_config.scto_input_id
-        scto_form_definition = scto.get_form_definition(scto_form_id)
-        survey_tab_columns = scto_form_definition["fieldsRowsAndColumns"][0]
+        if target_config.scto_input_type == "form":
+            scto_form_id = target_config.scto_input_id
+            scto_form_definition = scto.get_form_definition(scto_form_id)
+            survey_tab_columns = scto_form_definition["fieldsRowsAndColumns"][0]
 
-        # Loop through the rows of the `survey` tab of the form definition
-        for row in scto_form_definition["fieldsRowsAndColumns"][1:]:
-            questions_dict = dict(zip(survey_tab_columns, row))
+            # Loop through the rows of the `survey` tab of the form definition
+            for row in scto_form_definition["fieldsRowsAndColumns"][1:]:
+                questions_dict = dict(zip(survey_tab_columns, row))
 
-            # Skip questions with disabled = Yes
-            if questions_dict.get("disabled", "No").strip().lower() == "yes":
-                continue
+                # Skip questions with disabled = Yes
+                if questions_dict.get("disabled", "No").strip().lower() == "yes":
+                    continue
 
-            if questions_dict["name"].strip() != "":
-                # Add the question to the database
+                if questions_dict["name"].strip() != "":
+                    # Add the question to the database
+                    scto_question = TargetSCTOQuestion(
+                        form_uid=form_uid, question_name=questions_dict["name"]
+                    )
+                    db.session.add(scto_question)
+
+                try:
+                    db.session.flush()
+                except IntegrityError as e:
+                    db.session.rollback()
+                    return (jsonify({"error": str(e)}), 500)
+        else:
+            scto_dataset_id = target_config.scto_input_id
+            scto_dataset = scto.get_server_dataset(scto_dataset_id, line_breaks="\n")
+            scto_dataset_column_str = scto_dataset.split("\n")[0]
+            scto_dataset_column = scto_dataset_column_str.split(",")
+            for question_name in scto_dataset_column:
                 scto_question = TargetSCTOQuestion(
-                    form_uid=form_uid, question_name=questions_dict["name"]
+                    form_uid=form_uid, question_name=question_name
                 )
                 db.session.add(scto_question)
-
-            try:
-                db.session.flush()
-            except IntegrityError as e:
-                db.session.rollback()
-                return (jsonify({"error": str(e)}), 500)
-    else:
-        scto_dataset_id = target_config.scto_input_id
-        scto_dataset = scto.get_server_dataset(scto_dataset_id, line_breaks="\n")
-        scto_dataset_column_str = scto_dataset.split("\n")[0]
-        scto_dataset_column = scto_dataset_column_str.split(",")
-        for question_name in scto_dataset_column:
-            scto_question = TargetSCTOQuestion(
-                form_uid=form_uid, question_name=question_name
-            )
-            db.session.add(scto_question)
+    except Exception as e:
+        return (
+            jsonify({"error": "Error refreshing SurveyCTO input columns: " + str(e)}),
+            500,
+        )
     try:
         db.session.commit()
     except Exception as e:
