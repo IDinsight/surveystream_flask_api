@@ -246,9 +246,45 @@ class TestUserManagement:
         yield
 
     @pytest.fixture()
-    def create_geo_levels(
-        self, client, login_test_user, csrf_token, create_module_questionnaire
+    def create_form(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_survey,
+        create_module_questionnaire,
     ):
+        """
+        Insert new form as a setup step for the form tests
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "scto_form_id": "test_scto_input_output",
+            "form_name": "Agrifieldnet Main Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": "dod",
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
+        }
+
+        response = client.post(
+            "/api/forms",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+        print(response.json)
+
+        yield
+
+    @pytest.fixture()
+    def create_geo_levels(self, client, login_test_user, csrf_token, create_form):
         """
         Insert new geo levels as a setup step for the location upload
         These correspond to the geo levels found in the locations test files
@@ -281,6 +317,7 @@ class TestUserManagement:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
         yield
