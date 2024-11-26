@@ -28,7 +28,7 @@ from app.blueprints.emails.models import EmailConfig, EmailSchedule
 from app.blueprints.enumerators.models import Enumerator, SurveyorForm
 from app.blueprints.mapping.errors import MappingError
 from app.blueprints.mapping.utils import SurveyorMapping, TargetMapping
-from app.blueprints.roles.utils import check_if_survey_admin
+from app.blueprints.roles.utils import check_if_survey_admin, get_user_role
 from app.blueprints.targets.models import Target, TargetStatus
 
 from .errors import (
@@ -563,12 +563,16 @@ class AssignmentsUpload:
             )
         ).subquery()
 
+        user_role = get_user_role(self.user_uid, self.survey_uid)
         is_survey_admin = check_if_survey_admin(self.user_uid, self.survey_uid)
+        is_super_admin = current_user.is_super_admin
         child_users_with_supervisors_query = build_child_users_with_supervisors_query(
             self.user_uid,
             self.survey_uid,
             target_mapping.bottom_level_role_uid,
+            user_role,
             is_survey_admin,
+            is_super_admin,
         )
 
         targets_mapped_to_current_user = (
