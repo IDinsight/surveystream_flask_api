@@ -11749,3 +11749,161 @@ paths:
                   message:
                     type: string
                     example: "DQ module names not found"
+
+  /notifications:
+    get:
+      summary: Get Notifications for a user
+      tags:
+        - Notifications
+      parameters:
+        - name : user_uid
+          in: query
+          description: Unique identifier for the user
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+            description: Successfully returns list of notifications
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    user_notifications:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          notification_type:
+                            type: string
+                            description: Type of Notification- alert / warning / error
+                            example: "error"
+                          notification_status:
+                            type: string
+                            description: Status of Notification- in progress / done
+                            example: "done"
+                          notification_message:
+                            type: string
+                            description: Notification message- Emails have been delivered
+                            example: "done"
+                          notification_timestamp:
+                            type: Datetime
+                            description: Notification timestamp in UTC
+                    survey_notifications:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          survey_id:
+                            type: string
+                            description: Survey ID
+                            example: "test_survey"
+                          module_name:
+                            type: string
+                            description: Module Name
+                            example: "Audio Audits"
+                          notification_type:
+                            type: string
+                            description: Type of Notification- alert / warning / error
+                            example: "error"
+                          notification_status:
+                            type: string
+                            description: Status of Notification- in progress / done
+                            example: "done"
+                          notification_message:
+                            type: string
+                            description: Notification message- Emails have been delivered
+                            example: "done"
+                          notification_timestamp:
+                            type: Datetime
+                            description: Notification timestamp in UTC
+        "404":
+          description: Survey UID or USER UID Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+    post:
+      summary: Load Notifications for a user/survey
+      tags:
+        - Notifications
+      parameters:
+        - name : user_uid
+          in: body
+          description: Unique identifier for the user
+          required: false
+          schema:
+            type: integer
+        - name : survey_uid
+          in: body
+          description: Unique identifier for the survey
+          required: false
+          schema:
+            type: integer
+        - name : module_id
+          in: body
+          description: Unique identifier for the module
+          required: false
+          schema:
+            type: integer
+        - name : notification_status
+          in: body
+          description: Notification Status
+          required: true
+          schema:
+            type: string
+            default: in progress
+        - name : notification_type
+          in: body
+          description: Notification Type
+          required: true
+          schema:
+            type: string
+            default: alert
+        - name : notification_message
+          in: body
+          description: Notification Message
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+            description: Successfully created notification
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example:  "Notification created successfully"
+                    data:
+                      type: object
+                      items:
+                        notification_type:
+                          type: string
+                          description: Type of Notification- alert / warning / error
+                          example: "error"
+                        notification_status:
+                          type: string
+                          description: Status of Notification- in progress / done
+                          example: "done"
+                        notification_message:
+                          type: string
+                          description: Notification message- Emails have been delivered
+                          example: "done"
+                        notification_timestamp:
+                          type: Datetime
+                          description: Notification timestamp in UTC
+
