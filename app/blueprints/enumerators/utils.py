@@ -1,28 +1,31 @@
 import io
 import json
-import pandas as pd
-import numpy as np
-from app import db
-from flask_login import current_user
 from csv import DictReader
-from app.blueprints.locations.models import Location
-from sqlalchemy import insert, update, func, cast
+
+import numpy as np
+import pandas as pd
+from email_validator import EmailNotValidError, validate_email
+from flask_login import current_user
+from sqlalchemy import cast, func, insert, update
 from sqlalchemy.dialects.postgresql import JSONB
-from .models import (
-    Enumerator,
-    SurveyorForm,
-    MonitorForm,
-    SurveyorLocation,
-    MonitorLocation,
-    SurveyorStats,
-)
+
+from app import db
+from app.blueprints.locations.models import Location
+
 from .errors import (
     HeaderRowEmptyError,
-    InvalidEnumeratorRecordsError,
     InvalidColumnMappingError,
+    InvalidEnumeratorRecordsError,
     InvalidFileStructureError,
 )
-from email_validator import validate_email, EmailNotValidError
+from .models import (
+    Enumerator,
+    MonitorForm,
+    MonitorLocation,
+    SurveyorForm,
+    SurveyorLocation,
+    SurveyorStats,
+)
 
 
 class EnumeratorColumnMapping:
@@ -343,9 +346,9 @@ class EnumeratorsUpload:
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                non_null_columns_df.at[
-                    index, "errors"
-                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                non_null_columns_df.at[index, "errors"] = (
+                    f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
+                )
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],
@@ -479,9 +482,9 @@ class EnumeratorsUpload:
                 }
             )
 
-            invalid_mobile_primary_df[
-                "errors"
-            ] = "Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'"
+            invalid_mobile_primary_df["errors"] = (
+                "Invalid mobile number - numbers must be between 10 and 20 characters in length and can only contain digits or the special characters '-', '.', '+', '(', or ')'"
+            )
 
             invalid_records_df = invalid_records_df.merge(
                 invalid_mobile_primary_df["errors"],
@@ -524,9 +527,9 @@ class EnumeratorsUpload:
                 }
             )
 
-            invalid_enumerator_type_df[
-                "errors"
-            ] = "Invalid enumerator type - valid enumerator types are 'surveyor' and 'monitor' and can be separated by a semicolon if the enumerator has multiple types"
+            invalid_enumerator_type_df["errors"] = (
+                "Invalid enumerator type - valid enumerator types are 'surveyor' and 'monitor' and can be separated by a semicolon if the enumerator has multiple types"
+            )
 
             invalid_records_df = invalid_records_df.merge(
                 invalid_enumerator_type_df["errors"],
@@ -569,9 +572,9 @@ class EnumeratorsUpload:
                     }
                 )
 
-                invalid_location_id_df[
-                    "errors"
-                ] = "Location id not found in uploaded locations data for the survey's prime geo level"
+                invalid_location_id_df["errors"] = (
+                    "Location id not found in uploaded locations data for the survey's prime geo level"
+                )
                 invalid_records_df = invalid_records_df.merge(
                     invalid_location_id_df["errors"],
                     how="left",
@@ -649,7 +652,7 @@ class EnumeratorsUpload:
             MonitorLocation.query.filter_by(form_uid=self.form_uid).delete()
             SurveyorStats.query.filter_by(form_uid=self.form_uid).delete()
             Enumerator.query.filter_by(form_uid=self.form_uid).delete()
-            db.session.commit()
+            db.session.flush()
             records_to_insert = records_to_write
 
         if write_mode == "merge":
@@ -802,6 +805,11 @@ class EnumeratorsUpload:
                     Enumerator.enumerator_id == enumerator_id,
                     Enumerator.form_uid == self.form_uid,
                 ).update(update_data, synchronize_session=False)
+                enumerator = Enumerator.query.filter(
+                    Enumerator.enumerator_id == enumerator_id,
+                    Enumerator.form_uid == self.form_uid,
+                ).first()
+                enumerator_uid = enumerator.enumerator_uid
 
                 # Add column_mapping to custom fields
                 # Add the custom fields with column_mapping if they don't exist
@@ -836,6 +844,65 @@ class EnumeratorsUpload:
                                 & (Enumerator.form_uid == self.form_uid)
                             )
                         )
+
+                enumerator_types = [
+                    item.lower().strip() for item in record[5].split(";")
+                ]
+
+                for enumerator_type in enumerator_types:
+                    if enumerator_type == "surveyor":
+                        if hasattr(column_mapping, "location_id_column"):
+                            col_index = (
+                                self.enumerators_df.columns.get_loc(
+                                    getattr(column_mapping, "location_id_column")
+                                )
+                                + 1
+                            )
+                            surveyor_location = SurveyorLocation.query.filter_by(
+                                enumerator_uid=enumerator_uid,
+                                form_uid=self.form_uid,
+                            ).first()
+
+                            if not surveyor_location:
+                                surveyor_location = SurveyorLocation(
+                                    enumerator_uid=enumerator_uid,
+                                    form_uid=self.form_uid,
+                                    location_uid=location_uid_lookup[record[col_index]],
+                                )
+                                db.session.add(surveyor_location)
+                            else:
+                                surveyor_location.location_uid = location_uid_lookup[
+                                    record[col_index]
+                                ]
+                                db.session.add(surveyor_location)
+
+                    if enumerator_type == "monitor":
+
+                        if hasattr(column_mapping, "location_id_column"):
+                            col_index = (
+                                self.enumerators_df.columns.get_loc(
+                                    getattr(column_mapping, "location_id_column")
+                                )
+                                + 1
+                            )
+                            monitor_location = MonitorLocation.query.filter_by(
+                                enumerator_uid=enumerator_uid,
+                                form_uid=self.form_uid,
+                            ).first()
+
+                            if not monitor_location:
+                                monitor_location = MonitorLocation(
+                                    enumerator_uid=enumerator_uid,
+                                    form_uid=self.form_uid,
+                                    location_uid=location_uid_lookup[record[col_index]],
+                                )
+                                db.session.add(monitor_location)
+                            else:
+                                monitor_location.location_uid = location_uid_lookup[
+                                    record[col_index]
+                                ]
+                                db.session.add(monitor_location)
+
         db.session.commit()
 
         return
