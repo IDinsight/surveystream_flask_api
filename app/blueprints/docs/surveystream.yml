@@ -11778,6 +11778,10 @@ paths:
                       items:
                         type: object
                         properties:
+                          user_notification_uid:
+                            type: integer
+                            description: User Notification UID
+                            example: 1
                           notification_type:
                             type: string
                             description: Type of Notification- alert / warning / error
@@ -11798,6 +11802,10 @@ paths:
                       items:
                         type: object
                         properties:
+                          survey_notification_uid:
+                            type: integer
+                            description: Survey Notification UID
+                            example: 1
                           survey_id:
                             type: string
                             description: Survey ID
@@ -11891,6 +11899,10 @@ paths:
                     data:
                       type: object
                       items:
+                        survey_notification_uid/user_notification_uid:
+                          type: integer
+                          description: Survey Notification UID or User_notification_uid depending on the notification type
+                          example: 1
                         notification_type:
                           type: string
                           description: Type of Notification- alert / warning / error
@@ -11907,3 +11919,76 @@ paths:
                           type: Datetime
                           description: Notification timestamp in UTC
 
+    put:
+      summary: Update Notifications for a user/survey
+      tags:
+        - Notifications
+      parameters:
+        - name : user_notification_uid
+          in: body
+          description: Unique identifier for the user_notification_uid
+          required: false
+          schema:
+            type: integer
+        - name : survey_notification_uid
+          in: body
+          description: Unique identifier for the survey_notification_uid
+          required: false
+          schema:
+            type: integer
+        - name : notification_status
+          in: body
+          description: Notification Status
+          required: true
+          schema:
+            type: string
+            default: in progress
+        - name : notification_type
+          in: body
+          description: Notification Type
+          required: true
+          schema:
+            type: string
+            default: alert
+        - name : notification_message
+          in: body
+          description: Notification Message
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+            description: Successfully updated notification
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example:  "Notification updated successfully"
+                    data:
+                      type: object
+                      items:
+                        survey_notification_uid/user_notification_uid:
+                          type: integer
+                          description: Survey Notification UID or User_notification_uid depending on the notification type
+                          example: 1
+                        notification_type:
+                          type: string
+                          description: Type of Notification- alert / warning / error
+                          example: "error"
+                        notification_status:
+                          type: string
+                          description: Status of Notification- in progress / done
+                          example: "done"
+                        notification_message:
+                          type: string
+                          description: Notification message- Emails have been delivered
+                          example: "done"
+                        notification_timestamp:
+                          type: Datetime
+                          description: Notification timestamp in UTC
