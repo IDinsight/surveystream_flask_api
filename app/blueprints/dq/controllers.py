@@ -406,6 +406,13 @@ def add_dq_check(validated_payload):
             DQCheck.form_uid == form_uid,
             DQCheck.type_id == validated_payload.type_id.data,
         ).delete()
+    else:
+        # Delete existing all questions check for the form and type since a question specific check is being added
+        db.session.query(DQCheck).filter(
+            DQCheck.form_uid == form_uid,
+            DQCheck.type_id == validated_payload.type_id.data,
+            DQCheck.all_questions == True,
+        ).delete()
 
     dq_check = DQCheck(
         form_uid=form_uid,
