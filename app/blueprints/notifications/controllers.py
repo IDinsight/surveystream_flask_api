@@ -15,6 +15,7 @@ from .routes import notifications_bp
 from .validators import (
     GetNotificationsQueryValidator,
     PostNotificationsPayloadValidator,
+    PutNotificationsPayloadValidator,
 )
 
 
@@ -170,12 +171,86 @@ def post_notifications(validated_payload):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return (
+            jsonify(
+                {
+                    "error": str(e),
+                    "success": False,
+                }
+            ),
+            500,
+        )
 
     response = jsonify(
         {
             "success": True,
             "message": "Notification created successfully",
+            "data": notification.to_dict(),
+        }
+    )
+    return response, 200
+
+
+@notifications_bp.route("", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(PutNotificationsPayloadValidator)
+def put_notifications(validated_payload):
+    user_notification_uid = validated_payload.user_notification_uid.data
+    survey_notification_uid = validated_payload.survey_notification_uid.data
+
+    if user_notification_uid:
+        user_notification = UserNotification.query.get_or_404(user_notification_uid)
+        user_notification.notification_status = (
+            validated_payload.notification_status.data
+        )
+        user_notification.notification_type = validated_payload.notification_type.data
+        user_notification.notification_message = (
+            validated_payload.notification_message.data
+        )
+        notification = user_notification
+
+    elif survey_notification_uid:
+        survey_notification = SurveyNotification.query.get_or_404(
+            survey_notification_uid
+        )
+        survey_notification.notification_status = (
+            validated_payload.notification_status.data
+        )
+        survey_notification.notification_type = validated_payload.notification_type.data
+        survey_notification.notification_message = (
+            validated_payload.notification_message.data
+        )
+        notification = survey_notification
+
+    else:
+        return (
+            jsonify(
+                {
+                    "error": "Invalid request, Either survey_notification_uid or user_notificiation_uid should be provided",
+                    "success": False,
+                }
+            ),
+            400,
+        )
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return (
+            jsonify(
+                {
+                    "error": str(e),
+                    "success": False,
+                }
+            ),
+            500,
+        )
+
+    response = jsonify(
+        {
+            "success": True,
+            "message": "Notification updated successfully",
             "data": notification.to_dict(),
         }
     )

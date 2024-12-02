@@ -59,6 +59,7 @@ class SurveyNotification(db.Model):
 
     def to_dict(self):
         return {
+            "survey_notification_uid": self.notification_uid,
             "notification_type": self.notification_type,
             "notification_status": self.notification_status,
             "notification_message": self.notification_message,
@@ -110,6 +111,7 @@ class UserNotification(db.Model):
 
     def to_dict(self):
         return {
+            "user_notification_uid": self.user_notification_uid,
             "notification_type": self.notification_type,
             "notification_status": self.notification_status,
             "notification_message": self.notification_message,
