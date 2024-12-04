@@ -11269,6 +11269,33 @@ paths:
                               items:
                                 type: string
                                 example: ["Is empty", "is NA"]
+                            hard_min:
+                              type: decimal
+                              description: Minimum value for the constraint check
+                              example: 0
+                            hard_max:
+                              type: decimal
+                              description: Maximum value for the constraint check
+                              example: 100
+                            soft_min:
+                              type: decimal
+                              description: Minimum value for the soft constraint check
+                              example: 2.5
+                            soft_max:
+                              type: decimal
+                              description: Maximum value for the soft constraint check
+                              example: 100
+                            outlier_metric:
+                              type: string
+                              description: Metric used for outlier check. Values can be 'interquartile_range', 'standard_deviation', 'percentile'
+                            outlier_value:
+                              type: decimal
+                              description: Value for the outlier check
+                              example: 1.5
+                            spotcheck_score_name:
+                              type: string
+                              description: For spotcheck score checks, this field is used to combine question level scores into a single score
+                              example: "probing_score"
                         active:
                           type: boolean
                           description: Indicates if the DQ check is active or not
@@ -11364,6 +11391,33 @@ paths:
                       items:
                         type: string
                         example: ["Is empty", "is NA"]
+                    hard_min:
+                      type: decimal
+                      description: Minimum value for the constraint check
+                      example: 0
+                    hard_max:
+                      type: decimal
+                      description: Maximum value for the constraint check
+                      example: 100
+                    soft_min:
+                      type: decimal
+                      description: Minimum value for the soft constraint check
+                      example: 2.5
+                    soft_max:
+                      type: decimal
+                      description: Maximum value for the soft constraint check
+                      example: 100
+                    outlier_metric:
+                      type: string
+                      description: Metric used for outlier check. Values can be 'interquartile_range', 'standard_deviation', 'percentile'
+                    outlier_value:
+                      type: decimal
+                      description: Value for the outlier check
+                      example: 1.5
+                    spotcheck_score_name:
+                      type: string
+                      description: For spotcheck score checks, this field is used to combine question level scores into a single score
+                      example: "probing_score"
                 active:
                   type: boolean
                   description: Indicates if the DQ check is active or not
@@ -11538,6 +11592,33 @@ paths:
                       items:
                         type: string
                         example: ["Is empty", "is NA"]
+                    hard_min:
+                      type: decimal
+                      description: Minimum value for the constraint check
+                      example: 0
+                    hard_max:
+                      type: decimal
+                      description: Maximum value for the constraint check
+                      example: 100
+                    soft_min:
+                      type: decimal
+                      description: Minimum value for the soft constraint check
+                      example: 2.5
+                    soft_max:
+                      type: decimal
+                      description: Maximum value for the soft constraint check
+                      example: 100
+                    outlier_metric:
+                      type: string
+                      description: Metric used for outlier check. Values can be 'interquartile_range', 'standard_deviation', 'percentile'
+                    outlier_value:
+                      type: decimal
+                      description: Value for the outlier check
+                      example: 1.5
+                    spotcheck_score_name:
+                      type: string
+                      description: For spotcheck score checks, this field is used to combine question level scores into a single score
+                      example: "probing_score"
                 active:
                   type: boolean
 
