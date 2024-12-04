@@ -2,7 +2,7 @@ from itertools import groupby
 from operator import attrgetter
 
 from flask import jsonify, request
-from sqlalchemy import String, case, literal_column
+from sqlalchemy import String, and_, case, literal_column, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import cast
 from sqlalchemy.sql.functions import func
@@ -23,9 +23,9 @@ from .validators import (
     DQChecksQueryParamValidator,
     DQCheckValidator,
     DQConfigQueryParamValidator,
+    DQModuleNamesQueryParamValidator,
     UpdateDQChecksStateValidator,
     UpdateDQConfigValidator,
-    DQModuleNamesQueryParamValidator,
 )
 
 
@@ -78,9 +78,24 @@ def get_dq_config(validated_query_params):
     filter_invalid_subquery = (
         (
             db.session.query(DQCheckFilters.dq_check_uid)
+            .join(
+                DQCheck,
+                DQCheckFilters.dq_check_uid == DQCheck.dq_check_uid,
+            )
             .outerjoin(
                 SCTOQuestion,
-                DQCheckFilters.question_name == SCTOQuestion.question_name,
+                or_(
+                    and_(
+                        DQCheckFilters.question_name == SCTOQuestion.question_name,
+                        DQCheck.form_uid == SCTOQuestion.form_uid,
+                        DQCheck.type_id.notin_([8, 9]),
+                    ),
+                    and_(
+                        DQCheckFilters.question_name == SCTOQuestion.question_name,
+                        DQCheck.dq_scto_form_uid == SCTOQuestion.form_uid,
+                        DQCheck.type_id.in_([7, 8, 9]),
+                    ),
+                ),
             )
             .filter(SCTOQuestion.question_name == None)
         )
@@ -90,14 +105,23 @@ def get_dq_config(validated_query_params):
 
     # Get checks that are invalid because the question is not found in the form definition
     question_invalid_subquery = (
-        (
-            db.session.query(DQCheck.dq_check_uid)
-            .outerjoin(
-                SCTOQuestion,
-                DQCheck.question_name == SCTOQuestion.question_name,
-            )
-            .filter(SCTOQuestion.question_name == None, DQCheck.all_questions == False)
+        db.session.query(DQCheck.dq_check_uid)
+        .outerjoin(
+            SCTOQuestion,
+            or_(
+                and_(
+                    DQCheck.type_id.notin_([8, 9]),
+                    DQCheck.question_name == SCTOQuestion.question_name,
+                    SCTOQuestion.form_uid == form_uid,
+                ),
+                and_(
+                    DQCheck.type_id.in_([7, 8, 9]),
+                    DQCheck.question_name == SCTOQuestion.question_name,
+                    SCTOQuestion.form_uid == DQCheck.dq_scto_form_uid,
+                ),
+            ),
         )
+        .filter(SCTOQuestion.question_name == None, DQCheck.all_questions == False)
         .distinct()
         .subquery()
     )
@@ -293,6 +317,12 @@ def get_dq_checks(validated_query_params):
 
     scto_questions = SCTOQuestion.query.filter(SCTOQuestion.form_uid == form_uid).all()
 
+    if type_id in [7, 8, 9]:
+        dq_scto_form_uids = list(set([check.dq_scto_form_uid for check in dq_checks]))
+        dq_scto_questions = SCTOQuestion.query.filter(
+            SCTOQuestion.form_uid.in_(dq_scto_form_uids)
+        ).all()
+
     check_data = []
     for check in dq_checks:
         check_dict = check.to_dict()
@@ -304,16 +334,39 @@ def get_dq_checks(validated_query_params):
         if not check.all_questions:
             # Check if questions are available in the form definition and if it is a repeat group variable
             question_found = False
-            for question in scto_questions:
-                if question.question_name == check.question_name:
-                    question_found = True
-                    if question.is_repeat_group:
-                        check_dict["is_repeat_group"] = True
-                    else:
-                        check_dict["is_repeat_group"] = False
-                    break
+            dq_question_found = False
 
-            if not question_found:
+            if type_id not in [8, 9]:
+                for question in scto_questions:
+                    if question.question_name == check.question_name:
+                        question_found = True
+                        if question.is_repeat_group:
+                            check_dict["is_repeat_group"] = True
+                        else:
+                            check_dict["is_repeat_group"] = False
+                        break
+
+            if type_id in [7, 8, 9]:
+                for question in dq_scto_questions:
+                    if (
+                        question.question_name == check.question_name
+                        and question.form_uid == check.dq_scto_form_uid
+                    ):
+                        dq_question_found = True
+
+                        # Repeat group for mismatch check is set based on main form question
+                        if type_id in [8, 9]:
+                            if question.is_repeat_group:
+                                check_dict["is_repeat_group"] = True
+                            else:
+                                check_dict["is_repeat_group"] = False
+                        break
+
+            if not dq_question_found and type_id in [7, 8, 9]:
+                check_dict["active"] = False
+                check_dict["note"] = "Question not found in DQ form definition"
+
+            if not question_found and type_id not in [8, 9]:
                 check_dict["active"] = False
                 check_dict["note"] = "Question not found in form definition"
 

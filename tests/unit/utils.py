@@ -242,6 +242,25 @@ def load_reference_data(filename_stub):
     return reference_data
 
 
+def load_scto_questions(app, db, scto_questions_json):
+    """
+    Add scto questions directly in the database. Needed for running dq tests that require scto questions faster.
+    """
+
+    with app.app_context():
+        for question in scto_questions_json:
+            db.session.execute(
+                "INSERT INTO webapp.scto_form_questions (form_uid, question_name, question_type, is_repeat_group) VALUES (:form_uid, :question_name, :question_type, :is_repeat_group) ON CONFLICT DO NOTHING",
+                {
+                    "form_uid": question["form_uid"],
+                    "question_name": question["question_name"],
+                    "question_type": question["question_type"],
+                    "is_repeat_group": question["is_repeat_group"],
+                },
+            )
+        db.session.commit()
+
+
 def delete_scto_question(app, db, form_uid, question_name):
     """
     Delete a question directly in the database. Needed to set up certain tests.
