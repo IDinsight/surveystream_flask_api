@@ -2220,8 +2220,8 @@ class TestDQ:
                 "dq_checks": [
                     {
                         "type_id": 4,
-                        "num_configured": "1",
-                        "num_active": "1",
+                        "num_configured": "All",
+                        "num_active": "All",
                     },
                     {"type_id": 9, "num_configured": "1", "num_active": "0"},
                 ],
