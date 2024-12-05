@@ -1746,7 +1746,7 @@ class TestAssignments:
         Insert an email config as a setup step for email tests
         """
         payload = {
-            "config_name": "Assignments",
+            "config_name": "AssignmentsConfig",
             "form_uid": 1,
             "report_users": [1, 2, 3],
             "email_source": "SurveyStream Data",
@@ -1762,6 +1762,80 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        assert response.status_code == 201
+        return response.json["data"]
+
+    @pytest.fixture
+    def create_email_template(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_email_config,
+    ):
+        """
+        Insert email template as a setup for tests
+        """
+        payload = {
+            "subject": "Test Assignments Email",
+            "language": "english",
+            "content": "Test Content",
+            "email_config_uid": create_email_config["email_config_uid"],
+            "variable_list": [],
+            "table_list": [
+                {
+                    "table_name": "Assignments: Default",
+                    "column_mapping": {
+                        "test_column1": "TEST Column 1",
+                        "test_column2": "TEST Column 2",
+                    },
+                    "sort_list": {"test_column1": "asc", "test_column2": "desc"},
+                    "variable_name": "test_table+_1",
+                    "filter_list": [
+                        {
+                            "filter_group": [
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value",
+                                },
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column2",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value2",
+                                },
+                            ]
+                        },
+                        {
+                            "filter_group": [
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value",
+                                },
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column2",
+                                    "filter_operator": "Is not",
+                                    "filter_value": "test_value2",
+                                },
+                            ]
+                        },
+                    ],
+                }
+            ],
+        }
+        response = client.post(
+            "/api/emails/template",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
         assert response.status_code == 201
         return response.json["data"]
 
@@ -2335,6 +2409,7 @@ class TestAssignments:
         request,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Create an assignment between a single target and enumerator
@@ -2378,7 +2453,7 @@ class TestAssignments:
                         "no_changes_count": 0,
                         "re_assignments_count": 0,
                         "email_schedule": {
-                            "config_name": "Assignments",
+                            "config_name": "AssignmentsConfig",
                             "dates": response.json["data"]["email_schedule"]["dates"],
                             "schedule_date": response.json["data"]["email_schedule"][
                                 "schedule_date"
@@ -9896,6 +9971,7 @@ class TestAssignments:
         request,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with merge mode
@@ -9955,7 +10031,7 @@ class TestAssignments:
                         "no_changes_count": 0,
                         "re_assignments_count": 1,
                         "email_schedule": {
-                            "config_name": "Assignments",
+                            "config_name": "AssignmentsConfig",
                             "dates": response.json["data"]["email_schedule"]["dates"],
                             "schedule_date": response.json["data"]["email_schedule"][
                                 "schedule_date"
@@ -10284,6 +10360,7 @@ class TestAssignments:
         request,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with overwrite mode
@@ -10342,7 +10419,7 @@ class TestAssignments:
                         "no_changes_count": 0,
                         "re_assignments_count": 0,
                         "email_schedule": {
-                            "config_name": "Assignments",
+                            "config_name": "AssignmentsConfig",
                             "dates": response.json["data"]["email_schedule"]["dates"],
                             "schedule_date": response.json["data"]["email_schedule"][
                                 "schedule_date"
@@ -10676,6 +10753,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with invalid target_id and enumerator_id
@@ -10776,6 +10854,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         #     Function to test uploading asssignments csv with enumerator who has dropped out of the survey
@@ -10877,6 +10956,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with target that is not assignable
@@ -10964,6 +11044,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Upload the enumerators csv with unmapped enumerator id column
@@ -11016,6 +11097,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with missing enumerator id
@@ -11108,6 +11190,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with duplicate column
@@ -11162,6 +11245,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Upload the enumerators csv with same column mapped twice
@@ -11229,6 +11313,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Upload the enumerators csv with blank header row

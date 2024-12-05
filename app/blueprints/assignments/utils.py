@@ -24,7 +24,12 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.sql import Values
 
 from app import db
-from app.blueprints.emails.models import EmailConfig, EmailSchedule
+from app.blueprints.emails.models import (
+    EmailConfig,
+    EmailSchedule,
+    EmailTemplate,
+    EmailTemplateTable,
+)
 from app.blueprints.enumerators.models import Enumerator, SurveyorForm
 from app.blueprints.mapping.errors import MappingError
 from app.blueprints.mapping.utils import SurveyorMapping, TargetMapping
@@ -903,9 +908,31 @@ def get_next_assignment_email_schedule(form_uid):
     # Alias the subquery
     schedule_dates_subquery = alias(subquery)
 
+    # Find all configs using assignments table
+    assignment_email_config_subquery = (
+        db.session.query(EmailConfig)
+        .join(
+            EmailTemplate,
+            EmailTemplate.email_config_uid == EmailConfig.email_config_uid,
+        )
+        .join(
+            EmailTemplateTable,
+            EmailTemplateTable.email_template_uid == EmailTemplate.email_template_uid,
+        )
+        .filter(
+            EmailConfig.form_uid == form_uid,
+            EmailTemplateTable.table_name == "Assignments: Default",
+        )
+    ).subquery()
+
     # join schedule_dates_subquery and filter dates only greater than current date time
     email_schedule_res = (
-        db.session.query(EmailSchedule, EmailConfig, schedule_dates_subquery)
+        db.session.query(
+            EmailSchedule,
+            assignment_email_config_subquery.c.email_config_uid,
+            assignment_email_config_subquery.c.config_name,
+            schedule_dates_subquery,
+        )
         .select_from(EmailSchedule)
         .join(
             schedule_dates_subquery,
@@ -920,11 +947,9 @@ def get_next_assignment_email_schedule(form_uid):
             ),
         )
         .join(
-            EmailConfig, EmailSchedule.email_config_uid == EmailConfig.email_config_uid
-        )
-        .filter(
-            EmailConfig.form_uid == form_uid,
-            func.lower(EmailConfig.config_name) == "assignments",
+            assignment_email_config_subquery,
+            EmailSchedule.email_config_uid
+            == assignment_email_config_subquery.c.email_config_uid,
         )
         .order_by(schedule_dates_subquery.c.schedule_date.asc())
         .first()
@@ -933,14 +958,15 @@ def get_next_assignment_email_schedule(form_uid):
     if email_schedule_res:
         (
             email_schedule,
-            email_config,
+            email_config_uid,
+            config_name,
             schedule_date,
             email_schedule_uid,
         ) = email_schedule_res
 
         return {
-            "email_config_uid": email_config.email_config_uid,
-            "config_name": email_config.config_name,
+            "email_config_uid": email_config_uid,
+            "config_name": config_name,
             "dates": email_schedule.dates,
             "time": str(email_schedule.time),
             "current_time": str(current_time),
