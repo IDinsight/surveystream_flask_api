@@ -16,11 +16,11 @@ class SurveyNotification(db.Model):
     module_id = db.Column(
         db.Integer, db.ForeignKey(Module.module_id, ondelete="CASCADE"), nullable=False
     )
-    type = db.Column(
+    severity = db.Column(
         db.String(8),
         CheckConstraint(
-            "type IN ('alert','warning','error')",
-            name="ck_survey_notifications_type",
+            "severity IN ('alert','warning','error')",
+            name="ck_survey_notifications_severity",
         ),
         nullable=False,
         server_default="alert",
@@ -47,20 +47,20 @@ class SurveyNotification(db.Model):
         self,
         survey_uid,
         module_id,
-        type,
+        severity,
         resolution_status,
         message,
     ):
         self.survey_uid = survey_uid
         self.module_id = module_id
-        self.type = type
+        self.severity = severity
         self.resolution_status = resolution_status
         self.message = message
 
     def to_dict(self):
         return {
             "notification_uid": self.notification_uid,
-            "type": self.type,
+            "severity": self.severity,
             "resolution_status": self.resolution_status,
             "message": self.message,
             "created_at": self.created_at,
@@ -72,11 +72,11 @@ class UserNotification(db.Model):
 
     notification_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete="CASCADE"))
-    type = db.Column(
+    severity = db.Column(
         db.String(8),
         CheckConstraint(
-            "type IN ('alert','warning','error')",
-            name="ck_user_notifications_type",
+            "severity IN ('alert','warning','error')",
+            name="ck_user_notifications_severity",
         ),
         server_default="alert",
         nullable=False,
@@ -102,19 +102,19 @@ class UserNotification(db.Model):
     def __init__(
         self,
         user_uid,
-        type,
+        severity,
         resolution_status,
         message,
     ):
         self.user_uid = user_uid
-        self.type = type
+        self.severity = severity
         self.resolution_status = resolution_status
         self.message = message
 
     def to_dict(self):
         return {
             "notification_uid": self.notification_uid,
-            "type": self.type,
+            "severity": self.severity,
             "resolution_status": self.resolution_status,
             "message": self.message,
             "created_at": self.created_at,

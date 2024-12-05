@@ -240,10 +240,11 @@ class TestNotifications:
             "module_id": 1,
             "resolution_status": "in progress",
             "message": "Your survey end date is approaching",
-            "type": "warning",
+            "severity": "warning",
+            "type": "survey",
         }
         response = client.post(
-            "/api/notifications/survey",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -266,10 +267,11 @@ class TestNotifications:
             "module_id": 9,
             "resolution_status": "in progress",
             "message": "No user mappings found",
-            "type": "error",
+            "severity": "error",
+            "type": "survey",
         }
         response = client.post(
-            "/api/notifications/survey",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -297,10 +299,11 @@ class TestNotifications:
             "module_id": 9,
             "resolution_status": "in progress",
             "message": "No user mappings found",
-            "type": "error",
+            "severity": "error",
+            "type": "survey",
         }
         response = client.post(
-            "/api/notifications/survey",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -328,10 +331,11 @@ class TestNotifications:
             "module_id": 11,
             "resolution_status": "in progress",
             "message": "DQ: Survey status variable missing",
-            "type": "error",
+            "severity": "error",
+            "type": "survey",
         }
         response = client.post(
-            "/api/notifications/survey",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -353,10 +357,13 @@ class TestNotifications:
             "user_uid": 1,
             "resolution_status": "in progress",
             "message": "Your password has been reset",
-            "type": "alert",
+            "severity": "alert",
+            "type": "user",
         }
+
+        # add a delay to ensure the notification is created after the survey notification
         response = client.post(
-            "/api/notifications/user",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -377,10 +384,11 @@ class TestNotifications:
             "user_uid": 1,
             "resolution_status": "in progress",
             "message": "End date reached",
-            "type": "alert",
+            "severity": "alert",
+            "type": "user",
         }
         response = client.post(
-            "/api/notifications/user",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -393,7 +401,7 @@ class TestNotifications:
             "message": "Notification created successfully",
             "data": {
                 "notification_uid": 1,
-                "type": "alert",
+                "severity": "alert",
                 "resolution_status": "in progress",
                 "message": "End date reached",
             },
@@ -418,10 +426,11 @@ class TestNotifications:
             "user_uid": 1717166,
             "resolution_status": "in progress",
             "message": "Password changed",
-            "type": "alert",
+            "severity": "alert",
+            "type": "user",
         }
         response = client.post(
-            "/api/notifications/user",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -444,10 +453,10 @@ class TestNotifications:
         payload = {
             "user_uid": 1,
             "resolution_status": "in progressss",
-            "type": "alerttt",
+            "severity": "alerttt",
         }
         response = client.post(
-            "/api/notifications/user",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -457,9 +466,14 @@ class TestNotifications:
         assert response.status_code == 422
         expected_response = {
             "message": {
-                "type": ["Invalid Notification Type"],
-                "resolution_status": ["Invalid Resolution Status"],
+                "severity": [
+                    "Invalid Notification severity, valid values are alert, warning, error"
+                ],
+                "resolution_status": [
+                    "Invalid Resolution Status valid values are in progress, done"
+                ],
                 "message": ["This field is required."],
+                "type": ["This field is required."],
             },
             "success": False,
         }
@@ -477,10 +491,10 @@ class TestNotifications:
         payload = {
             "resolution_status": "in progress",
             "message": "End date reached",
-            "type": "alert",
+            "severity": "alert",
         }
         response = client.post(
-            "/api/notifications/user",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -489,7 +503,9 @@ class TestNotifications:
         print(response.json)
         assert response.status_code == 422
         expected_response = {
-            "message": {"user_uid": ["This field is required."]},
+            "message": {
+                "type": ["This field is required."],
+            },
             "success": False,
         }
 
@@ -508,10 +524,11 @@ class TestNotifications:
             "module_id": 4,
             "resolution_status": "in progress",
             "message": "End date reached",
-            "type": "alert",
+            "severity": "alert",
+            "type": "survey",
         }
         response = client.post(
-            "/api/notifications/survey",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -524,7 +541,7 @@ class TestNotifications:
             "message": "Notification created successfully",
             "data": {
                 "notification_uid": 2,
-                "type": "alert",
+                "severity": "alert",
                 "resolution_status": "in progress",
                 "message": "End date reached",
             },
@@ -550,10 +567,11 @@ class TestNotifications:
             "module_id": 4,
             "resolution_status": "in progress",
             "message": "End date reached",
-            "type": "alert",
+            "severity": "alert",
+            "type": "survey",
         }
         response = client.post(
-            "/api/notifications/survey",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -578,10 +596,11 @@ class TestNotifications:
             "module_id": 4123450,
             "resolution_status": "in progress",
             "message": "End date reached",
-            "type": "alert",
+            "severity": "alert",
+            "type": "survey",
         }
         response = client.post(
-            "/api/notifications/survey",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -615,8 +634,7 @@ class TestNotifications:
         assert response.status_code == 200
         expected_response = {
             "success": True,
-            "user_notifications": [],
-            "survey_notifications": [],
+            "data": [],
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -660,46 +678,49 @@ class TestNotifications:
         if user_fixture == "user_with_super_admin_permissions":
             expected_response = {
                 "success": True,
-                "user_notifications": [
-                    {
-                        "notification_uid": 1,
-                        "type": "alert",
-                        "resolution_status": "in progress",
-                        "message": "Your password has been reset",
-                    }
-                ],
-                "survey_notifications": [
+                "data": [
                     {
                         "survey_id": "test_survey2",
                         "module_name": "Data quality",
                         "notification_uid": 4,
-                        "type": "error",
+                        "severity": "error",
                         "resolution_status": "in progress",
                         "message": "DQ: Survey status variable missing",
+                        "type": "survey",
                     },
                     {
                         "survey_id": "test_survey2",
                         "module_name": "Assignments",
                         "notification_uid": 3,
-                        "type": "error",
+                        "severity": "error",
                         "resolution_status": "in progress",
                         "message": "No user mappings found",
+                        "type": "survey",
                     },
                     {
                         "survey_id": "test_survey",
                         "module_name": "Assignments",
                         "notification_uid": 2,
-                        "type": "error",
+                        "severity": "error",
                         "resolution_status": "in progress",
                         "message": "No user mappings found",
+                        "type": "survey",
                     },
                     {
                         "survey_id": "test_survey",
                         "module_name": "Basic information",
                         "notification_uid": 1,
-                        "type": "warning",
+                        "severity": "warning",
                         "resolution_status": "in progress",
                         "message": "Your survey end date is approaching",
+                        "type": "survey",
+                    },
+                    {
+                        "notification_uid": 1,
+                        "severity": "alert",
+                        "resolution_status": "in progress",
+                        "message": "Your password has been reset",
+                        "type": "user",
                     },
                 ],
             }
@@ -707,30 +728,31 @@ class TestNotifications:
         elif user_fixture == "user_with_survey_admin_permissions":
             expected_response = {
                 "success": True,
-                "user_notifications": [
-                    {
-                        "notification_uid": 1,
-                        "type": "alert",
-                        "resolution_status": "in progress",
-                        "message": "Your password has been reset",
-                    }
-                ],
-                "survey_notifications": [
+                "data": [
                     {
                         "notification_uid": 2,
                         "survey_id": "test_survey",
                         "module_name": "Assignments",
-                        "type": "error",
+                        "severity": "error",
                         "resolution_status": "in progress",
                         "message": "No user mappings found",
+                        "type": "survey",
                     },
                     {
                         "notification_uid": 1,
                         "survey_id": "test_survey",
                         "module_name": "Basic information",
-                        "type": "warning",
+                        "severity": "warning",
                         "resolution_status": "in progress",
                         "message": "Your survey end date is approaching",
+                        "type": "survey",
+                    },
+                    {
+                        "notification_uid": 1,
+                        "severity": "alert",
+                        "resolution_status": "in progress",
+                        "message": "Your password has been reset",
+                        "type": "user",
                     },
                 ],
             }
@@ -738,64 +760,65 @@ class TestNotifications:
 
             expected_response = {
                 "success": True,
-                "user_notifications": [
-                    {
-                        "notification_uid": 1,
-                        "type": "alert",
-                        "resolution_status": "in progress",
-                        "message": "Your password has been reset",
-                    }
-                ],
-                "survey_notifications": [
+                "data": [
                     {
                         "survey_id": "test_survey2",
                         "module_name": "Data quality",
                         "notification_uid": 4,
-                        "type": "error",
+                        "severity": "error",
                         "resolution_status": "in progress",
                         "message": "DQ: Survey status variable missing",
+                        "type": "survey",
                     },
                     {
                         "survey_id": "test_survey2",
                         "module_name": "Assignments",
                         "notification_uid": 3,
-                        "type": "error",
+                        "severity": "error",
                         "resolution_status": "in progress",
                         "message": "No user mappings found",
+                        "type": "survey",
                     },
                     {
                         "survey_id": "test_survey",
                         "module_name": "Assignments",
                         "notification_uid": 2,
-                        "type": "error",
+                        "severity": "error",
                         "resolution_status": "in progress",
                         "message": "No user mappings found",
+                        "type": "survey",
+                    },
+                    {
+                        "notification_uid": 1,
+                        "severity": "alert",
+                        "resolution_status": "in progress",
+                        "message": "Your password has been reset",
+                        "type": "user",
                     },
                 ],
             }
         else:
             expected_response = {
                 "success": True,
-                "user_notifications": [
+                "data": [
                     {
                         "notification_uid": 1,
-                        "type": "alert",
+                        "severity": "alert",
                         "resolution_status": "in progress",
                         "message": "Your password has been reset",
+                        "type": "user",
                     }
                 ],
-                "survey_notifications": [],
             }
         response_json = response.json
 
         # Remove the created_at from the response for comparison
-        for notification in response_json.get("user_notifications", []):
+        for notification in response_json.get("data", []):
             if "created_at" in notification:
                 del notification["created_at"]
-
-        for notification in response_json.get("survey_notifications", []):
-            if "created_at" in notification:
-                del notification["created_at"]
+            else:
+                print("Created_at missing in notification", notification)
+                assert False
 
         checkdiff = jsondiff.diff(expected_response, response_json)
         assert checkdiff == {}
@@ -809,13 +832,14 @@ class TestNotifications:
     ):
 
         payload = {
+            "type": "user",
             "notification_uid": 1,
             "resolution_status": "done",
             "message": "Your password has been reset",
-            "type": "alert",
+            "severity": "alert",
         }
         response = client.put(
-            "/api/notifications/user",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -828,7 +852,7 @@ class TestNotifications:
             "message": "Notification updated successfully",
             "data": {
                 "notification_uid": 1,
-                "type": "alert",
+                "severity": "alert",
                 "resolution_status": "done",
                 "message": "Your password has been reset",
             },
@@ -852,14 +876,15 @@ class TestNotifications:
     ):
 
         payload = {
+            "type": "survey",
             "notification_uid": 1,
-            "type": "alert",
+            "severity": "alert",
             "resolution_status": "done",
             "message": "Your survey ended yesterday",
         }
 
         response = client.put(
-            "/api/notifications/survey",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -872,7 +897,7 @@ class TestNotifications:
             "message": "Notification updated successfully",
             "data": {
                 "notification_uid": 1,
-                "type": "alert",
+                "severity": "alert",
                 "resolution_status": "done",
                 "message": "Your survey ended yesterday",
             },
@@ -896,14 +921,15 @@ class TestNotifications:
     ):
 
         payload = {
+            "type": "survey",
             "notification_uid": 1,
-            "type": "alert",
+            "severity": "alert",
             "resolution_status": "done",
             "message": "Your survey ended yesterday",
         }
 
         response = client.put(
-            "/api/notifications/survey",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -925,12 +951,13 @@ class TestNotifications:
     ):
 
         payload = {
-            "type": "alert",
+            "type": "survey",
+            "severity": "alert",
             "resolution_status": "done",
             "message": "Your survey ended yesterday",
         }
         response = client.put(
-            "/api/notifications/user",
+            "/api/notifications",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},

@@ -24,11 +24,11 @@ def upgrade():
         sa.Column("notification_uid", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("user_uid", sa.Integer(), nullable=True),
         sa.Column(
-            "type",
+            "severity",
             sa.String(length=8),
             sa.CheckConstraint(
-                "type IN ('alert','warning','error')",
-                name="ck_user_notifications_type",
+                "severity IN ('alert','warning','error')",
+                name="ck_user_notifications_severity",
             ),
             server_default="alert",
             nullable=False,
@@ -65,11 +65,11 @@ def upgrade():
         sa.Column("survey_uid", sa.Integer(), nullable=False),
         sa.Column("module_id", sa.Integer(), nullable=False),
         sa.Column(
-            "type",
+            "severity",
             sa.String(length=8),
             sa.CheckConstraint(
-                "type IN ('alert','warning','error')",
-                name="ck_survey_notifications_type",
+                "severity IN ('alert','warning','error')",
+                name="ck_survey_notifications_severity",
             ),
             server_default="alert",
             nullable=False,

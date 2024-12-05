@@ -11773,35 +11773,15 @@ paths:
                     success:
                       type: boolean
                       example: true
-                    user_notifications:
+                    data:
                       type: array
                       items:
                         type: object
                         properties:
-                          notification_uid:
-                            type: integer
-                            description: Notification UID
-                            example: 1
                           type:
                             type: string
-                            description: Type of Notification- alert / warning / error
-                            example: "error"
-                          resolution_status:
-                            type: string
-                            description: Status of Notification- in progress / done
-                            example: "done"
-                          message:
-                            type: string
-                            description: Notification message
-                            example: "Emails have been delivered"
-                          created_at:
-                            type: Datetime
-                            description: Notification created timestamp in UTC
-                    survey_notifications:
-                      type: array
-                      items:
-                        type: object
-                        properties:
+                            description: Notification Type - user or survey
+                            example: "user"
                           notification_uid:
                             type: integer
                             description: Survey Notification UID
@@ -11814,9 +11794,9 @@ paths:
                             type: string
                             description: Module Name
                             example: "Audio Audits"
-                          type:
+                          severity:
                             type: string
-                            description: Type of Notification- alert / warning / error
+                            description: severity of Notification- alert / warning / error
                             example: "error"
                           resolution_status:
                             type: string
@@ -11839,149 +11819,24 @@ paths:
                   success:
                     type: boolean
                     example: false
-  /notifications/user:
+    
     post:
-      summary: Create Notifications for a user
+      summary: Create Notifications for a user/survey
       tags:
         - Notifications
       parameters:
+        - name: type
+          in: body
+          description: Notification Type - user or survey
+          required: true
+          schema:
+            type: string
         - name : user_uid
           in: body
           description: Unique identifier for the user
           required: false
           schema:
             type: integer
-        - name : resolution_status
-          in: body
-          description: Resolution status - in progress OR done
-          required: true
-          schema:
-            type: string
-            default: in progress
-        - name : type
-          in: body
-          description: Notification Type
-          required: true
-          schema:
-            type: string
-            default: alert
-        - name : message
-          in: body
-          description: Notification Message
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-            description: Successfully created notification
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    success:
-                      type: boolean
-                      example: true
-                    message:
-                      type: string
-                      example:  "Notification created successfully"
-                    data:
-                      type: object
-                      items:
-                        notification_uid:
-                          type: integer
-                          description: User Notification UID
-                          example: 1
-                        type:
-                          type: string
-                          description: Type of Notification- alert / warning / error
-                          example: "error"
-                        resolution_status:
-                          type: string
-                          description: Status of Notification- in progress / done
-                          example: "done"
-                        message:
-                          type: string
-                          description: Notification message- Emails have been delivered
-                          example: "done"
-                        created_at:
-                          type: Datetime
-                          description: Notification timestamp in UTC
-
-    put:
-      summary: Update Notifications for a user
-      tags:
-        - Notifications
-      parameters:
-        - name : notification_uid
-          in: body
-          description: Unique identifier for the notification_uid
-          required: false
-          schema:
-            type: integer
-        - name : resolution_status
-          in: body
-          description: Resolution status - in progress OR done
-          required: true
-          schema:
-            type: string
-            default: in progress
-        - name : type
-          in: body
-          description: Notification Type
-          required: true
-          schema:
-            type: string
-            default: alert
-        - name : message
-          in: body
-          description: Notification Message
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-            description: Successfully updated notification
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    success:
-                      type: boolean
-                      example: true
-                    message:
-                      type: string
-                      example:  "Notification updated successfully"
-                    data:
-                      type: object
-                      items:
-                        notification_uid:
-                          type: integer
-                          description: User Notification UID
-                          example: 1
-                        type:
-                          type: string
-                          description: Type of Notification- alert / warning / error
-                          example: "error"
-                        resolution_status:
-                          type: string
-                          description: Status of Notification- in progress / done
-                          example: "done"
-                        message:
-                          type: string
-                          description: Notification message- Emails have been delivered
-                          example: "done"
-                        created_at:
-                          type: Datetime
-                          description: Notification timestamp in UTC
-
-  /notifications/survey:
-    post:
-      summary: Create Notifications for a survey
-      tags:
-        - Notifications
-      parameters:
         - name : survey_uid
           in: body
           description: Unique identifier for the survey
@@ -12001,9 +11856,9 @@ paths:
           schema:
             type: string
             default: in progress
-        - name : type
+        - name : severity
           in: body
-          description: Notification Type
+          description: Notification severity
           required: true
           schema:
             type: string
@@ -12033,11 +11888,11 @@ paths:
                       items:
                         notification_uid:
                           type: integer
-                          description: Survey Notification UID
+                          description: notification_uid depending on the notification type
                           example: 1
-                        type:
+                        severity:
                           type: string
-                          description: Type of Notification- alert / warning / error
+                          description: severity of Notification- alert / warning / error
                           example: "error"
                         resolution_status:
                           type: string
@@ -12052,10 +11907,16 @@ paths:
                           description: Notification timestamp in UTC
 
     put:
-      summary: Update Notifications for a user
+      summary: Update Notifications for a user/survey
       tags:
         - Notifications
       parameters:
+        - name: type
+          in: body
+          description: Notification Type - user or survey
+          required: true
+          schema:
+            type: string
         - name : notification_uid
           in: body
           description: Unique identifier for the notification_uid
@@ -12069,9 +11930,9 @@ paths:
           schema:
             type: string
             default: in progress
-        - name : type
+        - name : severity
           in: body
-          description: Notification Type
+          description: Notification severity
           required: true
           schema:
             type: string
@@ -12101,9 +11962,9 @@ paths:
                       items:
                         notification_uid:
                           type: integer
-                          description: User Notification UID
+                          description: notification_uid depending on the notification type
                           example: 1
-                        type:
+                        severity:
                           type: string
                           description: Type of Notification- alert / warning / error
                           example: "error"

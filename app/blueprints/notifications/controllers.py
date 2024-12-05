@@ -14,8 +14,7 @@ from .models import SurveyNotification, UserNotification, db
 from .routes import notifications_bp
 from .validators import (
     GetNotificationsQueryValidator,
-    PostSurveyNotificationsPayloadValidator,
-    PostUserNotificationsPayloadValidator,
+    PostNotificationsPayloadValidator,
     PutNotificationsPayloadValidator,
 )
 
@@ -51,7 +50,11 @@ def get_notifications(validated_query_params):
     )
 
     user_notification_dict = [
-        notification.to_dict() for notification in user_notifications
+        {
+            "type": "user",
+            **notification.to_dict(),
+        }
+        for notification in user_notifications
     ]
 
     survey_notifications_dict = []
@@ -72,6 +75,7 @@ def get_notifications(validated_query_params):
             {
                 "survey_id": notification.survey_id,
                 "module_name": notification.module_name,
+                "type": "survey",
                 **notification.SurveyNotification.to_dict(),
             }
             for notification in survey_notifications
@@ -104,6 +108,7 @@ def get_notifications(validated_query_params):
                 {
                     "survey_id": notification.survey_id,
                     "module_name": notification.module_name,
+                    "type": "survey",
                     **notification.SurveyNotification.to_dict(),
                 }
                 for notification in survey_notifications
@@ -138,130 +143,98 @@ def get_notifications(validated_query_params):
             {
                 "survey_id": notification.survey_id,
                 "module_name": notification.module_name,
+                "type": "survey",
                 **notification.SurveyNotification.to_dict(),
             }
             for notification in survey_notifications
         ]
 
     # Sort notifications by created_at
-    survey_notifications_dict = sorted(
-        survey_notifications_dict, key=lambda x: x["created_at"], reverse=True
+    notifications = sorted(
+        survey_notifications_dict + user_notification_dict,
+        key=lambda x: x["created_at"],
+        reverse=True,
     )
     return jsonify(
         {
             "success": True,
-            "user_notifications": user_notification_dict,
-            "survey_notifications": survey_notifications_dict,
+            "data": notifications,
         }
     )
 
 
-@notifications_bp.route("/user", methods=["POST"])
+@notifications_bp.route("", methods=["POST"])
 @logged_in_active_user_required
-@validate_payload(PostUserNotificationsPayloadValidator)
-def post_user_notifications(validated_payload):
-    """
-    Create a user notification
-
-    """
-
-    user_uid = validated_payload.user_uid.data
-    user = User.query.filter(User.user_uid == user_uid).first()
-
-    if not user:
-        return (
-            jsonify(
-                {
-                    "error": "User not found",
-                    "success": False,
-                }
-            ),
-            404,
-        )
-
-    user_notification = UserNotification(
-        user_uid=user_uid,
-        resolution_status=validated_payload.resolution_status.data,
-        message=validated_payload.message.data,
-        type=validated_payload.type.data,
-    )
-
-    db.session.add(user_notification)
-
-    notification = user_notification
-
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return (
-            jsonify(
-                {
-                    "error": str(e),
-                    "success": False,
-                }
-            ),
-            500,
-        )
-
-    response = jsonify(
-        {
-            "success": True,
-            "message": "Notification created successfully",
-            "data": notification.to_dict(),
-        }
-    )
-    return response, 200
-
-
-@notifications_bp.route("/survey", methods=["POST"])
-@logged_in_active_user_required
-@validate_payload(PostSurveyNotificationsPayloadValidator)
+@validate_payload(PostNotificationsPayloadValidator)
 def post_survey_notifications(validated_payload):
     """
     Create a survey Notification
 
     """
 
-    survey_uid = validated_payload.survey_uid.data
-    survey = Survey.query.filter(Survey.survey_uid == survey_uid).first()
+    type = validated_payload.type.data
+    if type == "survey":
+        survey_uid = validated_payload.survey_uid.data
+        survey = Survey.query.filter(Survey.survey_uid == survey_uid).first()
 
-    if not survey:
-        return (
-            jsonify(
-                {
-                    "error": "Survey not found",
-                    "success": False,
-                }
-            ),
-            404,
+        if not survey:
+            return (
+                jsonify(
+                    {
+                        "error": "Survey not found",
+                        "success": False,
+                    }
+                ),
+                404,
+            )
+
+        module_id = validated_payload.module_id.data
+        module = Module.query.filter(Module.module_id == module_id).first()
+
+        if not module:
+            return (
+                jsonify(
+                    {
+                        "error": "Module not found",
+                        "success": False,
+                    }
+                ),
+                404,
+            )
+
+        notification = SurveyNotification(
+            survey_uid=survey_uid,
+            module_id=module_id,
+            resolution_status=validated_payload.resolution_status.data,
+            message=validated_payload.message.data,
+            severity=validated_payload.severity.data,
         )
 
-    module_id = validated_payload.module_id.data
-    module = Module.query.filter(Module.module_id == module_id).first()
+        db.session.add(notification)
 
-    if not module:
-        return (
-            jsonify(
-                {
-                    "error": "Module not found",
-                    "success": False,
-                }
-            ),
-            404,
+    else:
+        user_uid = validated_payload.user_uid.data
+        user = User.query.filter(User.user_uid == user_uid).first()
+
+        if not user:
+            return (
+                jsonify(
+                    {
+                        "error": "User not found",
+                        "success": False,
+                    }
+                ),
+                404,
+            )
+
+        notification = UserNotification(
+            user_uid=user_uid,
+            resolution_status=validated_payload.resolution_status.data,
+            message=validated_payload.message.data,
+            severity=validated_payload.severity.data,
         )
 
-    survey_notification = SurveyNotification(
-        survey_uid=survey_uid,
-        module_id=module_id,
-        resolution_status=validated_payload.resolution_status.data,
-        message=validated_payload.message.data,
-        type=validated_payload.type.data,
-    )
-
-    db.session.add(survey_notification)
-
-    notification = survey_notification
+        db.session.add(notification)
 
     try:
         db.session.commit()
@@ -287,89 +260,62 @@ def post_survey_notifications(validated_payload):
     return response, 200
 
 
-@notifications_bp.route("/user", methods=["PUT"])
-@logged_in_active_user_required
-@validate_payload(PutNotificationsPayloadValidator)
-def put_user_notifications(validated_payload):
-    """
-    Update a user notification
-    """
-    notification_uid = validated_payload.notification_uid.data
-
-    user_notification = UserNotification.query.filter(
-        UserNotification.notification_uid == notification_uid
-    ).first()
-
-    if not user_notification:
-        return (
-            jsonify(
-                {
-                    "error": "Notification not found",
-                    "success": False,
-                }
-            ),
-            404,
-        )
-
-    user_notification.resolution_status = validated_payload.resolution_status.data
-    user_notification.type = validated_payload.type.data
-    user_notification.message = validated_payload.message.data
-    notification = user_notification
-
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return (
-            jsonify(
-                {
-                    "error": str(e),
-                    "success": False,
-                }
-            ),
-            500,
-        )
-
-    response = jsonify(
-        {
-            "success": True,
-            "message": "Notification updated successfully",
-            "data": notification.to_dict(),
-        }
-    )
-    return response, 200
-
-
-@notifications_bp.route("/survey", methods=["PUT"])
+@notifications_bp.route("", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(PutNotificationsPayloadValidator)
 def put_survey_notifications(validated_payload):
     """
     Update a survey notification
     """
+
+    type = validated_payload.type.data
     notification_uid = validated_payload.notification_uid.data
-    survey_notification = SurveyNotification.query.filter(
-        SurveyNotification.notification_uid == notification_uid
-    ).first()
 
-    if not survey_notification:
-        return (
-            jsonify(
-                {
-                    "error": "Notification not found",
-                    "success": False,
-                }
-            ),
-            404,
-        )
+    if type == "survey":
+        survey_notification = SurveyNotification.query.filter(
+            SurveyNotification.notification_uid == notification_uid
+        ).first()
 
-    survey_notification.resolution_status = validated_payload.resolution_status.data
-    survey_notification.type = validated_payload.type.data
-    survey_notification.message = validated_payload.message.data
-    notification = survey_notification
+        if not survey_notification:
+            return (
+                jsonify(
+                    {
+                        "error": "Notification not found",
+                        "success": False,
+                    }
+                ),
+                404,
+            )
+
+        survey_notification.resolution_status = validated_payload.resolution_status.data
+        survey_notification.severity = validated_payload.severity.data
+        survey_notification.message = validated_payload.message.data
+        notification = survey_notification
+
+    else:
+        user_notification = UserNotification.query.filter(
+            UserNotification.notification_uid == notification_uid
+        ).first()
+
+        if not user_notification:
+            return (
+                jsonify(
+                    {
+                        "error": "Notification not found",
+                        "success": False,
+                    }
+                ),
+                404,
+            )
+
+        user_notification.resolution_status = validated_payload.resolution_status.data
+        user_notification.severity = validated_payload.severity.data
+        user_notification.message = validated_payload.message.data
+        notification = user_notification
 
     try:
         db.session.commit()
+
     except Exception as e:
         db.session.rollback()
         return (
@@ -389,4 +335,5 @@ def put_survey_notifications(validated_payload):
             "data": notification.to_dict(),
         }
     )
+
     return response, 200
