@@ -238,12 +238,12 @@ class TestNotifications:
         payload = {
             "survey_uid": 1,
             "module_id": 1,
-            "notification_status": "in progress",
-            "notification_message": "Your survey end date is approaching",
-            "notification_type": "warning",
+            "resolution_status": "in progress",
+            "message": "Your survey end date is approaching",
+            "type": "warning",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/survey",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -264,12 +264,12 @@ class TestNotifications:
         payload = {
             "survey_uid": 1,
             "module_id": 9,
-            "notification_status": "in progress",
-            "notification_message": "No user mappings found",
-            "notification_type": "error",
+            "resolution_status": "in progress",
+            "message": "No user mappings found",
+            "type": "error",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/survey",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -295,12 +295,12 @@ class TestNotifications:
         payload = {
             "survey_uid": 2,
             "module_id": 9,
-            "notification_status": "in progress",
-            "notification_message": "No user mappings found",
-            "notification_type": "error",
+            "resolution_status": "in progress",
+            "message": "No user mappings found",
+            "type": "error",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/survey",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -326,12 +326,12 @@ class TestNotifications:
         payload = {
             "survey_uid": 2,
             "module_id": 11,
-            "notification_status": "in progress",
-            "notification_message": "DQ: Survey status variable missing",
-            "notification_type": "error",
+            "resolution_status": "in progress",
+            "message": "DQ: Survey status variable missing",
+            "type": "error",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/survey",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -351,12 +351,12 @@ class TestNotifications:
 
         payload = {
             "user_uid": 1,
-            "notification_status": "in progress",
-            "notification_message": "Your password has been reset",
-            "notification_type": "alert",
+            "resolution_status": "in progress",
+            "message": "Your password has been reset",
+            "type": "alert",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/user",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -375,12 +375,12 @@ class TestNotifications:
     ):
         payload = {
             "user_uid": 1,
-            "notification_status": "in progress",
-            "notification_message": "End date reached",
-            "notification_type": "alert",
+            "resolution_status": "in progress",
+            "message": "End date reached",
+            "type": "alert",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/user",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -392,20 +392,17 @@ class TestNotifications:
             "success": True,
             "message": "Notification created successfully",
             "data": {
-                "user_notification_uid": 1,
-                "notification_type": "alert",
-                "notification_status": "in progress",
-                "notification_message": "End date reached",
+                "notification_uid": 1,
+                "type": "alert",
+                "resolution_status": "in progress",
+                "message": "End date reached",
             },
         }
 
         response_json = response.json
-        # Remove the notification_timestamp from the response for comparison
-        if (
-            "data" in response_json
-            and "notification_timestamp" in response_json["data"]
-        ):
-            del response_json["data"]["notification_timestamp"]
+        # Remove the created_at from the response for comparison
+        if "data" in response_json and "created_at" in response_json["data"]:
+            del response_json["data"]["created_at"]
 
         checkdiff = jsondiff.diff(expected_response, response_json)
         assert checkdiff == {}
@@ -419,12 +416,12 @@ class TestNotifications:
     ):
         payload = {
             "user_uid": 1717166,
-            "notification_status": "in progress",
-            "notification_message": "Password changed",
-            "notification_type": "alert",
+            "resolution_status": "in progress",
+            "message": "Password changed",
+            "type": "alert",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/user",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -432,9 +429,7 @@ class TestNotifications:
 
         print(response.json)
         assert response.status_code == 404
-        expected_response = {
-            "message": "404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."
-        }
+        expected_response = {"error": "User not found", "success": False}
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -448,11 +443,11 @@ class TestNotifications:
     ):
         payload = {
             "user_uid": 1,
-            "notification_status": "in progressss",
-            "notification_type": "alerttt",
+            "resolution_status": "in progressss",
+            "type": "alerttt",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/user",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -462,9 +457,9 @@ class TestNotifications:
         assert response.status_code == 422
         expected_response = {
             "message": {
-                "notification_type": ["Invalid Notification Type"],
-                "notification_status": ["Invalid Notification Status"],
-                "notification_message": ["This field is required."],
+                "type": ["Invalid Notification Type"],
+                "resolution_status": ["Invalid Resolution Status"],
+                "message": ["This field is required."],
             },
             "success": False,
         }
@@ -480,12 +475,12 @@ class TestNotifications:
         csrf_token,
     ):
         payload = {
-            "notification_status": "in progress",
-            "notification_message": "End date reached",
-            "notification_type": "alert",
+            "resolution_status": "in progress",
+            "message": "End date reached",
+            "type": "alert",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/user",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -494,11 +489,7 @@ class TestNotifications:
         print(response.json)
         assert response.status_code == 422
         expected_response = {
-            "message": {
-                "user_uid": [
-                    "Either user_uid must be present or both survey_uid and module_id must be present."
-                ]
-            },
+            "message": {"user_uid": ["This field is required."]},
             "success": False,
         }
 
@@ -515,12 +506,12 @@ class TestNotifications:
         payload = {
             "survey_uid": 1,
             "module_id": 4,
-            "notification_status": "in progress",
-            "notification_message": "End date reached",
-            "notification_type": "alert",
+            "resolution_status": "in progress",
+            "message": "End date reached",
+            "type": "alert",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/survey",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -532,20 +523,17 @@ class TestNotifications:
             "success": True,
             "message": "Notification created successfully",
             "data": {
-                "survey_notification_uid": 2,
-                "notification_type": "alert",
-                "notification_status": "in progress",
-                "notification_message": "End date reached",
+                "notification_uid": 2,
+                "type": "alert",
+                "resolution_status": "in progress",
+                "message": "End date reached",
             },
         }
 
         response_json = response.json
-        # Remove the notification_timestamp from the response for comparison
-        if (
-            "data" in response_json
-            and "notification_timestamp" in response_json["data"]
-        ):
-            del response_json["data"]["notification_timestamp"]
+        # Remove the created_at from the response for comparison
+        if "data" in response_json and "created_at" in response_json["data"]:
+            del response_json["data"]["created_at"]
 
         checkdiff = jsondiff.diff(expected_response, response_json)
         assert checkdiff == {}
@@ -560,12 +548,12 @@ class TestNotifications:
         payload = {
             "survey_uid": 1234563634356789045677,
             "module_id": 4,
-            "notification_status": "in progress",
-            "notification_message": "End date reached",
-            "notification_type": "alert",
+            "resolution_status": "in progress",
+            "message": "End date reached",
+            "type": "alert",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/survey",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -573,9 +561,7 @@ class TestNotifications:
 
         print(response.json)
         assert response.status_code == 404
-        expected_response = {
-            "message": "404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."
-        }
+        expected_response = {"error": "Survey not found", "success": False}
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -590,12 +576,12 @@ class TestNotifications:
         payload = {
             "survey_uid": 1,
             "module_id": 4123450,
-            "notification_status": "in progress",
-            "notification_message": "End date reached",
-            "notification_type": "alert",
+            "resolution_status": "in progress",
+            "message": "End date reached",
+            "type": "alert",
         }
         response = client.post(
-            "/api/notifications",
+            "/api/notifications/survey",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -603,9 +589,7 @@ class TestNotifications:
 
         print(response.json)
         assert response.status_code == 404
-        expected_response = {
-            "message": "404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."
-        }
+        expected_response = {"error": "Module not found", "success": False}
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -678,44 +662,44 @@ class TestNotifications:
                 "success": True,
                 "user_notifications": [
                     {
-                        "user_notification_uid": 1,
-                        "notification_type": "alert",
-                        "notification_status": "in progress",
-                        "notification_message": "Your password has been reset",
+                        "notification_uid": 1,
+                        "type": "alert",
+                        "resolution_status": "in progress",
+                        "message": "Your password has been reset",
                     }
                 ],
                 "survey_notifications": [
                     {
-                        "survey_notification_uid": 1,
-                        "survey_id": "test_survey",
-                        "module_name": "Basic information",
-                        "notification_type": "warning",
-                        "notification_status": "in progress",
-                        "notification_message": "Your survey end date is approaching",
-                    },
-                    {
-                        "survey_notification_uid": 2,
-                        "survey_id": "test_survey",
-                        "module_name": "Assignments",
-                        "notification_type": "error",
-                        "notification_status": "in progress",
-                        "notification_message": "No user mappings found",
-                    },
-                    {
-                        "survey_notification_uid": 3,
-                        "survey_id": "test_survey2",
-                        "module_name": "Assignments",
-                        "notification_type": "error",
-                        "notification_status": "in progress",
-                        "notification_message": "No user mappings found",
-                    },
-                    {
-                        "survey_notification_uid": 4,
                         "survey_id": "test_survey2",
                         "module_name": "Data quality",
-                        "notification_type": "error",
-                        "notification_status": "in progress",
-                        "notification_message": "DQ: Survey status variable missing",
+                        "notification_uid": 4,
+                        "type": "error",
+                        "resolution_status": "in progress",
+                        "message": "DQ: Survey status variable missing",
+                    },
+                    {
+                        "survey_id": "test_survey2",
+                        "module_name": "Assignments",
+                        "notification_uid": 3,
+                        "type": "error",
+                        "resolution_status": "in progress",
+                        "message": "No user mappings found",
+                    },
+                    {
+                        "survey_id": "test_survey",
+                        "module_name": "Assignments",
+                        "notification_uid": 2,
+                        "type": "error",
+                        "resolution_status": "in progress",
+                        "message": "No user mappings found",
+                    },
+                    {
+                        "survey_id": "test_survey",
+                        "module_name": "Basic information",
+                        "notification_uid": 1,
+                        "type": "warning",
+                        "resolution_status": "in progress",
+                        "message": "Your survey end date is approaching",
                     },
                 ],
             }
@@ -725,28 +709,28 @@ class TestNotifications:
                 "success": True,
                 "user_notifications": [
                     {
-                        "user_notification_uid": 1,
-                        "notification_type": "alert",
-                        "notification_status": "in progress",
-                        "notification_message": "Your password has been reset",
+                        "notification_uid": 1,
+                        "type": "alert",
+                        "resolution_status": "in progress",
+                        "message": "Your password has been reset",
                     }
                 ],
                 "survey_notifications": [
                     {
-                        "survey_notification_uid": 1,
-                        "survey_id": "test_survey",
-                        "module_name": "Basic information",
-                        "notification_type": "warning",
-                        "notification_status": "in progress",
-                        "notification_message": "Your survey end date is approaching",
-                    },
-                    {
-                        "survey_notification_uid": 2,
+                        "notification_uid": 2,
                         "survey_id": "test_survey",
                         "module_name": "Assignments",
-                        "notification_type": "error",
-                        "notification_status": "in progress",
-                        "notification_message": "No user mappings found",
+                        "type": "error",
+                        "resolution_status": "in progress",
+                        "message": "No user mappings found",
+                    },
+                    {
+                        "notification_uid": 1,
+                        "survey_id": "test_survey",
+                        "module_name": "Basic information",
+                        "type": "warning",
+                        "resolution_status": "in progress",
+                        "message": "Your survey end date is approaching",
                     },
                 ],
             }
@@ -756,36 +740,36 @@ class TestNotifications:
                 "success": True,
                 "user_notifications": [
                     {
-                        "user_notification_uid": 1,
-                        "notification_type": "alert",
-                        "notification_status": "in progress",
-                        "notification_message": "Your password has been reset",
+                        "notification_uid": 1,
+                        "type": "alert",
+                        "resolution_status": "in progress",
+                        "message": "Your password has been reset",
                     }
                 ],
                 "survey_notifications": [
                     {
                         "survey_id": "test_survey2",
-                        "module_name": "Assignments",
-                        "survey_notification_uid": 3,
-                        "notification_type": "error",
-                        "notification_status": "in progress",
-                        "notification_message": "No user mappings found",
+                        "module_name": "Data quality",
+                        "notification_uid": 4,
+                        "type": "error",
+                        "resolution_status": "in progress",
+                        "message": "DQ: Survey status variable missing",
                     },
                     {
                         "survey_id": "test_survey2",
-                        "module_name": "Data quality",
-                        "survey_notification_uid": 4,
-                        "notification_type": "error",
-                        "notification_status": "in progress",
-                        "notification_message": "DQ: Survey status variable missing",
+                        "module_name": "Assignments",
+                        "notification_uid": 3,
+                        "type": "error",
+                        "resolution_status": "in progress",
+                        "message": "No user mappings found",
                     },
                     {
                         "survey_id": "test_survey",
                         "module_name": "Assignments",
-                        "survey_notification_uid": 2,
-                        "notification_type": "error",
-                        "notification_status": "in progress",
-                        "notification_message": "No user mappings found",
+                        "notification_uid": 2,
+                        "type": "error",
+                        "resolution_status": "in progress",
+                        "message": "No user mappings found",
                     },
                 ],
             }
@@ -794,24 +778,24 @@ class TestNotifications:
                 "success": True,
                 "user_notifications": [
                     {
-                        "user_notification_uid": 1,
-                        "notification_type": "alert",
-                        "notification_status": "in progress",
-                        "notification_message": "Your password has been reset",
+                        "notification_uid": 1,
+                        "type": "alert",
+                        "resolution_status": "in progress",
+                        "message": "Your password has been reset",
                     }
                 ],
                 "survey_notifications": [],
             }
         response_json = response.json
 
-        # Remove the notification_timestamp from the response for comparison
+        # Remove the created_at from the response for comparison
         for notification in response_json.get("user_notifications", []):
-            if "notification_timestamp" in notification:
-                del notification["notification_timestamp"]
+            if "created_at" in notification:
+                del notification["created_at"]
 
         for notification in response_json.get("survey_notifications", []):
-            if "notification_timestamp" in notification:
-                del notification["notification_timestamp"]
+            if "created_at" in notification:
+                del notification["created_at"]
 
         checkdiff = jsondiff.diff(expected_response, response_json)
         assert checkdiff == {}
@@ -825,14 +809,13 @@ class TestNotifications:
     ):
 
         payload = {
-            "user_notification_uid": 1,
-            "survey_notification_uid": None,
-            "notification_status": "done",
-            "notification_message": "Your password has been reset",
-            "notification_type": "alert",
+            "notification_uid": 1,
+            "resolution_status": "done",
+            "message": "Your password has been reset",
+            "type": "alert",
         }
         response = client.put(
-            "/api/notifications",
+            "/api/notifications/user",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -844,21 +827,18 @@ class TestNotifications:
             "success": True,
             "message": "Notification updated successfully",
             "data": {
-                "user_notification_uid": 1,
-                "notification_type": "alert",
-                "notification_status": "done",
-                "notification_message": "Your password has been reset",
+                "notification_uid": 1,
+                "type": "alert",
+                "resolution_status": "done",
+                "message": "Your password has been reset",
             },
         }
 
         response_json = response.json
 
-        # Remove the notification_timestamp from the response for comparison
-        if (
-            "data" in response_json
-            and "notification_timestamp" in response_json["data"]
-        ):
-            del response_json["data"]["notification_timestamp"]
+        # Remove the created_at from the response for comparison
+        if "data" in response_json and "created_at" in response_json["data"]:
+            del response_json["data"]["created_at"]
 
         checkdiff = jsondiff.diff(expected_response, response_json)
         assert checkdiff == {}
@@ -872,14 +852,14 @@ class TestNotifications:
     ):
 
         payload = {
-            "survey_notification_uid": 1,
-            "notification_type": "alert",
-            "notification_status": "done",
-            "notification_message": "Your survey ended yesterday",
+            "notification_uid": 1,
+            "type": "alert",
+            "resolution_status": "done",
+            "message": "Your survey ended yesterday",
         }
 
         response = client.put(
-            "/api/notifications",
+            "/api/notifications/survey",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -891,26 +871,23 @@ class TestNotifications:
             "success": True,
             "message": "Notification updated successfully",
             "data": {
-                "survey_notification_uid": 1,
-                "notification_type": "alert",
-                "notification_status": "done",
-                "notification_message": "Your survey ended yesterday",
+                "notification_uid": 1,
+                "type": "alert",
+                "resolution_status": "done",
+                "message": "Your survey ended yesterday",
             },
         }
 
         response_json = response.json
 
-        # Remove the notification_timestamp from the response for comparison
-        if (
-            "data" in response_json
-            and "notification_timestamp" in response_json["data"]
-        ):
-            del response_json["data"]["notification_timestamp"]
+        # Remove the created_at from the response for comparison
+        if "data" in response_json and "created_at" in response_json["data"]:
+            del response_json["data"]["created_at"]
 
         checkdiff = jsondiff.diff(expected_response, response_json)
         assert checkdiff == {}
 
-    def test_notifications_update_survey_notification_error_no_notification(
+    def test_notifications_update_survey_notification_error_no_notification_exists(
         self,
         client,
         login_test_user,
@@ -919,14 +896,14 @@ class TestNotifications:
     ):
 
         payload = {
-            "survey_notification_uid": 1,
-            "notification_type": "alert",
-            "notification_status": "done",
-            "notification_message": "Your survey ended yesterday",
+            "notification_uid": 1,
+            "type": "alert",
+            "resolution_status": "done",
+            "message": "Your survey ended yesterday",
         }
 
         response = client.put(
-            "/api/notifications",
+            "/api/notifications/survey",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -934,9 +911,7 @@ class TestNotifications:
         print(response.json)
         assert response.status_code == 404
 
-        expected_response = {
-            "message": "404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."
-        }
+        expected_response = {"error": "Notification not found", "success": False}
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -950,12 +925,12 @@ class TestNotifications:
     ):
 
         payload = {
-            "notification_type": "alert",
-            "notification_status": "done",
-            "notification_message": "Your survey ended yesterday",
+            "type": "alert",
+            "resolution_status": "done",
+            "message": "Your survey ended yesterday",
         }
         response = client.put(
-            "/api/notifications",
+            "/api/notifications/user",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -963,11 +938,7 @@ class TestNotifications:
         print(response.json)
         assert response.status_code == 422
         expected_response = {
-            "message": {
-                "user_notification_uid": [
-                    "Either user_notification_uid must be present Or survey_notification_uid be present."
-                ]
-            },
+            "message": {"notification_uid": ["This field is required."]},
             "success": False,
         }
 

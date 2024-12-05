@@ -16,26 +16,26 @@ class SurveyNotification(db.Model):
     module_id = db.Column(
         db.Integer, db.ForeignKey(Module.module_id, ondelete="CASCADE"), nullable=False
     )
-    notification_type = db.Column(
+    type = db.Column(
         db.String(8),
         CheckConstraint(
-            "notification_type IN ('alert','warning','error')",
+            "type IN ('alert','warning','error')",
             name="ck_survey_notifications_type",
         ),
         nullable=False,
         server_default="alert",
     )
-    notification_status = db.Column(
+    resolution_status = db.Column(
         db.String(16),
         CheckConstraint(
-            "notification_status IN ('in progress','done')",
-            name="ck_survey_notifications_status",
+            "resolution_status IN ('in progress','done')",
+            name="ck_survey_notifications_resolution_status",
         ),
         nullable=False,
         server_default="in progress",
     )
-    notification_message = db.Column(db.Text, nullable=False)
-    notification_timestamp = db.Column(
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(
         db.TIMESTAMP, nullable=False, server_default=db.func.current_timestamp()
     )
 
@@ -47,49 +47,51 @@ class SurveyNotification(db.Model):
         self,
         survey_uid,
         module_id,
-        notification_type,
-        notification_status,
-        notification_message,
+        type,
+        resolution_status,
+        message,
     ):
         self.survey_uid = survey_uid
         self.module_id = module_id
-        self.notification_type = notification_type
-        self.notification_status = notification_status
-        self.notification_message = notification_message
+        self.type = type
+        self.resolution_status = resolution_status
+        self.message = message
 
     def to_dict(self):
         return {
-            "survey_notification_uid": self.notification_uid,
-            "notification_type": self.notification_type,
-            "notification_status": self.notification_status,
-            "notification_message": self.notification_message,
-            "notification_timestamp": self.notification_timestamp,
+            "notification_uid": self.notification_uid,
+            "type": self.type,
+            "resolution_status": self.resolution_status,
+            "message": self.message,
+            "created_at": self.created_at,
         }
 
 
 class UserNotification(db.Model):
     __tablename__ = "user_notifications"
 
-    user_notification_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    notification_uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_uid = db.Column(db.Integer, db.ForeignKey(User.user_uid, ondelete="CASCADE"))
-    notification_type = db.Column(
+    type = db.Column(
         db.String(8),
         CheckConstraint(
-            "notification_type IN ('alert','warning','error')",
+            "type IN ('alert','warning','error')",
             name="ck_user_notifications_type",
         ),
+        server_default="alert",
         nullable=False,
     )
-    notification_status = db.Column(
+    resolution_status = db.Column(
         db.String(16),
         CheckConstraint(
-            "notification_status IN ('in progress','done')",
-            name="ck_user_notifications_status",
+            "resolution_status IN ('in progress','done')",
+            name="ck_user_notifications_resolution_status",
         ),
+        server_default="in progress",
         nullable=False,
     )
-    notification_message = db.Column(db.Text, nullable=False)
-    notification_timestamp = db.Column(
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(
         db.TIMESTAMP, nullable=False, server_default=db.func.current_timestamp()
     )
 
@@ -100,20 +102,20 @@ class UserNotification(db.Model):
     def __init__(
         self,
         user_uid,
-        notification_type,
-        notification_status,
-        notification_message,
+        type,
+        resolution_status,
+        message,
     ):
         self.user_uid = user_uid
-        self.notification_type = notification_type
-        self.notification_status = notification_status
-        self.notification_message = notification_message
+        self.type = type
+        self.resolution_status = resolution_status
+        self.message = message
 
     def to_dict(self):
         return {
-            "user_notification_uid": self.user_notification_uid,
-            "notification_type": self.notification_type,
-            "notification_status": self.notification_status,
-            "notification_message": self.notification_message,
-            "notification_timestamp": self.notification_timestamp,
+            "notification_uid": self.notification_uid,
+            "type": self.type,
+            "resolution_status": self.resolution_status,
+            "message": self.message,
+            "created_at": self.created_at,
         }
