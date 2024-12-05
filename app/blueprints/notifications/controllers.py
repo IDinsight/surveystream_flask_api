@@ -166,9 +166,9 @@ def get_notifications(validated_query_params):
 @notifications_bp.route("", methods=["POST"])
 @logged_in_active_user_required
 @validate_payload(PostNotificationsPayloadValidator)
-def post_survey_notifications(validated_payload):
+def post_notifications(validated_payload):
     """
-    Create a survey Notification
+    Create a Notification based on type
 
     """
 
@@ -263,9 +263,9 @@ def post_survey_notifications(validated_payload):
 @notifications_bp.route("", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(PutNotificationsPayloadValidator)
-def put_survey_notifications(validated_payload):
+def put_notifications(validated_payload):
     """
-    Update a survey notification
+    Update a notification based on type
     """
 
     type = validated_payload.type.data
