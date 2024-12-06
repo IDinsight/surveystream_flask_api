@@ -495,6 +495,7 @@ class TestDQ:
                 "data": {
                     "form_uid": 1,
                     "survey_status_filter": [1, 3],
+                    "group_by_module_name": False,
                     "dq_checks": None,
                 },
                 "success": True,
@@ -542,6 +543,7 @@ class TestDQ:
                 "data": {
                     "form_uid": 1,
                     "survey_status_filter": [1, 3],
+                    "group_by_module_name": False,
                     "dq_checks": [
                         {"type_id": 4, "num_configured": "All", "num_active": "All"}
                     ],
@@ -580,6 +582,7 @@ class TestDQ:
         payload = {
             "form_uid": 1,
             "survey_status_filter": [1],
+            "group_by_module_name": True,
         }
 
         response = client.put(
@@ -610,7 +613,7 @@ class TestDQ:
             print(response.json)
 
             expected_response = {
-                "data": {"form_uid": 1, "survey_status_filter": [1], "dq_checks": None},
+                "data": {"form_uid": 1, "survey_status_filter": [1], "group_by_module_name": True, "dq_checks": None},
                 "success": True,
             }
 
@@ -1333,6 +1336,7 @@ class TestDQ:
             "data": {
                 "form_uid": 1,
                 "survey_status_filter": [1, 3],
+                "group_by_module_name": False,
                 "dq_checks": [{"type_id": 4, "num_configured": "1", "num_active": "0"}],
             },
             "success": True,
@@ -1499,6 +1503,7 @@ class TestDQ:
                 "data": {
                     "form_uid": 1,
                     "survey_status_filter": [1, 3],
+                    "group_by_module_name": False,
                     "dq_checks": [
                         {
                             "type_id": 4,
@@ -1618,6 +1623,7 @@ class TestDQ:
                 "data": {
                     "form_uid": 1,
                     "survey_status_filter": [1, 3],
+                    "group_by_module_name": False,
                     "dq_checks": [
                         {
                             "type_id": 4,
@@ -2217,6 +2223,7 @@ class TestDQ:
             "data": {
                 "form_uid": 1,
                 "survey_status_filter": [1, 3],
+                "group_by_module_name": False,
                 "dq_checks": [
                     {
                         "type_id": 4,

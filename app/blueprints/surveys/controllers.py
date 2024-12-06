@@ -196,6 +196,7 @@ def get_survey_config_status(survey_uid):
     from app.blueprints.media_files.models import MediaFilesConfig
     from app.blueprints.target_status_mapping.models import TargetStatusMapping
     from app.blueprints.targets.models import Target
+    from app.blueprints.dq.models import DQConfig
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     scto_information = Form.query.filter_by(
@@ -253,6 +254,8 @@ def get_survey_config_status(survey_uid):
             )
             .first()
         )
+
+        dq_config = DQConfig.query.filter_by(form_uid=scto_information.form_uid).first()
 
         # Check if any saved mapping config is present
         mapping_config = (
@@ -342,7 +345,7 @@ def get_survey_config_status(survey_uid):
                     if email_config is not None:
                         item["status"] = "In Progress"
                 elif item["name"] == "Data quality":
-                    if dq_form_config is not None:
+                    if dq_form_config is not None or dq_config is not None:
                         item["status"] = "In Progress"
                 elif item["name"] == "Admin forms":
                     if admin_form_config is not None:
