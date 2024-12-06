@@ -212,6 +212,7 @@ def get_survey_config_status(survey_uid):
     media_files_config = None
     email_config = None
     dq_form_config = None
+    dq_config = None
     admin_form_config = None
     mapping_config = None
 
@@ -255,7 +256,11 @@ def get_survey_config_status(survey_uid):
             .first()
         )
 
-        dq_config = DQConfig.query.filter_by(form_uid=scto_information.form_uid).first()
+        dq_config = (
+            db.session.query(DQConfig.form_uid)
+            .filter(DQConfig.form_uid == scto_information.form_uid)
+            .first()
+        )
 
         # Check if any saved mapping config is present
         mapping_config = (
