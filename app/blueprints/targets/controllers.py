@@ -344,7 +344,8 @@ def upload_targets(validated_query_params, validated_payload):
                         "success": False,
                         "errors": {
                             "surveycto_error": [
-                                "Kindly wait 5 mins before reloading this form"
+                                "Kindly wait 5 mins before reloading this form "
+                                + str(e),
                             ],
                         },
                     }

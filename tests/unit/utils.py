@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+
 from werkzeug.http import parse_cookie
 
 
@@ -148,7 +149,7 @@ def create_new_survey_admin_user(
     response_add = client.post(
         "/api/users",
         json={
-            "email": "survey_admin@example.com",
+            "email": "survey_admin@idinsight.org",
             "first_name": "Survey",
             "last_name": "Admin",
             "roles": [],

@@ -127,6 +127,7 @@ def register_blueprints(app):
     from app.blueprints.media_files import media_files_bp
     from app.blueprints.mapping import mapping_bp
     from app.blueprints.dq import dq_bp
+    from app.blueprints.notifications import notifications_bp
 
     # Auth needs to be registered first to avoid circular imports
     app.register_blueprint(auth_bp)
@@ -149,6 +150,7 @@ def register_blueprints(app):
     app.register_blueprint(media_files_bp)
     app.register_blueprint(mapping_bp)
     app.register_blueprint(dq_bp)
+    app.register_blueprint(notifications_bp)
 
 
 def register_error_handlers(app):
