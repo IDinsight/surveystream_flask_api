@@ -22,6 +22,12 @@ def validate_dq_check(
             "Question name is required if check is not applied on all questions."
         )
 
+    # all_questions are only allowed for missing (4), don't knows (5) and refusals (6) checks
+    if all_questions and type_id not in [4, 5, 6]:
+        raise Exception(
+            "All questions is only allowed for missing, don't knows and refusals checks"
+        )
+
     # Raise error if both all_questions and question_name are provided
     if all_questions and question_name:
         raise Exception(
@@ -29,7 +35,8 @@ def validate_dq_check(
         )
 
     # Check if the question name is valid, when check is active
-    if question_name and active is True:
+    # For protocol (8) and spotcheck (9) checks, question name is from DQ form which is checked later
+    if question_name and active is True and type_id not in [8, 9]:
         scto_question = SCTOQuestion.query.filter(
             SCTOQuestion.form_uid == form_uid,
             SCTOQuestion.question_name == question_name,
@@ -68,16 +75,83 @@ def validate_dq_check(
 
         if dq_form is None:
             raise Exception(f"DQ Form with form_uid {dq_scto_form_uid} not found")
+    else:
+        if dq_scto_form_uid is not None:
+            raise Exception("DQ SCTO Form UID is not allowed for this type of check")
+
+    # for mismatch (7), protocol (8) and spotcheck (9), check if question name is present in dq form
+    if type_id in [7, 8, 9] and active is True:
+        dq_scto_question = SCTOQuestion.query.filter(
+            SCTOQuestion.form_uid == dq_scto_form_uid,
+            SCTOQuestion.question_name == question_name,
+        ).first()
+
+        if dq_scto_question is None:
+            raise Exception(
+                f"Question name '{question_name}' not found in DQ form definition. Active checks must have a valid question name."
+            )
 
     # Check if check components are valid based on type of check
-
-    # 1. For missing (4), don't knows (5) and refusals checks (6), value field is required
+    # 1.a For missing (4), don't knows (5) and refusals checks (6), value field is required
     if type_id in [4, 5, 6]:
-        if check_components.get("value") is None:
+        if check_components.get("value") is None or check_components.get("value") == []:
             raise Exception(
                 "Value field is required for missing, don't knows and refusals checks"
             )
+    else:
+        # 1.b For other checks, value field is not required
+        if (
+            check_components.get("value") is not None
+            and check_components.get("value") != []
+        ):
+            raise Exception("Value field is not allowed for this type of check")
 
-    # To do: Add check components validation for other check types
+    # 2. For outlier (3), outlier_metric and outlier_value fields are required
+    if type_id == 3:
+        if check_components.get("outlier_metric") is None:
+            raise Exception("Outlier metric field is required for outlier checks")
+
+        if check_components.get("outlier_value") is None:
+            raise Exception("Outlier value field is required for outlier checks")
+    else:
+        # 2. For other checks, outlier_metric and outlier_value fields are not required
+        if check_components.get("outlier_metric") is not None:
+            raise Exception(
+                "Outlier metric field is not allowed for this type of check"
+            )
+
+        if check_components.get("outlier_value") is not None:
+            raise Exception("Outlier value field is not allowed for this type of check")
+
+    # 3. For constraint (2), one of hard_min, hard_max, soft_min, soft_max fields is required
+    if type_id == 2:
+        if (
+            check_components.get("hard_min") is None
+            and check_components.get("hard_max") is None
+            and check_components.get("soft_min") is None
+            and check_components.get("soft_max") is None
+        ):
+            raise Exception(
+                "At least one of hard_min, hard_max, soft_min, soft_max fields is required for constraint checks"
+            )
+    else:
+        # 3. For other checks, one of hard_min, hard_max, soft_min, soft_max fields is not required
+        if (
+            check_components.get("hard_min") is not None
+            or check_components.get("hard_max") is not None
+            or check_components.get("soft_min") is not None
+            or check_components.get("soft_max") is not None
+        ):
+            raise Exception(
+                "The hard_min, hard_max, soft_min, soft_max fields are not allowed for this type of check"
+            )
+
+    # 4. For any check other than spotcheck (9), spotcheck_score_name is not allowed
+    # For spotcheck (9), spotcheck_score_name is an optional field, hence no validation required
+    if type_id != 9:
+        if check_components.get("spotcheck_score_name") is not None:
+            raise Exception(
+                "Spotcheck score name is not allowed for this type of check"
+            )
 
     return True

@@ -1,6 +1,12 @@
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
-from wtforms.validators import AnyOf, DataRequired
+from wtforms import (
+    BooleanField,
+    FieldList,
+    FormField,
+    IntegerField,
+    StringField,
+)
+from wtforms.validators import AnyOf, DataRequired, Optional
 
 from app.blueprints.forms.models import Form
 from app.blueprints.surveys.models import Survey
@@ -118,7 +124,20 @@ class CustomCheckComponentValidator(FlaskForm):
     class Meta:
         csrf = False
 
-    value = FieldList(StringField(), default=[])
+    value = FieldList(StringField(), validators=[Optional()])
+    hard_min = StringField(validators=[Optional()])
+    hard_max = StringField(validators=[Optional()])
+    soft_min = StringField(validators=[Optional()])
+    soft_max = StringField(validators=[Optional()])
+    outlier_metric = StringField(
+        AnyOf(
+            ["interquartile_range", "standard_deviation", "percentile"],
+            message="Value must be one of %(values)s",
+        ),
+        validators=[Optional()],
+    )
+    outlier_value = StringField(validators=[Optional()])
+    spotcheck_score_name = StringField(validators=[Optional()])
 
 
 class DQCheckValidator(FlaskForm):
