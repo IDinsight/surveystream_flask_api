@@ -73,6 +73,51 @@ def view_assignments(validated_query_params):
 
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
+    # Check if the form has Targets or Enumerators, if not return a response saying targets are empty or enumerators are empty
+    if (
+        Target.query.filter(Target.form_uid == form_uid).first() is None
+        and Enumerator.query.filter(Enumerator.form_uid == form_uid).first() is None
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Targets and enumerators are not available for this form. Kindly upload targets or enumerators first.",
+                    },
+                }
+            ),
+            404,
+        )
+    elif (
+        Target.query.filter(Target.form_uid == form_uid).first() is None
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Targets are not available for this form. Kindly upload targets first.",
+                    },
+                }
+            ),
+            404,
+        )
+    elif (
+        Enumerator.query.filter(Enumerator.form_uid == form_uid).first() is None
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
+                    },
+                }
+            ),
+            404,
+        )
+
     # We need to get the bottom level geo level UID for the survey in order to join in the location information
     # Only do this if the targets have locations
     if (
