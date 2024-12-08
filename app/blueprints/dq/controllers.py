@@ -229,6 +229,7 @@ def get_dq_config(validated_query_params):
         db.session.query(
             DQConfig.form_uid,
             DQConfig.survey_status_filter,
+            DQConfig.group_by_module_name,
             dq_checks_subquery.c.dq_checks,
         )
         .outerjoin(
@@ -259,6 +260,7 @@ def get_dq_config(validated_query_params):
             "data": {
                 "form_uid": dq_config.form_uid,
                 "survey_status_filter": dq_config.survey_status_filter,
+                "group_by_module_name": dq_config.group_by_module_name,
                 "dq_checks": dq_config.dq_checks,
             },
         }
@@ -285,7 +287,8 @@ def update_dq_config(validated_payload):
 
     dq_config = DQConfig(
         form_uid=form_uid,
-        survey_status_filter=payload["survey_status_filter"],
+        survey_status_filter=validated_payload.survey_status_filter.data,
+        group_by_module_name=validated_payload.group_by_module_name.data,
     )
     db.session.add(dq_config)
 

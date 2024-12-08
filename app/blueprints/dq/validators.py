@@ -83,6 +83,7 @@ class UpdateDQConfigValidator(FlaskForm):
     survey_status_filter = FieldList(
         IntegerField(), validators=[DataRequired(), validate_survey_status_filter]
     )
+    group_by_module_name = BooleanField(default=False)
 
 
 class DQChecksQueryParamValidator(FlaskForm):

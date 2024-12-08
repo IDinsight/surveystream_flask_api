@@ -2879,6 +2879,14 @@ paths:
             type: integer
           required: true
           description: Unique ID of the form
+        - in: query
+          name: include_repeat_groups
+          schema:
+            type: boolean
+          required: false
+          description: >-
+            Whether to include repeat groups in the response. Default is
+            false.
       responses:
         "200":
           description: OK
@@ -11076,6 +11084,10 @@ paths:
                           type: list
                           description: List of survey statuses to filter the data
                           example: ["1", "2"]
+                        group_by_module_name:
+                          type: boolean
+                          description: Indicates if the DQ checks are grouped by module name
+                          example: true
                         dq_checks:
                           type: array
                           description: List of DQ checks configured for the form
@@ -11129,6 +11141,10 @@ paths:
                   type: list
                   description: List of survey statuses to filter the data
                   example: ["1", "2"]
+                group_by_module_name:
+                  type: boolean
+                  description: Indicates if the DQ checks are grouped by module name. Default is false.
+                  example: true
               required:
                 - form_uid
                 - survey_status_filter
