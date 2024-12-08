@@ -1,8 +1,8 @@
 """Adding group_by_module_name column to dq_config
 
-Revision ID: 4e9aef7ac61d
-Revises: 388c4a422807
-Create Date: 2024-12-06 12:00:27.738654
+Revision ID: dbb88ef67228
+Revises: 9de0bf390ba2
+Create Date: 2024-12-08 10:42:58.628255
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4e9aef7ac61d'
+revision = 'dbb88ef67228'
 down_revision = '9de0bf390ba2'
 branch_labels = None
 depends_on = None
