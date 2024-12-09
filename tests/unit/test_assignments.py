@@ -1937,17 +1937,40 @@ class TestAssignments:
     ## FIXTURES END HERE
     ####################################################
 
-    def test_assignments_no_enumerators_no_targets_no_geo_levels_no_roles(
-        self, client, login_test_user, create_form, csrf_token
+    def test_assignments_no_enumerators_no_targets(
+        self, client, login_test_user, create_locations, add_user_hierarchy, csrf_token
     ):
         """
         Test the assignments endpoint response when key datasets are missing
-        No geo levels
-        No locations
-        No roles
         No enumerators
         No targets
+        """
 
+        expected_response = {
+            "errors": {
+                "message": "Targets and enumerators are not available for this form. Kindly upload targets or enumerators first."
+            },
+            "success": False,
+        }
+
+        # Check the response
+        response = client.get("/api/assignments", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_assignments_no_roles(
+        self,
+        client,
+        login_test_user,
+        create_form,
+        csrf_token,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test the assignments endpoint response when key datasets are missing
+        No roles
         When no roles are defined, the response should be a 422 error
         """
 
@@ -1964,48 +1987,85 @@ class TestAssignments:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_assignments_no_enumerators_no_targets_no_geo_levels(
-        self, client, login_test_user, create_form, create_roles, csrf_token
+    def test_assignments_no_targets(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        add_user_hierarchy,
+        csrf_token,
+        user_permissions,
+        request,
     ):
         """
-        Test the assignments endpoint response when key datasets are missing
-        No geo levels
-        No locations
-        No enumerators
+        Test the assignments endpoint response when key datasets are missing - multiple user roles
         No targets
         """
-
-        expected_response = {
-            "data": [],
-            "success": True,
-        }
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+        if expected_permission:
+            expected_response = {
+                "errors": {
+                    "message": "Targets are not available for this form. Kindly upload targets first.",
+                },
+                "success": False,
+            }
 
-    def test_assignments_no_enumerators_no_targets_no_locations(
-        self, client, login_test_user, create_geo_levels, create_roles, csrf_token
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            response.status_code = 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Assignments",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_assignments_no_enumerators(
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+        user_permissions,
+        request,
     ):
         """
-        Test the assignments endpoint response when key datasets are missing
-        No locations
+        Test the assignments endpoint response when key datasets are missing - multiple user roles
         No enumerators
-        No targets
         """
-
-        expected_response = {
-            "data": [],
-            "success": True,
-        }
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+        if expected_permission:
+            expected_response = {
+                "errors": {
+                    "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
+                },
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            response.status_code = 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Assignments",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
     def test_assignments_schedule_email(
         self,
@@ -2108,64 +2168,6 @@ class TestAssignments:
         assert response.status_code == 422
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
-
-    def test_assignments_no_enumerators_no_targets(
-        self, client, login_test_user, create_locations, add_user_hierarchy, csrf_token
-    ):
-        """
-        Test the assignments endpoint response when key datasets are missing
-        No enumerators
-        No targets
-        """
-
-        expected_response = {
-            "data": [],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_assignments_no_targets(
-        self,
-        client,
-        login_test_user,
-        upload_enumerators_csv,
-        add_user_hierarchy,
-        csrf_token,
-        user_permissions,
-        request,
-    ):
-        """
-        Test the assignments endpoint response when key datasets are missing - multiple user roles
-        No targets
-        """
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
-
-        # Check the response
-        response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        if expected_permission:
-            expected_response = {
-                "data": [],
-                "success": True,
-            }
-
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-        else:
-            response.status_code = 403
-
-            expected_response = {
-                "success": False,
-                "error": f"User does not have the required permission: READ Assignments",
-            }
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
 
     def test_assignments_empty_assignment_table(
         self,

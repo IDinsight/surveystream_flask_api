@@ -87,7 +87,7 @@ def view_assignments(validated_query_params):
                     },
                 }
             ),
-            404,
+            422,
         )
     elif (
         Target.query.filter(Target.form_uid == form_uid).first() is None
@@ -101,7 +101,7 @@ def view_assignments(validated_query_params):
                     },
                 }
             ),
-            404,
+            422,
         )
     elif (
         Enumerator.query.filter(Enumerator.form_uid == form_uid).first() is None
@@ -115,7 +115,7 @@ def view_assignments(validated_query_params):
                     },
                 }
             ),
-            404,
+            422,
         )
 
     # We need to get the bottom level geo level UID for the survey in order to join in the location information
