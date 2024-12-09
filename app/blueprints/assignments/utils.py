@@ -16,6 +16,7 @@ from sqlalchemy import (
     column,
     func,
     insert,
+    or_,
     select,
     update,
 )
@@ -886,30 +887,8 @@ def get_next_assignment_email_schedule(form_uid):
 
     """
 
-    # Get current datetime and current time
-    current_datetime = datetime.now()
-    current_time = datetime.now().strftime("%H:%M")
-
-    # a subquery to unnest the array of dates and filter dates less than current date
-    subquery = (
-        db.session.query(
-            cast(func.unnest(EmailSchedule.dates) + EmailSchedule.time, Date).label(
-                "schedule_date"
-            ),
-            EmailSchedule.email_schedule_uid,
-        )
-        .filter(
-            func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
-        )
-        .correlate(EmailSchedule)
-        .subquery()
-    )
-
-    # Alias the subquery
-    schedule_dates_subquery = alias(subquery)
-
     # Find all configs using assignments table
-    assignment_email_config_subquery = (
+    assignment_config_subquery = (
         db.session.query(EmailConfig)
         .join(
             EmailTemplate,
@@ -925,53 +904,102 @@ def get_next_assignment_email_schedule(form_uid):
         )
     ).subquery()
 
-    # join schedule_dates_subquery and filter dates only greater than current date time
-    email_schedule_res = (
+    # Get current datetime and current time
+    current_datetime = datetime.now()
+    current_time = datetime.now().strftime("%H:%M")
+
+    # a subquery to unnest the array of dates and filter dates to only get the ones greater than current date
+    # Outer join with assignment_email_config_subquery to always get the config details in the result
+    email_dates_unnested_subquery = (
         db.session.query(
-            EmailSchedule,
-            assignment_email_config_subquery.c.email_config_uid,
-            assignment_email_config_subquery.c.config_name,
-            schedule_dates_subquery,
-        )
-        .select_from(EmailSchedule)
-        .join(
-            schedule_dates_subquery,
-            and_(
-                schedule_dates_subquery.c.email_schedule_uid
-                == EmailSchedule.email_schedule_uid,
-                cast(
-                    schedule_dates_subquery.c.schedule_date + EmailSchedule.time,
-                    DateTime,
-                )
-                >= current_datetime,
+            EmailSchedule.email_config_uid,
+            EmailSchedule.email_schedule_uid,
+            cast(func.unnest(EmailSchedule.dates) + EmailSchedule.time, DateTime).label(
+                "schedule_time"
             ),
         )
-        .join(
-            assignment_email_config_subquery,
-            EmailSchedule.email_config_uid
-            == assignment_email_config_subquery.c.email_config_uid,
+        .filter(
+            func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
         )
-        .order_by(schedule_dates_subquery.c.schedule_date.asc())
-        .first()
+        .subquery()
+    )
+
+    subquery = (
+        db.session.query(
+            assignment_config_subquery.c.email_config_uid,
+            assignment_config_subquery.c.config_name,
+            email_dates_unnested_subquery.c.email_schedule_uid,
+            email_dates_unnested_subquery.c.schedule_time,
+        )
+        .outerjoin(
+            email_dates_unnested_subquery,
+            and_(
+                email_dates_unnested_subquery.c.email_config_uid
+                == assignment_config_subquery.c.email_config_uid,
+                email_dates_unnested_subquery.c.schedule_time >= current_datetime,
+            ),
+        )
+        .subquery()
+    )
+
+    # Alias the subquery
+    schedule_dates_subquery = alias(subquery)
+
+    # join schedule_dates_subquery and filter time greater than current time
+    # Get the first schedule for each config
+    email_schedule_subquery = (
+        db.session.query(
+            schedule_dates_subquery.c.email_config_uid,
+            schedule_dates_subquery.c.config_name,
+            EmailSchedule.email_schedule_uid,
+            EmailSchedule.dates,
+            cast(schedule_dates_subquery.c.schedule_time, Date).label("schedule_date"),
+            EmailSchedule.time,
+            func.row_number()
+            .over(
+                partition_by=schedule_dates_subquery.c.email_config_uid,
+                order_by=schedule_dates_subquery.c.schedule_time.asc(),
+            )
+            .label("row_number"),
+        )
+        .select_from(schedule_dates_subquery)
+        .outerjoin(
+            EmailSchedule,
+            and_(
+                EmailSchedule.email_config_uid
+                == schedule_dates_subquery.c.email_config_uid,
+                EmailSchedule.email_schedule_uid
+                == schedule_dates_subquery.c.email_schedule_uid,
+            ),
+        )
+        .subquery()
+    )
+
+    email_schedule_res = (
+        db.session.query(
+            email_schedule_subquery.c.email_config_uid,
+            email_schedule_subquery.c.config_name,
+            email_schedule_subquery.c.email_schedule_uid,
+            email_schedule_subquery.c.dates,
+            email_schedule_subquery.c.schedule_date,
+            email_schedule_subquery.c.time,
+        )
+        .filter(email_schedule_subquery.c.row_number == 1)
+        .all()
     )
 
     if email_schedule_res:
-        (
-            email_schedule,
-            email_config_uid,
-            config_name,
-            schedule_date,
-            email_schedule_uid,
-        ) = email_schedule_res
-
-        return {
-            "email_config_uid": email_config_uid,
-            "config_name": config_name,
-            "dates": email_schedule.dates,
-            "time": str(email_schedule.time),
-            "current_time": str(current_time),
-            "email_schedule_uid": email_schedule_uid,
-            "schedule_date": schedule_date,
-        }
+        return [
+            {
+                "email_config_uid": res.email_config_uid,
+                "config_name": res.config_name,
+                "dates": res.dates,
+                "time": str(res.time) if res.time else None,
+                "current_time": str(current_time),
+                "email_schedule_uid": res.email_schedule_uid,
+                "schedule_date": res.schedule_date,
+            }
+            for res in email_schedule_res
+        ]
 
     return None

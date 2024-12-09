@@ -2073,6 +2073,7 @@ class TestAssignments:
         login_test_user,
         create_geo_levels,
         create_roles,
+        create_email_config,
         csrf_token,
         user_permissions,
         request,
@@ -2090,6 +2091,7 @@ class TestAssignments:
 
         payload = {
             "form_uid": 1,
+            "email_config_uid": 1,
             "date": current_datetime,
             "time": "08:00",
             "recipients": [1, 2, 3],  # there are supposed to be enumerator ids
@@ -2145,6 +2147,7 @@ class TestAssignments:
 
         payload = {
             "form_uid": 1,
+            "email_config_uid": 1,
             "date": "2024-02-03",
             "time": "08:00",
             "recipients": [1, 2, 3],  # there are supposed to be enumerator ids
@@ -2445,7 +2448,7 @@ class TestAssignments:
             if user_fixture != "user_with_assignment_permissions":
                 assert response.status_code == 200
                 assert datetime.strptime(
-                    response.json["data"]["email_schedule"]["schedule_date"],
+                    response.json["data"]["email_schedule"][0]["schedule_date"],
                     date_format,
                 ) >= datetime.strptime(formatted_date, date_format)
                 expected_put_response = {
@@ -2454,19 +2457,25 @@ class TestAssignments:
                         "new_assignments_count": 1,
                         "no_changes_count": 0,
                         "re_assignments_count": 0,
-                        "email_schedule": {
-                            "config_name": "AssignmentsConfig",
-                            "dates": response.json["data"]["email_schedule"]["dates"],
-                            "schedule_date": response.json["data"]["email_schedule"][
-                                "schedule_date"
-                            ],
-                            "current_time": current_time,
-                            "email_schedule_uid": response.json["data"][
-                                "email_schedule"
-                            ]["email_schedule_uid"],
-                            "email_config_uid": 1,
-                            "time": response.json["data"]["email_schedule"]["time"],
-                        },
+                        "email_schedule": [
+                            {
+                                "config_name": "AssignmentsConfig",
+                                "dates": response.json["data"]["email_schedule"][0][
+                                    "dates"
+                                ],
+                                "schedule_date": response.json["data"][
+                                    "email_schedule"
+                                ][0]["schedule_date"],
+                                "current_time": current_time,
+                                "email_schedule_uid": response.json["data"][
+                                    "email_schedule"
+                                ][0]["email_schedule_uid"],
+                                "email_config_uid": 1,
+                                "time": response.json["data"]["email_schedule"][0][
+                                    "time"
+                                ],
+                            }
+                        ],
                     },
                     "message": "Success",
                 }
@@ -2910,6 +2919,113 @@ class TestAssignments:
 
         print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_create_assignment_no_email_config(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+    ):
+        """
+        Create an assignment between a single target and enumerator without email config
+        """
+        payload = {
+            "assignments": [{"target_uid": 1, "enumerator_uid": 1}],
+            "form_uid": 1,
+            "validate_mapping": True,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        current_datetime = datetime.now()
+        formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
+
+        current_time = datetime.now().strftime("%H:%M")
+
+        # Define the format corresponding to the date string
+        date_format = "%a, %d %b %Y %H:%M:%S %Z"
+
+        assert response.status_code == 200
+
+        expected_put_response = {
+            "data": {
+                "assignments_count": 1,
+                "new_assignments_count": 1,
+                "no_changes_count": 0,
+                "re_assignments_count": 0,
+            },
+            "message": "Success",
+        }
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
+        assert checkdiff == {}
+
+    def test_create_assignment_no_email_schedule(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+        create_email_config,
+        create_email_template,
+    ):
+        """
+        Create an assignment between a single target and enumerator without email schedule
+        """
+        payload = {
+            "assignments": [{"target_uid": 1, "enumerator_uid": 1}],
+            "form_uid": 1,
+            "validate_mapping": True,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        current_time = datetime.now().strftime("%H:%M")
+
+        assert response.status_code == 200
+
+        expected_put_response = {
+            "data": {
+                "assignments_count": 1,
+                "new_assignments_count": 1,
+                "no_changes_count": 0,
+                "re_assignments_count": 0,
+                "email_schedule": [
+                    {
+                        "email_config_uid": 1,
+                        "config_name": "AssignmentsConfig",
+                        "dates": None,
+                        "time": None,
+                        "current_time": current_time,
+                        "email_schedule_uid": None,
+                        "schedule_date": None,
+                    }
+                ],
+            },
+            "message": "Success",
+        }
+        print(response.json)
+        print(expected_put_response)
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
         assert checkdiff == {}
 
     def test_multiple_assignments(
@@ -10023,7 +10139,7 @@ class TestAssignments:
             if user_fixture != "user_with_assignment_upload_permissions":
                 assert response.status_code == 200
                 assert datetime.strptime(
-                    response.json["data"]["email_schedule"]["schedule_date"],
+                    response.json["data"]["email_schedule"][0]["schedule_date"],
                     date_format,
                 ) >= datetime.strptime(formatted_date, date_format)
                 expected_put_response = {
@@ -10032,19 +10148,25 @@ class TestAssignments:
                         "new_assignments_count": 0,
                         "no_changes_count": 0,
                         "re_assignments_count": 1,
-                        "email_schedule": {
-                            "config_name": "AssignmentsConfig",
-                            "dates": response.json["data"]["email_schedule"]["dates"],
-                            "schedule_date": response.json["data"]["email_schedule"][
-                                "schedule_date"
-                            ],
-                            "current_time": current_time,
-                            "email_schedule_uid": response.json["data"][
-                                "email_schedule"
-                            ]["email_schedule_uid"],
-                            "email_config_uid": 1,
-                            "time": response.json["data"]["email_schedule"]["time"],
-                        },
+                        "email_schedule": [
+                            {
+                                "config_name": "AssignmentsConfig",
+                                "dates": response.json["data"]["email_schedule"][0][
+                                    "dates"
+                                ],
+                                "schedule_date": response.json["data"][
+                                    "email_schedule"
+                                ][0]["schedule_date"],
+                                "current_time": current_time,
+                                "email_schedule_uid": response.json["data"][
+                                    "email_schedule"
+                                ][0]["email_schedule_uid"],
+                                "email_config_uid": 1,
+                                "time": response.json["data"]["email_schedule"][0][
+                                    "time"
+                                ],
+                            }
+                        ],
                     },
                     "message": "Success",
                 }
@@ -10411,7 +10533,7 @@ class TestAssignments:
             if user_fixture != "user_with_assignment_upload_permissions":
                 assert response.status_code == 200
                 assert datetime.strptime(
-                    response.json["data"]["email_schedule"]["schedule_date"],
+                    response.json["data"]["email_schedule"][0]["schedule_date"],
                     date_format,
                 ) >= datetime.strptime(formatted_date, date_format)
                 expected_put_response = {
@@ -10420,19 +10542,25 @@ class TestAssignments:
                         "new_assignments_count": 2,
                         "no_changes_count": 0,
                         "re_assignments_count": 0,
-                        "email_schedule": {
-                            "config_name": "AssignmentsConfig",
-                            "dates": response.json["data"]["email_schedule"]["dates"],
-                            "schedule_date": response.json["data"]["email_schedule"][
-                                "schedule_date"
-                            ],
-                            "current_time": current_time,
-                            "email_schedule_uid": response.json["data"][
-                                "email_schedule"
-                            ]["email_schedule_uid"],
-                            "email_config_uid": 1,
-                            "time": response.json["data"]["email_schedule"]["time"],
-                        },
+                        "email_schedule": [
+                            {
+                                "config_name": "AssignmentsConfig",
+                                "dates": response.json["data"]["email_schedule"][0][
+                                    "dates"
+                                ],
+                                "schedule_date": response.json["data"][
+                                    "email_schedule"
+                                ][0]["schedule_date"],
+                                "current_time": current_time,
+                                "email_schedule_uid": response.json["data"][
+                                    "email_schedule"
+                                ][0]["email_schedule_uid"],
+                                "email_config_uid": 1,
+                                "time": response.json["data"]["email_schedule"][0][
+                                    "time"
+                                ],
+                            }
+                        ],
                     },
                     "message": "Success",
                 }

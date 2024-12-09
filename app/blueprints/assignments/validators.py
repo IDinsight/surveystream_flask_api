@@ -27,6 +27,7 @@ class AssignmentsQueryParamValidator(FlaskForm):
 
 
 class AssignmentsEmailValidator(FlaskForm):
+    email_config_uid = IntegerField(validators=[DataRequired()])
     date = StringField(validators=[DataRequired()])
     time = StringField(validators=[DataRequired()])
     recipients = FieldList(IntegerField(validators=[DataRequired()]))
