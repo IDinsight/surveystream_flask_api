@@ -681,7 +681,9 @@ class TestNotifications:
                 "data": [
                     {
                         "survey_id": "test_survey2",
+                        "survey_uid": 2,
                         "module_name": "Data quality",
+                        "module_id": 11,
                         "notification_uid": 4,
                         "severity": "error",
                         "resolution_status": "in progress",
@@ -690,7 +692,9 @@ class TestNotifications:
                     },
                     {
                         "survey_id": "test_survey2",
+                        "survey_uid": 2,
                         "module_name": "Assignments",
+                        "module_id": 9,
                         "notification_uid": 3,
                         "severity": "error",
                         "resolution_status": "in progress",
@@ -699,7 +703,9 @@ class TestNotifications:
                     },
                     {
                         "survey_id": "test_survey",
+                        "survey_uid": 1,
                         "module_name": "Assignments",
+                        "module_id": 9,
                         "notification_uid": 2,
                         "severity": "error",
                         "resolution_status": "in progress",
@@ -708,7 +714,9 @@ class TestNotifications:
                     },
                     {
                         "survey_id": "test_survey",
+                        "survey_uid": 1,
                         "module_name": "Basic information",
+                        "module_id": 1,
                         "notification_uid": 1,
                         "severity": "warning",
                         "resolution_status": "in progress",
@@ -716,43 +724,46 @@ class TestNotifications:
                         "type": "survey",
                     },
                     {
+                        "type": "user",
                         "notification_uid": 1,
                         "severity": "alert",
                         "resolution_status": "in progress",
                         "message": "Your password has been reset",
-                        "type": "user",
                     },
                 ],
             }
-
         elif user_fixture == "user_with_survey_admin_permissions":
             expected_response = {
                 "success": True,
                 "data": [
                     {
-                        "notification_uid": 2,
                         "survey_id": "test_survey",
+                        "survey_uid": 1,
                         "module_name": "Assignments",
+                        "module_id": 9,
+                        "notification_uid": 2,
                         "severity": "error",
                         "resolution_status": "in progress",
                         "message": "No user mappings found",
                         "type": "survey",
                     },
                     {
-                        "notification_uid": 1,
                         "survey_id": "test_survey",
+                        "survey_uid": 1,
                         "module_name": "Basic information",
+                        "module_id": 1,
+                        "notification_uid": 1,
                         "severity": "warning",
                         "resolution_status": "in progress",
                         "message": "Your survey end date is approaching",
                         "type": "survey",
                     },
                     {
+                        "type": "user",
                         "notification_uid": 1,
                         "severity": "alert",
                         "resolution_status": "in progress",
                         "message": "Your password has been reset",
-                        "type": "user",
                     },
                 ],
             }
@@ -763,7 +774,9 @@ class TestNotifications:
                 "data": [
                     {
                         "survey_id": "test_survey2",
+                        "survey_uid": 2,
                         "module_name": "Data quality",
+                        "module_id": 11,
                         "notification_uid": 4,
                         "severity": "error",
                         "resolution_status": "in progress",
@@ -772,7 +785,9 @@ class TestNotifications:
                     },
                     {
                         "survey_id": "test_survey2",
+                        "survey_uid": 2,
                         "module_name": "Assignments",
+                        "module_id": 9,
                         "notification_uid": 3,
                         "severity": "error",
                         "resolution_status": "in progress",
@@ -781,7 +796,9 @@ class TestNotifications:
                     },
                     {
                         "survey_id": "test_survey",
+                        "survey_uid": 1,
                         "module_name": "Assignments",
+                        "module_id": 9,
                         "notification_uid": 2,
                         "severity": "error",
                         "resolution_status": "in progress",
@@ -789,11 +806,11 @@ class TestNotifications:
                         "type": "survey",
                     },
                     {
+                        "type": "user",
                         "notification_uid": 1,
                         "severity": "alert",
                         "resolution_status": "in progress",
                         "message": "Your password has been reset",
-                        "type": "user",
                     },
                 ],
             }

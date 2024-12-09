@@ -64,6 +64,7 @@ def get_notifications(validated_query_params):
             db.session.query(
                 SurveyNotification,
                 Survey.survey_id,
+                Module.module_id,
                 Module.name.label("module_name"),
             )
             .join(Survey, Survey.survey_uid == SurveyNotification.survey_uid)
@@ -74,7 +75,9 @@ def get_notifications(validated_query_params):
         survey_notifications_dict = [
             {
                 "survey_id": notification.survey_id,
+                "survey_uid": notification.SurveyNotification.survey_uid,
                 "module_name": notification.module_name,
+                "module_id": notification.module_id,
                 "type": "survey",
                 **notification.SurveyNotification.to_dict(),
             }
@@ -96,6 +99,7 @@ def get_notifications(validated_query_params):
                 db.session.query(
                     SurveyNotification,
                     Survey.survey_id,
+                    Module.module_id,
                     Module.name.label("module_name"),
                 )
                 .join(Survey, Survey.survey_uid == SurveyNotification.survey_uid)
@@ -107,7 +111,9 @@ def get_notifications(validated_query_params):
             survey_notifications_dict += [
                 {
                     "survey_id": notification.survey_id,
+                    "survey_uid": notification.SurveyNotification.survey_uid,
                     "module_name": notification.module_name,
+                    "module_id": notification.module_id,
                     "type": "survey",
                     **notification.SurveyNotification.to_dict(),
                 }
@@ -118,6 +124,7 @@ def get_notifications(validated_query_params):
             db.session.query(
                 SurveyNotification,
                 Survey.survey_id,
+                Module.module_id,
                 Module.name.label("module_name"),
             )
             .select_from(SurveyNotification)
@@ -142,7 +149,9 @@ def get_notifications(validated_query_params):
         survey_notifications_dict += [
             {
                 "survey_id": notification.survey_id,
+                "survey_uid": notification.SurveyNotification.survey_uid,
                 "module_name": notification.module_name,
+                "module_id": notification.module_id,
                 "type": "survey",
                 **notification.SurveyNotification.to_dict(),
             }
