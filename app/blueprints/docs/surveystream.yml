@@ -11887,6 +11887,14 @@ paths:
                             type: string
                             description: Survey ID
                             example: "test_survey"
+                          survey_uid:
+                            type: integer
+                            description: Survey UID
+                            example: 1
+                          module_id:
+                            type: integer
+                            description: Module ID
+                            example: 1
                           module_name:
                             type: string
                             description: Module Name
