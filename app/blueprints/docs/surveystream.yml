@@ -94,6 +94,8 @@ tags:
     description: Endpoints related to emails configuration
   - name: Media Files
     description: Endpoints related to media files
+  - name: Data Quality
+    description: Endpoints related to data quality configuration
 
 x-tagGroups:
   - name: User Management
@@ -154,6 +156,9 @@ x-tagGroups:
   - name: Media Files
     tags:
       - Media Files
+  - name: Data Quality
+    tags:
+      - Data Quality
 
 paths:
   /healthcheck:
@@ -2874,6 +2879,14 @@ paths:
             type: integer
           required: true
           description: Unique ID of the form
+        - in: query
+          name: include_repeat_groups
+          schema:
+            type: boolean
+          required: false
+          description: >-
+            Whether to include repeat groups in the response. Default is
+            false.
       responses:
         "200":
           description: OK
@@ -3513,10 +3526,16 @@ paths:
                       bulk_editable:
                         type: boolean
                         description: Whether the field is bulk editable or not
+                      column_source:
+                        type: string
+                        description: >-
+                          column_name in input source, if csv input then column header
+                          if scto output then question name.
                     required:
                       - column_name
                       - column_type
                       - bulk_editable
+                      - column_source
               required:
                 - form_uid
                 - column_config
@@ -3577,6 +3596,11 @@ paths:
                             bulk_editable:
                               type: boolean
                               description: Whether the field is bulk editable or not.
+                            column_source:
+                              type: string
+                              description: >-
+                                column_name in input source, if csv input then column header
+                                if scto output then question name.
                       location_columns:
                         type: array
                         description: An array of column config objects for the location columns.
@@ -4146,6 +4170,14 @@ paths:
                     file. In 'merge' mode, the new assignments from the CSV will
                     be added to the existing ones.  Any existing records
                     included in the upload will also be updated.
+                validate_mapping:
+                  type: boolean
+                  default: false
+                  description: >-
+                    Whether to validate the mapping of targets/enumerators with
+                    supervisors. If set to true, the endpoint will validate the
+                    mapping of targets/enumerators with supervisors and return
+                    any errors encountered in the mapping.
               required:
                 - column_mapping
                 - file
@@ -4312,22 +4344,32 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              description: A list of target/enumerator pairs
-              items:
                 type: object
                 properties:
                   form_uid:
                     type: integer
                     description: The unique ID of the form
-                  target_uid:
-                    type: integer
-                  enumerator_uid:
-                    type: integer
+                  assignments:
+                    type: array
+                    description: A list of target/enumerator pairs
+                    items:
+                      type: object
+                      properties:
+                        target_uid:
+                          type: integer
+                        enumerator_uid:
+                          type: integer
+                  validate_mapping:
+                    type: boolean
+                    default: false
+                    description: >-
+                      Whether to validate the mapping of targets/enumerators with
+                      supervisors. If set to true, the endpoint will validate the
+                      mapping of targets/enumerators with supervisors and return
+                      any errors encountered in the mapping.
                 required:
                   - form_uid
-                  - target_uid
-                  - enumerator_uid
+                  - assignments
       responses:
         "200":
           description: Success
@@ -6108,6 +6150,85 @@ paths:
 
             Note that the file validation will only be run if the geo level
             mapping is valid.
+    put:
+      tags:
+        - Locations
+      summary: Append locations csv to existing locations database
+      description: >
+        Appends the locations csv to the existing locations data in database.
+      parameters:
+        - name: survey_uid
+          in: query
+          description: The unique ID of the survey.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: >-
+          JSON object containing locations file content and geo level column
+          mapping.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                geo_level_mapping:
+                  type: array
+                  description: >-
+                    An array of objects mapping the columns in the CSV file to
+                    the geo levels for the given survey.
+                  items:
+                    type: object
+                    properties:
+                      geo_level_uid:
+                        type: integer
+                        nullable: false
+                        description: The unique ID of the geo level.
+                      location_id_column:
+                        type: string
+                        nullable: false
+                        description: >-
+                          The name of the column in the CSV file that contains
+                          the location id for the given geo level.
+                      location_name_column:
+                        type: integer
+                        nullable: false
+                        description: >-
+                          The name of the column in the CSV file that contains
+                          the location name for the given geo level.
+                    required:
+                      - geo_level_uid
+                      - location_id_column
+                      - location_name_column
+                file:
+                  type: string
+                  description: Base64 encoded CSV file content
+              required:
+                - geo_level_mapping
+                - file
+      responses:
+        "200":
+          description: Success
+        "403":
+          description: X-CSRF-Token required in header
+        "422":
+          description: >
+            Form errors
+
+            Validation errors for the geo level mapping will be returned as an
+            array under the `geo_level_mapping` key in the `errors` key of the
+            response.
+
+            Validation errors for the file will be returned as an array under
+            the `file` key in the `errors` key of the response.
+
+            Validation errors for the location type hierarchy will be returned
+            as an array under the `geo_level_hierarchy` key in the `errors` key
+            of the response.
+
+            Note that the file validation will only be run if the geo level
+            mapping is valid.
   
   /locations/long:
     get:
@@ -6175,6 +6296,39 @@ paths:
           description: >
             Error message indicating that the locations could not be retrieved.
   
+  /locations/<int:location_uid>:
+    put:
+      tags:
+          - Locations
+      summary: Updates a location based on location_uid
+      parameters:
+        - in: path
+          name: location_uid
+          schema:
+            type: integer
+          required: true
+          description: Unique ID of the location
+      requestBody:
+        description: JSON object containing the location details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                survey_uid:
+                  type: integer
+                  description: Unique ID of the survey
+                location_name:
+                  type: string
+                  description: The name of the location
+                location_uid:
+                  type: string
+                  description: The Unique ID of the location
+                parent_location_uid:
+                  type: integer
+                  description: The unique ID of the parent location  
+
   /target-status-mapping:
     get:
       tags:
@@ -6559,6 +6713,13 @@ paths:
                     records if validations for any record fails. If True, the
                     upload will load the successful records and return the
                     failed records in the response.
+                load_from_scto:
+                  type: boolean
+                  default: False
+                  description: >-
+                    Whether to load the targets from SurveyCTO.
+                    If True, the `file` parameter will be ignored.
+                    Targets will be loaded from source defined in TargetConfig
               required:
                 - column_mapping
                 - file
@@ -6758,6 +6919,207 @@ paths:
           description: Form not found
         "422":
           description: Form errors
+  
+  /targets/config:
+    get:
+      summary: Get the targets config for a form
+      description: >
+        Get the targets config for a form.
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: The form UID of the target config to be updated.
+          required: true
+      responses:
+        "200":
+          description: Target config retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates if the request was successful.
+                  data:
+                    type: object
+                    properties:
+                      form_uid:
+                        type: integer
+                        description: The form UID of the targets config
+                      target_source:
+                        type: string
+                        description: The source of the targets- csv or scto
+                      scto_input_type:
+                        type: string
+                        description: The type of SCTO input- form or dataset
+                      scto_input_id:
+                        type: string
+                        description: The ID of the SCTO input, i.e. scto form id or dataset id
+                      scto_encryption_flag:
+                        type: boolean
+                        description: The encryption flag for SCTO input- true or false
+        "404":
+          description: Target configuration not found for the form
+    post:
+      summary: Create the targets config for a form
+      description: >
+        Create the targets config for a form.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The form UID of the targets to be updated.
+                target_source:
+                  type: string
+                  description: The source of the targets- csv or scto
+                  values:
+                    - csv
+                    - scto
+                scto_input_type:
+                  type: string
+                  description: The type of SCTO input- form or dataset
+                  values:
+                    - form
+                    - dataset
+                scto_input_id:
+                  type: string
+                  description: The ID of the SCTO input, i.e. scto form id or dataset id
+                scto_encryption_flag:
+                  type: boolean
+                  description: The encryption flag for SCTO input- true or false
+              required:
+                - form_uid
+                - target_source
+      responses:
+        "200":
+          description: Target Config created successfully
+
+    put:
+      summary: Update the targets config for a form
+      description: >
+        Update the targets config for a form.
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The form UID of the targets to be updated.
+                target_source:
+                  type: string
+                  description: The source of the targets- csv or scto
+                  values:
+                    - csv
+                    - scto
+                scto_input_type:
+                  type: string
+                  description: The type of SCTO input- form or dataset
+                  values:
+                    - form
+                    - dataset
+                scto_input_id:
+                  type: string
+                  description: The ID of the SCTO input, i.e. scto form id or dataset id
+                scto_encryption_flag:
+                  type: boolean
+                  description: The encryption flag for SCTO input- true or false
+              required:
+                - form_uid
+                - target_source
+      responses:
+        "200":
+          description: Target Config updated successfully
+        "404":
+          description: Target Config not found
+  
+  /targets/config/scto-columns:
+    get:
+      summary: Get surveycto input columns for targets
+      description: Get surveycto input columns for targets.
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: Surveycto input columns retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  data:
+                    type: array
+                    description: List of surveycto input columns
+                    items:
+                      type: string
+    
+    put:
+      summary: Update surveycto input columns for targets
+      description: >
+        Update surveycto input columns for targets by
+        refreshing target source form definition/dataset from surveycto
+      tags:
+        - Targets
+      parameters:
+        - in: header
+          name: X-CSRF-TOKEN
+          description: The value of the CSRF-TOKEN cookie set by `GET /get-csrf`
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: Surveycto input columns updated successfully
+        "404":
+          description: Form with form_uid={form_uid} not found
+        "412":
+          description: Refresh endpoint works only for target source set as scto
   /targets/column-config:
     put:
       summary: Update the targets column config for a form
@@ -6820,6 +7182,27 @@ paths:
                       - column_name
                       - column_type
                       - bulk_editable
+                filters:
+                  type: array
+                  description: >-
+                    An object containing the filter data for the Target config.
+                    The filter data is used to filter the targets based on the
+                    provided filter data.
+                  items:
+                    type: object
+                    properties:
+                      filter_group:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            variable_name:
+                              type: string
+                              example: "target_sample"
+                            filter_operator:
+                              type: string
+                            filter_value:
+                              type: string
               required:
                 - form_uid
                 - column_config
@@ -6895,7 +7278,27 @@ paths:
                             column_label:
                               type: string
                               description: The label for the location column.
-
+                      target_scto_filter_list:
+                        type: array
+                        description: >-
+                          An object containing the filter data for the Target config.
+                          The filter data is used to filter the targets based on the
+                          provided filter data.
+                        items:
+                          type: object
+                          properties:
+                            filter_group:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  variable_name:
+                                    type: string
+                                    example: "target_sample"
+                                  filter_operator:
+                                    type: string
+                                  filter_value:
+                                    type: string
         "400":
           description: Request errors
         "404":
@@ -7142,6 +7545,9 @@ paths:
                     items:
                       type: object
                       properties:
+                        config_uid:
+                          type: integer
+                          description: The unique ID of a custom targets mapping configuration. Value is null for auto mapped values.
                         target_mapping_criteria_values:
                           type: object
                           description: The target to supervisor mapping criteria values for the target
@@ -7276,21 +7682,11 @@ paths:
           description: Unique ID of the form
           required: true
         - in: query
-          name: mapping_values
+          name: config_uid
           schema:
-            type: array
+            type: integer
           description: >-
-            The target mapping criteria values to be deleted. Each array item
-            is an object with the criteria name and value
-          required: true
-        - in: query
-          name: mapped_to
-          schema:
-            type: array
-          description: >-
-            The supervisor mapping criteria values to which the target mapping
-            criteria values are mapped. Each array item is an object with the
-            criteria name and value
+            Unique ID of the custom targets mapping configuration to be deleted
           required: true
       responses:
         "200":
@@ -7538,6 +7934,9 @@ paths:
                     items:
                       type: object
                       properties:
+                        config_uid:
+                          type: integer
+                          description: The unique ID of a custom surveyors mapping configuration. Value is null for auto mapped values.
                         surveyor_mapping_criteria_values:
                           type: object
                           description: The surveyor to supervisor mapping criteria values for the surveyor
@@ -7672,21 +8071,11 @@ paths:
           description: Unique ID of the form
           required: true
         - in: query
-          name: mapping_values
+          name: config_uid
           schema:
-            type: array
+            type: integer
           description: >-
-            The surveyor mapping criteria values to be deleted. Each array item
-            is an object with the criteria name and value
-          required: true
-        - in: query
-          name: mapped_to
-          schema:
-            type: array
-          description: >-
-            The supervisor mapping criteria values to which the surveyor mapping
-            criteria values are mapped. Each array item is an object with the
-            criteria name and value
+            Unique ID of the custom surveyors mapping configuration to be deleted
           required: true
       responses:
         "200":
@@ -10606,3 +10995,1084 @@ paths:
       responses:
         "200":
           description: Media files config deleted successfully
+
+  /dq/check-types:
+    get:
+      summary: Get all DQ check types
+      description: Retrieve a list of all available Data Quality (DQ) check types.
+      tags:
+        - Data Quality
+      responses:
+        "200":
+          description: Successfully returns a list of DQ check types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type_id:
+                          type: integer
+                          description: Unique identifier for the DQ check type
+                          example: 1
+                        name:
+                          type: string
+                          description: Name of the DQ check type
+                          example: "Missing"
+                        abbr:
+                          type: list
+                          description: List of abbreviations linked to the DQ check type
+                          example: ["M"]
+        "404":
+          description: DQ check types not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  data:
+                    type: null
+                    example: null
+                  message:
+                    type: string
+                    example: "DQ check types not found"
+
+  /dq/config:
+    get:
+      summary: Get DQ configuration for a form
+      description: Retrieve the DQ configuration for a specific form.
+      tags:
+        - Data Quality
+      parameters:
+        - name: form_uid
+          in: query
+          description: Unique identifier for the form
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully returns the DQ configuration for the form
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        form_uid:
+                          type: integer
+                          description: Unique identifier for the form
+                          example: 123
+                        survey_status_filter:
+                          type: list
+                          description: List of survey statuses to filter the data
+                          example: ["1", "2"]
+                        group_by_module_name:
+                          type: boolean
+                          description: Indicates if the DQ checks are grouped by module name
+                          example: true
+                        dq_checks:
+                          type: array
+                          description: List of DQ checks configured for the form
+                          items:
+                            type: object
+                            properties:
+                              type_id:
+                                type: integer
+                                description: Unique identifier for the DQ check type
+                                example: 1
+                              num_configured:
+                                type: string
+                                description: Number of checks configured for the DQ check type. Value is "All" if check is applies on all variables in the form
+                              num_active:
+                                type: integer
+                                description: Number of checks that are active for the DQ check type. Value is "All" if check is applies on all variables in the form
+        "404":
+          description: No DQ configs found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  data:
+                    type: null
+                    example: null
+                  message:
+                    type: string
+                    example: "DQ configs not found"
+
+    put:
+      summary: Create/update new DQ configuration for a form
+      description: Create or update the DQ configuration for a specific form.
+      tags:
+        - Data Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                survey_status_filter:
+                  type: list
+                  description: List of survey statuses to filter the data
+                  example: ["1", "2"]
+                group_by_module_name:
+                  type: boolean
+                  description: Indicates if the DQ checks are grouped by module name. Default is false.
+                  example: true
+              required:
+                - form_uid
+                - survey_status_filter
+      responses:
+        "201":
+          description: DQ configuration created/updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ configuration created/updated successfully"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while creating/updating the DQ configuration"
+                  
+  /dq/checks:
+    get:
+      summary: Get DQ checks for a form and type
+      description: Retrieve the DQ checks for a specific form and check type.
+      tags:
+        - Data Quality
+      parameters:
+        - name: form_uid
+          in: query
+          description: Unique identifier for the form
+          required: true
+          schema:
+            type: integer
+        - name: type_id
+          in: query
+          description: Unique identifier for the DQ check type
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully returns the DQ checks for the form
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        form_uid:
+                          type: integer
+                          description: Unique identifier for the form
+                          example: 123
+                        type_id:
+                          type: integer
+                          description: Unique identifier for the DQ check type
+                          example: 1
+                        dq_check_uid:
+                          type: integer
+                          description: Unique identifier for the DQ check
+                          example: 123
+                        all_questions:
+                          type: boolean
+                          description: Indicates if the DQ check applies to all questions in the form
+                          example: true
+                        question_name:
+                          type: string
+                          description: Name of the question the DQ check applies to. Value is None if check applies to all questions
+                          example: "district_name"
+                        is_repeat_group:
+                          type: boolean
+                          description: Indicates if the question is a repeat group
+                          example: true
+                        dq_scto_form_uid:
+                          type: integer
+                          description: Unique identifier for the Data Quality SurveyCTO form. This is provided for Mismatch, protocol violations and spotcheck score checks
+                          example: 123
+                        flag_description:
+                          type: string
+                          description: Description of the flag
+                          example: "Flags if the district name is missing"
+                        module_name:
+                          type: string
+                          description: Name of the module used for grouping the DQ check output
+                          example: "Agriculture"
+                        filters:
+                          type: array
+                          description: List of filters groups to be applied to the DQ check joined by an OR condition
+                          items:
+                            type: object
+                            description: Filter group
+                            properties:
+                              filter_group:
+                                type: array
+                                description: List of filters in the filter group joined by an AND condition
+                                items:
+                                  type: object
+                                  properties:
+                                    question_name:
+                                      type: string
+                                      description: Name of the question to apply filter on
+                                      example: "age"
+                                    filter_operator:
+                                      type: string
+                                      description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than'
+                                      example: "Is empty"
+                                    filter_value:
+                                      type: string
+                                      description: Value to filter on
+                                    is_repeat_group:
+                                      type: boolean
+                                      description: Indicates if the filter question is a repeat group
+                                      example: true
+                        check_components:
+                          type: object
+                          description: JSON object containing the check components based on the DQ check type
+                          properties:
+                            value:
+                              type: array
+                              description: List of values for checking missing, don't know and refusal checks
+                              items:
+                                type: string
+                                example: ["Is empty", "is NA"]
+                            hard_min:
+                              type: decimal
+                              description: Minimum value for the constraint check
+                              example: 0
+                            hard_max:
+                              type: decimal
+                              description: Maximum value for the constraint check
+                              example: 100
+                            soft_min:
+                              type: decimal
+                              description: Minimum value for the soft constraint check
+                              example: 2.5
+                            soft_max:
+                              type: decimal
+                              description: Maximum value for the soft constraint check
+                              example: 100
+                            outlier_metric:
+                              type: string
+                              description: Metric used for outlier check. Values can be 'interquartile_range', 'standard_deviation', 'percentile'
+                            outlier_value:
+                              type: decimal
+                              description: Value for the outlier check
+                              example: 1.5
+                            spotcheck_score_name:
+                              type: string
+                              description: For spotcheck score checks, this field is used to combine question level scores into a single score
+                              example: "probing_score"
+                        active:
+                          type: boolean
+                          description: Indicates if the DQ check is active or not
+                          example: true
+                        note:
+                          type: string
+                          description: Additional notes for the DQ check added by the system
+                          example: "Question not found in form definition"
+        "404":
+          description: No DQ checks found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  data:
+                    type: null
+                    example: null
+                  message:
+                    type: string
+                    example: "DQ checks not found"
+
+    post:
+      summary: Create new DQ check for a form
+      description: Create a new DQ check for a specific form.
+      tags:
+        - Data Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                type_id:
+                  type: integer
+                  description: Unique identifier for the DQ check type
+                  example: 1
+                all_questions:
+                  type: boolean
+                  description: Indicates if the DQ check applies to all questions in the form
+                  example: true
+                question_name:
+                  type: string
+                  description: Name of the question the DQ check applies to. Value is None if check applies to all questions
+                  example: "district_name"
+                module_name:
+                  type: string
+                  description: Name of the module used for grouping the DQ check output
+                  example: "Agriculture"
+                flag_description:
+                  type: string
+                  description: Description of the flag
+                  example: "Flags if the district name is missing"
+                filters:
+                  type: array
+                  description: List of filters groups to be applied to the DQ check joined by an OR condition
+                  items:
+                    type: object
+                    description: Filter group
+                    properties:
+                      filter_group:
+                        type: array
+                        description: List of filters in the filter group joined by an AND condition
+                        items:
+                          type: object
+                          properties:
+                            question_name:
+                              type: string
+                              description: Name of the question to apply filter on
+                              example: "age"
+                            filter_operator:
+                              type: string
+                              description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than'
+                              example: "Is empty"
+                            filter_value:
+                              type: string
+                              description: Value to filter on
+                check_components:
+                  type: object
+                  description: JSON object containing the check components based on the DQ check type
+                  properties:
+                    value:
+                      type: array
+                      description: List of values for checking missing, don't know and refusal checks
+                      items:
+                        type: string
+                        example: ["Is empty", "is NA"]
+                    hard_min:
+                      type: decimal
+                      description: Minimum value for the constraint check
+                      example: 0
+                    hard_max:
+                      type: decimal
+                      description: Maximum value for the constraint check
+                      example: 100
+                    soft_min:
+                      type: decimal
+                      description: Minimum value for the soft constraint check
+                      example: 2.5
+                    soft_max:
+                      type: decimal
+                      description: Maximum value for the soft constraint check
+                      example: 100
+                    outlier_metric:
+                      type: string
+                      description: Metric used for outlier check. Values can be 'interquartile_range', 'standard_deviation', 'percentile'
+                    outlier_value:
+                      type: decimal
+                      description: Value for the outlier check
+                      example: 1.5
+                    spotcheck_score_name:
+                      type: string
+                      description: For spotcheck score checks, this field is used to combine question level scores into a single score
+                      example: "probing_score"
+                active:
+                  type: boolean
+                  description: Indicates if the DQ check is active or not
+                  example: true
+
+              required:
+                - form_uid
+                - type_id
+
+      responses:
+        "200":
+          description: DQ check created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ check created successfully"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while creating the DQ check"
+
+    delete:
+      summary: Delete DQ checks for a form
+      description: Delete DQ checks for a specific form.
+      tags:
+        - Data Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                type_id:
+                  type: integer
+                  description: Unique identifier for the DQ check type
+                  example: 1
+                check_uids:
+                  type: array
+                  description: List of unique identifiers for the DQ checks to be deleted
+                  items:
+                    type: integer
+                    example: 123
+              required:
+                - form_uid
+                - type_id
+                - check_uids
+      responses:
+        "200":
+          description: DQ check deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ check deleted successfully"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while deleting the DQ check"
+
+  /dq/checks/{dq_check_uid}:
+    put:
+      summary: Update DQ check for a form
+      description: Update a DQ check for a specific form.
+      tags:
+        - Data Quality
+      parameters:
+        - in: path
+          name: dq_check_uid
+          required: true
+          description: Unique identifier for the DQ check
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                type_id:
+                  type: integer
+                  description: Unique identifier for the DQ check type
+                  example: 1
+                all_questions:
+                  type: boolean
+                  description: Indicates if the DQ check applies to all questions in the form
+                  example: true
+                question_name:
+                  type: string
+                  description: Name of the question the DQ check applies to. Value is None if check applies to all questions
+                  example: "district_name"
+                module_name:
+                  type: string
+                  description: Name of the module used for grouping the DQ check output
+                  example: "Agriculture"
+                flag_description:
+                  type: string
+                  description: Description of the flag
+                  example: "Flags if the district name is missing"
+                filters:
+                  type: array
+                  description: List of filters groups to be applied to the DQ check joined by an OR condition
+                  items:
+                    type: object
+                    description: Filter group
+                    properties:
+                      filter_group:
+                        type: array
+                        description: List of filters in the filter group joined by an AND condition
+                        items:
+                          type: object
+                          properties:
+                            question_name:
+                              type: string
+                              description: Name of the question to apply filter on
+                              example: "age"
+                            filter_operator:
+                              type: string
+                              description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than'
+                              example: "Is empty"
+                            filter_value:
+                              type: string
+                              description: Value to filter on
+                check_components:
+                  type: object
+                  description: JSON object containing the check components based on the DQ check type
+                  properties:
+                    value:
+                      type: array
+                      description: List of values for checking missing, don't know and refusal checks
+                      items:
+                        type: string
+                        example: ["Is empty", "is NA"]
+                    hard_min:
+                      type: decimal
+                      description: Minimum value for the constraint check
+                      example: 0
+                    hard_max:
+                      type: decimal
+                      description: Maximum value for the constraint check
+                      example: 100
+                    soft_min:
+                      type: decimal
+                      description: Minimum value for the soft constraint check
+                      example: 2.5
+                    soft_max:
+                      type: decimal
+                      description: Maximum value for the soft constraint check
+                      example: 100
+                    outlier_metric:
+                      type: string
+                      description: Metric used for outlier check. Values can be 'interquartile_range', 'standard_deviation', 'percentile'
+                    outlier_value:
+                      type: decimal
+                      description: Value for the outlier check
+                      example: 1.5
+                    spotcheck_score_name:
+                      type: string
+                      description: For spotcheck score checks, this field is used to combine question level scores into a single score
+                      example: "probing_score"
+                active:
+                  type: boolean
+
+              required:
+                - form_uid
+                - type_id
+      responses:
+        "200":
+          description: DQ check updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ check updated successfully"
+        "404":
+          description: DQ check not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "DQ check not found"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while updating the DQ check"
+  
+  /dq/checks/activate:
+    put:
+      summary: Activate DQ checks for a form
+      description: Activate DQ checks for a specific form.
+      tags:
+        - Data Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                type_id:
+                  type: integer
+                  description: Unique identifier for the DQ check type
+                  example: 1
+                check_uids:
+                  type: array
+                  description: List of unique identifiers for the DQ checks to be activated
+                  items:
+                    type: integer
+                    example: 123
+              required:
+                - form_uid
+                - type_id
+                - check_uids
+      responses:
+        "200":
+          description: DQ checks activated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ checks activated successfully"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while activating the DQ checks"
+  
+  /dq/checks/deactivate:
+    put:
+      summary: Deactivate DQ checks for a form
+      description: Deactivate DQ checks for a specific form.
+      tags:
+        - Data Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: Unique identifier for the form
+                  example: 123
+                type_id:
+                  type: integer
+                  description: Unique identifier for the DQ check type
+                  example: 1
+                check_uids:
+                  type: array
+                  description: List of unique identifiers for the DQ checks to be deactivated
+                  items:
+                    type: integer
+                    example: 123
+              required:
+                - form_uid
+                - type_id
+                - check_uids
+      responses:
+        "200":
+          description: DQ checks deactivated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "DQ checks deactivated successfully"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while deactivating the DQ checks"
+  
+  /dq/checks/module-names:
+    get:
+      summary: Get module names added for DQ checks for a form
+      description: Retrieve a list of all available module names added for DQ checks for a specific form.
+      tags:
+        - Data Quality
+      parameters:
+        - name: form_uid
+          in: query
+          description: Unique identifier for the form
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully returns a list of module names
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: string
+                      description: Name of the module
+                      example: "Agriculture"
+        "404":
+          description: DQ module names not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  data:
+                    type: null
+                    example: null
+                  message:
+                    type: string
+                    example: "DQ module names not found"
+
+  /notifications:
+    get:
+      summary: Get Notifications for a user, sorted by created_time descending
+      tags:
+        - Notifications
+      parameters:
+        - name : user_uid
+          in: query
+          description: Unique identifier for the user
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+            description: Successfully returns list of notifications
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                            description: Notification Type - user or survey
+                            example: "user"
+                          notification_uid:
+                            type: integer
+                            description: Survey Notification UID
+                            example: 1
+                          survey_id:
+                            type: string
+                            description: Survey ID
+                            example: "test_survey"
+                          module_name:
+                            type: string
+                            description: Module Name
+                            example: "Audio Audits"
+                          severity:
+                            type: string
+                            description: severity of Notification- alert / warning / error
+                            example: "error"
+                          resolution_status:
+                            type: string
+                            description: Status of Notification- in progress / done
+                            example: "done"
+                          message:
+                            type: string
+                            description: Notification message
+                            example: "Emails have been delivered"
+                          created_at:
+                            type: Datetime
+                            description: Notification timestamp in UTC
+        "404":
+          description: Survey UID or USER UID Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+    
+    post:
+      summary: Create Notifications for a user/survey
+      tags:
+        - Notifications
+      parameters:
+        - name: type
+          in: body
+          description: Notification Type - user or survey
+          required: true
+          schema:
+            type: string
+        - name : user_uid
+          in: body
+          description: Unique identifier for the user
+          required: false
+          schema:
+            type: integer
+        - name : survey_uid
+          in: body
+          description: Unique identifier for the survey
+          required: false
+          schema:
+            type: integer
+        - name : module_id
+          in: body
+          description: Unique identifier for the module
+          required: false
+          schema:
+            type: integer
+        - name : resolution_status
+          in: body
+          description: Resolution status - in progress OR done
+          required: true
+          schema:
+            type: string
+            default: in progress
+        - name : severity
+          in: body
+          description: Notification severity
+          required: true
+          schema:
+            type: string
+            default: alert
+        - name : message
+          in: body
+          description: Notification Message
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+            description: Successfully created notification
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example:  "Notification created successfully"
+                    data:
+                      type: object
+                      items:
+                        notification_uid:
+                          type: integer
+                          description: notification_uid depending on the notification type
+                          example: 1
+                        severity:
+                          type: string
+                          description: severity of Notification- alert / warning / error
+                          example: "error"
+                        resolution_status:
+                          type: string
+                          description: Status of Notification- in progress / done
+                          example: "done"
+                        message:
+                          type: string
+                          description: Notification message- Emails have been delivered
+                          example: "done"
+                        created_at:
+                          type: Datetime
+                          description: Notification timestamp in UTC
+
+    put:
+      summary: Update Notifications for a user/survey
+      tags:
+        - Notifications
+      parameters:
+        - name: type
+          in: body
+          description: Notification Type - user or survey
+          required: true
+          schema:
+            type: string
+        - name : notification_uid
+          in: body
+          description: Unique identifier for the notification_uid
+          required: false
+          schema:
+            type: integer
+        - name : resolution_status
+          in: body
+          description: Resolution status - in progress OR done
+          required: true
+          schema:
+            type: string
+            default: in progress
+        - name : severity
+          in: body
+          description: Notification severity
+          required: true
+          schema:
+            type: string
+            default: alert
+        - name : message
+          in: body
+          description: Notification Message
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+            description: Successfully updated notification
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example:  "Notification updated successfully"
+                    data:
+                      type: object
+                      items:
+                        notification_uid:
+                          type: integer
+                          description: notification_uid depending on the notification type
+                          example: 1
+                        severity:
+                          type: string
+                          description: Type of Notification- alert / warning / error
+                          example: "error"
+                        resolution_status:
+                          type: string
+                          description: Status of Notification- in progress / done
+                          example: "done"
+                        message:
+                          type: string
+                          description: Notification message- Emails have been delivered
+                          example: "done"
+                        created_at:
+                          type: Datetime
+                          description: Notification timestamp in UTC

@@ -21,7 +21,7 @@ from app.blueprints.locations.models import GeoLevel
 from app.blueprints.locations.utils import GeoLevelHierarchy
 from app.blueprints.mapping.errors import MappingError
 from app.blueprints.mapping.utils import SurveyorMapping, TargetMapping
-from app.blueprints.roles.utils import check_if_survey_admin
+from app.blueprints.roles.utils import check_if_survey_admin, get_user_role
 from app.blueprints.surveys.models import Survey
 from app.blueprints.targets.models import Target, TargetStatus
 from app.blueprints.targets.queries import (
@@ -145,9 +145,16 @@ def view_assignments(validated_query_params):
     ).subquery()
 
     # Get the child supervisors for the current logged in user
+    user_role = get_user_role(user_uid, survey_uid)
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    is_super_admin = current_user.is_super_admin
     child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+        user_uid,
+        survey_uid,
+        target_mapping.bottom_level_role_uid,
+        user_role,
+        is_survey_admin,
+        is_super_admin,
     )
 
     assignments_query = (
@@ -174,17 +181,36 @@ def view_assignments(validated_query_params):
             target_locations_subquery,
             Target.location_uid == target_locations_subquery.c.location_uid,
         )
-        .join(
-            mappings_query,
-            Target.target_uid == mappings_query.c.target_uid,
-        )
-        .join(
-            child_users_with_supervisors_query,
-            mappings_query.c.supervisor_uid
-            == child_users_with_supervisors_query.c.user_uid,
-        )
-        .filter(Target.form_uid == form_uid)
     )
+
+    # If the user is a survey admin or super admin without a specific survey role, we want to show all targets, even if they are not assigned
+    if is_survey_admin or (is_super_admin and user_role is None):
+        assignments_query = (
+            assignments_query.outerjoin(
+                mappings_query,
+                Target.target_uid == mappings_query.c.target_uid,
+            )
+            .outerjoin(
+                child_users_with_supervisors_query,
+                mappings_query.c.supervisor_uid
+                == child_users_with_supervisors_query.c.user_uid,
+            )
+            .filter(Target.form_uid == form_uid)
+        )
+    else:
+        # If the user is not a survey admin, we only want to show targets that are assigned to them or their child supervisors
+        assignments_query = (
+            assignments_query.join(
+                mappings_query,
+                Target.target_uid == mappings_query.c.target_uid,
+            )
+            .join(
+                child_users_with_supervisors_query,
+                mappings_query.c.supervisor_uid
+                == child_users_with_supervisors_query.c.user_uid,
+            )
+            .filter(Target.form_uid == form_uid)
+        )
 
     # Note that we use gettatr() here because we are joining in models that may not have a joined row for a given target, so the row's object corresponding to that model will be None
     response = jsonify(
@@ -324,9 +350,16 @@ def view_assignments_enumerators(validated_query_params):
     )
 
     # Get the child supervisors for the current logged in user
+    user_role = get_user_role(user_uid, survey_uid)
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    is_super_admin = current_user.is_super_admin
     child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, surveyor_mapping.bottom_level_role_uid, is_survey_admin
+        user_uid,
+        survey_uid,
+        surveyor_mapping.bottom_level_role_uid,
+        user_role,
+        is_survey_admin,
+        is_super_admin,
     )
 
     assignment_enumerators_query = (
@@ -353,19 +386,38 @@ def view_assignments_enumerators(validated_query_params):
             Enumerator.enumerator_uid
             == surveyor_formwise_productivity_subquery.c.enumerator_uid,
         )
-        .join(
-            surveyor_mappings_query,
-            Enumerator.enumerator_uid == surveyor_mappings_query.c.enumerator_uid,
-        )
-        .join(
-            child_users_with_supervisors_query,
-            surveyor_mappings_query.c.supervisor_uid
-            == child_users_with_supervisors_query.c.user_uid,
-        )
-        .filter(
-            SurveyorForm.form_uid == form_uid,
-        )
     )
+
+    if is_survey_admin:
+        assignment_enumerators_query = (
+            assignment_enumerators_query.outerjoin(
+                surveyor_mappings_query,
+                Enumerator.enumerator_uid == surveyor_mappings_query.c.enumerator_uid,
+            )
+            .outerjoin(
+                child_users_with_supervisors_query,
+                surveyor_mappings_query.c.supervisor_uid
+                == child_users_with_supervisors_query.c.user_uid,
+            )
+            .filter(
+                SurveyorForm.form_uid == form_uid,
+            )
+        )
+    else:
+        assignment_enumerators_query = (
+            assignment_enumerators_query.join(
+                surveyor_mappings_query,
+                Enumerator.enumerator_uid == surveyor_mappings_query.c.enumerator_uid,
+            )
+            .join(
+                child_users_with_supervisors_query,
+                surveyor_mappings_query.c.supervisor_uid
+                == child_users_with_supervisors_query.c.user_uid,
+            )
+            .filter(
+                SurveyorForm.form_uid == form_uid,
+            )
+        )
 
     response = jsonify(
         {
@@ -475,9 +527,16 @@ def view_assignments_targets(validated_query_params):
     ).subquery()
 
     # Get the child supervisors for the current logged in user
+    user_role = get_user_role(user_uid, survey_uid)
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    is_super_admin = current_user.is_super_admin
     child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+        user_uid,
+        survey_uid,
+        target_mapping.bottom_level_role_uid,
+        user_role,
+        is_survey_admin,
+        is_super_admin,
     )
 
     assignment_targets_query = (
@@ -495,17 +554,34 @@ def view_assignments_targets(validated_query_params):
             target_locations_subquery,
             Target.location_uid == target_locations_subquery.c.location_uid,
         )
-        .join(
-            mappings_query,
-            Target.target_uid == mappings_query.c.target_uid,
-        )
-        .join(
-            child_users_with_supervisors_query,
-            mappings_query.c.supervisor_uid
-            == child_users_with_supervisors_query.c.user_uid,
-        )
-        .filter(Target.form_uid == form_uid)
     )
+
+    if is_survey_admin:
+        assignment_targets_query = (
+            assignment_targets_query.outerjoin(
+                mappings_query,
+                Target.target_uid == mappings_query.c.target_uid,
+            )
+            .outerjoin(
+                child_users_with_supervisors_query,
+                mappings_query.c.supervisor_uid
+                == child_users_with_supervisors_query.c.user_uid,
+            )
+            .filter(Target.form_uid == form_uid)
+        )
+    else:
+        assignment_targets_query = (
+            assignment_targets_query.join(
+                mappings_query,
+                Target.target_uid == mappings_query.c.target_uid,
+            )
+            .join(
+                child_users_with_supervisors_query,
+                mappings_query.c.supervisor_uid
+                == child_users_with_supervisors_query.c.user_uid,
+            )
+            .filter(Target.form_uid == form_uid)
+        )
 
     response = jsonify(
         {
@@ -559,6 +635,7 @@ def update_assignments(validated_payload):
     """
     form_uid = validated_payload.form_uid.data
     assignments = validated_payload.assignments.data
+    validate_mapping = validated_payload.validate_mapping.data
 
     user_uid = current_user.user_uid
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
@@ -616,9 +693,16 @@ def update_assignments(validated_payload):
     ).subquery()
 
     # Get the child supervisors for the current logged in user
+    user_role = get_user_role(user_uid, survey_uid)
     is_survey_admin = check_if_survey_admin(user_uid, survey_uid)
+    is_super_admin = current_user.is_super_admin
     child_users_with_supervisors_query = build_child_users_with_supervisors_query(
-        user_uid, survey_uid, target_mapping.bottom_level_role_uid, is_survey_admin
+        user_uid,
+        survey_uid,
+        target_mapping.bottom_level_role_uid,
+        user_role,
+        is_survey_admin,
+        is_super_admin,
     )
 
     # Run database-backed validations on the assignment inputs
@@ -688,24 +772,28 @@ def update_assignments(validated_payload):
             if supervisors is None:
                 not_mapped_target_uids.append(assignment["target_uid"])
 
-        if assignment["enumerator_uid"] is not None:
-            # Check if the target and enumerator are mapped to the same supervisor
-            enumerator_supervisor_uid = (
-                db.session.query(surveyor_mappings_query.c.supervisor_uid)
-                .filter(
-                    surveyor_mappings_query.c.enumerator_uid
-                    == assignment["enumerator_uid"]
-                )
-                .first()
-            )
+            if validate_mapping:
+                if assignment["enumerator_uid"] is not None:
+                    # Check if the target and enumerator are mapped to the same supervisor
+                    enumerator_supervisor_uid = (
+                        db.session.query(surveyor_mappings_query.c.supervisor_uid)
+                        .filter(
+                            surveyor_mappings_query.c.enumerator_uid
+                            == assignment["enumerator_uid"]
+                        )
+                        .first()
+                    )
 
-            if target_supervisor_uid is None or enumerator_supervisor_uid is None:
-                incorrect_mapping_target_uids.append(assignment["target_uid"])
-            elif (
-                target_supervisor_uid.supervisor_uid
-                != enumerator_supervisor_uid.supervisor_uid
-            ):
-                incorrect_mapping_target_uids.append(assignment["target_uid"])
+                    if (
+                        target_supervisor_uid is None
+                        or enumerator_supervisor_uid is None
+                    ):
+                        incorrect_mapping_target_uids.append(assignment["target_uid"])
+                    elif (
+                        target_supervisor_uid.supervisor_uid
+                        != enumerator_supervisor_uid.supervisor_uid
+                    ):
+                        incorrect_mapping_target_uids.append(assignment["target_uid"])
 
     if len(dropout_enumerator_uids) > 0:
         enumerator_ids = (
@@ -773,25 +861,6 @@ def update_assignments(validated_payload):
             404,
         )
 
-    if len(incorrect_mapping_target_uids) > 0:
-        target_ids = (
-            db.session.query(Target.target_id)
-            .filter(Target.target_uid.in_(incorrect_mapping_target_uids))
-            .all()
-        )
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "errors": {
-                        "message": f"The following target ID's are assigned to enumerators mapped to a different supervisor: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Please ensure that the target and assigned enumerator are mapped to the same supervisor.",
-                        "incorrect_mapping_target_uids": incorrect_mapping_target_uids,
-                    },
-                }
-            ),
-            422,
-        )
-
     if len(not_mapped_target_uids) > 0:
         target_ids = (
             db.session.query(Target.target_id)
@@ -810,6 +879,26 @@ def update_assignments(validated_payload):
             ),
             422,
         )
+
+    if validate_mapping:
+        if len(incorrect_mapping_target_uids) > 0:
+            target_ids = (
+                db.session.query(Target.target_id)
+                .filter(Target.target_uid.in_(incorrect_mapping_target_uids))
+                .all()
+            )
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "message": f"The following target ID's are assigned to enumerators mapped to a different supervisor: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Please ensure that the target and assigned enumerator are mapped to the same supervisor.",
+                            "incorrect_mapping_target_uids": incorrect_mapping_target_uids,
+                        },
+                    }
+                ),
+                422,
+            )
 
     re_assignments_count = 0
     new_assignments_count = 0
@@ -1048,6 +1137,7 @@ def upload_assignments(validated_query_params, validated_payload):
         assignments_upload.validate_records(
             column_mapping,
             validated_payload.mode.data,
+            validated_payload.validate_mapping.data,
         )
     except InvalidFileStructureError as e:
         return (

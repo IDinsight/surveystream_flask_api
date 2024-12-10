@@ -140,6 +140,7 @@ class TargetMapping:
 
         mapping_config_subquery = db.session.query(
             UserMappingConfig.form_uid,
+            UserMappingConfig.config_uid,
             UserMappingConfig.mapping_type,
             UserMappingConfig.mapping_values,
             UserMappingConfig.mapped_to,
@@ -183,6 +184,7 @@ class TargetMapping:
                     "criteria"
                 ],
             ).label("mapped_to_values"),
+            mapping_config.c.config_uid,
         ).outerjoin(
             mapping_config,
             and_(
@@ -566,6 +568,7 @@ class SurveyorMapping:
 
         mapping_config_subquery = db.session.query(
             UserMappingConfig.form_uid,
+            UserMappingConfig.config_uid,
             UserMappingConfig.mapping_type,
             UserMappingConfig.mapping_values,
             UserMappingConfig.mapped_to,
@@ -610,6 +613,7 @@ class SurveyorMapping:
                     "criteria"
                 ],
             ).label("mapped_to_values"),
+            mapping_config.c.config_uid,
         ).outerjoin(
             mapping_config,
             and_(

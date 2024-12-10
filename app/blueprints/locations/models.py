@@ -1,6 +1,7 @@
+from sqlalchemy.orm import backref
+
 from app import db
 from app.blueprints.surveys.models import Survey
-from sqlalchemy.orm import backref
 
 
 class GeoLevel(db.Model):
@@ -36,8 +37,16 @@ class GeoLevel(db.Model):
     )
 
     def __init__(
-        self, survey_uid, geo_level_name, parent_geo_level_uid, user_uid, to_delete
+        self,
+        survey_uid,
+        geo_level_name,
+        parent_geo_level_uid,
+        user_uid,
+        to_delete=0,
+        geo_level_uid=None,
     ):
+        if geo_level_uid:
+            self.geo_level_uid = geo_level_uid
         self.survey_uid = survey_uid
         self.geo_level_name = geo_level_name
         self.parent_geo_level_uid = parent_geo_level_uid
@@ -75,6 +84,8 @@ class Location(db.Model):
         nullable=False,
     )
     parent_location_uid = db.Column(db.Integer(), db.ForeignKey(location_uid))
+
+    # Relationships
     surveys = db.relationship(
         Survey, backref=backref("locations", passive_deletes=True)
     )

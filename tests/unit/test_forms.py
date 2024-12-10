@@ -3,10 +3,12 @@ import pytest
 from utils import (
     create_new_survey_role_with_permissions,
     load_reference_data,
+    load_scto_questions,
     login_user,
     set_target_assignable_status,
     update_logged_in_user_roles,
 )
+from app import db
 
 
 @pytest.mark.forms
@@ -769,7 +771,7 @@ class TestForms:
         assert checkdiff == {}
 
     def test_scto_form_definition(
-        self, client, login_test_user, csrf_token, create_parent_form
+        self, client, app, login_test_user, csrf_token, create_parent_form
     ):
         """
         Test ingest the scto form definition from SCTO and fetching them from the database
@@ -785,9 +787,55 @@ class TestForms:
         print(response.json)
         assert response.status_code == 200
 
+        # Load repeat group questions to test they are excluded in the response by default
+        repeat_group_questions = load_reference_data("scto-questions-repeatgroups.json")
+        load_scto_questions(app, db, repeat_group_questions["data"]["questions"])
+
         # Get the SCTO questions from the database
         response = client.get(
             "/api/forms/1/scto-form-definition",
+        )
+        assert response.status_code == 200
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_scto_form_definition_with_repeat_groups(
+        self, client, app, login_test_user, csrf_token, create_parent_form
+    ):
+        """
+        Test ingest the scto form definition from SCTO and fetching them from the database
+        with repeat groups included in the response
+        """
+
+        expected_response = load_reference_data("scto-questions.json")
+
+        # Ingest the SCTO variables from SCTO into the database
+        response = client.post(
+            "/api/forms/1/scto-form-definition/refresh",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        # Load repeat group questions to test they are included in the response when requested
+        repeat_group_questions = load_reference_data("scto-questions-repeatgroups.json")
+        load_scto_questions(app, db, repeat_group_questions["data"]["questions"])
+
+        expected_response = {
+            "data": {
+                "questions": expected_response["data"]["questions"][:57]
+                + repeat_group_questions["data"]["questions"]
+                + expected_response["data"]["questions"][57:],
+                "settings": expected_response["data"]["settings"],
+            },
+            "success": True,
+        }
+
+        # Get the SCTO questions from the database
+        response = client.get(
+            "/api/forms/1/scto-form-definition",
+            query_string={"include_repeat_groups": True},
         )
         assert response.status_code == 200
 

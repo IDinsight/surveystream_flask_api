@@ -1,7 +1,13 @@
 import base64
 import binascii
+import json
+from datetime import datetime, timedelta
+from itertools import groupby
+from operator import attrgetter
 
-from flask import jsonify, request
+import pandas as pd
+import pysurveycto
+from flask import current_app, jsonify, request
 from flask_login import current_user
 from sqlalchemy import cast, update
 from sqlalchemy.dialects.postgresql import JSONB
@@ -16,6 +22,7 @@ from app.blueprints.locations.utils import GeoLevelHierarchy
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.utils.utils import (
     custom_permissions_required,
+    get_aws_secret,
     logged_in_active_user_required,
     validate_payload,
     validate_query_params,
@@ -28,12 +35,22 @@ from .errors import (
     InvalidNewColumnError,
     InvalidTargetRecordsError,
 )
-from .models import Target, TargetColumnConfig, TargetStatus
+from .models import (
+    Target,
+    TargetColumnConfig,
+    TargetConfig,
+    TargetSCTOFilters,
+    TargetSCTOQuestion,
+    TargetStatus,
+)
 from .queries import build_bottom_level_locations_with_location_hierarchy_subquery
 from .routes import targets_bp
-from .utils import TargetColumnMapping, TargetsUpload
+from .utils import TargetColumnMapping, TargetsUpload, apply_target_scto_filters
 from .validators import (
     BulkUpdateTargetsValidator,
+    TargetConfigQueryValidator,
+    TargetConfigSCTOColumnQueryValidator,
+    TargetConfigValidator,
     TargetsFileUploadValidator,
     TargetsQueryParamValidator,
     UpdateTarget,
@@ -142,12 +159,215 @@ def upload_targets(validated_query_params, validated_payload):
     else:
         geo_level_hierarchy = None
 
+    csv_string = ""
+    try:
+        # Check if we need to load the targets from SCTO
+        if validated_payload.load_from_scto.data:
+            target_config = TargetConfig.query.filter_by(form_uid=form_uid).first()
+            if target_config is None:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "errors": {
+                                "target_config": "Target configuration not found for form",
+                            },
+                        }
+                    ),
+                    404,
+                )
+
+            scto_credential_response = get_aws_secret(
+                "{scto_server_name}-surveycto-server".format(
+                    scto_server_name=form.scto_server_name
+                ),
+                current_app.config["AWS_REGION"],
+                is_global_secret=True,
+            )
+
+            scto_credentials = json.loads(scto_credential_response)
+
+            # Initialize the SurveyCTO object
+            scto = pysurveycto.SurveyCTOObject(
+                form.scto_server_name,
+                scto_credentials["username"],
+                scto_credentials["password"],
+            )
+
+            if target_config.target_source == "scto":
+                scto_input_type = target_config.scto_input_type
+
+                # Fetch filters to the SCTO data
+                target_scto_filters = TargetSCTOFilters.query.filter_by(
+                    form_uid=form_uid
+                ).all()
+                target_scto_filter_list = [
+                    {"filter_group": [filter.to_dict() for filter in filter_group]}
+                    for key, filter_group in groupby(
+                        target_scto_filters, key=attrgetter("filter_group_id")
+                    )
+                ]
+
+                if scto_input_type == "dataset":
+                    scto_dataset_id = target_config.scto_input_id
+                    scto_dataset = scto.get_server_dataset(scto_dataset_id)
+                    csv_string = scto_dataset
+
+                    if target_scto_filter_list and len(target_scto_filter_list) > 0:
+                        csv_string = apply_target_scto_filters(
+                            csv_string, target_scto_filter_list
+                        )
+                else:
+                    scto_form_id = target_config.scto_input_id
+                    scto_encryption_flag = target_config.scto_encryption_flag
+
+                    # Set completion date intervals as - 1 week , 2 week, 1 month, 2 month, Fixed date - 2024-01-01
+                    # Iterate through the oldest date till reaching row_threshold
+                    date_today = datetime.today()
+                    oldest_date_array = [
+                        date_today - timedelta(weeks=1),
+                        date_today - timedelta(weeks=2),
+                        date_today - timedelta(weeks=4),
+                        date_today - timedelta(weeks=8),
+                        datetime(2024, 1, 1),
+                    ]
+
+                    row_threshold = 10
+
+                    if scto_encryption_flag:
+                        # Get the encrypted form data
+                        encryption_key = get_aws_secret(
+                            scto_form_id + "-surveycto-encryption-key",
+                            current_app.config["AWS_REGION"],
+                            is_global_secret=True,
+                        )
+
+                        for oldest_date in oldest_date_array:
+                            scto_form = scto.get_form_data(
+                                scto_form_id,
+                                format="json",
+                                key=encryption_key,
+                                oldest_completion_date=oldest_date,
+                            )
+                            if len(scto_form) == 0:
+                                continue
+
+                            if (
+                                target_scto_filter_list
+                                and len(target_scto_filter_list) > 0
+                            ):
+                                csv_string = apply_target_scto_filters(
+                                    scto_form,
+                                    target_scto_filter_list,
+                                    data_format="json",
+                                )
+                                if len(csv_string) > row_threshold:
+                                    break
+                            else:
+                                # Convert JSON to CSV
+                                df = pd.DataFrame.from_dict(scto_form[:row_threshold])
+                                csv_string = df.to_csv(index=False)
+                                if len(df) > row_threshold:
+                                    break
+
+                    else:
+                        for oldest_date in oldest_date_array:
+                            scto_form = scto.get_form_data(
+                                scto_form_id,
+                                format="csv",
+                                oldest_completion_date=oldest_date,
+                            )
+                            csv_string = scto_form
+                            if (
+                                target_scto_filter_list
+                                and len(target_scto_filter_list) > 0
+                            ):
+                                csv_string = apply_target_scto_filters(
+                                    csv_string, target_scto_filter_list
+                                )
+                            if len(csv_string) > row_threshold:
+                                break
+
+        else:
+            csv_string = base64.b64decode(
+                validated_payload.file.data, validate=True
+            ).decode("utf-8")
+    except binascii.Error:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file_structure_errors": [
+                            "File data has invalid base64 encoding"
+                        ],
+                    },
+                }
+            ),
+            422,
+        )
+
+    except UnicodeDecodeError:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file_structure_errors": [
+                            "File data has invalid UTF-8 encoding"
+                        ],
+                    },
+                }
+            ),
+            422,
+        )
+    except HeaderRowEmptyError as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "file_structure_errors": e.message,
+                    },
+                }
+            ),
+            422,
+        )
+    except Exception as e:
+
+        if str(e).startswith("409 Client Error") or str(e).startswith(
+            "417 Client Error"
+        ):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "surveycto_error": [
+                                "Kindly wait 5 mins before reloading this form "
+                                + str(e),
+                            ],
+                        },
+                    }
+                ),
+                422,
+            )
+        else:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": {
+                            "file_structure_errors": str(e),
+                        },
+                    }
+                ),
+                422,
+            )
     # Create a TargetsUpload object from the uploaded file
     try:
         targets_upload = TargetsUpload(
-            csv_string=base64.b64decode(
-                validated_payload.file.data, validate=True
-            ).decode("utf-8"),
+            csv_string=csv_string,
             column_mapping=column_mapping,
             survey_uid=survey_uid,
             form_uid=form_uid,
@@ -961,16 +1181,39 @@ def update_target_column_config(validated_payload):
                 column_type=column["column_type"],
                 bulk_editable=column["bulk_editable"],
                 contains_pii=column["contains_pii"],
+                column_source=column["column_source"],
             )
         )
 
+    filter_data = validated_payload.filters.data
+    TargetSCTOFilters.query.filter(TargetSCTOFilters.form_uid == form_uid).delete()
+    try:
+        if len(filter_data) > 0:
+            max_filter_group_id = 0
+            for filter_group in filter_data:
+                max_filter_group_id += 1
+                for filter in filter_group["filter_group"]:
+                    db.session.add(
+                        TargetSCTOFilters(
+                            form_uid=form_uid,
+                            filter_group_id=max_filter_group_id,
+                            variable_name=filter["variable_name"],
+                            filter_operator=filter["filter_operator"],
+                            filter_value=filter["filter_value"],
+                        )
+                    )
+                    db.session.commit()
+            db.session.flush()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
     try:
         db.session.commit()
+        return jsonify({"success": True}), 200
+
     except IntegrityError as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500
-
-    return jsonify({"success": True}), 200
 
 
 @targets_bp.route("/column-config", methods=["GET"])
@@ -992,6 +1235,7 @@ def get_target_column_config(validated_query_params):
             "column_type": column.column_type,
             "bulk_editable": column.bulk_editable,
             "contains_pii": column.contains_pii,
+            "column_source": column.column_source,
         }
         for column in column_config
     ]
@@ -1043,6 +1287,19 @@ def get_target_column_config(validated_query_params):
                     ]
                 )
 
+    target_scto_filter_list = []
+    # Get filters on Targets SCTO Data
+
+    target_scto_filters = TargetSCTOFilters.query.filter(
+        TargetSCTOFilters.form_uid == form_uid,
+    ).all()
+    target_scto_filter_list = [
+        {"filter_group": [filter.to_dict() for filter in filter_group]}
+        for key, filter_group in groupby(
+            target_scto_filters, key=attrgetter("filter_group_id")
+        )
+    ]
+
     # Add target_status columns
     target_status_columns = [
         {
@@ -1071,6 +1328,7 @@ def get_target_column_config(validated_query_params):
                     "file_columns": config_data,
                     "location_columns": location_columns,
                     "target_status_columns": target_status_columns,
+                    "target_scto_filter_list": target_scto_filter_list,
                 },
             }
         ),
@@ -1149,3 +1407,299 @@ def update_target_status(validated_payload):
         return jsonify(message=str(e)), 500
 
     return jsonify({"success": True}), 200
+
+
+@targets_bp.route("/config", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(TargetConfigQueryValidator)
+@custom_permissions_required("READ Targets", "query", "form_uid")
+def get_target_config(validated_query_params):
+    """
+    Method to retrieve the targets information from the database
+    """
+
+    form_uid = validated_query_params.form_uid.data
+
+    target_config = TargetConfig.query.filter_by(form_uid=form_uid).first()
+
+    if target_config is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Target configuration not found for the form",
+                }
+            ),
+            404,
+        )
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": target_config.to_dict(),
+                "message": "Target config retrieved successfully",
+            }
+        ),
+        200,
+    )
+
+
+@targets_bp.route("/config", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(TargetConfigValidator)
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
+def create_target_config(validated_payload):
+    """
+    Method to create a target configuration
+    """
+
+    target_config_values = {
+        "form_uid": validated_payload.form_uid.data,
+        "target_source": validated_payload.target_source.data,
+        "scto_input_type": validated_payload.scto_input_type.data,
+        "scto_input_id": validated_payload.scto_input_id.data,
+        "scto_encryption_flag": validated_payload.scto_encryption_flag.data,
+    }
+
+    target_config = TargetConfig(**target_config_values)
+
+    try:
+        db.session.add(target_config)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return (
+        jsonify({"success": True, "message": "Target Config created successfully"}),
+        200,
+    )
+
+
+@targets_bp.route("/config", methods=["PUT"])
+@logged_in_active_user_required
+@validate_payload(TargetConfigValidator)
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
+def update_target_config(validated_payload):
+    """
+    Method to create a target configuration
+    """
+
+    form_uid = validated_payload.form_uid.data
+
+    target_config = TargetConfig.query.get_or_404(form_uid)
+
+    target_config.target_source = validated_payload.target_source.data
+
+    if validated_payload.target_source.data:
+        target_config.scto_input_type = validated_payload.scto_input_type.data
+        target_config.scto_input_id = validated_payload.scto_input_id.data
+        target_config.scto_encryption_flag = validated_payload.scto_encryption_flag.data
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "message": "Target Config updated successfully",
+            }
+        ),
+        200,
+    )
+
+
+@targets_bp.route(
+    "/config/scto-columns",
+    methods=["PUT"],
+)
+@logged_in_active_user_required
+@custom_permissions_required("WRITE Targets", "query", "form_uid")
+@validate_query_params(TargetConfigSCTOColumnQueryValidator)
+def refresh_target_scto_columns(validated_query_params):
+    """
+    Refrsh Target input column list from surveycto
+    """
+    form_uid = validated_query_params.form_uid.data
+    form = Form.query.filter_by(form_uid=form_uid).first()
+    if form.scto_server_name is None or form.scto_server_name == "":
+        return (
+            jsonify(
+                {
+                    "error": "SurveyCTO server name not provided for the form",
+                    "success": False,
+                }
+            ),
+            404,
+        )
+
+    # Check if form TargetConfig exists
+    target_config = TargetConfig.query.filter_by(form_uid=form_uid).first()
+    if target_config is None:
+        return (
+            jsonify(
+                {
+                    "error": "Target configuration not found for the form.",
+                    "success": False,
+                }
+            ),
+            404,
+        )
+
+    # Get the SurveyCTO credentials
+    try:
+        scto_credential_response = get_aws_secret(
+            "{scto_server_name}-surveycto-server".format(
+                scto_server_name=form.scto_server_name
+            ),
+            current_app.config["AWS_REGION"],
+            is_global_secret=True,
+        )
+
+        scto_credentials = json.loads(scto_credential_response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    # Check if target_source is form or dataset
+    if target_config.target_source != "scto":
+        return (
+            jsonify(
+                {
+                    "error": "Refresh endpoint works only for target source set as scto",
+                    "success": False,
+                }
+            ),
+            412,
+        )
+
+    try:
+        # Initialize the SurveyCTO object
+        scto = pysurveycto.SurveyCTOObject(
+            form.scto_server_name,
+            scto_credentials["username"],
+            scto_credentials["password"],
+        )
+
+        # Delete existing data
+        TargetSCTOQuestion.query.filter_by(form_uid=form_uid).delete()
+
+        if target_config.scto_input_type == "form":
+            scto_form_id = target_config.scto_input_id
+            scto_form_definition = scto.get_form_definition(scto_form_id)
+            survey_tab_columns = scto_form_definition["fieldsRowsAndColumns"][0]
+
+            # Loop through the rows of the `survey` tab of the form definition
+            for row in scto_form_definition["fieldsRowsAndColumns"][1:]:
+                questions_dict = dict(zip(survey_tab_columns, row))
+
+                # Skip questions with disabled = Yes
+                if questions_dict.get("disabled", "No").strip().lower() == "yes":
+                    continue
+
+                if questions_dict["name"].strip() != "":
+                    # Add the question to the database
+                    scto_question = TargetSCTOQuestion(
+                        form_uid=form_uid, question_name=questions_dict["name"]
+                    )
+                    db.session.add(scto_question)
+
+                try:
+                    db.session.flush()
+                except IntegrityError as e:
+                    db.session.rollback()
+                    return (jsonify({"error": str(e)}), 500)
+        else:
+            scto_dataset_id = target_config.scto_input_id
+            scto_dataset = scto.get_server_dataset(scto_dataset_id, line_breaks="\n")
+            scto_dataset_column_str = scto_dataset.split("\n")[0]
+            scto_dataset_column = scto_dataset_column_str.split(",")
+            for question_name in scto_dataset_column:
+                scto_question = TargetSCTOQuestion(
+                    form_uid=form_uid, question_name=question_name
+                )
+                db.session.add(scto_question)
+    except Exception as e:
+        return (
+            jsonify({"error": "Error refreshing SurveyCTO input columns: " + str(e)}),
+            500,
+        )
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    response = {
+        "success": True,
+        "message": "SurveyCTO input columns refreshed successfully",
+    }
+
+    return jsonify(response), 200
+
+
+@targets_bp.route(
+    "/config/scto-columns",
+    methods=["GET"],
+)
+@logged_in_active_user_required
+@validate_query_params(TargetConfigSCTOColumnQueryValidator)
+@custom_permissions_required("WRITE Targets", "query", "form_uid")
+def get_target_scto_columns(validated_query_params):
+    """
+    Get the SurveyCTO columns for a form
+    """
+    form_uid = validated_query_params.form_uid.data
+    scto_questions = TargetSCTOQuestion.query.filter_by(form_uid=form_uid).all()
+    if scto_questions is None or len(scto_questions) == 0:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "SurveyCTO columns not found for the form",
+                }
+            ),
+            404,
+        )
+
+    question_names = [scto_question.question_name for scto_question in scto_questions]
+    target_config = TargetConfig.query.filter_by(form_uid=form_uid).first()
+
+    if target_config.scto_input_type == "dataset":
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": question_names,
+                }
+            ),
+            200,
+        )
+    else:
+        # if Input type is form add metadata columns
+        metadata_column_list = [
+            "instanceID",
+            "formdef_version",
+            "starttime",
+            "endtime",
+            "SubmissionDate",
+        ]
+        for metadata_column in metadata_column_list:
+            if metadata_column not in question_names:
+                question_names.append(metadata_column)
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": question_names,
+                }
+            ),
+            200,
+        )

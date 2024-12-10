@@ -6,7 +6,6 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import backref
 from sqlalchemy.ext.mutable import MutableDict
 
-
 class Enumerator(db.Model):
     """
     SQLAlchemy data model for Enumerator

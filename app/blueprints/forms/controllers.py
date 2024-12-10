@@ -29,6 +29,7 @@ from .models import (
 from .validators import (
     CreateFormValidator,
     CreateSCTOQuestionMappingValidator,
+    GetFormDefinitionQueryParamValidator,
     GetFormQueryParamValidator,
     UpdateFormValidator,
     UpdateSCTOQuestionMappingValidator,
@@ -624,6 +625,9 @@ def ingest_scto_form_definition(form_uid):
                 )
                 db.session.add(scto_choice_label)
 
+    # There can be nested repeat groups, so we need to keep track of the depth in order to determine if a question is part of a repeat group
+    repeat_group_depth = 0
+
     # Loop through the rows of the `survey` tab of the form definition
     for row in scto_form_definition["fieldsRowsAndColumns"][1:]:
         questions_dict = dict(zip(survey_tab_columns, row))
@@ -633,8 +637,6 @@ def ingest_scto_form_definition(form_uid):
             continue
 
         if questions_dict["name"].strip() != "":
-            # There can be nested repeat groups, so we need to keep track of the depth in order to determine if a question is part of a repeat group
-            repeat_group_depth = 0
             # Handle the questions
             list_uid = None
             list_name = None
@@ -757,14 +759,16 @@ def delete_scto_form_definition(form_uid):
 
 @forms_bp.route("/<int:form_uid>/scto-form-definition", methods=["GET"])
 @logged_in_active_user_required
+@validate_query_params(GetFormDefinitionQueryParamValidator)
 @custom_permissions_required(
     ["READ Data Quality Forms", "READ Admin Forms"], "path", "form_uid"
 )
-def get_scto_form_definition(form_uid):
+def get_scto_form_definition(form_uid, validated_query_params):
     """
     Get SurveyCTO form definition questions from the database table
     We are filtering these based on the question types that are supported for question mapping by SurveyStream
     """
+    include_repeat_groups = validated_query_params.include_repeat_groups.data
 
     form = Form.query.filter_by(form_uid=form_uid).first()
 
@@ -772,29 +776,31 @@ def get_scto_form_definition(form_uid):
     if form is None:
         return jsonify({"error": "Form not found"}), 404
 
-    scto_questions = (
-        SCTOQuestion.query.filter_by(form_uid=form_uid, is_repeat_group=False)
-        .filter(
-            SCTOQuestion.question_type.notin_(
-                [
-                    "begin group",
-                    "end group",
-                    "begin repeat",
-                    "end repeat",
-                    "note",
-                    "image",
-                    "audio",
-                    "video",
-                    "file",
-                    "text audit",
-                    "audio audit" "sensor_statistic",
-                    "sensor_stream",
-                ]
-            )
+    scto_questions_query = SCTOQuestion.query.filter_by(form_uid=form_uid).filter(
+        SCTOQuestion.question_type.notin_(
+            [
+                "begin group",
+                "end group",
+                "begin repeat",
+                "end repeat",
+                "note",
+                "image",
+                "audio",
+                "video",
+                "file",
+                "text audit",
+                "audio audit" "sensor_statistic",
+                "sensor_stream",
+            ]
         )
-        .all()
     )
 
+    if not include_repeat_groups:
+        scto_questions_query = scto_questions_query.filter(
+            SCTOQuestion.is_repeat_group == False
+        )
+
+    scto_questions = scto_questions_query.all()
     scto_form_settings = SCTOFormSettings.query.filter_by(form_uid=form_uid).first()
 
     if scto_form_settings is None:
