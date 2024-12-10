@@ -83,7 +83,7 @@ def view_assignments(validated_query_params):
                 {
                     "success": False,
                     "errors": {
-                        "message": "Targets and enumerators are not available for this form. Kindly upload targets or enumerators first.",
+                        "message": "Targets and enumerators are not available for this form. Kindly upload targets and enumerators first.",
                     },
                 }
             ),

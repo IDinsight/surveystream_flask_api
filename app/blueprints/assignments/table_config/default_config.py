@@ -490,7 +490,9 @@ class DefaultTableConfig:
         Add the form productivity columns to the table config
         """
 
-        forms = Form.query.filter(Form.survey_uid == survey_uid).all()
+        forms = Form.query.filter(
+            Form.survey_uid == survey_uid, Form.form_type == "parent"
+        ).all()
         placeholder_index = table_config.index("form_productivity_placeholder")
 
         table_config = (
