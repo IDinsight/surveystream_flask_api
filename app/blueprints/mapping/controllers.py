@@ -8,6 +8,7 @@ from app import db
 from app.blueprints.auth.models import User
 from app.blueprints.locations.models import Location
 from app.blueprints.targets.models import Target
+from app.blueprints.enumerators.models import Enumerator
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
@@ -40,6 +41,19 @@ def get_target_mapping_config(validated_query_params):
 
     form_uid = validated_query_params.form_uid.data
 
+    # Check if the form has any targets
+    if Target.query.filter(Target.form_uid == form_uid).first() is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Targets are not available for this form. Kindly upload targets first.",
+                    },
+                }
+            ),
+            422,
+        )
     try:
         target_mapping = TargetMapping(form_uid)
     except MappingError as e:
@@ -328,6 +342,20 @@ def get_target_mapping(validated_query_params):
     """
     form_uid = validated_query_params.form_uid.data
 
+    # Check if the form has any targets
+    if Target.query.filter(Target.form_uid == form_uid).first() is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Targets are not available for this form. Kindly upload targets first.",
+                    },
+                }
+            ),
+            422,
+        )
+
     try:
         target_mapping = TargetMapping(form_uid)
     except MappingError as e:
@@ -608,6 +636,20 @@ def get_surveyor_mapping_config(validated_query_params):
     """
 
     form_uid = validated_query_params.form_uid.data
+
+    # Check if the form has any enumerators
+    if Enumerator.query.filter(Enumerator.form_uid == form_uid).first() is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
+                    },
+                }
+            ),
+            422,
+        )
 
     try:
         surveyor_mapping = SurveyorMapping(form_uid)
@@ -899,6 +941,20 @@ def get_surveyor_mapping(validated_query_params):
 
     """
     form_uid = validated_query_params.form_uid.data
+
+    # Check if the form has any enumerators
+    if Enumerator.query.filter(Enumerator.form_uid == form_uid).first() is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
+                    },
+                }
+            ),
+            422,
+        )
 
     try:
         surveyor_mapping = SurveyorMapping(form_uid)

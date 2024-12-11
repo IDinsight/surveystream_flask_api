@@ -1123,6 +1123,52 @@ class TestMapping:
         )
         assert response.status_code == 200
 
+    def test_target_mapping_no_targets(
+        self, client, login_test_user, create_form, create_locations, add_user
+    ):
+        """
+        Test getting the target mapping when there are no targets
+        """
+        response = client.get(
+            "/api/mapping/targets-mapping",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "message": "Targets are not available for this form. Kindly upload targets first."
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_target_mapping_config_no_targets(
+        self, client, login_test_user, create_form, create_locations, add_user
+    ):
+        """
+        Test getting the target mapping config when there are no targets
+        """
+        response = client.get(
+            "/api/mapping/targets-mapping-config",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "message": "Targets are not available for this form. Kindly upload targets first."
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_get_location_based_target_mapping(
         self,
         client,
@@ -2988,6 +3034,54 @@ class TestMapping:
         }
 
         print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_surveyor_mapping_no_enumerators(
+        self, client, login_test_user, create_form, create_locations, add_user
+    ):
+        """
+        Test getting the surveyor mapping when there are no enumerators
+
+        """
+        response = client.get(
+            "/api/mapping/surveyors-mapping",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "message": "Enumerators are not available for this form. Kindly upload enumerators first."
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_surveyor_mapping_config_no_enumerators(
+        self, client, login_test_user, create_form, create_locations, add_user
+    ):
+        """
+        Test getting the surveyor mapping config when there are no enumerators
+
+        """
+        response = client.get(
+            "/api/mapping/surveyors-mapping-config",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "errors": {
+                "message": "Enumerators are not available for this form. Kindly upload enumerators first."
+            },
+            "success": False,
+        }
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
