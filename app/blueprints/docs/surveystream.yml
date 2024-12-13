@@ -6919,7 +6919,36 @@ paths:
           description: Form not found
         "422":
           description: Form errors
-  
+    delete:
+      summary: Delete targets
+      description: Delete targets for given form_uid
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  message:
+                    type: string
+                    description: Targets deleted
+        "400":
+          description: Form ID is required
+
+   
   /targets/config:
     get:
       summary: Get the targets config for a form
