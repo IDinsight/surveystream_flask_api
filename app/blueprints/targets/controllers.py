@@ -916,8 +916,15 @@ def delete_target(target_uid):
     if Target.query.filter_by(target_uid=target_uid).first() is None:
         return jsonify({"error": "Target not found"}), 404
 
-    TargetStatus.query.filter_by(target_uid=target_uid).delete()
-    Target.query.filter_by(target_uid=target_uid).delete()
+    try:
+        from app.blueprints.assignments.models import SurveyorAssignment
+
+        TargetStatus.query.filter_by(target_uid=target_uid).delete()
+        SurveyorAssignment.query.filter_by(target_uid=target_uid).delete()
+        Target.query.filter_by(target_uid=target_uid).delete()
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
     try:
         db.session.commit()
@@ -1703,3 +1710,44 @@ def get_target_scto_columns(validated_query_params):
             ),
             200,
         )
+
+
+@targets_bp.route("", methods=["DELETE"])
+@logged_in_active_user_required
+@validate_query_params(TargetsQueryParamValidator)
+@custom_permissions_required("WRITE Targets", "query", "form_uid")
+def delete_all_targets(validated_query_params):
+    """
+    Method to delete targets from the database
+    """
+
+    form_uid = validated_query_params.form_uid.data
+    form = Form.query.filter_by(form_uid=form_uid).first()
+
+    if form is None:
+        return (jsonify({"error": "Form not found"}), 404)
+    try:
+        from app.blueprints.assignments.models import SurveyorAssignment
+
+        TargetStatus.query.filter(
+            TargetStatus.target_uid.in_(
+                db.session.query(Target.target_uid).filter(Target.form_uid == form_uid)
+            )
+        ).delete(synchronize_session=False)
+        SurveyorAssignment.query.filter(
+            SurveyorAssignment.target_uid.in_(
+                db.session.query(Target.target_uid).filter(Target.form_uid == form_uid)
+            )
+        ).delete(synchronize_session=False)
+        Target.query.filter_by(form_uid=form_uid).delete()
+
+    except Exception as e:
+        return (jsonify({"error": str(e)}), 500)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return (jsonify({"error": str(e)}), 500)
+
+    return (jsonify({"success": True, "message": "Targets deleted"}), 200)
