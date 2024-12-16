@@ -167,8 +167,37 @@ class TestNotifications:
         yield
 
     @pytest.fixture()
-    def create_module_questionnaire(
+    def update_module_selection(
         self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Update new module_selection as a setup step for the module_selection tests
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "modules": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "13", "14"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_module_questionnaire(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_survey,
+        update_module_selection,
     ):
         """
         Insert new module_questionnaire as a setup step for the module_questionnaire tests
@@ -524,7 +553,7 @@ class TestNotifications:
             "module_id": 4,
             "resolution_status": "in progress",
             "message": "End date reached",
-            "severity": "alert",
+            "severity": "error",
             "type": "survey",
         }
         response = client.post(
@@ -541,7 +570,7 @@ class TestNotifications:
             "message": "Notification created successfully",
             "data": {
                 "notification_uid": 2,
-                "severity": "alert",
+                "severity": "error",
                 "resolution_status": "in progress",
                 "message": "End date reached",
             },
@@ -554,6 +583,32 @@ class TestNotifications:
 
         checkdiff = jsondiff.diff(expected_response, response_json)
         assert checkdiff == {}
+
+        get_module_response = client.get(
+            "/api/module-status/1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(get_module_response.json)
+
+        expected_response = {
+            "success": True,
+            "data": [
+                {"survey_uid": 1, "module_id": 1, "config_status": "In Progress"},
+                {"survey_uid": 1, "module_id": 2, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 3, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 4, "config_status": "Error"},
+                {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 6, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 8, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 9, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 13, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 14, "config_status": "Not Started"},
+            ],
+        }
+
+        assert get_module_response.json == expected_response
 
     def test_notifications_create_survey_notifications_error_no_survey(
         self,
@@ -987,4 +1042,107 @@ class TestNotifications:
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_notifications_resolve_notification(
+        self,
+        client,
+        login_test_user,
+        create_survey_notification_for_assignments,
+        csrf_token,
+    ):
+        payload = {
+            "survey_uid": 1,
+            "module_id": 9,
+            "resolution_status": "done",
+        }
+        response = client.patch(
+            "/api/notifications",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        get_response = client.get(
+            "/api/notifications",
+            query_string={"user_uid": 1},
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert get_response.status_code == 200
+
+        print(get_response.json)
+
+        expected_response = {
+            "success": True,
+            "data": [
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Assignments",
+                    "module_id": 9,
+                    "type": "survey",
+                    "notification_uid": 2,
+                    "severity": "error",
+                    "resolution_status": "done",
+                    "message": "No user mappings found",
+                },
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Basic information",
+                    "module_id": 1,
+                    "type": "survey",
+                    "notification_uid": 1,
+                    "severity": "warning",
+                    "resolution_status": "in progress",
+                    "message": "Your survey end date is approaching",
+                },
+            ],
+        }
+
+        response_json = get_response.json
+
+        # Remove the created_at from the response for comparison
+        for notification in response_json.get("data", []):
+            if "created_at" in notification:
+                del notification["created_at"]
+            else:
+                print("Created_at missing in notification", notification)
+                assert False
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+        get_module_response = client.get(
+            "/api/module-status/1",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(get_module_response.json)
+
+        assert get_module_response.status_code == 200
+
+        expected_get_module_response = {
+            "success": True,
+            "data": [
+                {"survey_uid": 1, "module_id": 1, "config_status": "In Progress"},
+                {"survey_uid": 1, "module_id": 2, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 3, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 4, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 6, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 8, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 9, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 13, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 14, "config_status": "Not Started"},
+            ],
+        }
+        checkdiff = jsondiff.diff(
+            get_module_response.json, expected_get_module_response
+        )
+
         assert checkdiff == {}

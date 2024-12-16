@@ -1,6 +1,6 @@
 from flask import jsonify
 
-from app.blueprints.module_selection.models import Module
+from app.blueprints.module_selection.models import Module, ModuleStatus
 from app.blueprints.roles.models import Permission, Role, RolePermission, SurveyAdmin
 from app.blueprints.surveys.models import Survey
 from app.blueprints.user_management.models import User
@@ -16,6 +16,7 @@ from .validators import (
     GetNotificationsQueryValidator,
     PostNotificationsPayloadValidator,
     PutNotificationsPayloadValidator,
+    ResolveNotificationPayloadValidator,
 )
 
 
@@ -221,6 +222,12 @@ def post_notifications(validated_payload):
 
         db.session.add(notification)
 
+        if validated_payload.severity.data == "error":
+            ModuleStatus.query.filter(
+                ModuleStatus.module_id == module_id,
+                ModuleStatus.survey_uid == survey_uid,
+            ).update({"config_status": "Error"})
+
     else:
         user_uid = validated_payload.user_uid.data
         user = User.query.filter(User.user_uid == user_uid).first()
@@ -301,6 +308,13 @@ def put_notifications(validated_payload):
         survey_notification.message = validated_payload.message.data
         notification = survey_notification
 
+        if validated_payload.resolution_status.data == "done":
+            ModuleStatus.query.filter(
+                ModuleStatus.module_id == notification.module_id,
+                ModuleStatus.survey_uid == notification.survey_uid,
+                ModuleStatus.config_status == "Error",
+            ).update({"config_status": "Done"})
+
     else:
         user_notification = UserNotification.query.filter(
             UserNotification.notification_uid == notification_uid
@@ -342,6 +356,106 @@ def put_notifications(validated_payload):
             "success": True,
             "message": "Notification updated successfully",
             "data": notification.to_dict(),
+        }
+    )
+
+    return response, 200
+
+
+@notifications_bp.route("", methods=["PATCH"])
+@logged_in_active_user_required
+@validate_payload(ResolveNotificationPayloadValidator)
+def resolve_notification(validated_payload):
+    """
+    Resolve a notification based on type
+    """
+
+    type = validated_payload.type.data
+    notification_uid = validated_payload.notification_uid.data
+    survey_uid = validated_payload.survey_uid.data
+    module_id = validated_payload.module_id.data
+    resolution_status = validated_payload.resolution_status.data
+
+    if not (type and notification_uid) and not (survey_uid and module_id):
+        return (
+            jsonify(
+                {
+                    "error": "Either notification_uid or both survey_uid and module_id must be present.",
+                    "success": False,
+                }
+            ),
+            404,
+        )
+
+    if notification_uid:
+        if type == "survey":
+            notification = SurveyNotification.query.filter(
+                SurveyNotification.notification_uid == notification_uid
+            ).first()
+
+            if not notification:
+                return (
+                    jsonify(
+                        {
+                            "error": "Notification not found",
+                            "success": False,
+                        }
+                    ),
+                    404,
+                )
+        elif type == "user":
+            notification = UserNotification.query.filter(
+                UserNotification.notification_uid == notification_uid
+            ).first()
+
+            if not notification:
+                return (
+                    jsonify(
+                        {
+                            "error": "Notification not found",
+                            "success": False,
+                        }
+                    ),
+                    404,
+                )
+
+        notification.resolution_status = resolution_status
+
+    else:
+        survey_notification = SurveyNotification.query.filter(
+            SurveyNotification.survey_uid == survey_uid,
+            SurveyNotification.module_id == module_id,
+        ).first()
+
+        if survey_notification:
+            survey_notification.resolution_status = resolution_status
+
+        if resolution_status == "done":
+
+            ModuleStatus.query.filter(
+                ModuleStatus.module_id == module_id,
+                ModuleStatus.survey_uid == survey_uid,
+                ModuleStatus.config_status == "Error",
+            ).update({"config_status": "Done"})
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return (
+            jsonify(
+                {
+                    "error": str(e),
+                    "success": False,
+                }
+            ),
+            500,
+        )
+
+    response = jsonify(
+        {
+            "success": True,
+            "message": "Notification resolved successfully",
         }
     )
 
