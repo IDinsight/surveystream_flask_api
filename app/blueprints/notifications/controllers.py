@@ -403,6 +403,14 @@ def resolve_notification(validated_payload):
                     ),
                     404,
                 )
+            if resolution_status == "done":
+
+                ModuleStatus.query.filter(
+                    ModuleStatus.module_id == notification.module_id,
+                    ModuleStatus.survey_uid == notification.survey_uid,
+                    ModuleStatus.config_status == "Error",
+                ).update({"config_status": "Done"})
+
         elif type == "user":
             notification = UserNotification.query.filter(
                 UserNotification.notification_uid == notification_uid

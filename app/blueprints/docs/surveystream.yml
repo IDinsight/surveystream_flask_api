@@ -12084,3 +12084,63 @@ paths:
                         created_at:
                           type: Datetime
                           description: Notification timestamp in UTC
+    patch:
+      summary: Resolve Notifications for a user/survey
+      tags:
+        - Notifications
+      parameters:
+        - name: type
+          in: body
+          description: Notification Type - user or survey
+          required: true
+          schema:
+            type: string
+        - name : notification_uid
+          in: body
+          description: Unique identifier for the notification_uid
+          required: false
+          schema:
+            type: integer
+        - name : resolution_status
+          in: body
+          description: Resolution status - in progress OR done
+          required: true
+          schema:
+            type: string
+            default: in progress
+        - name: survey_uid
+          in: body
+          description: Unique identifier for the survey
+          required: false
+          schema:
+            type: integer
+        - name: module_id
+          in: body
+          description: Unique identifier for the module
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+            description: Successfully updated notification
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example:  "Notification resolved successfully"
+        "404":
+          description: Notification UID Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
