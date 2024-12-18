@@ -221,6 +221,15 @@ def upload_targets(validated_query_params, validated_payload):
                     scto_form_id = target_config.scto_input_id
                     scto_encryption_flag = target_config.scto_encryption_flag
 
+                    encryption_key = None
+                    if scto_encryption_flag:
+                        # Get the encrypted form data
+                        encryption_key = get_aws_secret(
+                            scto_form_id + "-surveycto-encryption-key",
+                            current_app.config["AWS_REGION"],
+                            is_global_secret=True,
+                        )
+
                     # Set completion date intervals as - 1 week , 2 week, 1 month, 2 month, Fixed date - 2024-01-01
                     # Iterate through the oldest date till reaching row_threshold
                     date_today = datetime.today()
@@ -231,61 +240,31 @@ def upload_targets(validated_query_params, validated_payload):
                         date_today - timedelta(weeks=8),
                         datetime(2024, 1, 1),
                     ]
-
                     row_threshold = 10
 
-                    if scto_encryption_flag:
-                        # Get the encrypted form data
-                        encryption_key = get_aws_secret(
-                            scto_form_id + "-surveycto-encryption-key",
-                            current_app.config["AWS_REGION"],
-                            is_global_secret=True,
+                    for oldest_date in oldest_date_array:
+                        scto_form = scto.get_form_data(
+                            scto_form_id,
+                            format="json",
+                            key=encryption_key,
+                            oldest_completion_date=oldest_date,
                         )
+                        if len(scto_form) == 0:
+                            continue
 
-                        for oldest_date in oldest_date_array:
-                            scto_form = scto.get_form_data(
-                                scto_form_id,
-                                format="json",
-                                key=encryption_key,
-                                oldest_completion_date=oldest_date,
+                        if target_scto_filter_list and len(target_scto_filter_list) > 0:
+                            csv_string = apply_target_scto_filters(
+                                scto_form,
+                                target_scto_filter_list,
+                                data_format="json",
                             )
-                            if len(scto_form) == 0:
-                                continue
-
-                            if (
-                                target_scto_filter_list
-                                and len(target_scto_filter_list) > 0
-                            ):
-                                csv_string = apply_target_scto_filters(
-                                    scto_form,
-                                    target_scto_filter_list,
-                                    data_format="json",
-                                )
-                                if len(csv_string) > row_threshold:
-                                    break
-                            else:
-                                # Convert JSON to CSV
-                                df = pd.DataFrame.from_dict(scto_form[:row_threshold])
-                                csv_string = df.to_csv(index=False)
-                                if len(df) > row_threshold:
-                                    break
-
-                    else:
-                        for oldest_date in oldest_date_array:
-                            scto_form = scto.get_form_data(
-                                scto_form_id,
-                                format="csv",
-                                oldest_completion_date=oldest_date,
-                            )
-                            csv_string = scto_form
-                            if (
-                                target_scto_filter_list
-                                and len(target_scto_filter_list) > 0
-                            ):
-                                csv_string = apply_target_scto_filters(
-                                    csv_string, target_scto_filter_list
-                                )
                             if len(csv_string) > row_threshold:
+                                break
+                        else:
+                            # Convert JSON to CSV
+                            df = pd.DataFrame.from_dict(scto_form[:row_threshold])
+                            csv_string = df.to_csv(index=False)
+                            if len(df) > row_threshold:
                                 break
 
         else:
