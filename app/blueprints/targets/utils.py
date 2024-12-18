@@ -150,7 +150,7 @@ class TargetsUpload:
 
     def __get_col_names(self, csv_string):
         col_names = DictReader(io.StringIO(csv_string)).fieldnames
-        if len(col_names) == 0:
+        if not (col_names) or len(col_names) == 0:
             raise HeaderRowEmptyError(
                 "Column names were not found in the file. Make sure the first row of the file contains column names."
             )

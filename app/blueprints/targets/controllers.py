@@ -238,17 +238,25 @@ def upload_targets(validated_query_params, validated_payload):
                         date_today - timedelta(weeks=2),
                         date_today - timedelta(weeks=4),
                         date_today - timedelta(weeks=8),
-                        datetime(2024, 1, 1),
+                        datetime(2020, 1, 1),
                     ]
                     row_threshold = 10
 
                     for oldest_date in oldest_date_array:
-                        scto_form = scto.get_form_data(
-                            scto_form_id,
-                            format="json",
-                            key=encryption_key,
-                            oldest_completion_date=oldest_date,
-                        )
+                        if scto_encryption_flag:
+                            scto_form = scto.get_form_data(
+                                scto_form_id,
+                                format="json",
+                                key=encryption_key,
+                                oldest_completion_date=oldest_date,
+                            )
+                        else:
+                            scto_form = scto.get_form_data(
+                                scto_form_id,
+                                format="json",
+                                oldest_completion_date=oldest_date,
+                            )
+
                         if len(scto_form) == 0:
                             continue
 
@@ -267,6 +275,20 @@ def upload_targets(validated_query_params, validated_payload):
                             if len(df) > row_threshold:
                                 break
 
+                if csv_string == "":
+                    return (
+                        jsonify(
+                            {
+                                "success": False,
+                                "errors": {
+                                    "surveycto_error": [
+                                        "No data found in SurveyCTO for the given inputs"
+                                    ],
+                                },
+                            }
+                        ),
+                        422,
+                    )
         else:
             csv_string = base64.b64decode(
                 validated_payload.file.data, validate=True
