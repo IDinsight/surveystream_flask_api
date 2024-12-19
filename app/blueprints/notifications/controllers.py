@@ -437,12 +437,12 @@ def resolve_notification(validated_payload):
         notification.resolution_status = resolution_status
 
     else:
-        survey_notification = SurveyNotification.query.filter(
+        survey_notifications = SurveyNotification.query.filter(
             SurveyNotification.survey_uid == survey_uid,
             SurveyNotification.module_id == module_id,
-        ).first()
+        ).all()
 
-        if survey_notification:
+        for survey_notification in survey_notifications:
             survey_notification.resolution_status = resolution_status
 
         if resolution_status == "done":
