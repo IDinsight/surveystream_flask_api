@@ -222,7 +222,10 @@ def post_notifications(validated_payload):
 
         db.session.add(notification)
 
-        if validated_payload.severity.data == "error":
+        if (
+            validated_payload.severity.data == "error"
+            and validated_payload.resolution_status.data != "done"
+        ):
             ModuleStatus.query.filter(
                 ModuleStatus.module_id == module_id,
                 ModuleStatus.survey_uid == survey_uid,
@@ -308,12 +311,16 @@ def put_notifications(validated_payload):
         survey_notification.message = validated_payload.message.data
         notification = survey_notification
 
-        if validated_payload.resolution_status.data == "done":
+        if validated_payload.severity.data == "error":
+            config_status = (
+                "Error"
+                if validated_payload.resolution_status.data != "done"
+                else "Done"
+            )
             ModuleStatus.query.filter(
                 ModuleStatus.module_id == notification.module_id,
                 ModuleStatus.survey_uid == notification.survey_uid,
-                ModuleStatus.config_status == "Error",
-            ).update({"config_status": "Done"})
+            ).update({"config_status": config_status})
 
     else:
         user_notification = UserNotification.query.filter(
