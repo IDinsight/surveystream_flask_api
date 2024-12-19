@@ -1746,7 +1746,7 @@ class TestAssignments:
         Insert an email config as a setup step for email tests
         """
         payload = {
-            "config_name": "Assignments",
+            "config_name": "AssignmentsConfig",
             "form_uid": 1,
             "report_users": [1, 2, 3],
             "email_source": "SurveyStream Data",
@@ -1762,6 +1762,80 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        assert response.status_code == 201
+        return response.json["data"]
+
+    @pytest.fixture
+    def create_email_template(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_email_config,
+    ):
+        """
+        Insert email template as a setup for tests
+        """
+        payload = {
+            "subject": "Test Assignments Email",
+            "language": "english",
+            "content": "Test Content",
+            "email_config_uid": create_email_config["email_config_uid"],
+            "variable_list": [],
+            "table_list": [
+                {
+                    "table_name": "Assignments: Default",
+                    "column_mapping": {
+                        "test_column1": "TEST Column 1",
+                        "test_column2": "TEST Column 2",
+                    },
+                    "sort_list": {"test_column1": "asc", "test_column2": "desc"},
+                    "variable_name": "test_table+_1",
+                    "filter_list": [
+                        {
+                            "filter_group": [
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value",
+                                },
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column2",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value2",
+                                },
+                            ]
+                        },
+                        {
+                            "filter_group": [
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value",
+                                },
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column2",
+                                    "filter_operator": "Is not",
+                                    "filter_value": "test_value2",
+                                },
+                            ]
+                        },
+                    ],
+                }
+            ],
+        }
+        response = client.post(
+            "/api/emails/template",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
         assert response.status_code == 201
         return response.json["data"]
 
@@ -1863,17 +1937,40 @@ class TestAssignments:
     ## FIXTURES END HERE
     ####################################################
 
-    def test_assignments_no_enumerators_no_targets_no_geo_levels_no_roles(
-        self, client, login_test_user, create_form, csrf_token
+    def test_assignments_no_enumerators_no_targets(
+        self, client, login_test_user, create_locations, add_user_hierarchy, csrf_token
     ):
         """
         Test the assignments endpoint response when key datasets are missing
-        No geo levels
-        No locations
-        No roles
         No enumerators
         No targets
+        """
 
+        expected_response = {
+            "errors": {
+                "message": "Targets and enumerators are not available for this form. Kindly upload targets and enumerators first."
+            },
+            "success": False,
+        }
+
+        # Check the response
+        response = client.get("/api/assignments", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_assignments_no_roles(
+        self,
+        client,
+        login_test_user,
+        create_form,
+        csrf_token,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test the assignments endpoint response when key datasets are missing
+        No roles
         When no roles are defined, the response should be a 422 error
         """
 
@@ -1890,48 +1987,85 @@ class TestAssignments:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_assignments_no_enumerators_no_targets_no_geo_levels(
-        self, client, login_test_user, create_form, create_roles, csrf_token
+    def test_assignments_no_targets(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        add_user_hierarchy,
+        csrf_token,
+        user_permissions,
+        request,
     ):
         """
-        Test the assignments endpoint response when key datasets are missing
-        No geo levels
-        No locations
-        No enumerators
+        Test the assignments endpoint response when key datasets are missing - multiple user roles
         No targets
         """
-
-        expected_response = {
-            "data": [],
-            "success": True,
-        }
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+        if expected_permission:
+            expected_response = {
+                "errors": {
+                    "message": "Targets are not available for this form. Kindly upload targets first.",
+                },
+                "success": False,
+            }
 
-    def test_assignments_no_enumerators_no_targets_no_locations(
-        self, client, login_test_user, create_geo_levels, create_roles, csrf_token
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            response.status_code = 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Assignments",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_assignments_no_enumerators(
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+        user_permissions,
+        request,
     ):
         """
-        Test the assignments endpoint response when key datasets are missing
-        No locations
+        Test the assignments endpoint response when key datasets are missing - multiple user roles
         No enumerators
-        No targets
         """
-
-        expected_response = {
-            "data": [],
-            "success": True,
-        }
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+        if expected_permission:
+            expected_response = {
+                "errors": {
+                    "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
+                },
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            response.status_code = 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Assignments",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
     def test_assignments_schedule_email(
         self,
@@ -1939,6 +2073,7 @@ class TestAssignments:
         login_test_user,
         create_geo_levels,
         create_roles,
+        create_email_config,
         csrf_token,
         user_permissions,
         request,
@@ -1956,6 +2091,7 @@ class TestAssignments:
 
         payload = {
             "form_uid": 1,
+            "email_config_uid": 1,
             "date": current_datetime,
             "time": "08:00",
             "recipients": [1, 2, 3],  # there are supposed to be enumerator ids
@@ -2011,6 +2147,7 @@ class TestAssignments:
 
         payload = {
             "form_uid": 1,
+            "email_config_uid": 1,
             "date": "2024-02-03",
             "time": "08:00",
             "recipients": [1, 2, 3],  # there are supposed to be enumerator ids
@@ -2034,64 +2171,6 @@ class TestAssignments:
         assert response.status_code == 422
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
-
-    def test_assignments_no_enumerators_no_targets(
-        self, client, login_test_user, create_locations, add_user_hierarchy, csrf_token
-    ):
-        """
-        Test the assignments endpoint response when key datasets are missing
-        No enumerators
-        No targets
-        """
-
-        expected_response = {
-            "data": [],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_assignments_no_targets(
-        self,
-        client,
-        login_test_user,
-        upload_enumerators_csv,
-        add_user_hierarchy,
-        csrf_token,
-        user_permissions,
-        request,
-    ):
-        """
-        Test the assignments endpoint response when key datasets are missing - multiple user roles
-        No targets
-        """
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
-
-        # Check the response
-        response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        if expected_permission:
-            expected_response = {
-                "data": [],
-                "success": True,
-            }
-
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-        else:
-            response.status_code = 403
-
-            expected_response = {
-                "success": False,
-                "error": f"User does not have the required permission: READ Assignments",
-            }
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
 
     def test_assignments_empty_assignment_table(
         self,
@@ -2335,6 +2414,7 @@ class TestAssignments:
         request,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Create an assignment between a single target and enumerator
@@ -2368,7 +2448,7 @@ class TestAssignments:
             if user_fixture != "user_with_assignment_permissions":
                 assert response.status_code == 200
                 assert datetime.strptime(
-                    response.json["data"]["email_schedule"]["schedule_date"],
+                    response.json["data"]["email_schedule"][0]["schedule_date"],
                     date_format,
                 ) >= datetime.strptime(formatted_date, date_format)
                 expected_put_response = {
@@ -2377,19 +2457,25 @@ class TestAssignments:
                         "new_assignments_count": 1,
                         "no_changes_count": 0,
                         "re_assignments_count": 0,
-                        "email_schedule": {
-                            "config_name": "Assignments",
-                            "dates": response.json["data"]["email_schedule"]["dates"],
-                            "schedule_date": response.json["data"]["email_schedule"][
-                                "schedule_date"
-                            ],
-                            "current_time": current_time,
-                            "email_schedule_uid": response.json["data"][
-                                "email_schedule"
-                            ]["email_schedule_uid"],
-                            "email_config_uid": 1,
-                            "time": response.json["data"]["email_schedule"]["time"],
-                        },
+                        "email_schedule": [
+                            {
+                                "config_name": "AssignmentsConfig",
+                                "dates": response.json["data"]["email_schedule"][0][
+                                    "dates"
+                                ],
+                                "schedule_date": response.json["data"][
+                                    "email_schedule"
+                                ][0]["schedule_date"],
+                                "current_time": current_time,
+                                "email_schedule_uid": response.json["data"][
+                                    "email_schedule"
+                                ][0]["email_schedule_uid"],
+                                "email_config_uid": 1,
+                                "time": response.json["data"]["email_schedule"][0][
+                                    "time"
+                                ],
+                            }
+                        ],
                     },
                     "message": "Success",
                 }
@@ -2833,6 +2919,113 @@ class TestAssignments:
 
         print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_create_assignment_no_email_config(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+    ):
+        """
+        Create an assignment between a single target and enumerator without email config
+        """
+        payload = {
+            "assignments": [{"target_uid": 1, "enumerator_uid": 1}],
+            "form_uid": 1,
+            "validate_mapping": True,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        current_datetime = datetime.now()
+        formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
+
+        current_time = datetime.now().strftime("%H:%M")
+
+        # Define the format corresponding to the date string
+        date_format = "%a, %d %b %Y %H:%M:%S %Z"
+
+        assert response.status_code == 200
+
+        expected_put_response = {
+            "data": {
+                "assignments_count": 1,
+                "new_assignments_count": 1,
+                "no_changes_count": 0,
+                "re_assignments_count": 0,
+            },
+            "message": "Success",
+        }
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
+        assert checkdiff == {}
+
+    def test_create_assignment_no_email_schedule(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+        create_email_config,
+        create_email_template,
+    ):
+        """
+        Create an assignment between a single target and enumerator without email schedule
+        """
+        payload = {
+            "assignments": [{"target_uid": 1, "enumerator_uid": 1}],
+            "form_uid": 1,
+            "validate_mapping": True,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        current_time = datetime.now().strftime("%H:%M")
+
+        assert response.status_code == 200
+
+        expected_put_response = {
+            "data": {
+                "assignments_count": 1,
+                "new_assignments_count": 1,
+                "no_changes_count": 0,
+                "re_assignments_count": 0,
+                "email_schedule": [
+                    {
+                        "email_config_uid": 1,
+                        "config_name": "AssignmentsConfig",
+                        "dates": None,
+                        "time": None,
+                        "current_time": current_time,
+                        "email_schedule_uid": None,
+                        "schedule_date": None,
+                    }
+                ],
+            },
+            "message": "Success",
+        }
+        print(response.json)
+        print(expected_put_response)
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
         assert checkdiff == {}
 
     def test_multiple_assignments(
@@ -9896,6 +10089,7 @@ class TestAssignments:
         request,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with merge mode
@@ -9945,7 +10139,7 @@ class TestAssignments:
             if user_fixture != "user_with_assignment_upload_permissions":
                 assert response.status_code == 200
                 assert datetime.strptime(
-                    response.json["data"]["email_schedule"]["schedule_date"],
+                    response.json["data"]["email_schedule"][0]["schedule_date"],
                     date_format,
                 ) >= datetime.strptime(formatted_date, date_format)
                 expected_put_response = {
@@ -9954,19 +10148,25 @@ class TestAssignments:
                         "new_assignments_count": 0,
                         "no_changes_count": 0,
                         "re_assignments_count": 1,
-                        "email_schedule": {
-                            "config_name": "Assignments",
-                            "dates": response.json["data"]["email_schedule"]["dates"],
-                            "schedule_date": response.json["data"]["email_schedule"][
-                                "schedule_date"
-                            ],
-                            "current_time": current_time,
-                            "email_schedule_uid": response.json["data"][
-                                "email_schedule"
-                            ]["email_schedule_uid"],
-                            "email_config_uid": 1,
-                            "time": response.json["data"]["email_schedule"]["time"],
-                        },
+                        "email_schedule": [
+                            {
+                                "config_name": "AssignmentsConfig",
+                                "dates": response.json["data"]["email_schedule"][0][
+                                    "dates"
+                                ],
+                                "schedule_date": response.json["data"][
+                                    "email_schedule"
+                                ][0]["schedule_date"],
+                                "current_time": current_time,
+                                "email_schedule_uid": response.json["data"][
+                                    "email_schedule"
+                                ][0]["email_schedule_uid"],
+                                "email_config_uid": 1,
+                                "time": response.json["data"]["email_schedule"][0][
+                                    "time"
+                                ],
+                            }
+                        ],
                     },
                     "message": "Success",
                 }
@@ -10284,6 +10484,7 @@ class TestAssignments:
         request,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with overwrite mode
@@ -10332,7 +10533,7 @@ class TestAssignments:
             if user_fixture != "user_with_assignment_upload_permissions":
                 assert response.status_code == 200
                 assert datetime.strptime(
-                    response.json["data"]["email_schedule"]["schedule_date"],
+                    response.json["data"]["email_schedule"][0]["schedule_date"],
                     date_format,
                 ) >= datetime.strptime(formatted_date, date_format)
                 expected_put_response = {
@@ -10341,19 +10542,25 @@ class TestAssignments:
                         "new_assignments_count": 2,
                         "no_changes_count": 0,
                         "re_assignments_count": 0,
-                        "email_schedule": {
-                            "config_name": "Assignments",
-                            "dates": response.json["data"]["email_schedule"]["dates"],
-                            "schedule_date": response.json["data"]["email_schedule"][
-                                "schedule_date"
-                            ],
-                            "current_time": current_time,
-                            "email_schedule_uid": response.json["data"][
-                                "email_schedule"
-                            ]["email_schedule_uid"],
-                            "email_config_uid": 1,
-                            "time": response.json["data"]["email_schedule"]["time"],
-                        },
+                        "email_schedule": [
+                            {
+                                "config_name": "AssignmentsConfig",
+                                "dates": response.json["data"]["email_schedule"][0][
+                                    "dates"
+                                ],
+                                "schedule_date": response.json["data"][
+                                    "email_schedule"
+                                ][0]["schedule_date"],
+                                "current_time": current_time,
+                                "email_schedule_uid": response.json["data"][
+                                    "email_schedule"
+                                ][0]["email_schedule_uid"],
+                                "email_config_uid": 1,
+                                "time": response.json["data"]["email_schedule"][0][
+                                    "time"
+                                ],
+                            }
+                        ],
                     },
                     "message": "Success",
                 }
@@ -10676,6 +10883,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with invalid target_id and enumerator_id
@@ -10776,6 +10984,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         #     Function to test uploading asssignments csv with enumerator who has dropped out of the survey
@@ -10877,6 +11086,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with target that is not assignable
@@ -10964,6 +11174,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Upload the enumerators csv with unmapped enumerator id column
@@ -11016,6 +11227,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with missing enumerator id
@@ -11108,6 +11320,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with duplicate column
@@ -11162,6 +11375,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Upload the enumerators csv with same column mapped twice
@@ -11229,6 +11443,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Upload the enumerators csv with blank header row
