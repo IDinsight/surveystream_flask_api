@@ -1,4 +1,8 @@
+import base64
+from pathlib import Path
+
 import jsondiff
+import pandas as pd
 import pytest
 from utils import (
     create_new_survey_role_with_permissions,
@@ -255,6 +259,288 @@ class TestNotifications:
         assert response.status_code == 201
 
         yield
+
+    @pytest.fixture()
+    def create_geo_levels_for_targets_file(
+        self, client, login_test_user, csrf_token, create_form
+    ):
+        """
+        Insert new geo levels as a setup step for the location upload tests
+        These correspond to the geo levels found in the locations test files
+        """
+
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "Mandal",
+                    "parent_geo_level_uid": 1,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "PSU",
+                    "parent_geo_level_uid": 2,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_locations_for_targets_file(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_targets_file,
+        csrf_token,
+    ):
+        """
+        Upload locations csv as a setup step for the targets upload tests
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            locations_csv = f.read()
+            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        df = pd.read_csv(filepath, dtype=str)
+        df.rename(
+            columns={
+                "district_id": "District ID",
+                "district_name": "District Name",
+                "mandal_id": "Mandal ID",
+                "mandal_name": "Mandal Name",
+                "psu_id": "PSU ID",
+                "psu_name": "PSU Name",
+            },
+            inplace=True,
+        )
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": df.to_dict(orient="records"),
+            },
+            "success": True,
+        }
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    @pytest.fixture()
+    def create_target_column_config(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Upload the targets column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "target_id",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": False,
+                    "column_source": "target_id1",
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "basic_details",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "language",
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "gender",
+                },
+                {
+                    "column_name": "Name",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "name",
+                },
+                {
+                    "column_name": "Mobile no.",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "mobile_primary",
+                },
+                {
+                    "column_name": "Address",
+                    "column_type": "custom_fields",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "address",
+                },
+                {
+                    "column_name": "bottom_geo_level_location",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "psu_id",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/targets/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_target_config(self, client, csrf_token, login_test_user, create_form):
+        """
+        Load target config table for tests with form inputs
+        """
+
+        payload = {
+            "form_uid": 1,
+            "target_source": "csv",
+        }
+
+        response = client.post(
+            "/api/targets/config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def upload_targets_csv(
+        self,
+        client,
+        login_test_user,
+        create_locations_for_targets_file,
+        create_target_config,
+        csrf_token,
+    ):
+        """
+        Upload the targets csv
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_small.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "language": "language1",
+                "gender": "gender1",
+                "location_id_column": "psu_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile no.",
+                        "column_name": "mobile_primary1",
+                    },
+                    {
+                        "field_label": "Name",
+                        "column_name": "name1",
+                    },
+                    {
+                        "field_label": "Address",
+                        "column_name": "address1",
+                    },
+                ],
+            },
+            "file": targets_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
 
     @pytest.fixture()
     def create_survey_notification(
@@ -1145,4 +1431,123 @@ class TestNotifications:
             get_module_response.json, expected_get_module_response
         )
 
+        assert checkdiff == {}
+
+    def test_create_action_notification_without_any_data(
+        self, client, login_test_user, csrf_token, create_form
+    ):
+        """
+        Test create notification without any data in modules
+
+        Expect:
+            No Notification created
+        """
+        payload = {
+            "survey_uid": 1,
+            "action": "Location Hierarchy changed",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "error": "No notification created for the action, conditions not met",
+            "success": False,
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+    def test_create_action_notification(
+        self, client, login_test_user, csrf_token, create_form, upload_targets_csv
+    ):
+        """
+        Test create notification with targets and locations data
+
+        Expect:
+            Notification created for target and locations
+        """
+        payload = {
+            "survey_uid": 1,
+            "action": "Location Hierarchy changed",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+        expected_response = {
+            "success": True,
+            "message": "Notification created successfully",
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+        query_string = {
+            "user_uid": 1,
+        }
+        get_response = client.get(
+            "/api/notifications",
+            query_string=query_string,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(get_response.json)
+        assert get_response.status_code == 200
+
+        expected_get_response = {
+            "success": True,
+            "data": [
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Targets",
+                    "module_id": 8,
+                    "type": "survey",
+                    "notification_uid": 1,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Location hierarchy has been changed for this survey. Kindly reupload the targets data.",
+                },
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Survey locations",
+                    "module_id": 5,
+                    "type": "survey",
+                    "notification_uid": 2,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Location hierarchy has been changed for this survey. Kindly reupload the locations data.",
+                },
+            ],
+        }
+
+        get_response_json = get_response.json
+
+        # Remove the created_at from the response for comparison
+        for notification in get_response_json.get("data", []):
+            if "created_at" in notification:
+                del notification["created_at"]
+            else:
+                print("Created_at missing in notification", notification)
+                assert False
+
+        checkdiff = jsondiff.diff(expected_get_response, get_response_json)
         assert checkdiff == {}

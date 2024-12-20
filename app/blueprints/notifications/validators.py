@@ -116,3 +116,10 @@ class ResolveNotificationPayloadValidator(FlaskForm):
             ),
         ],
     )
+
+
+class PostActionPayloadValidator(FlaskForm):
+
+    survey_uid = StringField(validators=[DataRequired()])
+    action = StringField(validators=[DataRequired()])
+    form_uid = StringField(default=None)

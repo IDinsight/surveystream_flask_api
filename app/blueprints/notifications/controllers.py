@@ -5,15 +5,24 @@ from app.blueprints.roles.models import Permission, Role, RolePermission, Survey
 from app.blueprints.surveys.models import Survey
 from app.blueprints.user_management.models import User
 from app.utils.utils import (
+    custom_permissions_required,
     logged_in_active_user_required,
     validate_payload,
     validate_query_params,
 )
 
-from .models import SurveyNotification, UserNotification, db
+from .models import (
+    NotificationAction,
+    NotificationTemplate,
+    SurveyNotification,
+    UserNotification,
+    db,
+)
 from .routes import notifications_bp
+from .utils import check_notification_conditions
 from .validators import (
     GetNotificationsQueryValidator,
+    PostActionPayloadValidator,
     PostNotificationsPayloadValidator,
     PutNotificationsPayloadValidator,
     ResolveNotificationPayloadValidator,
@@ -471,6 +480,107 @@ def resolve_notification(validated_payload):
         {
             "success": True,
             "message": "Notification resolved successfully",
+        }
+    )
+
+    return response, 200
+
+
+@notifications_bp.route("/action", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(PostActionPayloadValidator)
+@custom_permissions_required("ADMIN")
+def create_notification_via_action(validated_payload):
+    """
+    Create a Notification based on action
+    """
+
+    survey_uid = validated_payload.survey_uid.data
+    action = validated_payload.action.data
+    form_uid = validated_payload.form_uid.data
+
+    survey = Survey.query.filter(Survey.survey_uid == survey_uid).first()
+
+    if not survey:
+        return (
+            jsonify(
+                {
+                    "error": "Survey not found",
+                    "success": False,
+                }
+            ),
+            404,
+        )
+
+    notification_action = NotificationAction.query.filter(
+        NotificationAction.name == action
+    ).first()
+
+    if not notification_action:
+        return (
+            jsonify(
+                {
+                    "error": "Action not found",
+                    "success": False,
+                }
+            ),
+            404,
+        )
+
+    notification_template = NotificationTemplate.query.filter(
+        NotificationTemplate.notification_template_uid.in_(
+            notification_action.notification_template_list
+        )
+    ).all()
+
+    notification_created_flag = False
+    for template in notification_template:
+        if check_notification_conditions(
+            notification_action.module_id,
+            template.module_id,
+            survey_uid,
+            form_uid,
+        ):
+            message = notification_action.message + " " + template.message
+            notification = SurveyNotification(
+                survey_uid=survey_uid,
+                module_id=template.module_id,
+                resolution_status="in progress",
+                message=message,
+                severity=template.severity,
+            )
+
+            db.session.add(notification)
+            notification_created_flag = True
+
+    if not notification_created_flag:
+        return (
+            jsonify(
+                {
+                    "error": "No notification created for the action, conditions not met",
+                    "success": False,
+                }
+            ),
+            422,
+        )
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return (
+            jsonify(
+                {
+                    "error": str(e),
+                    "success": False,
+                }
+            ),
+            500,
+        )
+
+    response = jsonify(
+        {
+            "success": True,
+            "message": "Notification created successfully",
         }
     )
 

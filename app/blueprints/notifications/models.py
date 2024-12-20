@@ -1,4 +1,4 @@
-from sqlalchemy import CheckConstraint
+from sqlalchemy import CheckConstraint, UniqueConstraint
 
 from app import db
 from app.blueprints.auth.models import User
@@ -118,4 +118,95 @@ class UserNotification(db.Model):
             "resolution_status": self.resolution_status,
             "message": self.message,
             "created_at": self.created_at,
+        }
+
+
+class NotificationTemplate(db.Model):
+    __tablename__ = "notification_templates"
+
+    notification_template_uid = db.Column(
+        db.Integer, primary_key=True, autoincrement=True
+    )
+    module_id = db.Column(
+        db.Integer, db.ForeignKey(Module.module_id, ondelete="CASCADE"), nullable=False
+    )
+    name = db.Column(
+        db.Text,
+        nullable=False,
+    )
+    message = db.Column(
+        db.Text,
+        nullable=False,
+    )
+    severity = db.Column(
+        db.String(8),
+        CheckConstraint(
+            "severity IN ('alert','warning','error')",
+            name="ck_notification_templates_severity",
+        ),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint("module_id", "name", name="uc_notification_templates"),
+        {"schema": "webapp"},
+    )
+
+    def __init__(self, module_id, name, message, severity):
+        self.module_id = module_id
+        self.name = name
+        self.message = message
+        self.severity = severity
+
+    def to_dict(self):
+        return {
+            "template_uid": self.template_uid,
+            "module_id": self.module_id,
+            "name": self.name,
+            "message": self.message,
+            "severity": self.severity,
+        }
+
+
+class NotificationAction(db.Model):
+    __tablename__ = "notification_actions"
+
+    notification_action_uid = db.Column(
+        db.Integer, primary_key=True, autoincrement=True
+    )
+    module_id = db.Column(
+        db.Integer, db.ForeignKey(Module.module_id, ondelete="CASCADE"), nullable=False
+    )
+    name = db.Column(
+        db.Text,
+        nullable=False,
+    )
+    message = db.Column(
+        db.Text,
+        nullable=False,
+    )
+
+    notification_template_list = db.Column(
+        db.ARRAY(db.Integer),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint("module_id", "name", name="uc_notification_actions"),
+        {"schema": "webapp"},
+    )
+
+    def __init__(self, module_id, name, message, notification_template_list):
+        self.module_id = module_id
+        self.name = name
+        self.message = message
+        self.notification_template_list = notification_template_list
+
+    def to_dict(self):
+        return {
+            "notification_action_uid": self.notification_action_uid,
+            "module_id": self.module_id,
+            "name": self.name,
+            "message": self.message,
+            "notification_template_list": self.notification_template_list,
         }
