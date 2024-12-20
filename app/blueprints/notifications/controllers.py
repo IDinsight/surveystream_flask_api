@@ -553,6 +553,12 @@ def create_notification_via_action(validated_payload):
             db.session.add(notification)
             notification_created_flag = True
 
+            if template.severity == "error":
+                ModuleStatus.query.filter(
+                    ModuleStatus.module_id == template.module_id,
+                    ModuleStatus.survey_uid == survey_uid,
+                ).update({"config_status": "Error"})
+
     if not notification_created_flag:
         return (
             jsonify(

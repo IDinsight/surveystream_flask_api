@@ -122,6 +122,7 @@ class TestNotifications:
             "planned_start_date": "2021-01-01",
             "planned_end_date": "2021-12-31",
             "state": "Draft",
+            "prime_geo_level_uid": 1,
             "config_status": "In Progress - Configuration",
             "created_by_user_uid": test_user_credentials["user_uid"],
         }
@@ -303,7 +304,7 @@ class TestNotifications:
         yield
 
     @pytest.fixture()
-    def create_locations_for_targets_file(
+    def create_locations(
         self,
         client,
         login_test_user,
@@ -489,7 +490,7 @@ class TestNotifications:
         self,
         client,
         login_test_user,
-        create_locations_for_targets_file,
+        create_locations,
         create_target_config,
         csrf_token,
     ):
@@ -540,6 +541,63 @@ class TestNotifications:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def upload_enumerators_csv(
+        self, client, login_test_user, create_locations, csrf_token
+    ):
+        """
+        Insert enumerators
+        Include a custom field
+        Include a location id column that corresponds to the prime geo level for the survey (district)
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_small.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id1",
+                "name": "name1",
+                "email": "email1",
+                "mobile_primary": "mobile_primary1",
+                "language": "language1",
+                "home_address": "home_address1",
+                "gender": "gender1",
+                "enumerator_type": "enumerator_type1",
+                "location_id_column": "district_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary1",
+                    },
+                    {
+                        "field_label": "Age",
+                        "column_name": "age1",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
         assert response.status_code == 200
 
     @pytest.fixture()
@@ -1466,7 +1524,7 @@ class TestNotifications:
         checkdiff = jsondiff.diff(expected_response, response_json)
         assert checkdiff == {}
 
-    def test_create_action_notification(
+    def test_create_action_notification_no_enum(
         self, client, login_test_user, csrf_token, create_form, upload_targets_csv
     ):
         """
@@ -1532,6 +1590,109 @@ class TestNotifications:
                     "module_id": 5,
                     "type": "survey",
                     "notification_uid": 2,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Location hierarchy has been changed for this survey. Kindly reupload the locations data.",
+                },
+            ],
+        }
+
+        get_response_json = get_response.json
+
+        # Remove the created_at from the response for comparison
+        for notification in get_response_json.get("data", []):
+            if "created_at" in notification:
+                del notification["created_at"]
+            else:
+                print("Created_at missing in notification", notification)
+                assert False
+
+        checkdiff = jsondiff.diff(expected_get_response, get_response_json)
+        assert checkdiff == {}
+
+    def test_create_action_notification_all(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test create notification with targets, locations,enumerators data existing
+
+        Expect:
+            Notification created for targets, locations, enumerators
+        """
+        payload = {
+            "survey_uid": 1,
+            "action": "Location Hierarchy changed",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+        expected_response = {
+            "success": True,
+            "message": "Notification created successfully",
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+        query_string = {
+            "user_uid": 1,
+        }
+        get_response = client.get(
+            "/api/notifications",
+            query_string=query_string,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(get_response.json)
+        assert get_response.status_code == 200
+
+        expected_get_response = {
+            "success": True,
+            "data": [
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Enumerators",
+                    "module_id": 7,
+                    "type": "survey",
+                    "notification_uid": 1,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Location hierarchy has been changed for this survey. Kindly reupload the enumerators data.",
+                },
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Targets",
+                    "module_id": 8,
+                    "type": "survey",
+                    "notification_uid": 2,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Location hierarchy has been changed for this survey. Kindly reupload the targets data.",
+                },
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Survey locations",
+                    "module_id": 5,
+                    "type": "survey",
+                    "notification_uid": 3,
                     "severity": "error",
                     "resolution_status": "in progress",
                     "message": "Location hierarchy has been changed for this survey. Kindly reupload the locations data.",
