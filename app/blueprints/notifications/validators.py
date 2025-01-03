@@ -1,13 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import FieldList, FormField, IntegerField, StringField
+from wtforms import IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired
-
-
-class GetNotificationsQueryValidator(FlaskForm):
-    class Meta:
-        csrf = False
-
-    user_uid = StringField(validators=[DataRequired()])
 
 
 class PostNotificationsPayloadValidator(FlaskForm):

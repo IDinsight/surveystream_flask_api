@@ -675,12 +675,9 @@ class TestNotifications:
         create_form,
         csrf_token,
     ):
-        query_string = {
-            "user_uid": 1,
-        }
+
         response = client.get(
             "/api/notifications",
-            query_string=query_string,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -718,12 +715,8 @@ class TestNotifications:
         user_fixture, expected_permission = user_permissions
         request.getfixturevalue(user_fixture)
 
-        query_string = {
-            "user_uid": 1,
-        }
         response = client.get(
             "/api/notifications",
-            query_string=query_string,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
@@ -1067,7 +1060,6 @@ class TestNotifications:
 
         get_response = client.get(
             "/api/notifications",
-            query_string={"user_uid": 1},
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
