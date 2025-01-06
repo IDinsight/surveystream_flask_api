@@ -198,7 +198,9 @@ class TestDQ:
         """
 
         data = load_reference_data("scto-questions.json")
-        load_scto_questions(app, db, data["data"]["questions"])
+        repeat_group_questions = load_reference_data("scto-questions-repeatgroups.json")
+
+        load_scto_questions(app, db, data["data"]["questions"] + repeat_group_questions["data"]["questions"])
 
         yield
 
@@ -709,6 +711,10 @@ class TestDQ:
                             "outlier_metric": None,
                             "outlier_value": None,
                             "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
                         },
                     }
                 ],
@@ -910,6 +916,10 @@ class TestDQ:
                             "outlier_metric": None,
                             "outlier_value": None,
                             "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
                         },
                     }
                 ],
@@ -1105,6 +1115,10 @@ class TestDQ:
                             "outlier_metric": None,
                             "outlier_value": None,
                             "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
                         },
                     }
                 ],
@@ -1268,6 +1282,10 @@ class TestDQ:
                         "outlier_metric": None,
                         "outlier_value": None,
                         "spotcheck_score_name": None,
+                        "gps_type": None,
+                        "threshold": None,
+                        "gps_variable": None,
+                        "grid_id": None,
                     },
                 }
             ],
@@ -1481,6 +1499,10 @@ class TestDQ:
                             "outlier_metric": None,
                             "outlier_value": None,
                             "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
                         },
                     }
                 ],
@@ -1601,6 +1623,10 @@ class TestDQ:
                             "outlier_metric": None,
                             "outlier_value": None,
                             "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
                         },
                     }
                 ],
@@ -1777,6 +1803,10 @@ class TestDQ:
                             "outlier_metric": None,
                             "outlier_value": None,
                             "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
                         },
                     }
                 ],
@@ -1919,6 +1949,10 @@ class TestDQ:
                             "outlier_metric": None,
                             "outlier_value": None,
                             "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
                         },
                     }
                 ],
@@ -2066,6 +2100,10 @@ class TestDQ:
                             "outlier_metric": None,
                             "outlier_value": None,
                             "spotcheck_score_name": "probing_rate",
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
                         },
                     }
                 ],
@@ -2160,6 +2198,10 @@ class TestDQ:
                         "outlier_metric": None,
                         "outlier_value": None,
                         "spotcheck_score_name": "probing_rate",
+                        "gps_type": None,
+                        "threshold": None,
+                        "gps_variable": None,
+                        "grid_id": None,
                     },
                 }
             ],
@@ -2324,6 +2366,10 @@ class TestDQ:
                             "outlier_metric": None,
                             "outlier_value": None,
                             "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
                         },
                     }
                 ],
@@ -2468,6 +2514,10 @@ class TestDQ:
                             "outlier_metric": "interquartile_range",
                             "outlier_value": "1.5",
                             "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
                         },
                     }
                 ],
@@ -2487,3 +2537,249 @@ class TestDQ:
 
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
+    def test_add_dq_gps_check(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to add a DQ GPS check
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 10,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_gps_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "gps_type": "point2point",
+                "threshold": "50",
+                "gps_variable": "fac_4anc",
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "success": True,
+                "message": "Success",
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+            # Check if the GPS check was added
+            response = client.get(
+                "/api/dq/checks",
+                query_string={"form_uid": 1, "type_id": 10},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert response.status_code == 200
+            print(response.json)
+
+            expected_response = {
+                "data": [
+                    {
+                        "active": True,
+                        "all_questions": False,
+                        "dq_check_uid": 1,
+                        "filters": [],
+                        "flag_description": "test_gps_flag",
+                        "form_uid": 1,
+                        "module_name": "test_module",
+                        "question_name": "fac_4hb",
+                        "type_id": 10,
+                        "dq_scto_form_uid": None,
+                        "is_repeat_group": False,
+                        "note": None,
+                        "check_components": {
+                            "value": [],
+                            "hard_min": None,
+                            "hard_max": None,
+                            "soft_min": None,
+                            "soft_max": None,
+                            "outlier_metric": None,
+                            "outlier_value": None,
+                            "spotcheck_score_name": None,
+                            "gps_type": "point2point",
+                            "threshold": "50",
+                            "gps_variable": "fac_4anc",
+                            "grid_id": None,
+                        },
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_add_dq_gps_check_invalid_question(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        load_dq_scto_form_definition,
+    ):
+        """
+        Test the endpoint to add a DQ GPS check with invalid question name
+        """
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 10,
+            "all_questions": False,
+            "question_name": "randome_question",
+            "module_name": "test_module",
+            "flag_description": "test_gps_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "gps_type": "point2point",
+                "threshold": "50",
+                "gps_variable": "fac_4anc",
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 404
+        expected_response = {
+            "message": "Question name 'randome_question' not found in form definition. Active checks must have a valid question name.",
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_add_dq_gps_check_invalid_gps_variable(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        load_dq_scto_form_definition,
+    ):
+        """
+        Test the endpoint to add a DQ GPS check with invalid gps_variable question
+        """
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 10,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "",
+            "flag_description": "",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "gps_type": "point2point",
+                "threshold": "50",
+                "gps_variable": "randome_question",
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 404
+        expected_response = {
+            "message": "Question name 'randome_question' not found in form definition. Active checks must have a valid question name for GPS checks.",
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_add_dq_gps_check_is_repeat_group(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        load_dq_scto_form_definition,
+    ):
+        """
+        Test the endpoint to add a DQ GPS check with gps_variable question having is_repeat_group to true
+        """
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 10,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_gps_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "gps_type": "point2point",
+                "threshold": "50",
+                "gps_variable": "dummy_repeat",
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 404
+        expected_response = {
+            "message": "Question name 'dummy_repeat' is a repeat group question. GPS expected value cannot be a repeat group question.",
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
