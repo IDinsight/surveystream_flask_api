@@ -150,9 +150,9 @@ class TargetsUpload:
 
     def __get_col_names(self, csv_string):
         col_names = DictReader(io.StringIO(csv_string)).fieldnames
-        if len(col_names) == 0:
+        if not (col_names) or len(col_names) == 0:
             raise HeaderRowEmptyError(
-                "Column names were not found in the file. Make sure the first row of the file contains column names."
+                "Column names were not found in the data. Make sure the first row of the file contains column names."
             )
 
         return col_names
@@ -242,7 +242,7 @@ class TargetsUpload:
         for column_name in self.expected_columns:
             if file_columns.count(column_name) != 1:
                 file_structure_errors.append(
-                    f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} time(s) in the uploaded file. It should appear exactly once."
+                    f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} time(s) in the uploaded data. It should appear exactly once."
                 )
 
         if len(file_structure_errors) > 0:
@@ -313,7 +313,7 @@ class TargetsUpload:
             record_errors["summary_by_error_type"].append(
                 {
                     "error_type": "Duplicate rows",
-                    "error_message": f"The file has {len(duplicates_df)} duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
+                    "error_message": f"Data has {len(duplicates_df)} duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
                     "error_count": len(duplicates_df),
                     "row_numbers_with_errors": duplicates_df.index.to_list(),
                 }
@@ -342,8 +342,8 @@ class TargetsUpload:
         if len(duplicates_df) > 0:
             record_errors["summary_by_error_type"].append(
                 {
-                    "error_type": "Duplicate target_id's in file",
-                    "error_message": f"The file has {len(duplicates_df)} duplicate target_id(s). The following row numbers contain target_id duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
+                    "error_type": "Duplicate target_id",
+                    "error_message": f"Data has {len(duplicates_df)} duplicate target_id(s). The following row numbers contain target_id duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
                     "error_count": len(duplicates_df),
                     "row_numbers_with_errors": duplicates_df.index.to_list(),
                 }
@@ -382,7 +382,7 @@ class TargetsUpload:
                 record_errors["summary_by_error_type"].append(
                     {
                         "error_type": "Invalid location_id's",
-                        "error_message": f"The file contains {len(invalid_location_id_df)} location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: {', '.join(str(row_number) for row_number in invalid_location_id_df.index.to_list())}",
+                        "error_message": f"Data contains {len(invalid_location_id_df)} location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: {', '.join(str(row_number) for row_number in invalid_location_id_df.index.to_list())}",
                         "error_count": len(invalid_location_id_df),
                         "row_numbers_with_errors": invalid_location_id_df.index.to_list(),
                     }
