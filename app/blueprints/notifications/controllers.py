@@ -1,15 +1,10 @@
-from flask import jsonify
-
 from app.blueprints.module_selection.models import Module, ModuleStatus
 from app.blueprints.roles.models import Permission, Role, RolePermission, SurveyAdmin
 from app.blueprints.surveys.models import Survey
 from app.blueprints.user_management.models import User
-from app.utils.utils import (
-    custom_permissions_required,
-    logged_in_active_user_required,
-    validate_payload,
-    validate_query_params,
-)
+from app.utils.utils import logged_in_active_user_required, validate_payload
+from flask import jsonify
+from flask_login import current_user
 
 from .models import (
     NotificationAction,
@@ -21,7 +16,6 @@ from .models import (
 from .routes import notifications_bp
 from .utils import check_notification_conditions
 from .validators import (
-    GetNotificationsQueryValidator,
     PostActionPayloadValidator,
     PostNotificationsPayloadValidator,
     PutNotificationsPayloadValidator,
@@ -31,15 +25,14 @@ from .validators import (
 
 @notifications_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-@validate_query_params(GetNotificationsQueryValidator)
-def get_notifications(validated_query_params):
+def get_notifications():
     """
     Get all notification for a user.
     Collects all notificacations based on role of user.
 
     """
-    user_uid = validated_query_params.user_uid.data
-    user = User.query.filter(User.user_uid == user_uid).first()
+    user = current_user
+    user_uid = user.user_uid
 
     if not user:
         return (
