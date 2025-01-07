@@ -3,13 +3,6 @@ from wtforms import IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired
 
 
-class GetNotificationsQueryValidator(FlaskForm):
-    class Meta:
-        csrf = False
-
-    user_uid = StringField(validators=[DataRequired()])
-
-
 class PostNotificationsPayloadValidator(FlaskForm):
 
     def __init__(self, type=None, *args, **kwargs):
@@ -56,7 +49,8 @@ class PostNotificationsPayloadValidator(FlaskForm):
                 ["in progress", "done"],
                 message="Invalid Resolution Status valid values are in progress, done",
             ),
-        ]
+        ],
+        default="in progress",
     )
     message = StringField(validators=[DataRequired()])
 
@@ -88,3 +82,30 @@ class PutNotificationsPayloadValidator(FlaskForm):
         ]
     )
     message = StringField(validators=[DataRequired()])
+
+
+class ResolveNotificationPayloadValidator(FlaskForm):
+
+    type = StringField()
+    notification_uid = IntegerField()
+    survey_uid = IntegerField()
+    module_id = IntegerField()
+
+    def validate(self):
+        if not (self.type.data and self.notification_uid.data) and not (
+            self.survey_uid.data and self.module_id.data
+        ):
+            self.resolution_status.errors = "Either type and notification_uid or both survey_uid and module_id must be present."
+
+            return False
+        return super(ResolveNotificationPayloadValidator, self).validate()
+
+    resolution_status = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                ["in progress", "done"],
+                message="Invalid Resolution Status valid values are in progress, done",
+            ),
+        ],
+    )
