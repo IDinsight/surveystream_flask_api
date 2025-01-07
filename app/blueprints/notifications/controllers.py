@@ -1,10 +1,15 @@
+from flask import jsonify
+from flask_login import current_user
+
 from app.blueprints.module_selection.models import Module, ModuleStatus
 from app.blueprints.roles.models import Permission, Role, RolePermission, SurveyAdmin
 from app.blueprints.surveys.models import Survey
 from app.blueprints.user_management.models import User
-from app.utils.utils import logged_in_active_user_required, validate_payload
-from flask import jsonify
-from flask_login import current_user
+from app.utils.utils import (
+    custom_permissions_required,
+    logged_in_active_user_required,
+    validate_payload,
+)
 
 from .models import (
     NotificationAction,
