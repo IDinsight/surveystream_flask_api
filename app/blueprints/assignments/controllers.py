@@ -73,6 +73,47 @@ def view_assignments(validated_query_params):
 
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
+    # Check if the form has Targets or Enumerators, if not return a response saying targets are empty or enumerators are empty
+    if (
+        Target.query.filter(Target.form_uid == form_uid).first() is None
+        and Enumerator.query.filter(Enumerator.form_uid == form_uid).first() is None
+    ):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Targets and enumerators are not available for this form. Kindly upload targets and enumerators first.",
+                    },
+                }
+            ),
+            422,
+        )
+    elif Target.query.filter(Target.form_uid == form_uid).first() is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Targets are not available for this form. Kindly upload targets first.",
+                    },
+                }
+            ),
+            422,
+        )
+    elif Enumerator.query.filter(Enumerator.form_uid == form_uid).first() is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
+                    },
+                }
+            ),
+            422,
+        )
+
     # We need to get the bottom level geo level UID for the survey in order to join in the location information
     # Only do this if the targets have locations
     if (
@@ -988,34 +1029,34 @@ def schedule_assignments_email(validated_payload):
     """Function to schedule assignment emails"""
 
     form_uid = validated_payload.form_uid.data
+    email_config_uid = validated_payload.email_config_uid.data
 
-    # Find the assignments email_config_uid using the form_uid - if none create one
-
+    # Check if the email configuration exists for the form
     email_config = EmailConfig.query.filter(
-        func.lower(EmailConfig.config_name) == "assignments",
+        EmailConfig.email_config_uid == email_config_uid,
         EmailConfig.form_uid == form_uid,
     ).first()
 
     if email_config is None:
-        try:
-            email_config = EmailConfig(
-                config_name="assignments",
-                form_uid=form_uid,
-                email_source="SurveyStream Data",
-            )
-            db.session.add(email_config)
-            db.session.flush()
-        except IntegrityError:
-            db.session.rollback()
-            email_config = EmailConfig.query.filter(
-                func.lower(EmailConfig.config_name) == "assignments", form_uid=form_uid
-            ).first()
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "email_config_uid": [
+                            "Email configuration with the provided email_config_uid does not exist for the given form_uid"
+                        ],
+                    },
+                }
+            ),
+            422,
+        )
 
     time_str = validated_payload.time.data
     time_obj = datetime.strptime(time_str, "%H:%M").time()
 
     new_trigger = ManualEmailTrigger(
-        email_config_uid=email_config.email_config_uid,
+        email_config_uid=email_config_uid,
         date=validated_payload.date.data,
         time=time_obj,
         recipients=validated_payload.recipients.data,

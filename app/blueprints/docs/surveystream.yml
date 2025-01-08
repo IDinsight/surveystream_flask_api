@@ -6919,7 +6919,36 @@ paths:
           description: Form not found
         "422":
           description: Form errors
-  
+    delete:
+      summary: Delete targets
+      description: Delete targets for given form_uid
+      tags:
+        - Targets
+      parameters:
+        - in: query
+          name: form_uid
+          schema:
+            type: integer
+          description: Unique ID of the form
+          required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the request was successful
+                  message:
+                    type: string
+                    description: Targets deleted
+        "400":
+          description: Form ID is required
+
+   
   /targets/config:
     get:
       summary: Get the targets config for a form
@@ -11887,6 +11916,14 @@ paths:
                             type: string
                             description: Survey ID
                             example: "test_survey"
+                          survey_uid:
+                            type: integer
+                            description: Survey UID
+                            example: 1
+                          module_id:
+                            type: integer
+                            description: Module ID
+                            example: 1
                           module_name:
                             type: string
                             description: Module Name
@@ -12076,3 +12113,63 @@ paths:
                         created_at:
                           type: Datetime
                           description: Notification timestamp in UTC
+    patch:
+      summary: Resolve Notifications for a user/survey
+      tags:
+        - Notifications
+      parameters:
+        - name: type
+          in: body
+          description: Notification Type - user or survey
+          required: true
+          schema:
+            type: string
+        - name : notification_uid
+          in: body
+          description: Unique identifier for the notification_uid
+          required: false
+          schema:
+            type: integer
+        - name : resolution_status
+          in: body
+          description: Resolution status - in progress OR done
+          required: true
+          schema:
+            type: string
+            default: in progress
+        - name: survey_uid
+          in: body
+          description: Unique identifier for the survey
+          required: false
+          schema:
+            type: integer
+        - name: module_id
+          in: body
+          description: Unique identifier for the module
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+            description: Successfully updated notification
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example:  "Notification resolved successfully"
+        "404":
+          description: Notification UID Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false

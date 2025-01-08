@@ -88,12 +88,16 @@ def get_dq_config(validated_query_params):
                     and_(
                         DQCheckFilters.question_name == SCTOQuestion.question_name,
                         DQCheck.form_uid == SCTOQuestion.form_uid,
-                        DQCheck.type_id.notin_([8, 9]),
+                        DQCheck.type_id.notin_(
+                            [7, 8, 9]
+                        ),  # For all checks, question name in filters is from main form
                     ),
                     and_(
                         DQCheckFilters.question_name == SCTOQuestion.question_name,
                         DQCheck.dq_scto_form_uid == SCTOQuestion.form_uid,
-                        DQCheck.type_id.in_([7, 8, 9]),
+                        DQCheck.type_id.in_(
+                            [7, 8, 9]
+                        ),  # For mismatch, protocol and spotcheck, question name in filters is from DQ form
                     ),
                 ),
             )
@@ -104,24 +108,43 @@ def get_dq_config(validated_query_params):
     )
 
     # Get checks that are invalid because the question is not found in the form definition
-    question_invalid_subquery = (
+    main_form_question_invalid_subquery = (
         db.session.query(DQCheck.dq_check_uid)
         .outerjoin(
             SCTOQuestion,
-            or_(
-                and_(
-                    DQCheck.type_id.notin_([8, 9]),
-                    DQCheck.question_name == SCTOQuestion.question_name,
-                    SCTOQuestion.form_uid == form_uid,
-                ),
-                and_(
-                    DQCheck.type_id.in_([7, 8, 9]),
-                    DQCheck.question_name == SCTOQuestion.question_name,
-                    SCTOQuestion.form_uid == DQCheck.dq_scto_form_uid,
-                ),
+            and_(
+                DQCheck.question_name == SCTOQuestion.question_name,
+                DQCheck.form_uid == SCTOQuestion.form_uid,
             ),
         )
-        .filter(SCTOQuestion.question_name == None, DQCheck.all_questions == False)
+        .filter(
+            DQCheck.type_id.notin_(
+                [8, 9]
+            ),  # For all checks other than protocol and spotcheck, question name is from the main form
+            SCTOQuestion.question_name == None,
+            DQCheck.all_questions == False,
+            DQCheck.form_uid == form_uid,
+        )
+        .distinct()
+        .subquery()
+    )
+
+    dq_form_question_invalid_subquery = (
+        db.session.query(DQCheck.dq_check_uid)
+        .outerjoin(
+            SCTOQuestion,
+            and_(
+                DQCheck.question_name == SCTOQuestion.question_name,
+                SCTOQuestion.form_uid == DQCheck.dq_scto_form_uid,
+                DQCheck.form_uid == form_uid,
+            ),
+        )
+        .filter(
+            DQCheck.type_id.in_([7, 8, 9]),
+            SCTOQuestion.question_name == None,
+            DQCheck.all_questions == False,
+            DQCheck.form_uid == form_uid,
+        )
         .distinct()
         .subquery()
     )
@@ -138,8 +161,9 @@ def get_dq_config(validated_query_params):
                 [
                     (
                         (DQCheck.active == True)
-                        & (question_invalid_subquery.c.dq_check_uid == None)
-                        & (filter_invalid_subquery.c.dq_check_uid == None),
+                        & (main_form_question_invalid_subquery.c.dq_check_uid == None)
+                        & (filter_invalid_subquery.c.dq_check_uid == None)
+                        & (dq_form_question_invalid_subquery.c.dq_check_uid == None),
                         True,
                     )
                 ],
@@ -147,12 +171,16 @@ def get_dq_config(validated_query_params):
             ).label("active"),
         )
         .outerjoin(
-            question_invalid_subquery,
-            DQCheck.dq_check_uid == question_invalid_subquery.c.dq_check_uid,
+            main_form_question_invalid_subquery,
+            DQCheck.dq_check_uid == main_form_question_invalid_subquery.c.dq_check_uid,
         )
         .outerjoin(
             filter_invalid_subquery,
             DQCheck.dq_check_uid == filter_invalid_subquery.c.dq_check_uid,
+        )
+        .outerjoin(
+            dq_form_question_invalid_subquery,
+            DQCheck.dq_check_uid == dq_form_question_invalid_subquery.c.dq_check_uid,
         )
         .filter(DQCheck.form_uid == form_uid)
         .subquery()
@@ -388,14 +416,28 @@ def get_dq_checks(validated_query_params):
         for filter_group in filter_list:
             for filter_item in filter_group["filter_group"]:
                 filter_question_found = False
-                for question in scto_questions:
-                    if question.question_name == filter_item["question_name"]:
-                        filter_question_found = True
-                        if question.is_repeat_group:
-                            filter_item["is_repeat_group"] = True
-                        else:
-                            filter_item["is_repeat_group"] = False
-                        break
+
+                if type_id not in [7, 8, 9]:
+                    for question in scto_questions:
+                        if question.question_name == filter_item["question_name"]:
+                            filter_question_found = True
+                            if question.is_repeat_group:
+                                filter_item["is_repeat_group"] = True
+                            else:
+                                filter_item["is_repeat_group"] = False
+                            break
+                else:
+                    for question in dq_scto_questions:
+                        if (
+                            question.question_name == filter_item["question_name"]
+                            and question.form_uid == check.dq_scto_form_uid
+                        ):
+                            filter_question_found = True
+                            if question.is_repeat_group:
+                                filter_item["is_repeat_group"] = True
+                            else:
+                                filter_item["is_repeat_group"] = False
+                            break
 
                 if not filter_question_found:
                     check_dict["active"] = False
@@ -613,10 +655,22 @@ def activate_dq_checks(validated_payload):
     invalid_checks = []
 
     for dq_check in dq_checks:
-        if not dq_check.all_questions:
-            # Check if the question is available in the form definition
+        if type_id not in [8, 9]:
+            if not dq_check.all_questions:
+                # Check if the question is available in the form definition
+                scto_question = SCTOQuestion.query.filter(
+                    SCTOQuestion.form_uid == form_uid,
+                    SCTOQuestion.question_name == dq_check.question_name,
+                ).first()
+
+                if scto_question is None:
+                    invalid_checks.append(dq_check.dq_check_uid)
+                    continue
+
+        if type_id in [7, 8, 9]:
+            # Check if the question is available in the DQ form definition
             scto_question = SCTOQuestion.query.filter(
-                SCTOQuestion.form_uid == form_uid,
+                SCTOQuestion.form_uid == dq_check.dq_scto_form_uid,
                 SCTOQuestion.question_name == dq_check.question_name,
             ).first()
 
@@ -630,13 +684,20 @@ def activate_dq_checks(validated_payload):
 
         # Check if all questions used in filters are valid
         for filter_item in filters:
-            scto_question = SCTOQuestion.query.filter(
-                SCTOQuestion.form_uid == form_uid,
-                SCTOQuestion.question_name == filter_item.question_name,
-            ).first()
+            if type_id not in [7, 8, 9]:
+                scto_question = SCTOQuestion.query.filter(
+                    SCTOQuestion.form_uid == form_uid,
+                    SCTOQuestion.question_name == filter_item.question_name,
+                ).first()
+            else:
+                scto_question = SCTOQuestion.query.filter(
+                    SCTOQuestion.form_uid == dq_check.dq_scto_form_uid,
+                    SCTOQuestion.question_name == filter_item.question_name,
+                ).first()
 
             if scto_question is None:
                 invalid_checks.append(dq_check.dq_check_uid)
+                continue
 
     if len(invalid_checks) > 0:
         return (

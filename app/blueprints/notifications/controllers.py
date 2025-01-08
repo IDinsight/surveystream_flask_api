@@ -1,35 +1,31 @@
 from flask import jsonify
+from flask_login import current_user
 
-from app.blueprints.module_selection.models import Module
+from app.blueprints.module_selection.models import Module, ModuleStatus
 from app.blueprints.roles.models import Permission, Role, RolePermission, SurveyAdmin
 from app.blueprints.surveys.models import Survey
 from app.blueprints.user_management.models import User
-from app.utils.utils import (
-    logged_in_active_user_required,
-    validate_payload,
-    validate_query_params,
-)
+from app.utils.utils import logged_in_active_user_required, validate_payload
 
 from .models import SurveyNotification, UserNotification, db
 from .routes import notifications_bp
 from .validators import (
-    GetNotificationsQueryValidator,
     PostNotificationsPayloadValidator,
     PutNotificationsPayloadValidator,
+    ResolveNotificationPayloadValidator,
 )
 
 
 @notifications_bp.route("", methods=["GET"])
 @logged_in_active_user_required
-@validate_query_params(GetNotificationsQueryValidator)
-def get_notifications(validated_query_params):
+def get_notifications():
     """
     Get all notification for a user.
     Collects all notificacations based on role of user.
 
     """
-    user_uid = validated_query_params.user_uid.data
-    user = User.query.filter(User.user_uid == user_uid).first()
+    user = current_user
+    user_uid = user.user_uid
 
     if not user:
         return (
@@ -64,6 +60,7 @@ def get_notifications(validated_query_params):
             db.session.query(
                 SurveyNotification,
                 Survey.survey_id,
+                Module.module_id,
                 Module.name.label("module_name"),
             )
             .join(Survey, Survey.survey_uid == SurveyNotification.survey_uid)
@@ -74,7 +71,9 @@ def get_notifications(validated_query_params):
         survey_notifications_dict = [
             {
                 "survey_id": notification.survey_id,
+                "survey_uid": notification.SurveyNotification.survey_uid,
                 "module_name": notification.module_name,
+                "module_id": notification.module_id,
                 "type": "survey",
                 **notification.SurveyNotification.to_dict(),
             }
@@ -96,6 +95,7 @@ def get_notifications(validated_query_params):
                 db.session.query(
                     SurveyNotification,
                     Survey.survey_id,
+                    Module.module_id,
                     Module.name.label("module_name"),
                 )
                 .join(Survey, Survey.survey_uid == SurveyNotification.survey_uid)
@@ -107,7 +107,9 @@ def get_notifications(validated_query_params):
             survey_notifications_dict += [
                 {
                     "survey_id": notification.survey_id,
+                    "survey_uid": notification.SurveyNotification.survey_uid,
                     "module_name": notification.module_name,
+                    "module_id": notification.module_id,
                     "type": "survey",
                     **notification.SurveyNotification.to_dict(),
                 }
@@ -118,6 +120,7 @@ def get_notifications(validated_query_params):
             db.session.query(
                 SurveyNotification,
                 Survey.survey_id,
+                Module.module_id,
                 Module.name.label("module_name"),
             )
             .select_from(SurveyNotification)
@@ -142,7 +145,9 @@ def get_notifications(validated_query_params):
         survey_notifications_dict += [
             {
                 "survey_id": notification.survey_id,
+                "survey_uid": notification.SurveyNotification.survey_uid,
                 "module_name": notification.module_name,
+                "module_id": notification.module_id,
                 "type": "survey",
                 **notification.SurveyNotification.to_dict(),
             }
@@ -211,6 +216,15 @@ def post_notifications(validated_payload):
         )
 
         db.session.add(notification)
+
+        if (
+            validated_payload.severity.data == "error"
+            and validated_payload.resolution_status.data != "done"
+        ):
+            ModuleStatus.query.filter(
+                ModuleStatus.module_id == module_id,
+                ModuleStatus.survey_uid == survey_uid,
+            ).update({"config_status": "Error"})
 
     else:
         user_uid = validated_payload.user_uid.data
@@ -292,6 +306,17 @@ def put_notifications(validated_payload):
         survey_notification.message = validated_payload.message.data
         notification = survey_notification
 
+        if validated_payload.severity.data == "error":
+            config_status = (
+                "Error"
+                if validated_payload.resolution_status.data != "done"
+                else "Done"
+            )
+            ModuleStatus.query.filter(
+                ModuleStatus.module_id == notification.module_id,
+                ModuleStatus.survey_uid == notification.survey_uid,
+            ).update({"config_status": config_status})
+
     else:
         user_notification = UserNotification.query.filter(
             UserNotification.notification_uid == notification_uid
@@ -333,6 +358,114 @@ def put_notifications(validated_payload):
             "success": True,
             "message": "Notification updated successfully",
             "data": notification.to_dict(),
+        }
+    )
+
+    return response, 200
+
+
+@notifications_bp.route("", methods=["PATCH"])
+@logged_in_active_user_required
+@validate_payload(ResolveNotificationPayloadValidator)
+def resolve_notification(validated_payload):
+    """
+    Resolve a notification based on type
+    """
+
+    type = validated_payload.type.data
+    notification_uid = validated_payload.notification_uid.data
+    survey_uid = validated_payload.survey_uid.data
+    module_id = validated_payload.module_id.data
+    resolution_status = validated_payload.resolution_status.data
+
+    if not (type and notification_uid) and not (survey_uid and module_id):
+        return (
+            jsonify(
+                {
+                    "error": "Either notification_uid or both survey_uid and module_id must be present.",
+                    "success": False,
+                }
+            ),
+            404,
+        )
+
+    if notification_uid:
+        if type == "survey":
+            notification = SurveyNotification.query.filter(
+                SurveyNotification.notification_uid == notification_uid
+            ).first()
+
+            if not notification:
+                return (
+                    jsonify(
+                        {
+                            "error": "Notification not found",
+                            "success": False,
+                        }
+                    ),
+                    404,
+                )
+            if resolution_status == "done":
+
+                ModuleStatus.query.filter(
+                    ModuleStatus.module_id == notification.module_id,
+                    ModuleStatus.survey_uid == notification.survey_uid,
+                    ModuleStatus.config_status == "Error",
+                ).update({"config_status": "Done"})
+
+        elif type == "user":
+            notification = UserNotification.query.filter(
+                UserNotification.notification_uid == notification_uid
+            ).first()
+
+            if not notification:
+                return (
+                    jsonify(
+                        {
+                            "error": "Notification not found",
+                            "success": False,
+                        }
+                    ),
+                    404,
+                )
+
+        notification.resolution_status = resolution_status
+
+    else:
+        survey_notifications = SurveyNotification.query.filter(
+            SurveyNotification.survey_uid == survey_uid,
+            SurveyNotification.module_id == module_id,
+        ).all()
+
+        for survey_notification in survey_notifications:
+            survey_notification.resolution_status = resolution_status
+
+        if resolution_status == "done":
+
+            ModuleStatus.query.filter(
+                ModuleStatus.module_id == module_id,
+                ModuleStatus.survey_uid == survey_uid,
+                ModuleStatus.config_status == "Error",
+            ).update({"config_status": "Done"})
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return (
+            jsonify(
+                {
+                    "error": str(e),
+                    "success": False,
+                }
+            ),
+            500,
+        )
+
+    response = jsonify(
+        {
+            "success": True,
+            "message": "Notification resolved successfully",
         }
     )
 
