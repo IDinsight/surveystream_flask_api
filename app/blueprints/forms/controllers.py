@@ -671,6 +671,8 @@ def ingest_scto_form_definition(form_uid):
                 question_type=questions_dict["type"].strip().lower(),
                 list_uid=list_uid,
                 is_repeat_group=is_repeat_group,
+                is_required=questions_dict.get("required", "No").strip().lower()
+                == "yes",
             )
             db.session.add(scto_question)
 
@@ -832,6 +834,7 @@ def get_scto_form_definition(form_uid, validated_query_params):
                         "question_type": "text",
                         "list_uid": None,
                         "is_repeat_group": False,
+                        "is_required": False,
                     }
                 )
 

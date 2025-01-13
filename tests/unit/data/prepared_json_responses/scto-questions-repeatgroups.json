@@ -7,7 +7,8 @@
                 "list_uid": null,
                 "question_name": "dummy_repeat",
                 "question_type": "select_one yesno",
-                "question_uid": 72
+                "question_uid": 72,
+                "is_required": false
             }
         ],
         "settings": {

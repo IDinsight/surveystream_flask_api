@@ -356,18 +356,26 @@ class SCTOQuestion(db.Model):
     question_type = db.Column(db.String(), nullable=False)
     list_uid = db.Column(db.Integer(), db.ForeignKey(SCTOChoiceList.list_uid))
     is_repeat_group = db.Column(db.Boolean(), nullable=False)
+    is_required = db.Column(db.Boolean(), default=False)
     forms = db.relationship(
         Form, backref=backref("scto_form_questions", passive_deletes=True)
     )
 
     def __init__(
-        self, form_uid, question_name, question_type, list_uid, is_repeat_group
+        self,
+        form_uid,
+        question_name,
+        question_type,
+        list_uid,
+        is_repeat_group,
+        is_required,
     ):
         self.form_uid = form_uid
         self.question_name = question_name
         self.question_type = question_type
         self.list_uid = list_uid
         self.is_repeat_group = is_repeat_group
+        self.is_required = is_required
 
     def to_dict(self):
         return {
@@ -377,6 +385,7 @@ class SCTOQuestion(db.Model):
             "question_type": self.question_type,
             "list_uid": self.list_uid,
             "is_repeat_group": self.is_repeat_group,
+            "is_required": self.is_required,
         }
 
 
