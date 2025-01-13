@@ -356,7 +356,7 @@ class SCTOQuestion(db.Model):
     question_type = db.Column(db.String(), nullable=False)
     list_uid = db.Column(db.Integer(), db.ForeignKey(SCTOChoiceList.list_uid))
     is_repeat_group = db.Column(db.Boolean(), nullable=False)
-    is_required = db.Column(db.Boolean(), default=False)
+    is_required = db.Column(db.Boolean(), server_default="false")
     forms = db.relationship(
         Form, backref=backref("scto_form_questions", passive_deletes=True)
     )
