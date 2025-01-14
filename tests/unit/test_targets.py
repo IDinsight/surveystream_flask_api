@@ -1149,6 +1149,14 @@ class TestTargets:
             assert get_targets_response.status_code == 200
             assert get_targets_response.json == expected_response
 
+            # Check if the targets loaded time is updated in the database
+            get_target_config = client.get(
+                "/api/targets/config", query_string={"form_uid": 1}
+            )
+            print(get_target_config.json)
+            assert get_target_config.status_code == 200
+            assert get_target_config.json["data"]["targets_last_uploaded"] is not None
+            assert True == False
         else:
             assert response.status_code == 403
 

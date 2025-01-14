@@ -468,6 +468,10 @@ def upload_targets(validated_query_params, validated_payload):
             column_mapping,
             validated_payload.mode.data,
         )
+        TargetConfig.query.filter_by(form_uid=form_uid).update(
+            {TargetConfig.targets_last_uploaded: func.now()},
+        )
+        db.session.commit()
 
     except IntegrityError as e:
         db.session.rollback()
