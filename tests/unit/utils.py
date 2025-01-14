@@ -251,12 +251,13 @@ def load_scto_questions(app, db, scto_questions_json):
     with app.app_context():
         for question in scto_questions_json:
             db.session.execute(
-                "INSERT INTO webapp.scto_form_questions (form_uid, question_name, question_type, is_repeat_group) VALUES (:form_uid, :question_name, :question_type, :is_repeat_group) ON CONFLICT DO NOTHING",
+                "INSERT INTO webapp.scto_form_questions (form_uid, question_name, question_type, is_repeat_group, is_required) VALUES (:form_uid, :question_name, :question_type, :is_repeat_group, :is_required) ON CONFLICT DO NOTHING",
                 {
                     "form_uid": question["form_uid"],
                     "question_name": question["question_name"],
                     "question_type": question["question_type"],
                     "is_repeat_group": question["is_repeat_group"],
+                    "is_required": question["is_required"],
                 },
             )
         db.session.commit()
