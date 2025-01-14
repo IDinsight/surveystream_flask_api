@@ -228,7 +228,7 @@ class NotificationActionMapping(db.Model):
         UniqueConstraint(
             "notification_action_uid",
             "notification_template_uid",
-            name="uc_notification_mappings",
+            name="uc_notification_action_mappings",
         ),
         {"schema": "webapp"},
     )

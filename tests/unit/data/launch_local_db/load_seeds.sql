@@ -4,4 +4,4 @@ COPY webapp.default_target_status_mapping (surveying_method,survey_status,survey
 COPY webapp.dq_check_types (type_id,name,abbr) FROM '/docker-entrypoint-initdb.d/data/dq_check_types.csv' DELIMITER ',' CSV HEADER;
 COPY webapp.notification_templates (module_id,name,message,severity) FROM '/docker-entrypoint-initdb.d/data/notification_templates.csv' DELIMITER ',' CSV HEADER;
 COPY webapp.notification_actions (module_id,name,message) FROM '/docker-entrypoint-initdb.d/data/notification_actions.csv' DELIMITER ',' CSV HEADER;
-COPY webapp.notification_action_mappings (notification_action_uid,notification_template_uid,condition) FROM '/docker-entrypoint-initdb.d/data/notification_mappings.csv' DELIMITER ',' CSV HEADER;
+COPY webapp.notification_action_mappings (notification_action_uid,notification_template_uid,condition) FROM '/docker-entrypoint-initdb.d/data/notification_action_mappings.csv' DELIMITER ',' CSV HEADER;
