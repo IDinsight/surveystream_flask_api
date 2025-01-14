@@ -1,4 +1,4 @@
 module_id,name,message,severity
-7,Reupload Enumerators,Kindly reupload the enumerators data.,error
-8,Reupload Targets,Kindly reupload the targets data.,error
-5,Reupload Locations,Kindly reupload the locations data.,error
+7,Reupload enumerators,Kindly reupload the enumerators data.,error
+8,Reupload targets,Kindly reupload the targets data.,error
+5,Reupload locations,Kindly reupload the locations data.,error

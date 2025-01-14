@@ -1,81 +1,107 @@
 from app.blueprints.enumerators.models import Enumerator
 from app.blueprints.locations.models import Location
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
+from app.blueprints.surveys.models import Survey
 from app.blueprints.targets.models import Target, TargetConfig
 
+from .models import SurveyNotification
 
-def check_notification_conditions(
-    action_module_id, notification_module_id, survey_uid, form_uid
-):
+
+def check_module_notification_exists(survey_uid, module_id, severity):
     """
-    Check if the notification conditions are met.
+    Check if a notification exists for a module
 
     Args:
-        action_module_id (int): Module ID which created the action.
-        notification_module_id (int): Module ID for which we need to create a notification.
-        survey_uid (str): Unique identifier for the survey.
-        form_uid (str): Unique identifier for the form.
-
-    Returns:
-        bool: True if conditions are met, False otherwise.
+        survey_uid: UID of survey
+        module_id: ID of module
+        severity: Severity of notification
     """
+    return (
+        SurveyNotification.query.filter_by(
+            survey_uid=survey_uid,
+            module_id=module_id,
+            severity=severity,
+            resolution_status="in progress",
+        ).first()
+        is not None
+    )
 
-    # Base condition
-    # Default condition to check for a module before raising any notification for it
-    base_condition = True
 
-    # Additional condition
-    # Additional condition to check for inter-module dependencies before raising any notification
-    additional_condition = True
+def check_notification_condition(survey_uid, form_uid, input_conditions):
+    """
+    Match notification conditions according to survey configuration and dependency conditions
 
-    # Locations Module
-    if notification_module_id == 5:
-        # Check if the survey has locations data
-        base_condition = (
-            Location.query.filter_by(survey_uid=survey_uid).first() is not None
-        )
+    Args:
+        survey_uid: UID of surveys
+        form_uid: UID of form
+        input_conditions: List of Notification conditions
+    """
+    if input_conditions is None or len(input_conditions) == 0:
+        return True
 
-    # Enumerator Module
-    elif notification_module_id == 7:
-        # Check if the survey has enumerator data
-        base_condition = (
-            Enumerator.query.filter_by(form_uid=form_uid).first() is not None
-        )
+    condition_checks = {
+        "location_exists": lambda: check_location_exists(survey_uid),
+        "enumerator_exists": lambda: check_enumerator_exists(form_uid),
+        "target_exists": lambda: check_target_exists(form_uid),
+        "target_source_scto": lambda: check_target_source(form_uid, "scto"),
+        "target_source_csv": lambda: check_target_source(form_uid, "csv"),
+        "prime_geo_level_exists": lambda: check_prime_geo_level_exists(),
+        "surveyor_location_mapping": lambda: check_surveyor_location_mapping(
+            survey_uid
+        ),
+        "target_location_mapping": lambda: check_target_location_mapping(survey_uid),
+    }
 
-    # Target Module
-    elif notification_module_id == 8:
-        # Check if the survey has target data
-        # Check if the target source is set as csv for the survey
-        base_condition = (
-            Target.query.filter_by(form_uid=form_uid).first() is not None
-            and TargetConfig.query.filter_by(
-                form_uid=form_uid, target_source="csv"
-            ).first()
-            is not None
-        )
+    survey_conditions = {
+        condition: condition_checks[condition]()
+        for condition in input_conditions
+        if condition in condition_checks
+    }
 
-    # Additional conditions for Locations Module
-    if action_module_id == 5:
-        # Enumerator Module
-        if notification_module_id == 7:
-            # Check if surveyor mapping criteria includes location for the survey
-            additional_condition = (
-                ModuleQuestionnaire.query.filter(
-                    ModuleQuestionnaire.survey_uid == survey_uid,
-                    ModuleQuestionnaire.surveyor_mapping_criteria.any("Location"),
-                ).first()
-                is not None
-            )
+    return all(survey_conditions.values())
 
-        # Target Module
-        elif notification_module_id == 8:
-            # Check if target mapping criteria includes location for the survey
-            additional_condition = (
-                ModuleQuestionnaire.query.filter(
-                    ModuleQuestionnaire.survey_uid == survey_uid,
-                    ModuleQuestionnaire.target_mapping_criteria.any("Location"),
-                ).first()
-                is not None
-            )
 
-    return base_condition and additional_condition
+# Helper functions to check conditions
+
+
+def check_location_exists(survey_uid):
+    return Location.query.filter_by(survey_uid=survey_uid).first() is not None
+
+
+def check_enumerator_exists(form_uid):
+    return Enumerator.query.filter_by(form_uid=form_uid).first() is not None
+
+
+def check_target_exists(form_uid):
+    return Target.query.filter_by(form_uid=form_uid).first() is not None
+
+
+def check_target_source(form_uid, source):
+    return (
+        TargetConfig.query.filter_by(form_uid=form_uid, target_source=source).first()
+        is not None
+    )
+
+
+def check_prime_geo_level_exists():
+    return Survey.query.filter_by().first().prime_geo_level_uid is not None
+
+
+def check_surveyor_location_mapping(survey_uid):
+    return (
+        ModuleQuestionnaire.query.filter(
+            ModuleQuestionnaire.survey_uid == survey_uid,
+            ModuleQuestionnaire.surveyor_mapping_criteria.any("Location"),
+        ).first()
+        is not None
+    )
+
+
+def check_target_location_mapping(survey_uid):
+    return (
+        ModuleQuestionnaire.query.filter(
+            ModuleQuestionnaire.survey_uid == survey_uid,
+            ModuleQuestionnaire.target_mapping_criteria.any("Location"),
+        ).first()
+        is not None
+    )

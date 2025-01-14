@@ -1,4 +1,4 @@
-module_id,name,message,notification_template_list
-5,Locations Reuploaded,Locations data has been reuploaded for this survey.,"{1,2}"
-5,Location Hierarchy changed,Location hierarchy has been changed for this survey.,"{1,2,3}"
-5,Location Level added,New location levels has been added for this survey.,"{1,2,3}"
+module_id,name,message
+5,Locations reuploaded,Locations data has been reuploaded for this survey.
+5,Location hierarchy changed,Location hierarchy has been changed for this survey.
+5,Location level added,New location levels has been added for this survey.

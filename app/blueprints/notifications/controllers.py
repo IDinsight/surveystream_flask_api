@@ -13,13 +13,14 @@ from app.utils.utils import (
 
 from .models import (
     NotificationAction,
+    NotificationActionMapping,
     NotificationTemplate,
     SurveyNotification,
     UserNotification,
     db,
 )
 from .routes import notifications_bp
-from .utils import check_notification_conditions
+from .utils import check_module_notification_exists, check_notification_condition
 from .validators import (
     PostActionPayloadValidator,
     PostNotificationsPayloadValidator,
@@ -525,35 +526,52 @@ def create_notification_via_action(validated_payload):
             404,
         )
 
-    notification_template = NotificationTemplate.query.filter(
-        NotificationTemplate.notification_template_uid.in_(
-            notification_action.notification_template_list
+    notification_template = (
+        db.session.query(NotificationTemplate, NotificationActionMapping.condition)
+        .join(
+            NotificationActionMapping,
+            NotificationTemplate.notification_template_uid
+            == NotificationActionMapping.notification_template_uid,
         )
-    ).all()
+        .filter(
+            NotificationActionMapping.notification_action_uid
+            == notification_action.notification_action_uid
+        )
+        .all()
+    )
+    notification_templates = [
+        {
+            **template.NotificationTemplate.to_dict(),
+            "condition": template.condition,
+        }
+        for template in notification_template
+    ]
 
     notification_created_flag = False
-    for template in notification_template:
-        if check_notification_conditions(
-            notification_action.module_id,
-            template.module_id,
+    for template in notification_templates:
+        if check_notification_condition(
             survey_uid,
             form_uid,
+            template["condition"],
+        ) and not check_module_notification_exists(
+            survey_uid, template["module_id"], template["severity"]
         ):
-            message = notification_action.message + " " + template.message
+
+            message = notification_action.message + " " + template["message"]
             notification = SurveyNotification(
                 survey_uid=survey_uid,
-                module_id=template.module_id,
+                module_id=template["module_id"],
                 resolution_status="in progress",
                 message=message,
-                severity=template.severity,
+                severity=template["severity"],
             )
 
             db.session.add(notification)
             notification_created_flag = True
 
-            if template.severity == "error":
+            if template["severity"] == "error":
                 ModuleStatus.query.filter(
-                    ModuleStatus.module_id == template.module_id,
+                    ModuleStatus.module_id == template["module_id"],
                     ModuleStatus.survey_uid == survey_uid,
                 ).update({"config_status": "Error"})
 

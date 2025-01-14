@@ -1,0 +1,5 @@
+notification_action_uid,notification_template_uid,condition
+1,1,"{enumerator_exists,surveyor_location_mapping}"
+1,2,"{target_exists,target_location_mapping,target_source_csv}"
+2,3,"{location_exists}"
+3,3,"{location_exists}"

@@ -1494,7 +1494,7 @@ class TestNotifications:
         """
         payload = {
             "survey_uid": 1,
-            "action": "Location Hierarchy changed",
+            "action": "Location hierarchy changed",
             "form_uid": 1,
         }
         response = client.post(
@@ -1527,7 +1527,7 @@ class TestNotifications:
         """
         payload = {
             "survey_uid": 1,
-            "action": "Location Hierarchy changed",
+            "action": "Location hierarchy changed",
             "form_uid": 1,
         }
         response = client.post(
@@ -1567,25 +1567,14 @@ class TestNotifications:
                 {
                     "survey_id": "test_survey",
                     "survey_uid": 1,
-                    "module_name": "Targets",
-                    "module_id": 8,
+                    "module_name": "Survey locations",
+                    "module_id": 5,
                     "type": "survey",
                     "notification_uid": 1,
                     "severity": "error",
                     "resolution_status": "in progress",
-                    "message": "Location hierarchy has been changed for this survey. Kindly reupload the targets data.",
-                },
-                {
-                    "survey_id": "test_survey",
-                    "survey_uid": 1,
-                    "module_name": "Survey locations",
-                    "module_id": 5,
-                    "type": "survey",
-                    "notification_uid": 2,
-                    "severity": "error",
-                    "resolution_status": "in progress",
                     "message": "Location hierarchy has been changed for this survey. Kindly reupload the locations data.",
-                },
+                }
             ],
         }
 
@@ -1619,7 +1608,7 @@ class TestNotifications:
         """
         payload = {
             "survey_uid": 1,
-            "action": "Location Hierarchy changed",
+            "action": "Locations reuploaded",
             "form_uid": 1,
         }
         response = client.post(
@@ -1665,7 +1654,7 @@ class TestNotifications:
                     "notification_uid": 1,
                     "severity": "error",
                     "resolution_status": "in progress",
-                    "message": "Location hierarchy has been changed for this survey. Kindly reupload the enumerators data.",
+                    "message": "Locations data has been reuploaded for this survey. Kindly reupload the enumerators data.",
                 },
                 {
                     "survey_id": "test_survey",
@@ -1676,18 +1665,7 @@ class TestNotifications:
                     "notification_uid": 2,
                     "severity": "error",
                     "resolution_status": "in progress",
-                    "message": "Location hierarchy has been changed for this survey. Kindly reupload the targets data.",
-                },
-                {
-                    "survey_id": "test_survey",
-                    "survey_uid": 1,
-                    "module_name": "Survey locations",
-                    "module_id": 5,
-                    "type": "survey",
-                    "notification_uid": 3,
-                    "severity": "error",
-                    "resolution_status": "in progress",
-                    "message": "Location hierarchy has been changed for this survey. Kindly reupload the locations data.",
+                    "message": "Locations data has been reuploaded for this survey. Kindly reupload the targets data.",
                 },
             ],
         }
@@ -1704,3 +1682,52 @@ class TestNotifications:
 
         checkdiff = jsondiff.diff(expected_get_response, get_response_json)
         assert checkdiff == {}
+
+    def test_create_duplicate_notification(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test create duplicate notification
+
+        Expect:
+            Error 422
+        """
+        payload = {
+            "survey_uid": 1,
+            "action": "Locations reuploaded",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+        expected_response = {
+            "success": True,
+            "message": "Notification created successfully",
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+        # Send the same request again
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 422
