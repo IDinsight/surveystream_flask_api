@@ -203,7 +203,7 @@ jobs:
           image: ${{ steps.build-image.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         timeout-minutes: 3
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
@@ -284,7 +284,7 @@ jobs:
           image: ${{ steps.build-image.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         timeout-minutes: 3
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
