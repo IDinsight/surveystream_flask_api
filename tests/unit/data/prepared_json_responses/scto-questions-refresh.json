@@ -7,7 +7,8 @@
                 "list_uid": null,
                 "question_name": "starttime",
                 "question_type": "start",
-                "question_uid": 72
+                "question_uid": 72,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -15,7 +16,8 @@
                 "list_uid": null,
                 "question_name": "endtime",
                 "question_type": "end",
-                "question_uid": 73
+                "question_uid": 73,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -23,7 +25,8 @@
                 "list_uid": null,
                 "question_name": "deviceid",
                 "question_type": "deviceid",
-                "question_uid": 74
+                "question_uid": 74,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -31,7 +34,8 @@
                 "list_uid": null,
                 "question_name": "subscriberid",
                 "question_type": "subscriberid",
-                "question_uid": 75
+                "question_uid": 75,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -39,7 +43,8 @@
                 "list_uid": null,
                 "question_name": "simid",
                 "question_type": "simserial",
-                "question_uid": 76
+                "question_uid": 76,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -47,7 +52,8 @@
                 "list_uid": null,
                 "question_name": "devicephonenum",
                 "question_type": "phonenumber",
-                "question_uid": 77
+                "question_uid": 77,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -55,7 +61,8 @@
                 "list_uid": null,
                 "question_name": "username",
                 "question_type": "username",
-                "question_uid": 78
+                "question_uid": 78,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -63,7 +70,8 @@
                 "list_uid": null,
                 "question_name": "duration",
                 "question_type": "calculate",
-                "question_uid": 79
+                "question_uid": 79,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -71,7 +79,8 @@
                 "list_uid": null,
                 "question_name": "caseid",
                 "question_type": "caseid",
-                "question_uid": 80
+                "question_uid": 80,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -79,7 +88,8 @@
                 "list_uid": null,
                 "question_name": "round_id",
                 "question_type": "calculate",
-                "question_uid": 82
+                "question_uid": 82,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -87,7 +97,8 @@
                 "list_uid": null,
                 "question_name": "month",
                 "question_type": "calculate",
-                "question_uid": 83
+                "question_uid": 83,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -95,7 +106,8 @@
                 "list_uid": 22,
                 "question_name": "state_id",
                 "question_type": "select_one state",
-                "question_uid": 85
+                "question_uid": 85,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -103,7 +115,8 @@
                 "list_uid": null,
                 "question_name": "state_name",
                 "question_type": "calculate",
-                "question_uid": 86
+                "question_uid": 86,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -111,7 +124,8 @@
                 "list_uid": 23,
                 "question_name": "district_id",
                 "question_type": "select_one district",
-                "question_uid": 87
+                "question_uid": 87,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -119,7 +133,8 @@
                 "list_uid": null,
                 "question_name": "district_name",
                 "question_type": "calculate",
-                "question_uid": 88
+                "question_uid": 88,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -127,7 +142,8 @@
                 "list_uid": 24,
                 "question_name": "block_id",
                 "question_type": "select_one block",
-                "question_uid": 89
+                "question_uid": 89,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -135,7 +151,8 @@
                 "list_uid": null,
                 "question_name": "block_name",
                 "question_type": "calculate",
-                "question_uid": 90
+                "question_uid": 90,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -143,7 +160,8 @@
                 "list_uid": 25,
                 "question_name": "initial_id",
                 "question_type": "select_one first_letter",
-                "question_uid": 91
+                "question_uid": 91,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -151,7 +169,8 @@
                 "list_uid": null,
                 "question_name": "enum_first_letter",
                 "question_type": "calculate",
-                "question_uid": 92
+                "question_uid": 92,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -159,7 +178,8 @@
                 "list_uid": 26,
                 "question_name": "enum_id",
                 "question_type": "select_one enumerator",
-                "question_uid": 93
+                "question_uid": 93,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -167,7 +187,8 @@
                 "list_uid": null,
                 "question_name": "enum_name",
                 "question_type": "calculate",
-                "question_uid": 94
+                "question_uid": 94,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -175,7 +196,8 @@
                 "list_uid": 39,
                 "question_name": "designation_id",
                 "question_type": "select_one designation",
-                "question_uid": 95
+                "question_uid": 95,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -183,7 +205,8 @@
                 "list_uid": null,
                 "question_name": "designation",
                 "question_type": "calculate",
-                "question_uid": 96
+                "question_uid": 96,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -191,7 +214,8 @@
                 "list_uid": 40,
                 "question_name": "monitor_id",
                 "question_type": "select_one monitor",
-                "question_uid": 97
+                "question_uid": 97,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -199,7 +223,8 @@
                 "list_uid": null,
                 "question_name": "monitor_name",
                 "question_type": "calculate",
-                "question_uid": 98
+                "question_uid": 98,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -207,7 +232,8 @@
                 "list_uid": 31,
                 "question_name": "dc_id",
                 "question_type": "select_one dc",
-                "question_uid": 100
+                "question_uid": 100,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -215,7 +241,8 @@
                 "list_uid": null,
                 "question_name": "dc_id_long",
                 "question_type": "calculate",
-                "question_uid": 101
+                "question_uid": 101,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -223,7 +250,8 @@
                 "list_uid": null,
                 "question_name": "dc_type",
                 "question_type": "calculate",
-                "question_uid": 102
+                "question_uid": 102,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -231,7 +259,8 @@
                 "list_uid": 27,
                 "question_name": "sc_dc_found",
                 "question_type": "select_one yesno",
-                "question_uid": 103
+                "question_uid": 103,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -239,7 +268,8 @@
                 "list_uid": 42,
                 "question_name": "sc_dc_open",
                 "question_type": "select_one yesnoonly",
-                "question_uid": 105
+                "question_uid": 105,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -247,7 +277,8 @@
                 "list_uid": 27,
                 "question_name": "sc_intro",
                 "question_type": "select_one yesno",
-                "question_uid": 107
+                "question_uid": 107,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -255,7 +286,8 @@
                 "list_uid": 41,
                 "question_name": "sc_paperscarry",
                 "question_type": "select_one papers",
-                "question_uid": 108
+                "question_uid": 108,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -263,7 +295,8 @@
                 "list_uid": 27,
                 "question_name": "sc_dc_form_access",
                 "question_type": "select_one yesno",
-                "question_uid": 109
+                "question_uid": 109,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -271,7 +304,8 @@
                 "list_uid": 32,
                 "question_name": "sc_dc_fac_id",
                 "question_type": "select_one sampledfacilities",
-                "question_uid": 111
+                "question_uid": 111,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -279,7 +313,8 @@
                 "list_uid": null,
                 "question_name": "sc_dc_fac_id_long",
                 "question_type": "calculate",
-                "question_uid": 112
+                "question_uid": 112,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -287,7 +322,8 @@
                 "list_uid": null,
                 "question_name": "sc_dc_facility_name",
                 "question_type": "calculate",
-                "question_uid": 113
+                "question_uid": 113,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -295,7 +331,8 @@
                 "list_uid": 27,
                 "question_name": "sc_dc_form_avail",
                 "question_type": "select_one yesno",
-                "question_uid": 114
+                "question_uid": 114,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -303,7 +340,8 @@
                 "list_uid": 27,
                 "question_name": "sc_dc_form_month_conf",
                 "question_type": "select_one yesno",
-                "question_uid": 115
+                "question_uid": 115,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -311,7 +349,8 @@
                 "list_uid": null,
                 "question_name": "fac_anc_reg_1_trim",
                 "question_type": "integer",
-                "question_uid": 117
+                "question_uid": 117,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -319,7 +358,8 @@
                 "list_uid": null,
                 "question_name": "fac_4anc",
                 "question_type": "integer",
-                "question_uid": 118
+                "question_uid": 118,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -327,7 +367,8 @@
                 "list_uid": null,
                 "question_name": "fac_4hb",
                 "question_type": "integer",
-                "question_uid": 119
+                "question_uid": 119,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -335,7 +376,8 @@
                 "list_uid": null,
                 "question_name": "fac_sev_anem_treat",
                 "question_type": "integer",
-                "question_uid": 120
+                "question_uid": 120,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -343,7 +385,8 @@
                 "list_uid": null,
                 "question_name": "fac_sba_birth",
                 "question_type": "integer",
-                "question_uid": 121
+                "question_uid": 121,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -351,7 +394,8 @@
                 "list_uid": null,
                 "question_name": "fac_insti_birth",
                 "question_type": "integer",
-                "question_uid": 122
+                "question_uid": 122,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -359,7 +403,8 @@
                 "list_uid": null,
                 "question_name": "fac_live_birth_m",
                 "question_type": "integer",
-                "question_uid": 123
+                "question_uid": 123,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -367,7 +412,8 @@
                 "list_uid": null,
                 "question_name": "fac_live_birth_uw",
                 "question_type": "integer",
-                "question_uid": 124
+                "question_uid": 124,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -375,7 +421,8 @@
                 "list_uid": null,
                 "question_name": "fac_bfeeding_1hr",
                 "question_type": "integer",
-                "question_uid": 125
+                "question_uid": 125,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -383,7 +430,8 @@
                 "list_uid": null,
                 "question_name": "fac_full_immu_f",
                 "question_type": "integer",
-                "question_uid": 126
+                "question_uid": 126,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -391,7 +439,8 @@
                 "list_uid": 27,
                 "question_name": "sc_dc_fac_dataentry",
                 "question_type": "select_one yesno",
-                "question_uid": 127
+                "question_uid": 127,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -399,7 +448,8 @@
                 "list_uid": 27,
                 "question_name": "sc_dc_fac_photo_consent",
                 "question_type": "select_one yesno",
-                "question_uid": 128
+                "question_uid": 128,
+                "is_required": true
             },
             {
                 "form_uid": 1,
@@ -407,7 +457,8 @@
                 "list_uid": 27,
                 "question_name": "sc_dc_fac_photo_num",
                 "question_type": "select_one yesno",
-                "question_uid": 129
+                "question_uid": 129,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -415,7 +466,8 @@
                 "list_uid": 35,
                 "question_name": "sc_protocol_rate",
                 "question_type": "select_one protocol",
-                "question_uid": 135
+                "question_uid": 135,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -423,7 +475,8 @@
                 "list_uid": 36,
                 "question_name": "sc_probing_rate",
                 "question_type": "select_one probing",
-                "question_uid": 136
+                "question_uid": 136,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -431,7 +484,8 @@
                 "list_uid": 37,
                 "question_name": "sc_comfort_rate",
                 "question_type": "select_one comfort",
-                "question_uid": 137
+                "question_uid": 137,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -439,7 +493,8 @@
                 "list_uid": 38,
                 "question_name": "sc_speed_rate",
                 "question_type": "select_one speed",
-                "question_uid": 138
+                "question_uid": 138,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -447,7 +502,8 @@
                 "list_uid": null,
                 "question_name": "sc_final_score",
                 "question_type": "integer",
-                "question_uid": 140
+                "question_uid": 140,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -455,7 +511,8 @@
                 "list_uid": null,
                 "question_name": "monitor_comments",
                 "question_type": "text",
-                "question_uid": 141
+                "question_uid": 141,
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -463,7 +520,8 @@
                 "list_uid": null,
                 "question_name": "instanceID",
                 "question_type": "text",
-                "question_uid": "instanceID"
+                "question_uid": "instanceID",
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -471,7 +529,8 @@
                 "list_uid": null,
                 "question_name": "formdef_version",
                 "question_type": "text",
-                "question_uid": "formdef_version"
+                "question_uid": "formdef_version",
+                "is_required": false
             },
             {
                 "form_uid": 1,
@@ -479,7 +538,8 @@
                 "list_uid": null,
                 "question_name": "SubmissionDate",
                 "question_type": "text",
-                "question_uid": "SubmissionDate"
+                "question_uid": "SubmissionDate",
+                "is_required": false
             }
         ],
         "settings": {
