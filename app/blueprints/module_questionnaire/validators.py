@@ -18,22 +18,4 @@ class ModuleQuestionnaireForm(FlaskForm):
     def validate(self):
         if not super().validate():
             return False
-
-        if self.assignment_process.data not in ["Random", "Manual"]:
-            self.errors[
-                "assignment_process"
-            ] = 'Assignment process not in ("Random", "Manual")'
-            return False
-
-        if self.supervisor_surveyor_relation.data not in [
-            "1:1",
-            "1:many",
-            "many:1",
-            "many:many",
-        ]:
-            self.errors[
-                "supervisor_surveyor_relation"
-            ] = 'Supervisor Surveyor relation not in ("1:1","1:many","many:1","many:many")'
-            return False
-
         return True
