@@ -1156,7 +1156,6 @@ class TestTargets:
             print(get_target_config.json)
             assert get_target_config.status_code == 200
             assert get_target_config.json["data"]["targets_last_uploaded"] is not None
-            assert True == False
         else:
             assert response.status_code == 403
 
