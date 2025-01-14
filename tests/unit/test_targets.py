@@ -3326,19 +3326,19 @@ class TestTargets:
                         },
                         {
                             "error_count": 2,
-                            "error_message": "The file has 2 duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: 2, 3",
+                            "error_message": "Data has 2 duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: 2, 3",
                             "error_type": "Duplicate rows",
                             "row_numbers_with_errors": [2, 3],
                         },
                         {
                             "error_count": 2,
-                            "error_message": "The file has 2 duplicate target_id(s). The following row numbers contain target_id duplicates: 2, 3",
-                            "error_type": "Duplicate target_id's in file",
+                            "error_message": "Data has 2 duplicate target_id(s). The following row numbers contain target_id duplicates: 2, 3",
+                            "error_type": "Duplicate target_id",
                             "row_numbers_with_errors": [2, 3],
                         },
                         {
                             "error_count": 1,
-                            "error_message": "The file contains 1 location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: 4",
+                            "error_message": "Data contains 1 location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: 4",
                             "error_type": "Invalid location_id's",
                             "row_numbers_with_errors": [4],
                         },
@@ -3475,19 +3475,19 @@ class TestTargets:
                         },
                         {
                             "error_count": 2,
-                            "error_message": "The file has 2 duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: 2, 3",
+                            "error_message": "Data has 2 duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: 2, 3",
                             "error_type": "Duplicate rows",
                             "row_numbers_with_errors": [2, 3],
                         },
                         {
                             "error_count": 2,
-                            "error_message": "The file has 2 duplicate target_id(s). The following row numbers contain target_id duplicates: 2, 3",
-                            "error_type": "Duplicate target_id's in file",
+                            "error_message": "Data has 2 duplicate target_id(s). The following row numbers contain target_id duplicates: 2, 3",
+                            "error_type": "Duplicate target_id",
                             "row_numbers_with_errors": [2, 3],
                         },
                         {
                             "error_count": 1,
-                            "error_message": "The file contains 1 location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: 4",
+                            "error_message": "Data contains 1 location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: 4",
                             "error_type": "Invalid location_id's",
                             "row_numbers_with_errors": [4],
                         },
@@ -4945,3 +4945,55 @@ class TestTargets:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_delete_all_targets(
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        csrf_token,
+        create_survey,
+        user_permissions,
+        request,
+    ):
+        """
+        Test deleting all targets
+        Expect success for the allowed permissions
+        Expect 403 for the non permissions
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        if expected_permission:
+            # Delete the targets
+
+            response = client.delete(
+                "/api/targets",
+                query_string={"form_uid": 1},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            assert response.status_code == 200
+
+            # Check the response
+            response = client.get("/api/targets", query_string={"form_uid": 1})
+
+            assert response.json == {
+                "data": [],
+                "success": True,
+            }
+
+        else:
+            # Delete the target
+            response = client.delete(
+                "/api/targets/1", headers={"X-CSRF-Token": csrf_token}
+            )
+
+            assert response.status_code == 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Targets",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}

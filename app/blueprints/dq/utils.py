@@ -48,7 +48,7 @@ def validate_dq_check(
             )
 
     # Check if the filter question names are valid, when check is active
-    if filters and active is True:
+    if filters and active is True and type_id not in [7, 8, 9]:
         for filter_group in filters:
             for filter_item in filter_group.get("filter_group"):
                 filter_question_name = filter_item["question_name"]
@@ -75,6 +75,7 @@ def validate_dq_check(
 
         if dq_form is None:
             raise Exception(f"DQ Form with form_uid {dq_scto_form_uid} not found")
+
     else:
         if dq_scto_form_uid is not None:
             raise Exception("DQ SCTO Form UID is not allowed for this type of check")
@@ -90,6 +91,21 @@ def validate_dq_check(
             raise Exception(
                 f"Question name '{question_name}' not found in DQ form definition. Active checks must have a valid question name."
             )
+
+    # for mismatch (7), protocol (8) and spotcheck (9), check if question name used in filters is present in dq form
+    if type_id in [7, 8, 9] and filters and active is True:
+        for filter_group in filters:
+            for filter_item in filter_group.get("filter_group"):
+                filter_question_name = filter_item["question_name"]
+                filter_question = SCTOQuestion.query.filter(
+                    SCTOQuestion.form_uid == dq_scto_form_uid,
+                    SCTOQuestion.question_name == filter_question_name,
+                ).first()
+
+                if filter_question is None:
+                    raise Exception(
+                        f"Question name '{filter_question_name}' used in filters not found in DQ form definition. Active checks must have valid question names in filters."
+                    )
 
     # Check if check components are valid based on type of check
     # 1.a For missing (4), don't knows (5) and refusals checks (6), value field is required
