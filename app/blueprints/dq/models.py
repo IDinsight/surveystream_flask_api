@@ -126,7 +126,7 @@ class DQCheckFilters(db.Model):
     filter_operator = db.Column(
         db.String(),
         CheckConstraint(
-            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than')",
+            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greater than', 'Smaller than')",
             name="ck_dq_check_filters_filter_operator",
         ),
         nullable=False,
