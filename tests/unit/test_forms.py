@@ -539,6 +539,33 @@ class TestForms:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
+    def test_create_scto_question_mapping_without_survey_status(
+        self, client, csrf_token, login_test_user, create_parent_form
+    ):
+        """Test that the SCTO question mapping for parent form gives error if no survey status is provided"""
+        payload = {
+            "form_uid": 1,
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            }
+        }
+        response = client.post(
+            "/api/forms/1/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "error": "form_type=parent must have a mapping for survey_status",
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_create_scto_question_mapping_without_target_id(
         self, client, csrf_token, login_test_user, create_parent_form
     ):

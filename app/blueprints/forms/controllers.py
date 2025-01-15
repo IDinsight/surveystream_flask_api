@@ -313,7 +313,7 @@ def create_scto_question_mapping(form_uid, validated_payload):
             ),
             422,
         )
-    if form.form_type == "parent" and validated_payload.survey_status is None :
+    if form.form_type == "parent" and validated_payload.survey_status.data is None :
         return (
             jsonify(
                 {
@@ -323,6 +323,7 @@ def create_scto_question_mapping(form_uid, validated_payload):
             ),
             422,
         )
+    print(validated_payload)
 
     scto_question_mapping = SCTOQuestionMapping(
         form_uid=form_uid,
