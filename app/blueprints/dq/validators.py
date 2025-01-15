@@ -107,10 +107,10 @@ class DQCheckFilterValidator(FlaskForm):
                     "Does not contain",
                     "Is empty",
                     "Is not empty",
-                    "Greather than",
+                    "Greater than",
                     "Smaller than",
                 ],
-                message="Invalid operator. Must be 'Is', 'Is not', 'Contains', 'Does not contain', 'Is empty', or 'Is not empty', 'Greather than', 'Smaller than'",
+                message="Invalid operator. Must be 'Is', 'Is not', 'Contains', 'Does not contain', 'Is empty', or 'Is not empty', 'Greater than', 'Smaller than'",
             ),
         ]
     )
