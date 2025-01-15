@@ -11295,7 +11295,7 @@ paths:
                                       example: "age"
                                     filter_operator:
                                       type: string
-                                      description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than'
+                                      description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greater than', 'Smaller than'
                                       example: "Is empty"
                                     filter_value:
                                       type: string
@@ -11421,7 +11421,7 @@ paths:
                               example: "age"
                             filter_operator:
                               type: string
-                              description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than'
+                              description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greater than', 'Smaller than'
                               example: "Is empty"
                             filter_value:
                               type: string
@@ -11622,7 +11622,7 @@ paths:
                               example: "age"
                             filter_operator:
                               type: string
-                              description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greather than', 'Smaller than'
+                              description: Operator for the filter. Values can be 'Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greater than', 'Smaller than'
                               example: "Is empty"
                             filter_value:
                               type: string
