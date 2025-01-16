@@ -2,7 +2,7 @@
 Add targets_last_uploaded column to target_config
 
 Revision ID: fe556647b9f2
-Revises: 69c35c7db756
+Revises: e2cd5f73ac59
 Create Date: 2025-01-14 08:28:01.515532
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "fe556647b9f2"
-down_revision = "69c35c7db756"
+down_revision = "e2cd5f73ac59"
 branch_labels = None
 depends_on = None
 
