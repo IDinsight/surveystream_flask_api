@@ -139,6 +139,16 @@ class CustomCheckComponentValidator(FlaskForm):
     )
     outlier_value = StringField(validators=[Optional()])
     spotcheck_score_name = StringField(validators=[Optional()])
+    gps_type = StringField(
+        AnyOf(
+            ["point2point", "point2shape"],
+            message="Value must be one of %(values)s",
+        ),
+        validators=[Optional()],
+    )
+    threshold = StringField(validators=[Optional()])
+    gps_variable = StringField(validators=[Optional()])
+    grid_id = StringField(validators=[Optional()])
 
 
 class DQCheckValidator(FlaskForm):
