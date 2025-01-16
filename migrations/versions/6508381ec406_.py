@@ -2,7 +2,7 @@
 Add notification actions, templates and mappings
 
 Revision ID: 6508381ec406
-Revises: 69c35c7db756
+Revises: e2cd5f73ac59
 Create Date: 2025-01-14 07:44:08.816681
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "6508381ec406"
-down_revision = "69c35c7db756"
+down_revision = "e2cd5f73ac59"
 branch_labels = None
 depends_on = None
 
