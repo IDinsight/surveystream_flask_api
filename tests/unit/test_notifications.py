@@ -1667,9 +1667,19 @@ class TestNotifications:
                     "resolution_status": "in progress",
                     "message": "Locations data has been reuploaded for this survey. Kindly reupload the targets data.",
                 },
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Field supervisor roles",
+                    "module_id": 4,
+                    "type": "survey",
+                    "notification_uid": 3,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Locations data has been reuploaded for this survey. Kindly update user location details",
+                },
             ],
         }
-
         get_response_json = get_response.json
 
         # Remove the created_at from the response for comparison
