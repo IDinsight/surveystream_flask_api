@@ -323,8 +323,6 @@ def create_scto_question_mapping(form_uid, validated_payload):
             ),
             422,
         )
-    print(validated_payload)
-
     scto_question_mapping = SCTOQuestionMapping(
         form_uid=form_uid,
         survey_status=validated_payload.survey_status.data,
