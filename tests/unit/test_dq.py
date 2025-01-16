@@ -1013,7 +1013,7 @@ class TestDQ:
                     "filter_group": [
                         {
                             "question_name": "fac_sev_anem_treat",
-                            "filter_operator": "Greather than",
+                            "filter_operator": "Greater than",
                             "filter_value": "0",
                         }
                     ]
@@ -1081,7 +1081,7 @@ class TestDQ:
                                 "filter_group": [
                                     {
                                         "filter_group_id": 2,
-                                        "filter_operator": "Greather than",
+                                        "filter_operator": "Greater than",
                                         "filter_value": "0",
                                         "question_name": "fac_sev_anem_treat",
                                         "is_repeat_group": False,
