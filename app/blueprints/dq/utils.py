@@ -202,10 +202,6 @@ def validate_dq_check(
                     f"Question name '{gps_variable}' not found in form definition. Active checks must have a valid question name for GPS checks."
                 )
 
-            if scto_question and scto_question.is_repeat_group:
-                raise Exception(
-                    f"Question name '{gps_variable}' is a repeat group question. GPS expected value cannot be a repeat group question."
-                )
 
         # If grid_id is present then check if it is a valid question in form definition
         if grid_id is not None and active is True:
@@ -219,10 +215,6 @@ def validate_dq_check(
                     f"Question name '{grid_id}' not found in form definition. Active checks must have a valid question name for GPS checks."
                 )
 
-            if scto_question and scto_question.is_repeat_group:
-                raise Exception(
-                    f"Question name '{grid_id}' is a repeat group question. GPS grid_id value cannot be a repeat group question."
-                )
     else:
         # For other checks, threshold, gps variable and grid id fields are not required
         if check_components.get("threshold") is not None:
