@@ -12189,3 +12189,37 @@ paths:
                   success:
                     type: boolean
                     example: false
+
+  /notifications/action:
+    post:
+      summary: Create Notifications for a user/survey based on the action
+      tags:
+        - Notifications
+      parameters:
+        - name : survey_uid
+          in: body
+          description: Unique identifier for the survey
+          required: true
+          schema:
+            type: integer
+        - name: action
+          in: body
+          description: Action taken on the survey
+          required: true
+          schema:
+            type: string
+        - name: form_uid
+          in: body
+          description: Unique identifier for the form
+          required: false
+          schema:
+            type: integer
+        
+      responses:
+        "200":
+          description: Notification created successfully
+        "404":
+          description: Survey UID Not found
+        "422":
+          description: No notification created for the action, conditions not met
+         
