@@ -1,4 +1,5 @@
 from app.blueprints.enumerators.models import Enumerator
+from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.blueprints.surveys.models import Survey
@@ -50,6 +51,7 @@ def check_notification_condition(survey_uid, form_uid, input_conditions):
             survey_uid
         ),
         "target_location_mapping": lambda: check_target_location_mapping(survey_uid),
+        "form_exists": lambda: check_form_exists(form_uid),
     }
 
     survey_conditions = {
@@ -105,3 +107,7 @@ def check_target_location_mapping(survey_uid):
         ).first()
         is not None
     )
+
+
+def check_form_exists(form_uid):
+    return Form.query.filter_by(form_uid=form_uid).first() is not None

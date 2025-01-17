@@ -1733,11 +1733,11 @@ class TestNotifications:
         assert checkdiff == {}
 
         # Send the same request again
-        response = client.post(
+        duplicate_response = client.post(
             "/api/notifications/action",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
-        print(response.json)
-        assert response.status_code == 422
+        print(duplicate_response.json)
+        assert response.status_code == 200

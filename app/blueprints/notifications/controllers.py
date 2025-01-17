@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import jsonify
 from flask_login import current_user
 
@@ -549,12 +551,17 @@ def create_notification_via_action(validated_payload):
 
     notification_created_flag = False
     for template in notification_templates:
-        if check_notification_condition(
-            survey_uid,
-            form_uid,
-            template["condition"],
-        ) and not check_module_notification_exists(
+        module_notification_exists = check_module_notification_exists(
             survey_uid, template["module_id"], template["severity"]
+        )
+
+        if (
+            check_notification_condition(
+                survey_uid,
+                form_uid,
+                template["condition"],
+            )
+            and not module_notification_exists
         ):
 
             message = notification_action.message + " " + template["message"]
@@ -575,16 +582,15 @@ def create_notification_via_action(validated_payload):
                     ModuleStatus.survey_uid == survey_uid,
                 ).update({"config_status": "Error"})
 
-    if not notification_created_flag:
-        return (
-            jsonify(
-                {
-                    "error": "No notification created for the action, conditions not met",
-                    "success": False,
-                }
-            ),
-            422,
-        )
+        if module_notification_exists:
+            SurveyNotification.query.filter(
+                SurveyNotification.survey_uid == survey_uid,
+                SurveyNotification.module_id == template["module_id"],
+                SurveyNotification.severity == template["severity"],
+                SurveyNotification.resolution_status == "in progress",
+            ).update({"created_at": datetime.now()})
+            notification_created_flag = True
+
     try:
         db.session.commit()
     except Exception as e:
@@ -599,6 +605,16 @@ def create_notification_via_action(validated_payload):
             500,
         )
 
+    if not notification_created_flag:
+        return (
+            jsonify(
+                {
+                    "error": "No notification created for the action, conditions not met",
+                    "success": False,
+                }
+            ),
+            422,
+        )
     response = jsonify(
         {
             "success": True,
