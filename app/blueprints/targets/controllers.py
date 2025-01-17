@@ -289,10 +289,18 @@ def upload_targets(validated_query_params, validated_payload):
                         ),
                         422,
                     )
+
+            # Set Preview mode to true
+            TargetConfig.query.filter_by(form_uid=form_uid).update(
+                {"preview_mode": True},
+            )
         else:
             csv_string = base64.b64decode(
                 validated_payload.file.data, validate=True
             ).decode("utf-8")
+            TargetConfig.query.filter_by(form_uid=form_uid, preview_mode=False).update(
+                {"preview_mode": False},
+            )
     except binascii.Error:
         return (
             jsonify(

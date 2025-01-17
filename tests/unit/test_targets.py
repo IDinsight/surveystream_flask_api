@@ -1156,6 +1156,7 @@ class TestTargets:
             print(get_target_config.json)
             assert get_target_config.status_code == 200
             assert get_target_config.json["data"]["targets_last_uploaded"] is not None
+            assert get_target_config.json["data"]["preview_mode"] == True
         else:
             assert response.status_code == 403
 
@@ -2001,6 +2002,7 @@ class TestTargets:
                     "scto_input_type": "form",
                     "target_source": "scto",
                     "targets_last_uploaded": None,
+                    "preview_mode": False,
                 },
                 "success": True,
                 "message": "Target config retrieved successfully",
@@ -2051,6 +2053,7 @@ class TestTargets:
                     "scto_input_type": "form",
                     "target_source": "scto",
                     "targets_last_uploaded": None,
+                    "preview_mode": False,
                 },
                 "success": True,
                 "message": "Target config retrieved successfully",
