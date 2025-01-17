@@ -6995,6 +6995,9 @@ paths:
                       targets_last_uploaded:
                         type: string
                         description: The timestamp of the last targets upload
+                      preview_mode:
+                        type: boolean
+                        description: The preview mode flag for the targets, set true when dynamic targets are previewed via webapp
         "404":
           description: Target configuration not found for the form
     post:
