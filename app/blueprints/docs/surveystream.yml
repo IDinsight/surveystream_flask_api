@@ -11370,7 +11370,7 @@ paths:
                                   alias:
                                     type: string
                                     description: Alias for the question
-                                    example: "A", "B" etc
+                                    example: "A"
                                   is_repeat_group:
                                     type: boolean
                                     description: Indicates if the question is a repeat group
@@ -11547,7 +11547,7 @@ paths:
                           alias:
                             type: string
                             description: Alias for the question
-                            example: "A", "B" etc
+                            example: "A"
                     logic_check_assertions:
                       type: array
                       description: List of groups of assertions for logic checks joined by an OR condition
@@ -11795,7 +11795,7 @@ paths:
                           alias:
                             type: string
                             description: Alias for the question
-                            example: "A", "B" etc
+                            example: "A"
                     logic_check_assertions:
                       type: array
                       description: List of groups of assertions for logic checks joined by an OR condition
