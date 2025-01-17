@@ -179,7 +179,7 @@ def validate_dq_check(
         grid_id = check_components.get("grid_id")
 
         # Check gps_variable or grid_id field is present or not
-        if ( gps_variable is None and grid_id is None ):
+        if gps_variable is None and grid_id is None:
             raise Exception(
                 "Either gps_variable or grid_id field is required for gps checks"
             )
@@ -202,7 +202,6 @@ def validate_dq_check(
                     f"Question name '{gps_variable}' not found in form definition. Active checks must have a valid question name for GPS checks."
                 )
 
-
         # If grid_id is present then check if it is a valid question in form definition
         if grid_id is not None and active is True:
             scto_question = SCTOQuestion.query.filter(
@@ -221,11 +220,49 @@ def validate_dq_check(
             raise Exception("Threshold field is not allowed for this type of check")
 
         if check_components.get("gps_variable") is not None:
-            raise Exception(
-                "GPS variable field is not allowed for this type of check"
-            )
+            raise Exception("GPS variable field is not allowed for this type of check")
 
         if check_components.get("grid_id") is not None:
             raise Exception("Grid id field is not allowed for this type of check")
+
+    # For logic checks, check that logic_check_questions dictionary and logic_check_assertions are valid
+    if type_id == 1:
+        if check_components.get("logic_check_questions", []) == []:
+            raise Exception(
+                "The field 'logic_check_questions' is required for logic checks"
+            )
+
+        if check_components.get("logic_check_assertions", []) == []:
+            raise Exception(
+                "The field 'logic_check_assertions' is required for logic checks"
+            )
+
+        # Check if the question name is valid, when check is active
+        if active is True:
+            for logic_check_question in check_components.get(
+                "logic_check_questions", []
+            ):
+                question_name = logic_check_question.get("question_name")
+                scto_question = SCTOQuestion.query.filter(
+                    SCTOQuestion.form_uid == form_uid,
+                    SCTOQuestion.question_name == question_name,
+                ).first()
+
+                if scto_question is None:
+                    raise Exception(
+                        f"Question name '{question_name}' not found in form definition. Active checks must have a valid question name."
+                    )
+
+    else:
+        # For other checks, variables and assertions fields are not required
+        if check_components.get("logic_check_questions", []) != []:
+            raise Exception(
+                "logic_check_questions field is not allowed for this type of check"
+            )
+
+        if check_components.get("logic_check_assertions", []) != []:
+            raise Exception(
+                "logic_check_assertions field is not allowed for this type of check"
+            )
 
     return True

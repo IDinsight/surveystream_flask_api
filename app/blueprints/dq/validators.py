@@ -117,8 +117,21 @@ class DQCheckFilterValidator(FlaskForm):
     filter_value = StringField()
 
 
+class DQCheckLogicAssertGroupValidator(FlaskForm):
+    assertion = StringField(validators=[DataRequired()])
+
+
 class DQCheckFilterGroupValidator(FlaskForm):
     filter_group = FieldList(FormField(DQCheckFilterValidator), default=[])
+
+
+class DQCheckLogicAssertionValidator(FlaskForm):
+    assert_group = FieldList(FormField(DQCheckLogicAssertGroupValidator), default=[])
+
+
+class DQCheckLogicQuestionValidator(FlaskForm):
+    question_name = StringField(validators=[DataRequired()])
+    alias = StringField(validators=[DataRequired()])
 
 
 class CustomCheckComponentValidator(FlaskForm):
@@ -149,6 +162,8 @@ class CustomCheckComponentValidator(FlaskForm):
     threshold = StringField(validators=[Optional()])
     gps_variable = StringField(validators=[Optional()])
     grid_id = StringField(validators=[Optional()])
+    logic_check_questions = FieldList(FormField(DQCheckLogicQuestionValidator))
+    logic_check_assertions = FieldList(FormField(DQCheckLogicAssertionValidator))
 
 
 class DQCheckValidator(FlaskForm):
