@@ -2747,6 +2747,162 @@ class TestDQ:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
+    def test_get_gps_check_inactive(
+        self,
+        app,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        request,
+    ):
+        """
+        Test the get checks endpoint correctly marks logic checks as inactive
+
+        """
+        payload = {
+            "form_uid": 1,
+            "type_id": 10,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_gps_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "gps_type": "point2point",
+                "threshold": "50",
+                "gps_variable": "fac_4anc",
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 200
+
+        # Delete the question from the form definition
+        delete_scto_question(app, db, 1, "fac_4anc")
+
+        # Check if the check is marked as inactive
+        response = client.get(
+            "/api/dq/checks",
+            query_string={"form_uid": 1, "type_id": 10},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {
+                    "active": False,
+                    "all_questions": False,
+                    "dq_check_uid": 1,
+                    "filters": [],
+                    "flag_description": "test_gps_flag",
+                    "form_uid": 1,
+                    "module_name": "test_module",
+                    "question_name": "fac_4hb",
+                    "type_id": 10,
+                    "dq_scto_form_uid": None,
+                    "is_repeat_group": False,
+                    "note": "GPS variable not found in form definition",
+                    "check_components": {
+                        "value": [],
+                        "hard_min": None,
+                        "hard_max": None,
+                        "soft_min": None,
+                        "soft_max": None,
+                        "outlier_metric": None,
+                        "outlier_value": None,
+                        "spotcheck_score_name": None,
+                        "gps_type": "point2point",
+                        "threshold": "50",
+                        "gps_variable": "fac_4anc",
+                        "grid_id": None,
+                    },
+                }
+            ],
+            "success": True,
+        }
+        
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_dq_config_gps_check_inactive(
+        self,
+        app,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        request,
+    ):
+        """
+        Test the get checks endpoint correctly marks logic checks as inactive
+
+        """
+        payload = {
+            "form_uid": 1,
+            "type_id": 10,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_gps_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "gps_type": "point2point",
+                "threshold": "50",
+                "gps_variable": "fac_4anc",
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 200
+
+        # Delete the question from the form definition
+        delete_scto_question(app, db, 1, "fac_4hb")
+
+        # Check if the check is marked as inactive in the dq config
+        response = client.get(
+            "/api/dq/config",
+            query_string={"form_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        expected_response = {
+            "data": {
+                "form_uid": 1,
+                "survey_status_filter": [1, 3],
+                "group_by_module_name": False,
+                "dq_checks": [
+                    {"type_id": 10, "num_configured": "1", "num_active": "0"},
+                ],
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
     def test_add_dq_logic_check(
         self,
         client,
