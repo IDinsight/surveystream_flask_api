@@ -2832,7 +2832,7 @@ class TestDQ:
             ],
             "success": True,
         }
-        
+
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -3390,6 +3390,165 @@ class TestDQ:
                     {"type_id": 1, "num_configured": "1", "num_active": "0"},
                 ],
             },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_update_dq_logic_check(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+    ):
+        """
+        Test the endpoint to update the DQ check
+
+        """
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "fac_4hb", "alias": "A"},
+                    {"question_name": "fac_4anc", "alias": "B"},
+                ],
+                "logic_check_assertions": [
+                    {
+                        "assert_group": [
+                            {
+                                "assertion": "A > B",
+                            },
+                        ]
+                    },
+                ],
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag_updated",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "fac_4hb", "alias": "A"},
+                    {"question_name": "fac_4anc", "alias": "B"},
+                ],
+                "logic_check_assertions": [
+                    {
+                        "assert_group": [
+                            {
+                                "assertion": "A < B",
+                            },
+                        ]
+                    },
+                ],
+            },
+        }
+
+        response = client.put(
+            "/api/dq/checks/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "success": True,
+            "message": "Success",
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # Check if the check was updated
+        response = client.get(
+            "/api/dq/checks",
+            query_string={"form_uid": 1, "type_id": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {
+                    "active": True,
+                    "all_questions": False,
+                    "dq_check_uid": 1,
+                    "filters": [],
+                    "flag_description": "test_logic_flag_updated",
+                    "form_uid": 1,
+                    "module_name": "test_module",
+                    "question_name": "fac_4hb",
+                    "type_id": 1,
+                    "dq_scto_form_uid": None,
+                    "is_repeat_group": False,
+                    "note": None,
+                    "check_components": {
+                        "value": [],
+                        "hard_min": None,
+                        "hard_max": None,
+                        "soft_min": None,
+                        "soft_max": None,
+                        "outlier_metric": None,
+                        "outlier_value": None,
+                        "spotcheck_score_name": None,
+                        "gps_type": None,
+                        "threshold": None,
+                        "gps_variable": None,
+                        "grid_id": None,
+                        "logic_check_questions": [
+                            {
+                                "question_name": "fac_4hb",
+                                "is_repeat_group": False,
+                                "alias": "A",
+                            },
+                            {
+                                "question_name": "fac_4anc",
+                                "is_repeat_group": False,
+                                "alias": "B",
+                            },
+                        ],
+                        "logic_check_assertions": [
+                            {
+                                "assert_group": [
+                                    {
+                                        "assert_group_id": 1,
+                                        "assertion": "A < B",
+                                    },
+                                ]
+                            },
+                        ],
+                    },
+                }
+            ],
             "success": True,
         }
 
