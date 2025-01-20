@@ -140,8 +140,8 @@ class TargetsUpload:
     def __init__(self, csv_string, column_mapping, survey_uid, form_uid):
         try:
             self.col_names = self.__get_col_names(csv_string)
-        except:
-            raise
+        except Exception as e:
+            raise e
 
         self.survey_uid = survey_uid
         self.form_uid = form_uid
@@ -150,9 +150,9 @@ class TargetsUpload:
 
     def __get_col_names(self, csv_string):
         col_names = DictReader(io.StringIO(csv_string)).fieldnames
-        if len(col_names) == 0:
+        if not (col_names) or len(col_names) == 0:
             raise HeaderRowEmptyError(
-                "Column names were not found in the file. Make sure the first row of the file contains column names."
+                "Column names were not found in the data. Make sure the first row of the file contains column names."
             )
 
         return col_names
@@ -242,7 +242,7 @@ class TargetsUpload:
         for column_name in self.expected_columns:
             if file_columns.count(column_name) != 1:
                 file_structure_errors.append(
-                    f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} time(s) in the uploaded file. It should appear exactly once."
+                    f"Column name '{column_name}' from the column mapping appears {file_columns.count(column_name)} time(s) in the uploaded data. It should appear exactly once."
                 )
 
         if len(file_structure_errors) > 0:
@@ -313,7 +313,7 @@ class TargetsUpload:
             record_errors["summary_by_error_type"].append(
                 {
                     "error_type": "Duplicate rows",
-                    "error_message": f"The file has {len(duplicates_df)} duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
+                    "error_message": f"Data has {len(duplicates_df)} duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
                     "error_count": len(duplicates_df),
                     "row_numbers_with_errors": duplicates_df.index.to_list(),
                 }
@@ -342,8 +342,8 @@ class TargetsUpload:
         if len(duplicates_df) > 0:
             record_errors["summary_by_error_type"].append(
                 {
-                    "error_type": "Duplicate target_id's in file",
-                    "error_message": f"The file has {len(duplicates_df)} duplicate target_id(s). The following row numbers contain target_id duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
+                    "error_type": "Duplicate target_id",
+                    "error_message": f"Data has {len(duplicates_df)} duplicate target_id(s). The following row numbers contain target_id duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
                     "error_count": len(duplicates_df),
                     "row_numbers_with_errors": duplicates_df.index.to_list(),
                 }
@@ -382,7 +382,7 @@ class TargetsUpload:
                 record_errors["summary_by_error_type"].append(
                     {
                         "error_type": "Invalid location_id's",
-                        "error_message": f"The file contains {len(invalid_location_id_df)} location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: {', '.join(str(row_number) for row_number in invalid_location_id_df.index.to_list())}",
+                        "error_message": f"Data contains {len(invalid_location_id_df)} location_id(s) that were not found in the uploaded locations data. The following row numbers contain invalid location_id's: {', '.join(str(row_number) for row_number in invalid_location_id_df.index.to_list())}",
                         "error_count": len(invalid_location_id_df),
                         "row_numbers_with_errors": invalid_location_id_df.index.to_list(),
                     }
@@ -641,3 +641,107 @@ class TargetsUpload:
             target_dict["custom_fields"] = custom_fields
 
         return target_dict
+
+
+def apply_target_scto_filters(csv_string, target_filters, data_format="csv"):
+    """
+    Create a new CSV string with the target records filtered based on the filter input
+
+    CSV is read in chunks and filters are applied till the end of the file or a threshold is reached
+
+    Args:
+        csv_string: The CSV string containing the target records
+        target_filters: The filters to apply to the target records, Array of TargetSCTOFilter objects
+        json_string: The JSON string containing the target records, if data format is JSON
+    """
+
+    # Create filter strings
+    final_filter_string = ""
+    filter_count = 0
+    for filter_group_arr in target_filters:
+        group_count = 0
+        filter_group = filter_group_arr["filter_group"]
+        # Initialize
+        filter_string = " ( "
+        for filter in filter_group:
+            column_name = filter["variable_name"]
+            filter_value = filter["filter_value"]
+            filter_operator = filter["filter_operator"]
+
+            if group_count > 0:
+                filter_string += " & "
+            group_count += 1
+
+            if filter_value:
+                filter_value = "'" + filter_value + "'"
+
+            if filter_operator == "Is":
+                filter_string += (
+                    "( chunk_df['" + column_name + "'] == " + filter_value + " )"
+                )
+            elif filter_operator == "Is not":
+                filter_string += (
+                    "( chunk_df['" + column_name + "'] != " + filter_value + " )"
+                )
+            elif filter_operator == "Contains":
+                filter_string += (
+                    "(  chunk_df['"
+                    + column_name
+                    + "'].str.contains('"
+                    + str(filter_value)
+                    + "')  )"
+                )
+            elif filter_operator == "Does not contain":
+                filter_string += (
+                    "(  ~chunk_df['"
+                    + column_name
+                    + "'].str.contains('"
+                    + str(filter_value)
+                    + "') )"
+                )
+            elif filter_operator == "Is empty":
+                filter_string += "(  chunk_df['" + column_name + "'].isnull() )"
+            elif filter_operator == "Is not empty":
+                filter_string += "(  ~chunk_df['" + column_name + "'].isnull() )"
+
+        filter_string += " ) "
+        if filter_count > 0:
+            final_filter_string = final_filter_string + " | "
+
+        final_filter_string += filter_string
+        filter_count += 1
+
+    # Read the CSV string in chunks of 100 rows at a time
+
+    chunk_size = 500
+    filtered_data = pd.DataFrame()
+
+    if data_format == "csv":
+        for chunk_df in pd.read_csv(
+            io.StringIO(csv_string), chunksize=chunk_size, dtype=str
+        ):
+            chunk_df = chunk_df.replace("", np.nan)
+
+            # Apply the filter string to the chunk
+            filtered_chunk = chunk_df[eval(final_filter_string)]
+
+            filtered_data = pd.concat([filtered_data, filtered_chunk])
+            if len(filtered_data) >= 10:
+                break
+    else:
+        row_number = len(csv_string)
+
+        for i in range(0, row_number, chunk_size):
+            chunk_df = pd.DataFrame.from_dict(csv_string[i : i + row_number], dtype=str)
+            chunk_df.replace("", np.nan)
+
+            # Apply the filter string to the chunk
+            filtered_chunk = chunk_df[eval(final_filter_string)]
+
+            filtered_data = pd.concat([filtered_data, filtered_chunk])
+            if len(filtered_data) >= 10:
+                break
+
+    # Convert the filtered data back to a CSV string
+    filtered_csv_string = filtered_data.to_csv(index=False)
+    return filtered_csv_string

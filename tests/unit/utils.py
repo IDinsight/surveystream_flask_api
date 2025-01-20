@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+
 from werkzeug.http import parse_cookie
 
 
@@ -123,7 +124,7 @@ def create_new_survey_role_with_permissions(
             },
         ],
     }
-    
+
     response = client.put(
         "/api/roles",
         query_string={"survey_uid": survey_uid},
@@ -148,7 +149,7 @@ def create_new_survey_admin_user(
     response_add = client.post(
         "/api/users",
         json={
-            "email": "survey_admin@example.com",
+            "email": "survey_admin@idinsight.org",
             "first_name": "Survey",
             "last_name": "Admin",
             "roles": [],
@@ -240,6 +241,39 @@ def load_reference_data(filename_stub):
         reference_data = json.load(json_file)
 
     return reference_data
+
+
+def load_scto_questions(app, db, scto_questions_json):
+    """
+    Add scto questions directly in the database. Needed for running dq tests that require scto questions faster.
+    """
+
+    with app.app_context():
+        for question in scto_questions_json:
+            db.session.execute(
+                "INSERT INTO webapp.scto_form_questions (form_uid, question_name, question_type, is_repeat_group, is_required) VALUES (:form_uid, :question_name, :question_type, :is_repeat_group, :is_required) ON CONFLICT DO NOTHING",
+                {
+                    "form_uid": question["form_uid"],
+                    "question_name": question["question_name"],
+                    "question_type": question["question_type"],
+                    "is_repeat_group": question["is_repeat_group"],
+                    "is_required": question["is_required"],
+                },
+            )
+        db.session.commit()
+
+
+def delete_scto_question(app, db, form_uid, question_name):
+    """
+    Delete a question directly in the database. Needed to set up certain tests.
+    """
+
+    with app.app_context():
+        db.session.execute(
+            "DELETE FROM webapp.scto_form_questions WHERE form_uid=:form_uid AND question_name=:question_name",
+            {"form_uid": form_uid, "question_name": question_name},
+        )
+        db.session.commit()
 
 
 def delete_user(app, db, email):

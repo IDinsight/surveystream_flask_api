@@ -1,0 +1,24 @@
+{
+    "data": {
+        "questions": [
+            {
+                "form_uid": 1,
+                "is_repeat_group": true,
+                "list_uid": null,
+                "question_name": "dummy_repeat",
+                "question_type": "select_one yesno",
+                "question_uid": 72,
+                "is_required": false
+            }
+        ],
+        "settings": {
+            "default_language": "english",
+            "form_title": "TEST SurveyCTO_Inputs & Outputs",
+            "form_uid": 1,
+            "public_key": "",
+            "submission_url": "",
+            "version": "2211010014"
+        }
+    },
+    "success": true
+}

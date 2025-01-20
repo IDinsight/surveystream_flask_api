@@ -24,7 +24,7 @@ class ColumnMappingValidator(FlaskForm):
 
 class TargetsFileUploadValidator(FlaskForm):
     column_mapping = FormField(ColumnMappingValidator)
-    file = StringField(validators=[DataRequired()])
+    file = StringField()
     mode = StringField(
         validators=[
             AnyOf(
@@ -35,6 +35,7 @@ class TargetsFileUploadValidator(FlaskForm):
         ]
     )
     load_successful = BooleanField(validators=[Optional()], default=False)
+    load_from_scto = BooleanField(validators=[Optional()], default=False)
 
 
 class TargetsQueryParamValidator(FlaskForm):
@@ -70,11 +71,40 @@ class ColumnConfigValidator(FlaskForm):
         ),
         validators=[DataRequired()],
     )
+    column_source = StringField(validators=[DataRequired()])
+
+
+class TargetSCTOFilterValidator(FlaskForm):
+    variable_name = StringField(validators=[DataRequired()])
+    filter_operator = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                [
+                    "Is",
+                    "Is not",
+                    "Contains",
+                    "Does not contain",
+                    "Is empty",
+                    "Is not empty",
+                    "Greather than",
+                    "Smaller than",
+                ],
+                message="Invalid operator. Must be 'Is', 'Is not', 'Contains', 'Does not contain', 'Is empty', or 'Is not empty', 'Greather than', 'Smaller than'",
+            ),
+        ]
+    )
+    filter_value = StringField()
+
+
+class TargetSCTOFilterGroupValidator(FlaskForm):
+    filter_group = FieldList(FormField(TargetSCTOFilterValidator), default=[])
 
 
 class UpdateTargetsColumnConfig(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     column_config = FieldList(FormField(ColumnConfigValidator))
+    filters = FieldList(FormField(TargetSCTOFilterGroupValidator), default=[])
 
 
 class SctoFieldsValidator(FlaskForm):
@@ -103,3 +133,50 @@ class TargetStatusValidator(FlaskForm):
 class UpdateTargetStatus(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     target_status = FieldList(FormField(TargetStatusValidator))
+
+
+class TargetConfigValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
+    target_source = StringField(
+        validators=[
+            AnyOf(
+                ["csv", "scto"],
+                message="Value must be one of %(values)s",
+            ),
+            DataRequired(),
+        ]
+    )
+
+    def validate_scto_input_type(form, field):
+        if form.target_source.data == "scto":
+            AnyOf(
+                ["form", "dataset"],
+                message="Value must be one of %(values)s",
+            )(form, field)
+
+    def validate_scto_input_id(form, field):
+        if form.target_source.data == "scto":
+            DataRequired()(form, field)
+
+    scto_input_type = StringField(validators=[validate_scto_input_type])
+
+    scto_input_id = StringField(validators=[validate_scto_input_id])
+
+    scto_encryption_flag = BooleanField(default=False)
+
+
+class TargetConfigQueryValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
+
+
+class TargetConfigSCTOColumnQueryValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])

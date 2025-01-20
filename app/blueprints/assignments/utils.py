@@ -16,6 +16,7 @@ from sqlalchemy import (
     column,
     func,
     insert,
+    or_,
     select,
     update,
 )
@@ -24,11 +25,16 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.sql import Values
 
 from app import db
-from app.blueprints.emails.models import EmailConfig, EmailSchedule
+from app.blueprints.emails.models import (
+    EmailConfig,
+    EmailSchedule,
+    EmailTemplate,
+    EmailTemplateTable,
+)
 from app.blueprints.enumerators.models import Enumerator, SurveyorForm
 from app.blueprints.mapping.errors import MappingError
 from app.blueprints.mapping.utils import SurveyorMapping, TargetMapping
-from app.blueprints.roles.utils import check_if_survey_admin
+from app.blueprints.roles.utils import check_if_survey_admin, get_user_role
 from app.blueprints.targets.models import Target, TargetStatus
 
 from .errors import (
@@ -199,9 +205,14 @@ class AssignmentsUpload:
         target_supervisor_uid = [s for t, s in target_mappings if t == target_id]
         surveyor_supervisor_uid = [s for e, s in surveyor_mappings if e == surveyor_id]
 
-        return target_supervisor_uid == surveyor_supervisor_uid
+        same_supervisor = False
+        if len(target_supervisor_uid) > 0 and len(surveyor_supervisor_uid) > 0:
+            if target_supervisor_uid == surveyor_supervisor_uid:
+                same_supervisor = True
 
-    def validate_records(self, column_mapping, write_mode):
+        return same_supervisor
+
+    def validate_records(self, column_mapping, write_mode, validate_mapping):
         """
         Method to run validations on the assignments data
 
@@ -259,6 +270,7 @@ class AssignmentsUpload:
                     "error_message": f"Blank values are not allowed in the following columns: {', '.join(non_null_columns)}. Blank values in these columns were found for the following row(s): {', '.join(str(row_number) for row_number in non_null_columns_df.index.to_list())}",
                     "error_count": 0,
                     "row_numbers_with_errors": non_null_columns_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
@@ -272,9 +284,9 @@ class AssignmentsUpload:
                         blank_columns.append(column_name)
                         record_errors["summary_by_error_type"][-1]["error_count"] += 1
 
-                non_null_columns_df.at[index, "errors"] = (
-                    f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
-                )
+                non_null_columns_df.at[
+                    index, "errors"
+                ] = f"Blank field(s) found in the following column(s): {', '.join(blank_columns)}. The column(s) cannot contain blank fields."
 
             invalid_records_df = invalid_records_df.merge(
                 non_null_columns_df[["errors"]],
@@ -304,6 +316,7 @@ class AssignmentsUpload:
                     "error_message": f"The file has {len(duplicates_df)} duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
                     "error_count": len(duplicates_df),
                     "row_numbers_with_errors": duplicates_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
@@ -334,6 +347,7 @@ class AssignmentsUpload:
                     "error_message": f"The file has {len(duplicates_df)} duplicate target_id(s). The following row numbers contain target_id duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
                     "error_count": len(duplicates_df),
                     "row_numbers_with_errors": duplicates_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
@@ -371,12 +385,13 @@ class AssignmentsUpload:
                     "error_message": f"The file contains {len(invalid_target_id_df)} target_id(s) that were not found in the uploaded targets data. The following row numbers contain invalid target_id's: {', '.join(str(row_number) for row_number in invalid_target_id_df.index.to_list())}",
                     "error_count": len(invalid_target_id_df),
                     "row_numbers_with_errors": invalid_target_id_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
-            invalid_target_id_df["errors"] = (
-                "Target id not found in uploaded targets data for the form"
-            )
+            invalid_target_id_df[
+                "errors"
+            ] = "Target id not found in uploaded targets data for the form"
             invalid_records_df = invalid_records_df.merge(
                 invalid_target_id_df["errors"],
                 how="left",
@@ -420,12 +435,13 @@ class AssignmentsUpload:
                     "error_message": f"The file contains {len(not_assignable_target_id_df)} target_id(s) that were not assignable for this form (most likely because they are complete). The following row numbers contain not assignable target_id's: {', '.join(str(row_number) for row_number in not_assignable_target_id_df.index.to_list())}",
                     "error_count": len(not_assignable_target_id_df),
                     "row_numbers_with_errors": not_assignable_target_id_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
-            not_assignable_target_id_df["errors"] = (
-                "Target id not assignable for this form (most likely because they are complete)"
-            )
+            not_assignable_target_id_df[
+                "errors"
+            ] = "Target id not assignable for this form (most likely because they are complete)"
             invalid_records_df = invalid_records_df.merge(
                 not_assignable_target_id_df["errors"],
                 how="left",
@@ -466,12 +482,13 @@ class AssignmentsUpload:
                     "error_message": f"The file contains {len(invalid_enumerator_id_df)} enumerator_id(s) that were not found in the uploaded enumerators data. The following row numbers contain invalid enumerator_id's: {', '.join(str(row_number) for row_number in invalid_enumerator_id_df.index.to_list())}",
                     "error_count": len(invalid_enumerator_id_df),
                     "row_numbers_with_errors": invalid_enumerator_id_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
-            invalid_enumerator_id_df["errors"] = (
-                "Enumerator id not found in uploaded enumerators data for the form"
-            )
+            invalid_enumerator_id_df[
+                "errors"
+            ] = "Enumerator id not found in uploaded enumerators data for the form"
             invalid_records_df = invalid_records_df.merge(
                 invalid_enumerator_id_df["errors"],
                 how="left",
@@ -504,12 +521,13 @@ class AssignmentsUpload:
                     "error_message": f"The file contains {len(dropout_enumerator_id_df)} enumerator_id(s) that have status 'Dropout' and are ineligible for assignment. The following row numbers contain dropout enumerator_id's: {', '.join(str(row_number) for row_number in dropout_enumerator_id_df.index.to_list())}",
                     "error_count": len(dropout_enumerator_id_df),
                     "row_numbers_with_errors": dropout_enumerator_id_df.index.to_list(),
+                    "can_be_ignored": False,
                 }
             )
 
-            dropout_enumerator_id_df["errors"] = (
-                "Enumerator id has status 'Dropout' and are ineligible for assignment"
-            )
+            dropout_enumerator_id_df[
+                "errors"
+            ] = "Enumerator id has status 'Dropout' and are ineligible for assignment"
             invalid_records_df = invalid_records_df.merge(
                 dropout_enumerator_id_df["errors"],
                 how="left",
@@ -527,7 +545,6 @@ class AssignmentsUpload:
             invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
 
         # Mapping criteria based checks
-
         try:
             target_mapping = TargetMapping(self.form_uid)
             surveyor_mapping = SurveyorMapping(self.form_uid)
@@ -552,12 +569,16 @@ class AssignmentsUpload:
             )
         ).subquery()
 
+        user_role = get_user_role(self.user_uid, self.survey_uid)
         is_survey_admin = check_if_survey_admin(self.user_uid, self.survey_uid)
+        is_super_admin = current_user.is_super_admin
         child_users_with_supervisors_query = build_child_users_with_supervisors_query(
             self.user_uid,
             self.survey_uid,
             target_mapping.bottom_level_role_uid,
+            user_role,
             is_survey_admin,
+            is_super_admin,
         )
 
         targets_mapped_to_current_user = (
@@ -594,6 +615,7 @@ class AssignmentsUpload:
                 ]  # If there are no mappings, we still need to return a row with 0 values
             )
         ).subquery()
+
         surveyors_mapped_to_current_user = (
             db.session.query(
                 Enumerator.enumerator_id, surveyor_mappings_query.c.supervisor_uid
@@ -611,94 +633,111 @@ class AssignmentsUpload:
             .all()
         )
 
-        # Check each target is assignable by the current supervisor as per the mappings
-        not_mapped_to_current_user_df = self.assignments_df[
-            ~self.assignments_df[column_mapping.target_id].isin(
-                [
-                    target_id
-                    for target_id, supervisor_uid in targets_mapped_to_current_user
-                ]
-            )
-            & self.assignments_df[column_mapping.target_id].isin(
-                [row[0] for row in target_id_query.all()]
-            )  # Only check targets that are in the database
-        ]
-        if len(not_mapped_to_current_user_df) > 0:
-            record_errors["summary_by_error_type"].append(
-                {
-                    "error_type": "Not mapped target_id's",
-                    "error_message": f"The file contains {len(not_mapped_to_current_user_df)} target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_current_user_df.index.to_list())}",
-                    "error_count": len(not_mapped_to_current_user_df),
-                    "row_numbers_with_errors": not_mapped_to_current_user_df.index.to_list(),
-                }
-            )
+        # Check only if the user is not a survey admin
+        # Survey admins can assign any target
+        if not is_survey_admin:
+            # Check each target is assignable by the current supervisor as per the mappings
+            not_mapped_to_current_user_df = self.assignments_df[
+                ~self.assignments_df[column_mapping.target_id].isin(
+                    [
+                        target_id
+                        for target_id, supervisor_uid in targets_mapped_to_current_user
+                    ]
+                )
+                & self.assignments_df[column_mapping.target_id].isin(
+                    [row[0] for row in target_id_query.all()]
+                )  # Only check targets that are in the database
+            ]
+            if len(not_mapped_to_current_user_df) > 0:
+                record_errors["summary_by_error_type"].append(
+                    {
+                        "error_type": "Not mapped target_id's",
+                        "error_message": f"The file contains {len(not_mapped_to_current_user_df)} target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_current_user_df.index.to_list())}",
+                        "error_count": len(not_mapped_to_current_user_df),
+                        "row_numbers_with_errors": not_mapped_to_current_user_df.index.to_list(),
+                        "can_be_ignored": False,
+                    }
+                )
 
-            not_mapped_to_current_user_df["errors"] = (
-                "Target is not mapped to current logged in user and hence cannot be assigned"
-            )
-            invalid_records_df = invalid_records_df.merge(
-                not_mapped_to_current_user_df["errors"],
-                how="left",
-                left_index=True,
-                right_index=True,
-            )
-            # Replace NaN with empty string
-            invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna("")
-            invalid_records_df["errors"] = invalid_records_df[
-                ["errors_x", "errors_y"]
-            ].apply("; ".join, axis=1)
-            invalid_records_df = invalid_records_df.drop(
-                columns=["errors_x", "errors_y"]
-            )
-            invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
+                not_mapped_to_current_user_df[
+                    "errors"
+                ] = "Target is not mapped to current logged in user and hence cannot be assigned"
+                invalid_records_df = invalid_records_df.merge(
+                    not_mapped_to_current_user_df["errors"],
+                    how="left",
+                    left_index=True,
+                    right_index=True,
+                )
+                # Replace NaN with empty string
+                invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna(
+                    ""
+                )
+                invalid_records_df["errors"] = invalid_records_df[
+                    ["errors_x", "errors_y"]
+                ].apply("; ".join, axis=1)
+                invalid_records_df = invalid_records_df.drop(
+                    columns=["errors_x", "errors_y"]
+                )
+                invalid_records_df["errors"] = invalid_records_df["errors"].str.strip(
+                    "; "
+                )
 
-        # Check if enumerator is mapped to the same supervisor as the target
-        not_mapped_to_same_supervisor_df = self.assignments_df[
-            ~self.assignments_df.apply(
-                lambda x: self.__check_if_mapped_to_same_supervisor(
-                    x[column_mapping.target_id],
-                    x[column_mapping.enumerator_id],
-                    targets_mapped_to_current_user,
-                    surveyors_mapped_to_current_user,
-                ),
-                axis=1,
-            )
-            & self.assignments_df[column_mapping.target_id].isin(
-                [row[0] for row in target_id_query.all()]
-            )  # Only check targets that are in the database
-            & self.assignments_df[column_mapping.enumerator_id].isin(
-                [enumerator_id for enumerator_id, status in enumerator_id_query.all()]
-            )  # Only check enumerators that are in the database
-        ]
+        if validate_mapping:
+            # Check if enumerator is mapped to the same supervisor as the target
+            not_mapped_to_same_supervisor_df = self.assignments_df[
+                ~self.assignments_df.apply(
+                    lambda x: self.__check_if_mapped_to_same_supervisor(
+                        x[column_mapping.target_id],
+                        x[column_mapping.enumerator_id],
+                        targets_mapped_to_current_user,
+                        surveyors_mapped_to_current_user,
+                    ),
+                    axis=1,
+                )
+                & self.assignments_df[column_mapping.target_id].isin(
+                    [row[0] for row in target_id_query.all()]
+                )  # Only check targets that are in the database
+                & self.assignments_df[column_mapping.enumerator_id].isin(
+                    [
+                        enumerator_id
+                        for enumerator_id, status in enumerator_id_query.all()
+                    ]
+                )  # Only check enumerators that are in the database
+            ]
 
-        if len(not_mapped_to_same_supervisor_df) > 0:
-            record_errors["summary_by_error_type"].append(
-                {
-                    "error_type": "Incorrectly mappings target_id's",
-                    "error_message": f"The file contains {len(not_mapped_to_same_supervisor_df)} target_id(s) that are assigned to enumerators mapped to a different supervisor. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_same_supervisor_df.index.to_list())}",
-                    "error_count": len(not_mapped_to_same_supervisor_df),
-                    "row_numbers_with_errors": not_mapped_to_same_supervisor_df.index.to_list(),
-                }
-            )
+            if len(not_mapped_to_same_supervisor_df) > 0:
+                record_errors["summary_by_error_type"].append(
+                    {
+                        "error_type": "Incorrectly mapped target and enumerator id's",
+                        "error_message": f"The file contains {len(not_mapped_to_same_supervisor_df)} target_id(s) that are assigned to enumerators mapped to a different supervisor or the target/enumerator/both are not mapped. The following row numbers contain such target_id's: {', '.join(str(row_number) for row_number in not_mapped_to_same_supervisor_df.index.to_list())}",
+                        "error_count": len(not_mapped_to_same_supervisor_df),
+                        "row_numbers_with_errors": not_mapped_to_same_supervisor_df.index.to_list(),
+                        "can_be_ignored": True,
+                    }
+                )
 
-            not_mapped_to_same_supervisor_df["errors"] = (
-                "Target is assigned to an enumerator mapped to a different supervisor"
-            )
-            invalid_records_df = invalid_records_df.merge(
-                not_mapped_to_same_supervisor_df["errors"],
-                how="left",
-                left_index=True,
-                right_index=True,
-            )
-            # Replace NaN with empty string
-            invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna("")
-            invalid_records_df["errors"] = invalid_records_df[
-                ["errors_x", "errors_y"]
-            ].apply("; ".join, axis=1)
-            invalid_records_df = invalid_records_df.drop(
-                columns=["errors_x", "errors_y"]
-            )
-            invalid_records_df["errors"] = invalid_records_df["errors"].str.strip("; ")
+                not_mapped_to_same_supervisor_df[
+                    "errors"
+                ] = "Target is assigned to an enumerator mapped to a different supervisor"
+                invalid_records_df = invalid_records_df.merge(
+                    not_mapped_to_same_supervisor_df["errors"],
+                    how="left",
+                    left_index=True,
+                    right_index=True,
+                )
+                # Replace NaN with empty string
+                invalid_records_df["errors_y"] = invalid_records_df["errors_y"].fillna(
+                    ""
+                )
+                invalid_records_df["errors"] = invalid_records_df[
+                    ["errors_x", "errors_y"]
+                ].apply("; ".join, axis=1)
+                invalid_records_df = invalid_records_df.drop(
+                    columns=["errors_x", "errors_y"]
+                )
+                invalid_records_df["errors"] = invalid_records_df["errors"].str.strip(
+                    "; "
+                )
 
         if len(record_errors["summary_by_error_type"]) > 0:
             record_errors["summary"]["total_correct_rows"] = len(
@@ -848,71 +887,119 @@ def get_next_assignment_email_schedule(form_uid):
 
     """
 
+    # Find all configs using assignments table
+    assignment_config_subquery = (
+        db.session.query(EmailConfig)
+        .join(
+            EmailTemplate,
+            EmailTemplate.email_config_uid == EmailConfig.email_config_uid,
+        )
+        .join(
+            EmailTemplateTable,
+            EmailTemplateTable.email_template_uid == EmailTemplate.email_template_uid,
+        )
+        .filter(
+            EmailConfig.form_uid == form_uid,
+            EmailTemplateTable.table_name == "Assignments: Default",
+        )
+    ).subquery()
+
     # Get current datetime and current time
     current_datetime = datetime.now()
     current_time = datetime.now().strftime("%H:%M")
 
-    # a subquery to unnest the array of dates and filter dates less than current date
-    subquery = (
+    # a subquery to unnest the array of dates and filter dates to only get the ones greater than current date
+    # Outer join with assignment_email_config_subquery to always get the config details in the result
+    email_dates_unnested_subquery = (
         db.session.query(
-            cast(func.unnest(EmailSchedule.dates) + EmailSchedule.time, Date).label(
-                "schedule_date"
-            ),
+            EmailSchedule.email_config_uid,
             EmailSchedule.email_schedule_uid,
+            cast(func.unnest(EmailSchedule.dates) + EmailSchedule.time, DateTime).label(
+                "schedule_time"
+            ),
         )
         .filter(
             func.DATE(current_datetime) <= func.ANY(EmailSchedule.dates),
         )
-        .correlate(EmailSchedule)
+        .subquery()
+    )
+
+    subquery = (
+        db.session.query(
+            assignment_config_subquery.c.email_config_uid,
+            assignment_config_subquery.c.config_name,
+            email_dates_unnested_subquery.c.email_schedule_uid,
+            email_dates_unnested_subquery.c.schedule_time,
+        )
+        .outerjoin(
+            email_dates_unnested_subquery,
+            and_(
+                email_dates_unnested_subquery.c.email_config_uid
+                == assignment_config_subquery.c.email_config_uid,
+                email_dates_unnested_subquery.c.schedule_time >= current_datetime,
+            ),
+        )
         .subquery()
     )
 
     # Alias the subquery
     schedule_dates_subquery = alias(subquery)
 
-    # join schedule_dates_subquery and filter dates only greater than current date time
-    email_schedule_res = (
-        db.session.query(EmailSchedule, EmailConfig, schedule_dates_subquery)
-        .select_from(EmailSchedule)
-        .join(
-            schedule_dates_subquery,
+    # join schedule_dates_subquery and filter time greater than current time
+    # Get the first schedule for each config
+    email_schedule_subquery = (
+        db.session.query(
+            schedule_dates_subquery.c.email_config_uid,
+            schedule_dates_subquery.c.config_name,
+            EmailSchedule.email_schedule_uid,
+            EmailSchedule.dates,
+            cast(schedule_dates_subquery.c.schedule_time, Date).label("schedule_date"),
+            EmailSchedule.time,
+            func.row_number()
+            .over(
+                partition_by=schedule_dates_subquery.c.email_config_uid,
+                order_by=schedule_dates_subquery.c.schedule_time.asc(),
+            )
+            .label("row_number"),
+        )
+        .select_from(schedule_dates_subquery)
+        .outerjoin(
+            EmailSchedule,
             and_(
-                schedule_dates_subquery.c.email_schedule_uid
-                == EmailSchedule.email_schedule_uid,
-                cast(
-                    schedule_dates_subquery.c.schedule_date + EmailSchedule.time,
-                    DateTime,
-                )
-                >= current_datetime,
+                EmailSchedule.email_config_uid
+                == schedule_dates_subquery.c.email_config_uid,
+                EmailSchedule.email_schedule_uid
+                == schedule_dates_subquery.c.email_schedule_uid,
             ),
         )
-        .join(
-            EmailConfig, EmailSchedule.email_config_uid == EmailConfig.email_config_uid
+        .subquery()
+    )
+
+    email_schedule_res = (
+        db.session.query(
+            email_schedule_subquery.c.email_config_uid,
+            email_schedule_subquery.c.config_name,
+            email_schedule_subquery.c.email_schedule_uid,
+            email_schedule_subquery.c.dates,
+            email_schedule_subquery.c.schedule_date,
+            email_schedule_subquery.c.time,
         )
-        .filter(
-            EmailConfig.form_uid == form_uid,
-            func.lower(EmailConfig.config_name) == "assignments",
-        )
-        .order_by(schedule_dates_subquery.c.schedule_date.asc())
-        .first()
+        .filter(email_schedule_subquery.c.row_number == 1)
+        .all()
     )
 
     if email_schedule_res:
-        (
-            email_schedule,
-            email_config,
-            schedule_date,
-            email_schedule_uid,
-        ) = email_schedule_res
-
-        return {
-            "email_config_uid": email_config.email_config_uid,
-            "config_name": email_config.config_name,
-            "dates": email_schedule.dates,
-            "time": str(email_schedule.time),
-            "current_time": str(current_time),
-            "email_schedule_uid": email_schedule_uid,
-            "schedule_date": schedule_date,
-        }
+        return [
+            {
+                "email_config_uid": res.email_config_uid,
+                "config_name": res.config_name,
+                "dates": res.dates,
+                "time": str(res.time) if res.time else None,
+                "current_time": str(current_time),
+                "email_schedule_uid": res.email_schedule_uid,
+                "schedule_date": res.schedule_date,
+            }
+            for res in email_schedule_res
+        ]
 
     return None

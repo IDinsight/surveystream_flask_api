@@ -139,7 +139,7 @@ class TestAssignments:
         )
 
         login_user(client, test_user_credentials)
-        
+
     @pytest.fixture
     def user_with_no_permissions(self, client, test_user_credentials):
         # Assign no roles and permissions
@@ -187,6 +187,7 @@ class TestAssignments:
     )
     def user_permissions_with_upload(self, request):
         return request.param
+
     @pytest.fixture()
     def create_survey(self, client, login_test_user, csrf_token, test_user_credentials):
         """
@@ -1353,42 +1354,49 @@ class TestAssignments:
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": False,
+                    "column_source": "target_id1",
                 },
                 {
                     "column_name": "language",
                     "column_type": "basic_details",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "language",
                 },
                 {
                     "column_name": "gender",
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "gender",
                 },
                 {
                     "column_name": "Name",
                     "column_type": "custom_fields",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "name",
                 },
                 {
                     "column_name": "Mobile no.",
                     "column_type": "custom_fields",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "mobile_primary",
                 },
                 {
                     "column_name": "Address",
                     "column_type": "custom_fields",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "address",
                 },
                 {
                     "column_name": "bottom_geo_level_location",
                     "column_type": "location",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "psu_id",
                 },
             ],
         }
@@ -1421,36 +1429,42 @@ class TestAssignments:
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": False,
+                    "column_source": "target_id1",
                 },
                 {
                     "column_name": "language",
                     "column_type": "basic_details",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "language",
                 },
                 {
                     "column_name": "gender",
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "gender",
                 },
                 {
                     "column_name": "Name",
                     "column_type": "custom_fields",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "name",
                 },
                 {
                     "column_name": "Mobile no.",
                     "column_type": "custom_fields",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "mobile_primary",
                 },
                 {
                     "column_name": "Address",
                     "column_type": "custom_fields",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "address",
                 },
             ],
         }
@@ -1483,24 +1497,28 @@ class TestAssignments:
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": False,
+                    "column_source": "target_id1",
                 },
                 {
                     "column_name": "language",
                     "column_type": "basic_details",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "language",
                 },
                 {
                     "column_name": "gender",
                     "column_type": "basic_details",
                     "bulk_editable": False,
                     "contains_pii": True,
+                    "column_source": "gender",
                 },
                 {
                     "column_name": "bottom_geo_level_location",
                     "column_type": "location",
                     "bulk_editable": True,
                     "contains_pii": True,
+                    "column_source": "psu_id",
                 },
             ],
         }
@@ -1728,7 +1746,7 @@ class TestAssignments:
         Insert an email config as a setup step for email tests
         """
         payload = {
-            "config_name": "Assignments",
+            "config_name": "AssignmentsConfig",
             "form_uid": 1,
             "report_users": [1, 2, 3],
             "email_source": "SurveyStream Data",
@@ -1744,6 +1762,80 @@ class TestAssignments:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        assert response.status_code == 201
+        return response.json["data"]
+
+    @pytest.fixture
+    def create_email_template(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_email_config,
+    ):
+        """
+        Insert email template as a setup for tests
+        """
+        payload = {
+            "subject": "Test Assignments Email",
+            "language": "english",
+            "content": "Test Content",
+            "email_config_uid": create_email_config["email_config_uid"],
+            "variable_list": [],
+            "table_list": [
+                {
+                    "table_name": "Assignments: Default",
+                    "column_mapping": {
+                        "test_column1": "TEST Column 1",
+                        "test_column2": "TEST Column 2",
+                    },
+                    "sort_list": {"test_column1": "asc", "test_column2": "desc"},
+                    "variable_name": "test_table+_1",
+                    "filter_list": [
+                        {
+                            "filter_group": [
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value",
+                                },
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column2",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value2",
+                                },
+                            ]
+                        },
+                        {
+                            "filter_group": [
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column",
+                                    "filter_operator": "Is",
+                                    "filter_value": "test_value",
+                                },
+                                {
+                                    "table_name": "Assignments: Default",
+                                    "filter_variable": "test_column2",
+                                    "filter_operator": "Is not",
+                                    "filter_value": "test_value2",
+                                },
+                            ]
+                        },
+                    ],
+                }
+            ],
+        }
+        response = client.post(
+            "/api/emails/template",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
         assert response.status_code == 201
         return response.json["data"]
 
@@ -1833,7 +1925,7 @@ class TestAssignments:
 
         response = client.put(
             "/api/assignments",
-            query_string={"form_uid": 1},
+            query_string={"form_uid": 1, "validate_mapping": True},
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -1845,17 +1937,40 @@ class TestAssignments:
     ## FIXTURES END HERE
     ####################################################
 
-    def test_assignments_no_enumerators_no_targets_no_geo_levels_no_roles(
-        self, client, login_test_user, create_form, csrf_token
+    def test_assignments_no_enumerators_no_targets(
+        self, client, login_test_user, create_locations, add_user_hierarchy, csrf_token
     ):
         """
         Test the assignments endpoint response when key datasets are missing
-        No geo levels
-        No locations
-        No roles
         No enumerators
         No targets
+        """
 
+        expected_response = {
+            "errors": {
+                "message": "Targets and enumerators are not available for this form. Kindly upload targets and enumerators first."
+            },
+            "success": False,
+        }
+
+        # Check the response
+        response = client.get("/api/assignments", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_assignments_no_roles(
+        self,
+        client,
+        login_test_user,
+        create_form,
+        csrf_token,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test the assignments endpoint response when key datasets are missing
+        No roles
         When no roles are defined, the response should be a 422 error
         """
 
@@ -1872,48 +1987,85 @@ class TestAssignments:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_assignments_no_enumerators_no_targets_no_geo_levels(
-        self, client, login_test_user, create_form, create_roles, csrf_token
+    def test_assignments_no_targets(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        add_user_hierarchy,
+        csrf_token,
+        user_permissions,
+        request,
     ):
         """
-        Test the assignments endpoint response when key datasets are missing
-        No geo levels
-        No locations
-        No enumerators
+        Test the assignments endpoint response when key datasets are missing - multiple user roles
         No targets
         """
-
-        expected_response = {
-            "data": [],
-            "success": True,
-        }
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+        if expected_permission:
+            expected_response = {
+                "errors": {
+                    "message": "Targets are not available for this form. Kindly upload targets first.",
+                },
+                "success": False,
+            }
 
-    def test_assignments_no_enumerators_no_targets_no_locations(
-        self, client, login_test_user, create_geo_levels, create_roles, csrf_token
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            response.status_code = 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Assignments",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_assignments_no_enumerators(
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+        user_permissions,
+        request,
     ):
         """
-        Test the assignments endpoint response when key datasets are missing
-        No locations
+        Test the assignments endpoint response when key datasets are missing - multiple user roles
         No enumerators
-        No targets
         """
-
-        expected_response = {
-            "data": [],
-            "success": True,
-        }
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
 
         # Check the response
         response = client.get("/api/assignments", query_string={"form_uid": 1})
 
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
+        if expected_permission:
+            expected_response = {
+                "errors": {
+                    "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
+                },
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            response.status_code = 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Assignments",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
 
     def test_assignments_schedule_email(
         self,
@@ -1921,6 +2073,7 @@ class TestAssignments:
         login_test_user,
         create_geo_levels,
         create_roles,
+        create_email_config,
         csrf_token,
         user_permissions,
         request,
@@ -1938,6 +2091,7 @@ class TestAssignments:
 
         payload = {
             "form_uid": 1,
+            "email_config_uid": 1,
             "date": current_datetime,
             "time": "08:00",
             "recipients": [1, 2, 3],  # there are supposed to be enumerator ids
@@ -1993,6 +2147,7 @@ class TestAssignments:
 
         payload = {
             "form_uid": 1,
+            "email_config_uid": 1,
             "date": "2024-02-03",
             "time": "08:00",
             "recipients": [1, 2, 3],  # there are supposed to be enumerator ids
@@ -2016,64 +2171,6 @@ class TestAssignments:
         assert response.status_code == 422
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
-
-    def test_assignments_no_enumerators_no_targets(
-        self, client, login_test_user, create_locations, add_user_hierarchy, csrf_token
-    ):
-        """
-        Test the assignments endpoint response when key datasets are missing
-        No enumerators
-        No targets
-        """
-
-        expected_response = {
-            "data": [],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_assignments_no_targets(
-        self,
-        client,
-        login_test_user,
-        upload_enumerators_csv,
-        add_user_hierarchy,
-        csrf_token,
-        user_permissions,
-        request,
-    ):
-        """
-        Test the assignments endpoint response when key datasets are missing - multiple user roles
-        No targets
-        """
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
-
-        # Check the response
-        response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        if expected_permission:
-            expected_response = {
-                "data": [],
-                "success": True,
-            }
-
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-        else:
-            response.status_code = 403
-
-            expected_response = {
-                "success": False,
-                "error": f"User does not have the required permission: READ Assignments",
-            }
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
 
     def test_assignments_empty_assignment_table(
         self,
@@ -2099,99 +2196,6 @@ class TestAssignments:
             if user_fixture != "user_with_assignment_permissions":
                 expected_response = {
                     "data": [
-                        {
-                            "assigned_enumerator_custom_fields": None,
-                            "assigned_enumerator_email": None,
-                            "assigned_enumerator_gender": None,
-                            "assigned_enumerator_home_address": None,
-                            "assigned_enumerator_id": None,
-                            "assigned_enumerator_language": None,
-                            "assigned_enumerator_mobile_primary": None,
-                            "assigned_enumerator_name": None,
-                            "assigned_enumerator_uid": None,
-                            "completed_flag": None,
-                            "custom_fields": {
-                                "Address": "South Delhi",
-                                "Mobile no.": "1234567891",
-                                "Name": "Anupama",
-                                "column_mapping": {
-                                    "custom_fields": [
-                                        {
-                                            "column_name": "mobile_primary1",
-                                            "field_label": "Mobile no.",
-                                        },
-                                        {"column_name": "name1", "field_label": "Name"},
-                                        {
-                                            "column_name": "address1",
-                                            "field_label": "Address",
-                                        },
-                                    ],
-                                    "gender": "gender1",
-                                    "language": "language1",
-                                    "location_id_column": "psu_id1",
-                                    "target_id": "target_id1",
-                                },
-                            },
-                            "form_uid": 1,
-                            "gender": "Female",
-                            "language": "Hindi",
-                            "last_attempt_survey_status": None,
-                            "last_attempt_survey_status_label": "Not Attempted",
-                            "final_survey_status": None,
-                            "final_survey_status_label": "Not Attempted",
-                            "scto_fields": None,
-                            "supervisors": [
-                                {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
-                                },
-                                {
-                                    "role_name": "Cluster Coordinator",
-                                    "role_uid": 2,
-                                    "supervisor_email": "newuser2@example.com",
-                                    "supervisor_name": "Ron Doe",
-                                },
-                                {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
-                                },
-                            ],
-                            "location_uid": 4,
-                            "num_attempts": 0,
-                            "refusal_flag": None,
-                            "revisit_sections": None,
-                            "target_assignable": True,
-                            "target_id": "2",
-                            "target_locations": [
-                                {
-                                    "geo_level_name": "District",
-                                    "geo_level_uid": 1,
-                                    "location_id": "1",
-                                    "location_name": "ADILABAD",
-                                    "location_uid": 1,
-                                },
-                                {
-                                    "geo_level_name": "Mandal",
-                                    "geo_level_uid": 2,
-                                    "location_id": "1101",
-                                    "location_name": "ADILABAD RURAL",
-                                    "location_uid": 2,
-                                },
-                                {
-                                    "geo_level_name": "PSU",
-                                    "geo_level_uid": 3,
-                                    "location_id": "17101102",
-                                    "location_name": "ANKOLI",
-                                    "location_uid": 4,
-                                },
-                            ],
-                            "target_uid": 2,
-                            "webapp_tag_color": None,
-                        },
                         {
                             "assigned_enumerator_custom_fields": None,
                             "assigned_enumerator_email": None,
@@ -2285,101 +2289,6 @@ class TestAssignments:
                             "target_uid": 1,
                             "webapp_tag_color": None,
                         },
-                    ],
-                    "success": True,
-                }
-            else:
-                # User has no child supervisors
-                expected_response = {"data": [], "success": True}
-
-            print(response.json)
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-        else:
-            response.status_code = 403
-
-            expected_response = {
-                "success": False,
-                "error": f"User does not have the required permission: READ Assignments",
-            }
-            checkdiff = jsondiff.diff(expected_response, response.json)
-            assert checkdiff == {}
-
-    def test_create_assignment(
-        self,
-        client,
-        login_test_user,
-        upload_enumerators_csv,
-        upload_targets_csv,
-        add_user_hierarchy,
-        csrf_token,
-        user_permissions,
-        request,
-        create_email_config,
-        create_email_schedule,
-    ):
-        """
-        Create an assignment between a single target and enumerator
-        """
-        user_fixture, expected_permission = user_permissions
-        request.getfixturevalue(user_fixture)
-
-        payload = {
-            "assignments": [{"target_uid": 1, "enumerator_uid": 1}],
-            "form_uid": 1,
-        }
-
-        response = client.put(
-            "/api/assignments",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        current_datetime = datetime.now()
-        formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
-
-        current_time = datetime.now().strftime("%H:%M")
-
-        # Define the format corresponding to the date string
-        date_format = "%a, %d %b %Y %H:%M:%S %Z"
-
-        if expected_permission:
-            if user_fixture != "user_with_assignment_permissions":
-                assert response.status_code == 200
-                assert datetime.strptime(
-                    response.json["data"]["email_schedule"]["schedule_date"],
-                    date_format,
-                ) >= datetime.strptime(formatted_date, date_format)
-                expected_put_response = {
-                    "data": {
-                        "assignments_count": 1,
-                        "new_assignments_count": 1,
-                        "no_changes_count": 0,
-                        "re_assignments_count": 0,
-                        "email_schedule": {
-                            "config_name": "Assignments",
-                            "dates": response.json["data"]["email_schedule"]["dates"],
-                            "schedule_date": response.json["data"]["email_schedule"][
-                                "schedule_date"
-                            ],
-                            "current_time": current_time,
-                            "email_schedule_uid": response.json["data"][
-                                "email_schedule"
-                            ]["email_schedule_uid"],
-                            "email_config_uid": 1,
-                            "time": response.json["data"]["email_schedule"]["time"],
-                        },
-                    },
-                    "message": "Success",
-                }
-
-                checkdiff = jsondiff.diff(expected_put_response, response.json)
-                assert checkdiff == {}
-
-                expected_response = {
-                    "data": [
                         {
                             "assigned_enumerator_custom_fields": None,
                             "assigned_enumerator_email": None,
@@ -2473,6 +2382,109 @@ class TestAssignments:
                             "target_uid": 2,
                             "webapp_tag_color": None,
                         },
+                    ],
+                    "success": True,
+                }
+            else:
+                # User has no child supervisors
+                expected_response = {"data": [], "success": True}
+
+            print(response.json)
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            response.status_code = 403
+
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: READ Assignments",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_create_assignment(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+        user_permissions,
+        request,
+        create_email_config,
+        create_email_schedule,
+        create_email_template,
+    ):
+        """
+        Create an assignment between a single target and enumerator
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "assignments": [{"target_uid": 1, "enumerator_uid": 1}],
+            "form_uid": 1,
+            "validate_mapping": True,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        current_datetime = datetime.now()
+        formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
+
+        current_time = datetime.now().strftime("%H:%M")
+
+        # Define the format corresponding to the date string
+        date_format = "%a, %d %b %Y %H:%M:%S %Z"
+
+        if expected_permission:
+            if user_fixture != "user_with_assignment_permissions":
+                assert response.status_code == 200
+                assert datetime.strptime(
+                    response.json["data"]["email_schedule"][0]["schedule_date"],
+                    date_format,
+                ) >= datetime.strptime(formatted_date, date_format)
+                expected_put_response = {
+                    "data": {
+                        "assignments_count": 1,
+                        "new_assignments_count": 1,
+                        "no_changes_count": 0,
+                        "re_assignments_count": 0,
+                        "email_schedule": [
+                            {
+                                "config_name": "AssignmentsConfig",
+                                "dates": response.json["data"]["email_schedule"][0][
+                                    "dates"
+                                ],
+                                "schedule_date": response.json["data"][
+                                    "email_schedule"
+                                ][0]["schedule_date"],
+                                "current_time": current_time,
+                                "email_schedule_uid": response.json["data"][
+                                    "email_schedule"
+                                ][0]["email_schedule_uid"],
+                                "email_config_uid": 1,
+                                "time": response.json["data"]["email_schedule"][0][
+                                    "time"
+                                ],
+                            }
+                        ],
+                    },
+                    "message": "Success",
+                }
+
+                checkdiff = jsondiff.diff(expected_put_response, response.json)
+                assert checkdiff == {}
+
+                expected_response = {
+                    "data": [
                         {
                             "assigned_enumerator_custom_fields": {
                                 "Age": "1",
@@ -2587,6 +2599,99 @@ class TestAssignments:
                             "target_uid": 1,
                             "webapp_tag_color": None,
                         },
+                        {
+                            "assigned_enumerator_custom_fields": None,
+                            "assigned_enumerator_email": None,
+                            "assigned_enumerator_gender": None,
+                            "assigned_enumerator_home_address": None,
+                            "assigned_enumerator_id": None,
+                            "assigned_enumerator_language": None,
+                            "assigned_enumerator_mobile_primary": None,
+                            "assigned_enumerator_name": None,
+                            "assigned_enumerator_uid": None,
+                            "completed_flag": None,
+                            "custom_fields": {
+                                "Address": "South Delhi",
+                                "Mobile no.": "1234567891",
+                                "Name": "Anupama",
+                                "column_mapping": {
+                                    "custom_fields": [
+                                        {
+                                            "column_name": "mobile_primary1",
+                                            "field_label": "Mobile no.",
+                                        },
+                                        {"column_name": "name1", "field_label": "Name"},
+                                        {
+                                            "column_name": "address1",
+                                            "field_label": "Address",
+                                        },
+                                    ],
+                                    "gender": "gender1",
+                                    "language": "language1",
+                                    "location_id_column": "psu_id1",
+                                    "target_id": "target_id1",
+                                },
+                            },
+                            "form_uid": 1,
+                            "gender": "Female",
+                            "language": "Hindi",
+                            "last_attempt_survey_status": None,
+                            "last_attempt_survey_status_label": "Not Attempted",
+                            "final_survey_status": None,
+                            "final_survey_status_label": "Not Attempted",
+                            "scto_fields": None,
+                            "supervisors": [
+                                {
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
+                                },
+                                {
+                                    "role_name": "Cluster Coordinator",
+                                    "role_uid": 2,
+                                    "supervisor_email": "newuser2@example.com",
+                                    "supervisor_name": "Ron Doe",
+                                },
+                                {
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
+                                },
+                            ],
+                            "location_uid": 4,
+                            "num_attempts": 0,
+                            "refusal_flag": None,
+                            "revisit_sections": None,
+                            "target_assignable": True,
+                            "target_id": "2",
+                            "target_locations": [
+                                {
+                                    "geo_level_name": "District",
+                                    "geo_level_uid": 1,
+                                    "location_id": "1",
+                                    "location_name": "ADILABAD",
+                                    "location_uid": 1,
+                                },
+                                {
+                                    "geo_level_name": "Mandal",
+                                    "geo_level_uid": 2,
+                                    "location_id": "1101",
+                                    "location_name": "ADILABAD RURAL",
+                                    "location_uid": 2,
+                                },
+                                {
+                                    "geo_level_name": "PSU",
+                                    "geo_level_uid": 3,
+                                    "location_id": "17101102",
+                                    "location_name": "ANKOLI",
+                                    "location_uid": 4,
+                                },
+                            ],
+                            "target_uid": 2,
+                            "webapp_tag_color": None,
+                        },
                     ],
                     "success": True,
                 }
@@ -2653,73 +2758,6 @@ class TestAssignments:
 
         expected_response = {
             "data": [
-                {
-                    "assigned_enumerator_custom_fields": None,
-                    "assigned_enumerator_email": None,
-                    "assigned_enumerator_gender": None,
-                    "assigned_enumerator_home_address": None,
-                    "assigned_enumerator_id": None,
-                    "assigned_enumerator_language": None,
-                    "assigned_enumerator_mobile_primary": None,
-                    "assigned_enumerator_name": None,
-                    "assigned_enumerator_uid": None,
-                    "completed_flag": None,
-                    "custom_fields": {
-                        "Address": "South Delhi",
-                        "Mobile no.": "1234567891",
-                        "Name": "Anupama",
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name", "field_label": "Name"},
-                                {"column_name": "address", "field_label": "Address"},
-                            ],
-                            "gender": "gender",
-                            "language": "language",
-                            "target_id": "target_id",
-                        },
-                    },
-                    "form_uid": 1,
-                    "gender": "Female",
-                    "language": "Hindi",
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": "Not Attempted",
-                    "final_survey_status": None,
-                    "final_survey_status_label": "Not Attempted",
-                    "scto_fields": None,
-                    "supervisors": [
-                        {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
-                        },
-                        {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
-                        },
-                    ],
-                    "location_uid": None,
-                    "num_attempts": 0,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": True,
-                    "target_id": "2",
-                    "target_locations": None,
-                    "target_uid": 2,
-                    "webapp_tag_color": None,
-                },
                 {
                     "assigned_enumerator_custom_fields": {
                         "Mobile (Secondary)": "1123456789",
@@ -2805,6 +2843,73 @@ class TestAssignments:
                     "target_uid": 1,
                     "webapp_tag_color": None,
                 },
+                {
+                    "assigned_enumerator_custom_fields": None,
+                    "assigned_enumerator_email": None,
+                    "assigned_enumerator_gender": None,
+                    "assigned_enumerator_home_address": None,
+                    "assigned_enumerator_id": None,
+                    "assigned_enumerator_language": None,
+                    "assigned_enumerator_mobile_primary": None,
+                    "assigned_enumerator_name": None,
+                    "assigned_enumerator_uid": None,
+                    "completed_flag": None,
+                    "custom_fields": {
+                        "Address": "South Delhi",
+                        "Mobile no.": "1234567891",
+                        "Name": "Anupama",
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name", "field_label": "Name"},
+                                {"column_name": "address", "field_label": "Address"},
+                            ],
+                            "gender": "gender",
+                            "language": "language",
+                            "target_id": "target_id",
+                        },
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
+                    "supervisors": [
+                        {
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
+                        },
+                        {
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
+                        },
+                    ],
+                    "location_uid": None,
+                    "num_attempts": 0,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": True,
+                    "target_id": "2",
+                    "target_locations": None,
+                    "target_uid": 2,
+                    "webapp_tag_color": None,
+                },
             ],
             "success": True,
         }
@@ -2814,6 +2919,113 @@ class TestAssignments:
 
         print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_create_assignment_no_email_config(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+    ):
+        """
+        Create an assignment between a single target and enumerator without email config
+        """
+        payload = {
+            "assignments": [{"target_uid": 1, "enumerator_uid": 1}],
+            "form_uid": 1,
+            "validate_mapping": True,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        current_datetime = datetime.now()
+        formatted_date = current_datetime.strftime("%a, %d %b %Y") + " 00:00:00 GMT"
+
+        current_time = datetime.now().strftime("%H:%M")
+
+        # Define the format corresponding to the date string
+        date_format = "%a, %d %b %Y %H:%M:%S %Z"
+
+        assert response.status_code == 200
+
+        expected_put_response = {
+            "data": {
+                "assignments_count": 1,
+                "new_assignments_count": 1,
+                "no_changes_count": 0,
+                "re_assignments_count": 0,
+            },
+            "message": "Success",
+        }
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
+        assert checkdiff == {}
+
+    def test_create_assignment_no_email_schedule(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+        create_email_config,
+        create_email_template,
+    ):
+        """
+        Create an assignment between a single target and enumerator without email schedule
+        """
+        payload = {
+            "assignments": [{"target_uid": 1, "enumerator_uid": 1}],
+            "form_uid": 1,
+            "validate_mapping": True,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        current_time = datetime.now().strftime("%H:%M")
+
+        assert response.status_code == 200
+
+        expected_put_response = {
+            "data": {
+                "assignments_count": 1,
+                "new_assignments_count": 1,
+                "no_changes_count": 0,
+                "re_assignments_count": 0,
+                "email_schedule": [
+                    {
+                        "email_config_uid": 1,
+                        "config_name": "AssignmentsConfig",
+                        "dates": None,
+                        "time": None,
+                        "current_time": current_time,
+                        "email_schedule_uid": None,
+                        "schedule_date": None,
+                    }
+                ],
+            },
+            "message": "Success",
+        }
+        print(response.json)
+        print(expected_put_response)
+
+        checkdiff = jsondiff.diff(expected_put_response, response.json)
         assert checkdiff == {}
 
     def test_multiple_assignments(
@@ -2849,117 +3061,6 @@ class TestAssignments:
 
         expected_response = {
             "data": [
-                {
-                    "assigned_enumerator_custom_fields": {
-                        "Age": "2",
-                        "Mobile (Secondary)": "1123456789",
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_secondary1",
-                                    "field_label": "Mobile (Secondary)",
-                                },
-                                {"column_name": "age1", "field_label": "Age"},
-                            ],
-                            "email": "email1",
-                            "enumerator_id": "enumerator_id1",
-                            "enumerator_type": "enumerator_type1",
-                            "gender": "gender1",
-                            "home_address": "home_address1",
-                            "language": "language1",
-                            "location_id_column": "district_id1",
-                            "mobile_primary": "mobile_primary1",
-                            "name": "name1",
-                        },
-                    },
-                    "assigned_enumerator_email": "jahnavi.meher@idinsight.org",
-                    "assigned_enumerator_gender": "Female",
-                    "assigned_enumerator_home_address": "my house",
-                    "assigned_enumerator_id": "0294613",
-                    "assigned_enumerator_language": "Telugu",
-                    "assigned_enumerator_mobile_primary": "0123456789",
-                    "assigned_enumerator_name": "Jahnavi Meher",
-                    "assigned_enumerator_uid": 2,
-                    "completed_flag": None,
-                    "custom_fields": {
-                        "Address": "South Delhi",
-                        "Mobile no.": "1234567891",
-                        "Name": "Anupama",
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                    },
-                    "form_uid": 1,
-                    "gender": "Female",
-                    "language": "Hindi",
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": "Not Attempted",
-                    "final_survey_status": None,
-                    "final_survey_status_label": "Not Attempted",
-                    "scto_fields": None,
-                    "supervisors": [
-                        {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
-                        },
-                        {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
-                        },
-                    ],
-                    "location_uid": 4,
-                    "num_attempts": 0,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": True,
-                    "target_id": "2",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "geo_level_uid": 2,
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "geo_level_uid": 3,
-                            "location_id": "17101102",
-                            "location_name": "ANKOLI",
-                            "location_uid": 4,
-                        },
-                    ],
-                    "target_uid": 2,
-                    "webapp_tag_color": None,
-                },
                 {
                     "assigned_enumerator_custom_fields": {
                         "Age": "1",
@@ -3071,6 +3172,117 @@ class TestAssignments:
                     "target_uid": 1,
                     "webapp_tag_color": None,
                 },
+                {
+                    "assigned_enumerator_custom_fields": {
+                        "Age": "2",
+                        "Mobile (Secondary)": "1123456789",
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
+                    },
+                    "assigned_enumerator_email": "jahnavi.meher@idinsight.org",
+                    "assigned_enumerator_gender": "Female",
+                    "assigned_enumerator_home_address": "my house",
+                    "assigned_enumerator_id": "0294613",
+                    "assigned_enumerator_language": "Telugu",
+                    "assigned_enumerator_mobile_primary": "0123456789",
+                    "assigned_enumerator_name": "Jahnavi Meher",
+                    "assigned_enumerator_uid": 2,
+                    "completed_flag": None,
+                    "custom_fields": {
+                        "Address": "South Delhi",
+                        "Mobile no.": "1234567891",
+                        "Name": "Anupama",
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
+                    "supervisors": [
+                        {
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
+                        },
+                        {
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
+                        },
+                    ],
+                    "location_uid": 4,
+                    "num_attempts": 0,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": True,
+                    "target_id": "2",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "geo_level_uid": 1,
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "geo_level_uid": 2,
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "geo_level_uid": 3,
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                        },
+                    ],
+                    "target_uid": 2,
+                    "webapp_tag_color": None,
+                },
             ],
             "success": True,
         }
@@ -3131,6 +3343,117 @@ class TestAssignments:
 
         expected_response = {
             "data": [
+                {
+                    "assigned_enumerator_custom_fields": {
+                        "Age": "1",
+                        "Mobile (Secondary)": "1123456789",
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
+                    },
+                    "assigned_enumerator_email": "eric.dodge@idinsight.org",
+                    "assigned_enumerator_gender": "Male",
+                    "assigned_enumerator_home_address": "my house",
+                    "assigned_enumerator_id": "0294612",
+                    "assigned_enumerator_language": "English",
+                    "assigned_enumerator_mobile_primary": "0123456789",
+                    "assigned_enumerator_name": "Eric Dodge",
+                    "assigned_enumerator_uid": 1,
+                    "completed_flag": None,
+                    "custom_fields": {
+                        "Address": "Hyderabad",
+                        "Mobile no.": "1234567890",
+                        "Name": "Anil",
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
+                    "supervisors": [
+                        {
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
+                        },
+                        {
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
+                        },
+                    ],
+                    "location_uid": 4,
+                    "num_attempts": 0,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": True,
+                    "target_id": "1",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "geo_level_uid": 1,
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "geo_level_uid": 2,
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "geo_level_uid": 3,
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                        },
+                    ],
+                    "target_uid": 1,
+                    "webapp_tag_color": None,
+                },
                 {
                     "assigned_enumerator_custom_fields": None,
                     "assigned_enumerator_email": None,
@@ -3221,6 +3544,66 @@ class TestAssignments:
                     "target_uid": 2,
                     "webapp_tag_color": None,
                 },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/assignments", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_reassign_assignment(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+    ):
+        """
+        Test reassigning a target to a different enumerator
+        """
+
+        payload = {
+            "assignments": [
+                {"target_uid": 1, "enumerator_uid": 1},
+                {"target_uid": 2, "enumerator_uid": 1},
+            ],
+            "form_uid": 1,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        payload = {
+            "assignments": [
+                {"target_uid": 2, "enumerator_uid": 2},
+            ],
+            "form_uid": 1,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
                 {
                     "assigned_enumerator_custom_fields": {
                         "Age": "1",
@@ -3332,66 +3715,6 @@ class TestAssignments:
                     "target_uid": 1,
                     "webapp_tag_color": None,
                 },
-            ],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/assignments", query_string={"form_uid": 1})
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
-    def test_reassign_assignment(
-        self,
-        client,
-        login_test_user,
-        upload_enumerators_csv,
-        upload_targets_csv,
-        add_user_hierarchy,
-        csrf_token,
-    ):
-        """
-        Test reassigning a target to a different enumerator
-        """
-
-        payload = {
-            "assignments": [
-                {"target_uid": 1, "enumerator_uid": 1},
-                {"target_uid": 2, "enumerator_uid": 1},
-            ],
-            "form_uid": 1,
-        }
-
-        response = client.put(
-            "/api/assignments",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-        payload = {
-            "assignments": [
-                {"target_uid": 2, "enumerator_uid": 2},
-            ],
-            "form_uid": 1,
-        }
-
-        response = client.put(
-            "/api/assignments",
-            query_string={"form_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": [
                 {
                     "assigned_enumerator_custom_fields": {
                         "Age": "2",
@@ -3501,117 +3824,6 @@ class TestAssignments:
                         },
                     ],
                     "target_uid": 2,
-                    "webapp_tag_color": None,
-                },
-                {
-                    "assigned_enumerator_custom_fields": {
-                        "Age": "1",
-                        "Mobile (Secondary)": "1123456789",
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_secondary1",
-                                    "field_label": "Mobile (Secondary)",
-                                },
-                                {"column_name": "age1", "field_label": "Age"},
-                            ],
-                            "email": "email1",
-                            "enumerator_id": "enumerator_id1",
-                            "enumerator_type": "enumerator_type1",
-                            "gender": "gender1",
-                            "home_address": "home_address1",
-                            "language": "language1",
-                            "location_id_column": "district_id1",
-                            "mobile_primary": "mobile_primary1",
-                            "name": "name1",
-                        },
-                    },
-                    "assigned_enumerator_email": "eric.dodge@idinsight.org",
-                    "assigned_enumerator_gender": "Male",
-                    "assigned_enumerator_home_address": "my house",
-                    "assigned_enumerator_id": "0294612",
-                    "assigned_enumerator_language": "English",
-                    "assigned_enumerator_mobile_primary": "0123456789",
-                    "assigned_enumerator_name": "Eric Dodge",
-                    "assigned_enumerator_uid": 1,
-                    "completed_flag": None,
-                    "custom_fields": {
-                        "Address": "Hyderabad",
-                        "Mobile no.": "1234567890",
-                        "Name": "Anil",
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                    },
-                    "form_uid": 1,
-                    "gender": "Male",
-                    "language": "Telugu",
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": "Not Attempted",
-                    "final_survey_status": None,
-                    "final_survey_status_label": "Not Attempted",
-                    "scto_fields": None,
-                    "supervisors": [
-                        {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
-                        },
-                        {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
-                        },
-                    ],
-                    "location_uid": 4,
-                    "num_attempts": 0,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": True,
-                    "target_id": "1",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "geo_level_uid": 2,
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "geo_level_uid": 3,
-                            "location_id": "17101102",
-                            "location_name": "ANKOLI",
-                            "location_uid": 4,
-                        },
-                    ],
-                    "target_uid": 1,
                     "webapp_tag_color": None,
                 },
             ],
@@ -3687,96 +3899,6 @@ class TestAssignments:
                     "assigned_enumerator_uid": None,
                     "completed_flag": None,
                     "custom_fields": {
-                        "Address": "South Delhi",
-                        "Mobile no.": "1234567891",
-                        "Name": "Anupama",
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_primary1",
-                                    "field_label": "Mobile " "no.",
-                                },
-                                {"column_name": "name1", "field_label": "Name"},
-                                {"column_name": "address1", "field_label": "Address"},
-                            ],
-                            "gender": "gender1",
-                            "language": "language1",
-                            "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
-                        },
-                    },
-                    "form_uid": 1,
-                    "gender": "Female",
-                    "language": "Hindi",
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": "Not Attempted",
-                    "final_survey_status": None,
-                    "final_survey_status_label": "Not Attempted",
-                    "scto_fields": None,
-                    "supervisors": [
-                        {
-                            "role_name": "Regional Coordinator",
-                            "role_uid": 3,
-                            "supervisor_email": "newuser3@example.com",
-                            "supervisor_name": "John Doe",
-                        },
-                        {
-                            "role_name": "Cluster Coordinator",
-                            "role_uid": 2,
-                            "supervisor_email": "newuser2@example.com",
-                            "supervisor_name": "Ron Doe",
-                        },
-                        {
-                            "role_name": "Core User",
-                            "role_uid": 1,
-                            "supervisor_email": "newuser1@example.com",
-                            "supervisor_name": "Tim Doe",
-                        },
-                    ],
-                    "location_uid": 4,
-                    "num_attempts": 0,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": True,
-                    "target_id": "2",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "geo_level_uid": 2,
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "location_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "geo_level_uid": 3,
-                            "location_id": "17101102",
-                            "location_name": "ANKOLI",
-                            "location_uid": 4,
-                        },
-                    ],
-                    "target_uid": 2,
-                    "webapp_tag_color": None,
-                },
-                {
-                    "assigned_enumerator_custom_fields": None,
-                    "assigned_enumerator_email": None,
-                    "assigned_enumerator_gender": None,
-                    "assigned_enumerator_home_address": None,
-                    "assigned_enumerator_id": None,
-                    "assigned_enumerator_language": None,
-                    "assigned_enumerator_mobile_primary": None,
-                    "assigned_enumerator_name": None,
-                    "assigned_enumerator_uid": None,
-                    "completed_flag": None,
-                    "custom_fields": {
                         "Address": "Hyderabad",
                         "Mobile no.": "1234567890",
                         "Name": "Anil",
@@ -3853,6 +3975,96 @@ class TestAssignments:
                         },
                     ],
                     "target_uid": 1,
+                    "webapp_tag_color": None,
+                },
+                {
+                    "assigned_enumerator_custom_fields": None,
+                    "assigned_enumerator_email": None,
+                    "assigned_enumerator_gender": None,
+                    "assigned_enumerator_home_address": None,
+                    "assigned_enumerator_id": None,
+                    "assigned_enumerator_language": None,
+                    "assigned_enumerator_mobile_primary": None,
+                    "assigned_enumerator_name": None,
+                    "assigned_enumerator_uid": None,
+                    "completed_flag": None,
+                    "custom_fields": {
+                        "Address": "South Delhi",
+                        "Mobile no.": "1234567891",
+                        "Name": "Anupama",
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile " "no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "scto_fields": None,
+                    "supervisors": [
+                        {
+                            "role_name": "Regional Coordinator",
+                            "role_uid": 3,
+                            "supervisor_email": "newuser3@example.com",
+                            "supervisor_name": "John Doe",
+                        },
+                        {
+                            "role_name": "Cluster Coordinator",
+                            "role_uid": 2,
+                            "supervisor_email": "newuser2@example.com",
+                            "supervisor_name": "Ron Doe",
+                        },
+                        {
+                            "role_name": "Core User",
+                            "role_uid": 1,
+                            "supervisor_email": "newuser1@example.com",
+                            "supervisor_name": "Tim Doe",
+                        },
+                    ],
+                    "location_uid": 4,
+                    "num_attempts": 0,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": True,
+                    "target_id": "2",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "geo_level_uid": 1,
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "geo_level_uid": 2,
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "geo_level_uid": 3,
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                        },
+                    ],
+                    "target_uid": 2,
                     "webapp_tag_color": None,
                 },
             ],
@@ -4199,6 +4411,7 @@ class TestAssignments:
                 {"target_uid": 1, "enumerator_uid": 4},
             ],
             "form_uid": 1,
+            "validate_mapping": True,
         }
 
         response = client.put(
@@ -4217,6 +4430,251 @@ class TestAssignments:
             },
             "success": False,
         }
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_mismatched_supervisor_mapping_assignment_success(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        update_target_mapping_criteria,
+        csrf_token,
+    ):
+        """
+        Test trying to assign a target to enumerator with different supervisor is successful when `validate_mapping` is False
+        """
+
+        payload = {
+            "assignments": [
+                {"target_uid": 1, "enumerator_uid": 4},
+            ],
+            "form_uid": 1,
+            "validate_mapping": False,
+        }
+
+        response = client.put(
+            "/api/assignments",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "success": True,
+            "data": [
+                {
+                    "target_uid": 1,
+                    "target_id": "1",
+                    "language": "Telugu",
+                    "gender": "Male",
+                    "location_uid": 4,
+                    "form_uid": 1,
+                    "custom_fields": {
+                        "Name": "Anil",
+                        "Address": "Hyderabad",
+                        "Mobile no.": "1234567890",
+                        "column_mapping": {
+                            "gender": "gender1",
+                            "language": "language1",
+                            "target_id": "target_id1",
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "location_id_column": "psu_id1",
+                        },
+                    },
+                    "assigned_enumerator_uid": 4,
+                    "assigned_enumerator_id": "0294615",
+                    "assigned_enumerator_name": "Griffin Muteti",
+                    "assigned_enumerator_home_address": "my house",
+                    "assigned_enumerator_language": "Swahili",
+                    "assigned_enumerator_gender": "Male",
+                    "assigned_enumerator_email": "griffin.muteti@idinsight.org",
+                    "assigned_enumerator_mobile_primary": "0123456789",
+                    "assigned_enumerator_custom_fields": {
+                        "Age": "4",
+                        "column_mapping": {
+                            "name": "name1",
+                            "email": "email1",
+                            "gender": "gender1",
+                            "language": "language1",
+                            "home_address": "home_address1",
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "enumerator_id": "enumerator_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                        },
+                        "Mobile (Secondary)": "1123456789",
+                    },
+                    "completed_flag": None,
+                    "refusal_flag": None,
+                    "num_attempts": 0,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "target_assignable": True,
+                    "webapp_tag_color": None,
+                    "revisit_sections": None,
+                    "scto_fields": None,
+                    "target_locations": [
+                        {
+                            "location_id": "1",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                            "location_name": "ADILABAD",
+                            "geo_level_name": "District",
+                        },
+                        {
+                            "location_id": "1101",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                            "location_name": "ADILABAD RURAL",
+                            "geo_level_name": "Mandal",
+                        },
+                        {
+                            "location_id": "17101102",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                            "location_name": "ANKOLI",
+                            "geo_level_name": "PSU",
+                        },
+                    ],
+                    "supervisors": [
+                        {
+                            "role_uid": 3,
+                            "role_name": "Regional Coordinator",
+                            "supervisor_name": "John Doe",
+                            "supervisor_email": "newuser3@example.com",
+                        },
+                        {
+                            "role_uid": 2,
+                            "role_name": "Cluster Coordinator",
+                            "supervisor_name": "Ron Doe",
+                            "supervisor_email": "newuser2@example.com",
+                        },
+                        {
+                            "role_uid": 1,
+                            "role_name": "Core User",
+                            "supervisor_name": "Tim Doe",
+                            "supervisor_email": "newuser1@example.com",
+                        },
+                    ],
+                },
+                {
+                    "target_uid": 2,
+                    "target_id": "2",
+                    "language": "Hindi",
+                    "gender": "Female",
+                    "location_uid": 4,
+                    "form_uid": 1,
+                    "custom_fields": {
+                        "Name": "Anupama",
+                        "Address": "South Delhi",
+                        "Mobile no.": "1234567891",
+                        "column_mapping": {
+                            "gender": "gender1",
+                            "language": "language1",
+                            "target_id": "target_id1",
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "location_id_column": "psu_id1",
+                        },
+                    },
+                    "assigned_enumerator_uid": None,
+                    "assigned_enumerator_id": None,
+                    "assigned_enumerator_name": None,
+                    "assigned_enumerator_home_address": None,
+                    "assigned_enumerator_language": None,
+                    "assigned_enumerator_gender": None,
+                    "assigned_enumerator_email": None,
+                    "assigned_enumerator_mobile_primary": None,
+                    "assigned_enumerator_custom_fields": None,
+                    "completed_flag": None,
+                    "refusal_flag": None,
+                    "num_attempts": 0,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": "Not Attempted",
+                    "final_survey_status": None,
+                    "final_survey_status_label": "Not Attempted",
+                    "target_assignable": True,
+                    "webapp_tag_color": None,
+                    "revisit_sections": None,
+                    "scto_fields": None,
+                    "target_locations": [
+                        {
+                            "location_id": "1",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                            "location_name": "ADILABAD",
+                            "geo_level_name": "District",
+                        },
+                        {
+                            "location_id": "1101",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                            "location_name": "ADILABAD RURAL",
+                            "geo_level_name": "Mandal",
+                        },
+                        {
+                            "location_id": "17101102",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                            "location_name": "ANKOLI",
+                            "geo_level_name": "PSU",
+                        },
+                    ],
+                    "supervisors": [
+                        {
+                            "role_uid": 3,
+                            "role_name": "Regional Coordinator",
+                            "supervisor_name": "John Doe",
+                            "supervisor_email": "newuser3@example.com",
+                        },
+                        {
+                            "role_uid": 2,
+                            "role_name": "Cluster Coordinator",
+                            "supervisor_name": "Ron Doe",
+                            "supervisor_email": "newuser2@example.com",
+                        },
+                        {
+                            "role_uid": 1,
+                            "role_name": "Core User",
+                            "supervisor_name": "Tim Doe",
+                            "supervisor_email": "newuser1@example.com",
+                        },
+                    ],
+                },
+            ],
+        }
+        # Check the response
+        response = client.get("/api/assignments", query_string={"form_uid": 1})
+
         print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -9631,6 +10089,7 @@ class TestAssignments:
         request,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with merge mode
@@ -9658,6 +10117,7 @@ class TestAssignments:
             },
             "file": assignments_csv_encoded,
             "mode": "merge",
+            "validate_mapping": True,
         }
 
         response = client.post(
@@ -9679,7 +10139,7 @@ class TestAssignments:
             if user_fixture != "user_with_assignment_upload_permissions":
                 assert response.status_code == 200
                 assert datetime.strptime(
-                    response.json["data"]["email_schedule"]["schedule_date"],
+                    response.json["data"]["email_schedule"][0]["schedule_date"],
                     date_format,
                 ) >= datetime.strptime(formatted_date, date_format)
                 expected_put_response = {
@@ -9688,19 +10148,25 @@ class TestAssignments:
                         "new_assignments_count": 0,
                         "no_changes_count": 0,
                         "re_assignments_count": 1,
-                        "email_schedule": {
-                            "config_name": "Assignments",
-                            "dates": response.json["data"]["email_schedule"]["dates"],
-                            "schedule_date": response.json["data"]["email_schedule"][
-                                "schedule_date"
-                            ],
-                            "current_time": current_time,
-                            "email_schedule_uid": response.json["data"][
-                                "email_schedule"
-                            ]["email_schedule_uid"],
-                            "email_config_uid": 1,
-                            "time": response.json["data"]["email_schedule"]["time"],
-                        },
+                        "email_schedule": [
+                            {
+                                "config_name": "AssignmentsConfig",
+                                "dates": response.json["data"]["email_schedule"][0][
+                                    "dates"
+                                ],
+                                "schedule_date": response.json["data"][
+                                    "email_schedule"
+                                ][0]["schedule_date"],
+                                "current_time": current_time,
+                                "email_schedule_uid": response.json["data"][
+                                    "email_schedule"
+                                ][0]["email_schedule_uid"],
+                                "email_config_uid": 1,
+                                "time": response.json["data"]["email_schedule"][0][
+                                    "time"
+                                ],
+                            }
+                        ],
                     },
                     "message": "Success",
                 }
@@ -9709,120 +10175,6 @@ class TestAssignments:
 
                 expected_response = {
                     "data": [
-                        {
-                            "assigned_enumerator_custom_fields": {
-                                "Age": "2",
-                                "Mobile (Secondary)": "1123456789",
-                                "column_mapping": {
-                                    "custom_fields": [
-                                        {
-                                            "column_name": "mobile_secondary1",
-                                            "field_label": "Mobile (Secondary)",
-                                        },
-                                        {"column_name": "age1", "field_label": "Age"},
-                                    ],
-                                    "email": "email1",
-                                    "enumerator_id": "enumerator_id1",
-                                    "enumerator_type": "enumerator_type1",
-                                    "gender": "gender1",
-                                    "home_address": "home_address1",
-                                    "language": "language1",
-                                    "location_id_column": "district_id1",
-                                    "mobile_primary": "mobile_primary1",
-                                    "name": "name1",
-                                },
-                            },
-                            "assigned_enumerator_email": "jahnavi.meher@idinsight.org",
-                            "assigned_enumerator_gender": "Female",
-                            "assigned_enumerator_home_address": "my house",
-                            "assigned_enumerator_id": "0294613",
-                            "assigned_enumerator_language": "Telugu",
-                            "assigned_enumerator_mobile_primary": "0123456789",
-                            "assigned_enumerator_name": "Jahnavi Meher",
-                            "assigned_enumerator_uid": 2,
-                            "completed_flag": None,
-                            "custom_fields": {
-                                "Address": "South Delhi",
-                                "Mobile no.": "1234567891",
-                                "Name": "Anupama",
-                                "column_mapping": {
-                                    "custom_fields": [
-                                        {
-                                            "column_name": "mobile_primary1",
-                                            "field_label": "Mobile no.",
-                                        },
-                                        {"column_name": "name1", "field_label": "Name"},
-                                        {
-                                            "column_name": "address1",
-                                            "field_label": "Address",
-                                        },
-                                    ],
-                                    "gender": "gender1",
-                                    "language": "language1",
-                                    "location_id_column": "psu_id1",
-                                    "target_id": "target_id1",
-                                },
-                            },
-                            "form_uid": 1,
-                            "gender": "Female",
-                            "language": "Hindi",
-                            "last_attempt_survey_status": None,
-                            "last_attempt_survey_status_label": "Not Attempted",
-                            "final_survey_status": None,
-                            "final_survey_status_label": "Not Attempted",
-                            "scto_fields": None,
-                            "supervisors": [
-                                {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
-                                },
-                                {
-                                    "role_name": "Cluster Coordinator",
-                                    "role_uid": 2,
-                                    "supervisor_email": "newuser2@example.com",
-                                    "supervisor_name": "Ron Doe",
-                                },
-                                {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
-                                },
-                            ],
-                            "location_uid": 4,
-                            "num_attempts": 0,
-                            "refusal_flag": None,
-                            "revisit_sections": None,
-                            "target_assignable": True,
-                            "target_id": "2",
-                            "target_locations": [
-                                {
-                                    "geo_level_name": "District",
-                                    "geo_level_uid": 1,
-                                    "location_id": "1",
-                                    "location_name": "ADILABAD",
-                                    "location_uid": 1,
-                                },
-                                {
-                                    "geo_level_name": "Mandal",
-                                    "geo_level_uid": 2,
-                                    "location_id": "1101",
-                                    "location_name": "ADILABAD RURAL",
-                                    "location_uid": 2,
-                                },
-                                {
-                                    "geo_level_name": "PSU",
-                                    "geo_level_uid": 3,
-                                    "location_id": "17101102",
-                                    "location_name": "ANKOLI",
-                                    "location_uid": 4,
-                                },
-                            ],
-                            "target_uid": 2,
-                            "webapp_tag_color": None,
-                        },
                         {
                             "assigned_enumerator_custom_fields": {
                                 "Age": "4",
@@ -9937,6 +10289,120 @@ class TestAssignments:
                             "target_uid": 1,
                             "webapp_tag_color": None,
                         },
+                        {
+                            "assigned_enumerator_custom_fields": {
+                                "Age": "2",
+                                "Mobile (Secondary)": "1123456789",
+                                "column_mapping": {
+                                    "custom_fields": [
+                                        {
+                                            "column_name": "mobile_secondary1",
+                                            "field_label": "Mobile (Secondary)",
+                                        },
+                                        {"column_name": "age1", "field_label": "Age"},
+                                    ],
+                                    "email": "email1",
+                                    "enumerator_id": "enumerator_id1",
+                                    "enumerator_type": "enumerator_type1",
+                                    "gender": "gender1",
+                                    "home_address": "home_address1",
+                                    "language": "language1",
+                                    "location_id_column": "district_id1",
+                                    "mobile_primary": "mobile_primary1",
+                                    "name": "name1",
+                                },
+                            },
+                            "assigned_enumerator_email": "jahnavi.meher@idinsight.org",
+                            "assigned_enumerator_gender": "Female",
+                            "assigned_enumerator_home_address": "my house",
+                            "assigned_enumerator_id": "0294613",
+                            "assigned_enumerator_language": "Telugu",
+                            "assigned_enumerator_mobile_primary": "0123456789",
+                            "assigned_enumerator_name": "Jahnavi Meher",
+                            "assigned_enumerator_uid": 2,
+                            "completed_flag": None,
+                            "custom_fields": {
+                                "Address": "South Delhi",
+                                "Mobile no.": "1234567891",
+                                "Name": "Anupama",
+                                "column_mapping": {
+                                    "custom_fields": [
+                                        {
+                                            "column_name": "mobile_primary1",
+                                            "field_label": "Mobile no.",
+                                        },
+                                        {"column_name": "name1", "field_label": "Name"},
+                                        {
+                                            "column_name": "address1",
+                                            "field_label": "Address",
+                                        },
+                                    ],
+                                    "gender": "gender1",
+                                    "language": "language1",
+                                    "location_id_column": "psu_id1",
+                                    "target_id": "target_id1",
+                                },
+                            },
+                            "form_uid": 1,
+                            "gender": "Female",
+                            "language": "Hindi",
+                            "last_attempt_survey_status": None,
+                            "last_attempt_survey_status_label": "Not Attempted",
+                            "final_survey_status": None,
+                            "final_survey_status_label": "Not Attempted",
+                            "scto_fields": None,
+                            "supervisors": [
+                                {
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
+                                },
+                                {
+                                    "role_name": "Cluster Coordinator",
+                                    "role_uid": 2,
+                                    "supervisor_email": "newuser2@example.com",
+                                    "supervisor_name": "Ron Doe",
+                                },
+                                {
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
+                                },
+                            ],
+                            "location_uid": 4,
+                            "num_attempts": 0,
+                            "refusal_flag": None,
+                            "revisit_sections": None,
+                            "target_assignable": True,
+                            "target_id": "2",
+                            "target_locations": [
+                                {
+                                    "geo_level_name": "District",
+                                    "geo_level_uid": 1,
+                                    "location_id": "1",
+                                    "location_name": "ADILABAD",
+                                    "location_uid": 1,
+                                },
+                                {
+                                    "geo_level_name": "Mandal",
+                                    "geo_level_uid": 2,
+                                    "location_id": "1101",
+                                    "location_name": "ADILABAD RURAL",
+                                    "location_uid": 2,
+                                },
+                                {
+                                    "geo_level_name": "PSU",
+                                    "geo_level_uid": 3,
+                                    "location_id": "17101102",
+                                    "location_name": "ANKOLI",
+                                    "location_uid": 4,
+                                },
+                            ],
+                            "target_uid": 2,
+                            "webapp_tag_color": None,
+                        },
                     ],
                     "success": True,
                 }
@@ -9950,8 +10416,31 @@ class TestAssignments:
                 assert response.status_code == 422
 
                 expected_response = {
+                    "success": False,
                     "errors": {
                         "record_errors": {
+                            "summary": {
+                                "total_rows": 1,
+                                "total_correct_rows": 0,
+                                "total_rows_with_errors": 1,
+                                "error_count": 2,
+                            },
+                            "summary_by_error_type": [
+                                {
+                                    "error_type": "Not mapped target_id's",
+                                    "error_message": "The file contains 1 target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: 2",
+                                    "error_count": 1,
+                                    "row_numbers_with_errors": [2],
+                                    "can_be_ignored": False,
+                                },
+                                {
+                                    "error_type": "Incorrectly mapped target and enumerator id's",
+                                    "error_message": "The file contains 1 target_id(s) that are assigned to enumerators mapped to a different supervisor or the target/enumerator/both are not mapped. The following row numbers contain such target_id's: 2",
+                                    "error_count": 1,
+                                    "row_numbers_with_errors": [2],
+                                    "can_be_ignored": True,
+                                },
+                            ],
                             "invalid_records": {
                                 "ordered_columns": [
                                     "row_number",
@@ -9961,30 +10450,15 @@ class TestAssignments:
                                 ],
                                 "records": [
                                     {
-                                        "enumerator_id1": "0294615",
-                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned",
-                                        "row_number": 2,
                                         "target_id1": "1",
+                                        "enumerator_id1": "0294615",
+                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned; Target is assigned to an enumerator mapped to a different supervisor",
+                                        "row_number": 2,
                                     }
                                 ],
                             },
-                            "summary": {
-                                "error_count": 1,
-                                "total_correct_rows": 0,
-                                "total_rows": 1,
-                                "total_rows_with_errors": 1,
-                            },
-                            "summary_by_error_type": [
-                                {
-                                    "error_count": 1,
-                                    "error_message": "The file contains 1 target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: 2",
-                                    "error_type": "Not mapped target_id's",
-                                    "row_numbers_with_errors": [2],
-                                }
-                            ],
                         }
                     },
-                    "success": False,
                 }
                 print(response.json)
                 checkdiff = jsondiff.diff(expected_response, response.json)
@@ -10010,6 +10484,7 @@ class TestAssignments:
         request,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with overwrite mode
@@ -10036,6 +10511,7 @@ class TestAssignments:
             },
             "file": assignments_csv_encoded,
             "mode": "overwrite",
+            "validate_mapping": True,
         }
 
         response = client.post(
@@ -10057,7 +10533,7 @@ class TestAssignments:
             if user_fixture != "user_with_assignment_upload_permissions":
                 assert response.status_code == 200
                 assert datetime.strptime(
-                    response.json["data"]["email_schedule"]["schedule_date"],
+                    response.json["data"]["email_schedule"][0]["schedule_date"],
                     date_format,
                 ) >= datetime.strptime(formatted_date, date_format)
                 expected_put_response = {
@@ -10066,19 +10542,25 @@ class TestAssignments:
                         "new_assignments_count": 2,
                         "no_changes_count": 0,
                         "re_assignments_count": 0,
-                        "email_schedule": {
-                            "config_name": "Assignments",
-                            "dates": response.json["data"]["email_schedule"]["dates"],
-                            "schedule_date": response.json["data"]["email_schedule"][
-                                "schedule_date"
-                            ],
-                            "current_time": current_time,
-                            "email_schedule_uid": response.json["data"][
-                                "email_schedule"
-                            ]["email_schedule_uid"],
-                            "email_config_uid": 1,
-                            "time": response.json["data"]["email_schedule"]["time"],
-                        },
+                        "email_schedule": [
+                            {
+                                "config_name": "AssignmentsConfig",
+                                "dates": response.json["data"]["email_schedule"][0][
+                                    "dates"
+                                ],
+                                "schedule_date": response.json["data"][
+                                    "email_schedule"
+                                ][0]["schedule_date"],
+                                "current_time": current_time,
+                                "email_schedule_uid": response.json["data"][
+                                    "email_schedule"
+                                ][0]["email_schedule_uid"],
+                                "email_config_uid": 1,
+                                "time": response.json["data"]["email_schedule"][0][
+                                    "time"
+                                ],
+                            }
+                        ],
                     },
                     "message": "Success",
                 }
@@ -10088,120 +10570,6 @@ class TestAssignments:
 
                 expected_response = {
                     "data": [
-                        {
-                            "assigned_enumerator_custom_fields": {
-                                "Age": "4",
-                                "Mobile (Secondary)": "1123456789",
-                                "column_mapping": {
-                                    "custom_fields": [
-                                        {
-                                            "column_name": "mobile_secondary1",
-                                            "field_label": "Mobile (Secondary)",
-                                        },
-                                        {"column_name": "age1", "field_label": "Age"},
-                                    ],
-                                    "email": "email1",
-                                    "enumerator_id": "enumerator_id1",
-                                    "enumerator_type": "enumerator_type1",
-                                    "gender": "gender1",
-                                    "home_address": "home_address1",
-                                    "language": "language1",
-                                    "location_id_column": "district_id1",
-                                    "mobile_primary": "mobile_primary1",
-                                    "name": "name1",
-                                },
-                            },
-                            "assigned_enumerator_email": "griffin.muteti@idinsight.org",
-                            "assigned_enumerator_gender": "Male",
-                            "assigned_enumerator_home_address": "my house",
-                            "assigned_enumerator_id": "0294615",
-                            "assigned_enumerator_language": "Swahili",
-                            "assigned_enumerator_mobile_primary": "0123456789",
-                            "assigned_enumerator_name": "Griffin Muteti",
-                            "assigned_enumerator_uid": 4,
-                            "completed_flag": None,
-                            "custom_fields": {
-                                "Address": "South Delhi",
-                                "Mobile no.": "1234567891",
-                                "Name": "Anupama",
-                                "column_mapping": {
-                                    "custom_fields": [
-                                        {
-                                            "column_name": "mobile_primary1",
-                                            "field_label": "Mobile no.",
-                                        },
-                                        {"column_name": "name1", "field_label": "Name"},
-                                        {
-                                            "column_name": "address1",
-                                            "field_label": "Address",
-                                        },
-                                    ],
-                                    "gender": "gender1",
-                                    "language": "language1",
-                                    "location_id_column": "psu_id1",
-                                    "target_id": "target_id1",
-                                },
-                            },
-                            "form_uid": 1,
-                            "gender": "Female",
-                            "language": "Hindi",
-                            "last_attempt_survey_status": None,
-                            "last_attempt_survey_status_label": "Not Attempted",
-                            "final_survey_status": None,
-                            "final_survey_status_label": "Not Attempted",
-                            "scto_fields": None,
-                            "supervisors": [
-                                {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
-                                },
-                                {
-                                    "role_name": "Cluster Coordinator",
-                                    "role_uid": 2,
-                                    "supervisor_email": "newuser2@example.com",
-                                    "supervisor_name": "Ron Doe",
-                                },
-                                {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
-                                },
-                            ],
-                            "location_uid": 4,
-                            "num_attempts": 0,
-                            "refusal_flag": None,
-                            "revisit_sections": None,
-                            "target_assignable": True,
-                            "target_id": "2",
-                            "target_locations": [
-                                {
-                                    "geo_level_name": "District",
-                                    "geo_level_uid": 1,
-                                    "location_id": "1",
-                                    "location_name": "ADILABAD",
-                                    "location_uid": 1,
-                                },
-                                {
-                                    "geo_level_name": "Mandal",
-                                    "geo_level_uid": 2,
-                                    "location_id": "1101",
-                                    "location_name": "ADILABAD RURAL",
-                                    "location_uid": 2,
-                                },
-                                {
-                                    "geo_level_name": "PSU",
-                                    "geo_level_uid": 3,
-                                    "location_id": "17101102",
-                                    "location_name": "ANKOLI",
-                                    "location_uid": 4,
-                                },
-                            ],
-                            "target_uid": 2,
-                            "webapp_tag_color": None,
-                        },
                         {
                             "assigned_enumerator_custom_fields": {
                                 "Age": "2",
@@ -10316,6 +10684,120 @@ class TestAssignments:
                             "target_uid": 1,
                             "webapp_tag_color": None,
                         },
+                        {
+                            "assigned_enumerator_custom_fields": {
+                                "Age": "4",
+                                "Mobile (Secondary)": "1123456789",
+                                "column_mapping": {
+                                    "custom_fields": [
+                                        {
+                                            "column_name": "mobile_secondary1",
+                                            "field_label": "Mobile (Secondary)",
+                                        },
+                                        {"column_name": "age1", "field_label": "Age"},
+                                    ],
+                                    "email": "email1",
+                                    "enumerator_id": "enumerator_id1",
+                                    "enumerator_type": "enumerator_type1",
+                                    "gender": "gender1",
+                                    "home_address": "home_address1",
+                                    "language": "language1",
+                                    "location_id_column": "district_id1",
+                                    "mobile_primary": "mobile_primary1",
+                                    "name": "name1",
+                                },
+                            },
+                            "assigned_enumerator_email": "griffin.muteti@idinsight.org",
+                            "assigned_enumerator_gender": "Male",
+                            "assigned_enumerator_home_address": "my house",
+                            "assigned_enumerator_id": "0294615",
+                            "assigned_enumerator_language": "Swahili",
+                            "assigned_enumerator_mobile_primary": "0123456789",
+                            "assigned_enumerator_name": "Griffin Muteti",
+                            "assigned_enumerator_uid": 4,
+                            "completed_flag": None,
+                            "custom_fields": {
+                                "Address": "South Delhi",
+                                "Mobile no.": "1234567891",
+                                "Name": "Anupama",
+                                "column_mapping": {
+                                    "custom_fields": [
+                                        {
+                                            "column_name": "mobile_primary1",
+                                            "field_label": "Mobile no.",
+                                        },
+                                        {"column_name": "name1", "field_label": "Name"},
+                                        {
+                                            "column_name": "address1",
+                                            "field_label": "Address",
+                                        },
+                                    ],
+                                    "gender": "gender1",
+                                    "language": "language1",
+                                    "location_id_column": "psu_id1",
+                                    "target_id": "target_id1",
+                                },
+                            },
+                            "form_uid": 1,
+                            "gender": "Female",
+                            "language": "Hindi",
+                            "last_attempt_survey_status": None,
+                            "last_attempt_survey_status_label": "Not Attempted",
+                            "final_survey_status": None,
+                            "final_survey_status_label": "Not Attempted",
+                            "scto_fields": None,
+                            "supervisors": [
+                                {
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
+                                },
+                                {
+                                    "role_name": "Cluster Coordinator",
+                                    "role_uid": 2,
+                                    "supervisor_email": "newuser2@example.com",
+                                    "supervisor_name": "Ron Doe",
+                                },
+                                {
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
+                                },
+                            ],
+                            "location_uid": 4,
+                            "num_attempts": 0,
+                            "refusal_flag": None,
+                            "revisit_sections": None,
+                            "target_assignable": True,
+                            "target_id": "2",
+                            "target_locations": [
+                                {
+                                    "geo_level_name": "District",
+                                    "geo_level_uid": 1,
+                                    "location_id": "1",
+                                    "location_name": "ADILABAD",
+                                    "location_uid": 1,
+                                },
+                                {
+                                    "geo_level_name": "Mandal",
+                                    "geo_level_uid": 2,
+                                    "location_id": "1101",
+                                    "location_name": "ADILABAD RURAL",
+                                    "location_uid": 2,
+                                },
+                                {
+                                    "geo_level_name": "PSU",
+                                    "geo_level_uid": 3,
+                                    "location_id": "17101102",
+                                    "location_name": "ANKOLI",
+                                    "location_uid": 4,
+                                },
+                            ],
+                            "target_uid": 2,
+                            "webapp_tag_color": None,
+                        },
                     ],
                     "success": True,
                 }
@@ -10329,8 +10811,31 @@ class TestAssignments:
                 assert response.status_code == 422
 
                 expected_response = {
+                    "success": False,
                     "errors": {
                         "record_errors": {
+                            "summary": {
+                                "total_rows": 2,
+                                "total_correct_rows": 0,
+                                "total_rows_with_errors": 2,
+                                "error_count": 4,
+                            },
+                            "summary_by_error_type": [
+                                {
+                                    "error_type": "Not mapped target_id's",
+                                    "error_message": "The file contains 2 target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: 2, 3",
+                                    "error_count": 2,
+                                    "row_numbers_with_errors": [2, 3],
+                                    "can_be_ignored": False,
+                                },
+                                {
+                                    "error_type": "Incorrectly mapped target and enumerator id's",
+                                    "error_message": "The file contains 2 target_id(s) that are assigned to enumerators mapped to a different supervisor or the target/enumerator/both are not mapped. The following row numbers contain such target_id's: 2, 3",
+                                    "error_count": 2,
+                                    "row_numbers_with_errors": [2, 3],
+                                    "can_be_ignored": True,
+                                },
+                            ],
                             "invalid_records": {
                                 "ordered_columns": [
                                     "row_number",
@@ -10340,36 +10845,21 @@ class TestAssignments:
                                 ],
                                 "records": [
                                     {
-                                        "enumerator_id1": "0294613",
-                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned",
-                                        "row_number": 2,
                                         "target_id1": "1",
+                                        "enumerator_id1": "0294613",
+                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned; Target is assigned to an enumerator mapped to a different supervisor",
+                                        "row_number": 2,
                                     },
                                     {
-                                        "enumerator_id1": "0294615",
-                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned",
-                                        "row_number": 3,
                                         "target_id1": "2",
+                                        "enumerator_id1": "0294615",
+                                        "errors": "Target is not mapped to current logged in user and hence cannot be assigned; Target is assigned to an enumerator mapped to a different supervisor",
+                                        "row_number": 3,
                                     },
                                 ],
                             },
-                            "summary": {
-                                "error_count": 2,
-                                "total_correct_rows": 0,
-                                "total_rows": 2,
-                                "total_rows_with_errors": 2,
-                            },
-                            "summary_by_error_type": [
-                                {
-                                    "error_count": 2,
-                                    "error_message": "The file contains 2 target_id(s) that are not mapped to current logged in user and hence cannot be assigned by this user. The following row numbers contain such target_id's: 2, 3",
-                                    "error_type": "Not mapped target_id's",
-                                    "row_numbers_with_errors": [2, 3],
-                                }
-                            ],
                         }
                     },
-                    "success": False,
                 }
 
                 print(response.json)
@@ -10393,6 +10883,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with invalid target_id and enumerator_id
@@ -10466,12 +10957,14 @@ class TestAssignments:
                             "error_message": "The file contains 1 target_id(s) that were not found in the uploaded targets data. The following row numbers contain invalid target_id's: 3",
                             "error_type": "Invalid target_id's",
                             "row_numbers_with_errors": [3],
+                            "can_be_ignored": False,
                         },
                         {
                             "error_count": 1,
                             "error_message": "The file contains 1 enumerator_id(s) that were not found in the uploaded enumerators data. The following row numbers contain invalid enumerator_id's: 2",
                             "error_type": "Invalid enumerator_id's",
                             "row_numbers_with_errors": [2],
+                            "can_be_ignored": False,
                         },
                     ],
                 }
@@ -10491,6 +10984,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         #     Function to test uploading asssignments csv with enumerator who has dropped out of the survey
@@ -10572,6 +11066,7 @@ class TestAssignments:
                             "error_message": "The file contains 1 enumerator_id(s) that have status 'Dropout' and are ineligible for assignment. The following row numbers contain dropout enumerator_id's: 2",
                             "error_type": "Dropout enumerator_id's",
                             "row_numbers_with_errors": [2],
+                            "can_be_ignored": False,
                         }
                     ],
                 }
@@ -10591,6 +11086,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with target that is not assignable
@@ -10659,6 +11155,7 @@ class TestAssignments:
                             "error_message": "The file contains 1 target_id(s) that were not assignable for this form (most likely because they are complete). The following row numbers contain not assignable target_id's: 2",
                             "error_type": "Not Assignable target_id's",
                             "row_numbers_with_errors": [2],
+                            "can_be_ignored": False,
                         }
                     ],
                 }
@@ -10677,6 +11174,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Upload the enumerators csv with unmapped enumerator id column
@@ -10729,6 +11227,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with missing enumerator id
@@ -10795,12 +11294,14 @@ class TestAssignments:
                             "error_message": "Blank values are not allowed in the following columns: enumerator_id1, target_id1. Blank values in these columns were found for the following row(s): 3",
                             "error_type": "Blank field",
                             "row_numbers_with_errors": [3],
+                            "can_be_ignored": False,
                         },
                         {
                             "error_count": 1,
                             "error_message": "The file contains 1 enumerator_id(s) that were not found in the uploaded enumerators data. The following row numbers contain invalid enumerator_id's: 3",
                             "error_type": "Invalid enumerator_id's",
                             "row_numbers_with_errors": [3],
+                            "can_be_ignored": False,
                         },
                     ],
                 }
@@ -10819,6 +11320,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Function to test uploading asssignments csv with duplicate column
@@ -10873,6 +11375,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Upload the enumerators csv with same column mapped twice
@@ -10940,6 +11443,7 @@ class TestAssignments:
         csrf_token,
         create_email_config,
         create_email_schedule,
+        create_email_template,
     ):
         """
         Upload the enumerators csv with blank header row
@@ -11017,6 +11521,7 @@ class TestAssignments:
             },
             "file": assignments_csv_encoded,
             "mode": "merge",
+            "validate_mapping": True,
         }
 
         response = client.post(
@@ -11057,9 +11562,10 @@ class TestAssignments:
                     "summary_by_error_type": [
                         {
                             "error_count": 1,
-                            "error_message": "The file contains 1 target_id(s) that are assigned to enumerators mapped to a different supervisor. The following row numbers contain such target_id's: 2",
-                            "error_type": "Incorrectly mappings target_id's",
+                            "error_message": "The file contains 1 target_id(s) that are assigned to enumerators mapped to a different supervisor or the target/enumerator/both are not mapped. The following row numbers contain such target_id's: 2",
+                            "error_type": "Incorrectly mapped target and enumerator id's",
                             "row_numbers_with_errors": [2],
+                            "can_be_ignored": True,
                         }
                     ],
                 }
@@ -12737,90 +13243,6 @@ class TestAssignments:
                         {
                             "completed_flag": None,
                             "custom_fields": {
-                                "Address": "South Delhi",
-                                "Mobile no.": "1234567891",
-                                "Name": "Anupama",
-                                "column_mapping": {
-                                    "custom_fields": [
-                                        {
-                                            "column_name": "mobile_primary1",
-                                            "field_label": "Mobile no.",
-                                        },
-                                        {"column_name": "name1", "field_label": "Name"},
-                                        {
-                                            "column_name": "address1",
-                                            "field_label": "Address",
-                                        },
-                                    ],
-                                    "gender": "gender1",
-                                    "language": "language1",
-                                    "location_id_column": "psu_id1",
-                                    "target_id": "target_id1",
-                                },
-                            },
-                            "final_survey_status": None,
-                            "final_survey_status_label": None,
-                            "form_uid": 1,
-                            "gender": "Female",
-                            "language": "Hindi",
-                            "last_attempt_survey_status": None,
-                            "last_attempt_survey_status_label": None,
-                            "location_uid": 4,
-                            "num_attempts": None,
-                            "refusal_flag": None,
-                            "revisit_sections": None,
-                            "scto_fields": None,
-                            "supervisors": [
-                                {
-                                    "role_name": "Regional Coordinator",
-                                    "role_uid": 3,
-                                    "supervisor_email": "newuser3@example.com",
-                                    "supervisor_name": "John Doe",
-                                },
-                                {
-                                    "role_name": "Cluster Coordinator",
-                                    "role_uid": 2,
-                                    "supervisor_email": "newuser2@example.com",
-                                    "supervisor_name": "Ron Doe",
-                                },
-                                {
-                                    "role_name": "Core User",
-                                    "role_uid": 1,
-                                    "supervisor_email": "newuser1@example.com",
-                                    "supervisor_name": "Tim Doe",
-                                },
-                            ],
-                            "target_assignable": None,
-                            "target_id": "2",
-                            "target_locations": [
-                                {
-                                    "geo_level_name": "District",
-                                    "geo_level_uid": 1,
-                                    "location_id": "1",
-                                    "location_name": "ADILABAD",
-                                    "location_uid": 1,
-                                },
-                                {
-                                    "geo_level_name": "Mandal",
-                                    "geo_level_uid": 2,
-                                    "location_id": "1101",
-                                    "location_name": "ADILABAD RURAL",
-                                    "location_uid": 2,
-                                },
-                                {
-                                    "geo_level_name": "PSU",
-                                    "geo_level_uid": 3,
-                                    "location_id": "17101102",
-                                    "location_name": "ANKOLI",
-                                    "location_uid": 4,
-                                },
-                            ],
-                            "target_uid": 2,
-                            "webapp_tag_color": None,
-                        },
-                        {
-                            "completed_flag": None,
-                            "custom_fields": {
                                 "Address": "Hyderabad",
                                 "Mobile no.": "1234567890",
                                 "Name": "Anil",
@@ -12900,6 +13322,90 @@ class TestAssignments:
                                 },
                             ],
                             "target_uid": 1,
+                            "webapp_tag_color": None,
+                        },
+                        {
+                            "completed_flag": None,
+                            "custom_fields": {
+                                "Address": "South Delhi",
+                                "Mobile no.": "1234567891",
+                                "Name": "Anupama",
+                                "column_mapping": {
+                                    "custom_fields": [
+                                        {
+                                            "column_name": "mobile_primary1",
+                                            "field_label": "Mobile no.",
+                                        },
+                                        {"column_name": "name1", "field_label": "Name"},
+                                        {
+                                            "column_name": "address1",
+                                            "field_label": "Address",
+                                        },
+                                    ],
+                                    "gender": "gender1",
+                                    "language": "language1",
+                                    "location_id_column": "psu_id1",
+                                    "target_id": "target_id1",
+                                },
+                            },
+                            "final_survey_status": None,
+                            "final_survey_status_label": None,
+                            "form_uid": 1,
+                            "gender": "Female",
+                            "language": "Hindi",
+                            "last_attempt_survey_status": None,
+                            "last_attempt_survey_status_label": None,
+                            "location_uid": 4,
+                            "num_attempts": None,
+                            "refusal_flag": None,
+                            "revisit_sections": None,
+                            "scto_fields": None,
+                            "supervisors": [
+                                {
+                                    "role_name": "Regional Coordinator",
+                                    "role_uid": 3,
+                                    "supervisor_email": "newuser3@example.com",
+                                    "supervisor_name": "John Doe",
+                                },
+                                {
+                                    "role_name": "Cluster Coordinator",
+                                    "role_uid": 2,
+                                    "supervisor_email": "newuser2@example.com",
+                                    "supervisor_name": "Ron Doe",
+                                },
+                                {
+                                    "role_name": "Core User",
+                                    "role_uid": 1,
+                                    "supervisor_email": "newuser1@example.com",
+                                    "supervisor_name": "Tim Doe",
+                                },
+                            ],
+                            "target_assignable": None,
+                            "target_id": "2",
+                            "target_locations": [
+                                {
+                                    "geo_level_name": "District",
+                                    "geo_level_uid": 1,
+                                    "location_id": "1",
+                                    "location_name": "ADILABAD",
+                                    "location_uid": 1,
+                                },
+                                {
+                                    "geo_level_name": "Mandal",
+                                    "geo_level_uid": 2,
+                                    "location_id": "1101",
+                                    "location_name": "ADILABAD RURAL",
+                                    "location_uid": 2,
+                                },
+                                {
+                                    "geo_level_name": "PSU",
+                                    "geo_level_uid": 3,
+                                    "location_id": "17101102",
+                                    "location_name": "ANKOLI",
+                                    "location_uid": 4,
+                                },
+                            ],
+                            "target_uid": 2,
                             "webapp_tag_color": None,
                         },
                     ],

@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.blueprints.locations.models import GeoLevel
+from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.blueprints.module_selection.models import Module, ModuleStatus
 from app.blueprints.roles.models import Role, SurveyAdmin
 from app.utils.utils import (
@@ -195,6 +196,7 @@ def get_survey_config_status(survey_uid):
     from app.blueprints.media_files.models import MediaFilesConfig
     from app.blueprints.target_status_mapping.models import TargetStatusMapping
     from app.blueprints.targets.models import Target
+    from app.blueprints.dq.models import DQConfig
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     scto_information = Form.query.filter_by(
@@ -210,6 +212,7 @@ def get_survey_config_status(survey_uid):
     media_files_config = None
     email_config = None
     dq_form_config = None
+    dq_config = None
     admin_form_config = None
     mapping_config = None
 
@@ -250,6 +253,12 @@ def get_survey_config_status(survey_uid):
                 Form.form_type == "dq",
                 Form.parent_form_uid == scto_information.form_uid,
             )
+            .first()
+        )
+
+        dq_config = (
+            db.session.query(DQConfig.form_uid)
+            .filter(DQConfig.form_uid == scto_information.form_uid)
             .first()
         )
 
@@ -341,7 +350,7 @@ def get_survey_config_status(survey_uid):
                     if email_config is not None:
                         item["status"] = "In Progress"
                 elif item["name"] == "Data quality":
-                    if dq_form_config is not None:
+                    if dq_form_config is not None or dq_config is not None:
                         item["status"] = "In Progress"
                 elif item["name"] == "Admin forms":
                     if admin_form_config is not None:
@@ -399,6 +408,9 @@ def delete_survey(survey_uid):
         return jsonify({"error": "Survey not found"}), 404
 
     ModuleStatus.query.filter(ModuleStatus.survey_uid == survey_uid).delete()
+    ModuleQuestionnaire.query.filter(
+        ModuleQuestionnaire.survey_uid == survey_uid
+    ).delete()
     db.session.delete(survey)
 
     db.session.commit()

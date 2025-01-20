@@ -16,6 +16,13 @@ class GetFormQueryParamValidator(FlaskForm):
     )
 
 
+class GetFormDefinitionQueryParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    include_repeat_groups = BooleanField(default=False)
+
+
 class CreateFormValidator(FlaskForm):
     survey_uid = IntegerField(validators=[DataRequired()])
     scto_form_id = StringField(validators=[DataRequired()])

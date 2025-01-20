@@ -1,8 +1,9 @@
-import jsondiff
-import pytest
 import base64
-import pandas as pd
 from pathlib import Path
+
+import jsondiff
+import pandas as pd
+import pytest
 from utils import (
     create_new_survey_role_with_permissions,
     login_user,
@@ -126,7 +127,45 @@ class TestLocations:
         yield
 
     @pytest.fixture()
-    def create_geo_levels(self, client, login_test_user, csrf_token, create_survey):
+    def create_form(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_survey,
+        create_module_questionnaire,
+    ):
+        """
+        Insert new form as a setup step for the form tests
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "scto_form_id": "test_scto_input_output",
+            "form_name": "Agrifieldnet Main Form",
+            "tz_name": "Asia/Kolkata",
+            "scto_server_name": "dod",
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
+        }
+
+        response = client.post(
+            "/api/forms",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+        print(response.json)
+
+        yield
+
+    @pytest.fixture()
+    def create_geo_levels(self, client, login_test_user, csrf_token, create_form):
         """
         Insert new geo levels as a setup step for the geo levels tests
         """
@@ -153,13 +192,14 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
         yield
 
     @pytest.fixture()
     def create_geo_levels_for_locations_file(
-        self, client, login_test_user, csrf_token, create_survey
+        self, client, login_test_user, csrf_token, create_form
     ):
         """
         Insert new geo levels as a setup step for the location upload tests
@@ -193,6 +233,8 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
+
         assert response.status_code == 200
 
         yield
@@ -250,7 +292,7 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 200
 
@@ -285,12 +327,12 @@ class TestLocations:
             ],
             "success": True,
         }
-
+        print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
     def test_insert_geo_levels_for_survey_admin_user(
-        self, client, login_test_user, test_user_credentials, csrf_token, create_survey
+        self, client, login_test_user, test_user_credentials, csrf_token, create_form
     ):
         """
         Test that survey admins can insert geo levels
@@ -330,7 +372,7 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 200
 
@@ -355,7 +397,8 @@ class TestLocations:
             ],
             "success": True,
         }
-
+        print(response.json)
+        print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -376,7 +419,7 @@ class TestLocations:
         login_test_user,
         test_user_credentials,
         csrf_token,
-        create_survey,
+        create_form,
         create_module_questionnaire,
     ):
         """
@@ -429,7 +472,7 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 200
 
@@ -470,7 +513,7 @@ class TestLocations:
         login_user(client, test_user_credentials)
 
     def test_insert_geo_levels_for_non_admin_user_no_roles(
-        self, client, login_test_user, test_user_credentials, csrf_token, create_survey
+        self, client, login_test_user, test_user_credentials, csrf_token, create_form
     ):
         """
         Test that non-admins without permissions cannot insert geo_levels
@@ -513,7 +556,7 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 403
 
@@ -568,6 +611,7 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
         response = client.get(
@@ -625,6 +669,7 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
         # Check the response
@@ -710,6 +755,7 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
         # Check the response
@@ -728,6 +774,7 @@ class TestLocations:
             ],
             "success": True,
         }
+        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -787,7 +834,7 @@ class TestLocations:
         assert checkdiff == {}
 
     def test_geo_levels_validate_hierarchy_invalid_hierarchy(
-        self, client, login_test_user, create_survey, csrf_token
+        self, client, login_test_user, create_form, csrf_token
     ):
         """
         Test the different cases of an invalid geo level hierarchy
@@ -1052,7 +1099,7 @@ class TestLocations:
         ]
 
     def test_geo_levels_validate_hierarchy_valid_hierarchy(
-        self, client, login_test_user, create_survey, csrf_token
+        self, client, login_test_user, create_form, csrf_token
     ):
         """
         Test that the validations pass for a valid geo level hierarchy
@@ -1207,7 +1254,7 @@ class TestLocations:
         login_test_user,
         test_user_credentials,
         csrf_token,
-        create_survey,
+        create_form,
         create_module_questionnaire,
     ):
         """
@@ -1247,7 +1294,7 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 200
 
@@ -1325,7 +1372,7 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 200
 
@@ -1356,8 +1403,10 @@ class TestLocations:
             },
             "success": True,
         }
+
         # Check the response
         response = client.get("/api/locations", query_string={"survey_uid": 1})
+        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -1449,7 +1498,7 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 200
 
@@ -1483,6 +1532,7 @@ class TestLocations:
         # Check the response
         response = client.get("/api/locations", query_string={"survey_uid": 1})
 
+        print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -1563,7 +1613,7 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 403
 
@@ -1587,24 +1637,27 @@ class TestLocations:
         login_user(client, test_user_credentials)
 
     def test_reupload_locations_csv(
-        self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
+        self, client, login_test_user, upload_locations_csv, csrf_token
     ):
         """
         Test that the locations csv can be uploaded twice
         """
 
-        filepath = (
+        # Re-upload a new locations csv
+        newfilepath = (
             Path(__file__).resolve().parent
-            / f"data/file_uploads/sample_locations_small.csv"
+            / f"data/file_uploads/sample_locations_small_final.csv"
         )
 
         # Read the locations.csv file and convert it to base64
-        with open(filepath, "rb") as f:
-            locations_csv = f.read()
-            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+        with open(newfilepath, "rb") as f:
+            new_locations_csv = f.read()
+            new_locations_csv_encoded = base64.b64encode(new_locations_csv).decode(
+                "utf-8"
+            )
 
         # Upload the locations csv
-        payload = {
+        new_payload = {
             "geo_level_mapping": [
                 {
                     "geo_level_uid": 1,
@@ -1622,28 +1675,18 @@ class TestLocations:
                     "location_id_column": "psu_id",
                 },
             ],
-            "file": locations_csv_encoded,
+            "file": new_locations_csv_encoded,
         }
-
         response = client.post(
             "/api/locations",
             query_string={"survey_uid": 1},
-            json=payload,
+            json=new_payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
 
-        response = client.post(
-            "/api/locations",
-            query_string={"survey_uid": 1},
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        assert response.status_code == 200
-
-        df = pd.read_csv(filepath, dtype=str)
+        df = pd.read_csv(newfilepath, dtype=str)
         df.rename(
             columns={
                 "district_id": "District ID",
@@ -1672,9 +1715,154 @@ class TestLocations:
         }
         # Check the response
         response = client.get("/api/locations", query_string={"survey_uid": 1})
+        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_append_locations_csv(
+        self, client, login_test_user, upload_locations_csv, csrf_token
+    ):
+        """
+        Test that the locations csv can be appended to existing data
+        Expect success with new rows appended to locations
+        """
+
+        # Append a new locations csv to the existing locations
+        append_input_filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small_append_input.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(append_input_filepath, "rb") as f:
+            append_locations_csv = f.read()
+            append_locations_csv_encoded = base64.b64encode(
+                append_locations_csv
+            ).decode("utf-8")
+
+        append_payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": append_locations_csv_encoded,
+        }
+
+        response = client.put(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=append_payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        # Set final appended locations csv
+        append_output_filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small_final.csv"
+        )
+
+        df = pd.read_csv(append_output_filepath, dtype=str)
+        df.rename(
+            columns={
+                "district_id": "District ID",
+                "district_name": "District Name",
+                "mandal_id": "Mandal ID",
+                "mandal_name": "Mandal Name",
+                "psu_id": "PSU ID",
+                "psu_name": "PSU Name",
+            },
+            inplace=True,
+        )
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": df.to_dict(orient="records"),
+            },
+            "success": True,
+        }
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+        print(response.json)
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_append_locations_csv_with_error(
+        self, client, login_test_user, upload_locations_csv, csrf_token
+    ):
+        """
+        Test appending a locations csv with errors
+        Expect Fail with a 422
+        """
+
+        # Append a new locations csv to the existing locations
+        append_input_filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(append_input_filepath, "rb") as f:
+            append_locations_csv = f.read()
+            append_locations_csv_encoded = base64.b64encode(
+                append_locations_csv
+            ).decode("utf-8")
+
+        append_payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": append_locations_csv_encoded,
+        }
+
+        response = client.put(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=append_payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 422
 
     def test_locations_validations_geo_level_mapping_errors(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
@@ -2035,7 +2223,7 @@ class TestLocations:
         # Check the response
         response = client.get("/api/locations", query_string={"survey_uid": 1})
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 200
 
@@ -2108,7 +2296,7 @@ class TestLocations:
         # Check the response
         response = client.get("/api/locations", query_string={"survey_uid": 1})
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 200
 
@@ -2171,7 +2359,7 @@ class TestLocations:
         # Check the response
         response = client.get("/api/locations", query_string={"survey_uid": 1})
 
-        print(response)
+        print(response.json)
 
         assert response.status_code == 403
 
@@ -2220,7 +2408,7 @@ class TestLocations:
         assert checkdiff == {}
 
     def test_create_geo_levels_missing_keys(
-        self, client, login_test_user, csrf_token, create_survey
+        self, client, login_test_user, csrf_token, create_form
     ):
         """
         Insert new geo levels with missing keys to test the validator
@@ -2543,6 +2731,126 @@ class TestLocations:
             expected_response = {
                 "success": False,
                 "error": f"User does not have the required permission: READ Survey Locations",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+
+            assert checkdiff == {}
+
+    def test_update_location_name(
+        self,
+        client,
+        login_test_user,
+        upload_locations_csv,
+        csrf_token,
+        user_permissions,
+        request,
+    ):
+        """
+        Test that the location name can be updated
+        Expect success
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "survey_uid": 1,
+            "location_uid": 1,
+            "location_name": "NEW ADILABAD",
+            "parent_location_uid": None,
+        }
+
+        response = client.put(
+            "/api/locations/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "location": {
+                    "location_uid": 1,
+                    "survey_uid": 1,
+                    "location_name": "NEW ADILABAD",
+                    "location_id": "1",
+                    "geo_level_uid": 1,
+                    "parent_location_uid": None,
+                },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Survey Locations",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+
+            assert checkdiff == {}
+
+    def test_update_location_parent_location_uid(
+        self,
+        client,
+        login_test_user,
+        upload_locations_csv,
+        csrf_token,
+        user_permissions,
+        request,
+    ):
+        """
+        Test that the parent_location_uid can be updated
+        Expect success
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "survey_uid": 1,
+            "location_uid": 4,
+            "location_name": "NEW ANKOLI",
+            "parent_location_uid": 3,
+        }
+
+        response = client.put(
+            "/api/locations/4",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "location": {
+                    "survey_uid": 1,
+                    "location_uid": 4,
+                    "location_id": "17101102",
+                    "location_name": "NEW ANKOLI",
+                    "parent_location_uid": 3,
+                    "geo_level_uid": 3,
+                },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "success": False,
+                "error": f"User does not have the required permission: WRITE Survey Locations",
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
 

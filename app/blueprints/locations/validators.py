@@ -47,3 +47,13 @@ class LocationsQueryParamValidator(FlaskForm):
 
 class SurveyPrimeGeoLevelValidator(FlaskForm):
     prime_geo_level_uid = IntegerField(validators=[DataRequired()])
+
+
+class LocationUpdateParamValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    survey_uid = IntegerField(validators=[DataRequired()])
+    location_uid = IntegerField(validators=[DataRequired()])
+    location_name = StringField(validators=[DataRequired()])
+    parent_location_uid = StringField()
