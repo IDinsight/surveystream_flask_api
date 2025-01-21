@@ -2,7 +2,7 @@
 Targets Config: Add preview_mode and targets_last_uploaded columns
 
 Revision ID: 2a83ff36236b
-Revises: e2cd5f73ac59
+Revises: 6508381ec406
 Create Date: 2025-01-17 06:02:21.396115
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "2a83ff36236b"
-down_revision = "e2cd5f73ac59"
+down_revision = "6508381ec406"
 branch_labels = None
 depends_on = None
 
