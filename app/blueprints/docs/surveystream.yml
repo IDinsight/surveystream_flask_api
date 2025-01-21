@@ -11347,6 +11347,22 @@ paths:
                               type: string
                               description: For spotcheck score checks, this field is used to combine question level scores into a single score
                               example: "probing_score"
+                            gps_type:
+                              type: string
+                              description: For GPS checks to specify the gps type, Values can be 'point2point', 'point2shape'
+                              example: "point2point"
+                            threshold:
+                              type: decimal
+                              description: For GPS checks to match value within the threshold value
+                              example: 10
+                            gps_variable:
+                              type: string
+                              description: SCTO question name for GPS variable
+                              example: "district_name"
+                            grid_id:
+                              type: string
+                              description: SCTO question name for grid id variable
+                              example: "district_name"
                         active:
                           type: boolean
                           description: Indicates if the DQ check is active or not
@@ -12179,3 +12195,37 @@ paths:
                   success:
                     type: boolean
                     example: false
+
+  /notifications/action:
+    post:
+      summary: Create Notifications for a user/survey based on the action
+      tags:
+        - Notifications
+      parameters:
+        - name : survey_uid
+          in: body
+          description: Unique identifier for the survey
+          required: true
+          schema:
+            type: integer
+        - name: action
+          in: body
+          description: Action taken on the survey
+          required: true
+          schema:
+            type: string
+        - name: form_uid
+          in: body
+          description: Unique identifier for the form
+          required: false
+          schema:
+            type: integer
+        
+      responses:
+        "200":
+          description: Notification created successfully
+        "404":
+          description: Survey UID Not found
+        "422":
+          description: No notification created for the action, conditions not met
+         

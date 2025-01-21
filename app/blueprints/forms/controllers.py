@@ -313,7 +313,16 @@ def create_scto_question_mapping(form_uid, validated_payload):
             ),
             422,
         )
-
+    if form.form_type == "parent" and validated_payload.survey_status.data is None :
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"form_type={form.form_type} must have a mapping for survey_status",
+                }
+            ),
+            422,
+        )
     scto_question_mapping = SCTOQuestionMapping(
         form_uid=form_uid,
         survey_status=validated_payload.survey_status.data,
