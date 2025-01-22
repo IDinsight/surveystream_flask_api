@@ -2846,7 +2846,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Target to Supervisor mapping criteria not found."
+                "mapping_errors": "Target to supervisor mapping criteria not found."
             },
             "success": False,
         }
