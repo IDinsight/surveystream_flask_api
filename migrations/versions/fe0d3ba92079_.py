@@ -1,8 +1,8 @@
 """Add DQ logic check assertions and questions tables
 
-Revision ID: be5aa53fff5b
-Revises: 6508381ec406
-Create Date: 2025-01-17 09:47:12.912639
+Revision ID: fe0d3ba92079
+Revises: 2a83ff36236b
+Create Date: 2025-01-22 10:03:11.481228
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'be5aa53fff5b'
-down_revision = '6508381ec406'
+revision = 'fe0d3ba92079'
+down_revision = '2a83ff36236b'
 branch_labels = None
 depends_on = None
 
