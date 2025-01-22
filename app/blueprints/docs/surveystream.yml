@@ -6991,7 +6991,13 @@ paths:
                         description: The ID of the SCTO input, i.e. scto form id or dataset id
                       scto_encryption_flag:
                         type: boolean
-                        description: The encryption flag for SCTO input- true or false
+                        description: The encryption flag for SCTO input- true or false\
+                      targets_last_uploaded:
+                        type: string
+                        description: The timestamp of the last targets upload
+                      preview_mode:
+                        type: boolean
+                        description: The preview mode flag for the targets, set true when dynamic targets are previewed via webapp
         "404":
           description: Target configuration not found for the form
     post:
