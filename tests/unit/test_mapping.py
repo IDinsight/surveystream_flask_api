@@ -2846,7 +2846,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Supervisor to target mapping criteria not found."
+                "mapping_errors": "Target to Supervisor mapping criteria not found."
             },
             "success": False,
         }
@@ -2875,7 +2875,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Roles not configured for the survey. Cannot perform supervisor to target mapping without roles."
+                "mapping_errors": "Roles not configured for the survey. Cannot perform target to supervisor mapping without roles."
             },
             "success": False,
         }
@@ -2926,7 +2926,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Prime geo level not configured for the survey. Cannot perform supervisor to target mapping based on location without a prime geo level."
+                "mapping_errors": "Prime geo level not configured for the survey. Cannot perform target to supervisor mapping based on location without a prime geo level."
             },
             "success": False,
         }
@@ -4868,7 +4868,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Supervisor to surveyor mapping criteria not found."
+                "mapping_errors": "Surveyor to supervisor mapping criteria not found."
             },
             "success": False,
         }
@@ -4897,7 +4897,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Roles not configured for the survey. Cannot perform supervisor to surveyor mapping without roles."
+                "mapping_errors": "Roles not configured for the survey. Cannot perform surveyor to supervisor mapping without roles."
             },
             "success": False,
         }
@@ -4948,7 +4948,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Prime geo level not configured for the survey. Cannot perform supervisor to surveyor mapping based on location without a prime geo level."
+                "mapping_errors": "Prime geo level not configured for the survey. Cannot perform surveyor to supervisor mapping based on location without a prime geo level."
             },
             "success": False,
         }
