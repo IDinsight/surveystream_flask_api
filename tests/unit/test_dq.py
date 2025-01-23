@@ -200,7 +200,11 @@ class TestDQ:
         data = load_reference_data("scto-questions.json")
         repeat_group_questions = load_reference_data("scto-questions-repeatgroups.json")
 
-        load_scto_questions(app, db, data["data"]["questions"] + repeat_group_questions["data"]["questions"])
+        load_scto_questions(
+            app,
+            db,
+            data["data"]["questions"] + repeat_group_questions["data"]["questions"],
+        )
 
         yield
 
@@ -615,7 +619,12 @@ class TestDQ:
             print(response.json)
 
             expected_response = {
-                "data": {"form_uid": 1, "survey_status_filter": [1], "group_by_module_name": True, "dq_checks": None},
+                "data": {
+                    "form_uid": 1,
+                    "survey_status_filter": [1],
+                    "group_by_module_name": True,
+                    "dq_checks": None,
+                },
                 "success": True,
             }
 
@@ -2733,6 +2742,814 @@ class TestDQ:
         expected_response = {
             "message": "Question name 'randome_question' not found in form definition. Active checks must have a valid question name for GPS checks.",
             "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_gps_check_inactive(
+        self,
+        app,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        request,
+    ):
+        """
+        Test the get checks endpoint correctly marks logic checks as inactive
+
+        """
+        payload = {
+            "form_uid": 1,
+            "type_id": 10,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_gps_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "gps_type": "point2point",
+                "threshold": "50",
+                "gps_variable": "fac_4anc",
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 200
+
+        # Delete the question from the form definition
+        delete_scto_question(app, db, 1, "fac_4anc")
+
+        # Check if the check is marked as inactive
+        response = client.get(
+            "/api/dq/checks",
+            query_string={"form_uid": 1, "type_id": 10},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {
+                    "active": False,
+                    "all_questions": False,
+                    "dq_check_uid": 1,
+                    "filters": [],
+                    "flag_description": "test_gps_flag",
+                    "form_uid": 1,
+                    "module_name": "test_module",
+                    "question_name": "fac_4hb",
+                    "type_id": 10,
+                    "dq_scto_form_uid": None,
+                    "is_repeat_group": False,
+                    "note": "GPS variable not found in form definition",
+                    "check_components": {
+                        "value": [],
+                        "hard_min": None,
+                        "hard_max": None,
+                        "soft_min": None,
+                        "soft_max": None,
+                        "outlier_metric": None,
+                        "outlier_value": None,
+                        "spotcheck_score_name": None,
+                        "gps_type": "point2point",
+                        "threshold": "50",
+                        "gps_variable": "fac_4anc",
+                        "grid_id": None,
+                    },
+                }
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_dq_config_gps_check_inactive(
+        self,
+        app,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        request,
+    ):
+        """
+        Test the get checks endpoint correctly marks logic checks as inactive
+
+        """
+        payload = {
+            "form_uid": 1,
+            "type_id": 10,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_gps_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "gps_type": "point2point",
+                "threshold": "50",
+                "gps_variable": "fac_4anc",
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 200
+
+        # Delete the question from the form definition
+        delete_scto_question(app, db, 1, "fac_4hb")
+
+        # Check if the check is marked as inactive in the dq config
+        response = client.get(
+            "/api/dq/config",
+            query_string={"form_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        expected_response = {
+            "data": {
+                "form_uid": 1,
+                "survey_status_filter": [1, 3],
+                "group_by_module_name": False,
+                "dq_checks": [
+                    {"type_id": 10, "num_configured": "1", "num_active": "0"},
+                ],
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_add_dq_logic_check(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to add a DQ Logic check
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "fac_4hb", "alias": "A"},
+                    {"question_name": "fac_4anc", "alias": "B"},
+                ],
+                "logic_check_assertions": [
+                    {
+                        "assert_group": [
+                            {
+                                "assertion": "A > B",
+                            },
+                        ]
+                    },
+                ],
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "success": True,
+                "message": "Success",
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+            # Check if the GPS check was added
+            response = client.get(
+                "/api/dq/checks",
+                query_string={"form_uid": 1, "type_id": 1},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert response.status_code == 200
+            print(response.json)
+
+            expected_response = {
+                "data": [
+                    {
+                        "active": True,
+                        "all_questions": False,
+                        "dq_check_uid": 1,
+                        "filters": [],
+                        "flag_description": "test_logic_flag",
+                        "form_uid": 1,
+                        "module_name": "test_module",
+                        "question_name": "fac_4hb",
+                        "type_id": 1,
+                        "dq_scto_form_uid": None,
+                        "is_repeat_group": False,
+                        "note": None,
+                        "check_components": {
+                            "value": [],
+                            "hard_min": None,
+                            "hard_max": None,
+                            "soft_min": None,
+                            "soft_max": None,
+                            "outlier_metric": None,
+                            "outlier_value": None,
+                            "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
+                            "logic_check_questions": [
+                                {
+                                    "question_name": "fac_4hb",
+                                    "is_repeat_group": False,
+                                    "alias": "A",
+                                },
+                                {
+                                    "question_name": "fac_4anc",
+                                    "is_repeat_group": False,
+                                    "alias": "B",
+                                },
+                            ],
+                            "logic_check_assertions": [
+                                {
+                                    "assert_group": [
+                                        {
+                                            "assert_group_id": 1,
+                                            "assertion": "A > B",
+                                        },
+                                    ]
+                                },
+                            ],
+                        },
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_add_dq_logic_check_invalid_question_main(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        load_dq_scto_form_definition,
+    ):
+        """
+        Test the endpoint to add a DQ Logic check with invalid question name
+        """
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": "random_question",
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "random_question", "alias": "A"},
+                    {"question_name": "fac_4anc", "alias": "B"},
+                ],
+                "logic_check_assertions": [
+                    {
+                        "assert_group": [
+                            {
+                                "assertion": "A > B",
+                            },
+                        ]
+                    },
+                ],
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 404
+        expected_response = {
+            "message": "Question name 'random_question' not found in form definition. Active checks must have a valid question name.",
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_add_dq_logic_check_invalid_question_additional(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        load_dq_scto_form_definition,
+    ):
+        """
+        Test the endpoint to add a DQ Logic check with invalid question name
+        """
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "fac_4hb", "alias": "A"},
+                    {"question_name": "random_question", "alias": "B"},
+                ],
+                "logic_check_assertions": [
+                    {
+                        "assert_group": [
+                            {
+                                "assertion": "A > B",
+                            },
+                        ]
+                    },
+                ],
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 404
+        expected_response = {
+            "message": "Question name 'random_question' not found in form definition. Active checks must have a valid question name.",
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_add_dq_logic_check_error(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+    ):
+        """
+        Test the endpoint to add a DQ Logic check
+        """
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "fac_4hb", "alias": "A"},
+                    {"question_name": "fac_4anc", "alias": "B"},
+                ]
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 404
+
+        expected_response = {
+            "message": "The field 'logic_check_assertions' is required for logic checks",
+            "success": False,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_logic_check_inactive(
+        self,
+        app,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        request,
+    ):
+        """
+        Test the get checks endpoint correctly marks logic checks as inactive
+
+        """
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "fac_4hb", "alias": "A"},
+                    {"question_name": "fac_4anc", "alias": "B"},
+                ],
+                "logic_check_assertions": [
+                    {
+                        "assert_group": [
+                            {
+                                "assertion": "A > B",
+                            },
+                        ]
+                    },
+                ],
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        # Delete the question from the form definition
+        delete_scto_question(app, db, 1, "fac_4anc")
+
+        # Check if the check is marked as inactive
+        response = client.get(
+            "/api/dq/checks",
+            query_string={"form_uid": 1, "type_id": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {
+                    "active": False,
+                    "all_questions": False,
+                    "dq_check_uid": 1,
+                    "filters": [],
+                    "flag_description": "test_logic_flag",
+                    "form_uid": 1,
+                    "module_name": "test_module",
+                    "question_name": "fac_4hb",
+                    "type_id": 1,
+                    "dq_scto_form_uid": None,
+                    "is_repeat_group": False,
+                    "note": "Logic check question not found in form definition",
+                    "check_components": {
+                        "value": [],
+                        "hard_min": None,
+                        "hard_max": None,
+                        "soft_min": None,
+                        "soft_max": None,
+                        "outlier_metric": None,
+                        "outlier_value": None,
+                        "spotcheck_score_name": None,
+                        "gps_type": None,
+                        "threshold": None,
+                        "gps_variable": None,
+                        "grid_id": None,
+                        "logic_check_questions": [
+                            {
+                                "question_name": "fac_4hb",
+                                "is_repeat_group": False,
+                                "alias": "A",
+                            },
+                            {
+                                "question_name": "fac_4anc",
+                                "is_repeat_group": False,
+                                "alias": "B",
+                            },
+                        ],
+                        "logic_check_assertions": [
+                            {
+                                "assert_group": [
+                                    {
+                                        "assert_group_id": 1,
+                                        "assertion": "A > B",
+                                    },
+                                ]
+                            },
+                        ],
+                    },
+                }
+            ],
+            "success": True,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_dq_config_logic_check_inactive(
+        self,
+        app,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        request,
+    ):
+        """
+        Test the get config endpoint correctly marks logic checks as inactive
+
+        """
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "fac_4hb", "alias": "A"},
+                    {"question_name": "fac_4anc", "alias": "B"},
+                ],
+                "logic_check_assertions": [
+                    {
+                        "assert_group": [
+                            {
+                                "assertion": "A > B",
+                            },
+                        ]
+                    },
+                ],
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        # Delete the question from the form definition
+        delete_scto_question(app, db, 1, "fac_4anc")
+
+        # Check if the check is marked as inactive in the dq config
+        response = client.get(
+            "/api/dq/config",
+            query_string={"form_uid": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        expected_response = {
+            "data": {
+                "form_uid": 1,
+                "survey_status_filter": [1, 3],
+                "group_by_module_name": False,
+                "dq_checks": [
+                    {"type_id": 1, "num_configured": "1", "num_active": "0"},
+                ],
+            },
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_update_dq_logic_check(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+    ):
+        """
+        Test the endpoint to update the DQ check
+
+        """
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "fac_4hb", "alias": "A"},
+                    {"question_name": "fac_4anc", "alias": "B"},
+                ],
+                "logic_check_assertions": [
+                    {
+                        "assert_group": [
+                            {
+                                "assertion": "A > B",
+                            },
+                        ]
+                    },
+                ],
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": "fac_4hb",
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag_updated",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "fac_4hb", "alias": "A"},
+                    {"question_name": "fac_4anc", "alias": "B"},
+                ],
+                "logic_check_assertions": [
+                    {
+                        "assert_group": [
+                            {
+                                "assertion": "A < B",
+                            },
+                        ]
+                    },
+                ],
+            },
+        }
+
+        response = client.put(
+            "/api/dq/checks/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "success": True,
+            "message": "Success",
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # Check if the check was updated
+        response = client.get(
+            "/api/dq/checks",
+            query_string={"form_uid": 1, "type_id": 1},
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+        print(response.json)
+
+        expected_response = {
+            "data": [
+                {
+                    "active": True,
+                    "all_questions": False,
+                    "dq_check_uid": 1,
+                    "filters": [],
+                    "flag_description": "test_logic_flag_updated",
+                    "form_uid": 1,
+                    "module_name": "test_module",
+                    "question_name": "fac_4hb",
+                    "type_id": 1,
+                    "dq_scto_form_uid": None,
+                    "is_repeat_group": False,
+                    "note": None,
+                    "check_components": {
+                        "value": [],
+                        "hard_min": None,
+                        "hard_max": None,
+                        "soft_min": None,
+                        "soft_max": None,
+                        "outlier_metric": None,
+                        "outlier_value": None,
+                        "spotcheck_score_name": None,
+                        "gps_type": None,
+                        "threshold": None,
+                        "gps_variable": None,
+                        "grid_id": None,
+                        "logic_check_questions": [
+                            {
+                                "question_name": "fac_4hb",
+                                "is_repeat_group": False,
+                                "alias": "A",
+                            },
+                            {
+                                "question_name": "fac_4anc",
+                                "is_repeat_group": False,
+                                "alias": "B",
+                            },
+                        ],
+                        "logic_check_assertions": [
+                            {
+                                "assert_group": [
+                                    {
+                                        "assert_group_id": 1,
+                                        "assertion": "A < B",
+                                    },
+                                ]
+                            },
+                        ],
+                    },
+                }
+            ],
+            "success": True,
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
