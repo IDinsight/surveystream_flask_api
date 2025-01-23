@@ -40,6 +40,12 @@ def check_notification_condition(survey_uid, form_uid, input_conditions):
     if input_conditions is None or len(input_conditions) == 0:
         return True
 
+    if form_uid is None:
+        # TODO: Refactor this for multiple main forms
+        form = Form.query.filter_by(survey_uid=survey_uid, form_type="parent").first()
+        if form is not None:
+            form_uid = form.form_uid
+
     condition_checks = {
         "location_exists": lambda: check_location_exists(survey_uid),
         "enumerator_exists": lambda: check_enumerator_exists(form_uid),
@@ -59,6 +65,8 @@ def check_notification_condition(survey_uid, form_uid, input_conditions):
         for condition in input_conditions
         if condition in condition_checks
     }
+
+    print(survey_conditions)
 
     return all(survey_conditions.values())
 
