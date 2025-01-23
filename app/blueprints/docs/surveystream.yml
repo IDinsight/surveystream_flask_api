@@ -11363,6 +11363,45 @@ paths:
                               type: string
                               description: SCTO question name for grid id variable
                               example: "district_name"
+                            logic_check_questions:
+                              type: array
+                              description: List of questions to be used for logic checks
+                              items:
+                                type: object
+                                properties:
+                                  question_name:
+                                    type: string
+                                    description: Name of the question
+                                    example: "age"
+                                  alias:
+                                    type: string
+                                    description: Alias for the question
+                                    example: "A"
+                                  is_repeat_group:
+                                    type: boolean
+                                    description: Indicates if the question is a repeat group
+                                    example: true
+                            logic_check_assertions:
+                              type: array
+                              description: List of groups of assertions for logic checks joined by an OR condition
+                              items:
+                                type: object
+                                description: Assert group
+                                properties:
+                                  assert_group:
+                                    type: array
+                                    description: List of assert statements joined by an AND condition
+                                    items:
+                                      type: object
+                                      properties:
+                                        assert_group_id:
+                                          type: integer
+                                          description: Unique identifier for the assert group
+                                          example: 1
+                                        assertion: 
+                                          type: string
+                                          description: Assertion to be checked
+                                          example: "A > B"
                         active:
                           type: boolean
                           description: Indicates if the DQ check is active or not
@@ -11485,6 +11524,53 @@ paths:
                       type: string
                       description: For spotcheck score checks, this field is used to combine question level scores into a single score
                       example: "probing_score"
+                    gps_type:
+                      type: string
+                      description: For GPS checks to specify the gps type, Values can be 'point2point', 'point2shape'
+                      example: "point2point"
+                    threshold:
+                      type: decimal
+                      description: For GPS checks to match value within the threshold value
+                      example: 10
+                    gps_variable:
+                      type: string
+                      description: SCTO question name for expected GPS variable
+                      example: "district_name"
+                    grid_id:
+                      type: string
+                      description: SCTO question name for grid id variable
+                      example: "district_name"
+                    logic_check_questions:
+                      type: array
+                      description: List of questions to be used for logic checks
+                      items:
+                        type: object
+                        properties:
+                          question_name:
+                            type: string
+                            description: Name of the question
+                            example: "age"
+                          alias:
+                            type: string
+                            description: Alias for the question
+                            example: "A"
+                    logic_check_assertions:
+                      type: array
+                      description: List of groups of assertions for logic checks joined by an OR condition
+                      items:
+                        type: object
+                        description: Assert group
+                        properties:
+                          assert_group:
+                            type: array
+                            description: List of assert statements joined by an AND condition
+                            items:
+                              type: object
+                              properties:
+                                assertion: 
+                                  type: string
+                                  description: Assertion to be checked
+                                  example: "A > B"
                 active:
                   type: boolean
                   description: Indicates if the DQ check is active or not
@@ -11686,6 +11772,54 @@ paths:
                       type: string
                       description: For spotcheck score checks, this field is used to combine question level scores into a single score
                       example: "probing_score"
+                    gps_type:
+                      type: string
+                      description: For GPS checks to specify the gps type, Values can be 'point2point', 'point2shape'
+                      example: "point2point"
+                    threshold:
+                      type: decimal
+                      description: For GPS checks to match value within the threshold value
+                      example: 10
+                    gps_variable:
+                      type: string
+                      description: SCTO question name for expected GPS variable
+                      example: "district_name"
+                    grid_id:
+                      type: string
+                      description: SCTO question name for grid id variable
+                      example: "district_name"
+                    logic_check_questions:
+                      type: array
+                      description: List of questions to be used for logic checks
+                      items:
+                        type: object
+                        properties:
+                          question_name:
+                            type: string
+                            description: Name of the question
+                            example: "age"
+                          alias:
+                            type: string
+                            description: Alias for the question
+                            example: "A"
+                    logic_check_assertions:
+                      type: array
+                      description: List of groups of assertions for logic checks joined by an OR condition
+                      items:
+                        type: object
+                        description: Assert group
+                        properties:
+                          assert_group:
+                            type: array
+                            description: List of assert statements joined by an AND condition
+                            items:
+                              type: object
+                              properties:
+                                assertion: 
+                                  type: string
+                                  description: Assertion to be checked
+                                  example: "A > B"
+
                 active:
                   type: boolean
 
