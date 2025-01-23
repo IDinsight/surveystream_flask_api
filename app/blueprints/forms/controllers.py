@@ -152,6 +152,7 @@ def create_form(validated_payload):
         dq_form_type=validated_payload.dq_form_type.data,
         admin_form_type=validated_payload.admin_form_type.data,
         parent_form_uid=validated_payload.parent_form_uid.data,
+        number_of_attempts = validated_payload.number_of_attempts.data,
     )
 
     try:

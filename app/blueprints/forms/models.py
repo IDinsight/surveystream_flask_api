@@ -74,6 +74,7 @@ class Form(db.Model):
     server_access_allowed = db.Column(db.Boolean())
     last_ingested_at = db.Column(db.DateTime(), nullable=True)
     surveys = db.relationship(Survey, backref=backref("forms", passive_deletes=True))
+    number_of_attempts = db.Column(db.Integer(), nullable=True)
 
     def __init__(
         self,
@@ -89,6 +90,7 @@ class Form(db.Model):
         dq_form_type=None,
         admin_form_type=None,
         parent_form_uid=None,
+        number_of_attempts=7,
     ):
         self.survey_uid = survey_uid
         self.scto_form_id = scto_form_id
@@ -102,6 +104,7 @@ class Form(db.Model):
         self.dq_form_type = dq_form_type
         self.admin_form_type = admin_form_type
         self.parent_form_uid = parent_form_uid
+        self.number_of_attempts = number_of_attempts
 
     def to_dict(self):
         return {
@@ -119,6 +122,7 @@ class Form(db.Model):
             "server_access_role_granted": self.server_access_role_granted,
             "server_access_allowed": self.server_access_allowed,
             "last_ingested_at": self.last_ingested_at,
+            "number_of_attempts": self.number_of_attempts,
         }
 
 
