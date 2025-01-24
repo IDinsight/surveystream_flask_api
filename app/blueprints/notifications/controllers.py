@@ -22,7 +22,11 @@ from .models import (
     db,
 )
 from .routes import notifications_bp
-from .utils import check_module_notification_exists, check_notification_condition
+from .utils import (
+    check_module_notification_exists,
+    check_notification_condition,
+    set_module_status_error,
+)
 from .validators import (
     PostActionPayloadValidator,
     PostNotificationsPayloadValidator,
@@ -555,13 +559,20 @@ def create_notification_via_action(validated_payload):
             survey_uid, template["module_id"], template["severity"]
         )
 
-        if (
-            check_notification_condition(
-                survey_uid,
-                form_uid,
-                template["condition"],
-            )
-            and not module_notification_exists
+        if module_notification_exists:
+            SurveyNotification.query.filter(
+                SurveyNotification.survey_uid == survey_uid,
+                SurveyNotification.module_id == template["module_id"],
+                SurveyNotification.severity == template["severity"],
+                SurveyNotification.resolution_status == "in progress",
+            ).update({"created_at": datetime.now()}, synchronize_session="fetch")
+            notification_created_flag = True
+            set_module_status_error(survey_uid, template["module_id"])
+
+        elif check_notification_condition(
+            survey_uid,
+            form_uid,
+            template["condition"],
         ):
 
             message = notification_action.message + " " + template["message"]
@@ -577,19 +588,9 @@ def create_notification_via_action(validated_payload):
             notification_created_flag = True
 
             if template["severity"] == "error":
-                ModuleStatus.query.filter(
-                    ModuleStatus.module_id == template["module_id"],
-                    ModuleStatus.survey_uid == survey_uid,
-                ).update({"config_status": "Error"})
+                set_module_status_error(survey_uid, template["module_id"])
 
-        if module_notification_exists:
-            SurveyNotification.query.filter(
-                SurveyNotification.survey_uid == survey_uid,
-                SurveyNotification.module_id == template["module_id"],
-                SurveyNotification.severity == template["severity"],
-                SurveyNotification.resolution_status == "in progress",
-            ).update({"created_at": datetime.now()})
-            notification_created_flag = True
+        db.session.flush()
 
     try:
         db.session.commit()
