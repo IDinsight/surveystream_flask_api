@@ -29,12 +29,11 @@ def check_module_notification_exists(survey_uid, module_id, severity):
     )
 
 
-def set_module_status_error(db, survey_uid, module_id):
+def set_module_status_error(survey_uid, module_id):
     ModuleStatus.query.filter(
         ModuleStatus.module_id == module_id,
         ModuleStatus.survey_uid == survey_uid,
     ).update({"config_status": "Error"}, synchronize_session="fetch")
-    db.session.flush()
 
 
 def check_notification_condition(survey_uid, form_uid, input_conditions):

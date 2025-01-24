@@ -567,7 +567,7 @@ def create_notification_via_action(validated_payload):
                 SurveyNotification.resolution_status == "in progress",
             ).update({"created_at": datetime.now()}, synchronize_session="fetch")
             notification_created_flag = True
-            set_module_status_error(db, survey_uid, template["module_id"])
+            set_module_status_error(survey_uid, template["module_id"])
 
         elif check_notification_condition(
             survey_uid,
@@ -588,7 +588,7 @@ def create_notification_via_action(validated_payload):
             notification_created_flag = True
 
             if template["severity"] == "error":
-                set_module_status_error(db, survey_uid, template["module_id"])
+                set_module_status_error(survey_uid, template["module_id"])
 
         db.session.flush()
 
