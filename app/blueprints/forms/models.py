@@ -87,10 +87,10 @@ class Form(db.Model):
         server_access_role_granted,
         server_access_allowed,
         form_type,
+        number_of_attempts=None,
         dq_form_type=None,
         admin_form_type=None,
         parent_form_uid=None,
-        number_of_attempts=7,
     ):
         self.survey_uid = survey_uid
         self.scto_form_id = scto_form_id
