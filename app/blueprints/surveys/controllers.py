@@ -185,6 +185,7 @@ def get_survey_config_status(survey_uid):
     # Temp: Update module status based on whether data is present in the corresponding backend
     # table because we aren't updating the module status table from each module currently
     from app.blueprints.assignments.models import SurveyorAssignment
+    from app.blueprints.dq.models import DQConfig
     from app.blueprints.emails.models import EmailConfig
     from app.blueprints.enumerators.models import Enumerator
     from app.blueprints.forms.models import Form
@@ -196,7 +197,6 @@ def get_survey_config_status(survey_uid):
     from app.blueprints.media_files.models import MediaFilesConfig
     from app.blueprints.target_status_mapping.models import TargetStatusMapping
     from app.blueprints.targets.models import Target
-    from app.blueprints.dq.models import DQConfig
 
     survey = Survey.query.filter_by(survey_uid=survey_uid).first()
     scto_information = Form.query.filter_by(
@@ -311,6 +311,8 @@ def get_survey_config_status(survey_uid):
         data["Module selection"]["status"] = "In Progress"
 
     for item in data["Survey information"]:
+        if item["status"] == "Error":
+            continue
         if item["name"] == "SurveyCTO information":
             if scto_information is not None:
                 item["status"] = "In Progress"
@@ -340,6 +342,8 @@ def get_survey_config_status(survey_uid):
     if "Module configuration" in data:
         for item in data["Module configuration"]:
             if isinstance(item, dict) and "name" in item:
+                if status in item and item["status"] == "Error":
+                    continue
                 if item["name"] == "Assignments":
                     if assignments is not None:
                         item["status"] = "In Progress"
