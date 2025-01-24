@@ -1741,3 +1741,68 @@ class TestNotifications:
         )
         print(duplicate_response.json)
         assert response.status_code == 200
+
+    def test_check_module_error(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        payload = {
+            "survey_uid": 1,
+            "action": "Locations reuploaded",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        get_config_status = client.get(
+            "/api/surveys/1/config-status",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        expected_response = {
+            "success": True,
+            "data": {
+                "overall_status": "In Progress - Configuration",
+                "Basic information": {"status": "In Progress"},
+                "Module selection": {"status": "In Progress"},
+                "Survey information": [
+                    {"name": "SurveyCTO information", "status": "In Progress"},
+                    {"name": "Field supervisor roles", "status": "Error"},
+                    {"name": "Survey locations", "status": "In Progress"},
+                    {"name": "SurveyStream users", "status": "Not Started"},
+                    {"name": "Enumerators", "status": "Error"},
+                    {"name": "Targets", "status": "Error"},
+                ],
+                "Module configuration": [
+                    {"module_id": 9, "name": "Assignments", "status": "Not Started"},
+                    {
+                        "module_id": 13,
+                        "name": "Surveyor hiring",
+                        "status": "Not Started",
+                    },
+                    {
+                        "module_id": 14,
+                        "name": "Target status mapping",
+                        "status": "Not Started",
+                    },
+                    {
+                        "module_id": 16,
+                        "name": "Assignments column configuration",
+                        "status": "Not Started",
+                    },
+                ],
+            },
+        }
+
+        checkdiff = jsondiff.diff(expected_response, get_config_status.json)
+
+        assert checkdiff == {}
