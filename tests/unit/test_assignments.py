@@ -1980,7 +1980,7 @@ class TestAssignments:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Roles not configured for the survey. Cannot perform supervisor to target mapping without roles."
+                "mapping_errors": "Roles not configured for the survey. Cannot perform target to supervisor mapping without roles."
             },
             "success": False,
         }
