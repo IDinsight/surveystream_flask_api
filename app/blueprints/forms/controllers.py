@@ -138,9 +138,14 @@ def create_form(validated_payload):
             jsonify({"error": "form_type=admin must have a admin_form_type defined"}),
             422,
         )
-    if (validated_payload.form_type.data == "parent") and validate_payload.number_of_attempts.data is None:
+    if (
+        validated_payload.form_type.data == "parent"
+        and validated_payload.number_of_attempts.data is None
+    ):
         return (
-            jsonify({"error": "form_type=parent must have a number_of_attempts defined"}),
+            jsonify(
+                {"error": "form_type=parent must have a number_of_attempts defined"}
+            ),
             422,
         )
 
@@ -157,7 +162,11 @@ def create_form(validated_payload):
         dq_form_type=validated_payload.dq_form_type.data,
         admin_form_type=validated_payload.admin_form_type.data,
         parent_form_uid=validated_payload.parent_form_uid.data,
-        number_of_attempts = None  or validated_payload.number_of_attempts.data,
+        number_of_attempts=(
+            validated_payload.number_of_attempts.data
+            if validated_payload.number_of_attempts.data is not None
+            else None
+        ),
     )
     try:
         db.session.add(form)
@@ -219,10 +228,15 @@ def update_form(form_uid, validated_payload):
             jsonify({"error": "form_type=admin must have a admin_form_type defined"}),
             422,
         )
-    if (validated_payload.form_type.data == "parent") and validate_payload.number_of_attempts.data is None:
+    if (
+        validated_payload.form_type.data == "parent"
+        and validated_payload.number_of_attempts.data is None
+    ):
         return (
-            jsonify({"error": "form_type=parent must have a number_of_attempts defined"}),
-            422
+            jsonify(
+                {"error": "form_type=parent must have a number_of_attempts defined"}
+            ),
+            422,
         )
 
     try:
@@ -239,7 +253,11 @@ def update_form(form_uid, validated_payload):
                 Form.dq_form_type: validated_payload.dq_form_type.data,
                 Form.admin_form_type: validated_payload.admin_form_type.data,
                 Form.parent_form_uid: validated_payload.parent_form_uid.data,
-                Form.number_of_attempts: None or validated_payload.number_of_attempts.data,
+                Form.number_of_attempts: (
+                    validated_payload.number_of_attempts.data
+                    if validated_payload.number_of_attempts.data is not None
+                    else None
+                ),
             },
             synchronize_session="fetch",
         )
@@ -324,7 +342,7 @@ def create_scto_question_mapping(form_uid, validated_payload):
             ),
             422,
         )
-    if form.form_type == "parent" and validated_payload.survey_status.data is None :
+    if form.form_type == "parent" and validated_payload.survey_status.data is None:
         return (
             jsonify(
                 {

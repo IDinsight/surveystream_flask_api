@@ -36,5 +36,5 @@ services:
     command:
       - |
         . /bootstrap.sh
-        coverage run -m pytest tests -vv
+        coverage run -m pytest tests -m forms -vv -s
         coverage lcov --include="/usr/src/${BACKEND_NAME}/app/*" -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
