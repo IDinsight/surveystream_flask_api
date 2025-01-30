@@ -81,6 +81,7 @@ class UpdateFormValidator(FlaskForm):
             message="Value must be one of %(values)s",
         )
     )
+    number_of_attempts = IntegerField() 
 
 
 class LocationQuestionMappingValidator(FlaskForm):
