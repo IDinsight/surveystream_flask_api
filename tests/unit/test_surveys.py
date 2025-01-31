@@ -724,7 +724,12 @@ class TestSurveys:
         assert checkdiff == {}
 
     def test_get_surveys_for_non_admin_user_survey_roles(
-        self, client, login_test_user, create_surveys, create_module_questionnaire, test_user_credentials
+        self,
+        client,
+        login_test_user,
+        create_surveys,
+        create_module_questionnaire,
+        test_user_credentials,
     ):
         """
         Test get surveys for non-admin with roles
@@ -1033,25 +1038,29 @@ class TestSurveys:
         response = client.get("/api/surveys/1/config-status")
         assert response.status_code == 200
 
-        print(response.json)
         expected_response = {
             "data": {
-                "Basic information": {"status": "In Progress"},
-                "Module selection": {"status": "Not Started"},
+                "Basic information": {"status": "Done", "optional": False},
+                "Module selection": {"status": "Not Started", "optional": False},
                 "Survey information": [
-                    {"name": "SurveyCTO information", "status": "In Progress"},
-                    {"name": "User and role management", "status": "In Progress"},
-                    {"name": "Survey locations", "status": "In Progress"},
-                    {"name": "SurveyStream users", "status": "Not Started"},
-                    {"name": "Enumerators", "status": "In Progress"},
-                    {"name": "Targets", "status": "In Progress"},
-                    {"name": "Mapping", "status": "Not Started"},
+                    {
+                        "name": "SurveyCTO information",
+                        "status": "In Progress",
+                        "optional": False,
+                    },
+                    {
+                        "name": "User and role management",
+                        "status": "Done",
+                        "optional": False,
+                    },
                 ],
                 "overall_status": "In Progress - Configuration",
+                "completion_percentage": 50,
             },
             "success": True,
         }
 
+        print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 

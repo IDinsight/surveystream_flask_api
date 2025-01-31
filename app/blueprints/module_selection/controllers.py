@@ -4,9 +4,10 @@ from app.utils.utils import (
     validate_payload,
 )
 from flask import jsonify
-from .models import db, Module, ModuleStatus
+from .models import db, Module, ModuleStatus, ModuleDependency
 from .routes import module_selection_bp
 from .validators import UpdateModuleStatusValidator, AddModuleStatusValidator
+from app.blueprints.surveys.utils import ModuleStatusCalculator
 
 
 @module_selection_bp.route("/modules", methods=["GET"])
@@ -45,14 +46,32 @@ def add_module_status(validated_payload):
     survey_uid = validated_payload.survey_uid.data
     modules = validated_payload.modules.data
 
-    # If '9: Assignments' is selected, automatically select '16: Assignments column configuration'
-    if "9" in modules:
-        if "16" not in modules:
-            modules.append("16")
+    # Get mandatory modules
+    mandatory_modules = (
+        db.session.query(Module.module_id).filter(Module.optional.is_(False)).all()
+    )
+
+    # Add mandatory modules to the selected modules list
+    for module in mandatory_modules:
+        if module.module_id not in modules:
+            modules.append(module.module_id)
+
+    # Get the dependencies for each selected module
+    dependencies = (
+        db.session.query(ModuleDependency.requires_module_id)
+        .filter(ModuleDependency.module_id.in_(modules))
+        .distinct()
+        .all()
+    )
+
+    # Add the dependencies to the selected modules list
+    for dependency in dependencies:
+        if dependency.requires_module_id not in modules:
+            modules.append(dependency.requires_module_id)
 
     existing_modules_status = ModuleStatus.query.filter_by(survey_uid=survey_uid).all()
-    deselected_modules_status = filter(
-        lambda module: str(module.module_id) not in modules, existing_modules_status
+    deselected_modules_status = list(
+        filter(lambda module: module.module_id not in modules, existing_modules_status)
     )
 
     for module_id in modules:
@@ -77,44 +96,12 @@ def add_module_status(validated_payload):
             )
             db.session.add(module_status)
 
-    # Removing the modules if user deselect the card
-    for module_status in list(deselected_modules_status):
-        if module_status.config_status == "Not Started":
-            if module_status.module_id in [16, 9]:
-                # For '16: Assignments column configuration' and '9: Assignments' deselection,
-                # check if the other module is also of not started status before deleting
-                started_config = (
-                    db.session.query(ModuleStatus)
-                    .filter(
-                        ModuleStatus.survey_uid == survey_uid,
-                        ModuleStatus.module_id.in_([9, 16]),
-                        ModuleStatus.config_status != "Not Started",
-                    )
-                    .first()
-                )
-                if started_config:
-                    return (
-                        jsonify(
-                            {
-                                "success": False,
-                                "message": 'Only modules with "Not Started" status can be deselected.',
-                            }
-                        ),
-                        422,
-                    )
-            db.session.delete(module_status)
-        else:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": 'Only modules with "Not Started" status can be deselected.',
-                    }
-                ),
-                422,
-            )
+    # Removing the deselected modules
+    for module_status in deselected_modules_status:
+        db.session.delete(module_status)
 
     db.session.commit()
+
     return (
         jsonify(
             {"success": True, "message": "Module status added/updated successfully."}
@@ -133,16 +120,24 @@ def get_module_status(survey_uid):
         db.session.query(ModuleStatus)
         .filter(
             ModuleStatus.survey_uid == survey_uid,
-            ModuleStatus.module_id.notin_(
-                [16]
-            ),  # Excluding the module with id 16: Assignments column configuration
         )
         .all()
     )
+    data = []
+    for module in module_status:
+        module_status_calculator = ModuleStatusCalculator(survey_uid, module.module_id)
+        status = module_status_calculator.get_status()
+
+        data.append(
+            {
+                "survey_uid": module.survey_uid,
+                "module_id": module.module_id,
+                "config_status": status,
+            }
+        )
+
     return (
-        jsonify(
-            {"success": True, "data": [status.to_dict() for status in module_status]}
-        ),
+        jsonify({"success": True, "data": data}),
         200,
     )
 
@@ -153,13 +148,20 @@ def get_module_status(survey_uid):
 @logged_in_active_user_required
 @validate_payload(UpdateModuleStatusValidator)
 @custom_permissions_required("ADMIN", "path", "survey_uid")
-def update_module_status(module_id, survey_uid, validated_payload):
+def update_module_status(validated_payload):
+    """
+
+    Function to update the status of a module for a survey
+
+    """
+    module_id = validate_payload.module_id.data
+    survey_uid = validate_payload.survey_uid.data
+
     module_status = ModuleStatus.query.filter_by(
         module_id=module_id, survey_uid=survey_uid
     ).first()
 
     module_status.config_status = validated_payload.config_status.data
-
     db.session.commit()
 
     return jsonify({"success": True, "data": module_status.to_dict()}), 200

@@ -1,11 +1,17 @@
 from flask import jsonify
 from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql import func
+from sqlalchemy import case
 
 from app import db
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
-from app.blueprints.module_selection.models import Module, ModuleStatus
+from app.blueprints.module_selection.models import (
+    Module,
+    ModuleStatus,
+    ModuleDependency,
+)
 from app.blueprints.roles.models import Role, SurveyAdmin
 from app.utils.utils import (
     custom_permissions_required,
@@ -15,6 +21,7 @@ from app.utils.utils import (
 
 from .models import Survey
 from .routes import surveys_bp
+from .utils import ModuleStatusCalculator
 from .validators import CreateSurveyValidator, UpdateSurveyValidator
 
 
@@ -97,17 +104,14 @@ def create_survey(validated_payload):
         )
         db.session.add(survey_admin_entry)
         db.session.commit()
-        # Also populate Module Status table with default values
+
+        # Also populate Module Status table with mandatory modules
         module_list = Module.query.filter_by(optional=False).all()
         for module in module_list:
             default_config_status = ModuleStatus(
                 survey_uid=survey.survey_uid,
                 module_id=module.module_id,
-                config_status=(
-                    "In Progress"
-                    if module.name == "Basic information"
-                    else "Not Started"
-                ),
+                config_status="Not Started",
             )
             db.session.add(default_config_status)
 
@@ -137,17 +141,40 @@ def get_survey_config_status(survey_uid):
     if survey is None:
         return jsonify({"error": "Survey not found"}), 404
 
+    # Get dependency information for each module
+    module_dependencies = (
+        db.session.query(
+            ModuleDependency.requires_module_id,
+            func.array_agg(ModuleDependency.required_if)
+            .filter(ModuleDependency.required_if != None)
+            .label("required_if_conditions"),
+        )
+        .join(
+            ModuleStatus,
+            ModuleDependency.module_id == ModuleStatus.module_id,
+        )
+        .filter(ModuleStatus.survey_uid == survey_uid)
+        .group_by(ModuleDependency.requires_module_id)
+        .subquery()
+    )
+
     config_status = (
         db.session.query(
             Module.module_id,
             Module.name,
-            ModuleStatus.config_status,
             Module.optional,
-            Survey.config_status.label("overall_status"),
+            ModuleStatus.config_status,
+            module_dependencies.c.required_if_conditions,
+            Survey.config_status.label("survey_overall_status"),
+            Survey.state.label("survey_state"),
         )
         .join(
             Module,
             ModuleStatus.module_id == Module.module_id,
+        )
+        .outerjoin(
+            module_dependencies,
+            ModuleStatus.module_id == module_dependencies.c.requires_module_id,
         )
         .join(
             Survey,
@@ -157,209 +184,148 @@ def get_survey_config_status(survey_uid):
         .all()
     )
 
+    from app.blueprints.notifications.utils import check_notification_condition
+
     data = {}
-    optional_module_flag = False
+    num_modules = 0
+    num_completed_modules = 0
+    num_optional_modules = 0  # This is not used for completion percentage calculation
+
     for status in config_status:
-        data["overall_status"] = status["overall_status"]
-        if status.optional is False:
-            if status.name in ["Basic information", "Module selection"]:
-                data[status.name] = {"status": status.config_status}
-            else:
-                if "Survey information" not in list(data.keys()):
-                    data["Survey information"] = []
+        survey_state = status.survey_state
+        data["overall_status"] = status["survey_overall_status"]
+
+        module_status_calculator = ModuleStatusCalculator(survey_uid, status.module_id)
+        calculated_status = module_status_calculator.get_status()
+
+        if status.name in ["Basic information", "Module selection"]:
+            data[status.name] = {
+                "status": calculated_status,
+                "optional": status.optional,
+            }
+
+            num_modules += 1
+            if calculated_status == "Done":
+                num_completed_modules += 1
+
+        elif status.name in [
+            "SurveyCTO information",
+            "Survey locations",
+            "User and role management",
+            "Enumerators",
+            "Targets",
+            "Target status mapping",
+            "Mapping",
+        ]:
+            if "Survey information" not in list(data.keys()):
+                data["Survey information"] = []
+
+            if status.optional == False:
+                # These modules are mandatory
                 data["Survey information"].append(
-                    {"name": status.name, "status": status.config_status}
+                    {
+                        "name": status.name,
+                        "status": calculated_status,
+                        "optional": False,
+                    }
                 )
+
+                num_modules += 1
+                if calculated_status == "Done":
+                    num_completed_modules += 1
+
+            else:
+                # check required_if_conditions
+                required_if_conditions = status.required_if_conditions
+
+                # Flatten the list of conditions
+                required_if_conditions = [
+                    item for sublist in required_if_conditions for item in sublist
+                ]
+
+                if "Always" in required_if_conditions:
+                    data["Survey information"].append(
+                        {
+                            "name": status.name,
+                            "status": calculated_status,
+                            "optional": False,
+                        }
+                    )
+                    num_modules += 1
+                    if calculated_status == "Done":
+                        num_completed_modules += 1
+
+                elif check_notification_condition(
+                    survey_uid,
+                    None,
+                    required_if_conditions,
+                ):
+                    # if the conditions are met, module is mandatory
+                    data["Survey information"].append(
+                        {
+                            "name": status.name,
+                            "status": calculated_status,
+                            "optional": False,
+                        }
+                    )
+                    num_modules += 1
+                    if calculated_status == "Done":
+                        num_completed_modules += 1
+
+                else:
+                    optional = (
+                        False if calculated_status in ["In Progress", "Done"] else True
+                    )
+                    # if the module is 'in progress' or 'done', it is no longer optional
+                    data["Survey information"].append(
+                        {
+                            "name": status.name,
+                            "status": calculated_status,
+                            "optional": optional,
+                        }
+                    )
+
+                    if optional == False and calculated_status == "Done":
+                        num_completed_modules += 1
+                        num_modules += 1
+                    elif optional == False:
+                        num_modules += 1
+                    else:
+                        num_optional_modules += 1
+
         else:
-            optional_module_flag = True
+            if survey_state == "Active" and calculated_status in [
+                "In Progress",
+                "Done",
+            ]:
+                calculated_status = "Live"
+
             if "Module configuration" not in list(data.keys()):
                 data["Module configuration"] = []
+
+            optional = False  # Since this list will only have selected modules and selected modules are mandatory
+            if status.name == "Assignments column configuration":
+                # this module is not mandatory
+                optional = True
+                num_optional_modules += 1
+            else:
+                optional = False
+                num_modules += 1
+                if calculated_status in ["Done", "Live", "In Progress"]:
+                    num_completed_modules += 1
+
             data["Module configuration"].append(
                 {
                     "module_id": status.module_id,
                     "name": status.name,
-                    "status": status.config_status,
+                    "status": calculated_status,
+                    "optional": optional,
                 }
             )
 
-    # Temp: Update module status based on whether data is present in the corresponding backend
-    # table because we aren't updating the module status table from each module currently
-    from app.blueprints.assignments.models import SurveyorAssignment
-    from app.blueprints.dq.models import DQConfig
-    from app.blueprints.emails.models import EmailConfig
-    from app.blueprints.enumerators.models import Enumerator
-    from app.blueprints.forms.models import Form
-    from app.blueprints.mapping.models import (
-        UserMappingConfig,
-        UserSurveyorMapping,
-        UserTargetMapping,
+    data["completion_percentage"] = (
+        round(num_completed_modules / num_modules * 100, 2) if num_modules > 0 else 0
     )
-    from app.blueprints.media_files.models import MediaFilesConfig
-    from app.blueprints.target_status_mapping.models import TargetStatusMapping
-    from app.blueprints.targets.models import Target
-
-    survey = Survey.query.filter_by(survey_uid=survey_uid).first()
-    scto_information = Form.query.filter_by(
-        survey_uid=survey_uid, form_type="parent"
-    ).first()
-    roles = Role.query.filter_by(survey_uid=survey_uid).first()
-    locations = GeoLevel.query.filter_by(survey_uid=survey_uid).first()
-
-    enumerators = None
-    targets = None
-    assignments = None
-    target_status_mapping = None
-    media_files_config = None
-    email_config = None
-    dq_form_config = None
-    dq_config = None
-    admin_form_config = None
-    mapping_config = None
-
-    if scto_information is not None:
-        enumerators = Enumerator.query.filter_by(
-            form_uid=scto_information.form_uid
-        ).first()
-        targets = Target.query.filter_by(form_uid=scto_information.form_uid).first()
-
-        # Check if target status mapping exists for any form of the survey
-        target_status_mapping = (
-            db.session.query(TargetStatusMapping)
-            .join(Form, Form.form_uid == TargetStatusMapping.form_uid)
-            .filter(Form.survey_uid == survey_uid)
-            .first()
-        )
-
-        # Check if media files config exists for any form of the survey
-        media_files_config = (
-            db.session.query(MediaFilesConfig)
-            .join(Form, Form.form_uid == MediaFilesConfig.form_uid)
-            .filter(Form.survey_uid == survey_uid)
-            .first()
-        )
-
-        # Check if email exists
-        email_config = (
-            db.session.query(EmailConfig)
-            .join(Form, Form.form_uid == EmailConfig.form_uid)
-            .filter(Form.survey_uid == survey_uid)
-            .first()
-        )
-
-        dq_form_config = (
-            db.session.query(Form)
-            .filter(
-                Form.survey_uid == survey_uid,
-                Form.form_type == "dq",
-                Form.parent_form_uid == scto_information.form_uid,
-            )
-            .first()
-        )
-
-        dq_config = (
-            db.session.query(DQConfig.form_uid)
-            .filter(DQConfig.form_uid == scto_information.form_uid)
-            .first()
-        )
-
-        # Check if any saved mapping config is present
-        mapping_config = (
-            db.session.query(UserMappingConfig)
-            .filter(UserMappingConfig.form_uid == scto_information.form_uid)
-            .first()
-        )
-        if mapping_config is None:
-            mapping_config = (
-                db.session.query(UserSurveyorMapping)
-                .filter(UserSurveyorMapping.form_uid == scto_information.form_uid)
-                .first()
-            )
-        if mapping_config is None:
-            mapping_config = (
-                db.session.query(UserTargetMapping)
-                .join(Target, Target.target_uid == UserTargetMapping.target_uid)
-                .filter(Target.form_uid == scto_information.form_uid)
-                .first()
-            )
-
-    admin_form_config = (
-        db.session.query(Form)
-        .filter(
-            Form.survey_uid == survey_uid,
-            Form.form_type == "admin",
-        )
-        .first()
-    )
-
-    if enumerators and targets:
-        assignments = (
-            db.session.query(
-                SurveyorAssignment,
-            )
-            .join(
-                Enumerator,
-                Enumerator.enumerator_uid == SurveyorAssignment.enumerator_uid,
-            )
-            .join(Target, Target.target_uid == SurveyorAssignment.target_uid)
-            .filter(Target.form_uid == scto_information.form_uid)
-            .first()
-        )
-
-    if survey is not None:
-        data["Basic information"]["status"] = "In Progress"
-    if optional_module_flag:
-        data["Module selection"]["status"] = "In Progress"
-
-    for item in data["Survey information"]:
-        if item["status"] == "Error":
-            continue
-        if item["name"] == "SurveyCTO information":
-            if scto_information is not None:
-                item["status"] = "In Progress"
-        elif (
-            item["name"] == "Field supervisor roles"
-            or item["name"] == "User and role management"
-        ):
-            if roles is not None:
-                item["name"] = "User and role management"
-                item["status"] = "In Progress"
-        elif item["name"] == "Survey locations":
-            if locations is not None:
-                item["status"] = "In Progress"
-        elif item["name"] == "Enumerators":
-            if enumerators is not None:
-                item["status"] = "In Progress"
-        elif item["name"] == "Targets":
-            if targets is not None:
-                item["status"] = "In Progress"
-        elif item["name"] == "Target status mapping":
-            if target_status_mapping is not None:
-                item["status"] = "In Progress"
-        elif item["name"] == "Mapping":
-            if mapping_config is not None:
-                item["status"] = "In Progress"
-
-    if "Module configuration" in data:
-        for item in data["Module configuration"]:
-            if isinstance(item, dict) and "name" in item:
-                if status in item and item["status"] == "Error":
-                    continue
-                if item["name"] == "Assignments":
-                    if assignments is not None:
-                        item["status"] = "In Progress"
-                elif item["name"] == "Media (Audio/Photo) audits":
-                    if media_files_config is not None:
-                        item["status"] = "In Progress"
-                elif item["name"] == "Emails":
-                    if email_config is not None:
-                        item["status"] = "In Progress"
-                elif item["name"] == "Data quality":
-                    if dq_form_config is not None or dq_config is not None:
-                        item["status"] = "In Progress"
-                elif item["name"] == "Admin forms":
-                    if admin_form_config is not None:
-                        item["status"] = "In Progress"
-
     response = {"success": True, "data": data}
     return jsonify(response), 200
 
