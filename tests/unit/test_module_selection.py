@@ -277,6 +277,7 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
+                "completion_percentage": 22.22
             },
             "success": True,
         }
