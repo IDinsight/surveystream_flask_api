@@ -1698,6 +1698,9 @@ paths:
                                 description: >-
                                   Configration Status (Not started/ In progress/
                                   Done)
+                              optional:
+                                type: boolean
+                                description: Indicates if the module is optional
                         Survey information:
                           type: array
                           description: >-
@@ -1716,6 +1719,9 @@ paths:
                                 description: >-
                                   Configration Status (Not started/ In progress/
                                   Done)
+                              optional:
+                                type: boolean
+                                description: Indicates if the module is optional
                         Module selection:
                           type: object
                           description: Status of module selection for the survey
@@ -1727,11 +1733,18 @@ paths:
                                 description: >-
                                   Configration Status (Not started/ In progress/
                                   Done)
+                              optional:
+                                type: boolean
+                                description: Indicates if the module is optional
                         overall_status:
                           type: string
                           description: >-
                             Overall Status (In progress - Configuration/ In
                             Progress - Backend Setup/ Done)
+                        completion_percentage:
+                          type: integer
+                          description: >-
+                            Percentage of completion of the survey configuration
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
@@ -1748,6 +1761,87 @@ paths:
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
+  
+  /surveys/<survey_uid>/state:  
+    put:
+      summary: Update the state of a survey
+      description: Update the state of a survey
+      tags:
+        - Surveys
+      parameters:
+        - in: path
+          name: survey_uid
+          schema:
+            type: integer
+          required: true
+          description: The unique ID of the survey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                state:
+                  type: string
+                  enum:
+                    - Draft
+                    - Active
+                    - Past
+                  description: The state of the survey
+      responses:
+        "200":
+          description: The survey state was updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: The survey state was updated successfully
+        "400":
+          description: Bad request. The state must be provided in the request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: The state must be provided in the request
+        "404":
+          description: The requested survey was not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: The requested survey was not found
+        "422":
+          description: Form errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: Cannot set survey state to Past since the survey end date is in the future. Please update the survey end date before setting the survey state to Past.
   /modules:
     get:
       tags:

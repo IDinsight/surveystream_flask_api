@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import jsonify
 from flask_login import current_user
 from sqlalchemy import case
@@ -5,7 +7,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import func
 
 from app import db
-from app.blueprints.locations.models import GeoLevel
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.blueprints.module_selection.models import (
     Module,
@@ -347,11 +348,16 @@ def delete_survey(survey_uid):
     return "", 204
 
 
-@surveys_bp.route("/<int:survey_uid>/config-status", methods=["GET"])
+@surveys_bp.route("/<int:survey_uid>/state", methods=["PUT"])
 @logged_in_active_user_required
 @validate_payload(UpdateSurveyStateValidator)
 @custom_permissions_required("ADMIN", "path", "survey_uid")
 def update_survey_state(survey_uid, validated_payload):
+    """
+    Update the state ("Active", "Draft", "Past") of the survey
+
+    """
+
     state = validated_payload.state.data
 
     # Check if survey exists and throw error if not
@@ -439,6 +445,25 @@ def update_survey_state(survey_uid, validated_payload):
                         "error": "Cannot activate survey. The following modules are incomplete: "
                         + ", ".join(incomplete_modules)
                         + ". Please complete these modules before activating the survey.",
+                    }
+                ),
+                422,
+            )
+    elif state == "Past":
+        # Check the survey end date
+        survey_end_date = (
+            Survey.query.with_entities(Survey.planned_end_date)
+            .filter(Survey.survey_uid == survey_uid)
+            .first()
+        )
+        survey_end_date = survey_end_date[0]
+
+        if survey_end_date > datetime.now().date():
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Cannot set survey state to Past since the survey end date is in the future. Please update the survey end date before setting the survey state to Past.",
                     }
                 ),
                 422,

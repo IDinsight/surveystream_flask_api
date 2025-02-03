@@ -4,6 +4,7 @@ import jsondiff
 import pytest
 import re
 import pandas as pd
+from datetime import datetime, timedelta
 
 from utils import (
     create_new_survey_admin_user,
@@ -113,6 +114,29 @@ class TestSurveys:
         yield
 
     @pytest.fixture()
+    def create_module_selection(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_surveys
+    ):
+        """
+        Insert new module_selection
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "modules": ["13"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
     def create_parent_form(
         self, client, login_test_user, csrf_token, create_module_questionnaire
     ):
@@ -136,6 +160,36 @@ class TestSurveys:
 
         response = client.post(
             "/api/forms",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        yield
+
+    @pytest.fixture()
+    def create_scto_question_mapping(
+        self, client, csrf_token, login_test_user, create_parent_form
+    ):
+        """
+        Insert SCTO question mapping as a setup step for the tests
+        """
+
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 1,
+            "survey_status": "test_survey_status",
+            "revisit_section": "test_revisit_section",
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/1/scto-question-mapping",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -1085,6 +1139,292 @@ class TestSurveys:
 
         print(response.json)
         expected_response = {"error": "Survey not found"}
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_survey_active(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_scto_question_mapping,
+        create_module_selection,
+    ):
+        """
+        Test that a survey can be activated
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "state": "Active",
+        }
+
+        response = client.put(
+            "/api/surveys/1/state",
+            headers={"X-CSRF-Token": csrf_token},
+            json=payload,
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "success": True,
+            "message": "Survey state updated successfully.",
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        response = client.get("/api/surveys/1/basic-information")
+        assert response.status_code == 200
+
+        expected_response = {
+            "survey_uid": 1,
+            "survey_id": "test_survey",
+            "survey_name": "Test Survey",
+            "survey_description": "A test survey",
+            "project_name": "Test Project",
+            "surveying_method": "mixed-mode",
+            "irb_approval": "Yes",
+            "planned_start_date": "2021-01-01",
+            "planned_end_date": "2021-12-31",
+            "state": "Active",
+            "prime_geo_level_uid": 1,
+            "config_status": "Done",
+            "last_updated_at": "2023-05-30 00:00:00",
+            "created_by_user_uid": test_user_credentials["user_uid"],
+        }
+
+        # Assert that the last_updated_at field is a valid datetime
+        assert re.match(
+            r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}",
+            response.json["last_updated_at"],
+        )
+
+        # Replace the last_updated_at field in the expected response with the value from the actual response
+        expected_response["last_updated_at"] = response.json["last_updated_at"]
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_survey_active_incomplete(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_parent_form,
+        create_module_selection,
+    ):
+        """
+        Test that a survey can be activated
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "state": "Active",
+        }
+
+        response = client.put(
+            "/api/surveys/1/state",
+            headers={"X-CSRF-Token": csrf_token},
+            json=payload,
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "success": False,
+            "error": "Cannot activate survey. The following modules are incomplete: SurveyCTO information. Please complete these modules before activating the survey.",
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_survey_past(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_scto_question_mapping,
+        create_module_selection,
+    ):
+        """
+        Test that a survey can be moved to the past
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "state": "Past",
+        }
+
+        response = client.put(
+            "/api/surveys/1/state",
+            headers={"X-CSRF-Token": csrf_token},
+            json=payload,
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "success": True,
+            "message": "Survey state updated successfully.",
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        response = client.get("/api/surveys/1/basic-information")
+        assert response.status_code == 200
+
+        expected_response = {
+            "survey_uid": 1,
+            "survey_id": "test_survey",
+            "survey_name": "Test Survey",
+            "survey_description": "A test survey",
+            "project_name": "Test Project",
+            "surveying_method": "mixed-mode",
+            "irb_approval": "Yes",
+            "planned_start_date": "2021-01-01",
+            "planned_end_date": "2021-12-31",
+            "state": "Past",
+            "prime_geo_level_uid": 1,
+            "config_status": "In Progress - Configuration",
+            "last_updated_at": "2023-05-30 00:00:00",
+            "created_by_user_uid": test_user_credentials["user_uid"],
+        }
+
+        # Assert that the last_updated_at field is a valid datetime
+        assert re.match(
+            r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}",
+            response.json["last_updated_at"],
+        )
+
+        # Replace the last_updated_at field in the expected response with the value from the actual response
+        expected_response["last_updated_at"] = response.json["last_updated_at"]
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_survey_past_error(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_scto_question_mapping,
+        create_module_selection,
+    ):
+        """
+        Test that a survey can be moved to the past
+        """
+
+        # Update survey end date to a date in the future
+        payload = {
+            "survey_uid": 1,
+            "survey_id": "test_survey_1",
+            "survey_name": "Test Survey 1",
+            "survey_description": "A test survey 1",
+            "project_name": "Test Project 1",
+            "surveying_method": "phone",
+            "irb_approval": "No",
+            "planned_start_date": "2021-01-02",
+            "planned_end_date": (datetime.now() + timedelta(days=1)).strftime(
+                "%Y-%m-%d"
+            ),
+            "state": "Active",
+            "config_status": "In Progress - Configuration",
+        }
+
+        response = client.put(
+            "/api/surveys/1/basic-information",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        payload = {
+            "survey_uid": 1,
+            "state": "Past",
+        }
+
+        response = client.put(
+            "/api/surveys/1/state",
+            headers={"X-CSRF-Token": csrf_token},
+            json=payload,
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "success": False,
+            "error": "Cannot set survey state to Past since the survey end date is in the future. Please update the survey end date before setting the survey state to Past.",
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_survey_draft(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_scto_question_mapping,
+        create_module_selection,
+    ):
+        """
+        Test that a survey can be moved to the draft state
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "state": "Draft",
+        }
+
+        response = client.put(
+            "/api/surveys/1/state",
+            headers={"X-CSRF-Token": csrf_token},
+            json=payload,
+        )
+
+        assert response.status_code == 200
+
+        expected_response = {
+            "success": True,
+            "message": "Survey state updated successfully.",
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        response = client.get("/api/surveys/1/basic-information")
+        assert response.status_code == 200
+
+        expected_response = {
+            "survey_uid": 1,
+            "survey_id": "test_survey",
+            "survey_name": "Test Survey",
+            "survey_description": "A test survey",
+            "project_name": "Test Project",
+            "surveying_method": "mixed-mode",
+            "irb_approval": "Yes",
+            "planned_start_date": "2021-01-01",
+            "planned_end_date": "2021-12-31",
+            "state": "Draft",
+            "prime_geo_level_uid": 1,
+            "config_status": "In Progress - Configuration",
+            "last_updated_at": "2023-05-30 00:00:00",
+            "created_by_user_uid": test_user_credentials["user_uid"],
+        }
+
+        # Assert that the last_updated_at field is a valid datetime
+        assert re.match(
+            r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}",
+            response.json["last_updated_at"],
+        )
+
+        # Replace the last_updated_at field in the expected response with the value from the actual response
+        expected_response["last_updated_at"] = response.json["last_updated_at"]
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
