@@ -103,3 +103,15 @@ class UpdateSurveyValidator(FlaskForm):
             raise ValidationError(
                 "planned_end_date cannot be earlier than planned_start_date"
             )
+
+
+class UpdateSurveyStateValidator(FlaskForm):
+    survey_uid = IntegerField(validators=[DataRequired()])
+    state = StringField(
+        validators=[
+            DataRequired(),
+            AnyOf(
+                ["Draft", "Active", "Past"], message="Value must be one of %(values)s"
+            ),
+        ]
+    )

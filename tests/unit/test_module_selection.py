@@ -67,7 +67,7 @@ class TestModuleSelection:
         yield
 
     @pytest.fixture()
-    def create_module_selection(
+    def create_module_selection_hiring(
         self, client, login_test_user, csrf_token, test_user_credentials, create_survey
     ):
         """
@@ -91,7 +91,7 @@ class TestModuleSelection:
         yield
 
     @pytest.fixture()
-    def create_module_selection_with_dependencies(
+    def create_module_selection_media_audits(
         self, client, login_test_user, csrf_token, test_user_credentials, create_survey
     ):
         """
@@ -115,16 +115,16 @@ class TestModuleSelection:
 
         yield
 
-    def test_create_module_selection(
+    def test_module_selection_hiring(
         self,
         client,
         login_test_user,
-        create_module_selection,
+        create_module_selection_hiring,
         test_user_credentials,
     ):
         """
         Test that the create_module_selection is inserted correctly
-        Only mandatory module and optional module 13 are inserted
+        Only mandatory modules and optional module 13 - hiring are inserted
         """
 
         # Test the survey was inserted correctly
@@ -146,16 +146,55 @@ class TestModuleSelection:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_module_selection_with_dependencies(
+        # Test the config-status has correct optional/mandatory flag
+        response = client.get("/api/surveys/1/config-status")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "Basic information": {"status": "In Progress", "optional": False},
+                "Module selection": {"status": "Done", "optional": False},
+                "Survey information": [
+                    {
+                        "name": "SurveyCTO information",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                    {
+                        "name": "User and role management",
+                        "status": "Done",
+                        "optional": False,
+                    },
+                ],
+                "Module configuration": [
+                    {
+                        "module_id": 13,
+                        "name": "Surveyor hiring",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                ],
+                "overall_status": "In Progress - Configuration",
+                "completion_percentage": 40,
+            },
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_module_selection_media_audits(
         self,
         client,
         login_test_user,
-        create_module_selection_with_dependencies,
+        create_module_selection_media_audits,
         test_user_credentials,
     ):
         """
         Test that the update_module_selection is update correctly
-        All the dependencies of the module are also inserted
+        All the dependencies of the module media audits are also inserted.
+        Dependencies are optional
         """
 
         # Test the survey was inserted correctly
@@ -179,7 +218,51 @@ class TestModuleSelection:
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
-    def test_module_selection_location_dependencies(
+        # Test the config-status has correct optional/mandatory flag
+        response = client.get("/api/surveys/1/config-status")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "Basic information": {"status": "In Progress", "optional": False},
+                "Module selection": {"status": "Done", "optional": False},
+                "Survey information": [
+                    {
+                        "name": "SurveyCTO information",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                    {
+                        "name": "User and role management",
+                        "status": "Done",
+                        "optional": False,
+                    },
+                    {
+                        "name": "Survey locations",
+                        "status": "Not Started",
+                        "optional": True,
+                    },
+                    {"name": "Targets", "status": "Not Started", "optional": True},
+                ],
+                "Module configuration": [
+                    {
+                        "module_id": 12,
+                        "name": "Media (Audio/Photo) audits",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                ],
+                "overall_status": "In Progress - Configuration",
+                "completion_percentage": 40,
+            },
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_module_selection_assignments(
         self,
         client,
         csrf_token,
@@ -277,7 +360,110 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 22.22
+                "completion_percentage": 22.22,
+            },
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_module_selection_assignments_non_optional(
+        self,
+        client,
+        csrf_token,
+        test_user_credentials,
+        create_module_questionnaire,
+    ):
+        """
+        Test that the assignments module addition - which has location based dependencies
+        Here location is added in the mapping criteria, so the modules should be mandatory
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "modules": ["9"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # update the module questionnaire to include location in the mapping criteria
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Gender"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Test the config-status has been correct optional/mandatory flag
+        response = client.get("/api/surveys/1/config-status")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "Basic information": {"status": "Done", "optional": False},
+                "Module selection": {"status": "Done", "optional": False},
+                "Survey information": [
+                    {
+                        "name": "SurveyCTO information",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                    {
+                        "name": "User and role management",
+                        "status": "In Progress",
+                        "optional": False,
+                    },
+                    {
+                        "name": "Survey locations",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                    {"name": "Enumerators", "status": "Not Started", "optional": False},
+                    {"name": "Targets", "status": "Not Started", "optional": False},
+                    {
+                        "name": "Target status mapping",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                    {"name": "Mapping", "status": "Not Started", "optional": False},
+                ],
+                "Module configuration": [
+                    {
+                        "module_id": 9,
+                        "name": "Assignments",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                    {
+                        "module_id": 16,
+                        "name": "Assignments column configuration",
+                        "status": "Not Started",
+                        "optional": True,
+                    },
+                ],
+                "overall_status": "In Progress - Configuration",
+                "completion_percentage": 20,
             },
             "success": True,
         }
@@ -291,12 +477,12 @@ class TestModuleSelection:
         client,
         csrf_token,
         test_user_credentials,
-        create_module_selection,
+        create_module_selection_hiring,
     ):
         """
         Test that the module deselection works correctly
         13 is in selected modules, so it should be removed
-        18 is added
+        Admin forms - 18 is added
         """
 
         payload = {
@@ -324,6 +510,188 @@ class TestModuleSelection:
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 18, "survey_uid": 1},
             ],
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_module_selection_emails(
+        self,
+        client,
+        csrf_token,
+        test_user_credentials,
+        create_module_questionnaire,
+    ):
+        """
+        Test that the emails module addition
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "modules": ["15"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Test the survey was inserted correctly
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 2, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 3, "survey_uid": 1},
+                {"config_status": "In Progress", "module_id": 4, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 15, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 17, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 7, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # Test the config-status has been correct optional/mandatory flag
+        response = client.get("/api/surveys/1/config-status")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "Basic information": {"status": "Done", "optional": False},
+                "Module selection": {"status": "Done", "optional": False},
+                "Survey information": [
+                    {
+                        "name": "SurveyCTO information",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                    {
+                        "name": "User and role management",
+                        "status": "In Progress",
+                        "optional": False,
+                    },
+                    {"name": "Enumerators", "status": "Not Started", "optional": False},
+                    {"name": "Mapping", "status": "Not Started", "optional": False},
+                ],
+                "Module configuration": [
+                    {
+                        "module_id": 15,
+                        "name": "Emails",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                ],
+                "overall_status": "In Progress - Configuration",
+                "completion_percentage": 28.57,
+            },
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_module_selection_data_quality(
+        self,
+        client,
+        csrf_token,
+        test_user_credentials,
+        create_module_questionnaire,
+    ):
+        """
+        Test that the emails module addition
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "modules": ["11"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Test the survey was inserted correctly
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 2, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 4, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 11, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 14, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 7, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 5, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 8, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+        # Test the config-status has been correct optional/mandatory flag
+        response = client.get("/api/surveys/1/config-status")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": {
+                "Basic information": {"status": "Done", "optional": False},
+                "Module selection": {"status": "Done", "optional": False},
+                "Survey information": [
+                    {
+                        "name": "SurveyCTO information",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                    {
+                        "name": "User and role management",
+                        "status": "Done",
+                        "optional": False,
+                    },
+                    {
+                        "name": "Survey locations",
+                        "status": "Not Started",
+                        "optional": True,
+                    },
+                    {"name": "Enumerators", "status": "Not Started", "optional": True},
+                    {"name": "Targets", "status": "Not Started", "optional": True},
+                    {
+                        "name": "Target status mapping",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                ],
+                "Module configuration": [
+                    {
+                        "module_id": 11,
+                        "name": "Data quality",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                ],
+                "overall_status": "In Progress - Configuration",
+                "completion_percentage": 50,
+            },
             "success": True,
         }
 

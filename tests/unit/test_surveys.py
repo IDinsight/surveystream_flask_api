@@ -1050,12 +1050,12 @@ class TestSurveys:
                     },
                     {
                         "name": "User and role management",
-                        "status": "Done",
+                        "status": "Not Started",
                         "optional": False,
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 50,
+                "completion_percentage": 25,
             },
             "success": True,
         }

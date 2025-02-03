@@ -124,9 +124,9 @@ def get_module_status(survey_uid):
         .all()
     )
     data = []
+    module_status_calculator = ModuleStatusCalculator(survey_uid)
     for module in module_status:
-        module_status_calculator = ModuleStatusCalculator(survey_uid, module.module_id)
-        status = module_status_calculator.get_status()
+        status = module_status_calculator.get_status(module.module_id)
 
         data.append(
             {

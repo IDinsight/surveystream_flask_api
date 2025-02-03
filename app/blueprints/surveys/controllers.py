@@ -1,16 +1,16 @@
 from flask import jsonify
 from flask_login import current_user
+from sqlalchemy import case
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import func
-from sqlalchemy import case
 
 from app import db
 from app.blueprints.locations.models import GeoLevel
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.blueprints.module_selection.models import (
     Module,
-    ModuleStatus,
     ModuleDependency,
+    ModuleStatus,
 )
 from app.blueprints.roles.models import Role, SurveyAdmin
 from app.utils.utils import (
@@ -21,8 +21,12 @@ from app.utils.utils import (
 
 from .models import Survey
 from .routes import surveys_bp
-from .utils import ModuleStatusCalculator
-from .validators import CreateSurveyValidator, UpdateSurveyValidator
+from .utils import ModuleStatusCalculator, is_module_optional
+from .validators import (
+    CreateSurveyValidator,
+    UpdateSurveyStateValidator,
+    UpdateSurveyValidator,
+)
 
 
 @surveys_bp.route("", methods=["GET"])
@@ -184,19 +188,17 @@ def get_survey_config_status(survey_uid):
         .all()
     )
 
-    from app.blueprints.notifications.utils import check_notification_condition
-
     data = {}
     num_modules = 0
     num_completed_modules = 0
     num_optional_modules = 0  # This is not used for completion percentage calculation
 
+    module_status_calculator = ModuleStatusCalculator(survey_uid)
     for status in config_status:
         survey_state = status.survey_state
         data["overall_status"] = status["survey_overall_status"]
 
-        module_status_calculator = ModuleStatusCalculator(survey_uid, status.module_id)
-        calculated_status = module_status_calculator.get_status()
+        calculated_status = module_status_calculator.get_status(status.module_id)
 
         if status.name in ["Basic information", "Module selection"]:
             data[status.name] = {
@@ -220,7 +222,14 @@ def get_survey_config_status(survey_uid):
             if "Survey information" not in list(data.keys()):
                 data["Survey information"] = []
 
-            if status.optional == False:
+            calculated_optional_flag = is_module_optional(
+                survey_uid,
+                status.optional,
+                status.required_if_conditions,
+                calculated_status,
+            )
+
+            if calculated_optional_flag == False:
                 # These modules are mandatory
                 data["Survey information"].append(
                     {
@@ -235,63 +244,14 @@ def get_survey_config_status(survey_uid):
                     num_completed_modules += 1
 
             else:
-                # check required_if_conditions
-                required_if_conditions = status.required_if_conditions
-
-                # Flatten the list of conditions
-                required_if_conditions = [
-                    item for sublist in required_if_conditions for item in sublist
-                ]
-
-                if "Always" in required_if_conditions:
-                    data["Survey information"].append(
-                        {
-                            "name": status.name,
-                            "status": calculated_status,
-                            "optional": False,
-                        }
-                    )
-                    num_modules += 1
-                    if calculated_status == "Done":
-                        num_completed_modules += 1
-
-                elif check_notification_condition(
-                    survey_uid,
-                    None,
-                    required_if_conditions,
-                ):
-                    # if the conditions are met, module is mandatory
-                    data["Survey information"].append(
-                        {
-                            "name": status.name,
-                            "status": calculated_status,
-                            "optional": False,
-                        }
-                    )
-                    num_modules += 1
-                    if calculated_status == "Done":
-                        num_completed_modules += 1
-
-                else:
-                    optional = (
-                        False if calculated_status in ["In Progress", "Done"] else True
-                    )
-                    # if the module is 'in progress' or 'done', it is no longer optional
-                    data["Survey information"].append(
-                        {
-                            "name": status.name,
-                            "status": calculated_status,
-                            "optional": optional,
-                        }
-                    )
-
-                    if optional == False and calculated_status == "Done":
-                        num_completed_modules += 1
-                        num_modules += 1
-                    elif optional == False:
-                        num_modules += 1
-                    else:
-                        num_optional_modules += 1
+                data["Survey information"].append(
+                    {
+                        "name": status.name,
+                        "status": calculated_status,
+                        "optional": calculated_optional_flag,
+                    }
+                )
+                num_optional_modules += 1
 
         else:
             if survey_state == "Active" and calculated_status in [
@@ -385,3 +345,129 @@ def delete_survey(survey_uid):
 
     db.session.commit()
     return "", 204
+
+
+@surveys_bp.route("/<int:survey_uid>/config-status", methods=["GET"])
+@logged_in_active_user_required
+@validate_payload(UpdateSurveyStateValidator)
+@custom_permissions_required("ADMIN", "path", "survey_uid")
+def update_survey_state(survey_uid, validated_payload):
+    state = validated_payload.state.data
+
+    # Check if survey exists and throw error if not
+    survey = Survey.query.filter_by(survey_uid=survey_uid).first()
+    if survey is None:
+        return jsonify({"error": "Survey not found"}), 404
+
+    # Checks before updating the state to Active
+    if state == "Active":
+        # Get dependency information for each module
+        module_dependencies = (
+            db.session.query(
+                ModuleDependency.requires_module_id,
+                func.array_agg(ModuleDependency.required_if)
+                .filter(ModuleDependency.required_if != None)
+                .label("required_if_conditions"),
+            )
+            .join(
+                ModuleStatus,
+                ModuleDependency.module_id == ModuleStatus.module_id,
+            )
+            .filter(ModuleStatus.survey_uid == survey_uid)
+            .group_by(ModuleDependency.requires_module_id)
+            .subquery()
+        )
+
+        config_status = (
+            db.session.query(
+                Module.module_id,
+                Module.name,
+                Module.optional,
+                ModuleStatus.config_status,
+                module_dependencies.c.required_if_conditions,
+            )
+            .join(
+                Module,
+                ModuleStatus.module_id == Module.module_id,
+            )
+            .outerjoin(
+                module_dependencies,
+                ModuleStatus.module_id == module_dependencies.c.requires_module_id,
+            )
+            .filter(ModuleStatus.survey_uid == survey_uid)
+            .all()
+        )
+
+        incomplete_modules = []
+        module_status_calculator = ModuleStatusCalculator(survey_uid)
+        for status in config_status:
+            calculated_status = module_status_calculator.get_status(status.module_id)
+
+            # For output modules without configurations on the webapp, we skip the check
+            if status.module_id in [
+                10,
+                13,
+                16,
+            ]:  # Productivity tracker, hiring and assignment column configuration modules
+                continue
+            elif status.module_id == [
+                9,
+                11,
+                12,
+                15,
+                18,
+            ]:  # These modules have configurations on the webapp
+                # We expect these modules to be in progress or done states
+                if calculated_status not in ["Done", "In Progress"]:
+                    incomplete_modules.append(status.name)
+            else:
+                # For other modules, non-optional modules should be done and optional in "Not Started"/"Done" state
+                calculated_optional_flag = is_module_optional(
+                    survey_uid,
+                    status.optional,
+                    status.required_if_conditions,
+                    calculated_status,
+                )
+                if calculated_optional_flag == False and calculated_status != "Done":
+                    incomplete_modules.append(status.name)
+
+        if len(incomplete_modules) > 0:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Cannot activate survey. The following modules are incomplete: "
+                        + ", ".join(incomplete_modules)
+                        + ". Please complete these modules before activating the survey.",
+                    }
+                ),
+                422,
+            )
+
+    overall_config_status = (
+        Survey.query.with_entities(Survey.config_status)
+        .filter(Survey.survey_uid == survey_uid)
+        .first()
+    )
+    overall_config_status = overall_config_status[0]
+
+    # Update the overall configuration status based on the state
+    if state == "Active":
+        overall_config_status = "Done"
+    elif state == "Draft":
+        overall_config_status = "In Progress - Configuration"
+    elif state == "Past":
+        # Keep the overall configuration status as it is
+        pass
+
+    # Update the state of the survey
+    Survey.query.filter_by(survey_uid=survey_uid).update(
+        {Survey.state: state, Survey.config_status: overall_config_status},
+        synchronize_session="fetch",
+    )
+    db.session.commit()
+
+    return (
+        jsonify({"success": True, "message": "Survey state updated successfully."}),
+        200,
+    )
