@@ -187,7 +187,10 @@ class ModuleStatusCalculator:
             return "Not Started"
 
     def __check_target_status_mapping(self):
-        from app.blueprints.target_status_mapping.models import TargetStatusMapping
+        from app.blueprints.target_status_mapping.models import (
+            DefaultTargetStatusMapping,
+            TargetStatusMapping,
+        )
 
         # Check if surveycto information is present, if not then return not started
         if self.calculated_module_status.get(3) is None:
@@ -195,12 +198,23 @@ class ModuleStatusCalculator:
         if self.calculated_module_status[3] == "Not Started":
             return "Not Started"
 
+        surveying_method = (
+            Survey.query.filter_by(survey_uid=self.survey_uid).first().surveying_method
+        )
+        default_target_status_mapping = DefaultTargetStatusMapping.query.filter_by(
+            surveying_method=surveying_method
+        ).first()
+
+        if default_target_status_mapping:
+            return "Done"
+
         one_form = False
         all_forms = True
         for form in self.forms:
             target_status_mapping = TargetStatusMapping.query.filter_by(
                 form_uid=form
             ).first()
+
             if target_status_mapping is not None:
                 one_form = True
             else:
@@ -339,11 +353,9 @@ class ModuleStatusCalculator:
         return "Not Started"
 
     def __check_mapping(self):
-        from app.blueprints.mapping.models import (
-            UserMappingConfig,
-            UserSurveyorMapping,
-            UserTargetMapping,
-        )
+        from app.blueprints.targets.models import Target
+        from app.blueprints.enumerators.models import Enumerator
+        from app.blueprints.mapping.utils import SurveyorMapping, TargetMapping
 
         # Check if surveycto information is present, if not then return not started
         if self.calculated_module_status.get(3) is None:
@@ -351,21 +363,36 @@ class ModuleStatusCalculator:
         if self.calculated_module_status[3] == "Not Started":
             return "Not Started"
 
+        completed = True
+        error = True
         for form in self.forms:
-            mapping_config = UserMappingConfig.query.filter_by(form_uid=form).first()
-            if mapping_config is None:
-                mapping_config = UserSurveyorMapping.query.filter_by(
-                    form_uid=form
-                ).first()
-            if mapping_config is None:
-                mapping_config = UserTargetMapping.query.filter_by(
-                    form_uid=form
-                ).first()
+            # Check if there are unmapped enumerators and targets
+            try:
+                surveyor_mapping = SurveyorMapping(form)
+                target_mapping = TargetMapping(form)
 
-            if mapping_config is not None:
-                return "In Progress"
+                error = False
+            except:
+                continue
 
-        return "Not Started"
+            s_mappings = surveyor_mapping.generate_mappings()
+            t_mappings = target_mapping.generate_mappings()
+
+            # Find count of all enumerators and targets
+            targets = db.session.query(Target).filter(Target.form_uid == form).count()
+            enumerators = (
+                db.session.query(Enumerator).filter(Enumerator.form_uid == form).count()
+            )
+
+            if len(s_mappings) < enumerators or len(t_mappings) <= targets:
+                completed = False
+
+        if error:
+            return "Not Started"  # If mapping gives errors for all forms, then return not started
+        if completed:
+            return "Done"
+
+        return "In Progress - Incomplete"
 
     def __check_admin_forms(self):
         from app.blueprints.forms.models import Form, SCTOQuestionMapping
@@ -444,6 +471,9 @@ def check_module_dependency_condition(survey_uid, conditions):
             survey_uid
         ),
         "target_location_mapping": lambda: check_target_location_mapping(survey_uid),
+        "surveying_method_mixed_mode": lambda: check_surveying_method_mixed_mode(
+            survey_uid
+        ),
     }
 
     survey_conditions = {
@@ -470,6 +500,16 @@ def check_target_location_mapping(survey_uid):
         ModuleQuestionnaire.query.filter(
             ModuleQuestionnaire.survey_uid == survey_uid,
             ModuleQuestionnaire.target_mapping_criteria.any("Location"),
+        ).first()
+        is not None
+    )
+
+
+def check_surveying_method_mixed_mode(survey_uid):
+    return (
+        Survey.query.filter(
+            Survey.survey_uid == survey_uid,
+            Survey.surveying_method == "mixed-mode",
         ).first()
         is not None
     )

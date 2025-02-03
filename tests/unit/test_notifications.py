@@ -181,7 +181,35 @@ class TestNotifications:
 
         payload = {
             "survey_uid": 1,
-            "modules": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "13", "14"],
+            "modules": ["1", "2", "3", "4", "5", "7", "8", "9", "13", "14"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def update_second_survey_module_selection(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_second_survey,
+    ):
+        """
+        Update new module_selection as a setup step for the module_selection tests
+        """
+
+        payload = {
+            "survey_uid": 2,
+            "modules": ["9", "11"],
         }
 
         response = client.post(
@@ -662,6 +690,7 @@ class TestNotifications:
         csrf_token,
         create_survey_notification_for_assignments,
         create_second_survey,
+        update_second_survey_module_selection,
     ):
         """
         Create Survey Notification
@@ -694,6 +723,7 @@ class TestNotifications:
         csrf_token,
         create_second_survey_notification_for_assignments,
         create_second_survey,
+        update_second_survey_module_selection,
     ):
         """
         Create Survey Notification
@@ -938,17 +968,18 @@ class TestNotifications:
         expected_response = {
             "success": True,
             "data": [
-                {"survey_uid": 1, "module_id": 1, "config_status": "In Progress"},
-                {"survey_uid": 1, "module_id": 2, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 3, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 1, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress"},
                 {"survey_uid": 1, "module_id": 4, "config_status": "Error"},
                 {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 6, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 8, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 9, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 13, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 14, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 14, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 17, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 16, "config_status": "Not Started"},
             ],
         }
 
@@ -1019,7 +1050,6 @@ class TestNotifications:
         create_form,
         csrf_token,
     ):
-
         response = client.get(
             "/api/notifications",
             content_type="application/json",
@@ -1160,7 +1190,6 @@ class TestNotifications:
                 ],
             }
         elif user_fixture == "user_with_assignments_permissions":
-
             expected_response = {
                 "success": True,
                 "data": [
@@ -1239,7 +1268,6 @@ class TestNotifications:
         create_user_notification,
         csrf_token,
     ):
-
         payload = {
             "type": "user",
             "notification_uid": 1,
@@ -1283,7 +1311,6 @@ class TestNotifications:
         create_survey_notification,
         csrf_token,
     ):
-
         payload = {
             "type": "survey",
             "notification_uid": 1,
@@ -1328,7 +1355,6 @@ class TestNotifications:
         create_user_notification,
         csrf_token,
     ):
-
         payload = {
             "type": "survey",
             "notification_uid": 1,
@@ -1358,7 +1384,6 @@ class TestNotifications:
         create_user_notification,
         csrf_token,
     ):
-
         payload = {
             "type": "survey",
             "severity": "alert",
@@ -1464,17 +1489,18 @@ class TestNotifications:
         expected_get_module_response = {
             "success": True,
             "data": [
-                {"survey_uid": 1, "module_id": 1, "config_status": "In Progress"},
-                {"survey_uid": 1, "module_id": 2, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 3, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 4, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 1, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress"},
+                {"survey_uid": 1, "module_id": 4, "config_status": "In Progress"},
                 {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 6, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 8, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 9, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 9, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 13, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 14, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 14, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 17, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 16, "config_status": "Not Started"},
             ],
         }
         checkdiff = jsondiff.diff(
@@ -1670,7 +1696,7 @@ class TestNotifications:
                 {
                     "survey_id": "test_survey",
                     "survey_uid": 1,
-                    "module_name": "Field supervisor roles",
+                    "module_name": "User and role management",
                     "module_id": 4,
                     "type": "survey",
                     "notification_uid": 3,
@@ -1772,37 +1798,54 @@ class TestNotifications:
             "success": True,
             "data": {
                 "overall_status": "In Progress - Configuration",
-                "Basic information": {"status": "In Progress"},
-                "Module selection": {"status": "In Progress"},
+                "Basic information": {"status": "Done", "optional": False},
+                "Module selection": {"status": "Done", "optional": False},
                 "Survey information": [
-                    {"name": "SurveyCTO information", "status": "In Progress"},
-                    {"name": "Field supervisor roles", "status": "Error"},
-                    {"name": "Survey locations", "status": "In Progress"},
-                    {"name": "SurveyStream users", "status": "Not Started"},
-                    {"name": "Enumerators", "status": "Error"},
-                    {"name": "Targets", "status": "Error"},
+                    {
+                        "name": "SurveyCTO information",
+                        "status": "In Progress",
+                        "optional": False,
+                    },
+                    {
+                        "name": "User and role management",
+                        "status": "Error",
+                        "optional": False,
+                    },
+                    {"name": "Survey locations", "status": "Done", "optional": False},
+                    {"name": "Enumerators", "status": "Error", "optional": False},
+                    {"name": "Targets", "status": "Error", "optional": False},
+                    {
+                        "name": "Target status mapping",
+                        "status": "Done",
+                        "optional": False,
+                    },
+                    {"name": "Mapping", "status": "Not Started", "optional": False},
                 ],
                 "Module configuration": [
-                    {"module_id": 9, "name": "Assignments", "status": "Not Started"},
+                    {
+                        "module_id": 9,
+                        "name": "Assignments",
+                        "status": "In Progress",
+                        "optional": False,
+                    },
                     {
                         "module_id": 13,
                         "name": "Surveyor hiring",
                         "status": "Not Started",
-                    },
-                    {
-                        "module_id": 14,
-                        "name": "Target status mapping",
-                        "status": "Not Started",
+                        "optional": False,
                     },
                     {
                         "module_id": 16,
                         "name": "Assignments column configuration",
                         "status": "Not Started",
+                        "optional": True,
                     },
                 ],
+                "completion_percentage": 45.45,
             },
         }
 
+        print(get_config_status.json)
         checkdiff = jsondiff.diff(expected_response, get_config_status.json)
 
         assert checkdiff == {}

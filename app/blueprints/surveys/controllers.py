@@ -434,6 +434,12 @@ def update_survey_state(survey_uid, validated_payload):
                     status.required_if_conditions,
                     calculated_status,
                 )
+
+                # Mapping module gets a special treatment - it can be in "In Progress" state
+                # Incomplete only when the module is in "Not Started" state
+                if status.module_id == 17:
+                    if calculated_status == "Not Started":
+                        incomplete_modules.append(status.name)
                 if calculated_optional_flag == False and calculated_status != "Done":
                     incomplete_modules.append(status.name)
 
