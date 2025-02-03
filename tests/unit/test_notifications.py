@@ -250,6 +250,7 @@ class TestNotifications:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
+            "number_of_attempts": 7,
         }
         response = client.post(
             "/api/forms",
