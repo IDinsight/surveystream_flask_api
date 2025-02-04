@@ -40,7 +40,7 @@ class ModuleStatus(db.Model):
     config_status = db.Column(
         db.String,
         CheckConstraint(
-            "config_status IN ('Done','In Progress','Not Started', 'Error')",
+            "config_status IN ('Done','In Progress','Not Started', 'Error', 'Live')",
             name="ck_module_status_config_status",
         ),
         server_default="Not Started",
@@ -58,4 +58,29 @@ class ModuleStatus(db.Model):
             "survey_uid": self.survey_uid,
             "module_id": self.module_id,
             "config_status": self.config_status,
+        }
+
+
+class ModuleDependency(db.Model):
+    __tablename__ = "module_dependency"
+    __table_args__ = {
+        "schema": "webapp",
+    }
+
+    module_id = db.Column(db.Integer, db.ForeignKey(Module.module_id), primary_key=True)
+    requires_module_id = db.Column(
+        db.Integer, db.ForeignKey(Module.module_id), primary_key=True
+    )
+    required_if = db.Column(db.ARRAY(db.String()))
+
+    def __init__(self, module_id, requires_module_id, required_if):
+        self.module_id = module_id
+        self.requires_module_id = requires_module_id
+        required_if = required_if
+
+    def to_dict(self):
+        return {
+            "module_id": self.module_id,
+            "requires_module_id": self.requires_module_id,
+            "required_if": self.required_if,
         }
