@@ -40,7 +40,7 @@ class ModuleStatus(db.Model):
     config_status = db.Column(
         db.String,
         CheckConstraint(
-            "config_status IN ('Done','In Progress','Not Started', 'Error', 'Live')",
+            "config_status IN ('Done','In Progress','In Progress - Incomplete','Not Started','Error','Live')",
             name="ck_module_status_config_status",
         ),
         server_default="Not Started",
