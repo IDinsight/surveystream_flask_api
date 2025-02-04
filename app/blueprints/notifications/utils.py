@@ -1,6 +1,8 @@
-from app.blueprints.enumerators.models import Enumerator
+from app.blueprints.enumerators.models import Enumerator, SurveyorLocation
 from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
+from app.blueprints.mapping.models import UserMappingConfig
+from app.blueprints.media_files.models import MediaConfig
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.blueprints.module_selection.models import ModuleStatus
 from app.blueprints.surveys.models import Survey
@@ -56,6 +58,7 @@ def check_notification_condition(survey_uid, form_uid, input_conditions):
 
     condition_checks = {
         "location_exists": lambda: check_location_exists(survey_uid),
+        "location_not_exists": lambda: not check_location_exists(survey_uid),
         "enumerator_exists": lambda: check_enumerator_exists(form_uid),
         "target_exists": lambda: check_target_exists(form_uid),
         "target_source_scto": lambda: check_target_source(form_uid, "scto"),
@@ -66,6 +69,18 @@ def check_notification_condition(survey_uid, form_uid, input_conditions):
         ),
         "target_location_mapping": lambda: check_target_location_mapping(survey_uid),
         "form_exists": lambda: check_form_exists(form_uid),
+        "target_language_not_exists": lambda: target_language_not_exists(form_uid),
+        "target_gender_not_exists": lambda: target_gender_not_exists(form_uid),
+        "target_location_not_exists": lambda: target_location_not_exists(form_uid),
+        "enumerator_language_not_exists": lambda: enumerator_language_not_exists(
+            form_uid
+        ),
+        "enumerator_gender_not_exists": lambda: enumerator_gender_not_exists(form_uid),
+        "enumerator_location_not_exists": lambda: enumerator_location_not_exists(
+            form_uid
+        ),
+        "mapping_exists": lambda: mapping_exists(form_uid),
+        "media_config_exists": lambda: media_config_exists(form_uid),
     }
 
     survey_conditions = {
@@ -125,3 +140,50 @@ def check_target_location_mapping(survey_uid):
 
 def check_form_exists(form_uid):
     return Form.query.filter_by(form_uid=form_uid).first() is not None
+
+
+def target_language_not_exists(form_uid):
+    return Target.query.filter_by(form_uid=form_uid, language=None).first() is not None
+
+
+def target_gender_not_exists(form_uid):
+    return Target.query.filter_by(form_uid=form_uid, gennder=None).first() is not None
+
+
+def target_location_not_exists(form_uid):
+    return (
+        Target.query.filter_by(form_uid=form_uid, location_uid=None).first() is not None
+    )
+
+
+def enumerator_language_not_exists(form_uid):
+    return (
+        Enumerator.query.filter_by(form_uid=form_uid, language=None).first() is not None
+    )
+
+
+def enumerator_gender_not_exists(form_uid):
+    return (
+        Enumerator.query.filter_by(form_uid=form_uid, gender=None).first() is not None
+    )
+
+
+def enumerator_location_not_exists(form_uid):
+    return (
+        Enumerator.query.join(
+            SurveyorLocation,
+            Enumerator.enumerator_uid == SurveyorLocation.enumerator_uid,
+            isouter=True,
+        )
+        .filter(Enumerator.form_uid == form_uid, SurveyorLocation.location_uid == None)
+        .first()
+        is not None
+    )
+
+
+def mapping_exists(form_uid):
+    return UserMappingConfig.query.filter_by(form_uid=form_uid).first() is not None
+
+
+def media_config_exists(form_uid):
+    return MediaConfig.query.filter_by(form_uid=form_uid).first() is not None
