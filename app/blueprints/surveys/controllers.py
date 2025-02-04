@@ -255,12 +255,6 @@ def get_survey_config_status(survey_uid):
                 num_optional_modules += 1
 
         else:
-            if survey_state == "Active" and calculated_status in [
-                "In Progress",
-                "Done",
-            ]:
-                calculated_status = "Live"
-
             if "Module configuration" not in list(data.keys()):
                 data["Module configuration"] = []
 
@@ -416,7 +410,7 @@ def update_survey_state(survey_uid, validated_payload):
                 16,
             ]:  # Productivity tracker, hiring and assignment column configuration modules
                 continue
-            elif status.module_id == [
+            elif status.module_id in [
                 9,
                 11,
                 12,
@@ -440,7 +434,8 @@ def update_survey_state(survey_uid, validated_payload):
                 if status.module_id == 17:
                     if calculated_status == "Not Started":
                         incomplete_modules.append(status.name)
-                if calculated_optional_flag == False and calculated_status != "Done":
+
+                elif calculated_optional_flag == False and calculated_status != "Done":
                     incomplete_modules.append(status.name)
 
         if len(incomplete_modules) > 0:

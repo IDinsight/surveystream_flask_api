@@ -341,7 +341,7 @@ class TestModuleSelection:
                     {
                         "name": "Target status mapping",
                         "status": "Not Started",
-                        "optional": False,
+                        "optional": True,
                     },
                     {"name": "Mapping", "status": "Not Started", "optional": False},
                 ],
@@ -360,7 +360,7 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 22.22,
+                "completion_percentage": 25,
             },
             "success": True,
         }
@@ -444,7 +444,7 @@ class TestModuleSelection:
                     {
                         "name": "Target status mapping",
                         "status": "Not Started",
-                        "optional": False,
+                        "optional": True,
                     },
                     {"name": "Mapping", "status": "Not Started", "optional": False},
                 ],
@@ -463,7 +463,7 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 20,
+                "completion_percentage": 22.22,
             },
             "success": True,
         }
@@ -678,7 +678,7 @@ class TestModuleSelection:
                     {
                         "name": "Target status mapping",
                         "status": "Not Started",
-                        "optional": False,
+                        "optional": True,
                     },
                 ],
                 "Module configuration": [
@@ -690,7 +690,7 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 50,
+                "completion_percentage": 60,
             },
             "success": True,
         }

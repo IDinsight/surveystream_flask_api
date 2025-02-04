@@ -14,6 +14,7 @@ class ModuleStatusCalculator:
 
     def __init__(self, survey_uid):
         self.survey_uid = survey_uid
+        self.state = None
 
         if self.__check_survey_exists() is False:
             raise ValueError("Survey not found")
@@ -25,6 +26,7 @@ class ModuleStatusCalculator:
 
     def __check_survey_exists(self):
         survey = Survey.query.filter_by(survey_uid=self.survey_uid).first()
+        self.state = survey.state
         return False if survey is None else True
 
     def __check_unresolved_notifications(self, module_id):
@@ -198,6 +200,8 @@ class ModuleStatusCalculator:
         if self.calculated_module_status[3] == "Not Started":
             return "Not Started"
 
+        # Check is default target status mapping is present. If present, then the module is done.
+        # This loads on webapp only after form selection, hence the previous check on forms
         surveying_method = (
             Survey.query.filter_by(survey_uid=self.survey_uid).first().surveying_method
         )
@@ -452,6 +456,18 @@ class ModuleStatusCalculator:
             status = self.__check_admin_forms()
         else:
             return "Module not found"
+
+        # For the output modules, if the state is active and the status is in progress or done, then the status is live
+        if (
+            module_id in [9, 10, 11, 12, 13, 15, 16, 18]
+            and self.state == "Active"
+            and status
+            in [
+                "In Progress",
+                "Done",
+            ]
+        ):
+            status = "Live"
 
         self.calculated_module_status[module_id] = status
         return self.calculated_module_status[module_id]
