@@ -22,7 +22,7 @@ from app.utils.utils import (
 
 from .models import Survey
 from .routes import surveys_bp
-from .utils import ModuleStatusCalculator, is_module_optional
+from .utils import ModuleStatusCalculator, get_final_module_status, is_module_optional
 from .validators import (
     CreateSurveyValidator,
     UpdateSurveyStateValidator,
@@ -116,7 +116,8 @@ def create_survey(validated_payload):
             default_config_status = ModuleStatus(
                 survey_uid=survey.survey_uid,
                 module_id=module.module_id,
-                config_status="Not Started",
+                # Basic information module becomes in progress as soon as the survey is created
+                config_status="Not Started" if module.module_id != 1 else "In Progress",
             )
             db.session.add(default_config_status)
 
@@ -146,7 +147,7 @@ def get_survey_config_status(survey_uid):
     if survey is None:
         return jsonify({"error": "Survey not found"}), 404
 
-    # Get dependency information for each module
+    # Get dependency information for each module - this is needed to determine whether module is optional or not
     module_dependencies = (
         db.session.query(
             ModuleDependency.requires_module_id,
@@ -194,21 +195,22 @@ def get_survey_config_status(survey_uid):
     num_completed_modules = 0
     num_optional_modules = 0  # This is not used for completion percentage calculation
 
-    module_status_calculator = ModuleStatusCalculator(survey_uid)
     for status in config_status:
         survey_state = status.survey_state
         data["overall_status"] = status["survey_overall_status"]
 
-        calculated_status = module_status_calculator.get_status(status.module_id)
+        module_status = get_final_module_status(
+            survey_uid, status.module_id, survey_state, status.config_status
+        )
 
         if status.name in ["Basic information", "Module selection"]:
             data[status.name] = {
-                "status": calculated_status,
+                "status": module_status,
                 "optional": status.optional,
             }
 
             num_modules += 1
-            if calculated_status == "Done":
+            if module_status == "Done":
                 num_completed_modules += 1
 
         elif status.name in [
@@ -227,7 +229,7 @@ def get_survey_config_status(survey_uid):
                 survey_uid,
                 status.optional,
                 status.required_if_conditions,
-                calculated_status,
+                module_status,
             )
 
             if calculated_optional_flag == False:
@@ -235,20 +237,20 @@ def get_survey_config_status(survey_uid):
                 data["Survey information"].append(
                     {
                         "name": status.name,
-                        "status": calculated_status,
+                        "status": module_status,
                         "optional": False,
                     }
                 )
 
                 num_modules += 1
-                if calculated_status == "Done":
+                if module_status == "Done":
                     num_completed_modules += 1
 
             else:
                 data["Survey information"].append(
                     {
                         "name": status.name,
-                        "status": calculated_status,
+                        "status": module_status,
                         "optional": calculated_optional_flag,
                     }
                 )
@@ -266,14 +268,14 @@ def get_survey_config_status(survey_uid):
             else:
                 optional = False
                 num_modules += 1
-                if calculated_status in ["Done", "Live", "In Progress"]:
+                if module_status in ["Done", "Live", "In Progress"]:
                     num_completed_modules += 1
 
             data["Module configuration"].append(
                 {
                     "module_id": status.module_id,
                     "name": status.name,
-                    "status": calculated_status,
+                    "status": module_status,
                     "optional": optional,
                 }
             )
@@ -402,6 +404,20 @@ def update_survey_state(survey_uid, validated_payload):
         module_status_calculator = ModuleStatusCalculator(survey_uid)
         for status in config_status:
             calculated_status = module_status_calculator.get_status(status.module_id)
+
+            # Update the status of the module in the Module Status table
+            ModuleStatus.query.filter_by(
+                survey_uid=survey_uid, module_id=status.module_id
+            ).update(
+                {ModuleStatus.config_status: calculated_status},
+                synchronize_session="fetch",
+            )
+
+            # Check if there are any unresolved notifications for the module
+            if module_status_calculator.check_unresolved_notifications(
+                status.module_id
+            ):
+                calculated_status = "Error"
 
             # For output modules without configurations on the webapp, we skip the check
             if status.module_id in [

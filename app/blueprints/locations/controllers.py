@@ -13,6 +13,7 @@ from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    update_module_status,
     validate_payload,
     validate_query_params,
 )
@@ -86,6 +87,7 @@ def get_survey_geo_levels(validated_query_params):
 @validate_query_params(SurveyGeoLevelsQueryParamValidator)
 @validate_payload(SurveyGeoLevelsPayloadValidator)
 @custom_permissions_required("WRITE Survey Locations", "query", "survey_uid")
+@update_module_status(5, "survey_uid")
 def update_survey_geo_levels(validated_query_params, validated_payload):
     """
     Method to update the geo levels for a given survey
@@ -144,7 +146,6 @@ def update_survey_geo_levels(validated_query_params, validated_payload):
                     Form.survey_uid == survey_uid, Form.form_type == "parent"
                 ).first()
                 if form:
-
                     form_uid = form.form_uid
 
                     # Delete the existing target,enumerator location mapping data
@@ -407,7 +408,6 @@ def update_prime_geo_level(survey_uid, validated_payload):
         return jsonify(survey.to_dict()), 200
     else:
         try:
-
             from app.blueprints.forms.models import Form
 
             # Update the prime geo level
@@ -463,6 +463,7 @@ def update_prime_geo_level(survey_uid, validated_payload):
 @validate_query_params(LocationsQueryParamValidator)
 @validate_payload(LocationsFileUploadValidator)
 @custom_permissions_required("WRITE Survey Locations", "query", "survey_uid")
+@update_module_status(5, "survey_uid")
 def upload_locations(validated_query_params, validated_payload):
     """
     Method to validate the uploaded locations file and save it

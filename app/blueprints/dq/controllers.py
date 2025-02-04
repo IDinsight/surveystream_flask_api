@@ -12,6 +12,7 @@ from app.blueprints.forms.models import SCTOQuestion
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    update_module_status,
     validate_payload,
     validate_query_params,
 )
@@ -368,6 +369,7 @@ def get_dq_config(validated_query_params):
 @logged_in_active_user_required
 @validate_payload(UpdateDQConfigValidator)
 @custom_permissions_required("WRITE Data Quality", "body", "form_uid")
+@update_module_status(11, "form_uid")
 def update_dq_config(validated_payload):
     """
     Function to update dq config

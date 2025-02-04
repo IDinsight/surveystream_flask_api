@@ -21,6 +21,7 @@ from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    update_module_status,
     validate_payload,
     validate_query_params,
 )
@@ -67,6 +68,7 @@ from .validators import (
 @validate_query_params(EnumeratorsQueryParamValidator)
 @validate_payload(EnumeratorsFileUploadValidator)
 @custom_permissions_required("WRITE Enumerators", "query", "form_uid")
+@update_module_status(7, "form_uid")
 def upload_enumerators(validated_query_params, validated_payload):
     """
     Method to validate the uploaded enumerators file and save it to the database

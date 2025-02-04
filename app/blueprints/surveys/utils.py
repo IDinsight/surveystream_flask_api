@@ -1,8 +1,10 @@
-from app.blueprints.module_selection.models import Module, ModuleStatus
-from .models import Survey
-from app import db
 from sqlalchemy import func
+
+from app import db
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
+from app.blueprints.module_selection.models import Module, ModuleStatus
+
+from .models import Survey
 
 
 class ModuleStatusCalculator:
@@ -28,19 +30,6 @@ class ModuleStatusCalculator:
         survey = Survey.query.filter_by(survey_uid=self.survey_uid).first()
         self.state = survey.state
         return False if survey is None else True
-
-    def __check_unresolved_notifications(self, module_id):
-        from app.blueprints.notifications.models import SurveyNotification
-
-        notifications = SurveyNotification.query.filter_by(
-            survey_uid=self.survey_uid,
-            module_id=module_id,
-            severity="error",  # Check if we need to check for other severity levels
-            resolution_status="in progress",
-        ).all()
-        if notifications is not None and len(notifications) > 0:
-            return True
-        return False
 
     def __check_basic_information(self):
         module_questionnaire = ModuleQuestionnaire.query.filter_by(
@@ -90,8 +79,8 @@ class ModuleStatusCalculator:
         return "Done"
 
     def __check_user_role_management(self):
-        from app.blueprints.user_management.models import User
         from app.blueprints.roles.models import Role, SurveyAdmin
+        from app.blueprints.user_management.models import User
 
         roles = Role.query.filter_by(survey_uid=self.survey_uid).first()
         survey_admin = SurveyAdmin.query.filter_by(survey_uid=self.survey_uid).first()
@@ -357,9 +346,9 @@ class ModuleStatusCalculator:
         return "Not Started"
 
     def __check_mapping(self):
-        from app.blueprints.targets.models import Target
         from app.blueprints.enumerators.models import Enumerator
         from app.blueprints.mapping.utils import SurveyorMapping, TargetMapping
+        from app.blueprints.targets.models import Target
 
         # Check if surveycto information is present, if not then return not started
         if self.calculated_module_status.get(3) is None:
@@ -417,10 +406,21 @@ class ModuleStatusCalculator:
 
         return "In Progress"
 
-    def get_status(self, module_id):
-        if self.__check_unresolved_notifications(module_id):
-            status = "Error"
-        elif module_id == 1:
+    def check_unresolved_notifications(self, module_id):
+        from app.blueprints.notifications.models import SurveyNotification
+
+        notifications = SurveyNotification.query.filter_by(
+            survey_uid=self.survey_uid,
+            module_id=module_id,
+            severity="error",  # Check if we need to check for other severity levels
+            resolution_status="in progress",
+        ).all()
+        if notifications is not None and len(notifications) > 0:
+            return True
+        return False
+
+    def get_status(self, module_id, final=False):
+        if module_id == 1:
             status = self.__check_basic_information()
         elif module_id == 2:
             status = self.__check_module_selection()
@@ -457,20 +457,41 @@ class ModuleStatusCalculator:
         else:
             return "Module not found"
 
-        # For the output modules, if the state is active and the status is in progress or done, then the status is live
-        if (
-            module_id in [9, 10, 11, 12, 13, 15, 16, 18]
-            and self.state == "Active"
-            and status
-            in [
-                "In Progress",
-                "Done",
-            ]
-        ):
-            status = "Live"
-
         self.calculated_module_status[module_id] = status
         return self.calculated_module_status[module_id]
+
+
+def get_final_module_status(survey_uid, module_id, survey_state, config_status):
+    """
+
+    Function to get the final module status based on presence of errors,
+    survey state and the calculated status
+
+    """
+    # Check for errors on the go because config_status is not updated when there are errors
+    module_status_calculator = ModuleStatusCalculator(survey_uid)
+    if module_status_calculator.check_unresolved_notifications(module_id):
+        return "Error"
+
+    # For 17 (mapping) and 4 (user and role management) module, we need to
+    # calculate the status based on data in the tables because the status is
+    # effected by user changes that are outside the survey configuration
+    if module_id in [4, 17]:
+        return module_status_calculator.get_status(module_id)
+
+    # For the output modules, if the state is active and the status is in progress or done, then the status is live
+    if (
+        module_id in [9, 10, 11, 12, 13, 15, 16, 18]
+        and survey_state == "Active"
+        and config_status
+        in [
+            "In Progress",
+            "Done",
+        ]
+    ):
+        return "Live"
+
+    return config_status
 
 
 def check_module_dependency_condition(survey_uid, conditions):

@@ -15,6 +15,7 @@ from app.utils.google_sheet_utils import (
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    update_module_status,
     validate_payload,
     validate_query_params,
 )
@@ -62,6 +63,7 @@ from .validators import (
 @logged_in_active_user_required
 @validate_payload(EmailConfigValidator)
 @custom_permissions_required("WRITE Emails", "body", "form_uid")
+@update_module_status(15, "form_uid")
 def create_email_config(validated_payload):
     """
     Function to create a new email config
@@ -161,9 +163,10 @@ def get_email_details(validated_query_params):
     config_data = []
     for email_config in email_configs:
         email_config_dict = email_config.to_dict()
-        email_config_dict["email_source_columns"] = (
-            email_config.email_source_columns
-            + get_default_email_variable_names(form_uid)
+        email_config_dict[
+            "email_source_columns"
+        ] = email_config.email_source_columns + get_default_email_variable_names(
+            form_uid
         )
         config_data.append(
             {
@@ -239,9 +242,10 @@ def get_email_configs(validated_query_params):
     config_data = []
     for email_config in email_configs:
         email_config_dict = email_config.to_dict()
-        email_config_dict["email_source_columns"] = (
-            email_config.email_source_columns
-            + get_default_email_variable_names(form_uid)
+        email_config_dict[
+            "email_source_columns"
+        ] = email_config.email_source_columns + get_default_email_variable_names(
+            form_uid
         )
 
         config_data.append(email_config_dict)
@@ -278,9 +282,10 @@ def get_email_config(email_config_uid):
         )
 
     email_config_dict = email_config.to_dict()
-    email_config_dict["email_source_columns"] = (
-        email_config.email_source_columns
-        + get_default_email_variable_names(email_config.form_uid)
+    email_config_dict[
+        "email_source_columns"
+    ] = email_config.email_source_columns + get_default_email_variable_names(
+        email_config.form_uid
     )
 
     response = jsonify(
@@ -482,7 +487,6 @@ def get_email_schedules(validated_query_params):
 
     schedule_data = []
     for email_schedule in email_schedules:
-
         email_schedule_data = email_schedule.to_dict()
 
         # Get the filters for the schedule
@@ -594,7 +598,6 @@ def update_email_schedule(schedule_id, validated_payload):
                 max_filter_group_id += 1
 
                 for filter_item in filter_group.get("filter_group"):
-
                     filter_obj = EmailScheduleFilter(
                         email_schedule_uid=schedule_id,
                         filter_group_id=max_filter_group_id,
@@ -909,7 +912,6 @@ def create_email_template(validated_payload):
                 max_filter_group_id += 1
 
                 for filter_item in filter_group.get("filter_group"):
-
                     filter_obj = EmailTableFilter(
                         email_template_table_uid=table_uid,
                         filter_group_id=max_filter_group_id,
@@ -1017,7 +1019,6 @@ def create_email_template_bulk(validated_payload):
                     max_filter_group_id += 1
 
                     for filter_item in filter_group.get("filter_group"):
-
                         filter_obj = EmailTableFilter(
                             email_template_table_uid=table_uid,
                             filter_group_id=max_filter_group_id,
@@ -1201,7 +1202,6 @@ def update_email_template(email_template_uid, validated_payload):
                 max_filter_group_id += 1
 
                 for filter_item in filter_group.get("filter_group"):
-
                     filter_obj = EmailTableFilter(
                         email_template_table_uid=table_uid,
                         filter_group_id=max_filter_group_id,
@@ -1458,7 +1458,6 @@ def get_email_tablecatalog(validated_query_params):
 @validate_payload(EmailTableCatalogValidator)
 @custom_permissions_required("WRITE Emails", "body", "survey_uid")
 def create_email_tablecatalog(validated_payload):
-
     survey_uid = validated_payload.survey_uid.data
     table_catalog = validated_payload.table_catalog.data
 
@@ -1507,7 +1506,6 @@ def load_email_schedule_delivery_reports(validated_payload):
 
     form_uid = validated_payload.form_uid.data
     for report in validated_payload.reports.data:
-
         slot_type = report["slot_type"]
         email_schedule_uid = report["email_schedule_uid"]
         manual_email_trigger_uid = report["manual_email_trigger_uid"]
@@ -1653,7 +1651,7 @@ def get_email_schedule_report(validated_query_params):
             ]
 
             result.append(email_delivery_report_dict)
-        
+
         return (
             jsonify(
                 {
@@ -1663,6 +1661,8 @@ def get_email_schedule_report(validated_query_params):
             ),
             200,
         )
+
+
 @emails_bp.route("/tablecatalog/schedules", methods=["GET"])
 @logged_in_active_user_required
 @validate_query_params(EmailTableCatalogQueryParamValidator)

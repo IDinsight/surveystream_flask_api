@@ -1,13 +1,17 @@
+from flask import jsonify
+
+from app.blueprints.surveys.models import Survey
+from app.blueprints.surveys.utils import ModuleStatusCalculator, get_final_module_status
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    update_module_status,
     validate_payload,
 )
-from flask import jsonify
-from .models import db, Module, ModuleStatus, ModuleDependency
+
+from .models import Module, ModuleDependency, ModuleStatus, db
 from .routes import module_selection_bp
-from .validators import UpdateModuleStatusValidator, AddModuleStatusValidator
-from app.blueprints.surveys.utils import ModuleStatusCalculator
+from .validators import AddModuleStatusValidator
 
 
 @module_selection_bp.route("/modules", methods=["GET"])
@@ -38,6 +42,7 @@ def list_modules():
 @logged_in_active_user_required
 @validate_payload(AddModuleStatusValidator)
 @custom_permissions_required("ADMIN", "body", "survey_uid")
+@update_module_status(2, "survey_uid")
 def add_module_status(validated_payload):
     """
     Function to add the module selection results to module status table for a survey
@@ -90,9 +95,12 @@ def add_module_status(validated_payload):
         module_status = ModuleStatus.query.filter_by(
             survey_uid=survey_uid, module_id=module_id
         ).first()
+
         if not module_status:
             module_status = ModuleStatus(
-                survey_uid=survey_uid, module_id=module_id, config_status="Not Started"
+                survey_uid=survey_uid,
+                module_id=module_id,
+                config_status="Not Started",  # Default status, we are updating it later
             )
             db.session.add(module_status)
 
@@ -116,6 +124,8 @@ def get_module_status(survey_uid):
     """
     Get the status of all the modules for a survey
     """
+    survey_state = Survey.query.filter_by(survey_uid=survey_uid).first().state
+
     module_status = (
         db.session.query(ModuleStatus)
         .filter(
@@ -124,15 +134,20 @@ def get_module_status(survey_uid):
         .all()
     )
     data = []
-    module_status_calculator = ModuleStatusCalculator(survey_uid)
+
     for module in module_status:
-        status = module_status_calculator.get_status(module.module_id)
+        final_status = get_final_module_status(
+            survey_uid,
+            module.module_id,
+            survey_state,
+            module.config_status,
+        )
 
         data.append(
             {
                 "survey_uid": module.survey_uid,
                 "module_id": module.module_id,
-                "config_status": status,
+                "config_status": final_status,
             }
         )
 
@@ -143,25 +158,80 @@ def get_module_status(survey_uid):
 
 
 @module_selection_bp.route(
-    "/modules/<int:module_id>/status/<int:survey_uid>", methods=["PUT"]
+    "/module-status/<int:survey_uid>/<int:module_id>", methods=["PUT"]
 )
 @logged_in_active_user_required
-@validate_payload(UpdateModuleStatusValidator)
 @custom_permissions_required("ADMIN", "path", "survey_uid")
-def update_module_status(validated_payload):
+def update_module_status(survey_uid, module_id):
     """
 
     Function to update the status of a module for a survey
 
     """
-    module_id = validate_payload.module_id.data
-    survey_uid = validate_payload.survey_uid.data
 
-    module_status = ModuleStatus.query.filter_by(
-        module_id=module_id, survey_uid=survey_uid
-    ).first()
+    module = Module.query.get(module_id).first()
+    if not module:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "message": f"Module with id {module_id} does not exist.",
+                }
+            ),
+            404,
+        )
 
-    module_status.config_status = validated_payload.config_status.data
+    module_status_calculator = ModuleStatusCalculator(survey_uid)
+    module_status = module_status_calculator.get_status(module_id)
+
+    ModuleStatus.query.filter_by(survey_uid=survey_uid, module_id=module_id).update(
+        {"config_status": module_status}
+    )
+
+    db.session.flush()
+
+    # Mapping of which other modules are affected by this change
+    effected_modules_dict = {
+        1: [14, 17],
+        2: [
+            4,
+            5,
+            7,
+            8,
+            9,
+            11,
+            12,
+            14,
+            15,
+            16,
+            17,
+            18,
+        ],  # Since module selection is adding modules
+        3: [7, 8, 9, 11, 12, 14, 15, 16, 17],
+        4: [17],
+        5: [17],
+        7: [9, 17],
+        8: [9, 17],
+    }
+
+    for effected_module_id in effected_modules_dict.get(module_id, []):
+        # Check if module is in the list of active modules for the survey
+        module_status = ModuleStatus.query.filter_by(
+            survey_uid=survey_uid, module_id=effected_module_id
+        ).first()
+
+        if module_status:
+            calculated_module_status = module_status_calculator.get_status(
+                effected_module_id
+            )
+
+            ModuleStatus.query.filter_by(
+                survey_uid=survey_uid, module_id=effected_module_id
+            ).update({"config_status": calculated_module_status})
+
     db.session.commit()
 
-    return jsonify({"success": True, "data": module_status.to_dict()}), 200
+    return (
+        jsonify({"success": True, "message": "Module status updated successfully."}),
+        200,
+    )
