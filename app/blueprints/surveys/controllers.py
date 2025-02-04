@@ -33,6 +33,8 @@ from .validators import (
 @surveys_bp.route("", methods=["GET"])
 @logged_in_active_user_required
 def get_all_surveys():
+    from app.blueprints.notifications.models import SurveyNotification
+
     if current_user.get_is_super_admin():
         # Return all surveys for the super admin users
         surveys = Survey.query.all()
@@ -74,7 +76,26 @@ def get_all_surveys():
             # No surveys for the user
             surveys = []
 
-    data = [survey.to_dict() for survey in surveys]
+    # check if any unresolved notifications exist for the survey
+    data = []
+    for survey in surveys:
+        notifications = (
+            db.session.query(SurveyNotification.notification_uid)
+            .join(
+                ModuleStatus,
+                (SurveyNotification.module_id == ModuleStatus.module_id)
+                & (SurveyNotification.survey_uid == ModuleStatus.survey_uid),
+            )
+            .filter(
+                SurveyNotification.survey_uid == survey.survey_uid,
+                SurveyNotification.severity == "error",
+                SurveyNotification.resolution_status == "in progress",
+            )
+            .first()
+        )
+
+        data.append({**survey.to_dict(), **{"error": True if notifications else False}})
+
     response = {"success": True, "data": data}
 
     return jsonify(response), 200

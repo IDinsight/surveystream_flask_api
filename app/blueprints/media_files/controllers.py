@@ -6,6 +6,7 @@ from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
     update_module_status,
+    update_module_status_after_request,
     validate_payload,
     validate_query_params,
 )
@@ -92,7 +93,7 @@ def get_media_files_config(media_files_config_uid):
 @logged_in_active_user_required
 @validate_payload(CreateMediaFilesConfigValidator)
 @custom_permissions_required("WRITE Media Files Config", "body", "form_uid")
-@update_module_status(12, "form_uid")
+@update_module_status_after_request(12, "form_uid")
 def create_media_files_config(validated_payload):
     """
     Function to create a new media files config
@@ -195,15 +196,19 @@ def update_media_files_config(media_files_config_uid, validated_payload):
 @custom_permissions_required(
     "WRITE Media Files Config", "path", "media_files_config_uid"
 )
-@update_module_status(12, "form_uid")
 def delete_media_files_config(media_files_config_uid):
     """
     Function to delete a media file config
     """
     media_files_config = MediaFilesConfig.query.get_or_404(media_files_config_uid)
+    form_uid = media_files_config.form_uid
 
     try:
         db.session.delete(media_files_config)
+
+        # Update the status of the module
+        update_module_status(12, form_uid=form_uid)
+
         db.session.commit()
     except Exception as e:
         db.session.rollback()

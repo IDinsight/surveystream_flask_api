@@ -518,6 +518,7 @@ class TestSurveys:
                     "config_status": "In Progress - Configuration",
                     "last_updated_at": "2023-05-30 00:00:00",
                     "created_by_user_uid": test_user_credentials["user_uid"],
+                    "error": False,
                 },
                 {
                     "config_status": "In Progress - Configuration",
@@ -534,6 +535,7 @@ class TestSurveys:
                     "survey_name": "User survey",
                     "survey_uid": 2,
                     "surveying_method": "mixed-mode",
+                    "error": False,
                 },
             ],
             "success": True,
@@ -649,6 +651,7 @@ class TestSurveys:
                     "config_status": "In Progress - Configuration",
                     "last_updated_at": "2023-05-30 00:00:00",
                     "created_by_user_uid": test_user_credentials["user_uid"],
+                    "error": False,
                 },
                 {
                     "config_status": "In Progress - Configuration",
@@ -665,6 +668,7 @@ class TestSurveys:
                     "survey_name": "User survey",
                     "survey_uid": 2,
                     "surveying_method": "mixed-mode",
+                    "error": False,
                 },
             ],
             "success": True,
@@ -728,6 +732,7 @@ class TestSurveys:
                     "config_status": "In Progress - Configuration",
                     "last_updated_at": "2023-05-30 00:00:00",
                     "created_by_user_uid": test_user_credentials["user_uid"],
+                    "error": False,
                 }
             ],
             "success": True,
@@ -832,6 +837,7 @@ class TestSurveys:
                     "config_status": "In Progress - Configuration",
                     "last_updated_at": "2023-05-30 00:00:00",
                     "created_by_user_uid": test_user_credentials["user_uid"],
+                    "error": False,
                 }
             ],
             "success": True,

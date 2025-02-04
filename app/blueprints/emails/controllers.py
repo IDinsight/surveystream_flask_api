@@ -16,6 +16,7 @@ from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
     update_module_status,
+    update_module_status_after_request,
     validate_payload,
     validate_query_params,
 )
@@ -63,7 +64,7 @@ from .validators import (
 @logged_in_active_user_required
 @validate_payload(EmailConfigValidator)
 @custom_permissions_required("WRITE Emails", "body", "form_uid")
-@update_module_status(15, "form_uid")
+@update_module_status_after_request(15, "form_uid")
 def create_email_config(validated_payload):
     """
     Function to create a new email config
@@ -363,8 +364,14 @@ def delete_email_config(email_config_uid):
 
     email_config = EmailConfig.query.get_or_404(email_config_uid)
 
+    form_uid = email_config.form_uid
+
     try:
         db.session.delete(email_config)
+
+        # Update the status of the module
+        update_module_status(15, form_uid=form_uid)
+
         db.session.commit()
     except Exception as e:
         db.session.rollback()

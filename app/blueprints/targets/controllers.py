@@ -24,7 +24,7 @@ from app.utils.utils import (
     custom_permissions_required,
     get_aws_secret,
     logged_in_active_user_required,
-    update_module_status,
+    update_module_status_after_request,
     validate_payload,
     validate_query_params,
 )
@@ -65,7 +65,7 @@ from .validators import (
 @validate_query_params(TargetsQueryParamValidator)
 @validate_payload(TargetsFileUploadValidator)
 @custom_permissions_required("WRITE Targets", "query", "form_uid")
-@update_module_status(8, "form_uid")
+@update_module_status_after_request(8, "form_uid")
 def upload_targets(validated_query_params, validated_payload):
     """
     Method to validate the uploaded targets file and save it to the database
@@ -1471,7 +1471,7 @@ def get_target_config(validated_query_params):
 @logged_in_active_user_required
 @validate_payload(TargetConfigValidator)
 @custom_permissions_required("WRITE Targets", "body", "form_uid")
-@update_module_status(8, "form_uid")
+@update_module_status_after_request(8, "form_uid")
 def create_target_config(validated_payload):
     """
     Method to create a target configuration
@@ -1731,7 +1731,7 @@ def get_target_scto_columns(validated_query_params):
 @logged_in_active_user_required
 @validate_query_params(TargetsQueryParamValidator)
 @custom_permissions_required("WRITE Targets", "query", "form_uid")
-@update_module_status(8, "form_uid")
+@update_module_status_after_request(8, "form_uid")
 def delete_all_targets(validated_query_params):
     """
     Method to delete targets from the database

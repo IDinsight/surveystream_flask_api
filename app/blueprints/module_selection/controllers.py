@@ -5,7 +5,7 @@ from app.blueprints.surveys.utils import ModuleStatusCalculator, get_final_modul
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
-    update_module_status,
+    update_module_status_after_request,
     validate_payload,
 )
 
@@ -42,7 +42,7 @@ def list_modules():
 @logged_in_active_user_required
 @validate_payload(AddModuleStatusValidator)
 @custom_permissions_required("ADMIN", "body", "survey_uid")
-@update_module_status(2, "survey_uid")
+@update_module_status_after_request(2, "survey_uid")
 def add_module_status(validated_payload):
     """
     Function to add the module selection results to module status table for a survey

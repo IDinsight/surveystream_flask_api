@@ -10,7 +10,11 @@ from .models import Survey
 class ModuleStatusCalculator:
     """
     Class with functions to to check the status of a module for a survey
-    based on the data in the database
+    based on the data in the database. The output states are: "Not Started",
+    "In Progress", "In Progress - Incomplete" and "Done"
+
+    "Live" and "Error" are not returned by this class as these are set based on
+    external conditions and are calculated on the go when the status is fetched
 
     """
 
@@ -464,8 +468,10 @@ class ModuleStatusCalculator:
 def get_final_module_status(survey_uid, module_id, survey_state, config_status):
     """
 
-    Function to get the final module status based on presence of errors,
-    survey state and the calculated status
+    Function to get the final module status based on:
+    1. If there are unresolved error notifications for the module
+    2. survey_state: Whether the survey is active or not
+    3. config_status: status stored in the module status table
 
     """
     # Check for errors on the go because config_status is not updated when there are errors

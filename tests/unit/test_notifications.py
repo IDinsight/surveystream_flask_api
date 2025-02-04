@@ -921,6 +921,7 @@ class TestNotifications:
         login_test_user,
         create_survey_notification,
         csrf_token,
+        test_user_credentials,
     ):
         payload = {
             "survey_uid": 1,
@@ -984,6 +985,40 @@ class TestNotifications:
         }
 
         assert get_module_response.json == expected_response
+
+        # Test the get all surveys endpoint returns error status
+        response = client.get("/api/surveys")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {
+                    "survey_uid": 1,
+                    "survey_id": "test_survey",
+                    "survey_name": "Test Survey",
+                    "survey_description": "A test survey",
+                    "project_name": "Test Project",
+                    "surveying_method": "in-person",
+                    "irb_approval": "Yes",
+                    "planned_start_date": "2021-01-01",
+                    "planned_end_date": "2021-12-31",
+                    "state": "Draft",
+                    "prime_geo_level_uid": 1,
+                    "config_status": "In Progress - Configuration",
+                    "last_updated_at": "2023-05-30 00:00:00",
+                    "created_by_user_uid": test_user_credentials["user_uid"],
+                    "error": True,
+                }
+            ],
+            "success": True,
+        }
+
+        # Replace the last_updated_at field in the expected response with the value from the actual response
+        expected_response["data"][0]["last_updated_at"] = response.json["data"][0][
+            "last_updated_at"
+        ]
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
 
     def test_notifications_create_survey_notifications_error_no_survey(
         self,
