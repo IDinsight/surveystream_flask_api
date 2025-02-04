@@ -454,20 +454,25 @@ def update_module_status(module_id, identifier):
             response = fn(*args, **kwargs)
 
             # We only want to update the module status if the response is successful
-            if response[1] == 200:
+            if response[1] in [200, 201]:
                 from app.blueprints.module_selection.models import ModuleStatus
                 from app.blueprints.surveys.utils import ModuleStatusCalculator
                 from app.blueprints.forms.models import Form
 
+                # The endpoints have either survey_uid or form_uid in payload or query params
                 if identifier == "survey_uid":
-                    survey_uid = kwargs["validated_payload"].survey_uid.data
+                    if "survey_uid" in kwargs["validated_payload"]:
+                        survey_uid = kwargs["validated_payload"].survey_uid.data
+                    else:
+                        survey_uid = kwargs["validated_query_params"].survey_uid.data
                 elif identifier == "form_uid":
+                    if "form_uid" in kwargs["validated_payload"]:
+                        form_uid = kwargs["validated_payload"].form_uid.data
+                    else:
+                        form_uid = kwargs["validated_query_params"].form_uid.data
+
                     survey_uid = (
-                        Form.query.filter_by(
-                            form_uid=kwargs["validated_payload"].form_uid.data
-                        )
-                        .first()
-                        .survey_uid
+                        Form.query.filter_by(form_uid=form_uid).first().survey_uid
                     )
 
                 module_status_calculator = ModuleStatusCalculator(survey_uid)
