@@ -2,7 +2,7 @@ from app.blueprints.enumerators.models import Enumerator, SurveyorLocation
 from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
 from app.blueprints.mapping.models import UserMappingConfig
-from app.blueprints.media_files.models import MediaConfig
+from app.blueprints.media_files.models import MediaFilesConfig
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.blueprints.module_selection.models import ModuleStatus
 from app.blueprints.surveys.models import Survey
@@ -186,4 +186,4 @@ def mapping_exists(form_uid):
 
 
 def media_config_exists(form_uid):
-    return MediaConfig.query.filter_by(form_uid=form_uid).first() is not None
+    return MediaFilesConfig.query.filter_by(form_uid=form_uid).first() is not None
