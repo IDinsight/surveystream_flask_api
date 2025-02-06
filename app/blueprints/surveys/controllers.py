@@ -48,7 +48,9 @@ def get_all_surveys():
             # Get surveys where the user is a survey admin or associated with user's roles
             survey_uids_admin = {entry.survey_uid for entry in survey_admin_check}
             surveys_with_roles = (
-                Survey.query.join(Role, Survey.survey_uid == Role.survey_uid)
+                Survey.query.join(
+                    Role, Survey.survey_uid == Role.survey_uid, isouter=True
+                )
                 .filter(
                     (Role.role_uid.in_(user_roles))
                     | (Survey.survey_uid.in_(survey_uids_admin))
