@@ -1918,12 +1918,25 @@ class TestNotifications:
             headers={"X-CSRF-Token": csrf_token},
         )
 
-        response = client.get("/api/surveys/1/error-modules")
+        response = client.get("/api/surveys/1/modules")
         print(response.json)
         assert response.status_code == 200
 
         expected_response = {
-            "data": ["User and role management", "Enumerators", "Targets"],
+            "data": [
+                {"module_id": 1, "name": "Basic information", "error": False},
+                {"module_id": 2, "name": "Module selection", "error": False},
+                {"module_id": 3, "name": "SurveyCTO information", "error": False},
+                {"module_id": 4, "name": "User and role management", "error": True},
+                {"module_id": 5, "name": "Survey locations", "error": False},
+                {"module_id": 7, "name": "Enumerators", "error": True},
+                {"module_id": 8, "name": "Targets", "error": True},
+                {"module_id": 9, "name": "Assignments", "error": False},
+                {"module_id": 13, "name": "Surveyor hiring", "error": False},
+                {"module_id": 14, "name": "Target status mapping", "error": False},
+                {"module_id": 16, "name": "Assignments column configuration", "error": False},
+                {"module_id": 17, "name": "Mapping", "error": False},
+            ],
             "success": True,
         }
 

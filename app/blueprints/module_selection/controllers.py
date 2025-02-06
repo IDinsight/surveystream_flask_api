@@ -122,7 +122,7 @@ def add_module_status(validated_payload):
 @logged_in_active_user_required
 def get_module_status(survey_uid):
     """
-    Get the status of all the modules for a survey
+    Get the modules along with their stored status for a survey
     """
     survey_state = Survey.query.filter_by(survey_uid=survey_uid).first().state
 

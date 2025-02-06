@@ -588,11 +588,11 @@ def update_survey_state(survey_uid, validated_payload):
     )
 
 
-@surveys_bp.route("/<int:survey_uid>/error-modules", methods=["GET"])
+@surveys_bp.route("/<int:survey_uid>/modules", methods=["GET"])
 @logged_in_active_user_required
-def get_error_modules(survey_uid):
+def get_survey_modules(survey_uid):
     """
-    Get the list of modules that have errors for a given survey
+    Get the list of modules along with whether they have any unresolved errors
     """
     module_status = (
         db.session.query(
@@ -603,11 +603,20 @@ def get_error_modules(survey_uid):
         .all()
     )
 
-    error_modules = []
+    modules = []
     module_status_calculator = ModuleStatusCalculator(survey_uid)
 
     for status in module_status:
-        if module_status_calculator.check_unresolved_notifications(status.module_id):
-            error_modules.append(status.name)
+        modules.append(
+            {
+                "module_id": status.module_id,
+                "name": status.name,
+                "error": True
+                if module_status_calculator.check_unresolved_notifications(
+                    status.module_id
+                )
+                else False,
+            }
+        )
 
-    return jsonify({"success": True, "data": error_modules}), 200
+    return jsonify({"success": True, "data": modules}), 200

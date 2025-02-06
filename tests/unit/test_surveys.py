@@ -1511,15 +1511,20 @@ class TestSurveys:
         upload_targets_csv,
     ):
         """
-        Test that errored modules can be retrieved
+        Test that modules can be retrieved for a survey along with their error status
         """
 
-        response = client.get("/api/surveys/1/error-modules")
+        response = client.get("/api/surveys/1/modules")
         print(response.json)
         assert response.status_code == 200
 
         expected_response = {
-            "data": [],
+            "data": [
+                {"module_id": 1, "name": "Basic information", "error": False},
+                {"module_id": 2, "name": "Module selection", "error": False},
+                {"module_id": 3, "name": "SurveyCTO information", "error": False},
+                {"module_id": 4, "name": "User and role management", "error": False},
+            ],
             "success": True,
         }
 
