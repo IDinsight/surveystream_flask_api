@@ -1105,7 +1105,7 @@ class TestSurveys:
                 "Survey information": [
                     {
                         "name": "SurveyCTO information",
-                        "status": "In Progress",
+                        "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {
@@ -1115,7 +1115,15 @@ class TestSurveys:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 25,
+                "completion_stats": {
+                    "num_modules": 4,
+                    "num_completed": 1,
+                    "num_in_progress": 0,
+                    "num_in_progress_incomplete": 1,
+                    "num_not_started": 2,
+                    "num_error": 0,
+                    "num_optional": 0,
+                },
             },
             "success": True,
         }
@@ -1434,3 +1442,87 @@ class TestSurveys:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_survey_draft_error(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_scto_question_mapping,
+        create_module_selection,
+    ):
+        """
+        Test that a survey can be moved to the draft state
+        """
+
+        # Update survey end date to a date in the past and current state to Past
+        payload = {
+            "survey_uid": 1,
+            "survey_id": "test_survey_1",
+            "survey_name": "Test Survey 1",
+            "survey_description": "A test survey 1",
+            "project_name": "Test Project 1",
+            "surveying_method": "phone",
+            "irb_approval": "No",
+            "planned_start_date": "2021-01-02",
+            "planned_end_date": '2022-01-01',
+            "state": "Past",
+            "config_status": "In Progress - Configuration",
+        }
+
+        response = client.put(
+            "/api/surveys/1/basic-information",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        payload = {
+            "survey_uid": 1,
+            "state": "Draft",
+        }
+
+        response = client.put(
+            "/api/surveys/1/state",
+            headers={"X-CSRF-Token": csrf_token},
+            json=payload,
+        )
+
+        assert response.status_code == 422
+
+        expected_response = {
+            "success": False,
+            "error": "Cannot set survey state to Draft since the survey end date is in the past. Please update the survey end date before setting the survey state to Draft.",
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_get_errored_modules(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_surveys,
+        create_parent_form,
+        create_roles,
+        upload_enumerators_csv,
+        upload_targets_csv,
+    ):
+        """
+        Test that errored modules can be retrieved
+        """
+
+        response = client.get("/api/surveys/1/error-modules")
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+    

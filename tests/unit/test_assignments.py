@@ -14063,7 +14063,7 @@ class TestAssignments:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress", "module_id": 3, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 9, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 14, "survey_uid": 1},
@@ -14105,12 +14105,12 @@ class TestAssignments:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress", "module_id": 3, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {"config_status": "In Progress", "module_id": 9, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 14, "survey_uid": 1},
                 {
-                    "config_status": "In Progress - Incomplete",
+                    "config_status": "In Progress",
                     "module_id": 17,
                     "survey_uid": 1,
                 },
@@ -14168,7 +14168,7 @@ class TestAssignments:
                 {"config_status": "Live", "module_id": 9, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 14, "survey_uid": 1},
                 {
-                    "config_status": "In Progress - Incomplete",
+                    "config_status": "In Progress",
                     "module_id": 17,
                     "survey_uid": 1,
                 },
@@ -14269,12 +14269,12 @@ class TestAssignments:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress", "module_id": 3, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {"config_status": "In Progress", "module_id": 9, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 14, "survey_uid": 1},
                 {
-                    "config_status": "In Progress - Incomplete",
+                    "config_status": "In Progress",
                     "module_id": 17,
                     "survey_uid": 1,
                 },

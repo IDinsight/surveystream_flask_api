@@ -41,7 +41,7 @@ class ModuleStatusCalculator:
         ).all()
 
         if module_questionnaire is None or len(module_questionnaire) == 0:
-            return "In Progress"
+            return "In Progress - Incomplete"
         else:
             return "Done"
 
@@ -78,8 +78,11 @@ class ModuleStatusCalculator:
             scto_question_mapping = SCTOQuestionMapping.query.filter_by(
                 form_uid=form
             ).first()
+
+            # if there is a form for which question mapping is not done, then return in progress - incomplete
             if scto_question_mapping is None:
-                return "In Progress"
+                return "In Progress - Incomplete"
+
         return "Done"
 
     def __check_user_role_management(self):
@@ -108,7 +111,7 @@ class ModuleStatusCalculator:
             if roles is None and survey_admin is None:
                 return "Not Started"
             elif users is None or len(users) == 0:
-                return "In Progress"
+                return "In Progress - Incomplete"
             else:
                 return "Done"
         else:
@@ -120,15 +123,26 @@ class ModuleStatusCalculator:
     def __check_survey_locations(self):
         from app.blueprints.locations.models import GeoLevel, Location
 
+        # Check if module selection is done, if not then return not started
+        if self.calculated_module_status.get(2) is None:
+            self.calculated_module_status[2] = self.__check_module_selection()
+        if self.calculated_module_status[2] == "Not Started":
+            return "Not Started"
+
         geo_levels = GeoLevel.query.filter_by(survey_uid=self.survey_uid).first()
         if geo_levels is None:
             return "Not Started"
 
         locations = Location.query.filter_by(survey_uid=self.survey_uid).first()
-        if locations is None:
+
+        # if assignments, productivity tracker or data quality is selected,
+        # then locations are required. For media audits, only geo levels also suffice
+        if set(self.modules) & {9, 10, 11} and locations is None:
+            return "In Progress - Incomplete"
+        elif locations is None:
             return "In Progress"
-        else:
-            return "Done"
+
+        return "Done"
 
     def __check_enumerators(self):
         from app.blueprints.enumerators.models import Enumerator
@@ -151,7 +165,7 @@ class ModuleStatusCalculator:
         if one_form and all_forms:
             return "Done"
         elif one_form:
-            return "In Progress"
+            return "In Progress - Incomplete"
         else:
             return "Not Started"
 
@@ -177,7 +191,7 @@ class ModuleStatusCalculator:
         if one_form and all_forms:
             return "Done"
         elif one_form:
-            return "In Progress"
+            return "In Progress - Incomplete"
         else:
             return "Not Started"
 
@@ -220,7 +234,7 @@ class ModuleStatusCalculator:
         if one_form and all_forms:
             return "Done"
         elif one_form:
-            return "In Progress"
+            return "In Progress - Incomplete"
         else:
             return "Not Started"
 
@@ -316,7 +330,7 @@ class ModuleStatusCalculator:
         return "Not Started"
 
     def __check_emails(self):
-        from app.blueprints.emails.models import EmailConfig
+        from app.blueprints.emails.models import EmailConfig, EmailTemplate
 
         # Check if surveycto information is present, if not then return not started
         if self.calculated_module_status.get(3) is None:
@@ -324,12 +338,32 @@ class ModuleStatusCalculator:
         if self.calculated_module_status[3] == "Not Started":
             return "Not Started"
 
+        one_config = False
+        full_config = False
         for form in self.forms:
             email_config = EmailConfig.query.filter_by(form_uid=form).first()
             if email_config is not None:
-                return "In Progress"
+                one_config = True
 
-        return "Not Started"
+            # Check if there are templates corresponding to the config
+            # We don't check schedules because it is possible that the schedule is added
+            # later like when using assignment emails
+            if email_config is not None:
+                email_template = EmailTemplate.query.filter_by(
+                    email_config_uid=email_config.email_config_uid
+                ).first()
+
+                if email_template is not None:
+                    full_config = True
+
+        # if not even one email config is present, then return not started
+        if not one_config:
+            return "Not Started"
+        # if there are no email configs for which the full configuration is done, then return in progress - incomplete
+        elif not full_config:
+            return "In Progress - Incomplete"
+
+        return "In Progress"
 
     def __check_assignments_column_configuration(self):
         from app.blueprints.assignments.table_config.models import TableConfig
@@ -354,6 +388,12 @@ class ModuleStatusCalculator:
         from app.blueprints.mapping.utils import SurveyorMapping, TargetMapping
         from app.blueprints.targets.models import Target
 
+        # Check if module selection is done, if not then return not started
+        if self.calculated_module_status.get(2) is None:
+            self.calculated_module_status[2] = self.__check_module_selection()
+        if self.calculated_module_status[2] == "Not Started":
+            return "Not Started"
+
         # Check if surveycto information is present, if not then return not started
         if self.calculated_module_status.get(3) is None:
             self.calculated_module_status[3] = self.__check_surveycto_information()
@@ -362,6 +402,8 @@ class ModuleStatusCalculator:
 
         completed = True
         error = True
+        one_form = False
+        incomplete = False
         for form in self.forms:
             # Check if there are unmapped enumerators and targets
             try:
@@ -381,15 +423,32 @@ class ModuleStatusCalculator:
                 db.session.query(Enumerator).filter(Enumerator.form_uid == form).count()
             )
 
-            if len(s_mappings) < enumerators or len(t_mappings) <= targets:
+            # if there are mappings for either enumerators and targets for one form,
+            # then the mapping is started for that form
+            if len(s_mappings) > 0 or len(t_mappings) > 0:
+                one_form = True
+
+            # if there are no mappings for any form for any type, then the mapping is incomplete
+            if set(self.modules) & {
+                9
+            }:  # for assignments, both enumerators and targets are required
+                if len(s_mappings) == 0 or len(t_mappings) == 0:
+                    incomplete = True
+            else:
+                if len(s_mappings) == 0:  # for emails, only enumerators are required
+                    incomplete = True
+
+            if len(s_mappings) < enumerators or len(t_mappings) < targets:
                 completed = False
 
-        if error:
-            return "Not Started"  # If mapping gives errors for all forms, then return not started
+        if error or not one_form:
+            return "Not Started"  # If mapping gives errors for all forms, or if there are no mappings, then return not started
         if completed:
             return "Done"
+        if incomplete:
+            return "In Progress - Incomplete"  # it is incomplete if there are no mappings for any one form
 
-        return "In Progress - Incomplete"
+        return "In Progress"
 
     def __check_admin_forms(self):
         from app.blueprints.forms.models import Form, SCTOQuestionMapping
@@ -419,6 +478,7 @@ class ModuleStatusCalculator:
             severity="error",  # Check if we need to check for other severity levels
             resolution_status="in progress",
         ).all()
+
         if notifications is not None and len(notifications) > 0:
             return True
         return False

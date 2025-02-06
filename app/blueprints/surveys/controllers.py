@@ -137,8 +137,10 @@ def create_survey(validated_payload):
             default_config_status = ModuleStatus(
                 survey_uid=survey.survey_uid,
                 module_id=module.module_id,
-                # Basic information module becomes in progress as soon as the survey is created
-                config_status="Not Started" if module.module_id != 1 else "In Progress",
+                # Basic information module becomes in progress - Incomplete as soon as the survey is created
+                config_status="Not Started"
+                if module.module_id != 1
+                else "In Progress - Incomplete",
             )
             db.session.add(default_config_status)
 
@@ -213,8 +215,12 @@ def get_survey_config_status(survey_uid):
 
     data = {}
     num_modules = 0
-    num_completed_modules = 0
-    num_optional_modules = 0  # This is not used for completion percentage calculation
+    num_completed = 0
+    num_in_progress = 0
+    num_in_progress_incomplete = 0
+    num_not_started = 0
+    num_error = 0
+    num_optional = 0  # These are not included in the total number of modules
 
     for status in config_status:
         survey_state = status.survey_state
@@ -232,7 +238,15 @@ def get_survey_config_status(survey_uid):
 
             num_modules += 1
             if module_status == "Done":
-                num_completed_modules += 1
+                num_completed += 1
+            elif module_status == "In Progress":
+                num_in_progress += 1
+            elif module_status == "In Progress - Incomplete":
+                num_in_progress_incomplete += 1
+            elif module_status == "Not Started":
+                num_not_started += 1
+            elif module_status == "Error":
+                num_error += 1
 
         elif status.name in [
             "SurveyCTO information",
@@ -265,7 +279,15 @@ def get_survey_config_status(survey_uid):
 
                 num_modules += 1
                 if module_status == "Done":
-                    num_completed_modules += 1
+                    num_completed += 1
+                elif module_status == "In Progress":
+                    num_in_progress += 1
+                elif module_status == "In Progress - Incomplete":
+                    num_in_progress_incomplete += 1
+                elif module_status == "Not Started":
+                    num_not_started += 1
+                elif module_status == "Error":
+                    num_error += 1
 
             else:
                 data["Survey information"].append(
@@ -275,7 +297,7 @@ def get_survey_config_status(survey_uid):
                         "optional": calculated_optional_flag,
                     }
                 )
-                num_optional_modules += 1
+                num_optional += 1
 
         else:
             if "Module configuration" not in list(data.keys()):
@@ -285,12 +307,21 @@ def get_survey_config_status(survey_uid):
             if status.name == "Assignments column configuration":
                 # this module is not mandatory
                 optional = True
-                num_optional_modules += 1
+                num_optional += 1
             else:
                 optional = False
+
                 num_modules += 1
-                if module_status in ["Done", "Live", "In Progress"]:
-                    num_completed_modules += 1
+                if module_status in ["Done", "Live"]:
+                    num_completed += 1
+                elif module_status == "In Progress":
+                    num_in_progress += 1
+                elif module_status == "In Progress - Incomplete":
+                    num_in_progress_incomplete += 1
+                elif module_status == "Not Started":
+                    num_not_started += 1
+                elif module_status == "Error":
+                    num_error += 1
 
             data["Module configuration"].append(
                 {
@@ -301,9 +332,15 @@ def get_survey_config_status(survey_uid):
                 }
             )
 
-    data["completion_percentage"] = (
-        round(num_completed_modules / num_modules * 100, 2) if num_modules > 0 else 0
-    )
+    data["completion_stats"] = {
+        "num_modules": num_modules,  # Does not include optional modules
+        "num_completed": num_completed,
+        "num_in_progress": num_in_progress,
+        "num_in_progress_incomplete": num_in_progress_incomplete,
+        "num_not_started": num_not_started,
+        "num_error": num_error,
+        "num_optional": num_optional,
+    }
     response = {"success": True, "data": data}
     return jsonify(response), 200
 
@@ -447,18 +484,8 @@ def update_survey_state(survey_uid, validated_payload):
                 16,
             ]:  # Productivity tracker, hiring and assignment column configuration modules
                 continue
-            elif status.module_id in [
-                9,
-                11,
-                12,
-                15,
-                18,
-            ]:  # These modules have configurations on the webapp
-                # We expect these modules to be in progress or done states
-                if calculated_status not in ["Done", "In Progress"]:
-                    incomplete_modules.append(status.name)
             else:
-                # For other modules, non-optional modules should be done and optional in "Not Started"/"Done" state
+                # For other modules, non-optional modules should be done/in progress and optional in "Not Started"/"Done" state
                 calculated_optional_flag = is_module_optional(
                     survey_uid,
                     status.optional,
@@ -466,13 +493,16 @@ def update_survey_state(survey_uid, validated_payload):
                     calculated_status,
                 )
 
-                # Mapping module gets a special treatment - it can be in "In Progress" state
-                # Incomplete only when the module is in "Not Started" state
-                if status.module_id == 17:
-                    if calculated_status == "Not Started":
-                        incomplete_modules.append(status.name)
+                if calculated_optional_flag == False and calculated_status not in [
+                    "Done",
+                    "In Progress",
+                ]:
+                    incomplete_modules.append(status.name)
 
-                elif calculated_optional_flag == False and calculated_status != "Done":
+                elif calculated_optional_flag == True and calculated_status not in [
+                    "Not Started",
+                    "Done",
+                ]:
                     incomplete_modules.append(status.name)
 
         if len(incomplete_modules) > 0:
@@ -506,6 +536,26 @@ def update_survey_state(survey_uid, validated_payload):
                 ),
                 422,
             )
+    elif state == "Draft":
+        # check if the survey is being activated from Past state
+        existing_survey_details = (
+            Survey.query.with_entities(Survey.state, Survey.planned_end_date)
+            .filter(Survey.survey_uid == survey_uid)
+            .first()
+        )
+        existing_state = existing_survey_details[0]
+        planned_end_date = existing_survey_details[1]
+
+        if (existing_state == "Past") & (planned_end_date < datetime.now().date()):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Cannot set survey state to Draft since the survey end date is in the past. Please update the survey end date before setting the survey state to Draft.",
+                    }
+                ),
+                422,
+            )
 
     overall_config_status = (
         Survey.query.with_entities(Survey.config_status)
@@ -534,3 +584,28 @@ def update_survey_state(survey_uid, validated_payload):
         jsonify({"success": True, "message": "Survey state updated successfully."}),
         200,
     )
+
+
+@surveys_bp.route("/<int:survey_uid>/error-modules", methods=["GET"])
+@logged_in_active_user_required
+def get_error_modules(survey_uid):
+    """
+    Get the list of modules that have errors for a given survey
+    """
+    module_status = (
+        db.session.query(
+            ModuleStatus.module_id, Module.name, ModuleStatus.config_status
+        )
+        .join(Module, ModuleStatus.module_id == Module.module_id)
+        .filter(ModuleStatus.survey_uid == survey_uid)
+        .all()
+    )
+
+    error_modules = []
+    module_status_calculator = ModuleStatusCalculator(survey_uid)
+
+    for status in module_status:
+        if module_status_calculator.check_unresolved_notifications(status.module_id):
+            error_modules.append(status.name)
+
+    return jsonify({"success": True, "data": error_modules}), 200

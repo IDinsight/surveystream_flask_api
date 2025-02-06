@@ -365,6 +365,7 @@ def create_scto_question_mapping(form_uid, validated_payload):
 @custom_permissions_required(
     ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
 )
+@update_module_status_after_request(3, "form_uid")
 def update_scto_question_mapping(form_uid, validated_payload):
     """
     Update the SCTO question mapping for a form

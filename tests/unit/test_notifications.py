@@ -971,7 +971,7 @@ class TestNotifications:
             "data": [
                 {"survey_uid": 1, "module_id": 1, "config_status": "Done"},
                 {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
-                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress"},
+                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress - Incomplete"},
                 {"survey_uid": 1, "module_id": 4, "config_status": "Error"},
                 {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
@@ -1526,8 +1526,8 @@ class TestNotifications:
             "data": [
                 {"survey_uid": 1, "module_id": 1, "config_status": "Done"},
                 {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
-                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress"},
-                {"survey_uid": 1, "module_id": 4, "config_status": "In Progress"},
+                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress - Incomplete"},
+                {"survey_uid": 1, "module_id": 4, "config_status": "In Progress - Incomplete"},
                 {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 8, "config_status": "Not Started"},
@@ -1838,7 +1838,7 @@ class TestNotifications:
                 "Survey information": [
                     {
                         "name": "SurveyCTO information",
-                        "status": "In Progress",
+                        "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {
@@ -1876,7 +1876,15 @@ class TestNotifications:
                         "optional": True,
                     },
                 ],
-                "completion_percentage": 45.45,
+                "completion_stats": {
+                    "num_modules": 11,
+                    "num_completed": 4,
+                    "num_in_progress": 1,
+                    "num_in_progress_incomplete": 1,
+                    "num_not_started": 2,
+                    "num_error": 3,
+                    "num_optional": 1
+                }
             },
         }
 
@@ -1884,3 +1892,41 @@ class TestNotifications:
         checkdiff = jsondiff.diff(expected_response, get_config_status.json)
 
         assert checkdiff == {}
+
+    def test_get_errored_modules(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test that errored modules can be retrieved
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "action": "Locations reuploaded",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        response = client.get("/api/surveys/1/error-modules")
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": ["User and role management", "Enumerators", "Targets"],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+    

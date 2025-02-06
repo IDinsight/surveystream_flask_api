@@ -133,7 +133,7 @@ class TestModuleSelection:
 
         expected_response = {
             "data": [
-                {"survey_uid": 1, "module_id": 1, "config_status": "In Progress"},
+                {"survey_uid": 1, "module_id": 1, "config_status": "In Progress - Incomplete"},
                 {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
                 {"survey_uid": 1, "module_id": 3, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 4, "config_status": "Done"},
@@ -152,7 +152,7 @@ class TestModuleSelection:
 
         expected_response = {
             "data": {
-                "Basic information": {"status": "In Progress", "optional": False},
+                "Basic information": {"status": "In Progress - Incomplete", "optional": False},
                 "Module selection": {"status": "Done", "optional": False},
                 "Survey information": [
                     {
@@ -175,7 +175,15 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 40,
+                "completion_stats": {
+                    "num_modules": 5,
+                    "num_completed": 2,
+                    "num_in_progress": 0,
+                    "num_in_progress_incomplete": 1,
+                    "num_not_started": 2,
+                    "num_error": 0,
+                    "num_optional": 0,
+                },
             },
             "success": True,
         }
@@ -203,7 +211,7 @@ class TestModuleSelection:
 
         expected_response = {
             "data": [
-                {"config_status": "In Progress", "module_id": 1, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 3, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
@@ -224,7 +232,7 @@ class TestModuleSelection:
 
         expected_response = {
             "data": {
-                "Basic information": {"status": "In Progress", "optional": False},
+                "Basic information": {"status": "In Progress - Incomplete", "optional": False},
                 "Module selection": {"status": "Done", "optional": False},
                 "Survey information": [
                     {
@@ -253,7 +261,15 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 40,
+                "completion_stats": {
+                    "num_modules": 5,
+                    "num_completed": 2,
+                    "num_in_progress": 0,
+                    "num_in_progress_incomplete": 1,
+                    "num_not_started": 2,
+                    "num_error": 0,
+                    "num_optional": 2,
+                }
             },
             "success": True,
         }
@@ -296,7 +312,7 @@ class TestModuleSelection:
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 3, "survey_uid": 1},
-                {"config_status": "In Progress", "module_id": 4, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 4, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 9, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 14, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 17, "survey_uid": 1},
@@ -328,7 +344,7 @@ class TestModuleSelection:
                     },
                     {
                         "name": "User and role management",
-                        "status": "In Progress",
+                        "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {
@@ -360,7 +376,15 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 25,
+                "completion_stats": {
+                    "num_modules": 8,
+                    "num_completed": 2,
+                    "num_in_progress": 0,
+                    "num_in_progress_incomplete": 1,
+                    "num_not_started": 5,
+                    "num_error": 0,
+                    "num_optional": 3,
+                }
             },
             "success": True,
         }
@@ -431,7 +455,7 @@ class TestModuleSelection:
                     },
                     {
                         "name": "User and role management",
-                        "status": "In Progress",
+                        "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {
@@ -463,7 +487,15 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 22.22,
+                "completion_stats": {
+                    "num_modules": 9,
+                    "num_completed": 2,
+                    "num_in_progress": 0,
+                    "num_in_progress_incomplete": 1,
+                    "num_not_started": 6,
+                    "num_error": 0,
+                    "num_optional": 2,
+                }
             },
             "success": True,
         }
@@ -504,7 +536,7 @@ class TestModuleSelection:
 
         expected_response = {
             "data": [
-                {"config_status": "In Progress", "module_id": 1, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 3, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
@@ -550,7 +582,7 @@ class TestModuleSelection:
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 3, "survey_uid": 1},
-                {"config_status": "In Progress", "module_id": 4, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 4, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 15, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 17, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 7, "survey_uid": 1},
@@ -578,7 +610,7 @@ class TestModuleSelection:
                     },
                     {
                         "name": "User and role management",
-                        "status": "In Progress",
+                        "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {"name": "Enumerators", "status": "Not Started", "optional": False},
@@ -593,7 +625,15 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 28.57,
+                "completion_stats": {
+                    "num_modules": 7,
+                    "num_completed": 2,
+                    "num_in_progress": 0,
+                    "num_in_progress_incomplete": 1,
+                    "num_not_started": 4,
+                    "num_error": 0,
+                    "num_optional": 0,
+                }
             },
             "success": True,
         }
@@ -690,7 +730,15 @@ class TestModuleSelection:
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
-                "completion_percentage": 60,
+                "completion_stats": {
+                    "num_modules": 5,
+                    "num_completed": 3,
+                    "num_in_progress": 0,
+                    "num_in_progress_incomplete": 0,
+                    "num_not_started": 2,
+                    "num_error": 0,
+                    "num_optional": 4,
+                }
             },
             "success": True,
         }
