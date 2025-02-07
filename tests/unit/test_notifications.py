@@ -1806,3 +1806,110 @@ class TestNotifications:
         checkdiff = jsondiff.diff(expected_response, get_config_status.json)
 
         assert checkdiff == {}
+
+    def test_create_bulk_notifications(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test Create multiple notifications together using bulk endpoint
+
+        Expect: Success
+        """
+        payload = {
+            "actions": [
+                {
+                    "survey_uid": 1,
+                    "action": "Location hierarchy changed",
+                    "form_uid": 1,
+                },
+                {
+                    "survey_uid": 1,
+                    "action": "Prime Location updated",
+                    "form_uid": 1,
+                },
+            ]
+        }
+        response = client.post(
+            "/api/notifications/action/bulk",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+        expected_response = {
+            "success": True,
+            "message": "Notifications created successfully",
+            "data": [
+                {
+                    "survey_uid": "1",
+                    "action": "Location hierarchy changed",
+                    "message": "Notification created successfully",
+                },
+                {
+                    "survey_uid": "1",
+                    "action": "Prime Location updated",
+                    "message": "Notification created successfully",
+                },
+            ],
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+    def test_create_bulk_notifications_error(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test Create multiple notifications together using bulk endpoint when actions have error
+
+        Expect: 422, Errored action reported back
+        """
+        payload = {
+            "actions": [
+                {
+                    "survey_uid": 1,
+                    "action": "Location hierarchy changed",
+                    "form_uid": 1,
+                },
+                {
+                    "survey_uid": 1,
+                    "action": "Prime Location updated_errror",
+                    "form_uid": 1,
+                },
+            ]
+        }
+        response = client.post(
+            "/api/notifications/action/bulk",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "error": ["Action Prime Location updated_errror not found"],
+            "success": False,
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
