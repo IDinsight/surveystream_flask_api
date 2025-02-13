@@ -11356,13 +11356,29 @@ paths:
                               description: For GPS checks to match value within the threshold value
                               example: 10
                             gps_variable:
-                              type: string
-                              description: SCTO question name for GPS variable
-                              example: "district_name"
+                              type: object
+                              description: JSON object containing the GPS variable details
+                              properties:
+                                question_name:
+                                  type: string
+                                  description: SCTO question name for expected GPS variable
+                                  example: "gps"
+                                is_repeat_group:
+                                  type: boolean
+                                  description: Indicates if the question is a repeat group
+                                  example: true
                             grid_id:
-                              type: string
-                              description: SCTO question name for grid id variable
-                              example: "district_name"
+                              type: object
+                              description: JSON object containing the grid id variable details
+                              properties:
+                                question_name:
+                                  type: string
+                                  description: SCTO question name for grid id variable
+                                  example: "district_name"
+                                is_repeat_group:
+                                  type: boolean
+                                  description: Indicates if the question is a repeat group
+                                  example: true
                             logic_check_questions:
                               type: array
                               description: List of questions to be used for logic checks
