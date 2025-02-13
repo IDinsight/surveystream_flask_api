@@ -164,9 +164,13 @@ def get_dq_config(validated_query_params):
             and_(
                 DQCheck.form_uid == SCTOQuestion.form_uid,
                 or_(
-                    str(type_coerce(DQCheck.check_components, JSON)["gps_variable"])
+                    func.replace(
+                        cast(DQCheck.check_components["gps_variable"], String), '"', ""
+                    )
                     == SCTOQuestion.question_name,
-                    str(type_coerce(DQCheck.check_components, JSON)["grip_id"])
+                    func.replace(
+                        cast(DQCheck.check_components["grid_id"], String), '"', ""
+                    )
                     == SCTOQuestion.question_name,
                 ),
             ),
@@ -175,6 +179,7 @@ def get_dq_config(validated_query_params):
             DQCheck.type_id == 10,  # gps check
             DQCheck.form_uid == form_uid,
             SCTOQuestion.question_name == None,
+            DQCheck.active == True,
         )
         .distinct()
         .subquery()
@@ -559,25 +564,40 @@ def get_dq_checks(validated_query_params):
             gps_variable = check_dict["check_components"].get("gps_variable")
             grid_id = check_dict["check_components"].get("grid_id")
 
+            gps_check_questions = {}
             if gps_variable:
                 gps_variable_found = False
+                gps_variable_is_repeat_group = False
                 for question in scto_questions:
                     if question.question_name == gps_variable:
                         gps_variable_found = True
+                        gps_variable_is_repeat_group = question.is_repeat_group
 
                 if not gps_variable_found:
                     check_dict["active"] = False
                     check_dict["note"] = "GPS variable not found in form definition"
 
+                check_dict["check_components"]["gps_variable"] = {
+                    "question_name": gps_variable,
+                    "is_repeat_group": gps_variable_is_repeat_group,
+                }
+
             if grid_id:
                 grid_id_found = False
+                grid_id_is_repeat_group = False
                 for question in scto_questions:
                     if question.question_name == grid_id:
                         grid_id_found = True
+                        grid_id_is_repeat_group = question.is_repeat_group
 
                 if not grid_id_found:
                     check_dict["active"] = False
                     check_dict["note"] = "Grid ID not found in form definition"
+
+                check_dict["check_components"]["grid_id"] = {
+                    "question_name": grid_id,
+                    "is_repeat_group": grid_id_is_repeat_group,
+                }
 
         check_data.append(check_dict)
 
