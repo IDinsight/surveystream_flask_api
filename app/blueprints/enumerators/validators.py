@@ -114,6 +114,7 @@ class UpdateEnumerator(FlaskForm):
     language = StringField()
     home_address = StringField()
     gender = StringField(validators=[DataRequired()])
+    location_uid = IntegerField()
 
 
 class UpdateSurveyorForm(FlaskForm):
