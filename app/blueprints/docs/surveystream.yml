@@ -3813,6 +3813,9 @@ paths:
                     Any non-standard fields that should be displayed for the
                     enumerator. The keys are the user-defined labels of the
                     custom fields.
+                new_location_uid:
+                  type: integer
+                  description: The UID of the new location to map the enumerator to
               required:
                 - enumerator_id
                 - name
