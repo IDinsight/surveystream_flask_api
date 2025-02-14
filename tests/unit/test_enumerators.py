@@ -3093,7 +3093,7 @@ class TestEnumerators:
             "gender": "Male",
             "home_address": "my house",
             "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
-            "new_location_uid": 1,
+            "location_uid": 1,
         }
 
         user_fixture, expected_permission = user_permissions

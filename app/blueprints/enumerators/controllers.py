@@ -442,7 +442,7 @@ def update_enumerator(enumerator_uid, validated_payload):
     # This is because this method is used to update values but not add/remove/modify columns
     custom_fields_in_db = getattr(enumerator, "custom_fields", None)
     custom_fields_in_payload = payload.get("custom_fields")
-    location_uid = payload.get("new_location_uid")
+    location_uid = payload.get("location_uid")
 
     survey_uid = Form.query.filter_by(form_uid=enumerator.form_uid).first().survey_uid
     keys_in_db = []
