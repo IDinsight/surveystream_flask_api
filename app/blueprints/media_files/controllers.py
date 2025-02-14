@@ -1,19 +1,23 @@
 from flask import jsonify, request
+from sqlalchemy.exc import IntegrityError
+
+from app.blueprints.forms.models import Form
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
-    validate_query_params,
+    update_module_status,
+    update_module_status_after_request,
     validate_payload,
+    validate_query_params,
 )
-from .models import db, MediaFilesConfig
-from app.blueprints.forms.models import Form
+
+from .models import MediaFilesConfig, db
 from .routes import media_files_bp
 from .validators import (
-    MediaFilesConfigQueryParamValidator,
     CreateMediaFilesConfigValidator,
+    MediaFilesConfigQueryParamValidator,
     MediaFilesConfigValidator,
 )
-from sqlalchemy.exc import IntegrityError
 
 
 @media_files_bp.route("", methods=["GET"])
@@ -89,6 +93,7 @@ def get_media_files_config(media_files_config_uid):
 @logged_in_active_user_required
 @validate_payload(CreateMediaFilesConfigValidator)
 @custom_permissions_required("WRITE Media Files Config", "body", "form_uid")
+@update_module_status_after_request(12, "form_uid")
 def create_media_files_config(validated_payload):
     """
     Function to create a new media files config
@@ -196,9 +201,14 @@ def delete_media_files_config(media_files_config_uid):
     Function to delete a media file config
     """
     media_files_config = MediaFilesConfig.query.get_or_404(media_files_config_uid)
+    form_uid = media_files_config.form_uid
 
     try:
         db.session.delete(media_files_config)
+
+        # Update the status of the module
+        update_module_status(12, form_uid=form_uid)
+
         db.session.commit()
     except Exception as e:
         db.session.rollback()

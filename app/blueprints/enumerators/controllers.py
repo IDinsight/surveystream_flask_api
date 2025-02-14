@@ -21,6 +21,8 @@ from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    update_module_status,
+    update_module_status_after_request,
     validate_payload,
     validate_query_params,
 )
@@ -67,6 +69,7 @@ from .validators import (
 @validate_query_params(EnumeratorsQueryParamValidator)
 @validate_payload(EnumeratorsFileUploadValidator)
 @custom_permissions_required("WRITE Enumerators", "query", "form_uid")
+@update_module_status_after_request(7, "form_uid")
 def upload_enumerators(validated_query_params, validated_payload):
     """
     Method to validate the uploaded enumerators file and save it to the database
@@ -514,6 +517,11 @@ def delete_enumerator(enumerator_uid):
     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
         return jsonify({"error": "Enumerator not found"}), 404
 
+    # Get the enumerator's form_uid
+    form_uid = (
+        Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first().form_uid
+    )
+
     SurveyorForm.query.filter_by(enumerator_uid=enumerator_uid).delete()
     SurveyorLocation.query.filter_by(enumerator_uid=enumerator_uid).delete()
     MonitorForm.query.filter_by(enumerator_uid=enumerator_uid).delete()
@@ -523,6 +531,10 @@ def delete_enumerator(enumerator_uid):
 
     try:
         db.session.commit()
+
+        # Update the status of the module
+        update_module_status(7, form_uid=form_uid)
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
