@@ -442,10 +442,7 @@ def update_enumerator(enumerator_uid, validated_payload):
     # This is because this method is used to update values but not add/remove/modify columns
     custom_fields_in_db = getattr(enumerator, "custom_fields", None)
     custom_fields_in_payload = payload.get("custom_fields")
-    location_details: list[dict] = payload.get("surveyor_locations")
-    location_uid = None
-    if location_details is not None:
-        location_uid = location_details[0].get("location_uid")
+    location_uid = payload.get("new_location_uid")
 
     survey_uid = Form.query.filter_by(form_uid=enumerator.form_uid).first().survey_uid
     keys_in_db = []
@@ -459,11 +456,13 @@ def update_enumerator(enumerator_uid, validated_payload):
 
     if location_uid is not None:
         # Check if the location exists for the form's survey
-        bottom_level_geo_level_uid = location_details[0].get("geo_level_uid")
+        prime_geo_level_uid = (
+            Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
+        )
 
         location = Location.query.filter_by(
             location_uid=location_uid,
-            geo_level_uid=bottom_level_geo_level_uid,
+            geo_level_uid=prime_geo_level_uid,
             survey_uid=survey_uid,
         ).first()
 
@@ -522,14 +521,23 @@ def update_enumerator(enumerator_uid, validated_payload):
             synchronize_session="fetch",
         )
         if location_uid is not None:
-            SurveyorLocation.query.filter_by(
-                enumerator_uid=enumerator_uid,
-                form_uid=enumerator.form_uid,
-            ).update(
-                {SurveyorLocation.location_uid: location_uid},
-                synchronize_session="fetch",
+
+            statement = (
+                pg_insert(SurveyorLocation)
+                .values(
+                    form_uid=enumerator.form_uid,
+                    enumerator_uid=enumerator_uid,
+                    location_uid=location_uid,
+                )
+                .on_conflict_do_update(
+                    constraint="pk_location_surveyor_mapping",
+                    set_={SurveyorLocation.location_uid: location_uid},
+                )
             )
-        db.session.commit()
+
+            db.session.execute(statement)
+
+            db.session.commit()
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -784,20 +792,6 @@ def update_enumerator_role(enumerator_uid, validated_payload):
     form_uid = validated_payload.form_uid.data
     enumerator_type = validated_payload.enumerator_type.data
     location_uid = validated_payload.location_uid.data
-
-    # Convert enumerator_uid to integer if it's a string
-    try:
-        enumerator_uid = int(enumerator_uid)
-    except (ValueError, TypeError):
-        return (
-            jsonify(
-                {
-                    "error": "Invalid enumerator_uid format - must be an integer",
-                    "success": False,
-                }
-            ),
-            400,
-        )
 
     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
         return jsonify({"error": "Enumerator not found"}), 404
