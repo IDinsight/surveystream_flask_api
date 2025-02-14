@@ -445,7 +445,9 @@ def update_enumerator(enumerator_uid, validated_payload):
     # This is because this method is used to update values but not add/remove/modify columns
     custom_fields_in_db = getattr(enumerator, "custom_fields", None)
     custom_fields_in_payload = payload.get("custom_fields")
+    location_uid = payload.get("location_uid")
 
+    survey_uid = Form.query.filter_by(form_uid=enumerator.form_uid).first().survey_uid
     keys_in_db = []
     keys_in_payload = []
 
@@ -454,6 +456,29 @@ def update_enumerator(enumerator_uid, validated_payload):
 
     if custom_fields_in_payload is not None:
         keys_in_payload = custom_fields_in_payload.keys()
+
+    if location_uid is not None:
+        # Check if the location exists for the form's survey
+        prime_geo_level_uid = (
+            Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
+        )
+
+        location = Location.query.filter_by(
+            location_uid=location_uid,
+            geo_level_uid=prime_geo_level_uid,
+            survey_uid=survey_uid,
+        ).first()
+
+        if location is None:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": "Location does not exist for the survey",
+                    }
+                ),
+                404,
+            )
 
     for payload_key in keys_in_payload:
         # exclude column_mapping from these checks
@@ -498,7 +523,24 @@ def update_enumerator(enumerator_uid, validated_payload):
             },
             synchronize_session="fetch",
         )
-        db.session.commit()
+        if location_uid is not None:
+
+            statement = (
+                pg_insert(SurveyorLocation)
+                .values(
+                    form_uid=enumerator.form_uid,
+                    enumerator_uid=enumerator_uid,
+                    location_uid=location_uid,
+                )
+                .on_conflict_do_update(
+                    constraint="pk_location_surveyor_mapping",
+                    set_={SurveyorLocation.location_uid: location_uid},
+                )
+            )
+
+            db.session.execute(statement)
+
+            db.session.commit()
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
