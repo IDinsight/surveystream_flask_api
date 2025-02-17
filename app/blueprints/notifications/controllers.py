@@ -85,6 +85,11 @@ def get_notifications():
             )
             .join(Survey, Survey.survey_uid == SurveyNotification.survey_uid)
             .join(Module, Module.module_id == SurveyNotification.module_id)
+            .join(
+                ModuleStatus,
+                (ModuleStatus.module_id == Module.module_id)
+                & (ModuleStatus.survey_uid == SurveyNotification.survey_uid),
+            )  # Added to get only modules that are active
             .order_by(SurveyNotification.created_at.desc())
             .all()
         )
@@ -237,15 +242,6 @@ def post_notifications(validated_payload):
 
         db.session.add(notification)
 
-        if (
-            validated_payload.severity.data == "error"
-            and validated_payload.resolution_status.data != "done"
-        ):
-            ModuleStatus.query.filter(
-                ModuleStatus.module_id == module_id,
-                ModuleStatus.survey_uid == survey_uid,
-            ).update({"config_status": "Error"})
-
     else:
         user_uid = validated_payload.user_uid.data
         user = User.query.filter(User.user_uid == user_uid).first()
@@ -325,17 +321,6 @@ def put_notifications(validated_payload):
         survey_notification.severity = validated_payload.severity.data
         survey_notification.message = validated_payload.message.data
         notification = survey_notification
-
-        if validated_payload.severity.data == "error":
-            config_status = (
-                "Error"
-                if validated_payload.resolution_status.data != "done"
-                else "Done"
-            )
-            ModuleStatus.query.filter(
-                ModuleStatus.module_id == notification.module_id,
-                ModuleStatus.survey_uid == notification.survey_uid,
-            ).update({"config_status": config_status})
 
     else:
         user_notification = UserNotification.query.filter(
@@ -425,13 +410,6 @@ def resolve_notification(validated_payload):
                     ),
                     404,
                 )
-            if resolution_status == "done":
-
-                ModuleStatus.query.filter(
-                    ModuleStatus.module_id == notification.module_id,
-                    ModuleStatus.survey_uid == notification.survey_uid,
-                    ModuleStatus.config_status == "Error",
-                ).update({"config_status": "Done"})
 
         elif type == "user":
             notification = UserNotification.query.filter(
@@ -459,14 +437,6 @@ def resolve_notification(validated_payload):
 
         for survey_notification in survey_notifications:
             survey_notification.resolution_status = resolution_status
-
-        if resolution_status == "done":
-
-            ModuleStatus.query.filter(
-                ModuleStatus.module_id == module_id,
-                ModuleStatus.survey_uid == survey_uid,
-                ModuleStatus.config_status == "Error",
-            ).update({"config_status": "Done"})
 
     try:
         db.session.commit()
@@ -575,7 +545,6 @@ def create_notification_via_action(validated_payload):
             form_uid,
             template["condition"],
         ):
-
             message = notification_action.message + " " + template["message"]
             notification = SurveyNotification(
                 survey_uid=survey_uid,

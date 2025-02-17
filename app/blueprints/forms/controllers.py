@@ -12,6 +12,8 @@ from app.utils.utils import (
     custom_permissions_required,
     get_aws_secret,
     logged_in_active_user_required,
+    update_module_status,
+    update_module_status_after_request,
     validate_payload,
     validate_query_params,
 )
@@ -113,6 +115,7 @@ def get_form(form_uid):
 @custom_permissions_required(
     ["WRITE Data Quality Forms", "WRITE Admin Forms"], "body", "survey_uid"
 )
+@update_module_status_after_request(3, "survey_uid")
 def create_form(validated_payload):
     """
     Create a form
@@ -269,6 +272,10 @@ def delete_form(form_uid):
         return jsonify({"error": "Form not found"}), 404
 
     db.session.delete(form)
+
+    # Update the module status
+    update_module_status(3, survey_uid=form.survey_uid)
+
     db.session.commit()
     return "", 204
 
@@ -279,6 +286,7 @@ def delete_form(form_uid):
 @custom_permissions_required(
     ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
 )
+@update_module_status_after_request(3, "form_uid")
 def create_scto_question_mapping(form_uid, validated_payload):
     """
     Create a SurveyCTO question mapping for a form
@@ -357,6 +365,7 @@ def create_scto_question_mapping(form_uid, validated_payload):
 @custom_permissions_required(
     ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
 )
+@update_module_status_after_request(3, "form_uid")
 def update_scto_question_mapping(form_uid, validated_payload):
     """
     Update the SCTO question mapping for a form
@@ -440,6 +449,7 @@ def get_scto_question_mapping(form_uid):
 @custom_permissions_required(
     ["WRITE Data Quality Forms", "WRITE Admin Forms"], "path", "form_uid"
 )
+@update_module_status_after_request(3, "form_uid")
 def delete_scto_question_mapping(form_uid):
     """
     Delete the question mapping for a form

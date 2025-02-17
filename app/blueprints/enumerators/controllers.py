@@ -21,6 +21,8 @@ from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    update_module_status,
+    update_module_status_after_request,
     validate_payload,
     validate_query_params,
 )
@@ -67,6 +69,7 @@ from .validators import (
 @validate_query_params(EnumeratorsQueryParamValidator)
 @validate_payload(EnumeratorsFileUploadValidator)
 @custom_permissions_required("WRITE Enumerators", "query", "form_uid")
+@update_module_status_after_request(7, "form_uid")
 def upload_enumerators(validated_query_params, validated_payload):
     """
     Method to validate the uploaded enumerators file and save it to the database
@@ -442,7 +445,9 @@ def update_enumerator(enumerator_uid, validated_payload):
     # This is because this method is used to update values but not add/remove/modify columns
     custom_fields_in_db = getattr(enumerator, "custom_fields", None)
     custom_fields_in_payload = payload.get("custom_fields")
+    location_uid = payload.get("location_uid")
 
+    survey_uid = Form.query.filter_by(form_uid=enumerator.form_uid).first().survey_uid
     keys_in_db = []
     keys_in_payload = []
 
@@ -451,6 +456,29 @@ def update_enumerator(enumerator_uid, validated_payload):
 
     if custom_fields_in_payload is not None:
         keys_in_payload = custom_fields_in_payload.keys()
+
+    if location_uid is not None:
+        # Check if the location exists for the form's survey
+        prime_geo_level_uid = (
+            Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
+        )
+
+        location = Location.query.filter_by(
+            location_uid=location_uid,
+            geo_level_uid=prime_geo_level_uid,
+            survey_uid=survey_uid,
+        ).first()
+
+        if location is None:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "errors": "Location does not exist for the survey",
+                    }
+                ),
+                404,
+            )
 
     for payload_key in keys_in_payload:
         # exclude column_mapping from these checks
@@ -495,7 +523,24 @@ def update_enumerator(enumerator_uid, validated_payload):
             },
             synchronize_session="fetch",
         )
-        db.session.commit()
+        if location_uid is not None:
+
+            statement = (
+                pg_insert(SurveyorLocation)
+                .values(
+                    form_uid=enumerator.form_uid,
+                    enumerator_uid=enumerator_uid,
+                    location_uid=location_uid,
+                )
+                .on_conflict_do_update(
+                    constraint="pk_location_surveyor_mapping",
+                    set_={SurveyorLocation.location_uid: location_uid},
+                )
+            )
+
+            db.session.execute(statement)
+
+            db.session.commit()
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -514,6 +559,11 @@ def delete_enumerator(enumerator_uid):
     if Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first() is None:
         return jsonify({"error": "Enumerator not found"}), 404
 
+    # Get the enumerator's form_uid
+    form_uid = (
+        Enumerator.query.filter_by(enumerator_uid=enumerator_uid).first().form_uid
+    )
+
     SurveyorForm.query.filter_by(enumerator_uid=enumerator_uid).delete()
     SurveyorLocation.query.filter_by(enumerator_uid=enumerator_uid).delete()
     MonitorForm.query.filter_by(enumerator_uid=enumerator_uid).delete()
@@ -523,6 +573,10 @@ def delete_enumerator(enumerator_uid):
 
     try:
         db.session.commit()
+
+        # Update the status of the module
+        update_module_status(7, form_uid=form_uid)
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500

@@ -2,13 +2,13 @@
 9,5,"{surveyor_location_mapping,target_location_mapping}"
 9,7,"{Always}"
 9,8,"{Always}"
-9,14,"{Always}"
+9,14,"{surveying_method_mixed_mode}"
 9,16,
 9,17,"{Always}"
 10,5,"{surveyor_location_mapping,target_location_mapping}"
 10,7,
 10,8,
-10,14,"{Always}"
+10,14,"{surveying_method_mixed_mode}"
 12,5,
 12,8,
 15,7,"{Always}"
@@ -16,4 +16,4 @@
 11,5,
 11,7,
 11,8,
-11,14,"{Always}"
+11,14,"{surveying_method_mixed_mode}"

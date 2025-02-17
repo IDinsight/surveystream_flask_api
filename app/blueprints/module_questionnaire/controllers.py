@@ -1,11 +1,14 @@
+from flask import jsonify
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+from app import db
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    update_module_status_after_request,
     validate_payload,
 )
-from flask import jsonify
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-from app import db
+
 from .models import ModuleQuestionnaire
 from .routes import module_questionnaire_bp
 from .validators import ModuleQuestionnaireForm
@@ -31,6 +34,7 @@ def get_survey_module_questionnaire(survey_uid):
 @logged_in_active_user_required
 @validate_payload(ModuleQuestionnaireForm)
 @custom_permissions_required("ADMIN", "path", "survey_uid")
+@update_module_status_after_request(1, "survey_uid")
 def update_survey_module_questionnaire(survey_uid, validated_payload):
     # do upsert
     statement = (

@@ -443,6 +443,101 @@ def validate_payload(validator):
     return decorator
 
 
+def update_module_status_after_request(module_id, identifier):
+    """
+    Decorator to update the module status post request
+
+    """
+
+    def decorator(fn):
+        @wraps(fn)
+        def decorated_function(*args, **kwargs):
+            response = fn(*args, **kwargs)
+
+            # We only want to update the module status if the response is successful
+            if response[1] in [200, 201]:
+                survey_uid = None
+                form_uid = None
+
+                # The endpoints have either survey_uid or form_uid in payload or query params
+                if identifier == "survey_uid":
+                    if (
+                        "validated_payload" in kwargs
+                        and "survey_uid" in kwargs["validated_payload"]
+                    ):
+                        survey_uid = kwargs["validated_payload"].survey_uid.data
+                    else:
+                        survey_uid = kwargs["validated_query_params"].survey_uid.data
+                elif identifier == "form_uid":
+                    if (
+                        "validated_payload" in kwargs
+                        and "form_uid" in kwargs["validated_payload"]
+                    ):
+                        form_uid = kwargs["validated_payload"].form_uid.data
+                    else:
+                        form_uid = kwargs["validated_query_params"].form_uid.data
+
+                update_module_status(
+                    module_id, survey_uid=survey_uid, form_uid=form_uid
+                )
+
+            return response
+
+        return decorated_function
+
+    return decorator
+
+
+def update_module_status(module_id, survey_uid=None, form_uid=None):
+    """
+    Function to update the module status
+
+    """
+    from app.blueprints.module_selection.models import ModuleStatus
+    from app.blueprints.surveys.utils import ModuleStatusCalculator
+    from app.blueprints.forms.models import Form
+
+    if survey_uid is None:
+        survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
+
+    module_status_calculator = ModuleStatusCalculator(survey_uid)
+    module_status = module_status_calculator.get_status(module_id)
+
+    ModuleStatus.query.filter_by(survey_uid=survey_uid, module_id=module_id).update(
+        {"config_status": module_status}
+    )
+
+    # Mapping of which other modules are affected by this change
+    effected_modules_dict = {
+        # Mapping module and user management module are not included in this list
+        # because these are effected by User changes that can happen outside a survey
+        1: [14],
+        # Since module selection is adding modules, we need to update the status for all added modules
+        2: [5, 7, 8, 9, 11, 12, 14, 15, 16, 18],
+        # Admin forms is in this list because the same endpoint is used for all forms
+        3: [7, 8, 9, 11, 12, 14, 15, 16, 18],
+        7: [9],
+        8: [9],
+    }
+
+    for effected_module_id in effected_modules_dict.get(module_id, []):
+        # Check if module is in the list of active modules for the survey
+        module_status = ModuleStatus.query.filter_by(
+            survey_uid=survey_uid, module_id=effected_module_id
+        ).first()
+
+        if module_status:
+            calculated_module_status = module_status_calculator.get_status(
+                effected_module_id
+            )
+
+            ModuleStatus.query.filter_by(
+                survey_uid=survey_uid, module_id=effected_module_id
+            ).update({"config_status": calculated_module_status})
+
+    db.session.commit()
+
+
 class SurveyNotFoundError(Exception):
     def __init__(self, errors):
         self.errors = [errors]
