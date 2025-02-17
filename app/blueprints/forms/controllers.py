@@ -313,7 +313,7 @@ def create_scto_question_mapping(form_uid, validated_payload):
             ),
             422,
         )
-    if form.form_type == "parent" and validated_payload.survey_status.data is None :
+    if form.form_type == "parent" and validated_payload.survey_status.data is None:
         return (
             jsonify(
                 {
@@ -720,6 +720,10 @@ def ingest_scto_form_definition(form_uid):
 
     try:
         db.session.commit()
+        survey_uid = form.survey_uid
+        from app.blueprints.notifications.utils import check_form_variable_missing
+
+        check_form_variable_missing(survey_uid, form_uid, db)
     except IntegrityError as e:
         db.session.rollback()
         return (

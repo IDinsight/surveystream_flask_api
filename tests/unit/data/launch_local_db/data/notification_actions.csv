@@ -1,6 +1,17 @@
 module_id,name,message
-5,Locations reuploaded,Locations data has been reuploaded for this survey.
-5,Location hierarchy changed,Location hierarchy has been changed for this survey.
-5,Location level added,New location levels has been added for this survey.
-5,Location level deleted,Location levels has been deleted for this survey.
-5,Prime Location updated,Prime location level has been changed for this survey.
+5,"Locations reuploaded","Locations data has been reuploaded for this survey."
+5,"Location hierarchy changed","Location hierarchy has been changed for this survey."
+5,"Location level added","New location levels has been added for this survey."
+5,"Location level deleted","Location levels has been deleted for this survey."
+3,"Form ID changed","SCTO Form ID has changed."
+1,"Surveyor Mapping criteria includes Gender","Supervisor-Surveyor Mapping criteria changed to gender based."
+1,"Surveyor Mapping criteria includes Language","Supervisor-Surveyor Mapping criteria changed to language based."
+1,"Surveyor Mapping criteria includes Location","Supervisor-Surveyor Mapping criteria changed to location based."
+1,"Target Mapping criteria includes Location","Supervisor-Target Mapping criteria changed to location based."
+1,"Target Mapping criteria includes Language","Supervisor-Target Mapping criteria changed to language based."
+1,"Target Mapping criteria includes Gender","Supervisor-Target Mapping criteria changed to gender based."
+5,"Prime location updated","Prime location level has been changed for this survey."
+8,"Target config changed to CSV","Target config changed to CSV"
+1,"Survey end date approaching","Survey end date is approaching"
+1,"Draft survey start date approaching","Survey start date is approaching, your survey is in draft state."
+15,"Email delivery failed","Email delivery has failed for the survey."

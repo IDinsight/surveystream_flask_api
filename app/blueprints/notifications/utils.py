@@ -1,5 +1,8 @@
+from sqlalchemy import column, distinct, literal_column, select, union
+
+from app.blueprints.dq.models import DQCheck, DQCheckFilters
 from app.blueprints.enumerators.models import Enumerator, SurveyorLocation
-from app.blueprints.forms.models import Form
+from app.blueprints.forms.models import Form, SCTOQuestion, SCTOQuestionMapping
 from app.blueprints.locations.models import Location
 from app.blueprints.mapping.models import UserMappingConfig
 from app.blueprints.media_files.models import MediaFilesConfig
@@ -36,6 +39,110 @@ def set_module_status_error(survey_uid, module_id):
         ModuleStatus.module_id == module_id,
         ModuleStatus.survey_uid == survey_uid,
     ).update({"config_status": "Error"}, synchronize_session="fetch")
+
+
+def check_form_variable_missing(survey_uid, form_uid, db):
+
+    # Get form questions
+    form_questions = (
+        select(distinct(SCTOQuestion.question_name))
+        .where(SCTOQuestion.form_uid == form_uid)
+        .scalar_subquery()
+    )
+
+    # Combine questions from DQCheckFilter and DQCheck
+    dq_check_filters = (
+        select(DQCheckFilters.question_name)
+        .join(DQCheck, DQCheckFilters.dq_check_uid == DQCheck.dq_check_uid)
+        .where(DQCheck.form_uid == form_uid)
+    )
+
+    dq_check_questions = select(DQCheck.question_name).where(
+        DQCheck.form_uid == form_uid
+    )
+
+    combined_questions = union(dq_check_filters, dq_check_questions).subquery()
+
+    # Final query to get missing questions
+    missing_dq_questions = db.session.execute(
+        select(distinct(combined_questions.c.question_name)).where(
+            combined_questions.c.question_name.notin_(form_questions)
+        )
+    ).fetchall()
+
+    if len(missing_dq_questions) > 0:
+        # create a dq module notification
+        if not check_module_notification_exists(survey_uid, 11, "error"):
+            missing_vars = [q[0] for q in missing_dq_questions]
+            notification = SurveyNotification(
+                survey_uid=survey_uid,
+                module_id=11,
+                severity="error",
+                message=f"Following DQ variables are missing from form defintion: "
+                + f"{', '.join(missing_vars)}. Kindly review form changes and update dq configs.",
+                resolution_status="in progress",
+            )
+            db.session.add(notification)
+            db.session.flush()
+            pass
+    # Get required fields and check for missing questions in one query
+    mapping_query = select(
+        SCTOQuestionMapping.survey_status,
+        SCTOQuestionMapping.target_id,
+        SCTOQuestionMapping.revisit_section,
+        SCTOQuestionMapping.enumerator_id,
+        SCTOQuestionMapping.dq_enumerator_id,
+        SCTOQuestionMapping.locations,
+    ).where(SCTOQuestionMapping.form_uid == form_uid)
+
+    missing_required_questions = []
+    mapping_result = db.session.execute(mapping_query).first()
+    if mapping_result:
+        # Combine base fields and location fields into a single list
+        base_fields = [
+            mapping_result[0],
+            mapping_result[1],
+            mapping_result[2],
+            mapping_result[3],
+            mapping_result[4],
+        ]
+        location_fields = list(mapping_result[5].values()) if mapping_result[5] else []
+        required_fields = [q for q in base_fields + location_fields if q]
+
+        # Create a subquery of required fields
+        required_fields_query = union(
+            *[
+                select(literal_column(f"'{field}'").label("question_name"))
+                for field in required_fields
+            ]
+        ).subquery()
+
+        # Check missing questions
+        missing_required_questions = db.session.execute(
+            select(distinct(required_fields_query.c.question_name)).where(
+                required_fields_query.c.question_name.notin_(form_questions)
+            )
+        ).fetchall()
+
+    if len(missing_required_questions) > 0:
+        if not check_module_notification_exists(survey_uid, 3, "error"):
+            missing_vars = [q[0] for q in missing_required_questions]
+            notification = SurveyNotification(
+                survey_uid=survey_uid,
+                module_id=3,
+                severity="error",
+                message=f"Following SCTO Question mapping variables are missing from form definition: "
+                f"{', '.join(missing_vars)}. Please review form changes.",
+                resolution_status="in progress",
+            )
+            db.session.add(notification)
+            db.session.flush()
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+    return
 
 
 def check_notification_condition(survey_uid, form_uid, input_conditions):
@@ -92,7 +199,9 @@ def check_notification_condition(survey_uid, form_uid, input_conditions):
     return all(survey_conditions.values())
 
 
-# Helper functions to check conditions
+#                       ########                    #
+#  Helper functions to check notification conditions #
+#                       ########                    #
 
 
 def check_location_exists(survey_uid):
