@@ -186,6 +186,29 @@ class TestForms:
         yield
 
     @pytest.fixture()
+    def create_module_selection(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Insert admin forms and data quality forms modules
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "modules": ["11", "18"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
     def create_parent_form(self, client, login_test_user, csrf_token, create_survey):
         """
         Insert new form as a setup step for the form tests
@@ -536,6 +559,33 @@ class TestForms:
             "success": True,
         }
 
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_create_scto_question_mapping_without_survey_status(
+        self, client, csrf_token, login_test_user, create_parent_form
+    ):
+        """Test that the SCTO question mapping for parent form gives error if no survey status is provided"""
+        payload = {
+            "form_uid": 1,
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+        response = client.post(
+            "/api/forms/1/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "error": "form_type=parent must have a mapping for survey_status",
+            "success": False,
+        }
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -1553,3 +1603,214 @@ class TestForms:
             }
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
+    def test_scto_information_status_in_progress(
+        self, client, login_test_user, create_parent_form
+    ):
+        """
+        Test creating a form without question mapping, the status should be in progress
+
+        """
+        # Test the survey was inserted correctly
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 2, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 4, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+    def test_scto_information_status_done(
+        self, client, login_test_user, create_parent_form, csrf_token
+    ):
+        """
+        Test creating a form with question mapping, the status should be in progress
+
+        """
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 1,
+            "survey_status": "test_survey_status",
+            "revisit_section": "test_revisit_section",
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/1/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        # Test the survey was inserted correctly
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 2, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 4, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+    def test_dq_form_in_progress_incomplete(
+        self,
+        client,
+        login_test_user,
+        create_parent_form,
+        create_module_selection,
+        create_dq_form,
+    ):
+        """
+        Tests that the DQ form status is in progress - incomplete when the form is created
+        but question mapping is not done
+
+        """
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 2, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 4, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 11,
+                    "survey_uid": 1,
+                },
+                {"config_status": "Not Started", "module_id": 18, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+    def test_dq_form_in_progress_complete(
+        self,
+        client,
+        login_test_user,
+        create_parent_form,
+        create_module_selection,
+        create_dq_form,
+        csrf_token,
+    ):
+        """
+        Tests that the DQ form status is in progress when the form is created
+
+        """
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 2,
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "dq_enumerator_id": "test_dq_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/2/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 201
+
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 2, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 4, "survey_uid": 1},
+                {"config_status": "In Progress", "module_id": 11, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 18, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+    def test_admin_form_in_progress_incomplete(
+        self, client, login_test_user, create_module_selection, create_admin_form
+    ):
+        """
+        Tests that the admin form status is in progress - incomplete
+        when form is added but question mapping is missing
+
+        """
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 2, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 4, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 11, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 18,
+                    "survey_uid": 1,
+                },
+            ],
+            "success": True,
+        }
+
+    def test_admin_form_in_progress_complete(
+        self,
+        client,
+        login_test_user,
+        create_module_selection,
+        create_admin_form,
+        csrf_token,
+    ):
+        """
+        Tests that the Admin Form Status is in progress when the form is created and question mapping is done
+
+        """
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 2,
+            "enumerator_id": "test_enumerator_id",
+        }
+
+        response = client.post(
+            "/api/forms/2/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 201
+
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 2, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 4, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 11, "survey_uid": 1},
+                {"config_status": "In Progress", "module_id": 18, "survey_uid": 1},
+            ],
+            "success": True,
+        }

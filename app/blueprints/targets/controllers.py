@@ -24,6 +24,7 @@ from app.utils.utils import (
     custom_permissions_required,
     get_aws_secret,
     logged_in_active_user_required,
+    update_module_status_after_request,
     validate_payload,
     validate_query_params,
 )
@@ -64,6 +65,7 @@ from .validators import (
 @validate_query_params(TargetsQueryParamValidator)
 @validate_payload(TargetsFileUploadValidator)
 @custom_permissions_required("WRITE Targets", "query", "form_uid")
+@update_module_status_after_request(8, "form_uid")
 def upload_targets(validated_query_params, validated_payload):
     """
     Method to validate the uploaded targets file and save it to the database
@@ -289,10 +291,18 @@ def upload_targets(validated_query_params, validated_payload):
                         ),
                         422,
                     )
+
+            # Set Preview mode to true
+            TargetConfig.query.filter_by(form_uid=form_uid).update(
+                {"preview_mode": True},
+            )
         else:
             csv_string = base64.b64decode(
                 validated_payload.file.data, validate=True
             ).decode("utf-8")
+            TargetConfig.query.filter_by(form_uid=form_uid, preview_mode=False).update(
+                {"preview_mode": False},
+            )
     except binascii.Error:
         return (
             jsonify(
@@ -335,7 +345,6 @@ def upload_targets(validated_query_params, validated_payload):
             422,
         )
     except Exception as e:
-
         if str(e).startswith("409 Client Error") or str(e).startswith(
             "417 Client Error"
         ):
@@ -468,6 +477,10 @@ def upload_targets(validated_query_params, validated_payload):
             column_mapping,
             validated_payload.mode.data,
         )
+        TargetConfig.query.filter_by(form_uid=form_uid).update(
+            {TargetConfig.targets_last_uploaded: func.now()},
+        )
+        db.session.commit()
 
     except IntegrityError as e:
         db.session.rollback()
@@ -1458,6 +1471,7 @@ def get_target_config(validated_query_params):
 @logged_in_active_user_required
 @validate_payload(TargetConfigValidator)
 @custom_permissions_required("WRITE Targets", "body", "form_uid")
+@update_module_status_after_request(8, "form_uid")
 def create_target_config(validated_payload):
     """
     Method to create a target configuration
@@ -1717,6 +1731,7 @@ def get_target_scto_columns(validated_query_params):
 @logged_in_active_user_required
 @validate_query_params(TargetsQueryParamValidator)
 @custom_permissions_required("WRITE Targets", "query", "form_uid")
+@update_module_status_after_request(8, "form_uid")
 def delete_all_targets(validated_query_params):
     """
     Method to delete targets from the database

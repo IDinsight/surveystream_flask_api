@@ -8,6 +8,7 @@ from app import db
 from app.blueprints.auth.models import User
 from app.blueprints.locations.models import Location
 from app.blueprints.targets.models import Target
+from app.blueprints.enumerators.models import Enumerator
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
@@ -49,6 +50,20 @@ def get_target_mapping_config(validated_query_params):
                     "success": False,
                     "errors": {
                         "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
+        )
+
+    # Check if the form has Targets, if not return a response saying targets are empty
+    if Target.query.filter(Target.form_uid == form_uid).first() is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Targets are not available for this form. Kindly upload targets first.",
                     },
                 }
             ),
@@ -343,6 +358,20 @@ def get_target_mapping(validated_query_params):
             422,
         )
 
+    # Check if the form has Targets, if not return a response saying targets are empty
+    if Target.query.filter(Target.form_uid == form_uid).first() is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Targets are not available for this form. Kindly upload targets first.",
+                    },
+                }
+            ),
+            422,
+        )
+
     # Fetch all targets to supervisor mappings
     mappings = target_mapping.generate_mappings()
 
@@ -446,8 +475,12 @@ def get_target_mapping(validated_query_params):
                         "supervisor_mapping_criteria_values": {
                             "criteria": target.mapped_to_values,
                             "other": {
-                                "location_id": location.location_id,
-                                "location_name": location.location_name,
+                                "location_id": location.location_id
+                                if location
+                                else None,
+                                "location_name": location.location_name
+                                if location
+                                else None,
                             }
                             if "Location" in target_mapping.mapping_criteria
                             else {},
@@ -533,8 +566,12 @@ def get_target_mapping(validated_query_params):
                         "supervisor_mapping_criteria_values": {
                             "criteria": target.mapped_to_values,
                             "other": {
-                                "location_id": location.location_id,
-                                "location_name": location.location_name,
+                                "location_id": location.location_id
+                                if location
+                                else None,
+                                "location_name": location.location_name
+                                if location
+                                else None,
                             }
                             if "Location" in target_mapping.mapping_criteria
                             else {},
@@ -618,6 +655,20 @@ def get_surveyor_mapping_config(validated_query_params):
                     "success": False,
                     "errors": {
                         "mapping_errors": e.mapping_errors,
+                    },
+                }
+            ),
+            422,
+        )
+
+    # Check if the form has Enumerators, if not return a response saying enumerators are empty
+    if Enumerator.query.filter(Enumerator.form_uid == form_uid).first() is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
                     },
                 }
             ),
@@ -915,6 +966,20 @@ def get_surveyor_mapping(validated_query_params):
             422,
         )
 
+    # Check if the form has Enumerators, if not return a response saying enumerators are empty
+    if Enumerator.query.filter(Enumerator.form_uid == form_uid).first() is None:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
+                    },
+                }
+            ),
+            422,
+        )
+
     # Fetch all surveyor to supervisor mappings
     mappings = surveyor_mapping.generate_mappings()
 
@@ -1021,8 +1086,12 @@ def get_surveyor_mapping(validated_query_params):
                         "supervisor_mapping_criteria_values": {
                             "criteria": surveyor.mapped_to_values,
                             "other": {
-                                "location_id": location.location_id,
-                                "location_name": location.location_name,
+                                "location_id": location.location_id
+                                if location
+                                else None,
+                                "location_name": location.location_name
+                                if location
+                                else None,
                             }
                             if "Location" in surveyor_mapping.mapping_criteria
                             else {},
@@ -1110,8 +1179,12 @@ def get_surveyor_mapping(validated_query_params):
                         "supervisor_mapping_criteria_values": {
                             "criteria": surveyor.mapped_to_values,
                             "other": {
-                                "location_id": location.location_id,
-                                "location_name": location.location_name,
+                                "location_id": location.location_id
+                                if location
+                                else None,
+                                "location_name": location.location_name
+                                if location
+                                else None,
                             }
                             if "Location" in surveyor_mapping.mapping_criteria
                             else {},

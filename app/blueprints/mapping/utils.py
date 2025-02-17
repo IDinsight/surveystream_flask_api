@@ -58,7 +58,7 @@ class TargetMapping:
             or module_questionnaire.target_mapping_criteria is None
             or len(module_questionnaire.target_mapping_criteria) == 0
         ):
-            raise MappingError("Supervisor to target mapping criteria not found.")
+            raise MappingError("Target to supervisor mapping criteria not found.")
 
         return module_questionnaire.target_mapping_criteria
 
@@ -75,7 +75,7 @@ class TargetMapping:
         if "Location" in self.mapping_criteria:
             if prime_geo_level_uid is None:
                 raise MappingError(
-                    "Prime geo level not configured for the survey. Cannot perform supervisor to target mapping based on location without a prime geo level."
+                    "Prime geo level not configured for the survey. Cannot perform target to supervisor mapping based on location without a prime geo level."
                 )
         return prime_geo_level_uid
 
@@ -90,7 +90,7 @@ class TargetMapping:
         ]
         if not roles:
             raise MappingError(
-                "Roles not configured for the survey. Cannot perform supervisor to target mapping without roles."
+                "Roles not configured for the survey. Cannot perform target to supervisor mapping without roles."
             )
 
         try:
@@ -485,7 +485,7 @@ class SurveyorMapping:
             or module_questionnaire.surveyor_mapping_criteria is None
             or len(module_questionnaire.surveyor_mapping_criteria) == 0
         ):
-            raise MappingError("Supervisor to surveyor mapping criteria not found.")
+            raise MappingError("Surveyor to supervisor mapping criteria not found.")
 
         return module_questionnaire.surveyor_mapping_criteria
 
@@ -502,7 +502,7 @@ class SurveyorMapping:
         if "Location" in self.mapping_criteria:
             if prime_geo_level_uid is None:
                 raise MappingError(
-                    "Prime geo level not configured for the survey. Cannot perform supervisor to surveyor mapping based on location without a prime geo level."
+                    "Prime geo level not configured for the survey. Cannot perform surveyor to supervisor mapping based on location without a prime geo level."
                 )
         return prime_geo_level_uid
 
@@ -517,7 +517,7 @@ class SurveyorMapping:
         ]
         if not roles:
             raise MappingError(
-                "Roles not configured for the survey. Cannot perform supervisor to surveyor mapping without roles."
+                "Roles not configured for the survey. Cannot perform surveyor to supervisor mapping without roles."
             )
 
         try:
