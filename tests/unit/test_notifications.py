@@ -629,6 +629,34 @@ class TestNotifications:
         assert response.status_code == 200
 
     @pytest.fixture()
+    def create_scto_question_mapping(
+        self, client, csrf_token, login_test_user, create_form
+    ):
+        """
+        Test that the SCTO question mapping is inserted correctly
+        """
+
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 1,
+            "survey_status": "test_survey_status_error",
+            "revisit_section": "test_revisit_section",
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/1/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+    @pytest.fixture()
     def create_survey_notification(
         self, client, login_test_user, csrf_token, create_form
     ):
@@ -1749,12 +1777,13 @@ class TestNotifications:
                     "notification_uid": 3,
                     "severity": "error",
                     "resolution_status": "in progress",
-                    "message": "Locations data has been reuploaded for this survey. Kindly update user location details",
+                    "message": "Locations data has been reuploaded for this survey. Kindly update user location details.",
                 },
             ],
         }
-        get_response_json = get_response.json
 
+        get_response_json = get_response.json
+        print(get_response_json)
         # Remove the created_at from the response for comparison
         for notification in get_response_json.get("data", []):
             if "created_at" in notification:
@@ -1982,7 +2011,7 @@ class TestNotifications:
                 },
                 {
                     "survey_uid": 1,
-                    "action": "Prime Location updated",
+                    "action": "Prime location updated",
                     "form_uid": 1,
                 },
             ]
@@ -2006,7 +2035,7 @@ class TestNotifications:
                 },
                 {
                     "survey_uid": "1",
-                    "action": "Prime Location updated",
+                    "action": "Prime location updated",
                     "message": "Notification created successfully",
                 },
             ],
@@ -2063,4 +2092,57 @@ class TestNotifications:
         response_json = response.json
 
         checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+    def test_refresh_scto_form_definition_mapping_variable_missing(
+        self, client, login_test_user, csrf_token, create_scto_question_mapping
+    ):
+        """
+        Test that refreshing the scto form definition from SCTO gives the same result
+        """
+
+        # Ingest the SCTO variables from SCTO into the database
+        response = client.post(
+            "/api/forms/1/scto-form-definition/refresh",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Check if any notification raised
+        get_response = client.get(
+            "/api/notifications",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(get_response.json)
+        assert get_response.status_code == 200
+
+        expected_get_response = {
+            "success": True,
+            "data": [
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "SurveyCTO information",
+                    "module_id": 3,
+                    "type": "survey",
+                    "notification_uid": 1,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Following SCTO Question mapping variables are missing in form definition: test_enumerator_id, test_location_1, test_revisit_section, test_survey_status_error, test_target_id. Please review form changes.",
+                }
+            ],
+        }
+
+        get_response_json = get_response.json
+        print(get_response_json)
+        # Remove the created_at from the response for comparison
+        for notification in get_response_json.get("data", []):
+            if "created_at" in notification:
+                del notification["created_at"]
+            else:
+                print("Created_at missing in notification", notification)
+                assert False
+
+        checkdiff = jsondiff.diff(expected_get_response, get_response_json)
         assert checkdiff == {}

@@ -78,8 +78,7 @@ def check_form_variable_missing(survey_uid, form_uid, db):
                 survey_uid=survey_uid,
                 module_id=11,
                 severity="error",
-                message=f"Following DQ variables are missing from form defintion: "
-                + f"{', '.join(missing_vars)}. Kindly review form changes and update dq configs.",
+                message=f"Certain DQ variables are missing from form defintion. These checks will be inactive. Kindly review form changes and update dq configs.",
                 resolution_status="in progress",
             )
             db.session.add(notification)
@@ -131,7 +130,7 @@ def check_form_variable_missing(survey_uid, form_uid, db):
                 survey_uid=survey_uid,
                 module_id=3,
                 severity="error",
-                message=f"Following SCTO Question mapping variables are missing from form definition: "
+                message=f"Following SCTO Question mapping variables are missing in form definition: "
                 f"{', '.join(missing_vars)}. Please review form changes.",
                 resolution_status="in progress",
             )
