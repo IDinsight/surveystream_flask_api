@@ -1,0 +1,6 @@
+module_id,name,message
+5,Locations reuploaded,Locations data has been reuploaded for this survey.
+5,Location hierarchy changed,Location hierarchy has been changed for this survey.
+5,Location level added,New location levels has been added for this survey.
+5,Location level deleted,Location levels has been deleted for this survey.
+5,Prime Location updated,Prime location level has been changed for this survey.

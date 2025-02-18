@@ -1,4 +1,8 @@
+import base64
+from pathlib import Path
+
 import jsondiff
+import pandas as pd
 import pytest
 from utils import (
     create_new_survey_role_with_permissions,
@@ -118,6 +122,7 @@ class TestNotifications:
             "planned_start_date": "2021-01-01",
             "planned_end_date": "2021-12-31",
             "state": "Draft",
+            "prime_geo_level_uid": 1,
             "config_status": "In Progress - Configuration",
             "created_by_user_uid": test_user_credentials["user_uid"],
         }
@@ -176,7 +181,35 @@ class TestNotifications:
 
         payload = {
             "survey_uid": 1,
-            "modules": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "13", "14"],
+            "modules": ["1", "2", "3", "4", "5", "7", "8", "9", "13", "14"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def update_second_survey_module_selection(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_second_survey,
+    ):
+        """
+        Update new module_selection as a setup step for the module_selection tests
+        """
+
+        payload = {
+            "survey_uid": 2,
+            "modules": ["9", "11"],
         }
 
         response = client.post(
@@ -257,6 +290,345 @@ class TestNotifications:
         yield
 
     @pytest.fixture()
+    def create_geo_levels_for_targets_file(
+        self, client, login_test_user, csrf_token, create_form
+    ):
+        """
+        Insert new geo levels as a setup step for the location upload tests
+        These correspond to the geo levels found in the locations test files
+        """
+
+        payload = {
+            "geo_levels": [
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "District",
+                    "parent_geo_level_uid": None,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "Mandal",
+                    "parent_geo_level_uid": 1,
+                },
+                {
+                    "geo_level_uid": None,
+                    "geo_level_name": "PSU",
+                    "parent_geo_level_uid": 2,
+                },
+            ]
+        }
+
+        response = client.put(
+            "/api/locations/geo-levels",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_locations(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_targets_file,
+        csrf_token,
+    ):
+        """
+        Upload locations csv as a setup step for the targets upload tests
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            locations_csv = f.read()
+            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        df = pd.read_csv(filepath, dtype=str)
+        df.rename(
+            columns={
+                "district_id": "District ID",
+                "district_name": "District Name",
+                "mandal_id": "Mandal ID",
+                "mandal_name": "Mandal Name",
+                "psu_id": "PSU ID",
+                "psu_name": "PSU Name",
+            },
+            inplace=True,
+        )
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": df.to_dict(orient="records"),
+            },
+            "success": True,
+        }
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    @pytest.fixture()
+    def create_target_column_config(
+        self, client, login_test_user, create_form, csrf_token
+    ):
+        """
+        Upload the targets column config
+        """
+
+        payload = {
+            "form_uid": 1,
+            "column_config": [
+                {
+                    "column_name": "target_id",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": False,
+                    "column_source": "target_id1",
+                },
+                {
+                    "column_name": "language",
+                    "column_type": "basic_details",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "language",
+                },
+                {
+                    "column_name": "gender",
+                    "column_type": "basic_details",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "gender",
+                },
+                {
+                    "column_name": "Name",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "name",
+                },
+                {
+                    "column_name": "Mobile no.",
+                    "column_type": "custom_fields",
+                    "bulk_editable": False,
+                    "contains_pii": True,
+                    "column_source": "mobile_primary",
+                },
+                {
+                    "column_name": "Address",
+                    "column_type": "custom_fields",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "address",
+                },
+                {
+                    "column_name": "bottom_geo_level_location",
+                    "column_type": "location",
+                    "bulk_editable": True,
+                    "contains_pii": True,
+                    "column_source": "psu_id",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/targets/column-config",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_target_config(self, client, csrf_token, login_test_user, create_form):
+        """
+        Load target config table for tests with form inputs
+        """
+
+        payload = {
+            "form_uid": 1,
+            "target_source": "csv",
+        }
+
+        response = client.post(
+            "/api/targets/config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def upload_targets_csv(
+        self,
+        client,
+        login_test_user,
+        create_locations,
+        create_target_config,
+        csrf_token,
+    ):
+        """
+        Upload the targets csv
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_targets_small.csv"
+        )
+
+        # Read the targets.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            targets_csv = f.read()
+            targets_csv_encoded = base64.b64encode(targets_csv).decode("utf-8")
+
+        # Try to upload the targets csv
+        payload = {
+            "column_mapping": {
+                "target_id": "target_id1",
+                "language": "language1",
+                "gender": "gender1",
+                "location_id_column": "psu_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile no.",
+                        "column_name": "mobile_primary1",
+                    },
+                    {
+                        "field_label": "Name",
+                        "column_name": "name1",
+                    },
+                    {
+                        "field_label": "Address",
+                        "column_name": "address1",
+                    },
+                ],
+            },
+            "file": targets_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/targets",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+    @pytest.fixture()
+    def upload_enumerators_csv(
+        self, client, login_test_user, create_locations, csrf_token
+    ):
+        """
+        Insert enumerators
+        Include a custom field
+        Include a location id column that corresponds to the prime geo level for the survey (district)
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_small.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id1",
+                "name": "name1",
+                "email": "email1",
+                "mobile_primary": "mobile_primary1",
+                "language": "language1",
+                "home_address": "home_address1",
+                "gender": "gender1",
+                "enumerator_type": "enumerator_type1",
+                "location_id_column": "district_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary1",
+                    },
+                    {
+                        "field_label": "Age",
+                        "column_name": "age1",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+    @pytest.fixture()
     def create_survey_notification(
         self, client, login_test_user, csrf_token, create_form
     ):
@@ -318,6 +690,7 @@ class TestNotifications:
         csrf_token,
         create_survey_notification_for_assignments,
         create_second_survey,
+        update_second_survey_module_selection,
     ):
         """
         Create Survey Notification
@@ -350,6 +723,7 @@ class TestNotifications:
         csrf_token,
         create_second_survey_notification_for_assignments,
         create_second_survey,
+        update_second_survey_module_selection,
     ):
         """
         Create Survey Notification
@@ -547,6 +921,7 @@ class TestNotifications:
         login_test_user,
         create_survey_notification,
         csrf_token,
+        test_user_credentials,
     ):
         payload = {
             "survey_uid": 1,
@@ -594,21 +969,56 @@ class TestNotifications:
         expected_response = {
             "success": True,
             "data": [
-                {"survey_uid": 1, "module_id": 1, "config_status": "In Progress"},
-                {"survey_uid": 1, "module_id": 2, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 3, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 1, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress - Incomplete"},
                 {"survey_uid": 1, "module_id": 4, "config_status": "Error"},
                 {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 6, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 8, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 9, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 13, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 14, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 14, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 17, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 16, "config_status": "Not Started"},
             ],
         }
 
         assert get_module_response.json == expected_response
+
+        # Test the get all surveys endpoint returns error status
+        response = client.get("/api/surveys")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {
+                    "survey_uid": 1,
+                    "survey_id": "test_survey",
+                    "survey_name": "Test Survey",
+                    "survey_description": "A test survey",
+                    "project_name": "Test Project",
+                    "surveying_method": "in-person",
+                    "irb_approval": "Yes",
+                    "planned_start_date": "2021-01-01",
+                    "planned_end_date": "2021-12-31",
+                    "state": "Draft",
+                    "prime_geo_level_uid": 1,
+                    "config_status": "In Progress - Configuration",
+                    "last_updated_at": "2023-05-30 00:00:00",
+                    "created_by_user_uid": test_user_credentials["user_uid"],
+                    "error": True,
+                }
+            ],
+            "success": True,
+        }
+
+        # Replace the last_updated_at field in the expected response with the value from the actual response
+        expected_response["data"][0]["last_updated_at"] = response.json["data"][0][
+            "last_updated_at"
+        ]
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
 
     def test_notifications_create_survey_notifications_error_no_survey(
         self,
@@ -675,7 +1085,6 @@ class TestNotifications:
         create_form,
         csrf_token,
     ):
-
         response = client.get(
             "/api/notifications",
             content_type="application/json",
@@ -816,7 +1225,6 @@ class TestNotifications:
                 ],
             }
         elif user_fixture == "user_with_assignments_permissions":
-
             expected_response = {
                 "success": True,
                 "data": [
@@ -895,7 +1303,6 @@ class TestNotifications:
         create_user_notification,
         csrf_token,
     ):
-
         payload = {
             "type": "user",
             "notification_uid": 1,
@@ -939,7 +1346,6 @@ class TestNotifications:
         create_survey_notification,
         csrf_token,
     ):
-
         payload = {
             "type": "survey",
             "notification_uid": 1,
@@ -984,7 +1390,6 @@ class TestNotifications:
         create_user_notification,
         csrf_token,
     ):
-
         payload = {
             "type": "survey",
             "notification_uid": 1,
@@ -1014,7 +1419,6 @@ class TestNotifications:
         create_user_notification,
         csrf_token,
     ):
-
         payload = {
             "type": "survey",
             "severity": "alert",
@@ -1120,17 +1524,18 @@ class TestNotifications:
         expected_get_module_response = {
             "success": True,
             "data": [
-                {"survey_uid": 1, "module_id": 1, "config_status": "In Progress"},
-                {"survey_uid": 1, "module_id": 2, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 3, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 4, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 1, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress - Incomplete"},
+                {"survey_uid": 1, "module_id": 4, "config_status": "In Progress - Incomplete"},
                 {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 6, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 8, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 9, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 9, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 13, "config_status": "Not Started"},
-                {"survey_uid": 1, "module_id": 14, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 14, "config_status": "Done"},
+                {"survey_uid": 1, "module_id": 17, "config_status": "Not Started"},
+                {"survey_uid": 1, "module_id": 16, "config_status": "Not Started"},
             ],
         }
         checkdiff = jsondiff.diff(
@@ -1138,3 +1543,403 @@ class TestNotifications:
         )
 
         assert checkdiff == {}
+
+    def test_create_action_notification_without_any_data(
+        self, client, login_test_user, csrf_token, create_form
+    ):
+        """
+        Test create notification without any data in modules
+
+        Expect:
+            No Notification created
+        """
+        payload = {
+            "survey_uid": 1,
+            "action": "Location hierarchy changed",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "error": "No notification created for the action, conditions not met",
+            "success": False,
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+    def test_create_action_notification_no_enum(
+        self, client, login_test_user, csrf_token, create_form, upload_targets_csv
+    ):
+        """
+        Test create notification with targets and locations data
+
+        Expect:
+            Notification created for target and locations
+        """
+        payload = {
+            "survey_uid": 1,
+            "action": "Location hierarchy changed",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+        expected_response = {
+            "success": True,
+            "message": "Notification created successfully",
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+        query_string = {
+            "user_uid": 1,
+        }
+        get_response = client.get(
+            "/api/notifications",
+            query_string=query_string,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(get_response.json)
+        assert get_response.status_code == 200
+
+        expected_get_response = {
+            "success": True,
+            "data": [
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Survey locations",
+                    "module_id": 5,
+                    "type": "survey",
+                    "notification_uid": 1,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Location hierarchy has been changed for this survey. Kindly reupload the locations data.",
+                }
+            ],
+        }
+
+        get_response_json = get_response.json
+
+        # Remove the created_at from the response for comparison
+        for notification in get_response_json.get("data", []):
+            if "created_at" in notification:
+                del notification["created_at"]
+            else:
+                print("Created_at missing in notification", notification)
+                assert False
+
+        checkdiff = jsondiff.diff(expected_get_response, get_response_json)
+        assert checkdiff == {}
+
+    def test_create_action_notification_all(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test create notification with targets, locations,enumerators data existing
+
+        Expect:
+            Notification created for targets, locations, enumerators
+        """
+        payload = {
+            "survey_uid": 1,
+            "action": "Locations reuploaded",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+        expected_response = {
+            "success": True,
+            "message": "Notification created successfully",
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+        query_string = {
+            "user_uid": 1,
+        }
+        get_response = client.get(
+            "/api/notifications",
+            query_string=query_string,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(get_response.json)
+        assert get_response.status_code == 200
+
+        expected_get_response = {
+            "success": True,
+            "data": [
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Enumerators",
+                    "module_id": 7,
+                    "type": "survey",
+                    "notification_uid": 1,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Locations data has been reuploaded for this survey. Kindly reupload the enumerators data.",
+                },
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "Targets",
+                    "module_id": 8,
+                    "type": "survey",
+                    "notification_uid": 2,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Locations data has been reuploaded for this survey. Kindly reupload the targets data.",
+                },
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "User and role management",
+                    "module_id": 4,
+                    "type": "survey",
+                    "notification_uid": 3,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Locations data has been reuploaded for this survey. Kindly update user location details",
+                },
+            ],
+        }
+        get_response_json = get_response.json
+
+        # Remove the created_at from the response for comparison
+        for notification in get_response_json.get("data", []):
+            if "created_at" in notification:
+                del notification["created_at"]
+            else:
+                print("Created_at missing in notification", notification)
+                assert False
+
+        checkdiff = jsondiff.diff(expected_get_response, get_response_json)
+        assert checkdiff == {}
+
+    def test_create_duplicate_notification(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test create duplicate notification
+
+        Expect:
+            Error 422
+        """
+        payload = {
+            "survey_uid": 1,
+            "action": "Locations reuploaded",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 200
+        expected_response = {
+            "success": True,
+            "message": "Notification created successfully",
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+        # Send the same request again
+        duplicate_response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(duplicate_response.json)
+        assert response.status_code == 200
+
+    def test_check_module_error(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        payload = {
+            "survey_uid": 1,
+            "action": "Locations reuploaded",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        get_config_status = client.get(
+            "/api/surveys/1/config-status",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        expected_response = {
+            "success": True,
+            "data": {
+                "overall_status": "In Progress - Configuration",
+                "Basic information": {"status": "Done", "optional": False},
+                "Module selection": {"status": "Done", "optional": False},
+                "Survey information": [
+                    {
+                        "name": "SurveyCTO information",
+                        "status": "In Progress - Incomplete",
+                        "optional": False,
+                    },
+                    {
+                        "name": "User and role management",
+                        "status": "Error",
+                        "optional": False,
+                    },
+                    {"name": "Survey locations", "status": "Done", "optional": False},
+                    {"name": "Enumerators", "status": "Error", "optional": False},
+                    {"name": "Targets", "status": "Error", "optional": False},
+                    {
+                        "name": "Target status mapping",
+                        "status": "Done",
+                        "optional": False,
+                    },
+                    {"name": "Mapping", "status": "Not Started", "optional": False},
+                ],
+                "Module configuration": [
+                    {
+                        "module_id": 9,
+                        "name": "Assignments",
+                        "status": "In Progress",
+                        "optional": False,
+                    },
+                    {
+                        "module_id": 13,
+                        "name": "Surveyor hiring",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
+                    {
+                        "module_id": 16,
+                        "name": "Assignments column configuration",
+                        "status": "Not Started",
+                        "optional": True,
+                    },
+                ],
+                "completion_stats": {
+                    "num_modules": 11,
+                    "num_completed": 4,
+                    "num_in_progress": 1,
+                    "num_in_progress_incomplete": 1,
+                    "num_not_started": 2,
+                    "num_error": 3,
+                    "num_optional": 1
+                }
+            },
+        }
+
+        print(get_config_status.json)
+        checkdiff = jsondiff.diff(expected_response, get_config_status.json)
+
+        assert checkdiff == {}
+
+    def test_get_errored_modules(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test that errored modules can be retrieved
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "action": "Locations reuploaded",
+            "form_uid": 1,
+        }
+        response = client.post(
+            "/api/notifications/action",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        response = client.get("/api/surveys/1/modules")
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"module_id": 1, "name": "Basic information", "error": False},
+                {"module_id": 2, "name": "Module selection", "error": False},
+                {"module_id": 3, "name": "SurveyCTO information", "error": False},
+                {"module_id": 4, "name": "User and role management", "error": True},
+                {"module_id": 5, "name": "Survey locations", "error": False},
+                {"module_id": 7, "name": "Enumerators", "error": True},
+                {"module_id": 8, "name": "Targets", "error": True},
+                {"module_id": 9, "name": "Assignments", "error": False},
+                {"module_id": 13, "name": "Surveyor hiring", "error": False},
+                {"module_id": 14, "name": "Target status mapping", "error": False},
+                {"module_id": 16, "name": "Assignments column configuration", "error": False},
+                {"module_id": 17, "name": "Mapping", "error": False},
+            ],
+            "success": True,
+        }
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+    

@@ -117,10 +117,10 @@ class DQCheckFilters(db.Model):
     dq_check_uid = db.Column(
         db.Integer(),
         db.ForeignKey(DQCheck.dq_check_uid, ondelete="CASCADE"),
-        primary_key=True,
+        nullable=False,
     )
 
-    filter_group_id = db.Column(db.Integer(), primary_key=True)
+    filter_group_id = db.Column(db.Integer(), nullable=False)
 
     question_name = db.Column(db.String(), nullable=False)
     filter_operator = db.Column(
@@ -155,4 +155,71 @@ class DQCheckFilters(db.Model):
             "question_name": self.question_name,
             "filter_operator": self.filter_operator,
             "filter_value": self.filter_value,
+        }
+
+
+class DQLogicCheckQuestions(db.Model):
+    __tablename__ = "dq_logic_check_questions"
+
+    dq_check_uid = db.Column(
+        db.Integer(),
+        db.ForeignKey(DQCheck.dq_check_uid, ondelete="CASCADE"),
+    )
+    question_name = db.Column(db.String())
+    alias = db.Column(db.String(), nullable=False)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(
+            "dq_check_uid",
+            "question_name",
+        ),
+        db.UniqueConstraint(
+            "dq_check_uid",
+            "alias",
+            name="_dq_logic_check_questions_dq_check_uid_alias_uc",
+        ),
+        {"schema": "webapp"},
+    )
+
+    def __init__(self, dq_check_uid, question_name, alias):
+        self.dq_check_uid = dq_check_uid
+        self.question_name = question_name
+        self.alias = alias
+
+    def to_dict(self):
+        return {
+            "question_name": self.question_name,
+            "alias": self.alias,
+        }
+
+
+class DQLogicCheckAssertions(db.Model):
+    __tablename__ = "dq_logic_check_assertions"
+
+    assert_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+
+    dq_check_uid = db.Column(
+        db.Integer(),
+        db.ForeignKey(DQCheck.dq_check_uid, ondelete="CASCADE"),
+        nullable=False,
+    )
+    assert_group_id = db.Column(db.Integer(), nullable=False)
+    assertion = db.Column(db.String(), nullable=False)
+
+    __table_args__ = {"schema": "webapp"}
+
+    def __init__(
+        self,
+        dq_check_uid,
+        assert_group_id,
+        assertion,
+    ):
+        self.dq_check_uid = dq_check_uid
+        self.assert_group_id = assert_group_id
+        self.assertion = assertion
+
+    def to_dict(self):
+        return {
+            "assert_group_id": self.assert_group_id,
+            "assertion": self.assertion,
         }

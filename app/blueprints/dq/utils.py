@@ -170,4 +170,99 @@ def validate_dq_check(
                 "Spotcheck score name is not allowed for this type of check"
             )
 
+    # 5. For GPS checks (10), threshold with either gps variable or grid_id fields is required
+    if type_id == 10:
+        if check_components.get("threshold") is None:
+            raise Exception("Threshold field is required for gps checks")
+
+        gps_variable = check_components.get("gps_variable")
+        grid_id = check_components.get("grid_id")
+
+        # Check gps_variable or grid_id field is present or not
+        if gps_variable is None and grid_id is None:
+            raise Exception(
+                "Either gps_variable or grid_id field is required for gps checks"
+            )
+
+        # Check both should not be present at same time
+        if gps_variable and grid_id:
+            raise Exception(
+                "Either gps_variable or grid_id field is required for gps checks, not both"
+            )
+
+        # If gps_variable is present then check if it is a valid question in form definition
+        if gps_variable is not None and active is True:
+            scto_question = SCTOQuestion.query.filter(
+                SCTOQuestion.form_uid == form_uid,
+                SCTOQuestion.question_name == gps_variable,
+            ).first()
+
+            if scto_question is None:
+                raise Exception(
+                    f"Question name '{gps_variable}' not found in form definition. Active checks must have a valid question name for GPS checks."
+                )
+
+        # If grid_id is present then check if it is a valid question in form definition
+        if grid_id is not None and active is True:
+            scto_question = SCTOQuestion.query.filter(
+                SCTOQuestion.form_uid == form_uid,
+                SCTOQuestion.question_name == grid_id,
+            ).first()
+
+            if scto_question is None:
+                raise Exception(
+                    f"Question name '{grid_id}' not found in form definition. Active checks must have a valid question name for GPS checks."
+                )
+
+    else:
+        # For other checks, threshold, gps variable and grid id fields are not required
+        if check_components.get("threshold") is not None:
+            raise Exception("Threshold field is not allowed for this type of check")
+
+        if check_components.get("gps_variable") is not None:
+            raise Exception("GPS variable field is not allowed for this type of check")
+
+        if check_components.get("grid_id") is not None:
+            raise Exception("Grid id field is not allowed for this type of check")
+
+    # For logic checks, check that logic_check_questions dictionary and logic_check_assertions are valid
+    if type_id == 1:
+        if check_components.get("logic_check_questions", []) == []:
+            raise Exception(
+                "The field 'logic_check_questions' is required for logic checks"
+            )
+
+        if check_components.get("logic_check_assertions", []) == []:
+            raise Exception(
+                "The field 'logic_check_assertions' is required for logic checks"
+            )
+
+        # Check if the question name is valid, when check is active
+        if active is True:
+            for logic_check_question in check_components.get(
+                "logic_check_questions", []
+            ):
+                question_name = logic_check_question.get("question_name")
+                scto_question = SCTOQuestion.query.filter(
+                    SCTOQuestion.form_uid == form_uid,
+                    SCTOQuestion.question_name == question_name,
+                ).first()
+
+                if scto_question is None:
+                    raise Exception(
+                        f"Question name '{question_name}' not found in form definition. Active checks must have a valid question name."
+                    )
+
+    else:
+        # For other checks, variables and assertions fields are not required
+        if check_components.get("logic_check_questions", []) != []:
+            raise Exception(
+                "logic_check_questions field is not allowed for this type of check"
+            )
+
+        if check_components.get("logic_check_assertions", []) != []:
+            raise Exception(
+                "logic_check_assertions field is not allowed for this type of check"
+            )
+
     return True

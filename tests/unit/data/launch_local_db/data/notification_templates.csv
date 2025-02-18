@@ -1,0 +1,6 @@
+module_id,name,message,severity
+7,Reupload enumerators,Kindly reupload the enumerators data.,error
+8,Reupload targets,Kindly reupload the targets data.,error
+5,Reupload locations,Kindly reupload the locations data.,error
+3,Update surveyCTO question mapping,Kindly update SurveyCTO Question Mapping,error
+4,Update user location,Kindly update user location details,error

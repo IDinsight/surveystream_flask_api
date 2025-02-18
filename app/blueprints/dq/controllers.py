@@ -2,7 +2,7 @@ from itertools import groupby
 from operator import attrgetter
 
 from flask import jsonify, request
-from sqlalchemy import String, and_, case, literal_column, or_
+from sqlalchemy import JSON, String, and_, case, literal_column, or_, type_coerce
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import cast
 from sqlalchemy.sql.functions import func
@@ -12,12 +12,20 @@ from app.blueprints.forms.models import SCTOQuestion
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    update_module_status_after_request,
     validate_payload,
     validate_query_params,
 )
 
 from . import dq_bp
-from .models import DQCheck, DQCheckFilters, DQCheckTypes, DQConfig
+from .models import (
+    DQCheck,
+    DQCheckFilters,
+    DQCheckTypes,
+    DQConfig,
+    DQLogicCheckAssertions,
+    DQLogicCheckQuestions,
+)
 from .utils import validate_dq_check
 from .validators import (
     DQChecksQueryParamValidator,
@@ -149,6 +157,58 @@ def get_dq_config(validated_query_params):
         .subquery()
     )
 
+    # For all GPS checks, either gps_variable or grid_id is provided in check components and these should be from the main form
+    gps_check_component_invalid_subquery = (
+        db.session.query(DQCheck.dq_check_uid)
+        .outerjoin(
+            SCTOQuestion,
+            and_(
+                DQCheck.form_uid == SCTOQuestion.form_uid,
+                or_(
+                    func.replace(
+                        cast(DQCheck.check_components["gps_variable"], String), '"', ""
+                    )
+                    == SCTOQuestion.question_name,
+                    func.replace(
+                        cast(DQCheck.check_components["grid_id"], String), '"', ""
+                    )
+                    == SCTOQuestion.question_name,
+                ),
+            ),
+        )
+        .filter(
+            DQCheck.type_id == 10,  # gps check
+            DQCheck.form_uid == form_uid,
+            SCTOQuestion.question_name == None,
+            DQCheck.active == True,
+        )
+        .distinct()
+        .subquery()
+    )
+
+    # For Logic checks, each question selected in the check should be from the main form
+    logic_check_question_invalid_subquery = (
+        db.session.query(DQLogicCheckQuestions.dq_check_uid)
+        .join(
+            DQCheck,
+            DQLogicCheckQuestions.dq_check_uid == DQCheck.dq_check_uid,
+        )
+        .outerjoin(
+            SCTOQuestion,
+            and_(
+                DQLogicCheckQuestions.question_name == SCTOQuestion.question_name,
+                DQCheck.form_uid == SCTOQuestion.form_uid,
+            ),
+        )
+        .filter(
+            DQCheck.type_id == 1,  # logic check
+            DQCheck.form_uid == form_uid,
+            SCTOQuestion.question_name == None,
+        )
+        .distinct()
+        .subquery()
+    )
+
     # Get checks with active status
     dq_questions_subquery = (
         db.session.query(
@@ -163,7 +223,11 @@ def get_dq_config(validated_query_params):
                         (DQCheck.active == True)
                         & (main_form_question_invalid_subquery.c.dq_check_uid == None)
                         & (filter_invalid_subquery.c.dq_check_uid == None)
-                        & (dq_form_question_invalid_subquery.c.dq_check_uid == None),
+                        & (dq_form_question_invalid_subquery.c.dq_check_uid == None)
+                        & (gps_check_component_invalid_subquery.c.dq_check_uid == None)
+                        & (
+                            logic_check_question_invalid_subquery.c.dq_check_uid == None
+                        ),
                         True,
                     )
                 ],
@@ -181,6 +245,15 @@ def get_dq_config(validated_query_params):
         .outerjoin(
             dq_form_question_invalid_subquery,
             DQCheck.dq_check_uid == dq_form_question_invalid_subquery.c.dq_check_uid,
+        )
+        .outerjoin(
+            gps_check_component_invalid_subquery,
+            DQCheck.dq_check_uid == gps_check_component_invalid_subquery.c.dq_check_uid,
+        )
+        .outerjoin(
+            logic_check_question_invalid_subquery,
+            DQCheck.dq_check_uid
+            == logic_check_question_invalid_subquery.c.dq_check_uid,
         )
         .filter(DQCheck.form_uid == form_uid)
         .subquery()
@@ -301,6 +374,7 @@ def get_dq_config(validated_query_params):
 @logged_in_active_user_required
 @validate_payload(UpdateDQConfigValidator)
 @custom_permissions_required("WRITE Data Quality", "body", "form_uid")
+@update_module_status_after_request(11, "form_uid")
 def update_dq_config(validated_payload):
     """
     Function to update dq config
@@ -419,12 +493,10 @@ def get_dq_checks(validated_query_params):
 
                 if type_id not in [7, 8, 9]:
                     for question in scto_questions:
+                        filter_item["is_repeat_group"] = False
                         if question.question_name == filter_item["question_name"]:
                             filter_question_found = True
-                            if question.is_repeat_group:
-                                filter_item["is_repeat_group"] = True
-                            else:
-                                filter_item["is_repeat_group"] = False
+                            filter_item["is_repeat_group"] = question.is_repeat_group
                             break
                 else:
                     for question in dq_scto_questions:
@@ -433,17 +505,101 @@ def get_dq_checks(validated_query_params):
                             and question.form_uid == check.dq_scto_form_uid
                         ):
                             filter_question_found = True
-                            if question.is_repeat_group:
-                                filter_item["is_repeat_group"] = True
-                            else:
-                                filter_item["is_repeat_group"] = False
+                            filter_item["is_repeat_group"] = question.is_repeat_group
                             break
 
-                if not filter_question_found:
+                if (
+                    not filter_question_found
+                    and filter_item["question_name"] != check.question_name
+                ):  # Check if the question is not the same as the main question
                     check_dict["active"] = False
                     check_dict["note"] = "Filter question not found in form definition"
 
         check_dict["filters"] = filter_list
+
+        # For logic checks, get the logic check questions and assertions
+        if type_id == 1:
+            logic_check_questions = DQLogicCheckQuestions.query.filter(
+                DQLogicCheckQuestions.dq_check_uid == check.dq_check_uid
+            ).all()
+
+            # Check if questions are available in the form definition
+            logic_check_questions_list = []
+            for question in logic_check_questions:
+                logic_check_question_found = False
+                question_dict = question.to_dict()
+                question_dict["is_repeat_group"] = False
+
+                for question in scto_questions:
+                    if question.question_name == question_dict["question_name"]:
+                        question_dict["is_repeat_group"] = question.is_repeat_group
+                        logic_check_question_found = True
+                        break
+
+                if (
+                    not logic_check_question_found and question != check.question_name
+                ):  # Check if the question is not the same as the main question
+                    check_dict["active"] = False
+                    check_dict[
+                        "note"
+                    ] = "Logic check question not found in form definition"
+
+                logic_check_questions_list.append(question_dict)
+            check_dict["check_components"][
+                "logic_check_questions"
+            ] = logic_check_questions_list
+
+            logic_check_assertions = DQLogicCheckAssertions.query.filter(
+                DQLogicCheckAssertions.dq_check_uid == check.dq_check_uid
+            ).all()
+
+            assertions_list = [
+                {"assert_group": [assertion.to_dict() for assertion in assert_group]}
+                for key, assert_group in groupby(
+                    logic_check_assertions, key=attrgetter("assert_group_id")
+                )
+            ]
+            check_dict["check_components"]["logic_check_assertions"] = assertions_list
+
+        # For GPS checks, check if gps_variable or grid_id are available in the form definition
+        if type_id == 10:
+            gps_variable = check_dict["check_components"].get("gps_variable")
+            grid_id = check_dict["check_components"].get("grid_id")
+
+            gps_check_questions = {}
+            if gps_variable:
+                gps_variable_found = False
+                gps_variable_is_repeat_group = False
+                for question in scto_questions:
+                    if question.question_name == gps_variable:
+                        gps_variable_found = True
+                        gps_variable_is_repeat_group = question.is_repeat_group
+
+                if not gps_variable_found:
+                    check_dict["active"] = False
+                    check_dict["note"] = "GPS variable not found in form definition"
+
+                check_dict["check_components"]["gps_variable"] = {
+                    "question_name": gps_variable,
+                    "is_repeat_group": gps_variable_is_repeat_group,
+                }
+
+            if grid_id:
+                grid_id_found = False
+                grid_id_is_repeat_group = False
+                for question in scto_questions:
+                    if question.question_name == grid_id:
+                        grid_id_found = True
+                        grid_id_is_repeat_group = question.is_repeat_group
+
+                if not grid_id_found:
+                    check_dict["active"] = False
+                    check_dict["note"] = "Grid ID not found in form definition"
+
+                check_dict["check_components"]["grid_id"] = {
+                    "question_name": grid_id,
+                    "is_repeat_group": grid_id_is_repeat_group,
+                }
 
         check_data.append(check_dict)
 
@@ -512,6 +668,12 @@ def add_dq_check(validated_payload):
             DQCheck.all_questions == True,
         ).delete()
 
+    check_components = validated_payload.check_components.data
+
+    # Remove logic_check_questions and assertions from check_components before adding the check
+    logic_check_questions = check_components.pop("logic_check_questions", None)
+    logic_check_assertions = check_components.pop("logic_check_assertions", None)
+
     dq_check = DQCheck(
         form_uid=form_uid,
         type_id=validated_payload.type_id.data,
@@ -520,7 +682,7 @@ def add_dq_check(validated_payload):
         dq_scto_form_uid=validated_payload.dq_scto_form_uid.data,
         module_name=validated_payload.module_name.data,
         flag_description=validated_payload.flag_description.data,
-        check_components=validated_payload.check_components.data,
+        check_components=check_components,
         active=validated_payload.active.data,
     )
 
@@ -528,8 +690,9 @@ def add_dq_check(validated_payload):
         db.session.add(dq_check)
         db.session.flush()
 
-        # Add filters for the check
         dq_check_uid = dq_check.dq_check_uid
+
+        # Add filters for the check
         max_filter_group_id = 0
 
         for filter_group in validated_payload.filters.data:
@@ -545,6 +708,31 @@ def add_dq_check(validated_payload):
                 )
                 db.session.add(dq_check_filter)
         db.session.flush()
+
+        # Add logic check questions and assertions
+        if validated_payload.type_id.data == 1:
+            for question in logic_check_questions:
+                logic_check_question = DQLogicCheckQuestions(
+                    dq_check_uid=dq_check_uid,
+                    question_name=question["question_name"],
+                    alias=question["alias"],
+                )
+                db.session.add(logic_check_question)
+            db.session.flush()
+
+            max_assert_group_id = 0
+            for assert_group in logic_check_assertions:
+                max_assert_group_id += 1
+
+                for assertion in assert_group.get("assert_group"):
+                    logic_check_assertion = DQLogicCheckAssertions(
+                        dq_check_uid=dq_check_uid,
+                        assert_group_id=max_assert_group_id,
+                        assertion=assertion["assertion"],
+                    )
+                    db.session.add(logic_check_assertion)
+            db.session.flush()
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": str(e), "success": False}), 500
@@ -590,12 +778,17 @@ def update_dq_check(check_uid, validated_payload):
     if dq_check is None:
         return jsonify({"message": "DQ check not found", "success": False}), 404
 
+    check_components = validated_payload.check_components.data
+    # Remove logic_check_questions and assertions from check_components before updating the check
+    logic_check_questions = check_components.pop("logic_check_questions", None)
+    logic_check_assertions = check_components.pop("logic_check_assertions", None)
+
     dq_check.all_questions = validated_payload.all_questions.data
     dq_check.question_name = validated_payload.question_name.data
     dq_check.dq_scto_form_uid = validated_payload.dq_scto_form_uid.data
     dq_check.module_name = validated_payload.module_name.data
     dq_check.flag_description = validated_payload.flag_description.data
-    dq_check.check_components = validated_payload.check_components.data
+    dq_check.check_components = check_components
     dq_check.active = validated_payload.active.data
 
     try:
@@ -620,6 +813,38 @@ def update_dq_check(check_uid, validated_payload):
                 )
                 db.session.add(filter_obj)
         db.session.flush()
+
+        # For logic checks, update the logic check questions and assertions
+        if validated_payload.type_id.data == 1:
+            # Delete existing logic check questions and assertions
+            DQLogicCheckQuestions.query.filter_by(dq_check_uid=check_uid).delete()
+            DQLogicCheckAssertions.query.filter_by(dq_check_uid=check_uid).delete()
+            db.session.flush()
+
+            # Add logic check questions
+            for question in logic_check_questions:
+                logic_check_question = DQLogicCheckQuestions(
+                    dq_check_uid=check_uid,
+                    question_name=question["question_name"],
+                    alias=question["alias"],
+                )
+                db.session.add(logic_check_question)
+            db.session.flush()
+
+            # Add logic check assertions
+            max_assert_group_id = 0
+            for assert_group in logic_check_assertions:
+                max_assert_group_id += 1
+
+                for assertion in assert_group.get("assert_group"):
+                    logic_check_assertion = DQLogicCheckAssertions(
+                        dq_check_uid=check_uid,
+                        assert_group_id=max_assert_group_id,
+                        assertion=assertion["assertion"],
+                    )
+                    db.session.add(logic_check_assertion)
+            db.session.flush()
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": str(e), "success": False}), 500
