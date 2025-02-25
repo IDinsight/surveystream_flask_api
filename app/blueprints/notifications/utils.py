@@ -165,10 +165,6 @@ def check_form_variable_missing(survey_uid, form_uid, db):
             )
             db.session.add(notification)
             db.session.flush()
-    else:
-        raise Exception(
-            "Error in checking missing media variables", missing_media_questions
-        )
 
     try:
         db.session.commit()
