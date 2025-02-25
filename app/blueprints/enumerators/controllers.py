@@ -524,21 +524,22 @@ def update_enumerator(enumerator_uid, validated_payload):
             synchronize_session="fetch",
         )
         if location_uid is not None:
+            # Delete existing location mapping
+            # We can't use insert on conflict do update here because the table allows
+            # multiple rows with the same enumerator_uid and form_uid
+            SurveyorLocation.query.filter_by(
+                enumerator_uid=enumerator_uid,
+                form_uid=enumerator.form_uid,
+            ).delete()
 
-            statement = (
-                pg_insert(SurveyorLocation)
-                .values(
-                    form_uid=enumerator.form_uid,
-                    enumerator_uid=enumerator_uid,
-                    location_uid=location_uid,
-                )
-                .on_conflict_do_update(
-                    constraint="pk_location_surveyor_mapping",
-                    set_={SurveyorLocation.location_uid: location_uid},
-                )
+            # Add the new location mapping
+            surveyor_location = SurveyorLocation(
+                enumerator_uid=enumerator_uid,
+                form_uid=enumerator.form_uid,
+                location_uid=location_uid,
             )
 
-            db.session.execute(statement)
+            db.session.add(surveyor_location)
 
             db.session.commit()
     except Exception as e:
