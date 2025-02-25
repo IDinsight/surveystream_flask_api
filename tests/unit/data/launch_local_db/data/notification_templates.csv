@@ -10,3 +10,4 @@
 17,1,"Draft survey start date approaching","Kindly update the state of the survey to active or update the start date.","alert"
 18,1,"Survey end date approaching","Kindly update your survey end date if needed.","alert"
 19,15,"Email delivery failed","Kindly check the email delivery report status for more details.","alert"
+20,1,"Survey end date passed","Survey has been moved from active to past surveys","alert"

@@ -15,3 +15,4 @@
 14,1,"Survey end date approaching","Survey end date is approaching."
 15,1,"Draft survey start date approaching","Survey start date is approaching, your survey is in draft state."
 16,15,"Email delivery failed","Email delivery has failed for the survey."
+17,1,"Survey end date passed","Survey end date has passed."

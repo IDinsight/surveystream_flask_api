@@ -1,4 +1,4 @@
-from sqlalchemy import column, distinct, literal_column, select, union
+from sqlalchemy import column, distinct, func, literal_column, select, union
 
 from app.blueprints.dq.models import DQCheck, DQCheckFilters
 from app.blueprints.enumerators.models import Enumerator, SurveyorLocation
@@ -42,7 +42,6 @@ def set_module_status_error(survey_uid, module_id):
 
 
 def check_form_variable_missing(survey_uid, form_uid, db):
-
     # Get form questions
     form_questions = (
         select(distinct(SCTOQuestion.question_name))
@@ -72,12 +71,12 @@ def check_form_variable_missing(survey_uid, form_uid, db):
 
     if len(missing_dq_questions) > 0:
         # create a dq module notification
-        if not check_module_notification_exists(survey_uid, 11, "error"):
+        if not check_module_notification_exists(survey_uid, 11, "warning"):
             missing_vars = [q[0] for q in missing_dq_questions]
             notification = SurveyNotification(
                 survey_uid=survey_uid,
                 module_id=11,
-                severity="error",
+                severity="warning",
                 message=f"Certain DQ variables are missing from form defintion. These checks will be inactive. Kindly review form changes and update dq configs.",
                 resolution_status="in progress",
             )
@@ -136,6 +135,40 @@ def check_form_variable_missing(survey_uid, form_uid, db):
             )
             db.session.add(notification)
             db.session.flush()
+
+    # Check media file field mapping vars are present in form definition
+    try:
+        missing_media_questions = []
+        media_fields = (
+            select(func.unnest(MediaFilesConfig.scto_fields).label("media_field"))
+            .where(MediaFilesConfig.form_uid == form_uid)
+            .subquery()
+        )
+
+        missing_media_query = select(distinct(media_fields.c.media_field)).where(
+            media_fields.c.media_field.notin_(form_questions)
+        )
+        missing_media_questions = db.session.execute(missing_media_query).fetchall()
+    except Exception as e:
+        print(e)
+        raise Exception("Error in checking missing media variables eee ", e)
+
+    if len(missing_media_questions) > 0:
+        if not check_module_notification_exists(survey_uid, 12, "error"):
+            missing_vars = [q[0] for q in missing_media_questions]
+            notification = SurveyNotification(
+                survey_uid=survey_uid,
+                module_id=12,
+                severity="error",
+                message=f"Following media file fields are missing in form definition: {', '.join(missing_vars)}. Please review form changes.",
+                resolution_status="in progress",
+            )
+            db.session.add(notification)
+            db.session.flush()
+    else:
+        raise Exception(
+            "Error in checking missing media variables", missing_media_questions
+        )
 
     try:
         db.session.commit()
