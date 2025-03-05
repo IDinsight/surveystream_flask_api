@@ -1,18 +1,18 @@
 from flask import jsonify, request
+from sqlalchemy.exc import IntegrityError
+
+from app import db
+from app.blueprints.forms.models import Form
+from app.blueprints.surveys.models import Survey
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
-    validate_query_params,
+    update_module_status_after_request,
     validate_payload,
+    validate_query_params,
 )
-from sqlalchemy.exc import IntegrityError
-from app import db
-from app.blueprints.surveys.models import Survey
-from app.blueprints.forms.models import Form
-from .models import (
-    TargetStatusMapping,
-    DefaultTargetStatusMapping,
-)
+
+from .models import DefaultTargetStatusMapping, TargetStatusMapping
 from .routes import target_status_mapping_bp
 from .validators import (
     TargetStatusMappingQueryParamValidator,
@@ -72,6 +72,7 @@ def get_target_status_mapping(validated_query_params):
 @logged_in_active_user_required
 @validate_payload(UpdateTargetStatusMapping)
 @custom_permissions_required("WRITE Target Status Mapping", "body", "form_uid")
+@update_module_status_after_request(14, "form_uid")
 def update_target_status_mapping(validated_payload):
     """
     Method to save target status mapping

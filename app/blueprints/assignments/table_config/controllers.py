@@ -19,6 +19,7 @@ from app.blueprints.targets.models import TargetColumnConfig
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
+    update_module_status_after_request,
     validate_payload,
     validate_query_params,
 )
@@ -263,6 +264,7 @@ def get_table_config(validated_query_params):
 @logged_in_active_user_required
 @validate_payload(UpdateTableConfigValidator)
 @custom_permissions_required("WRITE Assignments", "body", "form_uid")
+@update_module_status_after_request(16, "form_uid")
 def update_table_config(validated_payload):
     """
     Updates the table definition for the specified assignments module table

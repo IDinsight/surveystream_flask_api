@@ -2847,7 +2847,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Supervisor to target mapping criteria not found."
+                "mapping_errors": "Target to supervisor mapping criteria not found."
             },
             "success": False,
         }
@@ -2876,7 +2876,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Roles not configured for the survey. Cannot perform supervisor to target mapping without roles."
+                "mapping_errors": "Roles not configured for the survey. Cannot perform target to supervisor mapping without roles."
             },
             "success": False,
         }
@@ -2893,7 +2893,7 @@ class TestMapping:
         csrf_token,
     ):
         """
-        Test getting the target mapping when roles are not set
+        Test getting the target mapping when prime geo level is not set
 
         """
         # Remove prime geo level
@@ -2927,7 +2927,65 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Prime geo level not configured for the survey. Cannot perform supervisor to target mapping based on location without a prime geo level."
+                "mapping_errors": "Prime geo level not configured for the survey. Cannot perform target to supervisor mapping based on location without a prime geo level."
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_target_location_mapping_with_no_targets(
+        self,
+        client,
+        login_test_user,
+        create_locations,
+        create_form,
+        add_user,
+        csrf_token,
+    ):
+        """
+        Test getting the target mapping when targets are not uploaded
+
+        """
+        response = client.get(
+            "/api/mapping/targets-mapping",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "success": False,
+            "errors": {
+                "message": "Targets are not available for this form. Kindly upload targets first."
+            },
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_target_location_mapping_config_with_no_targets(
+        self,
+        client,
+        login_test_user,
+        create_locations,
+        create_form,
+        add_user,
+        csrf_token,
+    ):
+        """
+        Test getting the target mapping config when targets are not uploaded
+
+        """
+        response = client.get(
+            "/api/mapping/targets-mapping-config",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+        print(response.json)
+        assert response.status_code == 422
+        expected_response = {
+            "errors": {
+                "message": "Targets are not available for this form. Kindly upload targets first.",
             },
             "success": False,
         }
@@ -4811,7 +4869,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Supervisor to surveyor mapping criteria not found."
+                "mapping_errors": "Surveyor to supervisor mapping criteria not found."
             },
             "success": False,
         }
@@ -4840,7 +4898,7 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Roles not configured for the survey. Cannot perform supervisor to surveyor mapping without roles."
+                "mapping_errors": "Roles not configured for the survey. Cannot perform surveyor to supervisor mapping without roles."
             },
             "success": False,
         }
@@ -4891,7 +4949,63 @@ class TestMapping:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Prime geo level not configured for the survey. Cannot perform supervisor to surveyor mapping based on location without a prime geo level."
+                "mapping_errors": "Prime geo level not configured for the survey. Cannot perform surveyor to supervisor mapping based on location without a prime geo level."
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_surveyor_location_mapping_with_no_targets(
+        self,
+        client,
+        login_test_user,
+        create_locations,
+        add_user,
+        create_form,
+        csrf_token,
+    ):
+        """
+        Test getting the surveyor mapping when enumerators are not uploaded
+
+        """
+        response = client.get(
+            "/api/mapping/surveyors-mapping",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+        expected_response = {
+            "errors": {
+                "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_surveyor_location_mapping_config_with_no_targets(
+        self,
+        client,
+        login_test_user,
+        create_locations,
+        add_user,
+        create_form,
+        csrf_token,
+    ):
+        """
+        Test getting the surveyor mapping config when surveyors are not uploaded
+
+        """
+        response = client.get(
+            "/api/mapping/surveyors-mapping-config",
+            query_string={"form_uid": 1},
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+        expected_response = {
+            "errors": {
+                "message": "Enumerators are not available for this form. Kindly upload enumerators first.",
             },
             "success": False,
         }

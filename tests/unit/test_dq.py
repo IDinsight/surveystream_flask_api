@@ -2634,7 +2634,10 @@ class TestDQ:
                             "spotcheck_score_name": None,
                             "gps_type": "point2point",
                             "threshold": "50",
-                            "gps_variable": "fac_4anc",
+                            "gps_variable": {
+                                "question_name": "fac_4anc",
+                                "is_repeat_group": False,
+                            },
                             "grid_id": None,
                         },
                     }
@@ -2826,7 +2829,10 @@ class TestDQ:
                         "spotcheck_score_name": None,
                         "gps_type": "point2point",
                         "threshold": "50",
-                        "gps_variable": "fac_4anc",
+                        "gps_variable": {
+                            "question_name": "fac_4anc",
+                            "is_repeat_group": False,
+                        },
                         "grid_id": None,
                     },
                 }

@@ -251,9 +251,35 @@ class TestAssignments:
         yield
 
     @pytest.fixture()
-    def create_form(
-        self, client, login_test_user, csrf_token, create_module_questionnaire
+    def create_module_selection(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        test_user_credentials,
+        create_module_questionnaire,
     ):
+        """
+        Insert assignments module_selection
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "modules": ["9"],
+        }
+
+        response = client.post(
+            "/api/module-status",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_form(self, client, login_test_user, csrf_token, create_module_selection):
         """
         Insert new form
         """
@@ -275,6 +301,36 @@ class TestAssignments:
 
         response = client.post(
             "/api/forms",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+        yield
+
+    @pytest.fixture()
+    def create_scto_question_mapping(
+        self, client, csrf_token, login_test_user, create_form
+    ):
+        """
+        Insert SCTO question mapping as a setup step for the tests
+        """
+
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 1,
+            "survey_status": "test_survey_status",
+            "revisit_section": "test_revisit_section",
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/1/scto-question-mapping",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -1340,6 +1396,26 @@ class TestAssignments:
         assert response.status_code == 200
 
     @pytest.fixture()
+    def create_target_config(self, client, login_test_user, create_form, csrf_token):
+        """
+        Load target config table for tests with form inputs
+        """
+
+        payload = {
+            "form_uid": 1,
+            "target_source": "csv",
+        }
+
+        response = client.post(
+            "/api/targets/config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+    @pytest.fixture()
     def create_target_column_config(
         self, client, login_test_user, create_form, csrf_token
     ):
@@ -1537,7 +1613,14 @@ class TestAssignments:
         yield
 
     @pytest.fixture()
-    def upload_targets_csv(self, client, login_test_user, create_locations, csrf_token):
+    def upload_targets_csv(
+        self,
+        client,
+        login_test_user,
+        create_locations,
+        create_target_config,
+        csrf_token,
+    ):
         """
         Upload the targets csv
         """
@@ -1981,7 +2064,7 @@ class TestAssignments:
         assert response.status_code == 422
         expected_response = {
             "errors": {
-                "mapping_errors": "Roles not configured for the survey. Cannot perform supervisor to target mapping without roles."
+                "mapping_errors": "Roles not configured for the survey. Cannot perform target to supervisor mapping without roles."
             },
             "success": False,
         }
@@ -13959,4 +14042,251 @@ class TestAssignments:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+        assert checkdiff == {}
+
+    def test_assignments_not_started_state(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        add_user_hierarchy,
+        csrf_token,
+    ):
+        """
+        Test the module status endpoint for testing the not started state
+
+        """
+        # Test the survey was inserted correctly
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 2, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 4, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 9, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 14, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 17,
+                    "survey_uid": 1,
+                },
+                {"config_status": "Done", "module_id": 7, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 5, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 16, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 8, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_assignments_in_progress_state(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+    ):
+        """
+        Test the module status endpoint for testing the in progress state
+
+        """
+        # Test the survey was inserted correctly
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 2, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 4, "survey_uid": 1},
+                {"config_status": "In Progress", "module_id": 9, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 14, "survey_uid": 1},
+                {
+                    "config_status": "In Progress",
+                    "module_id": 17,
+                    "survey_uid": 1,
+                },
+                {"config_status": "Done", "module_id": 7, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 5, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 16, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 8, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_assignments_live_state(
+        self,
+        client,
+        login_test_user,
+        create_scto_question_mapping,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        csrf_token,
+    ):
+        """
+        Test the module status endpoint for testing the live state
+
+        """
+
+        payload = {
+            "survey_uid": 1,
+            "state": "Active",
+        }
+
+        response = client.put(
+            "/api/surveys/1/state",
+            headers={"X-CSRF-Token": csrf_token},
+            json=payload,
+        )
+        print(response.json)
+
+        assert response.status_code == 200
+
+        # Test the survey was inserted correctly
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 2, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 4, "survey_uid": 1},
+                {"config_status": "Live", "module_id": 9, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 14, "survey_uid": 1},
+                {
+                    "config_status": "In Progress",
+                    "module_id": 17,
+                    "survey_uid": 1,
+                },
+                {"config_status": "Done", "module_id": 7, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 5, "survey_uid": 1},
+                {"config_status": "Not Started", "module_id": 16, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 8, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_assignments_table_config_in_progress_state(
+        self,
+        client,
+        login_test_user,
+        upload_enumerators_csv,
+        upload_targets_csv,
+        add_user_hierarchy,
+        create_enumerator_column_config,
+        create_target_column_config,
+        csrf_token,
+    ):
+        """
+        Test the module status endpoint for testing the in progress state
+
+        """
+        # Add the table config
+        payload = {
+            "form_uid": 1,
+            "table_name": "assignments_main",
+            "table_config": [
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_id",
+                    "column_label": "Enumerator id",
+                },
+                {
+                    "group_label": "Details",
+                    "column_key": "assigned_enumerator_name",
+                    "column_label": "Enumerator name",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "custom_fields['Mobile no.']",
+                    "column_label": "Target Mobile no.",
+                },
+                {
+                    "group_label": None,
+                    "column_key": "assigned_enumerator_custom_fields['Age']",
+                    "column_label": "Enumerator Age",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[0].location_name",
+                    "column_label": "State",
+                },
+                {
+                    "group_label": "Locations",
+                    "column_key": "target_locations[1].location_name",
+                    "column_label": "District",
+                },
+                {
+                    "group_label": "Core User",
+                    "column_key": "supervisors[2].supervisor_name",
+                    "column_label": "Name",
+                },
+                {
+                    "group_label": "Cluster Coordinator",
+                    "column_key": "supervisors[1].supervisor_name",
+                    "column_label": "Name",
+                },
+                {
+                    "group_label": "Regional Coordinator",
+                    "column_key": "supervisors[0].supervisor_name",
+                    "column_label": "Name",
+                },
+            ],
+        }
+
+        response = client.put(
+            "/api/assignments/table-config",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        # Test the survey was inserted correctly
+        response = client.get("/api/module-status/1")
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {"config_status": "Done", "module_id": 1, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 2, "survey_uid": 1},
+                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 4, "survey_uid": 1},
+                {"config_status": "In Progress", "module_id": 9, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 14, "survey_uid": 1},
+                {
+                    "config_status": "In Progress",
+                    "module_id": 17,
+                    "survey_uid": 1,
+                },
+                {"config_status": "Done", "module_id": 7, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 5, "survey_uid": 1},
+                {"config_status": "In Progress", "module_id": 16, "survey_uid": 1},
+                {"config_status": "Done", "module_id": 8, "survey_uid": 1},
+            ],
+            "success": True,
+        }
+
+        print(response.json)
+        checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}

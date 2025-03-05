@@ -2,6 +2,7 @@ from app.blueprints.enumerators.models import Enumerator
 from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
+from app.blueprints.module_selection.models import ModuleStatus
 from app.blueprints.surveys.models import Survey
 from app.blueprints.targets.models import Target, TargetConfig
 
@@ -28,6 +29,13 @@ def check_module_notification_exists(survey_uid, module_id, severity):
     )
 
 
+def set_module_status_error(survey_uid, module_id):
+    ModuleStatus.query.filter(
+        ModuleStatus.module_id == module_id,
+        ModuleStatus.survey_uid == survey_uid,
+    ).update({"config_status": "Error"}, synchronize_session="fetch")
+
+
 def check_notification_condition(survey_uid, form_uid, input_conditions):
     """
     Match notification conditions according to survey configuration and dependency conditions
@@ -39,6 +47,12 @@ def check_notification_condition(survey_uid, form_uid, input_conditions):
     """
     if input_conditions is None or len(input_conditions) == 0:
         return True
+
+    if form_uid is None:
+        # TODO: Refactor this for multiple main forms
+        form = Form.query.filter_by(survey_uid=survey_uid, form_type="parent").first()
+        if form is not None:
+            form_uid = form.form_uid
 
     condition_checks = {
         "location_exists": lambda: check_location_exists(survey_uid),
