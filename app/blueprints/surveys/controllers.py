@@ -310,6 +310,11 @@ def get_survey_config_status(survey_uid):
                 # this module is not mandatory
                 optional = True
                 num_optional += 1
+
+            elif status.name in ["Productivity tracker", "Hiring"]:
+                # these modules don't have configurations on the webapp
+                # so we don't include them in counts
+                pass
             else:
                 optional = False
 
