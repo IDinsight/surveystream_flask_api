@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, StringField
+from wtforms import FieldList, FormField, IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired
 
 
@@ -116,3 +116,8 @@ class PostActionPayloadValidator(FlaskForm):
     survey_uid = StringField(validators=[DataRequired()])
     action = StringField(validators=[DataRequired()])
     form_uid = StringField(default=None)
+
+
+class BulkPostActionPayloadValidator(FlaskForm):
+
+    actions = FieldList(FormField(PostActionPayloadValidator), min_entries=1)
