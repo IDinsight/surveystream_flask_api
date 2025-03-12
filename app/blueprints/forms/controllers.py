@@ -759,6 +759,10 @@ def ingest_scto_form_definition(form_uid):
 
     try:
         db.session.commit()
+        survey_uid = form.survey_uid
+        from app.blueprints.notifications.utils import check_form_variable_missing
+
+        check_form_variable_missing(survey_uid, form_uid, db)
     except IntegrityError as e:
         db.session.rollback()
         return (

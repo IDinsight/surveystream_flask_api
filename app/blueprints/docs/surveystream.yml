@@ -12480,3 +12480,34 @@ paths:
         "422":
           description: No notification created for the action, conditions not met
          
+  /notifications/action/bulk:
+    post:
+      summary: Create Notifications for a user/survey based on multiple actions
+      tags:
+        - Notifications
+      parameters:
+        - name: actions
+          in: body
+          description: List of actions taken on the survey
+          required: true
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+          survey_uid:
+            type: integer
+            description: Unique identifier for the survey
+          action:
+            type: string
+            description: Action taken on the survey
+          form_uid:
+            type: integer
+            description: Unique identifier for the form
+        
+      responses:
+        "200":
+          description: Notification created successfully
+
+        "422":
+          description: No notification created for the action, conditions not met
