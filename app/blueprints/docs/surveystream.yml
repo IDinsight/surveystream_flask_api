@@ -2149,6 +2149,10 @@ paths:
                   type: string
                   description: >-
                     The type of admin form. Allowed values are 'bikelog' and 'account_details'. Required if form_type is 'admin'. Must be null if form_type is 'parent' or 'dq'.
+                number_of_attempts:
+                  type: integer
+                  description: >-
+                    The number of attempts allowed before a target is marked as completed. Required if form_type is 'parent'. Must be null if form_type is 'dq' or 'admin'.
               required:
                 - survey_uid
                 - scto_form_id

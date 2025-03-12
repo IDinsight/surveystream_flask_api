@@ -226,6 +226,7 @@ class TestForms:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
+            "number_of_attempts":7,
         }
 
         response = client.post(
@@ -364,6 +365,7 @@ class TestForms:
                     "dq_form_type": None,
                     "admin_form_type": None,
                     "parent_scto_form_id": None,
+                    "number_of_attempts": 7,
                 }
             ],
             "success": True,
@@ -397,6 +399,7 @@ class TestForms:
                     "dq_form_type": None,
                     "admin_form_type": None,
                     "parent_scto_form_id": None,
+                    "number_of_attempts": 7,
                 }
             ],
             "success": True,
@@ -442,6 +445,7 @@ class TestForms:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
+            "number_of_attempts": 7,
         }
 
         response = client.put(
@@ -472,6 +476,7 @@ class TestForms:
                 "dq_form_type": None,
                 "admin_form_type": None,
                 "parent_scto_form_id": None,
+                "number_of_attempts": 7,
             },
             "success": True,
         }
@@ -792,6 +797,7 @@ class TestForms:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
+            "number_of_attempts": 7,
         }
 
         response = client.put(
@@ -1042,6 +1048,7 @@ class TestForms:
                         "dq_form_type": "audioaudit",
                         "admin_form_type": None,
                         "parent_scto_form_id": "test_scto_input_output",
+                        "number_of_attempts": None,
                     }
                 ],
                 "success": True,
@@ -1297,6 +1304,7 @@ class TestForms:
                         "dq_form_type": None,
                         "admin_form_type": "bikelog",
                         "parent_scto_form_id": None,
+                        "number_of_attempts": None,
                     }
                 ],
                 "success": True,
@@ -1417,6 +1425,7 @@ class TestForms:
                         "dq_form_type": None,
                         "admin_form_type": "bikelog",
                         "parent_scto_form_id": None,
+                        "number_of_attempts": None,
                     }
                 ],
                 "success": True,
@@ -1457,6 +1466,7 @@ class TestForms:
             "server_access_role_granted": True,
             "server_access_allowed": True,
             "form_type": "admin",
+            "number_of_attempts": None,
         }
 
         response = client.put(
