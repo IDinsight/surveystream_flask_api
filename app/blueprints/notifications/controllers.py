@@ -22,11 +22,7 @@ from .models import (
     db,
 )
 from .routes import notifications_bp
-from .utils import (
-    check_module_notification_exists,
-    check_notification_condition,
-    set_module_status_error,
-)
+from .utils import check_module_notification_exists, check_notification_condition
 from .validators import (
     BulkPostActionPayloadValidator,
     PostActionPayloadValidator,
@@ -538,7 +534,6 @@ def create_notification_via_action(validated_payload):
                 SurveyNotification.resolution_status == "in progress",
             ).update({"created_at": datetime.now()}, synchronize_session="fetch")
             notification_created_flag = True
-            set_module_status_error(survey_uid, template["module_id"])
 
         elif check_notification_condition(
             survey_uid,
@@ -556,9 +551,6 @@ def create_notification_via_action(validated_payload):
 
             db.session.add(notification)
             notification_created_flag = True
-
-            if template["severity"] == "error":
-                set_module_status_error(survey_uid, template["module_id"])
 
         db.session.flush()
 
@@ -663,7 +655,6 @@ def create_bulk_notifications_via_action(validated_payload):
                     SurveyNotification.resolution_status == "in progress",
                 ).update({"created_at": datetime.now()}, synchronize_session="fetch")
                 notification_created_flag = True
-                set_module_status_error(survey_uid, template["module_id"])
 
             elif check_notification_condition(
                 survey_uid,
@@ -682,9 +673,6 @@ def create_bulk_notifications_via_action(validated_payload):
 
                 db.session.add(notification)
                 notification_created_flag = True
-
-                if template["severity"] == "error":
-                    set_module_status_error(survey_uid, template["module_id"])
 
             db.session.flush()
 

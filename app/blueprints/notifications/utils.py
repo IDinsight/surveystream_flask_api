@@ -34,13 +34,6 @@ def check_module_notification_exists(survey_uid, module_id, severity):
     )
 
 
-def set_module_status_error(survey_uid, module_id):
-    ModuleStatus.query.filter(
-        ModuleStatus.module_id == module_id,
-        ModuleStatus.survey_uid == survey_uid,
-    ).update({"config_status": "Error"}, synchronize_session="fetch")
-
-
 def check_form_variable_missing(survey_uid, form_uid, db):
     # Get form questions
     form_questions = (
@@ -284,7 +277,7 @@ def target_language_not_exists(form_uid):
 
 
 def target_gender_not_exists(form_uid):
-    return Target.query.filter_by(form_uid=form_uid, gennder=None).first() is not None
+    return Target.query.filter_by(form_uid=form_uid, gender=None).first() is not None
 
 
 def target_location_not_exists(form_uid):
