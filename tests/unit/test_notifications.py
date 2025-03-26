@@ -278,6 +278,7 @@ class TestNotifications:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
+            "number_of_attempts": 7,
         }
         response = client.post(
             "/api/forms",
@@ -629,6 +630,34 @@ class TestNotifications:
         assert response.status_code == 200
 
     @pytest.fixture()
+    def create_scto_question_mapping(
+        self, client, csrf_token, login_test_user, create_form
+    ):
+        """
+        Test that the SCTO question mapping is inserted correctly
+        """
+
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 1,
+            "survey_status": "test_survey_status_error",
+            "revisit_section": "test_revisit_section",
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/1/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+    @pytest.fixture()
     def create_survey_notification(
         self, client, login_test_user, csrf_token, create_form
     ):
@@ -971,7 +1000,11 @@ class TestNotifications:
             "data": [
                 {"survey_uid": 1, "module_id": 1, "config_status": "Done"},
                 {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
-                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress - Incomplete"},
+                {
+                    "survey_uid": 1,
+                    "module_id": 3,
+                    "config_status": "In Progress - Incomplete",
+                },
                 {"survey_uid": 1, "module_id": 4, "config_status": "Error"},
                 {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
@@ -1526,8 +1559,16 @@ class TestNotifications:
             "data": [
                 {"survey_uid": 1, "module_id": 1, "config_status": "Done"},
                 {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
-                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress - Incomplete"},
-                {"survey_uid": 1, "module_id": 4, "config_status": "In Progress - Incomplete"},
+                {
+                    "survey_uid": 1,
+                    "module_id": 3,
+                    "config_status": "In Progress - Incomplete",
+                },
+                {
+                    "survey_uid": 1,
+                    "module_id": 4,
+                    "config_status": "In Progress - Incomplete",
+                },
                 {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 8, "config_status": "Not Started"},
@@ -1737,12 +1778,13 @@ class TestNotifications:
                     "notification_uid": 3,
                     "severity": "error",
                     "resolution_status": "in progress",
-                    "message": "Locations data has been reuploaded for this survey. Kindly update user location details",
+                    "message": "Locations data has been reuploaded for this survey. Kindly update user location details.",
                 },
             ],
         }
-        get_response_json = get_response.json
 
+        get_response_json = get_response.json
+        print(get_response_json)
         # Remove the created_at from the response for comparison
         for notification in get_response_json.get("data", []):
             if "created_at" in notification:
@@ -1883,8 +1925,8 @@ class TestNotifications:
                     "num_in_progress_incomplete": 1,
                     "num_not_started": 2,
                     "num_error": 3,
-                    "num_optional": 1
-                }
+                    "num_optional": 1,
+                },
             },
         }
 
@@ -1934,7 +1976,11 @@ class TestNotifications:
                 {"module_id": 9, "name": "Assignments", "error": False},
                 {"module_id": 13, "name": "Surveyor hiring", "error": False},
                 {"module_id": 14, "name": "Target status mapping", "error": False},
-                {"module_id": 16, "name": "Assignments column configuration", "error": False},
+                {
+                    "module_id": 16,
+                    "name": "Assignments column configuration",
+                    "error": False,
+                },
                 {"module_id": 17, "name": "Mapping", "error": False},
             ],
             "success": True,
@@ -1942,4 +1988,162 @@ class TestNotifications:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
-    
+
+    def test_create_bulk_notifications(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test Create multiple notifications together using bulk endpoint
+
+        Expect: Success
+        """
+        payload = {
+            "actions": [
+                {
+                    "survey_uid": 1,
+                    "action": "Location hierarchy changed",
+                    "form_uid": 1,
+                },
+                {
+                    "survey_uid": 1,
+                    "action": "Prime location updated",
+                    "form_uid": 1,
+                },
+            ]
+        }
+        response = client.post(
+            "/api/notifications/action/bulk",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+        expected_response = {
+            "success": True,
+            "message": "Notifications created successfully",
+            "data": [
+                {
+                    "survey_uid": "1",
+                    "action": "Location hierarchy changed",
+                    "message": "Notification created successfully",
+                },
+                {
+                    "survey_uid": "1",
+                    "action": "Prime location updated",
+                    "message": "Notification created successfully",
+                },
+            ],
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+    def test_create_bulk_notifications_error(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test Create multiple notifications together using bulk endpoint when actions have error
+
+        Expect: 422, Errored action reported back
+        """
+        payload = {
+            "actions": [
+                {
+                    "survey_uid": 1,
+                    "action": "Location hierarchy changed",
+                    "form_uid": 1,
+                },
+                {
+                    "survey_uid": 1,
+                    "action": "Prime Location updated_errror",
+                    "form_uid": 1,
+                },
+            ]
+        }
+        response = client.post(
+            "/api/notifications/action/bulk",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "error": ["Action Prime Location updated_errror not found"],
+            "success": False,
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+    def test_refresh_scto_form_definition_mapping_variable_missing(
+        self, client, login_test_user, csrf_token, create_scto_question_mapping
+    ):
+        """
+        Test that refreshing the scto form definition from SCTO gives the same result
+        """
+
+        # Ingest the SCTO variables from SCTO into the database
+        response = client.post(
+            "/api/forms/1/scto-form-definition/refresh",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Check if any notification raised
+        get_response = client.get(
+            "/api/notifications",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(get_response.json)
+        assert get_response.status_code == 200
+
+        expected_get_response = {
+            "success": True,
+            "data": [
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "SurveyCTO information",
+                    "module_id": 3,
+                    "type": "survey",
+                    "notification_uid": 1,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Following SCTO Question mapping variables are missing in form definition: test_enumerator_id, test_location_1, test_revisit_section, test_survey_status_error, test_target_id. Please review form changes.",
+                }
+            ],
+        }
+
+        get_response_json = get_response.json
+        print(get_response_json)
+        # Remove the created_at from the response for comparison
+        for notification in get_response_json.get("data", []):
+            if "created_at" in notification:
+                del notification["created_at"]
+            else:
+                print("Created_at missing in notification", notification)
+                assert False
+
+        checkdiff = jsondiff.diff(expected_get_response, get_response_json)
+        assert checkdiff == {}

@@ -141,6 +141,16 @@ def create_form(validated_payload):
             jsonify({"error": "form_type=admin must have a admin_form_type defined"}),
             422,
         )
+    if (
+        validated_payload.form_type.data == "parent"
+        and validated_payload.number_of_attempts.data is None
+    ):
+        return (
+            jsonify(
+                {"error": "form_type=parent must have a number_of_attempts defined"}
+            ),
+            422,
+        )
 
     form = Form(
         survey_uid=validated_payload.survey_uid.data,
@@ -155,8 +165,12 @@ def create_form(validated_payload):
         dq_form_type=validated_payload.dq_form_type.data,
         admin_form_type=validated_payload.admin_form_type.data,
         parent_form_uid=validated_payload.parent_form_uid.data,
+        number_of_attempts=(
+            validated_payload.number_of_attempts.data
+            if validated_payload.number_of_attempts.data is not None
+            else None
+        ),
     )
-
     try:
         db.session.add(form)
         db.session.commit()
@@ -217,6 +231,16 @@ def update_form(form_uid, validated_payload):
             jsonify({"error": "form_type=admin must have a admin_form_type defined"}),
             422,
         )
+    if (
+        validated_payload.form_type.data == "parent"
+        and validated_payload.number_of_attempts.data is None
+    ):
+        return (
+            jsonify(
+                {"error": "form_type=parent must have a number_of_attempts defined"}
+            ),
+            422,
+        )
 
     try:
         Form.query.filter_by(form_uid=form_uid).update(
@@ -232,6 +256,11 @@ def update_form(form_uid, validated_payload):
                 Form.dq_form_type: validated_payload.dq_form_type.data,
                 Form.admin_form_type: validated_payload.admin_form_type.data,
                 Form.parent_form_uid: validated_payload.parent_form_uid.data,
+                Form.number_of_attempts: (
+                    validated_payload.number_of_attempts.data
+                    if validated_payload.number_of_attempts.data is not None
+                    else None
+                ),
             },
             synchronize_session="fetch",
         )
@@ -730,6 +759,10 @@ def ingest_scto_form_definition(form_uid):
 
     try:
         db.session.commit()
+        survey_uid = form.survey_uid
+        from app.blueprints.notifications.utils import check_form_variable_missing
+
+        check_form_variable_missing(survey_uid, form_uid, db)
     except IntegrityError as e:
         db.session.rollback()
         return (

@@ -75,7 +75,9 @@ class TestTargetStatusMapping:
         yield
 
     @pytest.fixture()
-    def create_form(self, client, login_test_user, csrf_token, create_module_questionnaire):
+    def create_form(
+        self, client, login_test_user, csrf_token, create_module_questionnaire
+    ):
         """
         Insert new form as a setup step for the form tests
         """
@@ -92,6 +94,7 @@ class TestTargetStatusMapping:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
+            "number_of_attempts": 7,
         }
 
         response = client.post(
