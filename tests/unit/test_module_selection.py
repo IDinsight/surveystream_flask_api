@@ -154,7 +154,7 @@ class TestModuleSelection:
             "data": {
                 "Background Details": {"status": "In Progress - Incomplete", "optional": False},
                 "Feature Selection": {"status": "Done", "optional": False},
-                "Survey information": [
+                "Survey Information": [
                     {
                         "name": "SurveyCTO Integration",
                         "status": "Not Started",
@@ -166,7 +166,7 @@ class TestModuleSelection:
                         "optional": False,
                     },
                 ],
-                "Module configuration": [
+                "Module Configuration": [
                     {
                         "module_id": 13,
                         "name": "Surveyor Hiring",
@@ -234,7 +234,7 @@ class TestModuleSelection:
             "data": {
                 "Background Details": {"status": "In Progress - Incomplete", "optional": False},
                 "Feature Selection": {"status": "Done", "optional": False},
-                "Survey information": [
+                "Survey Information": [
                     {
                         "name": "SurveyCTO Integration",
                         "status": "Not Started",
@@ -252,7 +252,7 @@ class TestModuleSelection:
                     },
                     {"name": "Targets", "status": "Not Started", "optional": True},
                 ],
-                "Module configuration": [
+                "Module Configuration": [
                     {
                         "module_id": 12,
                         "name": "Media Audits",
@@ -336,7 +336,7 @@ class TestModuleSelection:
             "data": {
                 "Background Details": {"status": "Done", "optional": False},
                 "Feature Selection": {"status": "Done", "optional": False},
-                "Survey information": [
+                "Survey Information": [
                     {
                         "name": "SurveyCTO Integration",
                         "status": "Not Started",
@@ -361,7 +361,7 @@ class TestModuleSelection:
                     },
                     {"name": "Supervisor Mapping", "status": "Not Started", "optional": False},
                 ],
-                "Module configuration": [
+                "Module Configuration": [
                     {
                         "module_id": 9,
                         "name": "Assignments",
@@ -447,7 +447,7 @@ class TestModuleSelection:
             "data": {
                 "Background Details": {"status": "Done", "optional": False},
                 "Feature Selection": {"status": "Done", "optional": False},
-                "Survey information": [
+                "Survey Information": [
                     {
                         "name": "SurveyCTO Integration",
                         "status": "Not Started",
@@ -472,7 +472,7 @@ class TestModuleSelection:
                     },
                     {"name": "Supervisor Mapping", "status": "Not Started", "optional": False},
                 ],
-                "Module configuration": [
+                "Module Configuration": [
                     {
                         "module_id": 9,
                         "name": "Assignments",
@@ -602,7 +602,7 @@ class TestModuleSelection:
             "data": {
                 "Background Details": {"status": "Done", "optional": False},
                 "Feature Selection": {"status": "Done", "optional": False},
-                "Survey information": [
+                "Survey Information": [
                     {
                         "name": "SurveyCTO Integration",
                         "status": "Not Started",
@@ -616,7 +616,7 @@ class TestModuleSelection:
                     {"name": "Enumerators", "status": "Not Started", "optional": False},
                     {"name": "Supervisor Mapping", "status": "Not Started", "optional": False},
                 ],
-                "Module configuration": [
+                "Module Configuration": [
                     {
                         "module_id": 15,
                         "name": "Emails",
@@ -697,7 +697,7 @@ class TestModuleSelection:
             "data": {
                 "Background Details": {"status": "Done", "optional": False},
                 "Feature Selection": {"status": "Done", "optional": False},
-                "Survey information": [
+                "Survey Information": [
                     {
                         "name": "SurveyCTO Integration",
                         "status": "Not Started",
@@ -721,7 +721,7 @@ class TestModuleSelection:
                         "optional": True,
                     },
                 ],
-                "Module configuration": [
+                "Module Configuration": [
                     {
                         "module_id": 11,
                         "name": "Data Quality",

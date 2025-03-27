@@ -1103,7 +1103,7 @@ class TestSurveys:
             "data": {
                 "Background Details": {"status": "Done", "optional": False},
                 "Feature Selection": {"status": "Not Started", "optional": False},
-                "Survey information": [
+                "Survey Information": [
                     {
                         "name": "SurveyCTO Integration",
                         "status": "In Progress - Incomplete",

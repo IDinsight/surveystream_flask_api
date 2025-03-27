@@ -259,8 +259,8 @@ def get_survey_config_status(survey_uid):
             "Survey Status for Targets",
             "Supervisor Mapping",
         ]:
-            if "Survey information" not in list(data.keys()):
-                data["Survey information"] = []
+            if "Survey Information" not in list(data.keys()):
+                data["Survey Information"] = []
 
             calculated_optional_flag = is_module_optional(
                 survey_uid,
@@ -271,7 +271,7 @@ def get_survey_config_status(survey_uid):
 
             if calculated_optional_flag == False:
                 # These modules are mandatory
-                data["Survey information"].append(
+                data["Survey Information"].append(
                     {
                         "name": status.name,
                         "status": module_status,
@@ -292,7 +292,7 @@ def get_survey_config_status(survey_uid):
                     num_error += 1
 
             else:
-                data["Survey information"].append(
+                data["Survey Information"].append(
                     {
                         "name": status.name,
                         "status": module_status,
@@ -302,8 +302,8 @@ def get_survey_config_status(survey_uid):
                 num_optional += 1
 
         else:
-            if "Module configuration" not in list(data.keys()):
-                data["Module configuration"] = []
+            if "Module Configuration" not in list(data.keys()):
+                data["Module Configuration"] = []
 
             optional = False  # Since this list will only have selected modules and selected modules are mandatory
             if status.name == "Assignments Column Configuration":
@@ -330,7 +330,7 @@ def get_survey_config_status(survey_uid):
                 elif module_status == "Error":
                     num_error += 1
 
-            data["Module configuration"].append(
+            data["Module Configuration"].append(
                 {
                     "module_id": status.module_id,
                     "name": status.name,

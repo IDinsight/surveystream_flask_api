@@ -1689,7 +1689,7 @@ paths:
                       properties:
                         Background Details:
                           type: object
-                          description: Status of Background details module of the survey
+                          description: Status of `Background Details` module of the survey
                           items:
                             type: object
                             properties:
@@ -1701,10 +1701,10 @@ paths:
                               optional:
                                 type: boolean
                                 description: Indicates if the module is optional
-                        Survey information:
+                        Survey Information:
                           type: array
                           description: >-
-                            Status of modules in the survey information section
+                            Status of modules in the `Survey Information` section
                             of the survey
                           items:
                             type: object
@@ -1712,8 +1712,8 @@ paths:
                               name:
                                 type: string
                                 description: >-
-                                  Name of the module like SurveyCTO information,
-                                  Field supervisor roles etc.
+                                  Name of the module like SurveyCTO Integration,
+                                  User and Role Management etc.
                               status:
                                 type: string
                                 description: >-
@@ -1724,10 +1724,30 @@ paths:
                                 description: Indicates if the module is optional
                         Feature Selection:
                           type: object
-                          description: Status of feature selection for the survey
+                          description: Status of `Feature Selection` module for the survey
                           items:
                             type: object
                             properties:
+                              status:
+                                type: string
+                                description: >-
+                                  Configration Status (Not started/ In progress/
+                                  Done)
+                              optional:
+                                type: boolean
+                                description: Indicates if the module is optional
+                        Module Configuration:
+                          type: array
+                          description: >-
+                            Status of modules in the `Module Configuration` section
+                            of the survey
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: >-
+                                  Name of the module like Assignments, Data Quality etc.
                               status:
                                 type: string
                                 description: >-
@@ -1741,10 +1761,35 @@ paths:
                           description: >-
                             Overall Status (In progress - Configuration/ In
                             Progress - Backend Setup/ Done)
-                        completion_percentage:
-                          type: integer
+                        completion_stats:
+                          type: object
                           description: >-
-                            Percentage of completion of the survey configuration
+                            Completion stats for the survey like total modules,
+                            completed modules etc.
+                          items:
+                            type: object
+                            properties:
+                              num_modules:
+                                type: integer
+                                description: Total number of modules
+                              num_completed:
+                                type: integer
+                                description: Number of completed modules
+                              num_in_progress:
+                                type: integer
+                                description: Number of modules in progress
+                              num_in_progress_incomplete:
+                                type: integer
+                                description: Number of modules in progress and incomplete
+                              num_not_started:
+                                type: integer
+                                description: Number of modules not started
+                              num_error:
+                                type: integer
+                                description: Number of modules with errors
+                              num_optional:
+                                type: integer
+                                description: Number of optional modules
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.

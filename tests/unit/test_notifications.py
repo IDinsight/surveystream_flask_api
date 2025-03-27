@@ -1877,7 +1877,7 @@ class TestNotifications:
                 "overall_status": "In Progress - Configuration",
                 "Background Details": {"status": "Done", "optional": False},
                 "Feature Selection": {"status": "Done", "optional": False},
-                "Survey information": [
+                "Survey Information": [
                     {
                         "name": "SurveyCTO Integration",
                         "status": "In Progress - Incomplete",
@@ -1898,7 +1898,7 @@ class TestNotifications:
                     },
                     {"name": "Supervisor Mapping", "status": "Not Started", "optional": False},
                 ],
-                "Module configuration": [
+                "Module Configuration": [
                     {
                         "module_id": 9,
                         "name": "Assignments",
