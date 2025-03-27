@@ -152,16 +152,16 @@ class TestModuleSelection:
 
         expected_response = {
             "data": {
-                "Basic information": {"status": "In Progress - Incomplete", "optional": False},
-                "Module selection": {"status": "Done", "optional": False},
+                "Background Details": {"status": "In Progress - Incomplete", "optional": False},
+                "Feature Selection": {"status": "Done", "optional": False},
                 "Survey information": [
                     {
-                        "name": "SurveyCTO information",
+                        "name": "SurveyCTO Integration",
                         "status": "Not Started",
                         "optional": False,
                     },
                     {
-                        "name": "User and role management",
+                        "name": "User and Role Management",
                         "status": "Done",
                         "optional": False,
                     },
@@ -169,18 +169,18 @@ class TestModuleSelection:
                 "Module configuration": [
                     {
                         "module_id": 13,
-                        "name": "Surveyor hiring",
+                        "name": "Surveyor Hiring",
                         "status": "Not Started",
                         "optional": False,
                     },
                 ],
                 "overall_status": "In Progress - Configuration",
                 "completion_stats": {
-                    "num_modules": 5,
+                    "num_modules": 4,
                     "num_completed": 2,
                     "num_in_progress": 0,
                     "num_in_progress_incomplete": 1,
-                    "num_not_started": 2,
+                    "num_not_started": 1,
                     "num_error": 0,
                     "num_optional": 0,
                 },
@@ -232,21 +232,21 @@ class TestModuleSelection:
 
         expected_response = {
             "data": {
-                "Basic information": {"status": "In Progress - Incomplete", "optional": False},
-                "Module selection": {"status": "Done", "optional": False},
+                "Background Details": {"status": "In Progress - Incomplete", "optional": False},
+                "Feature Selection": {"status": "Done", "optional": False},
                 "Survey information": [
                     {
-                        "name": "SurveyCTO information",
+                        "name": "SurveyCTO Integration",
                         "status": "Not Started",
                         "optional": False,
                     },
                     {
-                        "name": "User and role management",
+                        "name": "User and Role Management",
                         "status": "Done",
                         "optional": False,
                     },
                     {
-                        "name": "Survey locations",
+                        "name": "Locations",
                         "status": "Not Started",
                         "optional": True,
                     },
@@ -255,7 +255,7 @@ class TestModuleSelection:
                 "Module configuration": [
                     {
                         "module_id": 12,
-                        "name": "Media (Audio/Photo) audits",
+                        "name": "Media Audits",
                         "status": "Not Started",
                         "optional": False,
                     },
@@ -334,32 +334,32 @@ class TestModuleSelection:
 
         expected_response = {
             "data": {
-                "Basic information": {"status": "Done", "optional": False},
-                "Module selection": {"status": "Done", "optional": False},
+                "Background Details": {"status": "Done", "optional": False},
+                "Feature Selection": {"status": "Done", "optional": False},
                 "Survey information": [
                     {
-                        "name": "SurveyCTO information",
+                        "name": "SurveyCTO Integration",
                         "status": "Not Started",
                         "optional": False,
                     },
                     {
-                        "name": "User and role management",
+                        "name": "User and Role Management",
                         "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {
-                        "name": "Survey locations",
+                        "name": "Locations",
                         "status": "Not Started",
                         "optional": True,
                     },
                     {"name": "Enumerators", "status": "Not Started", "optional": False},
                     {"name": "Targets", "status": "Not Started", "optional": False},
                     {
-                        "name": "Target status mapping",
+                        "name": "Survey Status for Targets",
                         "status": "Not Started",
                         "optional": True,
                     },
-                    {"name": "Mapping", "status": "Not Started", "optional": False},
+                    {"name": "Supervisor Mapping", "status": "Not Started", "optional": False},
                 ],
                 "Module configuration": [
                     {
@@ -370,7 +370,7 @@ class TestModuleSelection:
                     },
                     {
                         "module_id": 16,
-                        "name": "Assignments column configuration",
+                        "name": "Assignments Column Configuration",
                         "status": "Not Started",
                         "optional": True,
                     },
@@ -445,32 +445,32 @@ class TestModuleSelection:
 
         expected_response = {
             "data": {
-                "Basic information": {"status": "Done", "optional": False},
-                "Module selection": {"status": "Done", "optional": False},
+                "Background Details": {"status": "Done", "optional": False},
+                "Feature Selection": {"status": "Done", "optional": False},
                 "Survey information": [
                     {
-                        "name": "SurveyCTO information",
+                        "name": "SurveyCTO Integration",
                         "status": "Not Started",
                         "optional": False,
                     },
                     {
-                        "name": "User and role management",
+                        "name": "User and Role Management",
                         "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {
-                        "name": "Survey locations",
+                        "name": "Locations",
                         "status": "Not Started",
                         "optional": False,
                     },
                     {"name": "Enumerators", "status": "Not Started", "optional": False},
                     {"name": "Targets", "status": "Not Started", "optional": False},
                     {
-                        "name": "Target status mapping",
+                        "name": "Survey Status for Targets",
                         "status": "Not Started",
                         "optional": True,
                     },
-                    {"name": "Mapping", "status": "Not Started", "optional": False},
+                    {"name": "Supervisor Mapping", "status": "Not Started", "optional": False},
                 ],
                 "Module configuration": [
                     {
@@ -481,7 +481,7 @@ class TestModuleSelection:
                     },
                     {
                         "module_id": 16,
-                        "name": "Assignments column configuration",
+                        "name": "Assignments Column Configuration",
                         "status": "Not Started",
                         "optional": True,
                     },
@@ -600,21 +600,21 @@ class TestModuleSelection:
 
         expected_response = {
             "data": {
-                "Basic information": {"status": "Done", "optional": False},
-                "Module selection": {"status": "Done", "optional": False},
+                "Background Details": {"status": "Done", "optional": False},
+                "Feature Selection": {"status": "Done", "optional": False},
                 "Survey information": [
                     {
-                        "name": "SurveyCTO information",
+                        "name": "SurveyCTO Integration",
                         "status": "Not Started",
                         "optional": False,
                     },
                     {
-                        "name": "User and role management",
+                        "name": "User and Role Management",
                         "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {"name": "Enumerators", "status": "Not Started", "optional": False},
-                    {"name": "Mapping", "status": "Not Started", "optional": False},
+                    {"name": "Supervisor Mapping", "status": "Not Started", "optional": False},
                 ],
                 "Module configuration": [
                     {
@@ -695,28 +695,28 @@ class TestModuleSelection:
 
         expected_response = {
             "data": {
-                "Basic information": {"status": "Done", "optional": False},
-                "Module selection": {"status": "Done", "optional": False},
+                "Background Details": {"status": "Done", "optional": False},
+                "Feature Selection": {"status": "Done", "optional": False},
                 "Survey information": [
                     {
-                        "name": "SurveyCTO information",
+                        "name": "SurveyCTO Integration",
                         "status": "Not Started",
                         "optional": False,
                     },
                     {
-                        "name": "User and role management",
+                        "name": "User and Role Management",
                         "status": "Done",
                         "optional": False,
                     },
                     {
-                        "name": "Survey locations",
+                        "name": "Locations",
                         "status": "Not Started",
                         "optional": True,
                     },
                     {"name": "Enumerators", "status": "Not Started", "optional": True},
                     {"name": "Targets", "status": "Not Started", "optional": True},
                     {
-                        "name": "Target status mapping",
+                        "name": "Survey Status for Targets",
                         "status": "Not Started",
                         "optional": True,
                     },
@@ -724,7 +724,7 @@ class TestModuleSelection:
                 "Module configuration": [
                     {
                         "module_id": 11,
-                        "name": "Data quality",
+                        "name": "Data Quality",
                         "status": "Not Started",
                         "optional": False,
                     },

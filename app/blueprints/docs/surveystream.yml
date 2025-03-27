@@ -1687,9 +1687,9 @@ paths:
                     items:
                       type: object
                       properties:
-                        Basic information:
+                        Background Details:
                           type: object
-                          description: Status of basic information module of the survey
+                          description: Status of Background details module of the survey
                           items:
                             type: object
                             properties:
@@ -1722,9 +1722,9 @@ paths:
                               optional:
                                 type: boolean
                                 description: Indicates if the module is optional
-                        Module selection:
+                        Feature Selection:
                           type: object
-                          description: Status of module selection for the survey
+                          description: Status of feature selection for the survey
                           items:
                             type: object
                             properties:

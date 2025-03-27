@@ -1101,16 +1101,16 @@ class TestSurveys:
 
         expected_response = {
             "data": {
-                "Basic information": {"status": "Done", "optional": False},
-                "Module selection": {"status": "Not Started", "optional": False},
+                "Background Details": {"status": "Done", "optional": False},
+                "Feature Selection": {"status": "Not Started", "optional": False},
                 "Survey information": [
                     {
-                        "name": "SurveyCTO information",
+                        "name": "SurveyCTO Integration",
                         "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {
-                        "name": "User and role management",
+                        "name": "User and Role Management",
                         "status": "Not Started",
                         "optional": False,
                     },
@@ -1251,7 +1251,7 @@ class TestSurveys:
 
         expected_response = {
             "success": False,
-            "error": "Cannot activate survey. The following modules are incomplete: SurveyCTO information. Please complete these modules before activating the survey.",
+            "error": "Cannot activate survey. The following modules are incomplete: SurveyCTO Integration. Please complete these modules before activating the survey.",
         }
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
@@ -1521,10 +1521,10 @@ class TestSurveys:
 
         expected_response = {
             "data": [
-                {"module_id": 1, "name": "Basic information", "error": False},
-                {"module_id": 2, "name": "Module selection", "error": False},
-                {"module_id": 3, "name": "SurveyCTO information", "error": False},
-                {"module_id": 4, "name": "User and role management", "error": False},
+                {"module_id": 1, "name": "Background Details", "error": False},
+                {"module_id": 2, "name": "Feature Selection", "error": False},
+                {"module_id": 3, "name": "SurveyCTO Integration", "error": False},
+                {"module_id": 4, "name": "User and Role Management", "error": False},
             ],
             "success": True,
         }

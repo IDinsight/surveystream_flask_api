@@ -139,7 +139,7 @@ def create_survey(validated_payload):
             default_config_status = ModuleStatus(
                 survey_uid=survey.survey_uid,
                 module_id=module.module_id,
-                # Basic information module becomes in progress - Incomplete as soon as the survey is created
+                # Basic information/Background details module becomes in progress - Incomplete as soon as the survey is created
                 config_status="Not Started"
                 if module.module_id != 1
                 else "In Progress - Incomplete",
@@ -232,7 +232,7 @@ def get_survey_config_status(survey_uid):
             survey_uid, status.module_id, survey_state, status.config_status
         )
 
-        if status.name in ["Basic information", "Module selection"]:
+        if status.name in ["Background Details", "Feature Selection"]:
             data[status.name] = {
                 "status": module_status,
                 "optional": status.optional,
@@ -251,13 +251,13 @@ def get_survey_config_status(survey_uid):
                 num_error += 1
 
         elif status.name in [
-            "SurveyCTO information",
-            "Survey locations",
-            "User and role management",
+            "SurveyCTO Integration",
+            "Locations",
+            "User and Role Management",
             "Enumerators",
             "Targets",
-            "Target status mapping",
-            "Mapping",
+            "Survey Status for Targets",
+            "Supervisor Mapping",
         ]:
             if "Survey information" not in list(data.keys()):
                 data["Survey information"] = []
@@ -306,12 +306,12 @@ def get_survey_config_status(survey_uid):
                 data["Module configuration"] = []
 
             optional = False  # Since this list will only have selected modules and selected modules are mandatory
-            if status.name == "Assignments column configuration":
+            if status.name == "Assignments Column Configuration":
                 # this module is not mandatory
                 optional = True
                 num_optional += 1
 
-            elif status.name in ["Productivity tracker", "Hiring"]:
+            elif status.name in ["Productivity Tracker", "Surveyor Hiring"]:
                 # these modules don't have configurations on the webapp
                 # so we don't include them in counts
                 pass
