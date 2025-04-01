@@ -1,19 +1,19 @@
 "module_id","name","optional"
-1,"Basic information",False
-2,"Module selection",False
-3,"SurveyCTO information",False
-4,"User and role management",False
-5,"Survey locations",True
-6,"SurveyStream users",True
+1,"Background Details",False
+2,"Feature Selection",False
+3,"SurveyCTO Integration",False
+4,"User and Role Management",False
+5,"Locations",True
+6,"SurveyStream Users",True
 7,"Enumerators",True
 8,"Targets",True
 9,"Assignments",True
-10,"Productivity tracker",True
-11,"Data quality",True
-12,"Media (Audio/Photo) audits",True
-13,"Surveyor hiring",True
-14,"Target status mapping", True
+10,"Productivity Tracker",True
+11,"Data Quality",True
+12,"Media Audits",True
+13,"Surveyor Hiring",True
+14,"Survey Status for Targets", True
 15,"Emails",True
-16,"Assignments column configuration",True
-17,"Mapping",True
-18,"Admin forms", True
+16,"Assignments Column Configuration",True
+17,"Supervisor Mapping",True
+18,"Admin Forms", True
