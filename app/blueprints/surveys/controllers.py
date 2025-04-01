@@ -258,16 +258,21 @@ def get_survey_config_status(survey_uid):
             "Targets",
             "Survey Status for Targets",
             "Supervisor Mapping",
+            "Admin Forms",
         ]:
             if "Survey Information" not in list(data.keys()):
                 data["Survey Information"] = []
 
-            calculated_optional_flag = is_module_optional(
-                survey_uid,
-                status.optional,
-                status.required_if_conditions,
-                module_status,
-            )
+            if status.name == "Admin Forms":
+                # Since this is a selected module, it is never optional if selected
+                calculated_optional_flag = False
+            else:
+                calculated_optional_flag = is_module_optional(
+                    survey_uid,
+                    status.optional,
+                    status.required_if_conditions,
+                    module_status,
+                )
 
             if calculated_optional_flag == False:
                 # These modules are mandatory
