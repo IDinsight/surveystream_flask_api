@@ -2,4 +2,4 @@ enumerator_id,name,email,mobile_primary,language,home_address,gender,enumerator_
 0294612,Eric Dodge,eric.dodge@idinsight.org,0123456789,English,my house,Male,surveyor,1101,1123456789
 0294613,Jahnavi Meher,jahnavi.meher@idinsight.org,0123456789,Telugu,my house,Female,surveyor,1104,1123456789
 0294614,Jay Prakash,jay.prakash@idinsight.org,0123456789,Hindi,my house,Male,monitor,1101,1123456789
-0294615,Griffin Muteti,griffin.muteti@idinsight.org,0123456789,Swahili,my house,Male,monitor;surveyor,"1104,1101",1123456789
+0294615,Griffin Muteti,griffin.muteti@idinsight.org,0123456789,Swahili,my house,Male,monitor;surveyor,"1104;1101",1123456789
