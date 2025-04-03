@@ -484,10 +484,11 @@ def update_enumerator(enumerator_uid, validated_payload):
             Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
         )
 
-        location = Location.query.filter_by(
-            location_uid=location_uid,
-            geo_level_uid=prime_geo_level_uid,
-            survey_uid=survey_uid,
+        location_list = location_uid.split(";")
+        location = Location.query.filter(
+            Location.location_uid.in_(location_list),
+            Location.geo_level_uid == prime_geo_level_uid,
+            Location.survey_uid == survey_uid,
         ).first()
 
         if location is None:
@@ -553,14 +554,15 @@ def update_enumerator(enumerator_uid, validated_payload):
                 form_uid=enumerator.form_uid,
             ).delete()
 
-            # Add the new location mapping
-            surveyor_location = SurveyorLocation(
-                enumerator_uid=enumerator_uid,
-                form_uid=enumerator.form_uid,
-                location_uid=location_uid,
-            )
+            # Add the new location mappings
+            for location in location_uid.split(";"):
+                surveyor_location = SurveyorLocation(
+                    enumerator_uid=enumerator_uid,
+                    form_uid=enumerator.form_uid,
+                    location_uid=location,
+                )
 
-            db.session.add(surveyor_location)
+                db.session.add(surveyor_location)
 
             db.session.commit()
     except Exception as e:
