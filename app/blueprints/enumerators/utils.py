@@ -549,17 +549,26 @@ class EnumeratorsUpload:
 
         # If the location_id_column is mapped, the file should contain no location_id's that are not in the database
         if hasattr(column_mapping, "location_id_column"):
-            location_id_query = (
-                Location.query.filter(
+            valid_location_ids = set(
+                str(row[0])
+                for row in Location.query.filter(
                     Location.survey_uid == self.survey_uid,
                     Location.geo_level_uid == prime_geo_level_uid,
                 )
                 .with_entities(Location.location_id)
                 .distinct()
+                .all()
             )
+
             invalid_location_id_df = self.enumerators_df[
-                ~self.enumerators_df[column_mapping.location_id_column].isin(
-                    [row[0] for row in location_id_query.all()]
+                self.enumerators_df[column_mapping.location_id_column].apply(
+                    lambda x: (
+                        False
+                        if pd.isna(x)
+                        else not all(
+                            id.strip() in valid_location_ids for id in str(x).split(",")
+                        )
+                    )
                 )
             ]
             if len(invalid_location_id_df) > 0:
@@ -738,13 +747,29 @@ class EnumeratorsUpload:
                                 )
                                 + 1
                             )  # Add 1 to the index to account for the df index
-                            surveyor_location = SurveyorLocation(
-                                enumerator_uid=enumerator.enumerator_uid,
-                                form_uid=self.form_uid,
-                                location_uid=location_uid_lookup[row[col_index]],
-                            )
 
-                            db.session.add(surveyor_location)
+                            # Check if location_id has multiple values
+                            if "," in str(row[col_index]):
+                                # Handle multiple location_ids
+                                location_ids = [
+                                    lid.strip()
+                                    for lid in str(row[col_index]).split(",")
+                                ]
+                                for location_id in location_ids:
+                                    surveyor_location = SurveyorLocation(
+                                        enumerator_uid=enumerator.enumerator_uid,
+                                        form_uid=self.form_uid,
+                                        location_uid=location_uid_lookup[location_id],
+                                    )
+                                    db.session.add(surveyor_location)
+                            else:
+                                # Handle single location_id
+                                surveyor_location = SurveyorLocation(
+                                    enumerator_uid=enumerator.enumerator_uid,
+                                    form_uid=self.form_uid,
+                                    location_uid=location_uid_lookup[row[col_index]],
+                                )
+                                db.session.add(surveyor_location)
 
                     if enumerator_type == "monitor":
                         monitor_form = MonitorForm(
@@ -763,13 +788,29 @@ class EnumeratorsUpload:
                                 )
                                 + 1
                             )
-                            monitor_location = MonitorLocation(
-                                enumerator_uid=enumerator.enumerator_uid,
-                                form_uid=self.form_uid,
-                                location_uid=location_uid_lookup[row[col_index]],
-                            )
 
-                            db.session.add(monitor_location)
+                            # Check if location_id has multiple values
+                            if "," in str(row[col_index]):
+                                # Handle multiple location_ids
+                                location_ids = [
+                                    lid.strip()
+                                    for lid in str(row[col_index]).split(",")
+                                ]
+                                for location_id in location_ids:
+                                    monitor_location = MonitorLocation(
+                                        enumerator_uid=enumerator.enumerator_uid,
+                                        form_uid=self.form_uid,
+                                        location_uid=location_uid_lookup[location_id],
+                                    )
+                                    db.session.add(monitor_location)
+                            else:
+                                # Handle single location_id
+                                monitor_location = MonitorLocation(
+                                    enumerator_uid=enumerator.enumerator_uid,
+                                    form_uid=self.form_uid,
+                                    location_uid=location_uid_lookup[row[col_index]],
+                                )
+                                db.session.add(monitor_location)
 
         if records_to_update:
             for record in records_to_update:
@@ -862,19 +903,67 @@ class EnumeratorsUpload:
                                 enumerator_uid=enumerator_uid,
                                 form_uid=self.form_uid,
                             ).first()
-
                             if not surveyor_location:
-                                surveyor_location = SurveyorLocation(
+                                # Check if location_id has multiple values
+                                if "," in str(record[col_index]):
+                                    # Handle multiple location_ids
+                                    location_ids = [
+                                        lid.strip()
+                                        for lid in str(record[col_index]).split(",")
+                                    ]
+                                    for location_id in location_ids:
+                                        surveyor_location = SurveyorLocation(
+                                            enumerator_uid=enumerator_uid,
+                                            form_uid=self.form_uid,
+                                            location_uid=location_uid_lookup[
+                                                location_id
+                                            ],
+                                        )
+                                        db.session.add(surveyor_location)
+                                else:
+                                    # Handle single location_id
+                                    surveyor_location = SurveyorLocation(
+                                        enumerator_uid=enumerator_uid,
+                                        form_uid=self.form_uid,
+                                        location_uid=location_uid_lookup[
+                                            record[col_index]
+                                        ],
+                                    )
+                                    db.session.add(surveyor_location)
+                            else:
+                                # Delete the existing record
+                                SurveyorLocation.query.filter_by(
                                     enumerator_uid=enumerator_uid,
                                     form_uid=self.form_uid,
-                                    location_uid=location_uid_lookup[record[col_index]],
-                                )
-                                db.session.add(surveyor_location)
-                            else:
-                                surveyor_location.location_uid = location_uid_lookup[
-                                    record[col_index]
-                                ]
-                                db.session.add(surveyor_location)
+                                ).delete()
+                                db.session.flush()
+                                # For updating existing records
+                                if "," in str(record[col_index]):
+                                    # Delete all existing record and add new ones for multiple locations
+
+                                    location_ids = [
+                                        lid.strip()
+                                        for lid in str(record[col_index]).split(",")
+                                    ]
+                                    for location_id in location_ids:
+                                        surveyor_location = SurveyorLocation(
+                                            enumerator_uid=enumerator_uid,
+                                            form_uid=self.form_uid,
+                                            location_uid=location_uid_lookup[
+                                                location_id
+                                            ],
+                                        )
+                                        db.session.add(surveyor_location)
+                                else:
+                                    # Update single location
+                                    surveyor_location = SurveyorLocation(
+                                        enumerator_uid=enumerator_uid,
+                                        form_uid=self.form_uid,
+                                        location_uid=location_uid_lookup[
+                                            record[col_index]
+                                        ],
+                                    )
+                                    db.session.add(surveyor_location)
 
                     if enumerator_type == "monitor":
 
@@ -891,17 +980,65 @@ class EnumeratorsUpload:
                             ).first()
 
                             if not monitor_location:
-                                monitor_location = MonitorLocation(
+                                # Check if location_id has multiple values
+                                if "," in str(record[col_index]):
+                                    # Handle multiple location_ids
+                                    location_ids = [
+                                        lid.strip()
+                                        for lid in str(record[col_index]).split(",")
+                                    ]
+                                    for location_id in location_ids:
+                                        monitor_location = MonitorLocation(
+                                            enumerator_uid=enumerator_uid,
+                                            form_uid=self.form_uid,
+                                            location_uid=location_uid_lookup[
+                                                location_id
+                                            ],
+                                        )
+                                        db.session.add(monitor_location)
+                                else:
+                                    # Handle single location_id
+                                    monitor_location = MonitorLocation(
+                                        enumerator_uid=enumerator_uid,
+                                        form_uid=self.form_uid,
+                                        location_uid=location_uid_lookup[
+                                            record[col_index]
+                                        ],
+                                    )
+                                    db.session.add(monitor_location)
+                            else:
+                                # Delete the existing record
+                                MonitorLocation.query.filter_by(
                                     enumerator_uid=enumerator_uid,
                                     form_uid=self.form_uid,
-                                    location_uid=location_uid_lookup[record[col_index]],
-                                )
-                                db.session.add(monitor_location)
-                            else:
-                                monitor_location.location_uid = location_uid_lookup[
-                                    record[col_index]
-                                ]
-                                db.session.add(monitor_location)
+                                ).delete()
+                                db.session.flush()
+                                # For updating existing records
+                                if "," in str(record[col_index]):
+
+                                    location_ids = [
+                                        lid.strip()
+                                        for lid in str(record[col_index]).split(",")
+                                    ]
+                                    for location_id in location_ids:
+                                        monitor_location = MonitorLocation(
+                                            enumerator_uid=enumerator_uid,
+                                            form_uid=self.form_uid,
+                                            location_uid=location_uid_lookup[
+                                                location_id
+                                            ],
+                                        )
+                                        db.session.add(monitor_location)
+                                else:
+                                    # Update single location
+                                    monitor_location = MonitorLocation(
+                                        enumerator_uid=enumerator_uid,
+                                        form_uid=self.form_uid,
+                                        location_uid=location_uid_lookup[
+                                            record[col_index]
+                                        ],
+                                    )
+                                    db.session.add(monitor_location)
 
         db.session.commit()
 

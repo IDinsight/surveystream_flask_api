@@ -3233,28 +3233,33 @@ paths:
                           type: array
                           description: >-
                             The working geography of the enumerator if they are
-                            a surveyor on the form.  Each array item is an
-                            object of the form {`location_id`: _location_id_,
-                            `location_name`:  _location_name_, `location_uid`:
-                            __location_uid__, `geo_level_name`:
-                            __geo_level_name__, `geo_level_uid`:
-                            __geo_level_uid__} in descending order from highest 
-                            to lowest level location down to the level of the
-                            prime geo level the surveyor is mapped to. Will be
-                            null if the surveyor is not mapped to a prime geo
-                            level.
+                            a surveyor on the form.  
+                            List contains a list of all locations enumerator is mapped.
                           items:
-                            type: object
-                            properties:
-                              location_id:
-                                type: integer
-                                description: The user-defined unique ID of the location
-                              location_name:
-                                type: string
-                                description: The name of the location
-                              geo_level_name:
-                                type: string
-                                description: The name of the geo level
+                            type: array
+                            description: >-
+                              Each array item is an object of the form 
+                              {`location_id`: _location_id_,
+                              `location_name`:  _location_name_, `location_uid`:
+                              __location_uid__, `geo_level_name`:
+                              __geo_level_name__, `geo_level_uid`:
+                              __geo_level_uid__} in descending order from highest 
+                              to lowest level location down to the level of the
+                              prime geo level the surveyor is mapped to. Will be
+                              null if the surveyor is not mapped to a prime geo
+                              level.
+                            items:
+                              type: object
+                              properties:
+                                location_id:
+                                  type: integer
+                                  description: The user-defined unique ID of the location
+                                location_name:
+                                  type: string
+                                  description: The name of the location
+                                geo_level_name:
+                                  type: string
+                                  description: The name of the geo level
                         monitor_status:
                           type: string
                           enum:
@@ -3268,28 +3273,33 @@ paths:
                           type: array
                           description: >-
                             The working geography of the enumerator if they are
-                            a monitor on the form.  Each array item is an object
-                            of the form {`location_id`: _location_id_,
-                            `location_name`:  _location_name_, `location_uid`:
-                            __location_uid__, `geo_level_name`:
-                            __geo_level_name__, `geo_level_uid`:
-                            __geo_level_uid__} in descending order from highest 
-                            to lowest level location down to the level of the
-                            prime geo level the monitor is mapped to. Will be
-                            null if the monitor is not mapped to a prime geo
-                            level.
+                            a monitor on the form.  
+                            List contains a list of all locations monitor is mapped.
                           items:
-                            type: object
-                            properties:
-                              location_id:
-                                type: integer
-                                description: The user-defined unique ID of the location
-                              location_name:
-                                type: string
-                                description: The name of the location
-                              geo_level_name:
-                                type: string
-                                description: The name of the geo level
+                            type: array
+                            description: >-
+                              Each array item is an object
+                              of the form {`location_id`: _location_id_,
+                              `location_name`:  _location_name_, `location_uid`:
+                              __location_uid__, `geo_level_name`:
+                              __geo_level_name__, `geo_level_uid`:
+                              __geo_level_uid__} in descending order from highest 
+                              to lowest level location down to the level of the
+                              prime geo level the monitor is mapped to. Will be
+                              null if the monitor is not mapped to a prime geo
+                              level.
+                            items:
+                              type: object
+                              properties:
+                                location_id:
+                                  type: integer
+                                  description: The user-defined unique ID of the location
+                                location_name:
+                                  type: string
+                                  description: The name of the location
+                                geo_level_name:
+                                  type: string
+                                  description: The name of the geo level
         "400":
           description: Form ID is required
     post:

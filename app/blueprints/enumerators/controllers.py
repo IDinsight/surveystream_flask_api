@@ -252,7 +252,7 @@ def get_enumerators(validated_query_params):
 
     survey_uid = Form.query.filter_by(form_uid=form_uid).first().survey_uid
 
-    # This will be used to join in the locations hierarchy for each enumerator
+    # Create locations dataset
     prime_geo_level_uid = (
         Survey.query.filter_by(survey_uid=survey_uid).first().prime_geo_level_uid
     )
@@ -268,61 +268,82 @@ def get_enumerators(validated_query_params):
         )
     )
 
+    # Subqueries to build the surveyor and monitor locations
+    surveyor_locations_array_subquery = aliased(
+        db.session.query(
+            SurveyorLocation.enumerator_uid,
+            SurveyorLocation.form_uid,
+            func.jsonb_agg(surveyor_locations_subquery.c.locations).label("locations"),
+        )
+        .outerjoin(
+            surveyor_locations_subquery,
+            SurveyorLocation.location_uid == surveyor_locations_subquery.c.location_uid,
+        )
+        .group_by(SurveyorLocation.enumerator_uid, SurveyorLocation.form_uid)
+        .subquery()
+    )
+
+    monitor_locations_array_subquery = aliased(
+        db.session.query(
+            MonitorLocation.enumerator_uid,
+            MonitorLocation.form_uid,
+            func.jsonb_agg(monitor_locations_subquery.c.locations).label("locations"),
+        )
+        .outerjoin(
+            monitor_locations_subquery,
+            MonitorLocation.location_uid == monitor_locations_subquery.c.location_uid,
+        )
+        .group_by(MonitorLocation.enumerator_uid, MonitorLocation.form_uid)
+        .subquery()
+    )
+
     models = [Enumerator]
     joined_keys = []
 
     if enumerator_type is None or enumerator_type == "surveyor":
         models.append(SurveyorForm.status.label("surveyor_status"))
         models.append(
-            surveyor_locations_subquery.c.locations.label("surveyor_locations")
+            surveyor_locations_array_subquery.c.locations.label("surveyor_locations")
         )
         joined_keys.append("surveyor_status")
         joined_keys.append("surveyor_locations")
 
     if enumerator_type is None or enumerator_type == "monitor":
         models.append(MonitorForm.status.label("monitor_status"))
-        models.append(monitor_locations_subquery.c.locations.label("monitor_locations"))
+        models.append(
+            monitor_locations_array_subquery.c.locations.label("monitor_locations")
+        )
         joined_keys.append("monitor_status")
         joined_keys.append("monitor_locations")
 
     query_to_build = db.session.query(*models)
 
     if enumerator_type is None or enumerator_type == "surveyor":
-        query_to_build = (
-            query_to_build.outerjoin(
-                SurveyorForm,
-                (Enumerator.enumerator_uid == SurveyorForm.enumerator_uid)
-                & (Enumerator.form_uid == SurveyorForm.form_uid),
+        query_to_build = query_to_build.outerjoin(
+            SurveyorForm,
+            (Enumerator.enumerator_uid == SurveyorForm.enumerator_uid)
+            & (Enumerator.form_uid == SurveyorForm.form_uid),
+        ).outerjoin(
+            surveyor_locations_array_subquery,
+            (
+                Enumerator.enumerator_uid
+                == surveyor_locations_array_subquery.c.enumerator_uid
             )
-            .outerjoin(
-                SurveyorLocation,
-                (Enumerator.enumerator_uid == SurveyorLocation.enumerator_uid)
-                & (Enumerator.form_uid == SurveyorLocation.form_uid),
-            )
-            .outerjoin(
-                surveyor_locations_subquery,
-                SurveyorLocation.location_uid
-                == surveyor_locations_subquery.c.location_uid,
-            )
+            & (Enumerator.form_uid == surveyor_locations_array_subquery.c.form_uid),
         )
 
     if enumerator_type is None or enumerator_type == "monitor":
-        query_to_build = (
-            query_to_build.outerjoin(
-                MonitorForm,
-                (Enumerator.enumerator_uid == MonitorForm.enumerator_uid)
-                & (Enumerator.form_uid == MonitorForm.form_uid),
+        query_to_build = query_to_build.outerjoin(
+            MonitorForm,
+            (Enumerator.enumerator_uid == MonitorForm.enumerator_uid)
+            & (Enumerator.form_uid == MonitorForm.form_uid),
+        ).outerjoin(
+            monitor_locations_array_subquery,
+            (
+                Enumerator.enumerator_uid
+                == monitor_locations_array_subquery.c.enumerator_uid
             )
-            .outerjoin(
-                MonitorLocation,
-                (Enumerator.enumerator_uid == MonitorLocation.enumerator_uid)
-                & (Enumerator.form_uid == MonitorLocation.form_uid),
-            )
-            .outerjoin(
-                monitor_locations_subquery,
-                MonitorLocation.location_uid
-                == monitor_locations_subquery.c.location_uid,
-            )
+            & (Enumerator.form_uid == monitor_locations_array_subquery.c.form_uid),
         )
 
     final_query = query_to_build.filter(Enumerator.form_uid == form_uid)
