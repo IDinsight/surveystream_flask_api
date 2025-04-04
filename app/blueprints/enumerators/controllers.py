@@ -467,6 +467,8 @@ def update_enumerator(enumerator_uid, validated_payload):
     custom_fields_in_db = getattr(enumerator, "custom_fields", None)
     custom_fields_in_payload = payload.get("custom_fields")
     location_uid = payload.get("location_uid")
+    if location_uid is not None:
+        location_uid = str(location_uid)
 
     survey_uid = Form.query.filter_by(form_uid=enumerator.form_uid).first().survey_uid
     keys_in_db = []
