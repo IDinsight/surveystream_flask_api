@@ -1925,7 +1925,7 @@ class TestNotifications:
                     "num_in_progress_incomplete": 1,
                     "num_not_started": 1,
                     "num_error": 3,
-                    "num_optional": 1,
+                    "num_optional": 0,
                 },
             },
         }

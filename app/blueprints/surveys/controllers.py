@@ -274,7 +274,7 @@ def get_survey_config_status(survey_uid):
                     module_status,
                 )
 
-            if calculated_optional_flag == False:
+            if calculated_optional_flag is False:
                 # These modules are mandatory
                 data["Survey Information"].append(
                     {
@@ -285,7 +285,7 @@ def get_survey_config_status(survey_uid):
                 )
 
                 num_modules += 1
-                if module_status == "Done":
+                if module_status in ["Done", "Live"]:
                     num_completed += 1
                 elif module_status == "In Progress":
                     num_in_progress += 1
@@ -312,12 +312,11 @@ def get_survey_config_status(survey_uid):
 
             optional = False  # Since this list will only have selected modules and selected modules are mandatory
             if status.name == "Assignments Column Configuration":
-                # this module is not mandatory
+                # "Assignments Column Configuration" - is not treated as a separate module
+                # in the webapp, so we don't include it
                 optional = True
-                num_optional += 1
-
             elif status.name in ["Productivity Tracker", "Surveyor Hiring"]:
-                # these modules don't have configurations on the webapp
+                # "Productivity Tracker", "Surveyor Hiring" - don't have configurations on the webapp
                 # so we don't include them in counts
                 pass
             else:
