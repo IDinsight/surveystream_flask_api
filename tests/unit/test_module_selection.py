@@ -383,7 +383,7 @@ class TestModuleSelection:
                     "num_in_progress_incomplete": 1,
                     "num_not_started": 5,
                     "num_error": 0,
-                    "num_optional": 3,
+                    "num_optional": 2,
                 }
             },
             "success": True,
@@ -494,7 +494,7 @@ class TestModuleSelection:
                     "num_in_progress_incomplete": 1,
                     "num_not_started": 6,
                     "num_error": 0,
-                    "num_optional": 2,
+                    "num_optional": 1,
                 }
             },
             "success": True,
