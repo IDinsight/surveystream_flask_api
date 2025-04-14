@@ -686,6 +686,15 @@ class SurveyorMapping:
 
         # Step 1: Generate mappings for surveyors that can be mapped automatically
 
+        # If Location is a mapping criteria, exclude surveyors with multiple locations
+        base_query = db.session.query(surveyors_subquery.c.enumerator_uid)
+        if "Location" in self.mapping_criteria:
+            base_query = base_query.group_by(
+                surveyors_subquery.c.enumerator_uid
+            ).having(func.count() == 1)
+
+        valid_enumerators = base_query.subquery()
+
         # Only mapping criteria values with 1 supervisor can be mapped automatically
         # Hence, filter supervisors to only those mapping criteria values with 1 supervisor
         single_supervisor_per_mapping_values_subquery = (
@@ -729,6 +738,11 @@ class SurveyorMapping:
                 supervisors_subquery.c.user_uid.label("supervisor_uid"),
             )
             .join(
+                valid_enumerators,
+                surveyors_subquery.c.enumerator_uid
+                == valid_enumerators.c.enumerator_uid,
+            )
+            .join(
                 supervisors_subquery,
                 and_(
                     *[
@@ -746,6 +760,7 @@ class SurveyorMapping:
             )
             .all()
         )
+
         mappings = [
             {
                 "enumerator_uid": mapping.enumerator_uid,
@@ -757,7 +772,6 @@ class SurveyorMapping:
         # Step 2: Add saved mappings for surveyors that could not be mapped automatically
         surveyors_mapped = [mapping["enumerator_uid"] for mapping in mappings]
 
-        # Fetch saved mappings
         saved_mappings = self.get_saved_mappings()
         for mapping in saved_mappings:
             if mapping.enumerator_uid not in surveyors_mapped:
@@ -795,7 +809,7 @@ class SurveyorMapping:
                 .filter(
                     surveyors_subquery.c.enumerator_uid == mapping["enumerator_uid"]
                 )
-                .first()
+                .all()
             )
             if surveyor is None:
                 not_found_enumerator_uids.append(mapping["enumerator_uid"])
@@ -808,22 +822,36 @@ class SurveyorMapping:
             if supervisor is None:
                 not_found_supervisor_uids.append(mapping["supervisor_uid"])
 
+            # Handle multiple surveyor rows by combining their criteria
+            surveyor_criteria = {}
+            for s in surveyor:
+                criteria_values = s.mapped_to_values
+                for criteria, value in criteria_values.items():
+                    if criteria not in surveyor_criteria:
+                        surveyor_criteria[criteria] = [str(value)]
+                    else:
+                        surveyor_criteria[criteria].append(str(value))
+
+            # Construct query and get parameters
             supervisor_with_same_mapping = (
                 db.session.query(supervisors_subquery)
                 .filter(
                     supervisors_subquery.c.user_uid == mapping["supervisor_uid"],
                     *[
-                        (
+                        type_coerce(
                             type_coerce(
                                 supervisors_subquery.c.mapping_criteria_values, JSON
-                            )["criteria"][criteria]
-                            == type_coerce(surveyor.mapped_to_values[criteria], JSON)
+                            )["criteria"],
+                            JSON,
                         )
-                        for criteria in self.mapping_criteria
+                        .op("->>")(criteria)
+                        .in_([str(value) for value in values])
+                        for criteria, values in surveyor_criteria.items()
                     ],
                 )
                 .first()
             )
+
             if supervisor_with_same_mapping is None:
                 invalid_mapping.append(mapping["enumerator_uid"])
 
