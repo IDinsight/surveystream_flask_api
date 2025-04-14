@@ -4211,71 +4211,67 @@ class TestMapping:
             )
 
             expected_response = {
+                "success": True,
                 "data": [
                     {
-                        "enumerator_id": "0294612",
                         "enumerator_uid": 1,
+                        "enumerator_id": "0294612",
+                        "name": "Eric Dodge",
                         "gender": "Male",
                         "language": "English",
                         "location_id": ["1"],
                         "location_name": ["ADILABAD"],
-                        "name": "Eric Dodge",
-                        "supervisor_email": "newuser1@example.com",
-                        "supervisor_mapping_criteria_values": {
-                            "criteria": {"Gender": "Male"},
-                            "other": {},
-                        },
-                        "supervisor_name": "John Doe",
+                        "surveyor_mapping_criteria_values": [
+                            {"other": {}, "criteria": {"Gender": "Male"}}
+                        ],
                         "supervisor_uid": 3,
-                        "surveyor_mapping_criteria_values": {
-                            "criteria": {"Gender": "Male"},
+                        "supervisor_email": "newuser2@example.com",
+                        "supervisor_name": "Tim Doe",
+                        "supervisor_mapping_criteria_values": {
                             "other": {},
+                            "criteria": {"Gender": "Male"},
                         },
                     },
                     {
-                        "enumerator_id": "0294613",
                         "enumerator_uid": 2,
+                        "enumerator_id": "0294613",
+                        "name": "Jahnavi Meher",
                         "gender": "Female",
                         "language": "Telugu",
                         "location_id": ["1"],
                         "location_name": ["ADILABAD"],
-                        "name": "Jahnavi Meher",
-                        "supervisor_email": None,
-                        "supervisor_mapping_criteria_values": {
-                            "criteria": {"Gender": "Female"},
-                            "other": {},
-                        },
-                        "supervisor_name": None,
+                        "surveyor_mapping_criteria_values": [
+                            {"other": {}, "criteria": {"Gender": "Female"}}
+                        ],
                         "supervisor_uid": None,
-                        "surveyor_mapping_criteria_values": {
-                            "criteria": {"Gender": "Female"},
+                        "supervisor_email": None,
+                        "supervisor_name": None,
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": [{"Gender": "Female"}],
                             "other": {},
                         },
                     },
                     {
-                        "enumerator_id": "0294615",
                         "enumerator_uid": 4,
+                        "enumerator_id": "0294615",
+                        "name": "Griffin Muteti",
                         "gender": "Male",
                         "language": "Swahili",
                         "location_id": ["1"],
                         "location_name": ["ADILABAD"],
-                        "name": "Griffin Muteti",
-                        "supervisor_email": None,
-                        "supervisor_mapping_criteria_values": {
-                            "criteria": {"Gender": "Male"},
-                            "other": {},
-                        },
-                        "supervisor_name": None,
+                        "surveyor_mapping_criteria_values": [
+                            {"other": {}, "criteria": {"Gender": "Male"}}
+                        ],
                         "supervisor_uid": None,
-                        "surveyor_mapping_criteria_values": {
-                            "criteria": {"Gender": "Male"},
+                        "supervisor_email": None,
+                        "supervisor_name": None,
+                        "supervisor_mapping_criteria_values": {
+                            "criteria": [{"Gender": "Male"}],
                             "other": {},
                         },
                     },
                 ],
-                "success": True,
             }
-
             print(response.json)
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
@@ -4368,71 +4364,67 @@ class TestMapping:
 
         assert response.status_code == 200
         expected_response = {
+            "success": True,
             "data": [
                 {
-                    "enumerator_id": "0294612",
                     "enumerator_uid": 1,
+                    "enumerator_id": "0294612",
+                    "name": "Eric Dodge",
                     "gender": "Male",
                     "language": "English",
                     "location_id": ["1"],
                     "location_name": ["ADILABAD"],
-                    "name": "Eric Dodge",
-                    "supervisor_email": None,
-                    "supervisor_mapping_criteria_values": {
-                        "criteria": {"Gender": "Male"},
-                        "other": {},
-                    },
-                    "supervisor_name": None,
+                    "surveyor_mapping_criteria_values": [
+                        {"other": {}, "criteria": {"Gender": "Male"}}
+                    ],
                     "supervisor_uid": None,
-                    "surveyor_mapping_criteria_values": {
-                        "criteria": {"Gender": "Male"},
+                    "supervisor_email": None,
+                    "supervisor_name": None,
+                    "supervisor_mapping_criteria_values": {
+                        "criteria": [{"Gender": "Male"}],
                         "other": {},
                     },
                 },
                 {
-                    "enumerator_id": "0294613",
                     "enumerator_uid": 2,
+                    "enumerator_id": "0294613",
+                    "name": "Jahnavi Meher",
                     "gender": "Female",
                     "language": "Telugu",
                     "location_id": ["1"],
                     "location_name": ["ADILABAD"],
-                    "name": "Jahnavi Meher",
-                    "supervisor_email": None,
-                    "supervisor_mapping_criteria_values": {
-                        "criteria": {"Gender": "Female"},
-                        "other": {},
-                    },
-                    "supervisor_name": None,
+                    "surveyor_mapping_criteria_values": [
+                        {"other": {}, "criteria": {"Gender": "Female"}}
+                    ],
                     "supervisor_uid": None,
-                    "surveyor_mapping_criteria_values": {
-                        "criteria": {"Gender": "Female"},
+                    "supervisor_email": None,
+                    "supervisor_name": None,
+                    "supervisor_mapping_criteria_values": {
+                        "criteria": [{"Gender": "Female"}],
                         "other": {},
                     },
                 },
                 {
-                    "enumerator_id": "0294615",
                     "enumerator_uid": 4,
+                    "enumerator_id": "0294615",
+                    "name": "Griffin Muteti",
                     "gender": "Male",
                     "language": "Swahili",
                     "location_id": ["1"],
                     "location_name": ["ADILABAD"],
-                    "name": "Griffin Muteti",
-                    "supervisor_email": None,
-                    "supervisor_mapping_criteria_values": {
-                        "criteria": {"Gender": "Male"},
-                        "other": {},
-                    },
-                    "supervisor_name": None,
+                    "surveyor_mapping_criteria_values": [
+                        {"other": {}, "criteria": {"Gender": "Male"}}
+                    ],
                     "supervisor_uid": None,
-                    "surveyor_mapping_criteria_values": {
-                        "criteria": {"Gender": "Male"},
+                    "supervisor_email": None,
+                    "supervisor_name": None,
+                    "supervisor_mapping_criteria_values": {
+                        "criteria": [{"Gender": "Male"}],
                         "other": {},
                     },
                 },
             ],
-            "success": True,
         }
-
         print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
