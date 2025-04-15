@@ -10,6 +10,7 @@ from sqlalchemy import cast, func, insert, update
 from sqlalchemy.dialects.postgresql import JSONB
 
 from app import db
+from app.blueprints.assignments.models import SurveyorAssignment
 from app.blueprints.locations.models import Location
 
 from .errors import (
@@ -660,6 +661,15 @@ class EnumeratorsUpload:
             MonitorForm.query.filter_by(form_uid=self.form_uid).delete()
             MonitorLocation.query.filter_by(form_uid=self.form_uid).delete()
             SurveyorStats.query.filter_by(form_uid=self.form_uid).delete()
+            SurveyorAssignment.query.filter(
+                SurveyorAssignment.enumerator_uid.in_(
+                    db.session.query(Enumerator.enumerator_uid).filter_by(
+                        form_uid=self.form_uid
+                    )
+                )
+            ).delete(synchronize_session=False)
+
+            # Delete the enumerators themselves
             Enumerator.query.filter_by(form_uid=self.form_uid).delete()
             db.session.flush()
             records_to_insert = records_to_write
