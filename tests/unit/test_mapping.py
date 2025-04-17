@@ -4225,8 +4225,8 @@ class TestMapping:
                             {"other": {}, "criteria": {"Gender": "Male"}}
                         ],
                         "supervisor_uid": 3,
-                        "supervisor_email": "newuser2@example.com",
-                        "supervisor_name": "Tim Doe",
+                        "supervisor_email": "newuser1@example.com",
+                        "supervisor_name": "John Doe",
                         "supervisor_mapping_criteria_values": {
                             "other": {},
                             "criteria": {"Gender": "Male"},
