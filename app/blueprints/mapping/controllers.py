@@ -1051,10 +1051,9 @@ def get_surveyor_mapping(validated_query_params):
                 for supervisor in supervisors_data:
                     if (supervisor.user_uid == supervisor_uid) and (
                         supervisor.supervisor_mapping_criteria_values["criteria"]
-                        == surveyor.mapped_to_values
+                        in surveyor.mapped_to_values
                     ):
                         break
-
                 data.append(
                     {
                         "enumerator_uid": surveyor.enumerator_uid,
@@ -1147,10 +1146,9 @@ def get_surveyor_mapping(validated_query_params):
                 for supervisor in supervisors_data:
                     if (supervisor.user_uid == supervisor_uid) and (
                         supervisor.supervisor_mapping_criteria_values["criteria"]
-                        == surveyor.mapped_to_values
+                        in surveyor.mapped_to_values
                     ):
                         break
-
                 data.append(
                     {
                         "enumerator_uid": surveyor.enumerator_uid,
