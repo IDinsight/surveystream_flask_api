@@ -10790,10 +10790,20 @@ paths:
                 source:
                   type: string
                   description: Source of the media file - SurveyCTO or Exotel
+                format:
+                  type: string
+                  description: Format of the media file - Long or Wide
                 scto_fields:
                   type: array
                   description: >-
                     An array of SurveyCTO field names that are to be included in the media files output
+                  items:
+                    type: string
+                media_fields:
+                  type: array
+                  description: >-
+                    An array of SurveyCTO field names that contain media files to add to media files output
+                    Only applicable for wide format
                   items:
                     type: string
                 mapping_criteria:
@@ -10834,12 +10844,20 @@ paths:
                       source:
                         type: string
                         description: Source of the media file - SurveyCTO or Exotel
+                      format:
+                        type: string
+                        description: Format of the media file - Long or Wide
                       scto_fields:
                         type: array
                         description: >-
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      media_fields:
+                        type: array
+                        description: >-
+                          An array of SurveyCTO field names that contain media files to add to media files output
+                          Only applicable for wide format
                       mapping_criteria:
                         type: string
                         description: >-
@@ -10909,12 +10927,20 @@ paths:
                         source:
                           type: string
                           description: Source of the media file - SurveyCTO or Exotel
+                        format:
+                          type: string
+                          description: Format of the media file - Long or Wide
                         scto_fields:
                           type: array
                           description: >-
                             An array of SurveyCTO field names that are to be included in the media files output
                           items:
                             type: string
+                        media_fields:
+                          type: array
+                          description: >-
+                            An array of SurveyCTO field names that contain media files to add to media files output
+                            Only applicable for wide format
                         mapping_criteria:
                           type: string
                           description: >-
@@ -10991,12 +11017,20 @@ paths:
                       source:
                         type: string
                         description: Source of the media file - SurveyCTO or Exotel
+                      format:
+                        type: string
+                        description: Format of the media file - Long or Wide
                       scto_fields:
                         type: array
                         description: >-
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      media_fields:
+                        type: array
+                        description: >-
+                          An array of SurveyCTO field names that contain media files to add to media files output
+                          Only applicable for wide format
                       mapping_criteria:
                         type: string
                         description: >-
@@ -11056,12 +11090,20 @@ paths:
                 source:
                   type: string
                   description: Source of the media file - SurveyCTO or Exotel
+                format:
+                  type: string
+                  description: Format of the media file - Long or Wide
                 scto_fields:
                   type: array
                   description: >-
                     An array of SurveyCTO field names that are to be included in the media files output
                   items:
                     type: string
+                media_fields:
+                  type: array
+                  description: >-
+                    An array of SurveyCTO field names that contain media files to add to media files output
+                    Only applicable for wide format
                 mapping_criteria:
                   type: string
                   description: >-
@@ -11102,12 +11144,20 @@ paths:
                       source:
                         type: string
                         description: Source of the media file - SurveyCTO or Exotel
+                      format:
+                        type: string
+                        description: Format of the media file - Long or Wide
                       scto_fields:
                         type: array
                         description: >-
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      media_fields:
+                        type: array
+                        description: >-
+                          An array of SurveyCTO field names that contain media files to add to media files output
+                          Only applicable for wide format
                       mapping_criteria:
                         type: string
                         description: >-
