@@ -559,12 +559,46 @@ class TestMedaiFiles:
         create_form,
     ):
         """
-        Test creating media files config with invalid payload - missing media_fields and scto_fields
+        Test creating media files config with invalid payload - missing scto_fields
+        Format and media_fields is missing but since source is exotel it wont throw an error
         """
         payload = {
             "form_uid": 1,
             "file_type": "audio",
-            "format": "wide",
+            "source": "Exotel",
+            "mapping_criteria": "invalid_criteria",
+        }
+        response = client.post(
+            "/api/media-files",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+        print(response.json)
+        expected_response = {
+            "message": {
+                "scto_fields": ["This field is required."],
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_media_files_create_config_missing_format(
+        self,
+        client,
+        csrf_token,
+        create_form,
+    ):
+        """
+        Test creating media files config with invalid payload - missing scto_fields, Format
+        media_fields is missing but since Format is not defined it wont throw an error
+        """
+        payload = {
+            "form_uid": 1,
+            "file_type": "audio",
             "source": "SurveyCTO",
             "mapping_criteria": "invalid_criteria",
         }
@@ -580,7 +614,7 @@ class TestMedaiFiles:
         expected_response = {
             "message": {
                 "scto_fields": ["This field is required."],
-                "media_fields": ["This field is required."],
+                "format": ["This field is required."],
             },
             "success": False,
         }

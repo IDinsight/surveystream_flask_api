@@ -14,7 +14,13 @@ class CreateMediaFilesConfigValidator(FlaskForm):
     form_uid = IntegerField(validators=[DataRequired()])
     file_type = StringField(validators=[DataRequired()])
     source = StringField(validators=[DataRequired()])
-    format = StringField(validators=[DataRequired()])
+    format = StringField(
+        validators=[
+            lambda form, field: (
+                DataRequired()(form, field) if form.source.data == "SurveyCTO" else None
+            )
+        ],
+    )
     scto_fields = FieldList(StringField(), validators=[DataRequired()])
     media_fields = FieldList(
         StringField(),
@@ -31,7 +37,14 @@ class CreateMediaFilesConfigValidator(FlaskForm):
 class MediaFilesConfigValidator(FlaskForm):
     file_type = StringField(validators=[DataRequired()])
     source = StringField(validators=[DataRequired()])
-    format = StringField(validators=[DataRequired()])
+    format = StringField(
+        default="long",
+        validators=[
+            lambda form, field: (
+                DataRequired()(form, field) if form.source.data == "surveycto" else None
+            )
+        ],
+    )
     scto_fields = FieldList(StringField(), validators=[DataRequired()])
     media_fields = FieldList(
         StringField(),
