@@ -838,12 +838,8 @@ def get_scto_form_definition(form_uid, validated_query_params):
                 "begin repeat",
                 "end repeat",
                 "note",
-                "image",
-                "audio",
-                "video",
-                "file",
                 "text audit",
-                "audio audit" "sensor_statistic",
+                "sensor_statistic",
                 "sensor_stream",
             ]
         )
