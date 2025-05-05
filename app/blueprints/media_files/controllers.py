@@ -102,6 +102,61 @@ def create_media_files_config(validated_payload):
     """
     form_uid = validated_payload.form_uid.data
 
+    # Check if mapping criteria is valid
+    if validated_payload.mapping_criteria.data:
+        from app.blueprints.targets.models import Target
+
+        mapping_criteria = validated_payload.mapping_criteria.data
+        # Check if any targets exist for this form
+        targets = Target.query.filter(Target.form_uid == form_uid).all()
+        if len(targets) == 0:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "No targets exist for this form"},
+                    }
+                ),
+                422,
+            )
+        if mapping_criteria == "location":
+            # Check if all targets have location
+            targets_without_location = Target.query.filter(
+                Target.form_uid == form_uid,
+                Target.location_uid.is_(None),
+            ).all()
+
+            if len(targets_without_location) > 0:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": {
+                                "message": "All targets must have a location for mapping criteria 'location'"
+                            },
+                        }
+                    ),
+                    422,
+                )
+        elif mapping_criteria == "language":
+            # Check if all targets have language
+            targets_without_language = Target.query.filter(
+                Target.form_uid == form_uid,
+                Target.language.is_(None),
+            ).all()
+            if len(targets_without_language) > 0:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": {
+                                "message": "All targets must have a language for mapping criteria 'language'"
+                            },
+                        }
+                    ),
+                    422,
+                )
+
     new_config = MediaFilesConfig(
         form_uid=form_uid,
         file_type=validated_payload.file_type.data,
@@ -157,6 +212,62 @@ def update_media_files_config(media_files_config_uid, validated_payload):
     Method to save media files config for a form
     """
     media_files_config = MediaFilesConfig.query.get_or_404(media_files_config_uid)
+
+    form_uid = media_files_config.form_uid
+    # Check if mapping criteria is valid
+    if validated_payload.mapping_criteria.data:
+        from app.blueprints.targets.models import Target
+
+        mapping_criteria = validated_payload.mapping_criteria.data
+        # Check if any targets exist for this form
+        targets = Target.query.filter(Target.form_uid == form_uid).all()
+        if len(targets) == 0:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "No targets exist for this form"},
+                    }
+                ),
+                422,
+            )
+        if mapping_criteria == "location":
+            # Check if all targets have location
+            targets_without_location = Target.query.filter(
+                Target.form_uid == form_uid,
+                Target.location_uid.is_(None),
+            ).all()
+
+            if len(targets_without_location) > 0:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": {
+                                "message": "All targets must have a location for mapping criteria 'location'"
+                            },
+                        }
+                    ),
+                    422,
+                )
+        elif mapping_criteria == "language":
+            # Check if all targets have language
+            targets_without_language = Target.query.filter(
+                Target.form_uid == form_uid,
+                Target.language.is_(None),
+            ).all()
+            if len(targets_without_language) > 0:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": {
+                                "message": "All targets must have a language for mapping criteria 'language'"
+                            },
+                        }
+                    ),
+                    422,
+                )
 
     media_files_config.file_type = validated_payload.file_type.data
     media_files_config.source = validated_payload.source.data
