@@ -11329,6 +11329,10 @@ paths:
                           type: boolean
                           description: Indicates if the DQ checks are grouped by module name
                           example: true
+                        drop_duplicates:
+                          type: boolean
+                          description: Indicates if duplicates by target id should be dropped before running checks. Default is false.
+                          example: true
                         dq_checks:
                           type: array
                           description: List of DQ checks configured for the form
@@ -11385,6 +11389,10 @@ paths:
                 group_by_module_name:
                   type: boolean
                   description: Indicates if the DQ checks are grouped by module name. Default is false.
+                  example: true
+                drop_duplicates:
+                  type: boolean
+                  description: Indicates if duplicates by target id should be dropped before running checks. Default is false.
                   example: true
               required:
                 - form_uid
