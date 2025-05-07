@@ -34,7 +34,7 @@ class DQConfig(db.Model):
     survey_status_filter = db.Column(db.ARRAY(db.Integer), nullable=False)
     group_by_module_name = db.Column(db.Boolean(), nullable=False, default=False)
     drop_duplicates = db.Column(
-        db.Boolean(), nullable=False, default=False
+        db.Boolean(), nullable=False, server_default="false"
     )
 
     __table_args__ = (
