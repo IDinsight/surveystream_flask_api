@@ -8,6 +8,7 @@ from utils import (
     set_target_assignable_status,
     update_logged_in_user_roles,
 )
+
 from app import db
 
 
@@ -226,7 +227,7 @@ class TestForms:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
-            "number_of_attempts":7,
+            "number_of_attempts": 7,
         }
 
         response = client.post(
@@ -1629,7 +1630,11 @@ class TestForms:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 3,
+                    "survey_uid": 1,
+                },
                 {"config_status": "Not Started", "module_id": 4, "survey_uid": 1},
             ],
             "success": True,
@@ -1696,7 +1701,11 @@ class TestForms:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 3,
+                    "survey_uid": 1,
+                },
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {
                     "config_status": "In Progress - Incomplete",
@@ -1748,7 +1757,11 @@ class TestForms:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 3,
+                    "survey_uid": 1,
+                },
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {"config_status": "In Progress", "module_id": 11, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 18, "survey_uid": 1},
@@ -1771,7 +1784,11 @@ class TestForms:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 3,
+                    "survey_uid": 1,
+                },
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 11, "survey_uid": 1},
                 {
@@ -1817,10 +1834,121 @@ class TestForms:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 3,
+                    "survey_uid": 1,
+                },
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 11, "survey_uid": 1},
                 {"config_status": "In Progress", "module_id": 18, "survey_uid": 1},
             ],
             "success": True,
         }
+
+    def test_update_parent_form_server_name(
+        self,
+        client,
+        login_test_user,
+        create_admin_form,
+        csrf_token,
+        user_with_admin_forms_permissions,
+        request,
+    ):
+        """
+        Test update server name and timezone for parent form
+
+        Expect: Server name and timezone is updated both for parent and admin form
+        """
+        user_fixture, expected_permission = user_with_admin_forms_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "scto_form_id": "test_scto_input_output",
+            "form_name": "Agrifieldnet Main Form",
+            "tz_name": "America/New_York",
+            "scto_server_name": "updated_server",
+            "encryption_key_shared": True,
+            "server_access_role_granted": True,
+            "server_access_allowed": True,
+            "form_type": "parent",
+            "parent_form_uid": None,
+            "dq_form_type": None,
+            "number_of_attempts": 7,
+        }
+
+        response = client.put(
+            "/api/forms/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            # Check parent form updated correctly
+            response = client.get("/api/forms/1")
+
+            assert response.status_code == 200
+
+            expected_response = {
+                "success": True,
+                "data": {
+                    "form_uid": 1,
+                    "survey_uid": 1,
+                    "scto_form_id": "test_scto_input_output",
+                    "form_name": "Agrifieldnet Main Form",
+                    "form_type": "parent",
+                    "dq_form_type": None,
+                    "admin_form_type": None,
+                    "parent_form_uid": None,
+                    "tz_name": "America/New_York",
+                    "scto_server_name": "updated_server",
+                    "encryption_key_shared": True,
+                    "server_access_role_granted": True,
+                    "server_access_allowed": True,
+                    "last_ingested_at": None,
+                    "number_of_attempts": 7,
+                    "parent_scto_form_id": None,
+                },
+            }
+
+            assert response.json == expected_response
+
+            # Check admin form also updated
+            response = client.get("/api/forms/2")
+            print(response.json)
+
+            assert response.status_code == 200
+            expected_response = {
+                "success": True,
+                "data": {
+                    "form_uid": 2,
+                    "survey_uid": 1,
+                    "scto_form_id": "test_scto_admin",
+                    "form_name": "Agrifieldnet Bikelog Form",
+                    "form_type": "admin",
+                    "dq_form_type": None,
+                    "admin_form_type": "bikelog",
+                    "parent_form_uid": None,
+                    "tz_name": "America/New_York",
+                    "scto_server_name": "updated_server",
+                    "encryption_key_shared": True,
+                    "server_access_role_granted": True,
+                    "server_access_allowed": True,
+                    "last_ingested_at": None,
+                    "number_of_attempts": None,
+                    "parent_scto_form_id": None,
+                },
+            }
+            assert response.json == expected_response
+
+        else:
+            assert response.status_code == 403
+            expected_response = {
+                "success": False,
+                "error": "User does not have the required permission: WRITE Data Quality Forms, WRITE Admin Forms",
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
