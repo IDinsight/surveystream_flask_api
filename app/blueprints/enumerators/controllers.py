@@ -918,7 +918,7 @@ def bulk_update_enumerators(validated_payload):
     enumerator_type = validated_payload.enumerator_type.data
     location_uid = (
         [int(uid) for uid in validated_payload.location_uid.data.split(";")]
-        if validated_payload.location_uid
+        if validated_payload.location_uid and validated_payload.location_uid.data
         else None
     )
 
