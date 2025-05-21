@@ -104,6 +104,17 @@ class GetEnumeratorRolesQueryParamValidator(FlaskForm):
 class BulkUpdateEnumeratorsValidator(FlaskForm):
     enumerator_uids = FieldList(IntegerField(), validators=[DataRequired()])
     form_uid = IntegerField(validators=[DataRequired()])
+    enumerator_type = FieldList(
+        StringField(
+            validators=[
+                AnyOf(
+                    ["surveyor", "monitor", "surveyor;monitor", None],
+                    message="Value must be one of %(values)s",
+                ),
+            ]
+        )
+    )
+    location_uid = StringField()
 
 
 class UpdateEnumerator(FlaskForm):
@@ -166,15 +177,18 @@ class UpdateEnumeratorRole(FlaskForm):
 class BulkUpdateEnumeratorsRoleLocationValidator(FlaskForm):
     enumerator_uids = FieldList(IntegerField(), validators=[DataRequired()])
     form_uid = IntegerField(validators=[DataRequired()])
-    enumerator_type = StringField(
-        validators=[
-            AnyOf(
-                ["surveyor", "monitor", None], message="Value must be one of %(values)s"
-            ),
-            DataRequired(),
-        ]
+    enumerator_type = FieldList(
+        StringField(
+            validators=[
+                AnyOf(
+                    ["surveyor", "monitor", None],
+                    message="Value must be one of %(values)s",
+                ),
+                DataRequired(),
+            ]
+        )
     )
-    location_uids = FieldList(IntegerField())
+    location_uid = FieldList(IntegerField())
 
 
 class DeleteEnumeratorRole(FlaskForm):
