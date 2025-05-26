@@ -480,6 +480,69 @@ def update_enumerator(enumerator_uid, validated_payload):
     if custom_fields_in_payload is not None:
         keys_in_payload = custom_fields_in_payload.keys()
 
+    # Check if enumerator is Surveyor or Monitor
+    enumerator_surveyor = SurveyorForm.query.filter_by(
+        enumerator_uid=enumerator_uid
+    ).first()
+    enumerator_monitor = MonitorForm.query.filter_by(
+        enumerator_uid=enumerator_uid
+    ).first()
+
+    # Get payload values for enumerator type and status
+    enumerator_type = payload.get("enumerator_type")
+    enumerator_status = payload.get("enumerator_status")
+
+    print(
+        f"Updating enumerator {enumerator_uid} with type {enumerator_type} and status {enumerator_status}"
+    )
+
+    print(
+        f"Surveyor: {enumerator_surveyor}, Monitor: {enumerator_monitor}, Location UID: {location_uid}"
+    )
+
+    if enumerator_type is not None:
+        if "surveyor" in enumerator_type:
+            if enumerator_surveyor is None:
+                db.session.add(
+                    SurveyorForm(
+                        enumerator_uid=enumerator_uid,
+                        form_uid=enumerator.form_uid,
+                        status=enumerator_status,
+                    )
+                )
+            else:
+                # If the enumerator is a surveyor, but the payload does not specify it as a surveyor,
+                # we need to update the status of the surveyor form record
+                enumerator_surveyor.status = enumerator_status
+        if "monitor" in enumerator_type:
+            if enumerator_monitor is None:
+                db.session.add(
+                    MonitorForm(
+                        enumerator_uid=enumerator_uid,
+                        form_uid=enumerator.form_uid,
+                        status=enumerator_status,
+                    )
+                )
+            else:
+                # If the enumerator is a monitor, but the payload does not specify it as a monitor,
+                # we need to update the status of the monitor form record
+                enumerator_monitor.status = enumerator_status
+
+    if enumerator_surveyor is not None and "surveyor" not in enumerator_type:
+        # If the enumerator is a surveyor, but the payload does not specify it as a surveyor,
+        # we need to delete the surveyor form record
+        db.session.query(SurveyorForm).filter_by(enumerator_uid=enumerator_uid).delete()
+        db.session.query(SurveyorLocation).filter_by(
+            enumerator_uid=enumerator_uid, form_uid=enumerator.form_uid
+        ).delete()
+    if enumerator_monitor is not None and "monitor" not in enumerator_type:
+        # If the enumerator is a monitor, but the payload does not specify it as a monitor,
+        # we need to delete the monitor form record
+        db.session.query(MonitorForm).filter_by(enumerator_uid=enumerator_uid).delete()
+        db.session.query(MonitorLocation).filter_by(
+            enumerator_uid=enumerator_uid, form_uid=enumerator.form_uid
+        ).delete()
+
     if location_uid is not None:
         # Check if the location exists for the form's survey
         prime_geo_level_uid = (
@@ -551,22 +614,39 @@ def update_enumerator(enumerator_uid, validated_payload):
             # Delete existing location mapping
             # We can't use insert on conflict do update here because the table allows
             # multiple rows with the same enumerator_uid and form_uid
-            SurveyorLocation.query.filter_by(
-                enumerator_uid=enumerator_uid,
-                form_uid=enumerator.form_uid,
-            ).delete()
 
-            # Add the new location mappings
-            for location in location_uid.split(";"):
-                surveyor_location = SurveyorLocation(
+            if "surveyor" in enumerator_type:
+                SurveyorLocation.query.filter_by(
                     enumerator_uid=enumerator_uid,
                     form_uid=enumerator.form_uid,
-                    location_uid=location,
-                )
+                ).delete()
 
-                db.session.add(surveyor_location)
+                # Add the new location mappings
+                for location in location_uid.split(";"):
+                    surveyor_location = SurveyorLocation(
+                        enumerator_uid=enumerator_uid,
+                        form_uid=enumerator.form_uid,
+                        location_uid=location,
+                    )
 
-            db.session.commit()
+                    db.session.add(surveyor_location)
+            if "monitor" in enumerator_type:
+                MonitorLocation.query.filter_by(
+                    enumerator_uid=enumerator_uid,
+                    form_uid=enumerator.form_uid,
+                ).delete()
+
+                # Add the new location mappings
+                for location in location_uid.split(";"):
+                    monitor_location = MonitorLocation(
+                        enumerator_uid=enumerator_uid,
+                        form_uid=enumerator.form_uid,
+                        location_uid=location,
+                    )
+
+                    db.session.add(monitor_location)
+
+        db.session.commit()
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -916,6 +996,7 @@ def bulk_update_enumerators(validated_payload):
     form_uid = validated_payload.form_uid.data
     enumerator_uids = validated_payload.enumerator_uids.data
     enumerator_type = validated_payload.enumerator_type.data
+    enumerator_status = validated_payload.enumerator_status.data
     location_uid = (
         [int(uid) for uid in validated_payload.location_uid.data.split(";")]
         if validated_payload.location_uid and validated_payload.location_uid.data
@@ -954,6 +1035,7 @@ def bulk_update_enumerators(validated_payload):
             "csrf_token",
             "enumerator_type",
             "location_uid",
+            "enumerator_status",
         ):
             if (
                 key
@@ -991,8 +1073,50 @@ def bulk_update_enumerators(validated_payload):
             for custom_field in custom_fields_patch_keys:
                 enumerator_record.custom_fields[custom_field] = payload[custom_field]
 
+    model_lookup = {
+        "surveyor": SurveyorForm,
+        "monitor": MonitorForm,
+    }
+
+    print(
+        f"Updating enumerators {enumerator_uids} with type {enumerator_type} and status {enumerator_status}"
+    )
+    roles = enumerator_type.split(";")
+
+    for role in roles:
+        model = model_lookup[role]
+
+        # Update existing records
+        db.session.query(model).filter(
+            model.enumerator_uid.in_(enumerator_uids), model.form_uid == form_uid
+        ).update({"status": enumerator_status}, synchronize_session=False)
+
+        # Get enumerator_uids that don't have records yet
+        existing_uids = [
+            r[0]
+            for r in db.session.query(model.enumerator_uid)
+            .filter(
+                model.enumerator_uid.in_(enumerator_uids),
+                model.form_uid == form_uid,
+            )
+            .all()
+        ]
+
+        new_uids = list(set(enumerator_uids) - set(existing_uids))
+
+        # Insert new records for those enumerator_uids
+        if new_uids:
+            for uid in new_uids:
+                db.session.add(
+                    model(
+                        enumerator_uid=uid,
+                        form_uid=form_uid,
+                        status=enumerator_status,
+                    )
+                )
+
     # Handle role location updates if provided
-    if enumerator_type and location_uid is not None:
+    if location_uid is not None:
         # Validate location UIDs
         if len(location_uid) > 0:
             returned_location_uids = [
@@ -1019,23 +1143,21 @@ def bulk_update_enumerators(validated_payload):
             "monitor": MonitorLocation,
         }
 
-        # Process each enumerator's role types
-        for i, role_types in enumerate(enumerator_type):
-            enumerator_uid = enumerator_uids[i]
-            roles = role_types.split(";")
+        roles = enumerator_type.split(";")
 
-            # Delete existing locations for each role
+        # Delete existing locations for each role and enumerator
+        for role in roles:
+            model = model_lookup[role]
+            db.session.query(model).filter(
+                model.enumerator_uid.in_(enumerator_uids),
+                model.form_uid == form_uid,
+            ).delete()
+
+        # Add new locations for each role and enumerator
+        if len(location_uid) > 0:
             for role in roles:
                 model = model_lookup[role]
-                db.session.query(model).filter(
-                    model.enumerator_uid == enumerator_uid,
-                    model.form_uid == form_uid,
-                ).delete()
-
-            # Add new locations for each role
-            if len(location_uid) > 0:
-                for role in roles:
-                    model = model_lookup[role]
+                for enumerator_uid in enumerator_uids:
                     for loc_uid in location_uid:
                         db.session.add(
                             model(

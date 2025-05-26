@@ -104,15 +104,23 @@ class GetEnumeratorRolesQueryParamValidator(FlaskForm):
 class BulkUpdateEnumeratorsValidator(FlaskForm):
     enumerator_uids = FieldList(IntegerField(), validators=[DataRequired()])
     form_uid = IntegerField(validators=[DataRequired()])
-    enumerator_type = FieldList(
-        StringField(
-            validators=[
-                AnyOf(
-                    ["surveyor", "monitor", "surveyor;monitor", None],
-                    message="Value must be one of %(values)s",
-                ),
-            ]
-        )
+    enumerator_type = StringField(
+        validators=[
+            AnyOf(
+                ["surveyor", "monitor", "surveyor;monitor", "monitor;surveyor"],
+                message="Value must be one of %(values)s",
+            ),
+        ]
+    )
+
+    enumerator_status = StringField(
+        validators=[
+            AnyOf(
+                ["Active", "Dropout", "Temp. Inactive"],
+                message="Value must be one of %(values)s",
+            ),
+            DataRequired(),
+        ]
     )
     location_uid = StringField()
 
@@ -126,6 +134,24 @@ class UpdateEnumerator(FlaskForm):
     home_address = StringField()
     gender = StringField(validators=[DataRequired()])
     location_uid = StringField()
+    enumerator_status = StringField(
+        validators=[
+            AnyOf(
+                ["Active", "Dropout", "Temp. Inactive"],
+                message="Value must be one of %(values)s",
+            ),
+            DataRequired(),
+        ]
+    )
+    enumerator_type = StringField(
+        validators=[
+            AnyOf(
+                ["surveyor", "monitor", "surveyor;monitor", "monitor;surveyor"],
+                message="Value must be one of %(values)s",
+            ),
+            DataRequired(),
+        ]
+    )
 
 
 class UpdateSurveyorForm(FlaskForm):
