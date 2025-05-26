@@ -49,7 +49,9 @@ def get_media_files_configs(validated_query_params):
             "scto_form_id": form.scto_form_id,
             "file_type": media_files_config.file_type,
             "source": media_files_config.source,
+            "format": media_files_config.format,
             "scto_fields": media_files_config.scto_fields,
+            "media_fields": media_files_config.media_fields,
             "mapping_criteria": media_files_config.mapping_criteria,
             "google_sheet_key": media_files_config.google_sheet_key,
             "mapping_google_sheet_key": media_files_config.mapping_google_sheet_key,
@@ -104,7 +106,9 @@ def create_media_files_config(validated_payload):
         form_uid=form_uid,
         file_type=validated_payload.file_type.data,
         source=validated_payload.source.data,
+        format=validated_payload.format.data,
         scto_fields=validated_payload.scto_fields.data,
+        media_fields=validated_payload.media_fields.data,
         mapping_criteria=validated_payload.mapping_criteria.data,
     )
 
@@ -156,7 +160,9 @@ def update_media_files_config(media_files_config_uid, validated_payload):
 
     media_files_config.file_type = validated_payload.file_type.data
     media_files_config.source = validated_payload.source.data
+    media_files_config.format = validated_payload.format.data
     media_files_config.scto_fields = validated_payload.scto_fields.data
+    media_files_config.media_fields = validated_payload.media_fields.data
     media_files_config.mapping_criteria = validated_payload.mapping_criteria.data
 
     try:

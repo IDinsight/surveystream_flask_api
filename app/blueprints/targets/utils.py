@@ -559,6 +559,8 @@ class TargetsUpload:
                     ).first()
 
                     for field_name, field_value in record["custom_fields"].items():
+                        if pd.isna(field_value) or field_value == "nan":
+                            field_value = None
                         target_record.custom_fields[field_name] = field_value
 
             if records_to_insert:

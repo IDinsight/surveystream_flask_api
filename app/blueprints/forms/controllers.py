@@ -243,6 +243,7 @@ def update_form(form_uid, validated_payload):
         )
 
     try:
+
         Form.query.filter_by(form_uid=form_uid).update(
             {
                 Form.scto_form_id: validated_payload.scto_form_id.data,
@@ -264,6 +265,17 @@ def update_form(form_uid, validated_payload):
             },
             synchronize_session="fetch",
         )
+        if validated_payload.form_type.data == "parent":
+            form = Form.query.filter_by(form_uid=form_uid).first()
+            # Update surveycto scto_server_name and timezone for all forms of this survey
+            Form.query.filter_by(survey_uid=form.survey_uid).update(
+                {
+                    Form.scto_server_name: validated_payload.scto_server_name.data,
+                    Form.tz_name: validated_payload.tz_name.data,
+                },
+                synchronize_session=False,
+            )
+
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
@@ -838,12 +850,8 @@ def get_scto_form_definition(form_uid, validated_query_params):
                 "begin repeat",
                 "end repeat",
                 "note",
-                "image",
-                "audio",
-                "video",
-                "file",
                 "text audit",
-                "audio audit" "sensor_statistic",
+                "sensor_statistic",
                 "sensor_stream",
             ]
         )

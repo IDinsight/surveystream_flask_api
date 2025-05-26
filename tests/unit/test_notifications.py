@@ -1172,7 +1172,7 @@ class TestNotifications:
                     {
                         "survey_id": "test_survey2",
                         "survey_uid": 2,
-                        "module_name": "Data quality",
+                        "module_name": "Data Quality",
                         "module_id": 11,
                         "notification_uid": 4,
                         "severity": "error",
@@ -1205,7 +1205,7 @@ class TestNotifications:
                     {
                         "survey_id": "test_survey",
                         "survey_uid": 1,
-                        "module_name": "Basic information",
+                        "module_name": "Background Details",
                         "module_id": 1,
                         "notification_uid": 1,
                         "severity": "warning",
@@ -1240,7 +1240,7 @@ class TestNotifications:
                     {
                         "survey_id": "test_survey",
                         "survey_uid": 1,
-                        "module_name": "Basic information",
+                        "module_name": "Background Details",
                         "module_id": 1,
                         "notification_uid": 1,
                         "severity": "warning",
@@ -1264,7 +1264,7 @@ class TestNotifications:
                     {
                         "survey_id": "test_survey2",
                         "survey_uid": 2,
-                        "module_name": "Data quality",
+                        "module_name": "Data Quality",
                         "module_id": 11,
                         "notification_uid": 4,
                         "severity": "error",
@@ -1521,7 +1521,7 @@ class TestNotifications:
                 {
                     "survey_id": "test_survey",
                     "survey_uid": 1,
-                    "module_name": "Basic information",
+                    "module_name": "Background Details",
                     "module_id": 1,
                     "type": "survey",
                     "notification_uid": 1,
@@ -1669,7 +1669,7 @@ class TestNotifications:
                 {
                     "survey_id": "test_survey",
                     "survey_uid": 1,
-                    "module_name": "Survey locations",
+                    "module_name": "Locations",
                     "module_id": 5,
                     "type": "survey",
                     "notification_uid": 1,
@@ -1772,7 +1772,7 @@ class TestNotifications:
                 {
                     "survey_id": "test_survey",
                     "survey_uid": 1,
-                    "module_name": "User and role management",
+                    "module_name": "User and Role Management",
                     "module_id": 4,
                     "type": "survey",
                     "notification_uid": 3,
@@ -1875,30 +1875,30 @@ class TestNotifications:
             "success": True,
             "data": {
                 "overall_status": "In Progress - Configuration",
-                "Basic information": {"status": "Done", "optional": False},
-                "Module selection": {"status": "Done", "optional": False},
-                "Survey information": [
+                "Background Details": {"status": "Done", "optional": False},
+                "Feature Selection": {"status": "Done", "optional": False},
+                "Survey Information": [
                     {
-                        "name": "SurveyCTO information",
+                        "name": "SurveyCTO Integration",
                         "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {
-                        "name": "User and role management",
+                        "name": "User and Role Management",
                         "status": "Error",
                         "optional": False,
                     },
-                    {"name": "Survey locations", "status": "Done", "optional": False},
+                    {"name": "Locations", "status": "Done", "optional": False},
                     {"name": "Enumerators", "status": "Error", "optional": False},
                     {"name": "Targets", "status": "Error", "optional": False},
                     {
-                        "name": "Target status mapping",
+                        "name": "Survey Status for Targets",
                         "status": "Done",
                         "optional": False,
                     },
-                    {"name": "Mapping", "status": "Not Started", "optional": False},
+                    {"name": "Supervisor Mapping", "status": "Not Started", "optional": False},
                 ],
-                "Module configuration": [
+                "Module Configuration": [
                     {
                         "module_id": 9,
                         "name": "Assignments",
@@ -1907,25 +1907,25 @@ class TestNotifications:
                     },
                     {
                         "module_id": 13,
-                        "name": "Surveyor hiring",
+                        "name": "Surveyor Hiring",
                         "status": "Not Started",
                         "optional": False,
                     },
                     {
                         "module_id": 16,
-                        "name": "Assignments column configuration",
+                        "name": "Assignments Column Configuration",
                         "status": "Not Started",
                         "optional": True,
                     },
                 ],
                 "completion_stats": {
-                    "num_modules": 11,
+                    "num_modules": 10,
                     "num_completed": 4,
                     "num_in_progress": 1,
                     "num_in_progress_incomplete": 1,
-                    "num_not_started": 2,
+                    "num_not_started": 1,
                     "num_error": 3,
-                    "num_optional": 1,
+                    "num_optional": 0,
                 },
             },
         }
@@ -1966,22 +1966,22 @@ class TestNotifications:
 
         expected_response = {
             "data": [
-                {"module_id": 1, "name": "Basic information", "error": False},
-                {"module_id": 2, "name": "Module selection", "error": False},
-                {"module_id": 3, "name": "SurveyCTO information", "error": False},
-                {"module_id": 4, "name": "User and role management", "error": True},
-                {"module_id": 5, "name": "Survey locations", "error": False},
+                {"module_id": 1, "name": "Background Details", "error": False},
+                {"module_id": 2, "name": "Feature Selection", "error": False},
+                {"module_id": 3, "name": "SurveyCTO Integration", "error": False},
+                {"module_id": 4, "name": "User and Role Management", "error": True},
+                {"module_id": 5, "name": "Locations", "error": False},
                 {"module_id": 7, "name": "Enumerators", "error": True},
                 {"module_id": 8, "name": "Targets", "error": True},
                 {"module_id": 9, "name": "Assignments", "error": False},
-                {"module_id": 13, "name": "Surveyor hiring", "error": False},
-                {"module_id": 14, "name": "Target status mapping", "error": False},
+                {"module_id": 13, "name": "Surveyor Hiring", "error": False},
+                {"module_id": 14, "name": "Survey Status for Targets", "error": False},
                 {
                     "module_id": 16,
-                    "name": "Assignments column configuration",
+                    "name": "Assignments Column Configuration",
                     "error": False,
                 },
-                {"module_id": 17, "name": "Mapping", "error": False},
+                {"module_id": 17, "name": "Supervisor Mapping", "error": False},
             ],
             "success": True,
         }
@@ -2124,7 +2124,7 @@ class TestNotifications:
                 {
                     "survey_id": "test_survey",
                     "survey_uid": 1,
-                    "module_name": "SurveyCTO information",
+                    "module_name": "SurveyCTO Integration",
                     "module_id": 3,
                     "type": "survey",
                     "notification_uid": 1,

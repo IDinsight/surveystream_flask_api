@@ -139,7 +139,7 @@ def create_survey(validated_payload):
             default_config_status = ModuleStatus(
                 survey_uid=survey.survey_uid,
                 module_id=module.module_id,
-                # Basic information module becomes in progress - Incomplete as soon as the survey is created
+                # Basic information/Background details module becomes in progress - Incomplete as soon as the survey is created
                 config_status="Not Started"
                 if module.module_id != 1
                 else "In Progress - Incomplete",
@@ -232,7 +232,7 @@ def get_survey_config_status(survey_uid):
             survey_uid, status.module_id, survey_state, status.config_status
         )
 
-        if status.name in ["Basic information", "Module selection"]:
+        if status.name in ["Background Details", "Feature Selection"]:
             data[status.name] = {
                 "status": module_status,
                 "optional": status.optional,
@@ -251,27 +251,32 @@ def get_survey_config_status(survey_uid):
                 num_error += 1
 
         elif status.name in [
-            "SurveyCTO information",
-            "Survey locations",
-            "User and role management",
+            "SurveyCTO Integration",
+            "Locations",
+            "User and Role Management",
             "Enumerators",
             "Targets",
-            "Target status mapping",
-            "Mapping",
+            "Survey Status for Targets",
+            "Supervisor Mapping",
+            "Admin Forms",
         ]:
-            if "Survey information" not in list(data.keys()):
-                data["Survey information"] = []
+            if "Survey Information" not in list(data.keys()):
+                data["Survey Information"] = []
 
-            calculated_optional_flag = is_module_optional(
-                survey_uid,
-                status.optional,
-                status.required_if_conditions,
-                module_status,
-            )
+            if status.name == "Admin Forms":
+                # Since this is a selected module, it is never optional if selected
+                calculated_optional_flag = False
+            else:
+                calculated_optional_flag = is_module_optional(
+                    survey_uid,
+                    status.optional,
+                    status.required_if_conditions,
+                    module_status,
+                )
 
-            if calculated_optional_flag == False:
+            if calculated_optional_flag is False:
                 # These modules are mandatory
-                data["Survey information"].append(
+                data["Survey Information"].append(
                     {
                         "name": status.name,
                         "status": module_status,
@@ -280,7 +285,7 @@ def get_survey_config_status(survey_uid):
                 )
 
                 num_modules += 1
-                if module_status == "Done":
+                if module_status in ["Done", "Live"]:
                     num_completed += 1
                 elif module_status == "In Progress":
                     num_in_progress += 1
@@ -292,7 +297,7 @@ def get_survey_config_status(survey_uid):
                     num_error += 1
 
             else:
-                data["Survey information"].append(
+                data["Survey Information"].append(
                     {
                         "name": status.name,
                         "status": module_status,
@@ -302,17 +307,16 @@ def get_survey_config_status(survey_uid):
                 num_optional += 1
 
         else:
-            if "Module configuration" not in list(data.keys()):
-                data["Module configuration"] = []
+            if "Module Configuration" not in list(data.keys()):
+                data["Module Configuration"] = []
 
             optional = False  # Since this list will only have selected modules and selected modules are mandatory
-            if status.name == "Assignments column configuration":
-                # this module is not mandatory
+            if status.name == "Assignments Column Configuration":
+                # "Assignments Column Configuration" - is not treated as a separate module
+                # in the webapp, so we don't include it
                 optional = True
-                num_optional += 1
-
-            elif status.name in ["Productivity tracker", "Hiring"]:
-                # these modules don't have configurations on the webapp
+            elif status.name in ["Productivity Tracker", "Surveyor Hiring"]:
+                # "Productivity Tracker", "Surveyor Hiring" - don't have configurations on the webapp
                 # so we don't include them in counts
                 pass
             else:
@@ -330,7 +334,7 @@ def get_survey_config_status(survey_uid):
                 elif module_status == "Error":
                     num_error += 1
 
-            data["Module configuration"].append(
+            data["Module Configuration"].append(
                 {
                     "module_id": status.module_id,
                     "name": status.name,

@@ -1687,9 +1687,9 @@ paths:
                     items:
                       type: object
                       properties:
-                        Basic information:
+                        Background Details:
                           type: object
-                          description: Status of basic information module of the survey
+                          description: Status of `Background Details` module of the survey
                           items:
                             type: object
                             properties:
@@ -1701,10 +1701,10 @@ paths:
                               optional:
                                 type: boolean
                                 description: Indicates if the module is optional
-                        Survey information:
+                        Survey Information:
                           type: array
                           description: >-
-                            Status of modules in the survey information section
+                            Status of modules in the `Survey Information` section
                             of the survey
                           items:
                             type: object
@@ -1712,8 +1712,8 @@ paths:
                               name:
                                 type: string
                                 description: >-
-                                  Name of the module like SurveyCTO information,
-                                  Field supervisor roles etc.
+                                  Name of the module like SurveyCTO Integration,
+                                  User and Role Management etc.
                               status:
                                 type: string
                                 description: >-
@@ -1722,12 +1722,32 @@ paths:
                               optional:
                                 type: boolean
                                 description: Indicates if the module is optional
-                        Module selection:
+                        Feature Selection:
                           type: object
-                          description: Status of module selection for the survey
+                          description: Status of `Feature Selection` module for the survey
                           items:
                             type: object
                             properties:
+                              status:
+                                type: string
+                                description: >-
+                                  Configration Status (Not started/ In progress/
+                                  Done)
+                              optional:
+                                type: boolean
+                                description: Indicates if the module is optional
+                        Module Configuration:
+                          type: array
+                          description: >-
+                            Status of modules in the `Module Configuration` section
+                            of the survey
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: >-
+                                  Name of the module like Assignments, Data Quality etc.
                               status:
                                 type: string
                                 description: >-
@@ -1741,10 +1761,35 @@ paths:
                           description: >-
                             Overall Status (In progress - Configuration/ In
                             Progress - Backend Setup/ Done)
-                        completion_percentage:
-                          type: integer
+                        completion_stats:
+                          type: object
                           description: >-
-                            Percentage of completion of the survey configuration
+                            Completion stats for the survey like total modules,
+                            completed modules etc.
+                          items:
+                            type: object
+                            properties:
+                              num_modules:
+                                type: integer
+                                description: Total number of modules
+                              num_completed:
+                                type: integer
+                                description: Number of completed modules
+                              num_in_progress:
+                                type: integer
+                                description: Number of modules in progress
+                              num_in_progress_incomplete:
+                                type: integer
+                                description: Number of modules in progress and incomplete
+                              num_not_started:
+                                type: integer
+                                description: Number of modules not started
+                              num_error:
+                                type: integer
+                                description: Number of modules with errors
+                              num_optional:
+                                type: integer
+                                description: Number of optional modules
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
@@ -3188,28 +3233,33 @@ paths:
                           type: array
                           description: >-
                             The working geography of the enumerator if they are
-                            a surveyor on the form.  Each array item is an
-                            object of the form {`location_id`: _location_id_,
-                            `location_name`:  _location_name_, `location_uid`:
-                            __location_uid__, `geo_level_name`:
-                            __geo_level_name__, `geo_level_uid`:
-                            __geo_level_uid__} in descending order from highest 
-                            to lowest level location down to the level of the
-                            prime geo level the surveyor is mapped to. Will be
-                            null if the surveyor is not mapped to a prime geo
-                            level.
+                            a surveyor on the form.  
+                            List contains a list of all locations enumerator is mapped.
                           items:
-                            type: object
-                            properties:
-                              location_id:
-                                type: integer
-                                description: The user-defined unique ID of the location
-                              location_name:
-                                type: string
-                                description: The name of the location
-                              geo_level_name:
-                                type: string
-                                description: The name of the geo level
+                            type: array
+                            description: >-
+                              Each array item is an object of the form 
+                              {`location_id`: _location_id_,
+                              `location_name`:  _location_name_, `location_uid`:
+                              __location_uid__, `geo_level_name`:
+                              __geo_level_name__, `geo_level_uid`:
+                              __geo_level_uid__} in descending order from highest 
+                              to lowest level location down to the level of the
+                              prime geo level the surveyor is mapped to. Will be
+                              null if the surveyor is not mapped to a prime geo
+                              level.
+                            items:
+                              type: object
+                              properties:
+                                location_id:
+                                  type: integer
+                                  description: The user-defined unique ID of the location
+                                location_name:
+                                  type: string
+                                  description: The name of the location
+                                geo_level_name:
+                                  type: string
+                                  description: The name of the geo level
                         monitor_status:
                           type: string
                           enum:
@@ -3223,28 +3273,33 @@ paths:
                           type: array
                           description: >-
                             The working geography of the enumerator if they are
-                            a monitor on the form.  Each array item is an object
-                            of the form {`location_id`: _location_id_,
-                            `location_name`:  _location_name_, `location_uid`:
-                            __location_uid__, `geo_level_name`:
-                            __geo_level_name__, `geo_level_uid`:
-                            __geo_level_uid__} in descending order from highest 
-                            to lowest level location down to the level of the
-                            prime geo level the monitor is mapped to. Will be
-                            null if the monitor is not mapped to a prime geo
-                            level.
+                            a monitor on the form.  
+                            List contains a list of all locations monitor is mapped.
                           items:
-                            type: object
-                            properties:
-                              location_id:
-                                type: integer
-                                description: The user-defined unique ID of the location
-                              location_name:
-                                type: string
-                                description: The name of the location
-                              geo_level_name:
-                                type: string
-                                description: The name of the geo level
+                            type: array
+                            description: >-
+                              Each array item is an object
+                              of the form {`location_id`: _location_id_,
+                              `location_name`:  _location_name_, `location_uid`:
+                              __location_uid__, `geo_level_name`:
+                              __geo_level_name__, `geo_level_uid`:
+                              __geo_level_uid__} in descending order from highest 
+                              to lowest level location down to the level of the
+                              prime geo level the monitor is mapped to. Will be
+                              null if the monitor is not mapped to a prime geo
+                              level.
+                            items:
+                              type: object
+                              properties:
+                                location_id:
+                                  type: integer
+                                  description: The user-defined unique ID of the location
+                                location_name:
+                                  type: string
+                                  description: The name of the location
+                                geo_level_name:
+                                  type: string
+                                  description: The name of the geo level
         "400":
           description: Form ID is required
     post:
@@ -10745,10 +10800,20 @@ paths:
                 source:
                   type: string
                   description: Source of the media file - SurveyCTO or Exotel
+                format:
+                  type: string
+                  description: Format of the media file - Long or Wide
                 scto_fields:
                   type: array
                   description: >-
                     An array of SurveyCTO field names that are to be included in the media files output
+                  items:
+                    type: string
+                media_fields:
+                  type: array
+                  description: >-
+                    An array of SurveyCTO field names that contain media files to add to media files output
+                    Only applicable for wide format
                   items:
                     type: string
                 mapping_criteria:
@@ -10789,12 +10854,20 @@ paths:
                       source:
                         type: string
                         description: Source of the media file - SurveyCTO or Exotel
+                      format:
+                        type: string
+                        description: Format of the media file - Long or Wide
                       scto_fields:
                         type: array
                         description: >-
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      media_fields:
+                        type: array
+                        description: >-
+                          An array of SurveyCTO field names that contain media files to add to media files output
+                          Only applicable for wide format
                       mapping_criteria:
                         type: string
                         description: >-
@@ -10864,12 +10937,20 @@ paths:
                         source:
                           type: string
                           description: Source of the media file - SurveyCTO or Exotel
+                        format:
+                          type: string
+                          description: Format of the media file - Long or Wide
                         scto_fields:
                           type: array
                           description: >-
                             An array of SurveyCTO field names that are to be included in the media files output
                           items:
                             type: string
+                        media_fields:
+                          type: array
+                          description: >-
+                            An array of SurveyCTO field names that contain media files to add to media files output
+                            Only applicable for wide format
                         mapping_criteria:
                           type: string
                           description: >-
@@ -10946,12 +11027,20 @@ paths:
                       source:
                         type: string
                         description: Source of the media file - SurveyCTO or Exotel
+                      format:
+                        type: string
+                        description: Format of the media file - Long or Wide
                       scto_fields:
                         type: array
                         description: >-
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      media_fields:
+                        type: array
+                        description: >-
+                          An array of SurveyCTO field names that contain media files to add to media files output
+                          Only applicable for wide format
                       mapping_criteria:
                         type: string
                         description: >-
@@ -11011,12 +11100,20 @@ paths:
                 source:
                   type: string
                   description: Source of the media file - SurveyCTO or Exotel
+                format:
+                  type: string
+                  description: Format of the media file - Long or Wide
                 scto_fields:
                   type: array
                   description: >-
                     An array of SurveyCTO field names that are to be included in the media files output
                   items:
                     type: string
+                media_fields:
+                  type: array
+                  description: >-
+                    An array of SurveyCTO field names that contain media files to add to media files output
+                    Only applicable for wide format
                 mapping_criteria:
                   type: string
                   description: >-
@@ -11057,12 +11154,20 @@ paths:
                       source:
                         type: string
                         description: Source of the media file - SurveyCTO or Exotel
+                      format:
+                        type: string
+                        description: Format of the media file - Long or Wide
                       scto_fields:
                         type: array
                         description: >-
                           An array of SurveyCTO field names that are to be included in the media files output
                         items:
                           type: string
+                      media_fields:
+                        type: array
+                        description: >-
+                          An array of SurveyCTO field names that contain media files to add to media files output
+                          Only applicable for wide format
                       mapping_criteria:
                         type: string
                         description: >-
@@ -11224,6 +11329,10 @@ paths:
                           type: boolean
                           description: Indicates if the DQ checks are grouped by module name
                           example: true
+                        drop_duplicates:
+                          type: boolean
+                          description: Indicates if duplicates by target id should be dropped before running checks. Default is false.
+                          example: true
                         dq_checks:
                           type: array
                           description: List of DQ checks configured for the form
@@ -11280,6 +11389,10 @@ paths:
                 group_by_module_name:
                   type: boolean
                   description: Indicates if the DQ checks are grouped by module name. Default is false.
+                  example: true
+                drop_duplicates:
+                  type: boolean
+                  description: Indicates if duplicates by target id should be dropped before running checks. Default is false.
                   example: true
               required:
                 - form_uid

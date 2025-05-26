@@ -503,6 +503,7 @@ class TestDQ:
                     "form_uid": 1,
                     "survey_status_filter": [1, 3],
                     "group_by_module_name": False,
+                    "drop_duplicates": False,
                     "dq_checks": None,
                 },
                 "success": True,
@@ -551,6 +552,7 @@ class TestDQ:
                     "form_uid": 1,
                     "survey_status_filter": [1, 3],
                     "group_by_module_name": False,
+                    "drop_duplicates": False,
                     "dq_checks": [
                         {"type_id": 4, "num_configured": "All", "num_active": "All"}
                     ],
@@ -590,6 +592,7 @@ class TestDQ:
             "form_uid": 1,
             "survey_status_filter": [1],
             "group_by_module_name": True,
+            "drop_duplicates": True,
         }
 
         response = client.put(
@@ -624,6 +627,7 @@ class TestDQ:
                     "form_uid": 1,
                     "survey_status_filter": [1],
                     "group_by_module_name": True,
+                    "drop_duplicates": True,
                     "dq_checks": None,
                 },
                 "success": True,
@@ -1365,6 +1369,7 @@ class TestDQ:
                 "form_uid": 1,
                 "survey_status_filter": [1, 3],
                 "group_by_module_name": False,
+                "drop_duplicates": False,
                 "dq_checks": [{"type_id": 4, "num_configured": "1", "num_active": "0"}],
             },
             "success": True,
@@ -1536,6 +1541,7 @@ class TestDQ:
                     "form_uid": 1,
                     "survey_status_filter": [1, 3],
                     "group_by_module_name": False,
+                    "drop_duplicates": False,
                     "dq_checks": [
                         {
                             "type_id": 4,
@@ -1660,6 +1666,7 @@ class TestDQ:
                     "form_uid": 1,
                     "survey_status_filter": [1, 3],
                     "group_by_module_name": False,
+                    "drop_duplicates": False,
                     "dq_checks": [
                         {
                             "type_id": 4,
@@ -2276,6 +2283,7 @@ class TestDQ:
                 "form_uid": 1,
                 "survey_status_filter": [1, 3],
                 "group_by_module_name": False,
+                "drop_duplicates": False,
                 "dq_checks": [
                     {
                         "type_id": 4,
@@ -2900,6 +2908,7 @@ class TestDQ:
                 "form_uid": 1,
                 "survey_status_filter": [1, 3],
                 "group_by_module_name": False,
+                "drop_duplicates": False,
                 "dq_checks": [
                     {"type_id": 10, "num_configured": "1", "num_active": "0"},
                 ],
@@ -3393,6 +3402,7 @@ class TestDQ:
                 "form_uid": 1,
                 "survey_status_filter": [1, 3],
                 "group_by_module_name": False,
+                "drop_duplicates": False,
                 "dq_checks": [
                     {"type_id": 1, "num_configured": "1", "num_active": "0"},
                 ],
