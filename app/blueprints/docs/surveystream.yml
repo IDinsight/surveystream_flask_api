@@ -3565,9 +3565,7 @@ paths:
         be updated are specified by their enumerator IDs. Only the fields
         specified in the request body will be updated. If a field is not
         specified, it will not be updated. Only personal details and custom
-        fields can be updated can be updated through this endpoint. To bulk
-        update enumerators' locations, use the `PUT
-        /enumerators/roles/locations` endpoint.
+        fields can be updated can be updated through this endpoint.
 
         **Note:** Only fields that are defined in the enumerators column config
         table and set as `bulk_editable` can be updated via this endpoint. See
@@ -3597,6 +3595,19 @@ paths:
                 form_uid:
                   type: integer
                   description: The form UID of the enumerators to be updated.
+                enumerator_type:
+                  type: string
+                  description: >-
+                    The enumerator_type of the enumerators to be updated. Can be
+                    one of `monitor` or `surveyor` or 'surveyor;monitor'.
+                enumerator_status:
+                  type: string
+                  description: >-
+                    The status of the enumerators to be updated. Can be one of
+                    `Active`, `Temp. inactive`, or `Dropout`.
+                location_id:
+                  type: string
+                  description: String containing semicolon separated location ID of the enumerators.
                 patch_key_example:
                   description: >-
                     An example of the field name and value to be updated for the
@@ -3914,11 +3925,6 @@ paths:
       description: >
         Update an enumerator's details by their unique ID.
 
-        **Note**: This endpoint does not update information related to the
-        enumerator's role (like surveyor, monitor, etc.) on different forms or
-        the enumerator's mapping information for different forms. To update this
-        information, use the `/enumerators/{enumerator_uid}/roles` and
-        `/enumerators/{enumerator_uid}/roles/locations` endpoints.
       tags:
         - Enumerators
       parameters:
@@ -3969,6 +3975,16 @@ paths:
                 location_uid:
                   type: integer
                   description: The UID of the new location to map the enumerator to
+                enumerator_type:
+                  type: string
+                  description: >-
+                    The enumerator_type of the enumerator. Can be one of
+                    `monitor` or `surveyor` or `surveyor;monitor`.
+                enumerator_status:
+                  type: string
+                  description: >-
+                    The status of the enumerator. Can be one of `Active`,
+                    `Temp. inactive`, or `Dropout`.
               required:
                 - enumerator_id
                 - name
