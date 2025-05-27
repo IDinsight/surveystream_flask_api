@@ -23,7 +23,7 @@ def upgrade():
             'ck_dq_check_filters_filter_operator',
             type_='check',
         )
-        batch_op.add_constraint(
+        batch_op.create_check_constraint(
             "ck_dq_check_filters_filter_operator",
             """filter_operator IN 
             (   'Is',
@@ -46,7 +46,7 @@ def downgrade():
             'ck_dq_check_filters_filter_operator',
             type_='check',
         )
-        batch_op.add_constraint(
+        batch_op.create_check_constraint(
             "ck_dq_check_filters_filter_operator",
             """filter_operator IN 
             (   'Is',
