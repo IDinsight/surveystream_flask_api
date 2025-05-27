@@ -520,6 +520,12 @@ def update_enumerator(enumerator_uid, validated_payload):
                 # we need to update the status of the monitor form record
                 enumerator_monitor.status = enumerator_status
 
+    if enumerator_status == "Dropout":
+        # Delete the surveyor assignments
+        db.session.query(SurveyorAssignment).filter_by(
+            enumerator_uid=enumerator_uid
+        ).delete()
+
     if enumerator_surveyor is not None and "surveyor" not in enumerator_type:
         # If the enumerator is a surveyor, but the payload does not specify it as a surveyor,
         # we need to delete the surveyor form record
@@ -527,6 +533,11 @@ def update_enumerator(enumerator_uid, validated_payload):
         db.session.query(SurveyorLocation).filter_by(
             enumerator_uid=enumerator_uid, form_uid=enumerator.form_uid
         ).delete()
+        # Delete the surveyor assignments
+        db.session.query(SurveyorAssignment).filter_by(
+            enumerator_uid=enumerator_uid
+        ).delete()
+
     if enumerator_monitor is not None and "monitor" not in enumerator_type:
         # If the enumerator is a monitor, but the payload does not specify it as a monitor,
         # we need to delete the monitor form record
@@ -1065,6 +1076,12 @@ def bulk_update_enumerators(validated_payload):
             for custom_field in custom_fields_patch_keys:
                 enumerator_record.custom_fields[custom_field] = payload[custom_field]
 
+    if enumerator_status == "Dropout":
+        # Delete the surveyor assignments for the enumerators
+        db.session.query(SurveyorAssignment).filter(
+            SurveyorAssignment.enumerator_uid.in_(enumerator_uids)
+        ).delete()
+
     model_lookup = {
         "surveyor": SurveyorForm,
         "monitor": MonitorForm,
@@ -1108,6 +1125,10 @@ def bulk_update_enumerators(validated_payload):
                 SurveyorLocation.enumerator_uid.in_(enumerator_uids),
                 SurveyorLocation.form_uid == form_uid,
             ).delete()
+            db.session.query(SurveyorAssignment).filter(
+                SurveyorAssignment.enumerator_uid.in_(enumerator_uids),
+            ).delete()
+
     db.session.flush()
     for role in roles:
         model = model_lookup[role]
