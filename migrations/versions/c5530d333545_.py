@@ -24,11 +24,16 @@ def upgrade():
             type_='check',
         )
         batch_op.add_constraint(
-            'ck_dq_check_filters_filter_operator',
-            sa.CheckConstraint(
-                "filter_operator IN ('Is','Is not','Contains','Does not contain','Is empty','Is not empty', 'Greater than', 'Smaller than')",
-                name='ck_dq_check_filters_filter_operator',
-            ),
+            "ck_dq_check_filters_filter_operator",
+            """filter_operator IN 
+            (   'Is',
+                'Is not',
+                'Contains',
+                'Does not contain',
+                'Is empty',
+                'Is not empty',
+                'Greater than',
+                'Smaller than')""",
         )
 
     # ### end Alembic commands ###
@@ -42,11 +47,16 @@ def downgrade():
             type_='check',
         )
         batch_op.add_constraint(
-            'ck_dq_check_filters_filter_operator',
-            sa.CheckConstraint(
-                "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greater than', 'Smaller than')",
-                name='ck_dq_check_filters_filter_operator',
-            ),
+            "ck_dq_check_filters_filter_operator",
+            """filter_operator IN 
+            (   'Is',
+                'Is not',
+                'Contains',
+                'Does not contain',
+                'Is Empty',
+                'Is not empty',
+                'Greater than',
+                'Smaller than')""",
         )
 
     # ### end Alembic commands ###
