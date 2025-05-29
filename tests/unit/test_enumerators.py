@@ -3290,6 +3290,8 @@ class TestEnumerators:
             "home_address": "my house",
             "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
             "location_uid": 1,
+            "enumerator_type": "surveyor",
+            "enumerator_status": "Dropout",
         }
 
         user_fixture, expected_permission = user_permissions
@@ -3867,221 +3869,6 @@ class TestEnumerators:
 
         login_user(client, test_user_credentials)
 
-    def test_bulk_update_enumerators_locations(
-        self,
-        client,
-        login_test_user,
-        create_enumerator_column_config,
-        upload_enumerators_csv,
-        csrf_token,
-    ):
-        """
-        Test that enumerators locations can be bulk updated
-        """
-
-        # Update the enumerator
-        payload = {
-            "enumerator_uids": [1, 2],
-            "form_uid": 1,
-            "enumerator_type": "surveyor",
-            "location_uids": [],
-        }
-
-        response = client.put(
-            "/api/enumerators/roles/locations",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        print(response.json)
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": [
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_secondary1",
-                                    "field_label": "Mobile (Secondary)",
-                                },
-                                {"column_name": "age1", "field_label": "Age"},
-                            ],
-                            "gender": "gender1",
-                            "home_address": "home_address1",
-                            "language": "language1",
-                            "email": "email1",
-                            "enumerator_id": "enumerator_id1",
-                            "enumerator_type": "enumerator_type1",
-                            "location_id_column": "district_id1",
-                            "mobile_primary": "mobile_primary1",
-                            "name": "name1",
-                        },
-                        "Mobile (Secondary)": "1123456789",
-                        "Age": "1",
-                    },
-                    "email": "eric.dodge@idinsight.org",
-                    "enumerator_id": "0294612",
-                    "enumerator_uid": 1,
-                    "name": "Eric Dodge",
-                    "gender": "Male",
-                    "home_address": "my house",
-                    "language": "English",
-                    "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
-                    "surveyor_locations": None,
-                    "monitor_locations": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_secondary1",
-                                    "field_label": "Mobile (Secondary)",
-                                },
-                                {"column_name": "age1", "field_label": "Age"},
-                            ],
-                            "gender": "gender1",
-                            "home_address": "home_address1",
-                            "language": "language1",
-                            "email": "email1",
-                            "enumerator_id": "enumerator_id1",
-                            "enumerator_type": "enumerator_type1",
-                            "location_id_column": "district_id1",
-                            "mobile_primary": "mobile_primary1",
-                            "name": "name1",
-                        },
-                        "Mobile (Secondary)": "1123456789",
-                        "Age": "2",
-                    },
-                    "email": "jahnavi.meher@idinsight.org",
-                    "enumerator_id": "0294613",
-                    "enumerator_uid": 2,
-                    "name": "Jahnavi Meher",
-                    "gender": "Female",
-                    "home_address": "my house",
-                    "language": "Telugu",
-                    "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
-                    "surveyor_locations": None,
-                    "monitor_locations": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_secondary1",
-                                    "field_label": "Mobile (Secondary)",
-                                },
-                                {"column_name": "age1", "field_label": "Age"},
-                            ],
-                            "gender": "gender1",
-                            "home_address": "home_address1",
-                            "language": "language1",
-                            "email": "email1",
-                            "enumerator_id": "enumerator_id1",
-                            "enumerator_type": "enumerator_type1",
-                            "location_id_column": "district_id1",
-                            "mobile_primary": "mobile_primary1",
-                            "name": "name1",
-                        },
-                        "Mobile (Secondary)": "1123456789",
-                        "Age": "3",
-                    },
-                    "email": "jay.prakash@idinsight.org",
-                    "enumerator_id": "0294614",
-                    "enumerator_uid": 3,
-                    "name": "Jay Prakash",
-                    "gender": "Male",
-                    "home_address": "my house",
-                    "language": "Hindi",
-                    "mobile_primary": "0123456789",
-                    "monitor_locations": [
-                        [
-                            {
-                                "geo_level_name": "District",
-                                "location_id": "1",
-                                "location_name": "ADILABAD",
-                                "geo_level_uid": 1,
-                                "location_uid": 1,
-                            }
-                        ]
-                    ],
-                    "monitor_status": "Active",
-                    "surveyor_locations": None,
-                    "surveyor_status": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_secondary1",
-                                    "field_label": "Mobile (Secondary)",
-                                },
-                                {"column_name": "age1", "field_label": "Age"},
-                            ],
-                            "gender": "gender1",
-                            "home_address": "home_address1",
-                            "language": "language1",
-                            "email": "email1",
-                            "enumerator_id": "enumerator_id1",
-                            "enumerator_type": "enumerator_type1",
-                            "location_id_column": "district_id1",
-                            "mobile_primary": "mobile_primary1",
-                            "name": "name1",
-                        },
-                        "Mobile (Secondary)": "1123456789",
-                        "Age": "4",
-                    },
-                    "email": "griffin.muteti@idinsight.org",
-                    "enumerator_id": "0294615",
-                    "enumerator_uid": 4,
-                    "name": "Griffin Muteti",
-                    "gender": "Male",
-                    "home_address": "my house",
-                    "language": "Swahili",
-                    "mobile_primary": "0123456789",
-                    "monitor_locations": [
-                        [
-                            {
-                                "geo_level_name": "District",
-                                "location_id": "1",
-                                "location_name": "ADILABAD",
-                                "geo_level_uid": 1,
-                                "location_uid": 1,
-                            }
-                        ]
-                    ],
-                    "monitor_status": "Active",
-                    "surveyor_locations": [
-                        [
-                            {
-                                "geo_level_name": "District",
-                                "location_id": "1",
-                                "location_name": "ADILABAD",
-                                "geo_level_uid": 1,
-                                "location_uid": 1,
-                            }
-                        ]
-                    ],
-                    "surveyor_status": "Active",
-                },
-            ],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/enumerators", query_string={"form_uid": 1})
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
     def test_bulk_update_enumerators_for_super_admin_user(
         self,
         client,
@@ -4100,6 +3887,9 @@ class TestEnumerators:
             "form_uid": 1,
             "Mobile (Secondary)": "0123456789",
             "language": "Tagalog",
+            "location_uid": [1],
+            "enumerator_type": "surveyor;monitor",
+            "enumerator_status": "Temp. Inactive",
         }
 
         response = client.patch(
@@ -4144,8 +3934,8 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
                         [
                             {
@@ -4157,7 +3947,17 @@ class TestEnumerators:
                             }
                         ]
                     ],
-                    "monitor_locations": None,
+                    "monitor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
                 },
                 {
                     "custom_fields": {
@@ -4190,8 +3990,8 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
                         [
                             {
@@ -4203,7 +4003,17 @@ class TestEnumerators:
                             }
                         ]
                     ],
-                    "monitor_locations": None,
+                    "monitor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
                 },
                 {
                     "custom_fields": {
@@ -4346,6 +4156,8 @@ class TestEnumerators:
             "form_uid": 1,
             "Mobile (Secondary)": "0123456789",
             "language": "Tagalog",
+            "enumerator_type": "surveyor;monitor",
+            "enumerator_status": "Temp. Inactive",
         }
 
         response = client.patch(
@@ -4390,8 +4202,8 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
                         [
                             {
@@ -4436,8 +4248,8 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
                         [
                             {
@@ -4611,6 +4423,8 @@ class TestEnumerators:
             "form_uid": 1,
             "Mobile (Secondary)": "0123456789",
             "language": "Tagalog",
+            "enumerator_type": "surveyor;monitor",
+            "enumerator_status": "Temp. Inactive",
         }
 
         response = client.patch(
@@ -4655,8 +4469,8 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
                         [
                             {
@@ -4701,8 +4515,8 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
                         [
                             {
@@ -4870,6 +4684,8 @@ class TestEnumerators:
             "form_uid": 1,
             "Mobile (Secondary)": "0123456789",
             "language": "Tagalog",
+            "enumerator_type": "surveyor;monitor",
+            "enumerator_status": "Temp. Inactive",
         }
 
         response = client.patch(
@@ -5808,6 +5624,237 @@ class TestEnumerators:
         # Check the response
         response = client.get("/api/enumerators", query_string={"form_uid": 1})
 
+        print(response.json)
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_bulk_update_enumerators_delete_monitors_for_super_admin_user(
+        self,
+        client,
+        login_test_user,
+        create_enumerator_column_config,
+        upload_enumerators_csv,
+        csrf_token,
+    ):
+        """
+        Test that enumerators role can be bulk deleted by a super_admin user
+        Passing enumerator_type as surveyor for all enumerators
+        Expect : Monitor_status and monitor_locations to be null for existing monitors
+        """
+
+        # Update the enumerator
+        payload = {
+            "enumerator_uids": [1, 2, 3, 4],
+            "form_uid": 1,
+            "Mobile (Secondary)": "0123456789",
+            "language": "Tagalog",
+            "location_uid": [1],
+            "enumerator_type": "surveyor",
+            "enumerator_status": "Temp. Inactive",
+        }
+
+        response = client.patch(
+            "/api/enumerators",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
+                        "Mobile (Secondary)": "0123456789",
+                        "Age": "1",
+                    },
+                    "email": "eric.dodge@idinsight.org",
+                    "enumerator_id": "0294612",
+                    "enumerator_uid": 1,
+                    "name": "Eric Dodge",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Tagalog",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Temp. Inactive",
+                    "surveyor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
+                        "Mobile (Secondary)": "0123456789",
+                        "Age": "2",
+                    },
+                    "email": "jahnavi.meher@idinsight.org",
+                    "enumerator_id": "0294613",
+                    "enumerator_uid": 2,
+                    "name": "Jahnavi Meher",
+                    "gender": "Female",
+                    "home_address": "my house",
+                    "language": "Tagalog",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Temp. Inactive",
+                    "surveyor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
+                        "Mobile (Secondary)": "0123456789",
+                        "Age": "3",
+                    },
+                    "email": "jay.prakash@idinsight.org",
+                    "enumerator_id": "0294614",
+                    "enumerator_uid": 3,
+                    "name": "Jay Prakash",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Tagalog",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": None,
+                    "monitor_status": None,
+                    "surveyor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
+                    "surveyor_status": "Temp. Inactive",
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
+                        "Mobile (Secondary)": "0123456789",
+                        "Age": "4",
+                    },
+                    "email": "griffin.muteti@idinsight.org",
+                    "enumerator_id": "0294615",
+                    "enumerator_uid": 4,
+                    "name": "Griffin Muteti",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Tagalog",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": None,
+                    "monitor_status": None,
+                    "surveyor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
+                    "surveyor_status": "Temp. Inactive",
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/enumerators", query_string={"form_uid": 1})
         print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
