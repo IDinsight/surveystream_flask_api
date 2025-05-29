@@ -482,10 +482,12 @@ def update_enumerator(enumerator_uid, validated_payload):
 
     # Check if enumerator is Surveyor or Monitor
     enumerator_surveyor = SurveyorForm.query.filter_by(
-        enumerator_uid=enumerator_uid
+        enumerator_uid=enumerator_uid,
+        form_uid=enumerator.form_uid,
     ).first()
     enumerator_monitor = MonitorForm.query.filter_by(
-        enumerator_uid=enumerator_uid
+        enumerator_uid=enumerator_uid,
+        form_uid=enumerator.form_uid,
     ).first()
 
     # Get payload values for enumerator type and status
@@ -1095,7 +1097,10 @@ def bulk_update_enumerators(validated_payload):
         # Check if the enumerators were previously monitors
         monitor_records = (
             db.session.query(MonitorForm)
-            .filter(MonitorForm.enumerator_uid.in_(enumerator_uids))
+            .filter(
+                MonitorForm.enumerator_uid.in_(enumerator_uids),
+                MonitorForm.form_uid == form_uid,
+            )
             .all()
         )
         if monitor_records:
@@ -1112,7 +1117,10 @@ def bulk_update_enumerators(validated_payload):
         # Check if the enumerators were previously surveyors
         surveyor_records = (
             db.session.query(SurveyorForm)
-            .filter(SurveyorForm.enumerator_uid.in_(enumerator_uids))
+            .filter(
+                SurveyorForm.enumerator_uid.in_(enumerator_uids),
+                SurveyorForm.form_uid == form_uid,
+            )
             .all()
         )
         if surveyor_records:
@@ -1475,7 +1483,9 @@ def get_surveyor_stats(validated_query_params):
         .join(
             SurveyorForm,
             (SurveyorForm.enumerator_uid == Enumerator.enumerator_uid)
-            & (SurveyorForm.form_uid == Enumerator.form_uid),
+            & (
+                SurveyorForm.form_uid == Enumerator.form_uid
+            ),  # Add form_uid join condition
             isouter=True,
         )
         .filter(
