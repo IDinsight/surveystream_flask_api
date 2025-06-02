@@ -1,6 +1,11 @@
-from app.blueprints.enumerators.models import Enumerator
-from app.blueprints.forms.models import Form
+from sqlalchemy import column, distinct, func, literal_column, select, union
+
+from app.blueprints.dq.models import DQCheck, DQCheckFilters
+from app.blueprints.enumerators.models import Enumerator, SurveyorLocation
+from app.blueprints.forms.models import Form, SCTOQuestion, SCTOQuestionMapping
 from app.blueprints.locations.models import Location
+from app.blueprints.mapping.models import UserMappingConfig
+from app.blueprints.media_files.models import MediaFilesConfig
 from app.blueprints.module_questionnaire.models import ModuleQuestionnaire
 from app.blueprints.module_selection.models import ModuleStatus
 from app.blueprints.surveys.models import Survey
@@ -29,11 +34,136 @@ def check_module_notification_exists(survey_uid, module_id, severity):
     )
 
 
-def set_module_status_error(survey_uid, module_id):
-    ModuleStatus.query.filter(
-        ModuleStatus.module_id == module_id,
-        ModuleStatus.survey_uid == survey_uid,
-    ).update({"config_status": "Error"}, synchronize_session="fetch")
+def check_form_variable_missing(survey_uid, form_uid, db):
+    # Get form questions
+    form_questions = (
+        select(distinct(SCTOQuestion.question_name))
+        .where(SCTOQuestion.form_uid == form_uid)
+        .scalar_subquery()
+    )
+
+    # Combine questions from DQCheckFilter and DQCheck
+    dq_check_filters = (
+        select(DQCheckFilters.question_name)
+        .join(DQCheck, DQCheckFilters.dq_check_uid == DQCheck.dq_check_uid)
+        .where(DQCheck.form_uid == form_uid)
+    )
+
+    dq_check_questions = select(DQCheck.question_name).where(
+        DQCheck.form_uid == form_uid
+    )
+
+    combined_questions = union(dq_check_filters, dq_check_questions).subquery()
+
+    # Final query to get missing questions
+    missing_dq_questions = db.session.execute(
+        select(distinct(combined_questions.c.question_name)).where(
+            combined_questions.c.question_name.notin_(form_questions)
+        )
+    ).fetchall()
+
+    if len(missing_dq_questions) > 0:
+        # create a dq module notification
+        if not check_module_notification_exists(survey_uid, 11, "warning"):
+            missing_vars = [q[0] for q in missing_dq_questions]
+            notification = SurveyNotification(
+                survey_uid=survey_uid,
+                module_id=11,
+                severity="warning",
+                message=f"Certain DQ variables are missing from form defintion. These checks will be inactive. Kindly review form changes and update dq configs.",
+                resolution_status="in progress",
+            )
+            db.session.add(notification)
+            db.session.flush()
+            pass
+    # Get required fields and check for missing questions in one query
+    mapping_query = select(
+        SCTOQuestionMapping.survey_status,
+        SCTOQuestionMapping.target_id,
+        SCTOQuestionMapping.revisit_section,
+        SCTOQuestionMapping.enumerator_id,
+        SCTOQuestionMapping.dq_enumerator_id,
+        SCTOQuestionMapping.locations,
+    ).where(SCTOQuestionMapping.form_uid == form_uid)
+
+    missing_required_questions = []
+    mapping_result = db.session.execute(mapping_query).first()
+    if mapping_result:
+        # Combine base fields and location fields into a single list
+        base_fields = [
+            mapping_result[0],
+            mapping_result[1],
+            mapping_result[2],
+            mapping_result[3],
+            mapping_result[4],
+        ]
+        location_fields = list(mapping_result[5].values()) if mapping_result[5] else []
+        required_fields = [q for q in base_fields + location_fields if q]
+
+        # Create a subquery of required fields
+        required_fields_query = union(
+            *[
+                select(literal_column(f"'{field}'").label("question_name"))
+                for field in required_fields
+            ]
+        ).subquery()
+
+        # Check missing questions
+        missing_required_questions = db.session.execute(
+            select(distinct(required_fields_query.c.question_name)).where(
+                required_fields_query.c.question_name.notin_(form_questions)
+            )
+        ).fetchall()
+
+    if len(missing_required_questions) > 0:
+        if not check_module_notification_exists(survey_uid, 3, "error"):
+            missing_vars = [q[0] for q in missing_required_questions]
+            notification = SurveyNotification(
+                survey_uid=survey_uid,
+                module_id=3,
+                severity="error",
+                message=f"Following SCTO Question mapping variables are missing in form definition: "
+                f"{', '.join(missing_vars)}. Please review form changes.",
+                resolution_status="in progress",
+            )
+            db.session.add(notification)
+            db.session.flush()
+
+    # Check media file field mapping vars are present in form definition
+    try:
+        missing_media_questions = []
+        media_fields = (
+            select(func.unnest(MediaFilesConfig.scto_fields).label("media_field"))
+            .where(MediaFilesConfig.form_uid == form_uid)
+            .subquery()
+        )
+
+        missing_media_query = select(distinct(media_fields.c.media_field)).where(
+            media_fields.c.media_field.notin_(form_questions)
+        )
+        missing_media_questions = db.session.execute(missing_media_query).fetchall()
+    except Exception as e:
+        print(e)
+        raise Exception("Error in checking missing media variables eee ", e)
+
+    if len(missing_media_questions) > 0:
+        if not check_module_notification_exists(survey_uid, 12, "error"):
+            missing_vars = [q[0] for q in missing_media_questions]
+            notification = SurveyNotification(
+                survey_uid=survey_uid,
+                module_id=12,
+                severity="error",
+                message=f"Following media file fields are missing in form definition: {', '.join(missing_vars)}. Please review form changes.",
+                resolution_status="in progress",
+            )
+            db.session.add(notification)
+            db.session.flush()
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+    return
 
 
 def check_notification_condition(survey_uid, form_uid, input_conditions):
@@ -56,6 +186,7 @@ def check_notification_condition(survey_uid, form_uid, input_conditions):
 
     condition_checks = {
         "location_exists": lambda: check_location_exists(survey_uid),
+        "location_not_exists": lambda: not check_location_exists(survey_uid),
         "enumerator_exists": lambda: check_enumerator_exists(form_uid),
         "target_exists": lambda: check_target_exists(form_uid),
         "target_source_scto": lambda: check_target_source(form_uid, "scto"),
@@ -66,6 +197,18 @@ def check_notification_condition(survey_uid, form_uid, input_conditions):
         ),
         "target_location_mapping": lambda: check_target_location_mapping(survey_uid),
         "form_exists": lambda: check_form_exists(form_uid),
+        "target_language_not_exists": lambda: target_language_not_exists(form_uid),
+        "target_gender_not_exists": lambda: target_gender_not_exists(form_uid),
+        "target_location_not_exists": lambda: target_location_not_exists(form_uid),
+        "enumerator_language_not_exists": lambda: enumerator_language_not_exists(
+            form_uid
+        ),
+        "enumerator_gender_not_exists": lambda: enumerator_gender_not_exists(form_uid),
+        "enumerator_location_not_exists": lambda: enumerator_location_not_exists(
+            form_uid
+        ),
+        "mapping_exists": lambda: mapping_exists(form_uid),
+        "media_config_exists": lambda: media_config_exists(form_uid),
     }
 
     survey_conditions = {
@@ -77,7 +220,9 @@ def check_notification_condition(survey_uid, form_uid, input_conditions):
     return all(survey_conditions.values())
 
 
-# Helper functions to check conditions
+#                       ########                    #
+#  Helper functions to check notification conditions #
+#                       ########                    #
 
 
 def check_location_exists(survey_uid):
@@ -125,3 +270,50 @@ def check_target_location_mapping(survey_uid):
 
 def check_form_exists(form_uid):
     return Form.query.filter_by(form_uid=form_uid).first() is not None
+
+
+def target_language_not_exists(form_uid):
+    return Target.query.filter_by(form_uid=form_uid, language=None).first() is not None
+
+
+def target_gender_not_exists(form_uid):
+    return Target.query.filter_by(form_uid=form_uid, gender=None).first() is not None
+
+
+def target_location_not_exists(form_uid):
+    return (
+        Target.query.filter_by(form_uid=form_uid, location_uid=None).first() is not None
+    )
+
+
+def enumerator_language_not_exists(form_uid):
+    return (
+        Enumerator.query.filter_by(form_uid=form_uid, language=None).first() is not None
+    )
+
+
+def enumerator_gender_not_exists(form_uid):
+    return (
+        Enumerator.query.filter_by(form_uid=form_uid, gender=None).first() is not None
+    )
+
+
+def enumerator_location_not_exists(form_uid):
+    return (
+        Enumerator.query.join(
+            SurveyorLocation,
+            Enumerator.enumerator_uid == SurveyorLocation.enumerator_uid,
+            isouter=True,
+        )
+        .filter(Enumerator.form_uid == form_uid, SurveyorLocation.location_uid == None)
+        .first()
+        is not None
+    )
+
+
+def mapping_exists(form_uid):
+    return UserMappingConfig.query.filter_by(form_uid=form_uid).first() is not None
+
+
+def media_config_exists(form_uid):
+    return MediaFilesConfig.query.filter_by(form_uid=form_uid).first() is not None

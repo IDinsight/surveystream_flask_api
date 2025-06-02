@@ -174,6 +174,7 @@ class TestEnumerators:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
+            "number_of_attempts": 7,
         }
 
         response = client.post(
@@ -241,6 +242,93 @@ class TestEnumerators:
         filepath = (
             Path(__file__).resolve().parent
             / f"data/file_uploads/sample_locations_small.csv"
+        )
+
+        # Read the locations.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            locations_csv = f.read()
+            locations_csv_encoded = base64.b64encode(locations_csv).decode("utf-8")
+
+        # Try to upload the locations csv
+        payload = {
+            "geo_level_mapping": [
+                {
+                    "geo_level_uid": 1,
+                    "location_name_column": "district_name",
+                    "location_id_column": "district_id",
+                },
+                {
+                    "geo_level_uid": 2,
+                    "location_name_column": "mandal_name",
+                    "location_id_column": "mandal_id",
+                },
+                {
+                    "geo_level_uid": 3,
+                    "location_name_column": "psu_name",
+                    "location_id_column": "psu_id",
+                },
+            ],
+            "file": locations_csv_encoded,
+        }
+
+        response = client.post(
+            "/api/locations",
+            query_string={"survey_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 200
+
+        df = pd.read_csv(filepath, dtype=str)
+        df.rename(
+            columns={
+                "district_id": "District ID",
+                "district_name": "District Name",
+                "mandal_id": "Mandal ID",
+                "mandal_name": "Mandal Name",
+                "psu_id": "PSU ID",
+                "psu_name": "PSU Name",
+            },
+            inplace=True,
+        )
+
+        expected_response = {
+            "data": {
+                "ordered_columns": [
+                    "District ID",
+                    "District Name",
+                    "Mandal ID",
+                    "Mandal Name",
+                    "PSU ID",
+                    "PSU Name",
+                ],
+                "records": df.to_dict(orient="records"),
+            },
+            "success": True,
+        }
+        # Check the response
+        response = client.get("/api/locations", query_string={"survey_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    @pytest.fixture()
+    def create_locations_for_enumerators_file_medium(
+        self,
+        client,
+        login_test_user,
+        create_geo_levels_for_enumerators_file,
+        csrf_token,
+    ):
+        """
+        Upload locations csv as a setup step for the enumerators upload tests
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_locations_small_multiple.csv"
         )
 
         # Read the locations.csv file and convert it to base64
@@ -884,13 +972,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "name": "E Dodge",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -928,13 +1018,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "name": "Jan Meher",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -969,13 +1061,15 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "1233564789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "name": "J Prakash",
@@ -1013,24 +1107,28 @@ class TestEnumerators:
                     "language": "Swahili",
                     "mobile_primary": "1236456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "name": "Griff Muteti",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -1137,13 +1235,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "name": "E Dodge",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -1181,13 +1281,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "name": "Jan Meher",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -1222,13 +1324,15 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "name": "J Prakash",
@@ -1266,24 +1370,28 @@ class TestEnumerators:
                     "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "name": "Griff Muteti",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -1318,24 +1426,28 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123456389",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "name": "Rohan M",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -1370,24 +1482,28 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123556389",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "name": "Yashi M",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -1422,24 +1538,28 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123556382",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "name": "Utkarsh",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -1497,13 +1617,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "surveyor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -1541,13 +1663,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "surveyor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -1583,13 +1707,15 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": None,
@@ -1627,23 +1753,27 @@ class TestEnumerators:
                     "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -1762,13 +1892,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "surveyor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -1806,13 +1938,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "surveyor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -1848,13 +1982,15 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": None,
@@ -1892,23 +2028,27 @@ class TestEnumerators:
                     "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -2046,13 +2186,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "surveyor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -2090,13 +2232,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "surveyor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -2132,13 +2276,15 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": None,
@@ -2176,23 +2322,27 @@ class TestEnumerators:
                     "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -2410,13 +2560,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "surveyor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                     "custom_fields": {
@@ -2445,13 +2597,15 @@ class TestEnumerators:
                     "monitor_status": None,
                     "surveyor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                     "custom_fields": {
@@ -2525,20 +2679,22 @@ class TestEnumerators:
                     "monitor_status": None,
                     "surveyor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "location_id": "1101",
+                                "location_name": "ADILABAD RURAL",
+                                "geo_level_uid": 2,
+                                "location_uid": 2,
+                            },
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -2574,20 +2730,22 @@ class TestEnumerators:
                     "monitor_status": None,
                     "surveyor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1104",
-                            "location_name": "BELA",
-                            "geo_level_uid": 2,
-                            "location_uid": 3,
-                        },
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "location_id": "1104",
+                                "location_name": "BELA",
+                                "geo_level_uid": 2,
+                                "location_uid": 3,
+                            },
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -2621,20 +2779,22 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "geo_level_uid": 2,
-                            "location_uid": 2,
-                        },
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            },
+                            {
+                                "geo_level_name": "Mandal",
+                                "location_id": "1101",
+                                "location_name": "ADILABAD RURAL",
+                                "geo_level_uid": 2,
+                                "location_uid": 2,
+                            },
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": None,
@@ -2670,37 +2830,73 @@ class TestEnumerators:
                     "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1104",
-                            "location_name": "BELA",
-                            "geo_level_uid": 2,
-                            "location_uid": 3,
-                        },
+                        [
+                            {
+                                "location_id": "1",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD",
+                                "geo_level_name": "District",
+                            },
+                            {
+                                "location_id": "1104",
+                                "location_uid": 3,
+                                "geo_level_uid": 2,
+                                "location_name": "BELA",
+                                "geo_level_name": "Mandal",
+                            },
+                        ],
+                        [
+                            {
+                                "location_id": "1",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD",
+                                "geo_level_name": "District",
+                            },
+                            {
+                                "location_id": "1101",
+                                "location_uid": 2,
+                                "geo_level_uid": 2,
+                                "location_name": "ADILABAD RURAL",
+                                "geo_level_name": "Mandal",
+                            },
+                        ],
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1104",
-                            "location_name": "BELA",
-                            "geo_level_uid": 2,
-                            "location_uid": 3,
-                        },
+                        [
+                            {
+                                "location_id": "1",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD",
+                                "geo_level_name": "District",
+                            },
+                            {
+                                "location_id": "1104",
+                                "location_uid": 3,
+                                "geo_level_uid": 2,
+                                "location_name": "BELA",
+                                "geo_level_name": "Mandal",
+                            },
+                        ],
+                        [
+                            {
+                                "location_id": "1",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD",
+                                "geo_level_name": "District",
+                            },
+                            {
+                                "location_id": "1101",
+                                "location_uid": 2,
+                                "geo_level_uid": 2,
+                                "location_name": "ADILABAD RURAL",
+                                "geo_level_name": "Mandal",
+                            },
+                        ],
                     ],
                     "surveyor_status": "Active",
                 },
@@ -3094,6 +3290,8 @@ class TestEnumerators:
             "home_address": "my house",
             "custom_fields": {"Mobile (Secondary)": "1123456789", "Age": "1"},
             "location_uid": 1,
+            "enumerator_type": "surveyor",
+            "enumerator_status": "Dropout",
         }
 
         user_fixture, expected_permission = user_permissions
@@ -3671,215 +3869,6 @@ class TestEnumerators:
 
         login_user(client, test_user_credentials)
 
-    def test_bulk_update_enumerators_locations(
-        self,
-        client,
-        login_test_user,
-        create_enumerator_column_config,
-        upload_enumerators_csv,
-        csrf_token,
-    ):
-        """
-        Test that enumerators locations can be bulk updated
-        """
-
-        # Update the enumerator
-        payload = {
-            "enumerator_uids": [1, 2],
-            "form_uid": 1,
-            "enumerator_type": "surveyor",
-            "location_uids": [],
-        }
-
-        response = client.put(
-            "/api/enumerators/roles/locations",
-            json=payload,
-            content_type="application/json",
-            headers={"X-CSRF-Token": csrf_token},
-        )
-        print(response.json)
-        assert response.status_code == 200
-
-        expected_response = {
-            "data": [
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_secondary1",
-                                    "field_label": "Mobile (Secondary)",
-                                },
-                                {"column_name": "age1", "field_label": "Age"},
-                            ],
-                            "gender": "gender1",
-                            "home_address": "home_address1",
-                            "language": "language1",
-                            "email": "email1",
-                            "enumerator_id": "enumerator_id1",
-                            "enumerator_type": "enumerator_type1",
-                            "location_id_column": "district_id1",
-                            "mobile_primary": "mobile_primary1",
-                            "name": "name1",
-                        },
-                        "Mobile (Secondary)": "1123456789",
-                        "Age": "1",
-                    },
-                    "email": "eric.dodge@idinsight.org",
-                    "enumerator_id": "0294612",
-                    "enumerator_uid": 1,
-                    "name": "Eric Dodge",
-                    "gender": "Male",
-                    "home_address": "my house",
-                    "language": "English",
-                    "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
-                    "surveyor_locations": None,
-                    "monitor_locations": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_secondary1",
-                                    "field_label": "Mobile (Secondary)",
-                                },
-                                {"column_name": "age1", "field_label": "Age"},
-                            ],
-                            "gender": "gender1",
-                            "home_address": "home_address1",
-                            "language": "language1",
-                            "email": "email1",
-                            "enumerator_id": "enumerator_id1",
-                            "enumerator_type": "enumerator_type1",
-                            "location_id_column": "district_id1",
-                            "mobile_primary": "mobile_primary1",
-                            "name": "name1",
-                        },
-                        "Mobile (Secondary)": "1123456789",
-                        "Age": "2",
-                    },
-                    "email": "jahnavi.meher@idinsight.org",
-                    "enumerator_id": "0294613",
-                    "enumerator_uid": 2,
-                    "name": "Jahnavi Meher",
-                    "gender": "Female",
-                    "home_address": "my house",
-                    "language": "Telugu",
-                    "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
-                    "surveyor_locations": None,
-                    "monitor_locations": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_secondary1",
-                                    "field_label": "Mobile (Secondary)",
-                                },
-                                {"column_name": "age1", "field_label": "Age"},
-                            ],
-                            "gender": "gender1",
-                            "home_address": "home_address1",
-                            "language": "language1",
-                            "email": "email1",
-                            "enumerator_id": "enumerator_id1",
-                            "enumerator_type": "enumerator_type1",
-                            "location_id_column": "district_id1",
-                            "mobile_primary": "mobile_primary1",
-                            "name": "name1",
-                        },
-                        "Mobile (Secondary)": "1123456789",
-                        "Age": "3",
-                    },
-                    "email": "jay.prakash@idinsight.org",
-                    "enumerator_id": "0294614",
-                    "enumerator_uid": 3,
-                    "name": "Jay Prakash",
-                    "gender": "Male",
-                    "home_address": "my house",
-                    "language": "Hindi",
-                    "mobile_primary": "0123456789",
-                    "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
-                    ],
-                    "monitor_status": "Active",
-                    "surveyor_locations": None,
-                    "surveyor_status": None,
-                },
-                {
-                    "custom_fields": {
-                        "column_mapping": {
-                            "custom_fields": [
-                                {
-                                    "column_name": "mobile_secondary1",
-                                    "field_label": "Mobile (Secondary)",
-                                },
-                                {"column_name": "age1", "field_label": "Age"},
-                            ],
-                            "gender": "gender1",
-                            "home_address": "home_address1",
-                            "language": "language1",
-                            "email": "email1",
-                            "enumerator_id": "enumerator_id1",
-                            "enumerator_type": "enumerator_type1",
-                            "location_id_column": "district_id1",
-                            "mobile_primary": "mobile_primary1",
-                            "name": "name1",
-                        },
-                        "Mobile (Secondary)": "1123456789",
-                        "Age": "4",
-                    },
-                    "email": "griffin.muteti@idinsight.org",
-                    "enumerator_id": "0294615",
-                    "enumerator_uid": 4,
-                    "name": "Griffin Muteti",
-                    "gender": "Male",
-                    "home_address": "my house",
-                    "language": "Swahili",
-                    "mobile_primary": "0123456789",
-                    "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
-                    ],
-                    "monitor_status": "Active",
-                    "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
-                    ],
-                    "surveyor_status": "Active",
-                },
-            ],
-            "success": True,
-        }
-
-        # Check the response
-        response = client.get("/api/enumerators", query_string={"form_uid": 1})
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
-
     def test_bulk_update_enumerators_for_super_admin_user(
         self,
         client,
@@ -3898,6 +3887,9 @@ class TestEnumerators:
             "form_uid": 1,
             "Mobile (Secondary)": "0123456789",
             "language": "Tagalog",
+            "location_uid": [1],
+            "enumerator_type": "surveyor;monitor",
+            "enumerator_status": "Temp. Inactive",
         }
 
         response = client.patch(
@@ -3942,18 +3934,30 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
-                    "monitor_locations": None,
+                    "monitor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
                 },
                 {
                     "custom_fields": {
@@ -3986,18 +3990,30 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
-                    "monitor_locations": None,
+                    "monitor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
                 },
                 {
                     "custom_fields": {
@@ -4031,13 +4047,15 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": None,
@@ -4075,23 +4093,27 @@ class TestEnumerators:
                     "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -4134,6 +4156,8 @@ class TestEnumerators:
             "form_uid": 1,
             "Mobile (Secondary)": "0123456789",
             "language": "Tagalog",
+            "enumerator_type": "surveyor;monitor",
+            "enumerator_status": "Temp. Inactive",
         }
 
         response = client.patch(
@@ -4178,16 +4202,18 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -4222,16 +4248,18 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -4267,13 +4295,15 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": None,
@@ -4311,23 +4341,27 @@ class TestEnumerators:
                     "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -4389,6 +4423,8 @@ class TestEnumerators:
             "form_uid": 1,
             "Mobile (Secondary)": "0123456789",
             "language": "Tagalog",
+            "enumerator_type": "surveyor;monitor",
+            "enumerator_status": "Temp. Inactive",
         }
 
         response = client.patch(
@@ -4433,16 +4469,18 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -4477,16 +4515,18 @@ class TestEnumerators:
                     "home_address": "my house",
                     "language": "Tagalog",
                     "mobile_primary": "0123456789",
-                    "monitor_status": None,
-                    "surveyor_status": "Active",
+                    "monitor_status": "Temp. Inactive",
+                    "surveyor_status": "Temp. Inactive",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_locations": None,
                 },
@@ -4522,13 +4562,15 @@ class TestEnumerators:
                     "language": "Hindi",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": None,
@@ -4566,23 +4608,27 @@ class TestEnumerators:
                     "language": "Swahili",
                     "mobile_primary": "0123456789",
                     "monitor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "monitor_status": "Active",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "geo_level_uid": 1,
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "surveyor_status": "Active",
                 },
@@ -4638,6 +4684,8 @@ class TestEnumerators:
             "form_uid": 1,
             "Mobile (Secondary)": "0123456789",
             "language": "Tagalog",
+            "enumerator_type": "surveyor;monitor",
+            "enumerator_status": "Temp. Inactive",
         }
 
         response = client.patch(
@@ -5293,6 +5341,520 @@ class TestEnumerators:
             "success": False,
         }
 
+        print(response.json)
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_upload_enumerators_csv_with_multiple_locations(
+        self,
+        client,
+        login_test_user,
+        create_locations_for_enumerators_file_medium,
+        csrf_token,
+    ):
+        """
+        Test that the enumerators csv can be uploaded
+        """
+
+        filepath = (
+            Path(__file__).resolve().parent
+            / f"data/file_uploads/sample_enumerators_multiple_locations.csv"
+        )
+
+        # Read the enumerators.csv file and convert it to base64
+        with open(filepath, "rb") as f:
+            enumerators_csv = f.read()
+            enumerators_csv_encoded = base64.b64encode(enumerators_csv).decode("utf-8")
+
+        # Try to upload the enumerators csv
+        payload = {
+            "column_mapping": {
+                "enumerator_id": "enumerator_id1",
+                "name": "name1",
+                "email": "email1",
+                "mobile_primary": "mobile_primary1",
+                "language": "language1",
+                "home_address": "home_address1",
+                "gender": "gender1",
+                "enumerator_type": "enumerator_type1",
+                "location_id_column": "district_id1",
+                "custom_fields": [
+                    {
+                        "field_label": "Mobile (Secondary)",
+                        "column_name": "mobile_secondary1",
+                    },
+                    {
+                        "field_label": "Age",
+                        "column_name": "age1",
+                    },
+                ],
+            },
+            "file": enumerators_csv_encoded,
+            "mode": "overwrite",
+        }
+
+        response = client.post(
+            "/api/enumerators",
+            query_string={"form_uid": 1},
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "success": True,
+            "data": [
+                {
+                    "enumerator_uid": 1,
+                    "enumerator_id": "0294612",
+                    "name": "Eric Dodge",
+                    "email": "eric.dodge@idinsight.org",
+                    "mobile_primary": "0123456789",
+                    "home_address": "my house",
+                    "gender": "Male",
+                    "language": "English",
+                    "custom_fields": {
+                        "Age": "1",
+                        "column_mapping": {
+                            "name": "name1",
+                            "email": "email1",
+                            "gender": "gender1",
+                            "language": "language1",
+                            "home_address": "home_address1",
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "enumerator_id": "enumerator_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                        },
+                        "Mobile (Secondary)": "1123456789",
+                    },
+                    "surveyor_status": "Active",
+                    "surveyor_locations": [
+                        [
+                            {
+                                "location_id": "1",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD",
+                                "geo_level_name": "District",
+                            }
+                        ],
+                        [
+                            {
+                                "location_id": "2",
+                                "location_uid": 2,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD2",
+                                "geo_level_name": "District",
+                            }
+                        ],
+                    ],
+                    "monitor_status": None,
+                    "monitor_locations": None,
+                },
+                {
+                    "enumerator_uid": 2,
+                    "enumerator_id": "0294613",
+                    "name": "Jahnavi Meher",
+                    "email": "jahnavi.meher@idinsight.org",
+                    "mobile_primary": "0123456789",
+                    "home_address": "my house",
+                    "gender": "Female",
+                    "language": "Telugu",
+                    "custom_fields": {
+                        "Age": "2",
+                        "column_mapping": {
+                            "name": "name1",
+                            "email": "email1",
+                            "gender": "gender1",
+                            "language": "language1",
+                            "home_address": "home_address1",
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "enumerator_id": "enumerator_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                        },
+                        "Mobile (Secondary)": "1123456789",
+                    },
+                    "surveyor_status": "Active",
+                    "surveyor_locations": [
+                        [
+                            {
+                                "location_id": "1",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD",
+                                "geo_level_name": "District",
+                            }
+                        ]
+                    ],
+                    "monitor_status": None,
+                    "monitor_locations": None,
+                },
+                {
+                    "enumerator_uid": 3,
+                    "enumerator_id": "0294614",
+                    "name": "Jay Prakash",
+                    "email": "jay.prakash@idinsight.org",
+                    "mobile_primary": "0123456789",
+                    "home_address": "my house",
+                    "gender": "Male",
+                    "language": "Hindi",
+                    "custom_fields": {
+                        "Age": "3",
+                        "column_mapping": {
+                            "name": "name1",
+                            "email": "email1",
+                            "gender": "gender1",
+                            "language": "language1",
+                            "home_address": "home_address1",
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "enumerator_id": "enumerator_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                        },
+                        "Mobile (Secondary)": "1123456789",
+                    },
+                    "surveyor_status": None,
+                    "surveyor_locations": None,
+                    "monitor_status": "Active",
+                    "monitor_locations": [
+                        [
+                            {
+                                "location_id": "1",
+                                "location_uid": 1,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD",
+                                "geo_level_name": "District",
+                            }
+                        ],
+                        [
+                            {
+                                "location_id": "2",
+                                "location_uid": 2,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD2",
+                                "geo_level_name": "District",
+                            }
+                        ],
+                    ],
+                },
+                {
+                    "enumerator_uid": 4,
+                    "enumerator_id": "0294615",
+                    "name": "Griffin Muteti",
+                    "email": "griffin.muteti@idinsight.org",
+                    "mobile_primary": "0123456789",
+                    "home_address": "my house",
+                    "gender": "Male",
+                    "language": "Swahili",
+                    "custom_fields": {
+                        "Age": "4",
+                        "column_mapping": {
+                            "name": "name1",
+                            "email": "email1",
+                            "gender": "gender1",
+                            "language": "language1",
+                            "home_address": "home_address1",
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "enumerator_id": "enumerator_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                        },
+                        "Mobile (Secondary)": "1123456789",
+                    },
+                    "surveyor_status": "Active",
+                    "surveyor_locations": [
+                        [
+                            {
+                                "location_id": "2",
+                                "location_uid": 2,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD2",
+                                "geo_level_name": "District",
+                            }
+                        ]
+                    ],
+                    "monitor_status": "Active",
+                    "monitor_locations": [
+                        [
+                            {
+                                "location_id": "2",
+                                "location_uid": 2,
+                                "geo_level_uid": 1,
+                                "location_name": "ADILABAD2",
+                                "geo_level_name": "District",
+                            }
+                        ]
+                    ],
+                },
+            ],
+        }
+        # Check the response
+        response = client.get("/api/enumerators", query_string={"form_uid": 1})
+
+        print(response.json)
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_bulk_update_enumerators_delete_monitors_for_super_admin_user(
+        self,
+        client,
+        login_test_user,
+        create_enumerator_column_config,
+        upload_enumerators_csv,
+        csrf_token,
+    ):
+        """
+        Test that enumerators role can be bulk deleted by a super_admin user
+        Passing enumerator_type as surveyor for all enumerators
+        Expect : Monitor_status and monitor_locations to be null for existing monitors
+        """
+
+        # Update the enumerator
+        payload = {
+            "enumerator_uids": [1, 2, 3, 4],
+            "form_uid": 1,
+            "Mobile (Secondary)": "0123456789",
+            "language": "Tagalog",
+            "location_uid": [1],
+            "enumerator_type": "surveyor",
+            "enumerator_status": "Temp. Inactive",
+        }
+
+        response = client.patch(
+            "/api/enumerators",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
+                        "Mobile (Secondary)": "0123456789",
+                        "Age": "1",
+                    },
+                    "email": "eric.dodge@idinsight.org",
+                    "enumerator_id": "0294612",
+                    "enumerator_uid": 1,
+                    "name": "Eric Dodge",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Tagalog",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Temp. Inactive",
+                    "surveyor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
+                        "Mobile (Secondary)": "0123456789",
+                        "Age": "2",
+                    },
+                    "email": "jahnavi.meher@idinsight.org",
+                    "enumerator_id": "0294613",
+                    "enumerator_uid": 2,
+                    "name": "Jahnavi Meher",
+                    "gender": "Female",
+                    "home_address": "my house",
+                    "language": "Tagalog",
+                    "mobile_primary": "0123456789",
+                    "monitor_status": None,
+                    "surveyor_status": "Temp. Inactive",
+                    "surveyor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
+                    "monitor_locations": None,
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
+                        "Mobile (Secondary)": "0123456789",
+                        "Age": "3",
+                    },
+                    "email": "jay.prakash@idinsight.org",
+                    "enumerator_id": "0294614",
+                    "enumerator_uid": 3,
+                    "name": "Jay Prakash",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Tagalog",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": None,
+                    "monitor_status": None,
+                    "surveyor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
+                    "surveyor_status": "Temp. Inactive",
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_secondary1",
+                                    "field_label": "Mobile (Secondary)",
+                                },
+                                {"column_name": "age1", "field_label": "Age"},
+                            ],
+                            "gender": "gender1",
+                            "home_address": "home_address1",
+                            "language": "language1",
+                            "email": "email1",
+                            "enumerator_id": "enumerator_id1",
+                            "enumerator_type": "enumerator_type1",
+                            "location_id_column": "district_id1",
+                            "mobile_primary": "mobile_primary1",
+                            "name": "name1",
+                        },
+                        "Mobile (Secondary)": "0123456789",
+                        "Age": "4",
+                    },
+                    "email": "griffin.muteti@idinsight.org",
+                    "enumerator_id": "0294615",
+                    "enumerator_uid": 4,
+                    "name": "Griffin Muteti",
+                    "gender": "Male",
+                    "home_address": "my house",
+                    "language": "Tagalog",
+                    "mobile_primary": "0123456789",
+                    "monitor_locations": None,
+                    "monitor_status": None,
+                    "surveyor_locations": [
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "geo_level_uid": 1,
+                                "location_uid": 1,
+                            }
+                        ]
+                    ],
+                    "surveyor_status": "Temp. Inactive",
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/enumerators", query_string={"form_uid": 1})
         print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)

@@ -278,6 +278,7 @@ class TestNotifications:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
+            "number_of_attempts": 7,
         }
         response = client.post(
             "/api/forms",
@@ -629,6 +630,34 @@ class TestNotifications:
         assert response.status_code == 200
 
     @pytest.fixture()
+    def create_scto_question_mapping(
+        self, client, csrf_token, login_test_user, create_form
+    ):
+        """
+        Test that the SCTO question mapping is inserted correctly
+        """
+
+        # Insert the SCTO question mapping
+        payload = {
+            "form_uid": 1,
+            "survey_status": "test_survey_status_error",
+            "revisit_section": "test_revisit_section",
+            "target_id": "test_target_id",
+            "enumerator_id": "test_enumerator_id",
+            "locations": {
+                "location_1": "test_location_1",
+            },
+        }
+
+        response = client.post(
+            "/api/forms/1/scto-question-mapping",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 201
+
+    @pytest.fixture()
     def create_survey_notification(
         self, client, login_test_user, csrf_token, create_form
     ):
@@ -971,7 +1000,11 @@ class TestNotifications:
             "data": [
                 {"survey_uid": 1, "module_id": 1, "config_status": "Done"},
                 {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
-                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress - Incomplete"},
+                {
+                    "survey_uid": 1,
+                    "module_id": 3,
+                    "config_status": "In Progress - Incomplete",
+                },
                 {"survey_uid": 1, "module_id": 4, "config_status": "Error"},
                 {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
@@ -1139,7 +1172,7 @@ class TestNotifications:
                     {
                         "survey_id": "test_survey2",
                         "survey_uid": 2,
-                        "module_name": "Data quality",
+                        "module_name": "Data Quality",
                         "module_id": 11,
                         "notification_uid": 4,
                         "severity": "error",
@@ -1172,7 +1205,7 @@ class TestNotifications:
                     {
                         "survey_id": "test_survey",
                         "survey_uid": 1,
-                        "module_name": "Basic information",
+                        "module_name": "Background Details",
                         "module_id": 1,
                         "notification_uid": 1,
                         "severity": "warning",
@@ -1207,7 +1240,7 @@ class TestNotifications:
                     {
                         "survey_id": "test_survey",
                         "survey_uid": 1,
-                        "module_name": "Basic information",
+                        "module_name": "Background Details",
                         "module_id": 1,
                         "notification_uid": 1,
                         "severity": "warning",
@@ -1231,7 +1264,7 @@ class TestNotifications:
                     {
                         "survey_id": "test_survey2",
                         "survey_uid": 2,
-                        "module_name": "Data quality",
+                        "module_name": "Data Quality",
                         "module_id": 11,
                         "notification_uid": 4,
                         "severity": "error",
@@ -1488,7 +1521,7 @@ class TestNotifications:
                 {
                     "survey_id": "test_survey",
                     "survey_uid": 1,
-                    "module_name": "Basic information",
+                    "module_name": "Background Details",
                     "module_id": 1,
                     "type": "survey",
                     "notification_uid": 1,
@@ -1526,8 +1559,16 @@ class TestNotifications:
             "data": [
                 {"survey_uid": 1, "module_id": 1, "config_status": "Done"},
                 {"survey_uid": 1, "module_id": 2, "config_status": "Done"},
-                {"survey_uid": 1, "module_id": 3, "config_status": "In Progress - Incomplete"},
-                {"survey_uid": 1, "module_id": 4, "config_status": "In Progress - Incomplete"},
+                {
+                    "survey_uid": 1,
+                    "module_id": 3,
+                    "config_status": "In Progress - Incomplete",
+                },
+                {
+                    "survey_uid": 1,
+                    "module_id": 4,
+                    "config_status": "In Progress - Incomplete",
+                },
                 {"survey_uid": 1, "module_id": 5, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 7, "config_status": "Not Started"},
                 {"survey_uid": 1, "module_id": 8, "config_status": "Not Started"},
@@ -1628,7 +1669,7 @@ class TestNotifications:
                 {
                     "survey_id": "test_survey",
                     "survey_uid": 1,
-                    "module_name": "Survey locations",
+                    "module_name": "Locations",
                     "module_id": 5,
                     "type": "survey",
                     "notification_uid": 1,
@@ -1731,18 +1772,19 @@ class TestNotifications:
                 {
                     "survey_id": "test_survey",
                     "survey_uid": 1,
-                    "module_name": "User and role management",
+                    "module_name": "User and Role Management",
                     "module_id": 4,
                     "type": "survey",
                     "notification_uid": 3,
                     "severity": "error",
                     "resolution_status": "in progress",
-                    "message": "Locations data has been reuploaded for this survey. Kindly update user location details",
+                    "message": "Locations data has been reuploaded for this survey. Kindly update user location details.",
                 },
             ],
         }
-        get_response_json = get_response.json
 
+        get_response_json = get_response.json
+        print(get_response_json)
         # Remove the created_at from the response for comparison
         for notification in get_response_json.get("data", []):
             if "created_at" in notification:
@@ -1833,30 +1875,30 @@ class TestNotifications:
             "success": True,
             "data": {
                 "overall_status": "In Progress - Configuration",
-                "Basic information": {"status": "Done", "optional": False},
-                "Module selection": {"status": "Done", "optional": False},
-                "Survey information": [
+                "Background Details": {"status": "Done", "optional": False},
+                "Feature Selection": {"status": "Done", "optional": False},
+                "Survey Information": [
                     {
-                        "name": "SurveyCTO information",
+                        "name": "SurveyCTO Integration",
                         "status": "In Progress - Incomplete",
                         "optional": False,
                     },
                     {
-                        "name": "User and role management",
+                        "name": "User and Role Management",
                         "status": "Error",
                         "optional": False,
                     },
-                    {"name": "Survey locations", "status": "Done", "optional": False},
+                    {"name": "Locations", "status": "Done", "optional": False},
                     {"name": "Enumerators", "status": "Error", "optional": False},
                     {"name": "Targets", "status": "Error", "optional": False},
                     {
-                        "name": "Target status mapping",
+                        "name": "Survey Status for Targets",
                         "status": "Done",
                         "optional": False,
                     },
-                    {"name": "Mapping", "status": "Not Started", "optional": False},
+                    {"name": "Supervisor Mapping", "status": "Not Started", "optional": False},
                 ],
-                "Module configuration": [
+                "Module Configuration": [
                     {
                         "module_id": 9,
                         "name": "Assignments",
@@ -1865,26 +1907,26 @@ class TestNotifications:
                     },
                     {
                         "module_id": 13,
-                        "name": "Surveyor hiring",
+                        "name": "Surveyor Hiring",
                         "status": "Not Started",
                         "optional": False,
                     },
                     {
                         "module_id": 16,
-                        "name": "Assignments column configuration",
+                        "name": "Assignments Column Configuration",
                         "status": "Not Started",
                         "optional": True,
                     },
                 ],
                 "completion_stats": {
-                    "num_modules": 11,
+                    "num_modules": 10,
                     "num_completed": 4,
                     "num_in_progress": 1,
                     "num_in_progress_incomplete": 1,
-                    "num_not_started": 2,
+                    "num_not_started": 1,
                     "num_error": 3,
-                    "num_optional": 1
-                }
+                    "num_optional": 0,
+                },
             },
         }
 
@@ -1924,22 +1966,184 @@ class TestNotifications:
 
         expected_response = {
             "data": [
-                {"module_id": 1, "name": "Basic information", "error": False},
-                {"module_id": 2, "name": "Module selection", "error": False},
-                {"module_id": 3, "name": "SurveyCTO information", "error": False},
-                {"module_id": 4, "name": "User and role management", "error": True},
-                {"module_id": 5, "name": "Survey locations", "error": False},
+                {"module_id": 1, "name": "Background Details", "error": False},
+                {"module_id": 2, "name": "Feature Selection", "error": False},
+                {"module_id": 3, "name": "SurveyCTO Integration", "error": False},
+                {"module_id": 4, "name": "User and Role Management", "error": True},
+                {"module_id": 5, "name": "Locations", "error": False},
                 {"module_id": 7, "name": "Enumerators", "error": True},
                 {"module_id": 8, "name": "Targets", "error": True},
                 {"module_id": 9, "name": "Assignments", "error": False},
-                {"module_id": 13, "name": "Surveyor hiring", "error": False},
-                {"module_id": 14, "name": "Target status mapping", "error": False},
-                {"module_id": 16, "name": "Assignments column configuration", "error": False},
-                {"module_id": 17, "name": "Mapping", "error": False},
+                {"module_id": 13, "name": "Surveyor Hiring", "error": False},
+                {"module_id": 14, "name": "Survey Status for Targets", "error": False},
+                {
+                    "module_id": 16,
+                    "name": "Assignments Column Configuration",
+                    "error": False,
+                },
+                {"module_id": 17, "name": "Supervisor Mapping", "error": False},
             ],
             "success": True,
         }
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
-    
+
+    def test_create_bulk_notifications(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test Create multiple notifications together using bulk endpoint
+
+        Expect: Success
+        """
+        payload = {
+            "actions": [
+                {
+                    "survey_uid": 1,
+                    "action": "Location hierarchy changed",
+                    "form_uid": 1,
+                },
+                {
+                    "survey_uid": 1,
+                    "action": "Prime location updated",
+                    "form_uid": 1,
+                },
+            ]
+        }
+        response = client.post(
+            "/api/notifications/action/bulk",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+        expected_response = {
+            "success": True,
+            "message": "Notifications created successfully",
+            "data": [
+                {
+                    "survey_uid": "1",
+                    "action": "Location hierarchy changed",
+                    "message": "Notification created successfully",
+                },
+                {
+                    "survey_uid": "1",
+                    "action": "Prime location updated",
+                    "message": "Notification created successfully",
+                },
+            ],
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+    def test_create_bulk_notifications_error(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_form,
+        upload_targets_csv,
+        upload_enumerators_csv,
+    ):
+        """
+        Test Create multiple notifications together using bulk endpoint when actions have error
+
+        Expect: 422, Errored action reported back
+        """
+        payload = {
+            "actions": [
+                {
+                    "survey_uid": 1,
+                    "action": "Location hierarchy changed",
+                    "form_uid": 1,
+                },
+                {
+                    "survey_uid": 1,
+                    "action": "Prime Location updated_errror",
+                    "form_uid": 1,
+                },
+            ]
+        }
+        response = client.post(
+            "/api/notifications/action/bulk",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        print(response.json)
+        assert response.status_code == 422
+
+        expected_response = {
+            "error": ["Action Prime Location updated_errror not found"],
+            "success": False,
+        }
+
+        response_json = response.json
+
+        checkdiff = jsondiff.diff(expected_response, response_json)
+        assert checkdiff == {}
+
+    def test_refresh_scto_form_definition_mapping_variable_missing(
+        self, client, login_test_user, csrf_token, create_scto_question_mapping
+    ):
+        """
+        Test that refreshing the scto form definition from SCTO gives the same result
+        """
+
+        # Ingest the SCTO variables from SCTO into the database
+        response = client.post(
+            "/api/forms/1/scto-form-definition/refresh",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        assert response.status_code == 200
+
+        # Check if any notification raised
+        get_response = client.get(
+            "/api/notifications",
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(get_response.json)
+        assert get_response.status_code == 200
+
+        expected_get_response = {
+            "success": True,
+            "data": [
+                {
+                    "survey_id": "test_survey",
+                    "survey_uid": 1,
+                    "module_name": "SurveyCTO Integration",
+                    "module_id": 3,
+                    "type": "survey",
+                    "notification_uid": 1,
+                    "severity": "error",
+                    "resolution_status": "in progress",
+                    "message": "Following SCTO Question mapping variables are missing in form definition: test_enumerator_id, test_location_1, test_revisit_section, test_survey_status_error, test_target_id. Please review form changes.",
+                }
+            ],
+        }
+
+        get_response_json = get_response.json
+        print(get_response_json)
+        # Remove the created_at from the response for comparison
+        for notification in get_response_json.get("data", []):
+            if "created_at" in notification:
+                del notification["created_at"]
+            else:
+                print("Created_at missing in notification", notification)
+                assert False
+
+        checkdiff = jsondiff.diff(expected_get_response, get_response_json)
+        assert checkdiff == {}

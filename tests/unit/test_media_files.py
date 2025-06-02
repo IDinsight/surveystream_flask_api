@@ -1,10 +1,11 @@
+from datetime import datetime, timedelta
+
 import jsondiff
 import pytest
-from datetime import datetime, timedelta
 from utils import (
-    update_logged_in_user_roles,
-    login_user,
     create_new_survey_role_with_permissions,
+    login_user,
+    update_logged_in_user_roles,
 )
 
 
@@ -169,6 +170,7 @@ class TestMedaiFiles:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
+            "number_of_attempts": 7,
         }
         response = client.post(
             "/api/forms",
@@ -192,6 +194,7 @@ class TestMedaiFiles:
             "form_uid": 1,
             "file_type": "audio",
             "source": "SurveyCTO",
+            "format": "long",
             "scto_fields": [
                 "SubmissionDate",
                 "instanceID",
@@ -228,6 +231,7 @@ class TestMedaiFiles:
             "form_uid": 1,
             "file_type": "audio",
             "source": "SurveyCTO",
+            "format": "long",
             "scto_fields": [
                 "SubmissionDate",
                 "instanceID",
@@ -242,6 +246,8 @@ class TestMedaiFiles:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
+        print(response.status_code)
 
         if expected_permission:
             assert response.status_code == 201
@@ -259,6 +265,7 @@ class TestMedaiFiles:
                     "form_uid": 1,
                     "file_type": "audio",
                     "source": "SurveyCTO",
+                    "format": "long",
                     "scto_fields": [
                         "SubmissionDate",
                         "instanceID",
@@ -266,6 +273,7 @@ class TestMedaiFiles:
                         "district_id",
                         "status",
                     ],
+                    "media_fields": [],
                     "mapping_criteria": None,
                     "google_sheet_key": None,
                     "mapping_google_sheet_key": None,
@@ -315,6 +323,7 @@ class TestMedaiFiles:
                     "form_uid": 1,
                     "file_type": "audio",
                     "source": "SurveyCTO",
+                    "format": "long",
                     "scto_fields": [
                         "SubmissionDate",
                         "instanceID",
@@ -322,6 +331,7 @@ class TestMedaiFiles:
                         "district_id",
                         "status",
                     ],
+                    "media_fields": [],
                     "mapping_criteria": None,
                     "google_sheet_key": None,
                     "mapping_google_sheet_key": None,
@@ -372,6 +382,7 @@ class TestMedaiFiles:
                         "scto_form_id": "test_scto_input_output",
                         "file_type": "audio",
                         "source": "SurveyCTO",
+                        "format": "long",
                         "scto_fields": [
                             "SubmissionDate",
                             "instanceID",
@@ -379,6 +390,7 @@ class TestMedaiFiles:
                             "district_id",
                             "status",
                         ],
+                        "media_fields": [],
                         "mapping_criteria": None,
                         "google_sheet_key": None,
                         "mapping_google_sheet_key": None,
@@ -412,6 +424,7 @@ class TestMedaiFiles:
         payload = {
             "file_type": "audio",
             "source": "Exotel",
+            "format": "long",
             "scto_fields": [
                 "SubmissionDate",
                 "instanceID",
@@ -446,6 +459,7 @@ class TestMedaiFiles:
                         "media_files_config_uid": 1,
                         "form_uid": 1,
                         **payload,
+                        "media_fields": [],
                         "google_sheet_key": None,
                         "mapping_google_sheet_key": None,
                     },
@@ -518,6 +532,7 @@ class TestMedaiFiles:
             "form_uid": 1,
             "file_type": "audio",
             "source": "SurveyCTO",
+            "format": "long",
             "scto_fields": ["test", "duplicate", "config"],
         }
         response = client.post(
@@ -536,3 +551,152 @@ class TestMedaiFiles:
         }
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_media_files_create_config_invalid_payload(
+        self,
+        client,
+        csrf_token,
+        create_form,
+    ):
+        """
+        Test creating media files config with invalid payload - missing scto_fields
+        Format and media_fields is missing but since source is exotel it wont throw an error
+        """
+        payload = {
+            "form_uid": 1,
+            "file_type": "audio",
+            "source": "Exotel",
+            "mapping_criteria": "invalid_criteria",
+        }
+        response = client.post(
+            "/api/media-files",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+        print(response.json)
+        expected_response = {
+            "message": {
+                "scto_fields": ["This field is required."],
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_media_files_create_config_missing_format(
+        self,
+        client,
+        csrf_token,
+        create_form,
+    ):
+        """
+        Test creating media files config with invalid payload - missing scto_fields, Format
+        media_fields is missing but since Format is not defined it wont throw an error
+        """
+        payload = {
+            "form_uid": 1,
+            "file_type": "audio",
+            "source": "SurveyCTO",
+            "mapping_criteria": "invalid_criteria",
+        }
+        response = client.post(
+            "/api/media-files",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        assert response.status_code == 422
+        print(response.json)
+        expected_response = {
+            "message": {
+                "scto_fields": ["This field is required."],
+                "format": ["This field is required."],
+            },
+            "success": False,
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_media_files_create_config_wide_format(
+        self,
+        client,
+        csrf_token,
+        user_permissions,
+        request,
+        create_form,
+    ):
+        """
+        Test creating media files config with wide format
+        """
+
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "file_type": "audio",
+            "source": "SurveyCTO",
+            "format": "wide",
+            "scto_fields": [
+                "SubmissionDate",
+                "instanceID",
+                "enum_id",
+                "district_id",
+                "status",
+            ],
+            "media_fields": ["transmission_photo", "bikelog_photo"],
+        }
+        response = client.post(
+            "/api/media-files",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+        if expected_permission:
+            assert response.status_code == 201
+
+            response = client.get(
+                "/api/media-files/1",
+                content_type="application/json",
+                headers={"X-CSRF-Token": csrf_token},
+            )
+
+            assert response.status_code == 200
+            expected_response = {
+                "data": {
+                    "media_files_config_uid": 1,
+                    "form_uid": 1,
+                    "file_type": "audio",
+                    "source": "SurveyCTO",
+                    "format": "wide",
+                    "scto_fields": [
+                        "SubmissionDate",
+                        "instanceID",
+                        "enum_id",
+                        "district_id",
+                        "status",
+                    ],
+                    "media_fields": ["transmission_photo", "bikelog_photo"],
+                    "mapping_criteria": None,
+                    "google_sheet_key": None,
+                    "mapping_google_sheet_key": None,
+                },
+                "success": True,
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Media Files Config",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}

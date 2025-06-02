@@ -296,6 +296,7 @@ class TestAssignments:
             "form_type": "parent",
             "parent_form_uid": None,
             "dq_form_type": None,
+            "number_of_attempts": 7,
         }
 
         response = client.post(
@@ -4827,13 +4828,15 @@ class TestAssignments:
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "enumerator_uid": 1,
                     "form_productivity": {
@@ -4900,13 +4903,15 @@ class TestAssignments:
                     "email": "jahnavi.meher@idinsight.org",
                     "enumerator_id": "0294613",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "enumerator_uid": 2,
                     "form_productivity": {
@@ -4973,13 +4978,15 @@ class TestAssignments:
                     "email": "griffin.muteti@idinsight.org",
                     "enumerator_id": "0294615",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "enumerator_uid": 4,
                     "form_productivity": {
@@ -12739,13 +12746,15 @@ class TestAssignments:
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "enumerator_uid": 1,
                     "form_productivity": {
@@ -12806,13 +12815,15 @@ class TestAssignments:
                     "email": "jahnavi.meher@idinsight.org",
                     "enumerator_id": "0294613",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "enumerator_uid": 2,
                     "form_productivity": {
@@ -12873,13 +12884,15 @@ class TestAssignments:
                     "email": "griffin.muteti@idinsight.org",
                     "enumerator_id": "0294615",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "enumerator_uid": 4,
                     "form_productivity": {
@@ -13005,13 +13018,15 @@ class TestAssignments:
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "enumerator_uid": 1,
                     "form_productivity": {
@@ -13066,13 +13081,15 @@ class TestAssignments:
                     "email": "jahnavi.meher@idinsight.org",
                     "enumerator_id": "0294613",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "enumerator_uid": 2,
                     "form_productivity": {
@@ -13127,13 +13144,15 @@ class TestAssignments:
                     "email": "griffin.muteti@idinsight.org",
                     "enumerator_id": "0294615",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "enumerator_uid": 4,
                     "form_productivity": {
@@ -13255,13 +13274,15 @@ class TestAssignments:
                     "email": "eric.dodge@idinsight.org",
                     "enumerator_id": "0294612",
                     "surveyor_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "geo_level_uid": 1,
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                        }
+                        [
+                            {
+                                "geo_level_name": "District",
+                                "geo_level_uid": 1,
+                                "location_id": "1",
+                                "location_name": "ADILABAD",
+                                "location_uid": 1,
+                            }
+                        ]
                     ],
                     "enumerator_uid": 1,
                     "form_productivity": {
@@ -14063,7 +14084,11 @@ class TestAssignments:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 3,
+                    "survey_uid": 1,
+                },
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {"config_status": "Not Started", "module_id": 9, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 14, "survey_uid": 1},
@@ -14105,7 +14130,11 @@ class TestAssignments:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 3,
+                    "survey_uid": 1,
+                },
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {"config_status": "In Progress", "module_id": 9, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 14, "survey_uid": 1},
@@ -14269,7 +14298,11 @@ class TestAssignments:
             "data": [
                 {"config_status": "Done", "module_id": 1, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 2, "survey_uid": 1},
-                {"config_status": "In Progress - Incomplete", "module_id": 3, "survey_uid": 1},
+                {
+                    "config_status": "In Progress - Incomplete",
+                    "module_id": 3,
+                    "survey_uid": 1,
+                },
                 {"config_status": "Done", "module_id": 4, "survey_uid": 1},
                 {"config_status": "In Progress", "module_id": 9, "survey_uid": 1},
                 {"config_status": "Done", "module_id": 14, "survey_uid": 1},

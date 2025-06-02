@@ -1,6 +1,13 @@
-module_id,name,message,severity
-7,Reupload enumerators,Kindly reupload the enumerators data.,error
-8,Reupload targets,Kindly reupload the targets data.,error
-5,Reupload locations,Kindly reupload the locations data.,error
-3,Update surveyCTO question mapping,Kindly update SurveyCTO Question Mapping,error
-4,Update user location,Kindly update user location details,error
+"notification_template_uid","module_id","name","message","severity"
+1,7,"Reupload enumerators","Kindly reupload the enumerators data.","error"
+2,8,"Reupload targets","Kindly reupload the targets data.","error"
+3,5,"Reupload locations","Kindly reupload the locations data.","error"
+4,3,"Update surveyCTO question mapping","Kindly update SurveyCTO Question Mapping.","error"
+5,4,"Update user location","Kindly update user location details.","error"
+7,3,"Form ID Changed","Kindly review form changes.","alert"
+9,12,"Media Files output changed","Kindly review changes on media file outputs.","alert"
+16,17,"Review Mapping","Kindly review mapping for users.","warning"
+17,1,"Draft survey start date approaching","Kindly update the state of the survey to active or update the start date.","alert"
+18,1,"Survey end date approaching","Kindly update your survey end date if needed.","alert"
+19,15,"Email delivery failed","Kindly check the email delivery report status for more details.","alert"
+20,1,"Survey end date passed","Survey has been moved from active to past surveys","alert"

@@ -331,6 +331,7 @@ def get_dq_config(validated_query_params):
             DQConfig.form_uid,
             DQConfig.survey_status_filter,
             DQConfig.group_by_module_name,
+            DQConfig.drop_duplicates,
             dq_checks_subquery.c.dq_checks,
         )
         .outerjoin(
@@ -362,6 +363,7 @@ def get_dq_config(validated_query_params):
                 "form_uid": dq_config.form_uid,
                 "survey_status_filter": dq_config.survey_status_filter,
                 "group_by_module_name": dq_config.group_by_module_name,
+                "drop_duplicates": dq_config.drop_duplicates,
                 "dq_checks": dq_config.dq_checks,
             },
         }
@@ -391,6 +393,7 @@ def update_dq_config(validated_payload):
         form_uid=form_uid,
         survey_status_filter=validated_payload.survey_status_filter.data,
         group_by_module_name=validated_payload.group_by_module_name.data,
+        drop_duplicates=validated_payload.drop_duplicates.data,
     )
     db.session.add(dq_config)
 

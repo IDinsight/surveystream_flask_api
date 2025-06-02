@@ -7,6 +7,7 @@ from flask_login import current_user
 from sqlalchemy import Integer, column, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import aliased
 from sqlalchemy.sql import Values
 
 from app import db
@@ -386,6 +387,25 @@ def view_assignments_enumerators(validated_query_params):
             survey_uid, prime_geo_level_uid
         )
     )
+
+    # Subqueries to build the surveyor locations
+    surveyor_locations_array_subquery = aliased(
+        db.session.query(
+            SurveyorLocation.enumerator_uid,
+            SurveyorLocation.form_uid,
+            func.jsonb_agg(
+                prime_locations_with_location_hierarchy_subquery.c.locations
+            ).label("locations"),
+        )
+        .outerjoin(
+            prime_locations_with_location_hierarchy_subquery,
+            SurveyorLocation.location_uid
+            == prime_locations_with_location_hierarchy_subquery.c.location_uid,
+        )
+        .group_by(SurveyorLocation.enumerator_uid, SurveyorLocation.form_uid)
+        .subquery()
+    )
+
     surveyor_formwise_productivity_subquery = (
         build_surveyor_formwise_productivity_subquery(survey_uid)
     )
@@ -407,20 +427,18 @@ def view_assignments_enumerators(validated_query_params):
         db.session.query(
             Enumerator,
             SurveyorForm,
-            prime_locations_with_location_hierarchy_subquery.c.locations,
+            surveyor_locations_array_subquery.c.locations,
             surveyor_formwise_productivity_subquery.c.form_productivity,
             child_users_with_supervisors_query.c.supervisors,
         )
         .join(SurveyorForm, Enumerator.enumerator_uid == SurveyorForm.enumerator_uid)
         .outerjoin(
-            SurveyorLocation,
-            (SurveyorForm.enumerator_uid == SurveyorLocation.enumerator_uid)
-            & (SurveyorForm.form_uid == SurveyorLocation.form_uid),
-        )
-        .outerjoin(
-            prime_locations_with_location_hierarchy_subquery,
-            SurveyorLocation.location_uid
-            == prime_locations_with_location_hierarchy_subquery.c.location_uid,
+            surveyor_locations_array_subquery,
+            (
+                Enumerator.enumerator_uid
+                == surveyor_locations_array_subquery.c.enumerator_uid
+            )
+            & (Enumerator.form_uid == surveyor_locations_array_subquery.c.form_uid),
         )
         .outerjoin(
             surveyor_formwise_productivity_subquery,

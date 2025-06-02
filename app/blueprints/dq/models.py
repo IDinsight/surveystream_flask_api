@@ -33,6 +33,9 @@ class DQConfig(db.Model):
     )
     survey_status_filter = db.Column(db.ARRAY(db.Integer), nullable=False)
     group_by_module_name = db.Column(db.Boolean(), nullable=False, default=False)
+    drop_duplicates = db.Column(
+        db.Boolean(), nullable=False, server_default="false"
+    )
 
     __table_args__ = (
         db.PrimaryKeyConstraint("form_uid"),
@@ -126,7 +129,7 @@ class DQCheckFilters(db.Model):
     filter_operator = db.Column(
         db.String(),
         CheckConstraint(
-            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is Empty','Is not empty', 'Greater than', 'Smaller than')",
+            "filter_operator IN ('Is','Is not','Contains','Does not contain','Is empty','Is not empty', 'Greater than', 'Smaller than')",
             name="ck_dq_check_filters_filter_operator",
         ),
         nullable=False,

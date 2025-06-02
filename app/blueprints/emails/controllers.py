@@ -934,6 +934,19 @@ def create_email_template(validated_payload):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+    try:
+        # Get form_uid for updating module status
+        form_uid = (
+            db.session.query(EmailConfig.form_uid)
+            .filter_by(email_config_uid=validated_payload.email_config_uid.data)
+            .first()
+        ).form_uid
+        update_module_status(15, form_uid=form_uid)
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
     return (
         jsonify(
             {
@@ -1041,6 +1054,19 @@ def create_email_template_bulk(validated_payload):
             db.session.rollback()
             return jsonify({"error": f"For language {language} " + str(e)}), 500
 
+    try:
+        # Get form_uid for updating module status
+        form_uid = (
+            db.session.query(EmailConfig.form_uid)
+            .filter_by(email_config_uid=email_config_uid)
+            .first()
+        ).form_uid
+        update_module_status(15, form_uid=form_uid)
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
     return (
         jsonify(
             {
@@ -1251,6 +1277,14 @@ def delete_email_template(email_template_uid, validated_query_params):
     try:
         db.session.delete(template)
         db.session.commit()
+
+        # Update the status of the module
+        form_uid = (
+            db.session.query(EmailConfig.form_uid)
+            .filter_by(email_config_uid=template.email_config_uid)
+            .first()
+        ).form_uid
+        update_module_status(15, form_uid=form_uid)
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500

@@ -22,12 +22,9 @@ from .models import (
     db,
 )
 from .routes import notifications_bp
-from .utils import (
-    check_module_notification_exists,
-    check_notification_condition,
-    set_module_status_error,
-)
+from .utils import check_module_notification_exists, check_notification_condition
 from .validators import (
+    BulkPostActionPayloadValidator,
     PostActionPayloadValidator,
     PostNotificationsPayloadValidator,
     PutNotificationsPayloadValidator,
@@ -537,7 +534,6 @@ def create_notification_via_action(validated_payload):
                 SurveyNotification.resolution_status == "in progress",
             ).update({"created_at": datetime.now()}, synchronize_session="fetch")
             notification_created_flag = True
-            set_module_status_error(survey_uid, template["module_id"])
 
         elif check_notification_condition(
             survey_uid,
@@ -555,9 +551,6 @@ def create_notification_via_action(validated_payload):
 
             db.session.add(notification)
             notification_created_flag = True
-
-            if template["severity"] == "error":
-                set_module_status_error(survey_uid, template["module_id"])
 
         db.session.flush()
 
@@ -589,6 +582,131 @@ def create_notification_via_action(validated_payload):
         {
             "success": True,
             "message": "Notification created successfully",
+        }
+    )
+
+    return response, 200
+
+
+@notifications_bp.route("/action/bulk", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(BulkPostActionPayloadValidator)
+@custom_permissions_required("ADMIN")
+def create_bulk_notifications_via_action(validated_payload):
+    """
+    Create Notifications based on multiple actions
+    """
+
+    actions = validated_payload.actions.data
+    notifications_created = []
+    errors = []
+
+    for action_data in actions:
+        survey_uid = action_data["survey_uid"]
+        action = action_data["action"]
+        form_uid = action_data["form_uid"]
+
+        survey = Survey.query.filter(Survey.survey_uid == survey_uid).first()
+
+        if not survey:
+            errors.append(f"Survey with UID {survey_uid} not found")
+            continue
+
+        notification_action = NotificationAction.query.filter(
+            NotificationAction.name == action
+        ).first()
+
+        if not notification_action:
+            errors.append(f"Action {action} not found")
+            continue
+
+        notification_template = (
+            db.session.query(NotificationTemplate, NotificationActionMapping.condition)
+            .join(
+                NotificationActionMapping,
+                NotificationTemplate.notification_template_uid
+                == NotificationActionMapping.notification_template_uid,
+            )
+            .filter(
+                NotificationActionMapping.notification_action_uid
+                == notification_action.notification_action_uid
+            )
+            .all()
+        )
+        notification_templates = [
+            {
+                **template.NotificationTemplate.to_dict(),
+                "condition": template.condition,
+            }
+            for template in notification_template
+        ]
+
+        notification_created_flag = False
+        for template in notification_templates:
+            module_notification_exists = check_module_notification_exists(
+                survey_uid, template["module_id"], template["severity"]
+            )
+
+            if module_notification_exists:
+                SurveyNotification.query.filter(
+                    SurveyNotification.survey_uid == survey_uid,
+                    SurveyNotification.module_id == template["module_id"],
+                    SurveyNotification.severity == template["severity"],
+                    SurveyNotification.resolution_status == "in progress",
+                ).update({"created_at": datetime.now()}, synchronize_session="fetch")
+                notification_created_flag = True
+
+            elif check_notification_condition(
+                survey_uid,
+                form_uid,
+                template["condition"],
+            ):
+
+                message = notification_action.message + " " + template["message"]
+                notification = SurveyNotification(
+                    survey_uid=survey_uid,
+                    module_id=template["module_id"],
+                    resolution_status="in progress",
+                    message=message,
+                    severity=template["severity"],
+                )
+
+                db.session.add(notification)
+                notification_created_flag = True
+
+            db.session.flush()
+
+        if notification_created_flag:
+            notifications_created.append(
+                {
+                    "survey_uid": survey_uid,
+                    "action": action,
+                    "message": "Notification created successfully",
+                }
+            )
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        errors.append(str(e))
+
+    if errors:
+        return (
+            jsonify(
+                {
+                    "error": errors,
+                    "success": False,
+                }
+            ),
+            422,
+        )
+
+    response = jsonify(
+        {
+            "success": True,
+            "message": "Notifications created successfully",
+            "data": notifications_created,
         }
     )
 

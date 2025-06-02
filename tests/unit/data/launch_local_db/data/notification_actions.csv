@@ -1,6 +1,18 @@
-module_id,name,message
-5,Locations reuploaded,Locations data has been reuploaded for this survey.
-5,Location hierarchy changed,Location hierarchy has been changed for this survey.
-5,Location level added,New location levels has been added for this survey.
-5,Location level deleted,Location levels has been deleted for this survey.
-5,Prime Location updated,Prime location level has been changed for this survey.
+"notification_action_uid","module_id","name","message"
+1,5,"Locations reuploaded","Locations data has been reuploaded for this survey."
+2,5,"Location hierarchy changed","Location hierarchy has been changed for this survey."
+3,5,"Location level added","New location levels has been added for this survey."
+4,5,"Location level deleted","Location levels has been deleted for this survey."
+5,5,"Prime location updated","Prime location level has been changed for this survey."
+6,3,"Form ID changed","SCTO Form ID has changed."
+7,1,"Surveyor Mapping criteria includes Gender","Supervisor-Surveyor Mapping criteria changed to gender based."
+8,1,"Surveyor Mapping criteria includes Language","Supervisor-Surveyor Mapping criteria changed to language based."
+9,1,"Surveyor Mapping criteria includes Location","Supervisor-Surveyor Mapping criteria changed to location based."
+10,1,"Target Mapping criteria includes Location","Supervisor-Target Mapping criteria changed to location based."
+11,1,"Target Mapping criteria includes Language","Supervisor-Target Mapping criteria changed to language based."
+12,1,"Target Mapping criteria includes Gender","Supervisor-Target Mapping criteria changed to gender based."
+13,8,"Target config changed to CSV","Target config changed to CSV."
+14,1,"Survey end date approaching","Survey end date is approaching."
+15,1,"Draft survey start date approaching","Survey start date is approaching, your survey is in draft state."
+16,15,"Email delivery failed","Email delivery has failed for the survey."
+17,1,"Survey end date passed","Survey end date has passed."

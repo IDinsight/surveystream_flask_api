@@ -6,9 +6,9 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.blueprints.auth.models import User
+from app.blueprints.enumerators.models import Enumerator
 from app.blueprints.locations.models import Location
 from app.blueprints.targets.models import Target
-from app.blueprints.enumerators.models import Enumerator
 from app.utils.utils import (
     custom_permissions_required,
     logged_in_active_user_required,
@@ -474,16 +474,18 @@ def get_target_mapping(validated_query_params):
                         "supervisor_name": None,
                         "supervisor_mapping_criteria_values": {
                             "criteria": target.mapped_to_values,
-                            "other": {
-                                "location_id": location.location_id
-                                if location
-                                else None,
-                                "location_name": location.location_name
-                                if location
-                                else None,
-                            }
-                            if "Location" in target_mapping.mapping_criteria
-                            else {},
+                            "other": (
+                                {
+                                    "location_id": (
+                                        location.location_id if location else None
+                                    ),
+                                    "location_name": (
+                                        location.location_name if location else None
+                                    ),
+                                }
+                                if "Location" in target_mapping.mapping_criteria
+                                else {}
+                            ),
                         },
                     }
                 )
@@ -565,16 +567,18 @@ def get_target_mapping(validated_query_params):
                         "supervisor_name": None,
                         "supervisor_mapping_criteria_values": {
                             "criteria": target.mapped_to_values,
-                            "other": {
-                                "location_id": location.location_id
-                                if location
-                                else None,
-                                "location_name": location.location_name
-                                if location
-                                else None,
-                            }
-                            if "Location" in target_mapping.mapping_criteria
-                            else {},
+                            "other": (
+                                {
+                                    "location_id": (
+                                        location.location_id if location else None
+                                    ),
+                                    "location_name": (
+                                        location.location_name if location else None
+                                    ),
+                                }
+                                if "Location" in target_mapping.mapping_criteria
+                                else {}
+                            ),
                         },
                     }
                 )
@@ -1009,10 +1013,20 @@ def get_surveyor_mapping(validated_query_params):
         surveyor_subquery.c.language,
         surveyor_subquery.c.location_id,
         surveyor_subquery.c.location_name,
-        surveyor_subquery.c.mapping_criteria_values.label(
+        func.json_agg(surveyor_subquery.c.mapping_criteria_values).label(
             "surveyor_mapping_criteria_values"
         ),
-        surveyor_subquery.c.mapped_to_values,
+        func.json_agg(distinct(surveyor_subquery.c.mapped_to_values)).label(
+            "mapped_to_values"
+        ),
+    ).group_by(
+        surveyor_subquery.c.enumerator_uid,
+        surveyor_subquery.c.enumerator_id,
+        surveyor_subquery.c.name,
+        surveyor_subquery.c.gender,
+        surveyor_subquery.c.language,
+        surveyor_subquery.c.location_id,
+        surveyor_subquery.c.location_name,
     )
 
     # Check if we need to paginate the results
@@ -1037,10 +1051,9 @@ def get_surveyor_mapping(validated_query_params):
                 for supervisor in supervisors_data:
                     if (supervisor.user_uid == supervisor_uid) and (
                         supervisor.supervisor_mapping_criteria_values["criteria"]
-                        == surveyor.mapped_to_values
+                        in surveyor.mapped_to_values
                     ):
                         break
-
                 data.append(
                     {
                         "enumerator_uid": surveyor.enumerator_uid,
@@ -1063,8 +1076,9 @@ def get_surveyor_mapping(validated_query_params):
                     location = (
                         db.session.query(Location.location_id, Location.location_name)
                         .filter(
-                            Location.location_uid
-                            == surveyor.mapped_to_values["Location"],
+                            Location.location_uid.in_(
+                                [d["Location"] for d in surveyor.mapped_to_values]
+                            ),
                             Location.survey_uid == surveyor_mapping.survey_uid,
                         )
                         .first()
@@ -1085,16 +1099,18 @@ def get_surveyor_mapping(validated_query_params):
                         "supervisor_name": None,
                         "supervisor_mapping_criteria_values": {
                             "criteria": surveyor.mapped_to_values,
-                            "other": {
-                                "location_id": location.location_id
-                                if location
-                                else None,
-                                "location_name": location.location_name
-                                if location
-                                else None,
-                            }
-                            if "Location" in surveyor_mapping.mapping_criteria
-                            else {},
+                            "other": (
+                                {
+                                    "location_id": (
+                                        location.location_id if location else None
+                                    ),
+                                    "location_name": (
+                                        location.location_name if location else None
+                                    ),
+                                }
+                                if "Location" in surveyor_mapping.mapping_criteria
+                                else {}
+                            ),
                         },
                     }
                 )
@@ -1130,10 +1146,9 @@ def get_surveyor_mapping(validated_query_params):
                 for supervisor in supervisors_data:
                     if (supervisor.user_uid == supervisor_uid) and (
                         supervisor.supervisor_mapping_criteria_values["criteria"]
-                        == surveyor.mapped_to_values
+                        in surveyor.mapped_to_values
                     ):
                         break
-
                 data.append(
                     {
                         "enumerator_uid": surveyor.enumerator_uid,
@@ -1151,13 +1166,15 @@ def get_surveyor_mapping(validated_query_params):
                     }
                 )
             else:
+
                 if "Location" in surveyor_mapping.mapping_criteria:
                     # Find the location ID and Name for the surveyor's mapped to values
                     location = (
                         db.session.query(Location.location_id, Location.location_name)
                         .filter(
-                            Location.location_uid
-                            == surveyor.mapped_to_values["Location"],
+                            Location.location_uid.in_(
+                                [d["Location"] for d in surveyor.mapped_to_values]
+                            ),
                             Location.survey_uid == surveyor_mapping.survey_uid,
                         )
                         .first()
@@ -1178,16 +1195,18 @@ def get_surveyor_mapping(validated_query_params):
                         "supervisor_name": None,
                         "supervisor_mapping_criteria_values": {
                             "criteria": surveyor.mapped_to_values,
-                            "other": {
-                                "location_id": location.location_id
-                                if location
-                                else None,
-                                "location_name": location.location_name
-                                if location
-                                else None,
-                            }
-                            if "Location" in surveyor_mapping.mapping_criteria
-                            else {},
+                            "other": (
+                                {
+                                    "location_id": (
+                                        location.location_id if location else None
+                                    ),
+                                    "location_name": (
+                                        location.location_name if location else None
+                                    ),
+                                }
+                                if "Location" in surveyor_mapping.mapping_criteria
+                                else {}
+                            ),
                         },
                     }
                 )

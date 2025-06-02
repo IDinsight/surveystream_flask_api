@@ -1,8 +1,9 @@
+from sqlalchemy import CheckConstraint
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.ext.mutable import MutableDict
+
 from app import db
 from app.blueprints.forms.models import Form
-from sqlalchemy import CheckConstraint
-from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 
 
 class MediaFilesConfig(db.Model):
@@ -42,7 +43,20 @@ class MediaFilesConfig(db.Model):
         server_default="SurveyCTO",
         nullable=False,
     )
+    format = db.Column(
+        db.String(),
+        CheckConstraint(
+            "format IN ('long','wide')",
+            name="ck_media_files_config_format",
+        ),
+        server_default="long",
+        nullable=False,
+    )
     scto_fields = db.Column(db.ARRAY(db.String()))
+    media_fields = db.Column(
+        db.ARRAY(db.String()),
+        server_default="{}",
+    )
     mapping_criteria = db.Column(
         db.String(),
         CheckConstraint(
@@ -58,15 +72,19 @@ class MediaFilesConfig(db.Model):
         form_uid,
         file_type,
         source,
+        format,
         scto_fields,
+        media_fields,
         mapping_criteria,
-        google_sheet_key = None,
-        mapping_google_sheet_key = None,
+        google_sheet_key=None,
+        mapping_google_sheet_key=None,
     ):
         self.form_uid = form_uid
         self.file_type = file_type
         self.source = source
+        self.format = format
         self.scto_fields = scto_fields
+        self.media_fields = media_fields
         self.mapping_criteria = mapping_criteria
         self.google_sheet_key = google_sheet_key
         self.mapping_google_sheet_key = mapping_google_sheet_key
@@ -77,6 +95,8 @@ class MediaFilesConfig(db.Model):
             "form_uid": self.form_uid,
             "file_type": self.file_type,
             "source": self.source,
+            "format": self.format,
+            "media_fields": self.media_fields,
             "scto_fields": self.scto_fields,
             "mapping_criteria": self.mapping_criteria,
             "google_sheet_key": self.google_sheet_key,
