@@ -36,6 +36,44 @@ def get_survey_module_questionnaire(survey_uid):
 @custom_permissions_required("ADMIN", "path", "survey_uid")
 @update_module_status_after_request(1, "survey_uid")
 def update_survey_module_questionnaire(survey_uid, validated_payload):
+
+    # check if mapping criteria is changed
+    existing_module_questionnaire = ModuleQuestionnaire.query.filter_by(
+        survey_uid=survey_uid
+    ).first()
+    if existing_module_questionnaire:
+        if (
+            existing_module_questionnaire.target_mapping_criteria
+            != validated_payload.target_mapping_criteria.data
+            or existing_module_questionnaire.surveyor_mapping_criteria
+            != validated_payload.surveyor_mapping_criteria.data
+        ):
+            from app.blueprints.forms.models import Form
+            from app.blueprints.mapping.models import UserMappingConfig
+
+            # Delete all user mapping configs for this survey
+            main_form = Form.query.filter_by(
+                survey_uid=survey_uid, form_type="parent"
+            ).first()
+
+            if main_form:
+                main_form_uid = main_form.form_uid
+                if (
+                    existing_module_questionnaire.target_mapping_criteria
+                    != validated_payload.target_mapping_criteria.data
+                ):
+                    UserMappingConfig.query.filter_by(
+                        form_uid=main_form_uid, mapping_type="target"
+                    ).delete(synchronize_session=False)
+
+                if (
+                    existing_module_questionnaire.surveyor_mapping_criteria
+                    != validated_payload.surveyor_mapping_criteria.data
+                ):
+                    UserMappingConfig.query.filter_by(
+                        form_uid=main_form_uid, mapping_type="surveyor"
+                    ).delete(synchronize_session=False)
+
     # do upsert
     statement = (
         pg_insert(ModuleQuestionnaire)
