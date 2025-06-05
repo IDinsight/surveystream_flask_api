@@ -1,6 +1,3 @@
-from flask import jsonify
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-
 from app import db
 from app.utils.utils import (
     custom_permissions_required,
@@ -8,6 +5,8 @@ from app.utils.utils import (
     update_module_status_after_request,
     validate_payload,
 )
+from flask import jsonify
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from .models import ModuleQuestionnaire
 from .routes import module_questionnaire_bp
@@ -42,37 +41,31 @@ def update_survey_module_questionnaire(survey_uid, validated_payload):
         survey_uid=survey_uid
     ).first()
     if existing_module_questionnaire:
-        if (
-            existing_module_questionnaire.target_mapping_criteria
-            != validated_payload.target_mapping_criteria.data
-            or existing_module_questionnaire.surveyor_mapping_criteria
-            != validated_payload.surveyor_mapping_criteria.data
-        ):
-            from app.blueprints.forms.models import Form
-            from app.blueprints.mapping.models import UserMappingConfig
+        from app.blueprints.forms.models import Form
+        from app.blueprints.mapping.models import UserMappingConfig
 
-            # Delete all user mapping configs for this survey
-            main_form = Form.query.filter_by(
-                survey_uid=survey_uid, form_type="parent"
-            ).first()
+        # Delete all user mapping configs for this survey
+        main_form = Form.query.filter_by(
+            survey_uid=survey_uid, form_type="parent"
+        ).first()
 
-            if main_form:
-                main_form_uid = main_form.form_uid
-                if (
-                    existing_module_questionnaire.target_mapping_criteria
-                    != validated_payload.target_mapping_criteria.data
-                ):
-                    UserMappingConfig.query.filter_by(
-                        form_uid=main_form_uid, mapping_type="target"
-                    ).delete(synchronize_session=False)
+        if main_form:
+            main_form_uid = main_form.form_uid
+            if (
+                existing_module_questionnaire.target_mapping_criteria
+                != validated_payload.target_mapping_criteria.data
+            ):
+                UserMappingConfig.query.filter_by(
+                    form_uid=main_form_uid, mapping_type="target"
+                ).delete(synchronize_session=False)
 
-                if (
-                    existing_module_questionnaire.surveyor_mapping_criteria
-                    != validated_payload.surveyor_mapping_criteria.data
-                ):
-                    UserMappingConfig.query.filter_by(
-                        form_uid=main_form_uid, mapping_type="surveyor"
-                    ).delete(synchronize_session=False)
+            if (
+                existing_module_questionnaire.surveyor_mapping_criteria
+                != validated_payload.surveyor_mapping_criteria.data
+            ):
+                UserMappingConfig.query.filter_by(
+                    form_uid=main_form_uid, mapping_type="surveyor"
+                ).delete(synchronize_session=False)
 
     # do upsert
     statement = (
