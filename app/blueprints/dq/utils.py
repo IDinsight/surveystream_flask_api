@@ -22,10 +22,10 @@ def validate_dq_check(
             "Question name is required if check is not applied on all questions."
         )
 
-    # all_questions are only allowed for missing (4), don't knows (5) and refusals (6) checks
-    if all_questions and type_id not in [4, 5, 6]:
+    # all_questions are only allowed for missing (4), don't knows (5), refusals (6) and other (11) checks
+    if all_questions and type_id not in [4, 5, 6, 11]:
         raise Exception(
-            "All questions is only allowed for missing, don't knows and refusals checks"
+            "All questions is only allowed for missing, don't knows, refusals and other checks"
         )
 
     # Raise error if both all_questions and question_name are provided
@@ -108,11 +108,11 @@ def validate_dq_check(
                     )
 
     # Check if check components are valid based on type of check
-    # 1.a For missing (4), don't knows (5) and refusals checks (6), value field is required
-    if type_id in [4, 5, 6]:
+    # 1.a For missing (4), don't knows (5), refusals checks (6) and other (11) , value field is required
+    if type_id in [4, 5, 6, 11]:
         if check_components.get("value") is None or check_components.get("value") == []:
             raise Exception(
-                "Value field is required for missing, don't knows and refusals checks"
+                "Value field is required for missing, don't knows, refusals and other checks"
             )
     else:
         # 1.b For other checks, value field is not required
