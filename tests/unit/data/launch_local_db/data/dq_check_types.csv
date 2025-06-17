@@ -9,3 +9,4 @@ type_id,name,abbr
 8,Protocol violation,"{P}"
 9,Spotcheck score,"{SS}"
 10,GPS,"{P2P,P2S}"
+11,Other,"{OT}"

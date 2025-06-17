@@ -11546,7 +11546,7 @@ paths:
                           properties:
                             value:
                               type: array
-                              description: List of values for checking missing, don't know and refusal checks
+                              description: List of values for checking missing, don't know, refusal and other checks
                               items:
                                 type: string
                                 example: ["Is empty", "is NA"]
@@ -11739,7 +11739,7 @@ paths:
                   properties:
                     value:
                       type: array
-                      description: List of values for checking missing, don't know and refusal checks
+                      description: List of values for checking missing, don't know, refusal and other checks
                       items:
                         type: string
                         example: ["Is empty", "is NA"]
@@ -11987,7 +11987,7 @@ paths:
                   properties:
                     value:
                       type: array
-                      description: List of values for checking missing, don't know and refusal checks
+                      description: List of values for checking missing, don't know, refusal and other checks
                       items:
                         type: string
                         example: ["Is empty", "is NA"]

@@ -421,6 +421,7 @@ class TestDQ:
                 {"abbr": ["P"], "name": "Protocol violation", "type_id": 8},
                 {"abbr": ["SS"], "name": "Spotcheck score", "type_id": 9},
                 {"abbr": ["P2P", "P2S"], "name": "GPS", "type_id": 10},
+                {"abbr": ["OT"], "name": "Other", "type_id": 11},
             ],
             "success": True,
         }
@@ -1879,7 +1880,7 @@ class TestDQ:
         assert response.status_code == 404
 
         expected_response = {
-            "message": "All questions is only allowed for missing, don't knows and refusals checks",
+            "message": "All questions is only allowed for missing, don't knows, refusals and other checks",
             "success": False,
         }
 
@@ -3571,3 +3572,107 @@ class TestDQ:
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
+
+    def test_add_dq_other_check(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to add a DQ other value check
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 11,
+            "all_questions": False,
+            "question_name": "fac_anc_reg_1_trim",
+            "module_name": "test_module",
+            "flag_description": "test_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {"value": ["99"]},
+        }
+
+        response = client.post(
+            "/api/dq/checks",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "success": True,
+                "message": "Success",
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+            # Check if the check was added
+            response = client.get(
+                "/api/dq/checks",
+                query_string={"form_uid": 1, "type_id": 11},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert response.status_code == 200
+            print(response.json)
+
+            expected_response = {
+                "data": [
+                    {
+                        "active": True,
+                        "all_questions": False,
+                        "dq_check_uid": 1,
+                        "filters": [],
+                        "flag_description": "test_flag",
+                        "form_uid": 1,
+                        "module_name": "test_module",
+                        "question_name": "fac_anc_reg_1_trim",
+                        "type_id": 11,
+                        "dq_scto_form_uid": None,
+                        "is_repeat_group": False,
+                        "note": None,
+                        "check_components": {
+                            "value": ["99"],
+                            "hard_min": None,
+                            "hard_max": None,
+                            "soft_min": None,
+                            "soft_max": None,
+                            "outlier_metric": None,
+                            "outlier_value": None,
+                            "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
+                        },
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
