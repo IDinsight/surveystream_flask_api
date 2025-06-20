@@ -204,7 +204,7 @@ jobs:
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        timeout-minutes: 3
+        timeout-minutes: 5
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: backend
@@ -285,7 +285,7 @@ jobs:
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        timeout-minutes: 3
+        timeout-minutes: 5
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: backend
