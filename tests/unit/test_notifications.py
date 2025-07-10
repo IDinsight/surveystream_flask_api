@@ -1896,7 +1896,11 @@ class TestNotifications:
                         "status": "Done",
                         "optional": False,
                     },
-                    {"name": "Supervisor Mapping", "status": "Not Started", "optional": False},
+                    {
+                        "name": "Supervisor Mapping",
+                        "status": "Not Started",
+                        "optional": False,
+                    },
                 ],
                 "Module Configuration": [
                     {
@@ -2107,6 +2111,7 @@ class TestNotifications:
             "/api/forms/1/scto-form-definition/refresh",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
         # Check if any notification raised
