@@ -2109,7 +2109,7 @@ class TestNotifications:
         # Ingest the SCTO variables from SCTO into the database
         import time
 
-        time.sleep(120)  # Ensure the SCTO variables are ingested
+        time.sleep(360)  # Ensure the SCTO variables are ingested
         response = client.post(
             "/api/forms/1/scto-form-definition/refresh",
             headers={"X-CSRF-Token": csrf_token},
