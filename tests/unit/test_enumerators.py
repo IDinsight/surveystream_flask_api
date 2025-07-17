@@ -415,52 +415,52 @@ class TestEnumerators:
                 {
                     "column_name": "enumerator_id",
                     "column_type": "personal_details",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                 },
                 {
                     "column_name": "name",
                     "column_type": "personal_details",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                 },
                 {
                     "column_name": "email",
                     "column_type": "personal_details",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                 },
                 {
                     "column_name": "mobile_primary",
                     "column_type": "personal_details",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                 },
                 {
                     "column_name": "language",
                     "column_type": "personal_details",
-                    "bulk_editable": True,
+                    "allow_null_values": True,
                 },
                 {
                     "column_name": "home_address",
                     "column_type": "personal_details",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                 },
                 {
                     "column_name": "gender",
                     "column_type": "personal_details",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                 },
                 {
                     "column_name": "prime_geo_level_location",
                     "column_type": "location",
-                    "bulk_editable": True,
+                    "allow_null_values": True,
                 },
                 {
                     "column_name": "Mobile (Secondary)",
                     "column_type": "custom_fields",
-                    "bulk_editable": True,
+                    "allow_null_values": True,
                 },
                 {
                     "column_name": "Age",
                     "column_type": "custom_fields",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                 },
             ],
         }
@@ -3151,52 +3151,52 @@ class TestEnumerators:
                 "data": {
                     "file_columns": [
                         {
-                            "bulk_editable": False,
+                            "allow_null_values": False,
                             "column_name": "enumerator_id",
                             "column_type": "personal_details",
                         },
                         {
-                            "bulk_editable": False,
+                            "allow_null_values": False,
                             "column_name": "name",
                             "column_type": "personal_details",
                         },
                         {
-                            "bulk_editable": False,
+                            "allow_null_values": False,
                             "column_name": "email",
                             "column_type": "personal_details",
                         },
                         {
-                            "bulk_editable": False,
+                            "allow_null_values": False,
                             "column_name": "mobile_primary",
                             "column_type": "personal_details",
                         },
                         {
-                            "bulk_editable": True,
+                            "allow_null_values": True,
                             "column_name": "language",
                             "column_type": "personal_details",
                         },
                         {
-                            "bulk_editable": False,
+                            "allow_null_values": False,
                             "column_name": "home_address",
                             "column_type": "personal_details",
                         },
                         {
-                            "bulk_editable": False,
+                            "allow_null_values": False,
                             "column_name": "gender",
                             "column_type": "personal_details",
                         },
                         {
-                            "bulk_editable": True,
+                            "allow_null_values": True,
                             "column_name": "prime_geo_level_location",
                             "column_type": "location",
                         },
                         {
-                            "bulk_editable": True,
+                            "allow_null_values": True,
                             "column_name": "Mobile (Secondary)",
                             "column_type": "custom_fields",
                         },
                         {
-                            "bulk_editable": False,
+                            "allow_null_values": False,
                             "column_name": "Age",
                             "column_type": "custom_fields",
                         },
