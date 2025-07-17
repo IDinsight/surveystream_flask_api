@@ -1042,6 +1042,25 @@ def append_locations(validated_query_params, validated_payload):
             ),
             422,
         )
+    except Exception as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "record_errors": {
+                        "summary_by_error_type": [
+                            {
+                                "error_type": "File processing error",
+                                "error_message": str(e),
+                                "error_count": 1,
+                                "row_numbers_with_errors": [],
+                            }
+                        ]
+                    },
+                }
+            ),
+            422,
+        )
 
     # Get the existing locations for the survey
 
@@ -1122,6 +1141,25 @@ def append_locations(validated_query_params, validated_payload):
                 {
                     "success": False,
                     "record_errors": e.args[0],
+                }
+            ),
+            422,
+        )
+    except Exception as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "record_errors": {
+                        "summary_by_error_type": [
+                            {
+                                "error_type": "File processing error",
+                                "error_message": str(e),
+                                "error_count": 1,
+                                "row_numbers_with_errors": [],
+                            }
+                        ]
+                    },
                 }
             ),
             422,

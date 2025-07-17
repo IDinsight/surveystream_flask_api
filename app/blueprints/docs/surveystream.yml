@@ -3687,9 +3687,9 @@ paths:
                         description: >-
                           The field type of the column. Can be one of
                           `personal_details`, `custom_field`, or `location`.
-                      bulk_editable:
+                      allow_null_values:
                         type: boolean
-                        description: Whether the field is bulk editable or not
+                        description: Whether the field allows null values or not
                       column_source:
                         type: string
                         description: >-
@@ -3698,7 +3698,6 @@ paths:
                     required:
                       - column_name
                       - column_type
-                      - bulk_editable
                       - column_source
               required:
                 - form_uid
@@ -3757,9 +3756,9 @@ paths:
                               description: >
                                 The field type of the column. Can be one of
                                 `personal_details`, `custom_field`, or `location`.
-                            bulk_editable:
+                            allow_null_values:
                               type: boolean
-                              description: Whether the field is bulk editable or not.
+                              description: Whether the field allows null values or not.
                             column_source:
                               type: string
                               description: >-
@@ -7382,13 +7381,12 @@ paths:
                         description: >-
                           The field type of the column. Can be one of
                           `basic_details`, `custom_field`, or `location`.
-                      bulk_editable:
+                      allow_null_values:
                         type: boolean
-                        description: Whether the field is bulk editable or not
+                        description: Whether the field allows null values or not
                     required:
                       - column_name
                       - column_type
-                      - bulk_editable
                 filters:
                   type: array
                   description: >-
@@ -7459,9 +7457,9 @@ paths:
                         items:
                           type: object
                           properties:
-                            bulk_editable:
+                            allow_null_values:
                               type: boolean
-                              description: Whether the field is bulk editable or not.
+                              description: Whether the field allows null values or not.
                             column_name:
                               type: string
                               description: The field name of the column.
