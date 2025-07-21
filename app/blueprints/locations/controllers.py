@@ -478,23 +478,28 @@ def upload_locations(validated_query_params, validated_payload):
     try:
         geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
     except InvalidGeoLevelHierarchyError as e:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "record_errors": {
-                        "summary_by_error_type": [
-                            {
-                                "error_type": "Geo level hierarchy error",
-                                "error_message": error_message,
-                                "error_count": 1,
-                                "row_numbers_with_errors": [],
-                            }
-                        ]
-                        for error_message in e.geo_level_hierarchy_errors
-                    },
+                    "error_type": "Geo level hierarchy error",
+                    "error_message": error_message,
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+                for error_message in e.geo_level_hierarchy_errors
+            ],
+            "invalid_records": {
+                "ordered_columns": [],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
 
@@ -503,23 +508,28 @@ def upload_locations(validated_query_params, validated_payload):
             geo_levels, validated_payload.geo_level_mapping.data
         )
     except InvalidGeoLevelMappingError as e:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "record_errors": {
-                        "summary_by_error_type": [
-                            {
-                                "error_type": "Geo level mapping error",
-                                "error_message": error_message,
-                                "error_count": 1,
-                                "row_numbers_with_errors": [],
-                            }
-                            for error_message in e.geo_level_mapping_errors
-                        ]
-                    },
+                    "error_type": "Geo level mapping error",
+                    "error_message": error_message,
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+                for error_message in e.geo_level_mapping_errors
+            ],
+            "invalid_records": {
+                "ordered_columns": [],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
 
@@ -540,60 +550,99 @@ def upload_locations(validated_query_params, validated_payload):
             ).decode("utf-8")
         )
     except binascii.Error:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "record_errors": {
-                        "summary_by_error_type": [
-                            {
-                                "error_type": "File encoding error",
-                                "error_message": "File data has invalid base64 encoding",
-                                "error_count": 1,
-                                "row_numbers_with_errors": [],
-                            }
-                        ]
-                    },
+                    "error_type": "File encoding error",
+                    "error_message": "File data has invalid base64 encoding",
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
     except UnicodeDecodeError:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "record_errors": {
-                        "summary_by_error_type": [
-                            {
-                                "error_type": "File encoding error",
-                                "error_message": "File data has invalid UTF-8 encoding",
-                                "error_count": 1,
-                                "row_numbers_with_errors": [],
-                            }
-                        ]
-                    },
+                    "error_type": "File encoding error",
+                    "error_message": "File data has invalid UTF-8 encoding",
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
     except HeaderRowEmptyError as e:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "record_errors": {
-                        "summary_by_error_type": [
-                            {
-                                "error_type": "Header row error",
-                                "error_message": str(e),
-                                "error_count": 1,
-                                "row_numbers_with_errors": [],
-                            }
-                        ]
-                    },
+                    "error_type": "Header row error",
+                    "error_message": str(e),
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
+            422,
+        )
+    except Exception as e:
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
+                {
+                    "error_type": "File processing error",
+                    "error_message": str(e),
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
+                }
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
 
@@ -986,79 +1035,99 @@ def append_locations(validated_query_params, validated_payload):
             ).decode("utf-8")
         )
     except binascii.Error:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "record_errors": {
-                        "summary_by_error_type": [
-                            {
-                                "error_type": "File encoding error",
-                                "error_message": "File data has invalid base64 encoding",
-                                "error_count": 1,
-                                "row_numbers_with_errors": [],
-                            }
-                        ]
-                    },
+                    "error_type": "File encoding error",
+                    "error_message": "File data has invalid base64 encoding",
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
     except UnicodeDecodeError:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "record_errors": {
-                        "summary_by_error_type": [
-                            {
-                                "error_type": "File encoding error",
-                                "error_message": "File data has invalid UTF-8 encoding",
-                                "error_count": 1,
-                                "row_numbers_with_errors": [],
-                            }
-                        ]
-                    },
+                    "error_type": "File encoding error",
+                    "error_message": "File data has invalid UTF-8 encoding",
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
     except HeaderRowEmptyError as e:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "record_errors": {
-                        "summary_by_error_type": [
-                            {
-                                "error_type": "Header row error",
-                                "error_message": str(e),
-                                "error_count": 1,
-                                "row_numbers_with_errors": [],
-                            }
-                        ]
-                    },
+                    "error_type": "Header row error",
+                    "error_message": str(e),
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
     except Exception as e:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "record_errors": {
-                        "summary_by_error_type": [
-                            {
-                                "error_type": "File processing error",
-                                "error_message": str(e),
-                                "error_count": 1,
-                                "row_numbers_with_errors": [],
-                            }
-                        ]
-                    },
+                    "error_type": "File processing error",
+                    "error_message": str(e),
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
 

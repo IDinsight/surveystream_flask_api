@@ -310,9 +310,22 @@ class LocationsUpload:
         :param ordered_geo_levels: List of geo levels for the survey from the database in descending order based on the location type hierarchy
         :param geo_level_mapping_lookup: Dictionary of geo level column mappings from the request payload keyed by geo level uid
         """
-        record_errors = {"summary_by_error_type": []}
-
+        record_errors = {
+            "summary": {
+                "total_rows": len(self.locations_df),
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
         file_columns = self.locations_df.columns.to_list()
+
+        invalid_records_df = self.locations_df.copy()
+        invalid_records_df["errors"] = ""
 
         # 1. Each mapped column should appear in the csv file exactly once
         for column_name in expected_columns:
@@ -326,6 +339,7 @@ class LocationsUpload:
                         "row_numbers_with_errors": [],
                     }
                 )
+                # No specific row to mark in invalid_records_df for this error
 
         # 2. The file should contain no blank fields
         blank_fields = [
@@ -343,6 +357,15 @@ class LocationsUpload:
                     "row_numbers_with_errors": rows,
                 }
             )
+            # Mark errors in invalid_records_df
+            for col, row in blank_fields:
+                idx = row + 2
+                if idx in invalid_records_df.index:
+                    prev = invalid_records_df.at[idx, "errors"]
+                    msg = f"Blank value in column '{col}'"
+                    invalid_records_df.at[idx, "errors"] = (
+                        prev + "; " if prev else ""
+                    ) + msg
 
         # 3. The file should have no duplicate rows
         duplicates_df = self.locations_df[self.locations_df.duplicated(keep=False)]
@@ -357,6 +380,13 @@ class LocationsUpload:
                     ).to_list(),
                 }
             )
+            # Mark errors in invalid_records_df
+            for idx in duplicates_df.index:
+                prev = invalid_records_df.at[idx, "errors"]
+                msg = "Duplicate row"
+                invalid_records_df.at[idx, "errors"] = (
+                    prev + "; " if prev else ""
+                ) + msg
 
         # 4. Duplicate rows with existing data (for append)
         if existing_location_df is not None:
@@ -377,6 +407,15 @@ class LocationsUpload:
                         "row_numbers_with_errors": rows,
                     }
                 )
+                # Mark errors in invalid_records_df
+                for idx in intersection_df.index:
+                    idx2 = idx + 2
+                    if idx2 in invalid_records_df.index:
+                        prev = invalid_records_df.at[idx2, "errors"]
+                        msg = "Duplicate with existing data"
+                        invalid_records_df.at[idx2, "errors"] = (
+                            prev + "; " if prev else ""
+                        ) + msg
             combined_df = pd.concat([self.locations_df, existing_location_df])
             combined_df.reset_index(inplace=True, drop=True)
         else:
@@ -429,6 +468,14 @@ class LocationsUpload:
                             "row_numbers_with_errors": error_rows,
                         }
                     )
+                    # Mark errors in invalid_records_df
+                    for idx in error_rows:
+                        if idx in invalid_records_df.index:
+                            prev = invalid_records_df.at[idx, "errors"]
+                            msg = "Location assigned to multiple parents"
+                            invalid_records_df.at[idx, "errors"] = (
+                                prev + "; " if prev else ""
+                            ) + msg
 
         # 6. A location (defined by location_id) cannot have multiple location names
         for geo_level in reversed(ordered_geo_levels):
@@ -473,10 +520,39 @@ class LocationsUpload:
                         "row_numbers_with_errors": error_rows,
                     }
                 )
+                # Mark errors in invalid_records_df
+                for idx in error_rows:
+                    if idx in invalid_records_df.index:
+                        prev = invalid_records_df.at[idx, "errors"]
+                        msg = "Location id with multiple names"
+                        invalid_records_df.at[idx, "errors"] = (
+                            prev + "; " if prev else ""
+                        ) + msg
 
+        # Set invalid_records_df and error summary if there are errors
         if len(record_errors["summary_by_error_type"]) > 0:
+            error_indices = set(
+                invalid_records_df[invalid_records_df["errors"] != ""].index
+            )
+            if error_indices:
+                invalids = invalid_records_df.loc[
+                    invalid_records_df.index.isin(error_indices)
+                ]
+            else:
+                invalids = invalid_records_df.iloc[0:0]
+            record_errors["invalid_records"]["records"] = invalids.fillna("").to_dict(
+                orient="records"
+            )
+            record_errors["summary"]["total_correct_rows"] = len(
+                self.locations_df
+            ) - len(invalids)
+            record_errors["summary"]["total_rows_with_errors"] = len(invalids)
             raise InvalidLocationsError(record_errors)
 
+        # If no errors, set empty invalid_records_df and summary
+        record_errors["invalid_records"]["records"] = []
+        record_errors["summary"]["total_correct_rows"] = len(self.locations_df)
+        record_errors["summary"]["total_rows_with_errors"] = 0
         return
 
 

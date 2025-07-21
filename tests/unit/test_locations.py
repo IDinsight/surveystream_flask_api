@@ -1922,6 +1922,12 @@ class TestLocations:
         expected_response = {
             "success": False,
             "record_errors": {
+                "summary": {
+                    "total_rows": 0,
+                    "total_correct_rows": None,
+                    "total_rows_with_errors": None,
+                },
+                "invalid_records": {"ordered_columns": [], "records": None},
                 "summary_by_error_type": [
                     {
                         "error_type": "Geo level mapping error",
@@ -1953,7 +1959,7 @@ class TestLocations:
                         "error_count": 1,
                         "row_numbers_with_errors": [],
                     },
-                ]
+                ],
             },
         }
         checkdiff = jsondiff.diff(expected_response, response.json)
@@ -2010,6 +2016,11 @@ class TestLocations:
         expected_response = {
             "success": False,
             "record_errors": {
+                "summary": {
+                    "total_rows": 13,
+                    "total_correct_rows": 4,
+                    "total_rows_with_errors": 9,
+                },
                 "summary_by_error_type": [
                     {
                         "error_type": "Column mapping error",
@@ -2041,7 +2052,111 @@ class TestLocations:
                         "error_count": "2",
                         "row_numbers_with_errors": [13, 14],
                     },
-                ]
+                ],
+                "invalid_records": {
+                    "ordered_columns": [
+                        "row_number",
+                        "district_id",
+                        "district_name",
+                        "mandal_id",
+                        "mandal_name",
+                        "psu_id",
+                        "psu_name",
+                        "errors",
+                    ],
+                    "records": [
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1101",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "ANKOLI",
+                            "psu_id": "17101102",
+                            "extra_column": "asdf",
+                            "errors": "Location assigned to multiple parents",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1101",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "",
+                            "psu_id": "17101107",
+                            "extra_column": "asdf",
+                            "errors": "Blank value in column 'psu_name'",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "YAPALGUDA",
+                            "psu_id": "17101122",
+                            "extra_column": "asdf",
+                            "errors": "Blank value in column 'mandal_id'",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1101",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "RAMPUR",
+                            "psu_id": "17101147",
+                            "extra_column": "asdf",
+                            "errors": "Duplicate row",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1101",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "RAMPUR",
+                            "psu_id": "17101147",
+                            "extra_column": "asdf",
+                            "errors": "Duplicate row",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1101",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "CHANDA",
+                            "psu_id": "",
+                            "extra_column": "asdf",
+                            "errors": "Blank value in column 'psu_id'",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1102",
+                            "mandal_name": "ADILABAD URBAN",
+                            "psu_name": "ANKOLI",
+                            "psu_id": "17101102",
+                            "extra_column": "asdf",
+                            "errors": "Location assigned to multiple parents",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "TEST DISTRICT 2",
+                            "mandal_id": "1103",
+                            "mandal_name": "TEST DISTRICT 2 URBAN",
+                            "psu_name": "ASDF",
+                            "psu_id": "17101103",
+                            "extra_column": "asdf",
+                            "errors": "Location id with multiple names",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "TEST DISTRICT 3",
+                            "mandal_id": "1103",
+                            "mandal_name": "TEST DISTRICT 2 URBAN",
+                            "psu_name": "ASDFASDF",
+                            "psu_id": "17101104",
+                            "extra_column": "asdf",
+                            "errors": "Location id with multiple names",
+                        },
+                    ],
+                },
             },
         }
         checkdiff = jsondiff.diff(expected_response, response.json)
