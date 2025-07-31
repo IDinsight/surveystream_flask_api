@@ -476,6 +476,7 @@ class TargetsUpload:
         ####################################################################
 
         records_to_write = []
+        self.targets_df = self.targets_df.fillna("")
 
         for row in self.targets_df.drop_duplicates().itertuples():
             target_dict = self.__build_target_dict(

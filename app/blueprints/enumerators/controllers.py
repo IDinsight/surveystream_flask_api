@@ -1327,10 +1327,10 @@ def get_enumerator_column_config(validated_query_params):
         (column for column in config_data if column["column_type"] == "location"),
         None,
     )
+    location_columns = []
 
     if location_column:
         geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
-        location_columns = []
 
         if geo_levels:
             try:

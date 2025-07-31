@@ -648,6 +648,7 @@ class EnumeratorsUpload:
         # Use the list of enumerator records to write to the database
         ####################################################################
 
+        self.enumerators_df = self.enumerators_df.fillna("")
         records_to_write = [
             row for row in self.enumerators_df.drop_duplicates().itertuples()
         ]
