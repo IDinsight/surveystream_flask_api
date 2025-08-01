@@ -310,42 +310,86 @@ class LocationsUpload:
         :param ordered_geo_levels: List of geo levels for the survey from the database in descending order based on the location type hierarchy
         :param geo_level_mapping_lookup: Dictionary of geo level column mappings from the request payload keyed by geo level uid
         """
-
-        file_errors = []
-
-        # Each mapped column should appear in the csv file exactly once
+        record_errors = {
+            "summary": {
+                "total_rows": len(self.locations_df),
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
         file_columns = self.locations_df.columns.to_list()
 
-        for column_name in expected_columns:
-            if file_columns.count(column_name) != 1:
-                file_errors.append(
-                    f"Column name '{column_name}' from the column mapping appears "
-                    f"{file_columns.count(column_name)} times in the uploaded file. It should appear exactly once."
-                )
+        invalid_records_df = self.locations_df.copy()
+        invalid_records_df["errors"] = ""
 
-        # The file should contain no blank fields
+        # 1. Each mapped column should appear in the csv file exactly once
+        for column_name in expected_columns:
+            count = file_columns.count(column_name)
+            if count != 1:
+                record_errors["summary_by_error_type"].append(
+                    {
+                        "error_type": "Column mapping error",
+                        "error_message": f"Column name '{column_name}' from the column mapping appears {count} time(s) in the uploaded file. It should appear exactly once.",
+                        "error_count": "1",
+                        "row_numbers_with_errors": [],
+                    }
+                )
+                # No specific row to mark in invalid_records_df for this error
+
+        # 2. The file should contain no blank fields
         blank_fields = [
-            f"'column': {self.locations_df.columns[j]}, 'row': {i + 2}"
+            (self.locations_df.columns[j], i)
             for i, j in zip(*np.where(pd.isnull(self.locations_df)))
         ]
         if len(blank_fields) > 0:
-            blank_fields_formatted = "\n".join(item for item in blank_fields)
-            file_errors.append(
-                f"The file contains {len(blank_fields)} blank fields. Blank fields are not allowed. "
-                f"Blank fields are found in the following columns and rows:\n{blank_fields_formatted}"
+            columns = set([col for col, _ in blank_fields])
+            rows = sorted(set([int(row) + 2 for _, row in blank_fields]))
+            record_errors["summary_by_error_type"].append(
+                {
+                    "error_type": "Blank field",
+                    "error_message": f"Blank values are not allowed in the following columns: {', '.join(sorted(columns))}. Blank values in these columns were found for the following row(s): {', '.join(str(r) for r in rows)}",
+                    "error_count": str(len(blank_fields)),
+                    "row_numbers_with_errors": rows,
+                }
             )
+            # Mark errors in invalid_records_df
+            for col, row in blank_fields:
+                idx = row + 2
+                if idx in invalid_records_df.index:
+                    prev = invalid_records_df.at[idx, "errors"]
+                    msg = f"Blank value in column '{col}'"
+                    invalid_records_df.at[idx, "errors"] = (
+                        prev + "; " if prev else ""
+                    ) + msg
 
-        # The file should have no duplicate rows
+        # 3. The file should have no duplicate rows
         duplicates_df = self.locations_df[self.locations_df.duplicated(keep=False)]
         if len(duplicates_df) > 0:
-            file_errors.append(
-                f"The file has {len(duplicates_df)} duplicate rows. Duplicate rows are not allowed. "
-                f"The following rows are duplicates:\n{duplicates_df.to_string()}"
+            record_errors["summary_by_error_type"].append(
+                {
+                    "error_type": "Duplicate rows",
+                    "error_message": f"The file has {len(duplicates_df)} duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: {', '.join(str(row_number) for row_number in duplicates_df.index.to_list())}",
+                    "error_count": str(len(duplicates_df)),
+                    "row_numbers_with_errors": duplicates_df.index.astype(
+                        int
+                    ).to_list(),
+                }
             )
+            # Mark errors in invalid_records_df
+            for idx in duplicates_df.index:
+                prev = invalid_records_df.at[idx, "errors"]
+                msg = "Duplicate row"
+                invalid_records_df.at[idx, "errors"] = (
+                    prev + "; " if prev else ""
+                ) + msg
 
+        # 4. Duplicate rows with existing data (for append)
         if existing_location_df is not None:
-            # This is needed to check for duplicate location id's across the existing and uploaded data
-            # Check for duplicate location ids across existing and uploaded data
             intersection_df = pd.merge(
                 self.locations_df,
                 existing_location_df,
@@ -353,29 +397,31 @@ class LocationsUpload:
                 on=expected_columns,
                 suffixes=("_uploaded", "_existing"),
             )
-
             if not intersection_df.empty:
-                duplicate_rows_with_details = [row + 1 for row in intersection_df.index]
-
-                file_errors.append(
-                    f"The uploaded file has some rows that already exist in SurveyStream. "
-                    f"Please remove these rows and upload the file again. "
-                    f"You can also edit the existing data on the screen or use the "
-                    f"fresh upload method if you want to delete the existing data. "
-                    f"The following row number in the uploaded file are duplicates of existing data: {duplicate_rows_with_details}"
+                rows = [int(row) + 2 for row in intersection_df.index]
+                record_errors["summary_by_error_type"].append(
+                    {
+                        "error_type": "Duplicate with existing data",
+                        "error_message": f"The uploaded file has some rows that already exist in SurveyStream. The following row numbers in the uploaded file are duplicates of existing data: {', '.join(str(r) for r in rows)}",
+                        "error_count": str(len(rows)),
+                        "row_numbers_with_errors": rows,
+                    }
                 )
-
-            # Combine the existing and uploaded dataframes for geo level based checks
+                # Mark errors in invalid_records_df
+                for idx in intersection_df.index:
+                    idx2 = idx + 2
+                    if idx2 in invalid_records_df.index:
+                        prev = invalid_records_df.at[idx2, "errors"]
+                        msg = "Duplicate with existing data"
+                        invalid_records_df.at[idx2, "errors"] = (
+                            prev + "; " if prev else ""
+                        ) + msg
             combined_df = pd.concat([self.locations_df, existing_location_df])
             combined_df.reset_index(inplace=True, drop=True)
         else:
             combined_df = self.locations_df
 
-        # A location (defined by location_id) cannot be assigned to multiple parents
-        # Note that this is a check on duplicate location id's
-        # Because of the wide structure of the sheet, a location id can appear multiple times in the same column
-        # This check makes sure that all duplicate instances of a location id are legitimate duplicates
-        # Note that the previous check is also required to catch the case where the lowest level location id is duplicated within the same parent
+        # 5. A location (defined by location_id) cannot be assigned to multiple parents
         for geo_level in reversed(ordered_geo_levels):
             if geo_level.parent_geo_level_uid is not None:
                 geo_level_id_column_name = geo_level_mapping_lookup[
@@ -384,8 +430,6 @@ class LocationsUpload:
                 parent_geo_level_id_column_name = geo_level_mapping_lookup[
                     geo_level.parent_geo_level_uid
                 ]["location_id_column"]
-                # If we deduplicate on the parent location id column and the location id column, the number of rows should be the same as just deduplicating on the location id column
-                # If this check fails we know that the location id column has locations that are mapped to more than one parent
                 if len(
                     combined_df[
                         combined_df.duplicated(
@@ -402,38 +446,45 @@ class LocationsUpload:
                         )
                     ]
                 ):
-
-                    error_str = combined_df[
-                        combined_df.drop_duplicates(
-                            subset=[
-                                parent_geo_level_id_column_name,
-                                geo_level_id_column_name,
-                            ]
-                        )
-                        .duplicated(subset=[geo_level_id_column_name], keep=False)
-                        .reindex(combined_df.index, fill_value=False)
-                    ].to_string()
-
-                    file_errors.append(
-                        f"Location type {geo_level.geo_level_name} has location id's that are mapped to more than "
-                        f"one parent location in column {parent_geo_level_id_column_name}. "
-                        f"A location (defined by the location id column) cannot be assigned to multiple parents. "
-                        f"Make sure to use a unique location id for each location. "
-                        f"The following rows have location id's that are mapped to more than one parent location:\n{error_str}",
+                    error_rows = (
+                        combined_df[
+                            combined_df.drop_duplicates(
+                                subset=[
+                                    parent_geo_level_id_column_name,
+                                    geo_level_id_column_name,
+                                ]
+                            )
+                            .duplicated(subset=[geo_level_id_column_name], keep=False)
+                            .reindex(combined_df.index, fill_value=False)
+                        ]
+                        .index.astype(int)
+                        .to_list()
                     )
+                    record_errors["summary_by_error_type"].append(
+                        {
+                            "error_type": "Location assigned to multiple parents",
+                            "error_message": f"Location type {geo_level.geo_level_name} has location id's that are mapped to more than one parent location in column {parent_geo_level_id_column_name}. The following rows have location id's that are mapped to more than one parent location: {', '.join(str(r) for r in error_rows)}",
+                            "error_count": str(len(error_rows)),
+                            "row_numbers_with_errors": error_rows,
+                        }
+                    )
+                    # Mark errors in invalid_records_df
+                    for idx in error_rows:
+                        if idx in invalid_records_df.index:
+                            prev = invalid_records_df.at[idx, "errors"]
+                            msg = "Location assigned to multiple parents"
+                            invalid_records_df.at[idx, "errors"] = (
+                                prev + "; " if prev else ""
+                            ) + msg
 
-        # A location (defined by location_id) cannot have multiple location names
+        # 6. A location (defined by location_id) cannot have multiple location names
         for geo_level in reversed(ordered_geo_levels):
             geo_level_id_column_name = geo_level_mapping_lookup[
                 geo_level.geo_level_uid
             ]["location_id_column"]
-
             geo_level_name_column_name = geo_level_mapping_lookup[
                 geo_level.geo_level_uid
             ]["location_name_column"]
-
-            # If we deduplicate on the location id column and the location name column, the number of rows should be the same as just deduplicating on the location id column
-            # If this check fails we know that the location id column is being reused for different location names
             if len(
                 combined_df[
                     combined_df.duplicated(
@@ -447,24 +498,61 @@ class LocationsUpload:
                     )
                 ]
             ):
-                error_str = combined_df[
-                    combined_df.drop_duplicates(
-                        subset=[geo_level_id_column_name, geo_level_name_column_name]
-                    )
-                    .duplicated(subset=[geo_level_id_column_name], keep=False)
-                    .reindex(combined_df.index, fill_value=False)
-                ].to_string()
-
-                file_errors.append(
-                    f"Location type {geo_level.geo_level_name} has location id's that have more than one "
-                    f"location name. Make sure to use a unique location name for each location id. "
-                    f"The following rows have location id's that have more than one location name:\n"
-                    f"{error_str}",
+                error_rows = (
+                    combined_df[
+                        combined_df.drop_duplicates(
+                            subset=[
+                                geo_level_id_column_name,
+                                geo_level_name_column_name,
+                            ]
+                        )
+                        .duplicated(subset=[geo_level_id_column_name], keep=False)
+                        .reindex(combined_df.index, fill_value=False)
+                    ]
+                    .index.astype(int)
+                    .to_list()
                 )
+                record_errors["summary_by_error_type"].append(
+                    {
+                        "error_type": "Location id with multiple names",
+                        "error_message": f"Location type {geo_level.geo_level_name} has location id's that have more than one location name. The following rows have location id's that have more than one location name: {', '.join(str(r) for r in error_rows)}",
+                        "error_count": str(len(error_rows)),
+                        "row_numbers_with_errors": error_rows,
+                    }
+                )
+                # Mark errors in invalid_records_df
+                for idx in error_rows:
+                    if idx in invalid_records_df.index:
+                        prev = invalid_records_df.at[idx, "errors"]
+                        msg = "Location id with multiple names"
+                        invalid_records_df.at[idx, "errors"] = (
+                            prev + "; " if prev else ""
+                        ) + msg
 
-        if len(file_errors) > 0:
-            raise InvalidLocationsError(file_errors)
+        # Set invalid_records_df and error summary if there are errors
+        if len(record_errors["summary_by_error_type"]) > 0:
+            error_indices = set(
+                invalid_records_df[invalid_records_df["errors"] != ""].index
+            )
+            if error_indices:
+                invalids = invalid_records_df.loc[
+                    invalid_records_df.index.isin(error_indices)
+                ]
+            else:
+                invalids = invalid_records_df.iloc[0:0]
+            record_errors["invalid_records"]["records"] = invalids.fillna("").to_dict(
+                orient="records"
+            )
+            record_errors["summary"]["total_correct_rows"] = len(
+                self.locations_df
+            ) - len(invalids)
+            record_errors["summary"]["total_rows_with_errors"] = len(invalids)
+            raise InvalidLocationsError(record_errors)
 
+        # If no errors, set empty invalid_records_df and summary
+        record_errors["invalid_records"]["records"] = []
+        record_errors["summary"]["total_correct_rows"] = len(self.locations_df)
+        record_errors["summary"]["total_rows_with_errors"] = 0
         return
 
 

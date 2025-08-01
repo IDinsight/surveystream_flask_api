@@ -152,7 +152,7 @@ class TargetColumnConfig(db.Model):
         ),
         nullable=False,
     )
-    bulk_editable = db.Column(db.Boolean(), nullable=False, default=False)
+    allow_null_values = db.Column(db.Boolean(), nullable=False, server_default="true")
     contains_pii = db.Column(db.Boolean(), nullable=True)
     column_source = db.Column(
         db.String(),

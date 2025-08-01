@@ -708,7 +708,7 @@ def ingest_scto_form_definition(form_uid):
                 "select_one",
                 "select_multiple",
             ]:
-                list_name = questions_dict["type"].strip().split(" ")[1]
+                list_name = questions_dict["type"].strip().split(" ")[-1]
                 list_uid = (
                     SCTOChoiceList.query.filter_by(
                         form_uid=form_uid, list_name=list_name

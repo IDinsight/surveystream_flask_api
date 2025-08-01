@@ -1027,7 +1027,12 @@ def bulk_update_enumerators(validated_payload):
     }
 
     for column in column_config:
-        if column.column_type != "location" and column.bulk_editable is True:
+        if column.column_type != "location" and column.column_name not in (
+            "enumerator_id",
+            "email",
+            "mobile_primary",
+            "name",
+        ):
             bulk_editable_fields[column.column_type].append(column.column_name)
 
     personal_details_patch_keys = []
@@ -1264,23 +1269,13 @@ def update_enumerator_column_config(validated_payload):
     db.session.flush()
 
     for column in payload["column_config"]:
-        if not isinstance(column["bulk_editable"], bool):
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "errors": f"Field 'bulk_editable' must be a boolean",
-                    }
-                ),
-                422,
-            )
 
         db.session.add(
             EnumeratorColumnConfig(
                 form_uid=form_uid,
                 column_name=column["column_name"],
                 column_type=column["column_type"],
-                bulk_editable=column["bulk_editable"],
+                allow_null_values=column["allow_null_values"],
             )
         )
 
@@ -1323,7 +1318,7 @@ def get_enumerator_column_config(validated_query_params):
         {
             "column_name": column.column_name,
             "column_type": column.column_type,
-            "bulk_editable": column.bulk_editable,
+            "allow_null_values": column.allow_null_values,
         }
         for column in column_config
     ]
@@ -1332,10 +1327,10 @@ def get_enumerator_column_config(validated_query_params):
         (column for column in config_data if column["column_type"] == "location"),
         None,
     )
+    location_columns = []
 
     if location_column:
         geo_levels = GeoLevel.query.filter_by(survey_uid=survey_uid).all()
-        location_columns = []
 
         if geo_levels:
             try:

@@ -478,17 +478,28 @@ def upload_locations(validated_query_params, validated_payload):
     try:
         geo_level_hierarchy = GeoLevelHierarchy(geo_levels)
     except InvalidGeoLevelHierarchyError as e:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "errors": {
-                        "geo_level_hierarchy": e.geo_level_hierarchy_errors,
-                        "file": [],
-                        "geo_level_mapping": [],
-                    },
+                    "error_type": "Geo level hierarchy error",
+                    "error_message": error_message,
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+                for error_message in e.geo_level_hierarchy_errors
+            ],
+            "invalid_records": {
+                "ordered_columns": [],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
 
@@ -497,16 +508,28 @@ def upload_locations(validated_query_params, validated_payload):
             geo_levels, validated_payload.geo_level_mapping.data
         )
     except InvalidGeoLevelMappingError as e:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "errors": {
-                        "geo_level_mapping": e.geo_level_mapping_errors,
-                        "file": [],
-                    },
+                    "error_type": "Geo level mapping error",
+                    "error_message": error_message,
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+                for error_message in e.geo_level_mapping_errors
+            ],
+            "invalid_records": {
+                "ordered_columns": [],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
 
@@ -527,42 +550,99 @@ def upload_locations(validated_query_params, validated_payload):
             ).decode("utf-8")
         )
     except binascii.Error:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "errors": {
-                        "file": ["File data has invalid base64 encoding"],
-                        "geo_level_mapping": [],
-                    },
+                    "error_type": "File encoding error",
+                    "error_message": "File data has invalid base64 encoding",
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
     except UnicodeDecodeError:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "errors": {
-                        "file": ["File data has invalid UTF-8 encoding"],
-                        "geo_level_mapping": [],
-                    },
+                    "error_type": "File encoding error",
+                    "error_message": "File data has invalid UTF-8 encoding",
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
     except HeaderRowEmptyError as e:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "errors": {
-                        "file": e.message,
-                        "geo_level_mapping": [],
-                    },
+                    "error_type": "Header row error",
+                    "error_message": str(e),
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
+            422,
+        )
+    except Exception as e:
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
+                {
+                    "error_type": "File processing error",
+                    "error_message": str(e),
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
+                }
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
 
@@ -574,14 +654,12 @@ def upload_locations(validated_query_params, validated_payload):
             column_mapping.geo_level_mapping_lookup,
         )
     except InvalidLocationsError as e:
+
         return (
             jsonify(
                 {
                     "success": False,
-                    "errors": {
-                        "file": e.locations_errors,
-                        "geo_level_mapping": [],
-                    },
+                    "record_errors": e.args[0],
                 }
             ),
             422,
@@ -689,6 +767,9 @@ def upload_locations(validated_query_params, validated_payload):
     try:
         db.session.commit()
     except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+    except Exception as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
@@ -954,42 +1035,99 @@ def append_locations(validated_query_params, validated_payload):
             ).decode("utf-8")
         )
     except binascii.Error:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "errors": {
-                        "file": ["File data has invalid base64 encoding"],
-                        "geo_level_mapping": [],
-                    },
+                    "error_type": "File encoding error",
+                    "error_message": "File data has invalid base64 encoding",
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
     except UnicodeDecodeError:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "errors": {
-                        "file": ["File data has invalid UTF-8 encoding"],
-                        "geo_level_mapping": [],
-                    },
+                    "error_type": "File encoding error",
+                    "error_message": "File data has invalid UTF-8 encoding",
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
     except HeaderRowEmptyError as e:
-        return (
-            jsonify(
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
                 {
-                    "success": False,
-                    "errors": {
-                        "file": e.message,
-                        "geo_level_mapping": [],
-                    },
+                    "error_type": "Header row error",
+                    "error_message": str(e),
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
                 }
-            ),
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
+            422,
+        )
+    except Exception as e:
+        record_errors = {
+            "summary": {
+                "total_rows": 0,
+                "total_correct_rows": None,
+                "total_rows_with_errors": None,
+            },
+            "summary_by_error_type": [
+                {
+                    "error_type": "File processing error",
+                    "error_message": str(e),
+                    "error_count": 1,
+                    "row_numbers_with_errors": [],
+                }
+            ],
+            "invalid_records": {
+                "ordered_columns": ["row_number"] + expected_columns + ["errors"],
+                "records": None,
+            },
+        }
+        return (
+            jsonify({"success": False, "record_errors": record_errors}),
             422,
         )
 
@@ -1071,9 +1209,25 @@ def append_locations(validated_query_params, validated_payload):
             jsonify(
                 {
                     "success": False,
-                    "errors": {
-                        "file": e.locations_errors,
-                        "geo_level_mapping": [],
+                    "record_errors": e.args[0],
+                }
+            ),
+            422,
+        )
+    except Exception as e:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "record_errors": {
+                        "summary_by_error_type": [
+                            {
+                                "error_type": "File processing error",
+                                "error_message": str(e),
+                                "error_count": 1,
+                                "row_numbers_with_errors": [],
+                            }
+                        ]
                     },
                 }
             ),
@@ -1145,6 +1299,9 @@ def append_locations(validated_query_params, validated_payload):
     try:
         db.session.commit()
     except IntegrityError as e:
+        db.session.rollback()
+        return jsonify(message=str(e)), 500
+    except Exception as e:
         db.session.rollback()
         return jsonify(message=str(e)), 500
 
