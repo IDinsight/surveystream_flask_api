@@ -1008,9 +1008,9 @@ def bulk_update_targets(validated_payload):
         "location": [],
         "custom_fields": [],
     }
-
     for column in column_config:
-        if column.bulk_editable:
+        # Skip target_id column as it shouldn't be bulk editable
+        if column.column_name != "target_id":
             bulk_editable_fields[column.column_type].append(column.column_name)
 
     for key in payload.keys():
@@ -1174,16 +1174,6 @@ def update_target_column_config(validated_payload):
     db.session.flush()
 
     for column in payload["column_config"]:
-        if not isinstance(column["bulk_editable"], bool):
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "errors": f"Field 'bulk_editable' must be a boolean",
-                    }
-                ),
-                422,
-            )
         if not isinstance(column["contains_pii"], bool):
             return (
                 jsonify(
@@ -1200,7 +1190,7 @@ def update_target_column_config(validated_payload):
                 form_uid=form_uid,
                 column_name=column["column_name"],
                 column_type=column["column_type"],
-                bulk_editable=column["bulk_editable"],
+                allow_null_values=column["allow_null_values"],
                 contains_pii=column["contains_pii"],
                 column_source=column["column_source"],
             )
@@ -1254,7 +1244,7 @@ def get_target_column_config(validated_query_params):
         {
             "column_name": column.column_name,
             "column_type": column.column_type,
-            "bulk_editable": column.bulk_editable,
+            "allow_null_values": column.allow_null_values,
             "contains_pii": column.contains_pii,
             "column_source": column.column_source,
         }

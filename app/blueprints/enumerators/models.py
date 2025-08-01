@@ -1,10 +1,12 @@
+from sqlalchemy import CheckConstraint
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.orm import backref
+
 from app import db
 from app.blueprints.forms.models import Form
 from app.blueprints.locations.models import Location
-from sqlalchemy import CheckConstraint
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import backref
-from sqlalchemy.ext.mutable import MutableDict
+
 
 class Enumerator(db.Model):
     """
@@ -237,7 +239,7 @@ class EnumeratorColumnConfig(db.Model):
         ),
         nullable=False,
     )
-    bulk_editable = db.Column(db.Boolean(), nullable=False, default=False)
+    allow_null_values = db.Column(db.Boolean(), nullable=False, server_default="true")
 
     __table_args__ = (
         db.PrimaryKeyConstraint("form_uid", "column_name"),

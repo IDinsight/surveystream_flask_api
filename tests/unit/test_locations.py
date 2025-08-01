@@ -1916,16 +1916,54 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
 
         assert response.status_code == 422
-        assert "geo_level_mapping" in response.json["errors"]
-        assert response.json["errors"]["geo_level_mapping"] == [
-            "Each location type defined in the location type hierarchy should appear exactly once in the location type column mapping. Location type 'District' appears 2 times in the location type mapping.",
-            "Each location type defined in the location type hierarchy should appear exactly once in the location type column mapping. Location type 'PSU' appears 0 times in the location type mapping.",
-            "Location type '4' in the location type column mapping is not one of the location types for the survey.",
-            "Column name 'district_id' appears more than once in the location type column mapping. Column names should be unique.",
-            "Column name 'district_name' appears more than once in the location type column mapping. Column names should be unique.",
-        ]
+        expected_response = {
+            "success": False,
+            "record_errors": {
+                "summary": {
+                    "total_rows": 0,
+                    "total_correct_rows": None,
+                    "total_rows_with_errors": None,
+                },
+                "invalid_records": {"ordered_columns": [], "records": None},
+                "summary_by_error_type": [
+                    {
+                        "error_type": "Geo level mapping error",
+                        "error_message": "Each location type defined in the location type hierarchy should appear exactly once in the location type column mapping. Location type 'District' appears 2 times in the location type mapping.",
+                        "error_count": 1,
+                        "row_numbers_with_errors": [],
+                    },
+                    {
+                        "error_type": "Geo level mapping error",
+                        "error_message": "Each location type defined in the location type hierarchy should appear exactly once in the location type column mapping. Location type 'PSU' appears 0 times in the location type mapping.",
+                        "error_count": 1,
+                        "row_numbers_with_errors": [],
+                    },
+                    {
+                        "error_type": "Geo level mapping error",
+                        "error_message": "Location type '4' in the location type column mapping is not one of the location types for the survey.",
+                        "error_count": 1,
+                        "row_numbers_with_errors": [],
+                    },
+                    {
+                        "error_type": "Geo level mapping error",
+                        "error_message": "Column name 'district_id' appears more than once in the location type column mapping. Column names should be unique.",
+                        "error_count": 1,
+                        "row_numbers_with_errors": [],
+                    },
+                    {
+                        "error_type": "Geo level mapping error",
+                        "error_message": "Column name 'district_name' appears more than once in the location type column mapping. Column names should be unique.",
+                        "error_count": 1,
+                        "row_numbers_with_errors": [],
+                    },
+                ],
+            },
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
 
     def test_locations_validations_file_errors(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
@@ -1974,15 +2012,155 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 422
-        assert "file" in response.json["errors"]
-        print(response.json["errors"]["file"])
-        assert response.json["errors"]["file"] == [
-            "Column name 'district_id' from the column mapping appears 2 times in the uploaded file. It should appear exactly once.",
-            "The file contains 3 blank fields. Blank fields are not allowed. Blank fields are found in the following columns and rows:\n'column': psu_name, 'row': 3\n'column': mandal_id, 'row': 5\n'column': psu_id, 'row': 10",
-            "The file has 2 duplicate rows. Duplicate rows are not allowed. The following rows are duplicates:\n           district_id district_name mandal_id     mandal_name psu_name    psu_id district_id extra_column\nrow_number                                                                                                \n8                    1      ADILABAD      1101  ADILABAD RURAL   RAMPUR  17101147           1         asdf\n9                    1      ADILABAD      1101  ADILABAD RURAL   RAMPUR  17101147           1         asdf",
-            "Location type PSU has location id's that are mapped to more than one parent location in column mandal_id. A location (defined by the location id column) cannot be assigned to multiple parents. Make sure to use a unique location id for each location. The following rows have location id's that are mapped to more than one parent location:\n           district_id district_name mandal_id     mandal_name psu_name    psu_id district_id extra_column\nrow_number                                                                                                \n2                    1      ADILABAD      1101  ADILABAD RURAL   ANKOLI  17101102           1         asdf\n12                   1      ADILABAD      1102  ADILABAD URBAN   ANKOLI  17101102           1         asdf",
-            "Location type District has location id's that have more than one location name. Make sure to use a unique location name for each location id. The following rows have location id's that have more than one location name:\n           district_id    district_name mandal_id            mandal_name  psu_name    psu_id district_id extra_column\nrow_number                                                                                                           \n13                   2  TEST DISTRICT 2      1103  TEST DISTRICT 2 URBAN      ASDF  17101103           1         asdf\n14                   2  TEST DISTRICT 3      1103  TEST DISTRICT 2 URBAN  ASDFASDF  17101104           1         asdf",
-        ]
+        print(response.json)
+        expected_response = {
+            "success": False,
+            "record_errors": {
+                "summary": {
+                    "total_rows": 13,
+                    "total_correct_rows": 4,
+                    "total_rows_with_errors": 9,
+                },
+                "summary_by_error_type": [
+                    {
+                        "error_type": "Column mapping error",
+                        "error_message": "Column name 'district_id' from the column mapping appears 2 time(s) in the uploaded file. It should appear exactly once.",
+                        "error_count": "1",
+                        "row_numbers_with_errors": [],
+                    },
+                    {
+                        "error_type": "Blank field",
+                        "error_message": "Blank values are not allowed in the following columns: mandal_id, psu_id, psu_name. Blank values in these columns were found for the following row(s): 3, 5, 10",
+                        "error_count": "3",
+                        "row_numbers_with_errors": [3, 5, 10],
+                    },
+                    {
+                        "error_type": "Duplicate rows",
+                        "error_message": "The file has 2 duplicate row(s). Duplicate rows are not allowed. The following row numbers are duplicates: 8, 9",
+                        "error_count": "2",
+                        "row_numbers_with_errors": [8, 9],
+                    },
+                    {
+                        "error_type": "Location assigned to multiple parents",
+                        "error_message": "Location type PSU has location id's that are mapped to more than one parent location in column mandal_id. The following rows have location id's that are mapped to more than one parent location: 2, 12",
+                        "error_count": "2",
+                        "row_numbers_with_errors": [2, 12],
+                    },
+                    {
+                        "error_type": "Location id with multiple names",
+                        "error_message": "Location type District has location id's that have more than one location name. The following rows have location id's that have more than one location name: 13, 14",
+                        "error_count": "2",
+                        "row_numbers_with_errors": [13, 14],
+                    },
+                ],
+                "invalid_records": {
+                    "ordered_columns": [
+                        "row_number",
+                        "district_id",
+                        "district_name",
+                        "mandal_id",
+                        "mandal_name",
+                        "psu_id",
+                        "psu_name",
+                        "errors",
+                    ],
+                    "records": [
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1101",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "ANKOLI",
+                            "psu_id": "17101102",
+                            "extra_column": "asdf",
+                            "errors": "Location assigned to multiple parents",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1101",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "",
+                            "psu_id": "17101107",
+                            "extra_column": "asdf",
+                            "errors": "Blank value in column 'psu_name'",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "YAPALGUDA",
+                            "psu_id": "17101122",
+                            "extra_column": "asdf",
+                            "errors": "Blank value in column 'mandal_id'",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1101",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "RAMPUR",
+                            "psu_id": "17101147",
+                            "extra_column": "asdf",
+                            "errors": "Duplicate row",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1101",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "RAMPUR",
+                            "psu_id": "17101147",
+                            "extra_column": "asdf",
+                            "errors": "Duplicate row",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1101",
+                            "mandal_name": "ADILABAD RURAL",
+                            "psu_name": "CHANDA",
+                            "psu_id": "",
+                            "extra_column": "asdf",
+                            "errors": "Blank value in column 'psu_id'",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "ADILABAD",
+                            "mandal_id": "1102",
+                            "mandal_name": "ADILABAD URBAN",
+                            "psu_name": "ANKOLI",
+                            "psu_id": "17101102",
+                            "extra_column": "asdf",
+                            "errors": "Location assigned to multiple parents",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "TEST DISTRICT 2",
+                            "mandal_id": "1103",
+                            "mandal_name": "TEST DISTRICT 2 URBAN",
+                            "psu_name": "ASDF",
+                            "psu_id": "17101103",
+                            "extra_column": "asdf",
+                            "errors": "Location id with multiple names",
+                        },
+                        {
+                            "district_id": "1",
+                            "district_name": "TEST DISTRICT 3",
+                            "mandal_id": "1103",
+                            "mandal_name": "TEST DISTRICT 2 URBAN",
+                            "psu_name": "ASDFASDF",
+                            "psu_id": "17101104",
+                            "extra_column": "asdf",
+                            "errors": "Location id with multiple names",
+                        },
+                    ],
+                },
+            },
+        }
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
 
     def test_locations_validations_file_errors_first_row_blank(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
@@ -2032,10 +2210,10 @@ class TestLocations:
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 422
-        assert "file" in response.json["errors"]
-        assert response.json["errors"]["file"] == [
-            "Column names were not found in the file. Make sure the first row of the file contains column names."
-        ]
+        assert (
+            response.json["record_errors"]["summary_by_error_type"][0]["error_message"]
+            == "Column names were not found in the file. Make sure the first row of the file contains column names."
+        )
 
     def test_locations_validations_file_errors_empty_string(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
@@ -2118,11 +2296,12 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 422
-        assert "file" in response.json["errors"]
-        assert response.json["errors"]["file"] == [
-            "File data has invalid base64 encoding"
-        ]
+        assert (
+            response.json["record_errors"]["summary_by_error_type"][0]["error_message"]
+            == "File data has invalid base64 encoding"
+        )
 
     def test_locations_validations_file_errors_invalid_base64_char(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
@@ -2162,11 +2341,13 @@ class TestLocations:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
+
         assert response.status_code == 422
-        assert "file" in response.json["errors"]
-        assert response.json["errors"]["file"] == [
-            "File data has invalid base64 encoding"
-        ]
+        assert (
+            response.json["record_errors"]["summary_by_error_type"][0]["error_message"]
+            == "File data has invalid base64 encoding"
+        )
 
     def test_get_locations_null_result_for_super_admin_user(
         self, client, login_test_user, create_geo_levels_for_locations_file, csrf_token
