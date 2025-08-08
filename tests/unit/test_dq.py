@@ -3676,3 +3676,402 @@ class TestDQ:
 
             checkdiff = jsondiff.diff(expected_response, response.json)
             assert checkdiff == {}
+
+    def test_add_dq_missing_value_check_bulk_question(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to add a DQ missing value check in bulk
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 4,
+            "all_questions": False,
+            "question_name": ["fac_anc_reg_1_trim", "fac_4anc"],
+            "module_name": "test_module",
+            "flag_description": "test_flag",
+            "filters": [
+                {
+                    "filter_group": [
+                        {
+                            "filter_group_id": 1,
+                            "filter_operator": "Is",
+                            "filter_value": "1",
+                            "question_name": "fac_4anc",
+                            "is_repeat_group": False,
+                        },
+                        {
+                            "filter_group_id": 1,
+                            "filter_operator": "Is",
+                            "filter_value": "3",
+                            "question_name": "fac_4hb",
+                            "is_repeat_group": False,
+                        },
+                    ]
+                },
+                {
+                    "filter_group": [
+                        {
+                            "filter_group_id": 2,
+                            "filter_operator": "Greater than",
+                            "filter_value": "0",
+                            "question_name": "fac_sev_anem_treat",
+                            "is_repeat_group": False,
+                        }
+                    ]
+                },
+            ],
+            "active": True,
+            "check_components": {"value": ["Is empty", "is NA"]},
+        }
+
+        response = client.post(
+            "/api/dq/checks_bulk",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 200
+
+            expected_response = {
+                "success": True,
+                "message": "Success",
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+            # Check if the check was added
+            response = client.get(
+                "/api/dq/checks",
+                query_string={"form_uid": 1, "type_id": 4},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert response.status_code == 200
+            print(response.json)
+
+            expected_response = {
+                "success": True,
+                "data": [
+                    {
+                        "dq_check_uid": 1,
+                        "form_uid": 1,
+                        "type_id": 4,
+                        "all_questions": False,
+                        "question_name": "fac_anc_reg_1_trim",
+                        "dq_scto_form_uid": None,
+                        "module_name": "test_module",
+                        "flag_description": "test_flag",
+                        "check_components": {
+                            "value": ["Is empty", "is NA"],
+                            "hard_min": None,
+                            "hard_max": None,
+                            "soft_min": None,
+                            "soft_max": None,
+                            "outlier_metric": None,
+                            "outlier_value": None,
+                            "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
+                        },
+                        "active": True,
+                        "note": None,
+                        "is_repeat_group": False,
+                        "filters": [
+                            {
+                                "filter_group": [
+                                    {
+                                        "filter_group_id": 1,
+                                        "question_name": "fac_4anc",
+                                        "filter_operator": "Is",
+                                        "filter_value": "1",
+                                        "is_repeat_group": False,
+                                    },
+                                    {
+                                        "filter_group_id": 1,
+                                        "question_name": "fac_4hb",
+                                        "filter_operator": "Is",
+                                        "filter_value": "3",
+                                        "is_repeat_group": False,
+                                    },
+                                ]
+                            },
+                            {
+                                "filter_group": [
+                                    {
+                                        "filter_group_id": 2,
+                                        "question_name": "fac_sev_anem_treat",
+                                        "filter_operator": "Greater than",
+                                        "filter_value": "0",
+                                        "is_repeat_group": False,
+                                    }
+                                ]
+                            },
+                        ],
+                    },
+                    {
+                        "dq_check_uid": 2,
+                        "form_uid": 1,
+                        "type_id": 4,
+                        "all_questions": False,
+                        "question_name": "fac_4anc",
+                        "dq_scto_form_uid": None,
+                        "module_name": "test_module",
+                        "flag_description": "test_flag",
+                        "check_components": {
+                            "value": ["Is empty", "is NA"],
+                            "hard_min": None,
+                            "hard_max": None,
+                            "soft_min": None,
+                            "soft_max": None,
+                            "outlier_metric": None,
+                            "outlier_value": None,
+                            "spotcheck_score_name": None,
+                            "gps_type": None,
+                            "threshold": None,
+                            "gps_variable": None,
+                            "grid_id": None,
+                        },
+                        "active": True,
+                        "note": None,
+                        "is_repeat_group": False,
+                        "filters": [
+                            {
+                                "filter_group": [
+                                    {
+                                        "filter_group_id": 1,
+                                        "question_name": "fac_4anc",
+                                        "filter_operator": "Is",
+                                        "filter_value": "1",
+                                        "is_repeat_group": False,
+                                    },
+                                    {
+                                        "filter_group_id": 1,
+                                        "question_name": "fac_4hb",
+                                        "filter_operator": "Is",
+                                        "filter_value": "3",
+                                        "is_repeat_group": False,
+                                    },
+                                ]
+                            },
+                            {
+                                "filter_group": [
+                                    {
+                                        "filter_group_id": 2,
+                                        "question_name": "fac_sev_anem_treat",
+                                        "filter_operator": "Greater than",
+                                        "filter_value": "0",
+                                        "is_repeat_group": False,
+                                    }
+                                ]
+                            },
+                        ],
+                    },
+                ],
+            }
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_add_dq_missing_value_check_bulk_question_not_found(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to add a DQ missing value check in bulk when question is not found
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 4,
+            "all_questions": False,
+            "question_name": ["fac_anc_reg_1_trim", "fac_anc_reg_2_trim"],
+            "module_name": "test_module",
+            "flag_description": "test_flag",
+            "filters": [
+                {
+                    "filter_group": [
+                        {
+                            "filter_group_id": 1,
+                            "filter_operator": "Is",
+                            "filter_value": "1",
+                            "question_name": "fac_4anc",
+                            "is_repeat_group": False,
+                        },
+                        {
+                            "filter_group_id": 1,
+                            "filter_operator": "Is",
+                            "filter_value": "3",
+                            "question_name": "fac_4hb",
+                            "is_repeat_group": False,
+                        },
+                    ]
+                },
+                {
+                    "filter_group": [
+                        {
+                            "filter_group_id": 2,
+                            "filter_operator": "Greater than",
+                            "filter_value": "0",
+                            "question_name": "fac_sev_anem_treat",
+                            "is_repeat_group": False,
+                        }
+                    ]
+                },
+            ],
+            "active": True,
+            "check_components": {"value": ["Is empty", "is NA"]},
+        }
+
+        response = client.post(
+            "/api/dq/checks_bulk",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 404
+
+            expected_response = {
+                "message": "Question name 'fac_anc_reg_2_trim' not found in form definition. Active checks must have a valid question name.",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+            # Check if the check was added
+            response = client.get(
+                "/api/dq/checks",
+                query_string={"form_uid": 1, "type_id": 4},
+                headers={"X-CSRF-Token": csrf_token},
+            )
+            assert response.status_code == 404
+            print(response.json)
+
+            expected_response = {
+                "success": False,
+                "data": None,
+                "message": "DQ checks not found",
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+    def test_add_dq_logic_check_bulk_error(
+        self,
+        client,
+        login_test_user,
+        csrf_token,
+        create_dq_config,
+        load_scto_form_definition,
+        user_permissions,
+        request,
+    ):
+        """
+        Test the endpoint to add a DQ Logic check in bulk
+        """
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        payload = {
+            "form_uid": 1,
+            "type_id": 1,
+            "all_questions": False,
+            "question_name": ["fac_4hb", "fac_anc_reg_1_trim"],
+            "module_name": "test_module",
+            "flag_description": "test_logic_flag",
+            "filters": [],
+            "active": True,
+            "check_components": {
+                "logic_check_questions": [
+                    {"question_name": "fac_4hb", "alias": "A"},
+                    {"question_name": "fac_4anc", "alias": "B"},
+                ],
+                "logic_check_assertions": [
+                    {
+                        "assert_group": [
+                            {
+                                "assertion": "A > B",
+                            },
+                        ]
+                    },
+                ],
+            },
+        }
+
+        response = client.post(
+            "/api/dq/checks_bulk",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+
+        if expected_permission:
+            assert response.status_code == 404
+
+            expected_response = {
+                "message": "For logic checks, question name should contain only one question.",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}
+
+        else:
+            assert response.status_code == 403
+
+            expected_response = {
+                "error": "User does not have the required permission: WRITE Data Quality",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(expected_response, response.json)
+            assert checkdiff == {}

@@ -28,6 +28,7 @@ from .models import (
 )
 from .utils import validate_dq_check
 from .validators import (
+    BulkDQCheckValidator,
     DQChecksQueryParamValidator,
     DQCheckValidator,
     DQConfigQueryParamValidator,
@@ -543,9 +544,9 @@ def get_dq_checks(validated_query_params):
                     not logic_check_question_found and question != check.question_name
                 ):  # Check if the question is not the same as the main question
                     check_dict["active"] = False
-                    check_dict[
-                        "note"
-                    ] = "Logic check question not found in form definition"
+                    check_dict["note"] = (
+                        "Logic check question not found in form definition"
+                    )
 
                 logic_check_questions_list.append(question_dict)
             check_dict["check_components"][
@@ -628,6 +629,126 @@ def get_dq_checks(validated_query_params):
     )
 
     return response, 200
+
+
+@dq_bp.route("/checks_bulk", methods=["POST"])
+@logged_in_active_user_required
+@validate_payload(BulkDQCheckValidator)
+@custom_permissions_required("WRITE Data Quality", "body", "form_uid")
+def add_dq_check_bulk(validated_payload):
+    """
+    Function to add a dq check
+
+    """
+    form_uid = validated_payload.form_uid.data
+    type_id = validated_payload.type_id.data
+
+    try:
+        validate_dq_check(
+            form_uid,
+            type_id,
+            validated_payload.all_questions.data,
+            validated_payload.question_name.data,
+            validated_payload.dq_scto_form_uid.data,
+            validated_payload.check_components.data,
+            validated_payload.filters.data,
+            validated_payload.active.data,
+        )
+    except Exception as e:
+        return jsonify({"message": str(e), "success": False}), 404
+
+    # Delete existing checks for the form and type if all questions is selected
+    if validated_payload.all_questions.data:
+        # Delete all checks for the form and type, this cascades to filters
+        db.session.query(DQCheck).filter(
+            DQCheck.form_uid == form_uid,
+            DQCheck.type_id == validated_payload.type_id.data,
+        ).delete()
+    else:
+        # Delete existing all questions check for the form and type since a question specific check is being added
+        db.session.query(DQCheck).filter(
+            DQCheck.form_uid == form_uid,
+            DQCheck.type_id == validated_payload.type_id.data,
+            DQCheck.all_questions == True,
+        ).delete()
+
+    check_components = validated_payload.check_components.data
+
+    # Remove logic_check_questions and assertions from check_components before adding the check
+    logic_check_questions = check_components.pop("logic_check_questions", None)
+    logic_check_assertions = check_components.pop("logic_check_assertions", None)
+
+    for dq_question_name in validated_payload.question_name.data:
+        dq_check = DQCheck(
+            form_uid=form_uid,
+            type_id=validated_payload.type_id.data,
+            all_questions=validated_payload.all_questions.data,
+            question_name=dq_question_name,
+            dq_scto_form_uid=validated_payload.dq_scto_form_uid.data,
+            module_name=validated_payload.module_name.data,
+            flag_description=validated_payload.flag_description.data,
+            check_components=check_components,
+            active=validated_payload.active.data,
+        )
+
+        try:
+            db.session.add(dq_check)
+            db.session.flush()
+
+            dq_check_uid = dq_check.dq_check_uid
+
+            # Add filters for the check
+            max_filter_group_id = 0
+
+            for filter_group in validated_payload.filters.data:
+                max_filter_group_id += 1
+
+                for filter in filter_group.get("filter_group"):
+                    dq_check_filter = DQCheckFilters(
+                        dq_check_uid=dq_check_uid,
+                        filter_group_id=max_filter_group_id,
+                        question_name=filter["question_name"],
+                        filter_operator=filter["filter_operator"],
+                        filter_value=filter["filter_value"],
+                    )
+                    db.session.add(dq_check_filter)
+            db.session.flush()
+
+            # Add logic check questions and assertions
+            if validated_payload.type_id.data == 1:
+                for question in logic_check_questions:
+                    logic_check_question = DQLogicCheckQuestions(
+                        dq_check_uid=dq_check_uid,
+                        question_name=question["question_name"],
+                        alias=question["alias"],
+                    )
+                    db.session.add(logic_check_question)
+                db.session.flush()
+
+                max_assert_group_id = 0
+                for assert_group in logic_check_assertions:
+                    max_assert_group_id += 1
+
+                    for assertion in assert_group.get("assert_group"):
+                        logic_check_assertion = DQLogicCheckAssertions(
+                            dq_check_uid=dq_check_uid,
+                            assert_group_id=max_assert_group_id,
+                            assertion=assertion["assertion"],
+                        )
+                        db.session.add(logic_check_assertion)
+                db.session.flush()
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"message": str(e), "success": False}), 500
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"message": str(e), "success": False}), 500
+
+    return jsonify({"message": "Success", "success": True}), 200
 
 
 @dq_bp.route("/checks", methods=["POST"])

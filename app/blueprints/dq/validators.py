@@ -1,11 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import (
-    BooleanField,
-    FieldList,
-    FormField,
-    IntegerField,
-    StringField,
-)
+from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired, Optional
 
 from app.blueprints.forms.models import Form
@@ -175,6 +169,23 @@ class DQCheckValidator(FlaskForm):
     type_id = IntegerField(validators=[DataRequired(), validate_check_type])
     all_questions = BooleanField(default=False)
     question_name = StringField()
+    dq_scto_form_uid = IntegerField()
+    module_name = StringField()
+    flag_description = StringField()
+    check_components = FormField(CustomCheckComponentValidator, default={})
+    active = BooleanField(default=True)
+
+    filters = FieldList(FormField(DQCheckFilterGroupValidator), default=[])
+
+
+class BulkDQCheckValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    form_uid = IntegerField(validators=[DataRequired()])
+    type_id = IntegerField(validators=[DataRequired(), validate_check_type])
+    all_questions = BooleanField(default=False)
+    question_name = FieldList(StringField())
     dq_scto_form_uid = IntegerField()
     module_name = StringField()
     flag_description = StringField()
