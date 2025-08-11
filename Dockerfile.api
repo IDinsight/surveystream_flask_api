@@ -9,14 +9,19 @@ ARG NAME
 ARG PORT
 ARG HOME_DIR=/usr/src/${NAME}
 
-RUN apt-get update && apt-get -y install libpq-dev gcc jq wget curl
+RUN apt-get update && apt-get -y install libpq-dev libev-dev libffi-dev build-essential gcc jq wget curl
 
 ADD --chmod=755 https://astral.sh/uv/install.sh /install.sh
 RUN /install.sh && rm /install.sh
 
-ENV DOCKERIZE_VERSION v0.7.0
+ENV DOCKERIZE_VERSION=v0.7.0
 
-RUN wget -O - https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz | tar xzf - -C /usr/local/bin
+ARG TARGETPLATFORM
+RUN if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
+        wget -O - https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-arm64-$DOCKERIZE_VERSION.tar.gz | tar xzf - -C /usr/local/bin; \
+    else \
+        wget -O - https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz | tar xzf - -C /usr/local/bin; \
+    fi
 
 RUN set -ex apt-get autoremove -y --purge wget && rm -rf /var/lib/apt/lists/*
 
@@ -39,8 +44,8 @@ COPY scripts/bootstrap.sh /bootstrap.sh
 
 VOLUME ${HOME_DIR}/app
 
-ENV PORT ${PORT}
-ENV PYTHONPATH "${PYTHONPATH}:${HOME_DIR}"
+ENV PORT=${PORT}
+ENV PYTHONPATH="${PYTHONPATH}:${HOME_DIR}"
 EXPOSE ${PORT}
 
 USER container_user
