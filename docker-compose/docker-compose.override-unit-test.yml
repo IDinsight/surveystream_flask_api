@@ -1,4 +1,3 @@
-version: "2"
 networks:
     # This special network is configured so that the local metadata
     # service can bind to the specific IP address that ECS uses

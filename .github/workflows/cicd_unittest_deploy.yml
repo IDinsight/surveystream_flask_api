@@ -30,7 +30,7 @@ jobs:
           mode: variables
 
       - name: Build the Docker image
-        run: docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
+        run: docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/arm64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -93,7 +93,7 @@ jobs:
           IMAGE_TAG: PreMigration
 
         run: |
-          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/arm64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
           docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -140,7 +140,7 @@ jobs:
           IMAGE_TAG: PostMigration
 
         run: |
-          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/arm64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
           docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -182,7 +182,7 @@ jobs:
           IMAGE_TAG: backend
 
         run: |
-          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/arm64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
           docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -263,7 +263,7 @@ jobs:
           IMAGE_TAG: backend
 
         run: |
-          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/amd64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} . 
+          docker build -f Dockerfile.api --rm --build-arg NAME=${{ env.BACKEND_NAME }} --build-arg PORT=${{ env.BACKEND_PORT }} --platform=linux/arm64 -t ${{ env.BACKEND_NAME }}:${{ env.VERSION }} .
           docker tag ${{ env.BACKEND_NAME }}:${{ env.VERSION }} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
