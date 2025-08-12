@@ -25,6 +25,7 @@ services:
       AWS_REGION: ap-south-1
       ADMIN_ACCOUNT: ${ADMIN_ACCOUNT}
       USE_DB_MIGRATIONS: ${USE_DB_MIGRATIONS}
+      TEST_PATHS: "${TEST_PATHS}"
     volumes:
       - /tmp/coverage:/usr/src/${BACKEND_NAME}/tests/output
     depends_on:
@@ -36,6 +37,7 @@ services:
     command:
       - |
         . /bootstrap.sh
+        echo "Container TEST_PATHS raw: '${TEST_PATHS}'"
         if [ -z "${TEST_PATHS}" ]; then
           TARGETS="tests"
         else
