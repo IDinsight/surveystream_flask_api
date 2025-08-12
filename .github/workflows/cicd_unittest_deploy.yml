@@ -165,6 +165,7 @@ jobs:
 
             echo "TEST_PATHS=$(echo $TEST_PATHS)" >> $GITHUB_ENV
           fi
+          echo "Tests according to file changes: ${TEST_PATHS}"
 
       - name: Run unit tests
         shell: bash
