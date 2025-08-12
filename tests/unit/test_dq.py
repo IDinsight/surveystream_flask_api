@@ -3736,7 +3736,7 @@ class TestDQ:
         }
 
         response = client.post(
-            "/api/dq/checks_bulk",
+            "/api/dq/checks",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -3957,7 +3957,7 @@ class TestDQ:
         }
 
         response = client.post(
-            "/api/dq/checks_bulk",
+            "/api/dq/checks",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
@@ -4047,7 +4047,7 @@ class TestDQ:
         }
 
         response = client.post(
-            "/api/dq/checks_bulk",
+            "/api/dq/checks",
             json=payload,
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
