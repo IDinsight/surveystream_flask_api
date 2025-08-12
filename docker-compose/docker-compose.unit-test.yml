@@ -20,12 +20,11 @@ services:
   api:
     image: ${BACKEND_NAME}:${VERSION}
     environment:
-      - CONFIG_TYPE=app.config.UnitTestConfig
-      - PYTHONUNBUFFERED=1
-      - AWS_REGION=ap-south-1
-      - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
-      - USE_DB_MIGRATIONS=${USE_DB_MIGRATIONS}
-      - TEST_PATHS=${TEST_PATHS}
+      CONFIG_TYPE: app.config.UnitTestConfig
+      PYTHONUNBUFFERED: "1"
+      AWS_REGION: ap-south-1
+      ADMIN_ACCOUNT: ${ADMIN_ACCOUNT}
+      USE_DB_MIGRATIONS: ${USE_DB_MIGRATIONS}
     volumes:
       - /tmp/coverage:/usr/src/${BACKEND_NAME}/tests/output
     depends_on:

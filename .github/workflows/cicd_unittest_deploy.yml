@@ -139,7 +139,6 @@ jobs:
         run: |
           if [ "${{ needs.files-changed.outputs.common }}" = 'true' ]; then
             TEST_PATHS=""
-            echo "TEST_PATHS=" >> $GITHUB_ENV
           else
             TEST_PATHS=''
             [ "${{ needs.files-changed.outputs.assignments }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_assignments.py"
@@ -163,15 +162,24 @@ jobs:
             [ "${{ needs.files-changed.outputs.targets }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_targets.py"
             [ "${{ needs.files-changed.outputs.timezones }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_timezones.py"
             [ "${{ needs.files-changed.outputs.user_management }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_user_management.py"
-
-            echo "TEST_PATHS=$(echo $TEST_PATHS)" >> $GITHUB_ENV
           fi
+          # Trim leading/trailing whitespace
+          TEST_PATHS="${TEST_PATHS## }"
+          TEST_PATHS="${TEST_PATHS%% }"
+          echo "Selected TEST_PATHS: '$TEST_PATHS'"
+          # Persist for subsequent steps (preserve spaces)
+          {
+            echo "TEST_PATHS<<__EOF__"
+            echo "$TEST_PATHS"
+            echo "__EOF__"
+          } >> "$GITHUB_ENV"
           echo "Tests according to file changes: ${TEST_PATHS}"
 
       - name: Run unit tests
         shell: bash
         run: |
-          docker compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
+          echo "Workflow TEST_PATHS: '${TEST_PATHS}'"
+          docker compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm -e TEST_PATHS api ;
 
       - name: Send coverage report to Coveralls
         uses: coverallsapp/github-action@v2
