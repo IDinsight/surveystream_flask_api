@@ -38,8 +38,9 @@ services:
       - |
         . /bootstrap.sh
         if [ -n "${TEST_PATHS}" ]; then
-          echo "Running targeted tests: ${TEST_PATHS}"
-          coverage run -m pytest ${TEST_PATHS} -vv
+          TARGETS=$(echo "${TEST_PATHS}" | sed 's#tests/unit/#tests/#g')
+          echo "Running targeted tests: ${TARGETS}"
+          coverage run -m pytest ${TARGETS} -vv
         else
           echo "Running full test suite"
           coverage run -m pytest tests -vv
