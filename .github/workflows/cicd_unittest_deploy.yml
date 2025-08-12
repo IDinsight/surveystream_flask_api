@@ -13,8 +13,96 @@ on:
       - "*"
 
 jobs:
+  files-changed:
+    name: Detect what files changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    # Map a step output to a job output
+    outputs:
+      common: ${{ steps.changes.outputs.common }}
+      assignments: ${{ steps.changes.outputs.assignments }}
+      auth: ${{ steps.changes.outputs.auth }}
+      docs: ${{ steps.changes.outputs.docs }}
+      dq: ${{ steps.changes.outputs.dq }}
+      emails: ${{ steps.changes.outputs.emails }}
+      enumerators: ${{ steps.changes.outputs.enumerators }}
+      forms: ${{ steps.changes.outputs.forms }}
+      healthcheck: ${{ steps.changes.outputs.healthcheck }}
+      locations: ${{ steps.changes.outputs.locations }}
+      mapping: ${{ steps.changes.outputs.mapping }}
+      media_files: ${{ steps.changes.outputs.media_files }}
+      module_questionnaire: ${{ steps.changes.outputs.module_questionnaire }}
+      module_selection: ${{ steps.changes.outputs.module_selection }}
+      notifications: ${{ steps.changes.outputs.notifications }}
+      profile: ${{ steps.changes.outputs.profile }}
+      roles: ${{ steps.changes.outputs.roles }}
+      surveys: ${{ steps.changes.outputs.surveys }}
+      target_status_mapping: ${{ steps.changes.outputs.target_status_mapping }}
+      targets: ${{ steps.changes.outputs.targets }}
+      timezones: ${{ steps.changes.outputs.timezones }}
+      user_management: ${{ steps.changes.outputs.user_management }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for file changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          token: ${{ github.token }}
+          filters: |
+            # Tag changes to shared app utilities as common
+            common:
+              - 'app/utils/**'
+
+            # One filter per blueprint folder under app/blueprints
+            assignments:
+              - 'app/blueprints/assignments/**'
+            auth:
+              - 'app/blueprints/auth/**'
+            docs:
+              - 'app/blueprints/docs/**'
+            dq:
+              - 'app/blueprints/dq/**'
+            emails:
+              - 'app/blueprints/emails/**'
+            enumerators:
+              - 'app/blueprints/enumerators/**'
+            forms:
+              - 'app/blueprints/forms/**'
+            healthcheck:
+              - 'app/blueprints/healthcheck/**'
+            locations:
+              - 'app/blueprints/locations/**'
+            mapping:
+              - 'app/blueprints/mapping/**'
+            media_files:
+              - 'app/blueprints/media_files/**'
+            module_questionnaire:
+              - 'app/blueprints/module_questionnaire/**'
+            module_selection:
+              - 'app/blueprints/module_selection/**'
+            notifications:
+              - 'app/blueprints/notifications/**'
+            profile:
+              - 'app/blueprints/profile/**'
+            roles:
+              - 'app/blueprints/roles/**'
+            surveys:
+              - 'app/blueprints/surveys/**'
+            target_status_mapping:
+              - 'app/blueprints/target_status_mapping/**'
+            targets:
+              - 'app/blueprints/targets/**'
+            timezones:
+              - 'app/blueprints/timezones/**'
+            user_management:
+              - 'app/blueprints/user_management/**'
+
   UnitTest:
     runs-on: ubuntu-latest
+    needs: files-changed
 
     permissions:
       id-token: write
@@ -47,8 +135,47 @@ jobs:
       - name: Check DB Migration
         run: docker compose -f docker-compose/docker-compose.db-check.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
 
+      - name: Select test files based on changes
+        run: |
+          if [ "${{ needs.files-changed.outputs.common }}" = 'true' ]; then
+            echo "TEST_PATHS=''" >> $GITHUB_ENV
+          else
+            TEST_PATHS=''
+            [ "${{ needs.files-changed.outputs.assignments }}" = 'true' ] && [ -d tests/unit/assignments ] && TEST_PATHS="$TEST_PATHS tests/unit/assignments"
+            [ "${{ needs.files-changed.outputs.auth }}" = 'true' ] && [ -d tests/unit/auth ] && TEST_PATHS="$TEST_PATHS tests/unit/auth"
+            [ "${{ needs.files-changed.outputs.docs }}" = 'true' ] && [ -d tests/unit/docs ] && TEST_PATHS="$TEST_PATHS tests/unit/docs"
+            [ "${{ needs.files-changed.outputs.dq }}" = 'true' ] && [ -d tests/unit/dq ] && TEST_PATHS="$TEST_PATHS tests/unit/dq"
+            [ "${{ needs.files-changed.outputs.emails }}" = 'true' ] && [ -d tests/unit/emails ] && TEST_PATHS="$TEST_PATHS tests/unit/emails"
+            [ "${{ needs.files-changed.outputs.enumerators }}" = 'true' ] && [ -d tests/unit/enumerators ] && TEST_PATHS="$TEST_PATHS tests/unit/enumerators"
+            [ "${{ needs.files-changed.outputs.forms }}" = 'true' ] && [ -d tests/unit/forms ] && TEST_PATHS="$TEST_PATHS tests/unit/forms"
+            [ "${{ needs.files-changed.outputs.healthcheck }}" = 'true' ] && [ -d tests/unit/healthcheck ] && TEST_PATHS="$TEST_PATHS tests/unit/healthcheck"
+            [ "${{ needs.files-changed.outputs.locations }}" = 'true' ] && [ -d tests/unit/locations ] && TEST_PATHS="$TEST_PATHS tests/unit/locations"
+            [ "${{ needs.files-changed.outputs.mapping }}" = 'true' ] && [ -d tests/unit/mapping ] && TEST_PATHS="$TEST_PATHS tests/unit/mapping"
+            [ "${{ needs.files-changed.outputs.media_files }}" = 'true' ] && [ -d tests/unit/media_files ] && TEST_PATHS="$TEST_PATHS tests/unit/media_files"
+            [ "${{ needs.files-changed.outputs.module_questionnaire }}" = 'true' ] && [ -d tests/unit/module_questionnaire ] && TEST_PATHS="$TEST_PATHS tests/unit/module_questionnaire"
+            [ "${{ needs.files-changed.outputs.module_selection }}" = 'true' ] && [ -d tests/unit/module_selection ] && TEST_PATHS="$TEST_PATHS tests/unit/module_selection"
+            [ "${{ needs.files-changed.outputs.notifications }}" = 'true' ] && [ -d tests/unit/notifications ] && TEST_PATHS="$TEST_PATHS tests/unit/notifications"
+            [ "${{ needs.files-changed.outputs.profile }}" = 'true' ] && [ -d tests/unit/profile ] && TEST_PATHS="$TEST_PATHS tests/unit/profile"
+            [ "${{ needs.files-changed.outputs.roles }}" = 'true' ] && [ -d tests/unit/roles ] && TEST_PATHS="$TEST_PATHS tests/unit/roles"
+            [ "${{ needs.files-changed.outputs.surveys }}" = 'true' ] && [ -d tests/unit/surveys ] && TEST_PATHS="$TEST_PATHS tests/unit/surveys"
+            [ "${{ needs.files-changed.outputs.target_status_mapping }}" = 'true' ] && [ -d tests/unit/target_status_mapping ] && TEST_PATHS="$TEST_PATHS tests/unit/target_status_mapping"
+            [ "${{ needs.files-changed.outputs.targets }}" = 'true' ] && [ -d tests/unit/targets ] && TEST_PATHS="$TEST_PATHS tests/unit/targets"
+            [ "${{ needs.files-changed.outputs.timezones }}" = 'true' ] && [ -d tests/unit/timezones ] && TEST_PATHS="$TEST_PATHS tests/unit/timezones"
+            [ "${{ needs.files-changed.outputs.user_management }}" = 'true' ] && [ -d tests/unit/user_management ] && TEST_PATHS="$TEST_PATHS tests/unit/user_management"
+
+            echo "TEST_PATHS=$(echo $TEST_PATHS)" >> $GITHUB_ENV
+          fi
+
       - name: Run unit tests
-        run: docker compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
+        shell: bash
+        run: |
+          if [ -n "${TEST_PATHS}" ]; then
+            echo "Running selected tests: ${TEST_PATHS}"
+            docker compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api pytest -q ${TEST_PATHS}
+          else
+            echo "No targeted tests selected (or common changed). Running full test suite."
+            docker compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
+          fi
 
       - name: Send coverage report to Coveralls
         uses: coverallsapp/github-action@v2
