@@ -138,30 +138,31 @@ jobs:
       - name: Select test files based on changes
         run: |
           if [ "${{ needs.files-changed.outputs.common }}" = 'true' ]; then
-            echo "TEST_PATHS=''" >> $GITHUB_ENV
+            TEST_PATHS=""
+            echo "TEST_PATHS=" >> $GITHUB_ENV
           else
             TEST_PATHS=''
-            [ "${{ needs.files-changed.outputs.assignments }}" = 'true' ] && [ -d tests/unit/assignments ] && TEST_PATHS="$TEST_PATHS tests/unit/assignments"
-            [ "${{ needs.files-changed.outputs.auth }}" = 'true' ] && [ -d tests/unit/auth ] && TEST_PATHS="$TEST_PATHS tests/unit/auth"
-            [ "${{ needs.files-changed.outputs.docs }}" = 'true' ] && [ -d tests/unit/docs ] && TEST_PATHS="$TEST_PATHS tests/unit/docs"
-            [ "${{ needs.files-changed.outputs.dq }}" = 'true' ] && [ -d tests/unit/dq ] && TEST_PATHS="$TEST_PATHS tests/unit/dq"
-            [ "${{ needs.files-changed.outputs.emails }}" = 'true' ] && [ -d tests/unit/emails ] && TEST_PATHS="$TEST_PATHS tests/unit/emails"
-            [ "${{ needs.files-changed.outputs.enumerators }}" = 'true' ] && [ -d tests/unit/enumerators ] && TEST_PATHS="$TEST_PATHS tests/unit/enumerators"
-            [ "${{ needs.files-changed.outputs.forms }}" = 'true' ] && [ -d tests/unit/forms ] && TEST_PATHS="$TEST_PATHS tests/unit/forms"
-            [ "${{ needs.files-changed.outputs.healthcheck }}" = 'true' ] && [ -d tests/unit/healthcheck ] && TEST_PATHS="$TEST_PATHS tests/unit/healthcheck"
-            [ "${{ needs.files-changed.outputs.locations }}" = 'true' ] && [ -d tests/unit/locations ] && TEST_PATHS="$TEST_PATHS tests/unit/locations"
-            [ "${{ needs.files-changed.outputs.mapping }}" = 'true' ] && [ -d tests/unit/mapping ] && TEST_PATHS="$TEST_PATHS tests/unit/mapping"
-            [ "${{ needs.files-changed.outputs.media_files }}" = 'true' ] && [ -d tests/unit/media_files ] && TEST_PATHS="$TEST_PATHS tests/unit/media_files"
-            [ "${{ needs.files-changed.outputs.module_questionnaire }}" = 'true' ] && [ -d tests/unit/module_questionnaire ] && TEST_PATHS="$TEST_PATHS tests/unit/module_questionnaire"
-            [ "${{ needs.files-changed.outputs.module_selection }}" = 'true' ] && [ -d tests/unit/module_selection ] && TEST_PATHS="$TEST_PATHS tests/unit/module_selection"
-            [ "${{ needs.files-changed.outputs.notifications }}" = 'true' ] && [ -d tests/unit/notifications ] && TEST_PATHS="$TEST_PATHS tests/unit/notifications"
-            [ "${{ needs.files-changed.outputs.profile }}" = 'true' ] && [ -d tests/unit/profile ] && TEST_PATHS="$TEST_PATHS tests/unit/profile"
-            [ "${{ needs.files-changed.outputs.roles }}" = 'true' ] && [ -d tests/unit/roles ] && TEST_PATHS="$TEST_PATHS tests/unit/roles"
-            [ "${{ needs.files-changed.outputs.surveys }}" = 'true' ] && [ -d tests/unit/surveys ] && TEST_PATHS="$TEST_PATHS tests/unit/surveys"
-            [ "${{ needs.files-changed.outputs.target_status_mapping }}" = 'true' ] && [ -d tests/unit/target_status_mapping ] && TEST_PATHS="$TEST_PATHS tests/unit/target_status_mapping"
-            [ "${{ needs.files-changed.outputs.targets }}" = 'true' ] && [ -d tests/unit/targets ] && TEST_PATHS="$TEST_PATHS tests/unit/targets"
-            [ "${{ needs.files-changed.outputs.timezones }}" = 'true' ] && [ -d tests/unit/timezones ] && TEST_PATHS="$TEST_PATHS tests/unit/timezones"
-            [ "${{ needs.files-changed.outputs.user_management }}" = 'true' ] && [ -d tests/unit/user_management ] && TEST_PATHS="$TEST_PATHS tests/unit/user_management"
+            [ "${{ needs.files-changed.outputs.assignments }}" = 'true' ] && [ -f tests/unit/test_assignments.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_assignments.py"
+            [ "${{ needs.files-changed.outputs.auth }}" = 'true' ] && [ -f tests/unit/test_auth.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_auth.py"
+            [ "${{ needs.files-changed.outputs.docs }}" = 'true' ] && [ -f tests/unit/test_docs.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_docs.py"
+            [ "${{ needs.files-changed.outputs.dq }}" = 'true' ] && [ -f tests/unit/test_dq.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_dq.py"
+            [ "${{ needs.files-changed.outputs.emails }}" = 'true' ] && [ -f tests/unit/test_emails.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_emails.py"
+            [ "${{ needs.files-changed.outputs.enumerators }}" = 'true' ] && [ -f tests/unit/test_enumerators.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_enumerators.py"
+            [ "${{ needs.files-changed.outputs.forms }}" = 'true' ] && [ -f tests/unit/test_forms.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_forms.py"
+            [ "${{ needs.files-changed.outputs.healthcheck }}" = 'true' ] && [ -f tests/unit/test_healthcheck.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_healthcheck.py"
+            [ "${{ needs.files-changed.outputs.locations }}" = 'true' ] && [ -f tests/unit/test_locations.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_locations.py"
+            [ "${{ needs.files-changed.outputs.mapping }}" = 'true' ] && [ -f tests/unit/test_mapping.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_mapping.py"
+            [ "${{ needs.files-changed.outputs.media_files }}" = 'true' ] && [ -f tests/unit/test_media_files.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_media_files.py"
+            [ "${{ needs.files-changed.outputs.module_questionnaire }}" = 'true' ] && [ -f tests/unit/test_module_questionnaire.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_module_questionnaire.py"
+            [ "${{ needs.files-changed.outputs.module_selection }}" = 'true' ] && [ -f tests/unit/test_module_selection.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_module_selection.py"
+            [ "${{ needs.files-changed.outputs.notifications }}" = 'true' ] && [ -f tests/unit/test_notifications.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_notifications.py"
+            [ "${{ needs.files-changed.outputs.profile }}" = 'true' ] && [ -f tests/unit/test_profile.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_profile.py"
+            [ "${{ needs.files-changed.outputs.roles }}" = 'true' ] && [ -f tests/unit/test_roles.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_roles.py"
+            [ "${{ needs.files-changed.outputs.surveys }}" = 'true' ] && [ -f tests/unit/test_surveys.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_surveys.py"
+            [ "${{ needs.files-changed.outputs.target_status_mapping }}" = 'true' ] && [ -f tests/unit/test_target_status_mapping.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_target_status_mapping.py"
+            [ "${{ needs.files-changed.outputs.targets }}" = 'true' ] && [ -f tests/unit/test_targets.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_targets.py"
+            [ "${{ needs.files-changed.outputs.timezones }}" = 'true' ] && [ -f tests/unit/test_timezones.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_timezones.py"
+            [ "${{ needs.files-changed.outputs.user_management }}" = 'true' ] && [ -f tests/unit/test_user_management.py ] && TEST_PATHS="$TEST_PATHS tests/unit/test_user_management.py"
 
             echo "TEST_PATHS=$(echo $TEST_PATHS)" >> $GITHUB_ENV
           fi
