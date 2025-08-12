@@ -25,7 +25,6 @@ services:
       - AWS_REGION=ap-south-1
       - ADMIN_ACCOUNT=${ADMIN_ACCOUNT}
       - USE_DB_MIGRATIONS=${USE_DB_MIGRATIONS}
-      - TEST_PATHS=${TEST_PATHS}
     volumes:
       - /tmp/coverage:/usr/src/${BACKEND_NAME}/tests/output
     depends_on:
@@ -37,12 +36,5 @@ services:
     command:
       - |
         . /bootstrap.sh
-        if [ -n "${TEST_PATHS}" ]; then
-          TARGETS=$(echo "${TEST_PATHS}" | sed 's#tests/unit/#tests/#g')
-          echo "Running targeted tests: ${TARGETS}"
-          coverage run -m pytest ${TARGETS} -vv
-        else
-          echo "Running full test suite"
-          coverage run -m pytest tests -vv
-        fi
+        coverage run -m pytest tests -vv
         coverage lcov --include="/usr/src/${BACKEND_NAME}/app/*" -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
