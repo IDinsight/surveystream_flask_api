@@ -25,7 +25,6 @@ services:
       AWS_REGION: ap-south-1
       ADMIN_ACCOUNT: ${ADMIN_ACCOUNT}
       USE_DB_MIGRATIONS: ${USE_DB_MIGRATIONS}
-      TEST_PATHS: "${TEST_PATHS}"
     volumes:
       - /tmp/coverage:/usr/src/${BACKEND_NAME}/tests/output
     depends_on:
@@ -36,13 +35,8 @@ services:
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
-        . /bootstrap.sh
-        echo "Container TEST_PATHS raw: '${TEST_PATHS}'"
-        if [ -z "${TEST_PATHS}" ]; then
-          TARGETS="tests"
-        else
-          TARGETS="${TEST_PATHS}"
-        fi
-        echo "Running pytest on: ${TARGETS}"
-        coverage run -m pytest ${TARGETS} -vv
-        coverage lcov --include="/usr/src/${BACKEND_NAME}/app/*" -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
+          . /bootstrap.sh
+          echo "Container TEST_PATHS raw: '$$TEST_PATHS'"
+          echo "Running pytest on: $${TEST_PATHS:-tests}"
+          coverage run -m pytest $${TEST_PATHS:-tests} -vv
+          coverage lcov --include="/usr/src/${BACKEND_NAME}/app/*" -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
