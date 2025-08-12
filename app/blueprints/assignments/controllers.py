@@ -253,81 +253,55 @@ def view_assignments(validated_query_params):
             )
             .filter(Target.form_uid == form_uid)
         )
+    # Pre-fetch all data in a single query and use list comprehension for better performance
+    query_results = assignments_query.all()
 
-    # Note that we use gettatr() here because we are joining in models that may not have a joined row for a given target, so the row's object corresponding to that model will be None
-    response = jsonify(
+    # Prepare the response data more efficiently using a list comprehension
+    response_data = [
         {
-            "success": True,
-            "data": [
-                {
-                    **target.to_dict(),
-                    **{
-                        "assigned_enumerator_uid": getattr(
-                            enumerator, "enumerator_uid", None
-                        ),
-                        "assigned_enumerator_id": getattr(
-                            enumerator, "enumerator_id", None
-                        ),
-                        "assigned_enumerator_name": getattr(enumerator, "name", None),
-                        "assigned_enumerator_home_address": getattr(
-                            enumerator, "home_address", None
-                        ),
-                        "assigned_enumerator_language": getattr(
-                            enumerator, "language", None
-                        ),
-                        "assigned_enumerator_gender": getattr(
-                            enumerator, "gender", None
-                        ),
-                        "assigned_enumerator_email": getattr(enumerator, "email", None),
-                        "assigned_enumerator_mobile_primary": getattr(
-                            enumerator, "mobile_primary", None
-                        ),
-                        "assigned_enumerator_custom_fields": getattr(
-                            enumerator, "custom_fields", None
-                        ),
-                    },
-                    **{
-                        "completed_flag": getattr(
-                            target_status, "completed_flag", None
-                        ),
-                        "refusal_flag": getattr(target_status, "refusal_flag", None),
-                        "num_attempts": getattr(target_status, "num_attempts", 0),
-                        "last_attempt_survey_status": getattr(
-                            target_status, "last_attempt_survey_status", None
-                        ),
-                        "last_attempt_survey_status_label": getattr(
-                            target_status,
-                            "last_attempt_survey_status_label",
-                            "Not Attempted",
-                        ),
-                        "final_survey_status": getattr(
-                            target_status, "final_survey_status", None
-                        ),
-                        "final_survey_status_label": getattr(
-                            target_status,
-                            "final_survey_status_label",
-                            "Not Attempted",
-                        ),
-                        "target_assignable": getattr(
-                            target_status,
-                            "target_assignable",
-                            True,  # If the target_status is None, the target is new and hence, assignable
-                        ),
-                        "webapp_tag_color": getattr(
-                            target_status, "webapp_tag_color", None
-                        ),
-                        "revisit_sections": getattr(
-                            target_status, "revisit_sections", None
-                        ),
-                        "scto_fields": getattr(target_status, "scto_fields", None),
-                    },
-                    "target_locations": target_locations,
-                    "supervisors": supervisors,
-                }
-                for target, target_status, enumerator, target_locations, supervisors in assignments_query.all()
-            ],
+            **target.to_dict(),
+            # Enumerator fields - grouped together for better readability and performance
+            "assigned_enumerator_uid": getattr(enumerator, "enumerator_uid", None),
+            "assigned_enumerator_id": getattr(enumerator, "enumerator_id", None),
+            "assigned_enumerator_name": getattr(enumerator, "name", None),
+            "assigned_enumerator_home_address": getattr(
+                enumerator, "home_address", None
+            ),
+            "assigned_enumerator_language": getattr(enumerator, "language", None),
+            "assigned_enumerator_gender": getattr(enumerator, "gender", None),
+            "assigned_enumerator_email": getattr(enumerator, "email", None),
+            "assigned_enumerator_mobile_primary": getattr(
+                enumerator, "mobile_primary", None
+            ),
+            "assigned_enumerator_custom_fields": getattr(
+                enumerator, "custom_fields", None
+            ),
+            # Target status fields - using direct attribute access where possible
+            "completed_flag": getattr(target_status, "completed_flag", None),
+            "refusal_flag": getattr(target_status, "refusal_flag", None),
+            "num_attempts": getattr(target_status, "num_attempts", 0),
+            "last_attempt_survey_status": getattr(
+                target_status, "last_attempt_survey_status", None
+            ),
+            "last_attempt_survey_status_label": getattr(
+                target_status, "last_attempt_survey_status_label", "Not Attempted"
+            ),
+            "final_survey_status": getattr(target_status, "final_survey_status", None),
+            "final_survey_status_label": getattr(
+                target_status, "final_survey_status_label", "Not Attempted"
+            ),
+            "target_assignable": getattr(target_status, "target_assignable", True),
+            "webapp_tag_color": getattr(target_status, "webapp_tag_color", None),
+            "revisit_sections": getattr(target_status, "revisit_sections", None),
+            "scto_fields": getattr(target_status, "scto_fields", None),
+            # Location and supervisor data
+            "target_locations": target_locations,
+            "supervisors": supervisors,
         }
-    )
+        for target, target_status, enumerator, target_locations, supervisors in query_results
+    ]
+
+    response = jsonify({"success": True, "data": response_data})
 
     return response, 200
 
@@ -729,9 +703,7 @@ def update_assignments(validated_payload):
                 for mapping in target_mappings
             ]
             if len(target_mappings) > 0
-            else [
-                (0, 0)
-            ]  # If there are no mappings, we still need to return a row with 0 values
+            else [(0, 0)]
         )
     ).subquery()
     surveyor_mappings_query = select(
@@ -745,9 +717,7 @@ def update_assignments(validated_payload):
                 for mapping in surveyor_mappings
             ]
             if len(surveyor_mappings) > 0
-            else [
-                (0, 0)
-            ]  # If there are no mappings, we still need to return a row with 0 values
+            else [(0, 0)]
         )
     ).subquery()
 
@@ -771,101 +741,122 @@ def update_assignments(validated_payload):
     unassignable_target_uids = []
     not_mapped_target_uids = []
     incorrect_mapping_target_uids = []
+    # Validation loop
+    enumerator_id_list = [
+        assignment["enumerator_uid"]
+        for assignment in assignments
+        if assignment["enumerator_uid"] is not None
+    ]
+    target_id_list = [
+        assignment["target_uid"]
+        for assignment in assignments
+        if assignment["target_uid"] is not None
+    ]
 
-    for assignment in assignments:
-        if assignment["enumerator_uid"] is not None:
-            enumerator_result = (
-                db.session.query(Enumerator, SurveyorForm)
-                .join(
-                    SurveyorForm,
-                    Enumerator.enumerator_uid == SurveyorForm.enumerator_uid,
-                )
-                .filter(
-                    Enumerator.enumerator_uid == assignment["enumerator_uid"],
-                    SurveyorForm.form_uid == form_uid,
-                )
-                .first()
+    # Query all enumerators and targets once outside the loop
+    enumerator_result = {
+        enumerator.enumerator_uid: (enumerator, surveyor_form)
+        for enumerator, surveyor_form in (
+            db.session.query(Enumerator, SurveyorForm)
+            .join(
+                SurveyorForm,
+                Enumerator.enumerator_uid == SurveyorForm.enumerator_uid,
             )
-            if enumerator_result is None:
-                not_found_enumerator_uids.append(assignment["enumerator_uid"])
-            elif enumerator_result[1].status == "Dropout":
-                dropout_enumerator_uids.append(assignment["enumerator_uid"])
+            .filter(
+                Enumerator.enumerator_uid.in_(enumerator_id_list),
+                SurveyorForm.form_uid == form_uid,
+            )
+            .all()
+        )
+    }
 
-        target_result = (
+    target_result = {
+        target.target_uid: (target, target_status)
+        for target, target_status in (
             db.session.query(Target, TargetStatus)
             .outerjoin(TargetStatus, Target.target_uid == TargetStatus.target_uid)
             .filter(
-                Target.target_uid == assignment["target_uid"],
+                Target.target_uid.in_(target_id_list),
                 Target.form_uid == form_uid,
             )
-            .first()
-        )
-        if target_result is None:
-            not_found_target_uids.append(assignment["target_uid"])
-        elif (
-            len(target_result) == 2
-            and target_result[1] is not None
-            and getattr(target_result[1], "target_assignable", True) is not True
-        ):
-            unassignable_target_uids.append(assignment["target_uid"])
-
-        target_supervisor_uid = (
-            db.session.query(target_mappings_query.c.supervisor_uid)
-            .filter(target_mappings_query.c.target_uid == assignment["target_uid"])
-            .first()
-        )
-        if target_supervisor_uid is not None:
-            # Check if current user is eligible to assign the target
-            supervisors = (
-                db.session.query(
-                    child_users_with_supervisors_query.c.user_uid,
-                    child_users_with_supervisors_query.c.supervisors,
-                )
-                .filter(
-                    child_users_with_supervisors_query.c.user_uid
-                    == target_supervisor_uid.supervisor_uid
-                )
-                .first()
-            )
-
-            if supervisors is None:
-                not_mapped_target_uids.append(assignment["target_uid"])
-
-            if validate_mapping:
-                if assignment["enumerator_uid"] is not None:
-                    # Check if the target and enumerator are mapped to the same supervisor
-                    enumerator_supervisor_uid = (
-                        db.session.query(surveyor_mappings_query.c.supervisor_uid)
-                        .filter(
-                            surveyor_mappings_query.c.enumerator_uid
-                            == assignment["enumerator_uid"]
-                        )
-                        .first()
-                    )
-
-                    if (
-                        target_supervisor_uid is None
-                        or enumerator_supervisor_uid is None
-                    ):
-                        incorrect_mapping_target_uids.append(assignment["target_uid"])
-                    elif (
-                        target_supervisor_uid.supervisor_uid
-                        != enumerator_supervisor_uid.supervisor_uid
-                    ):
-                        incorrect_mapping_target_uids.append(assignment["target_uid"])
-
-    if len(dropout_enumerator_uids) > 0:
-        enumerator_ids = (
-            db.session.query(Enumerator.enumerator_id)
-            .filter(Enumerator.enumerator_uid.in_(dropout_enumerator_uids))
             .all()
         )
+    }
+
+    # Get target and enumerator mappings
+    target_supervisor_mappings = {
+        row.target_uid: row.supervisor_uid
+        for row in db.session.query(
+            target_mappings_query.c.target_uid, target_mappings_query.c.supervisor_uid
+        )
+        .filter(target_mappings_query.c.target_uid.in_(target_id_list))
+        .all()
+    }
+
+    if validate_mapping:
+        enumerator_supervisor_mappings = {
+            row.enumerator_uid: row.supervisor_uid
+            for row in db.session.query(
+                surveyor_mappings_query.c.enumerator_uid,
+                surveyor_mappings_query.c.supervisor_uid,
+            )
+            .filter(surveyor_mappings_query.c.enumerator_uid.in_(enumerator_id_list))
+            .all()
+        }
+
+    # Get eligible supervisors
+    eligible_supervisors = {
+        row.user_uid: row.supervisors
+        for row in db.session.query(
+            child_users_with_supervisors_query.c.user_uid,
+            child_users_with_supervisors_query.c.supervisors,
+        ).all()
+    }
+
+    for idx, assignment in enumerate(assignments):
+        if assignment["enumerator_uid"] is not None:
+            assigned_enumerator = enumerator_result.get(assignment["enumerator_uid"])
+
+            if assigned_enumerator is None:
+                not_found_enumerator_uids.append(assignment["enumerator_uid"])
+            elif assigned_enumerator[1].status == "Dropout":
+                dropout_enumerator_uids.append(assignment["enumerator_uid"])
+
+        target = target_result.get(assignment["target_uid"])
+        if target is None:
+            not_found_target_uids.append(assignment["target_uid"])
+        else:
+            target_status = target[1]
+            if target_status and not getattr(target_status, "target_assignable", True):
+                unassignable_target_uids.append(assignment["target_uid"])
+
+        # Check target mapping
+        target_supervisor_uid = target_supervisor_mappings.get(assignment["target_uid"])
+        if target_supervisor_uid is not None:
+            if target_supervisor_uid not in eligible_supervisors:
+                not_mapped_target_uids.append(assignment["target_uid"])
+
+            if validate_mapping and assignment["enumerator_uid"] is not None:
+                enumerator_supervisor_uid = enumerator_supervisor_mappings.get(
+                    assignment["enumerator_uid"]
+                )
+                if target_supervisor_uid != enumerator_supervisor_uid:
+                    incorrect_mapping_target_uids.append(assignment["target_uid"])
+
+    # Error handling
+    if dropout_enumerator_uids:
+        enumerator_ids = [
+            str(row.enumerator_id)
+            for row in db.session.query(Enumerator.enumerator_id)
+            .filter(Enumerator.enumerator_uid.in_(dropout_enumerator_uids))
+            .all()
+        ]
         return (
             jsonify(
                 {
                     "success": False,
                     "errors": {
-                        "message": f"The following enumerator ID's have status 'Dropout' and are ineligible for assignment: {', '.join(str(enumerator_id.enumerator_id) for enumerator_id in enumerator_ids)}",
+                        "message": f"The following enumerator ID's have status 'Dropout' and are ineligible for assignment: {', '.join(enumerator_ids)}",
                         "dropout_enumerator_uids": dropout_enumerator_uids,
                     },
                 }
@@ -873,18 +864,19 @@ def update_assignments(validated_payload):
             422,
         )
 
-    if len(unassignable_target_uids) > 0:
-        target_ids = (
-            db.session.query(Target.target_id)
+    if unassignable_target_uids:
+        target_ids = [
+            str(row.target_id)
+            for row in db.session.query(Target.target_id)
             .filter(Target.target_uid.in_(unassignable_target_uids))
             .all()
-        )
+        ]
         return (
             jsonify(
                 {
                     "success": False,
                     "errors": {
-                        "message": f"The following target ID's are not assignable for this form (most likely because they are complete): {', '.join(str(target_id.target_id) for target_id in target_ids)}",
+                        "message": f"The following target ID's are not assignable for this form (most likely because they are complete): {', '.join(target_ids)}",
                         "unassignable_target_uids": unassignable_target_uids,
                     },
                 }
@@ -892,13 +884,13 @@ def update_assignments(validated_payload):
             422,
         )
 
-    if len(not_found_enumerator_uids) > 0:
+    if not_found_enumerator_uids:
         return (
             jsonify(
                 {
                     "success": False,
                     "errors": {
-                        "message": f"Some of the enumerator ID's provided were not found for this form. Kindly refresh and try again.",
+                        "message": "Some of the enumerator ID's provided were not found for this form. Kindly refresh and try again.",
                         "not_found_enumerator_uids": not_found_enumerator_uids,
                     },
                 }
@@ -906,13 +898,13 @@ def update_assignments(validated_payload):
             404,
         )
 
-    if len(not_found_target_uids) > 0:
+    if not_found_target_uids:
         return (
             jsonify(
                 {
                     "success": False,
                     "errors": {
-                        "message": f"Some of the target ID's provided were not found for this form. Kindly refresh and try again.",
+                        "message": "Some of the target ID's provided were not found for this form. Kindly refresh and try again.",
                         "not_found_target_uids": not_found_target_uids,
                     },
                 }
@@ -920,18 +912,19 @@ def update_assignments(validated_payload):
             404,
         )
 
-    if len(not_mapped_target_uids) > 0:
-        target_ids = (
-            db.session.query(Target.target_id)
+    if not_mapped_target_uids:
+        target_ids = [
+            str(row.target_id)
+            for row in db.session.query(Target.target_id)
             .filter(Target.target_uid.in_(not_mapped_target_uids))
             .all()
-        )
+        ]
         return (
             jsonify(
                 {
                     "success": False,
                     "errors": {
-                        "message": f"The following target ID's are not assignable by the current user: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Kindly refresh and try again.",
+                        "message": f"The following target ID's are not assignable by the current user: {', '.join(target_ids)}. Kindly refresh and try again.",
                         "not_mapped_target_uids": not_mapped_target_uids,
                     },
                 }
@@ -939,84 +932,94 @@ def update_assignments(validated_payload):
             422,
         )
 
-    if validate_mapping:
-        if len(incorrect_mapping_target_uids) > 0:
-            target_ids = (
-                db.session.query(Target.target_id)
-                .filter(Target.target_uid.in_(incorrect_mapping_target_uids))
-                .all()
-            )
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "errors": {
-                            "message": f"The following target ID's are assigned to enumerators mapped to a different supervisor: {', '.join(str(target_id.target_id) for target_id in target_ids)}. Please ensure that the target and assigned enumerator are mapped to the same supervisor.",
-                            "incorrect_mapping_target_uids": incorrect_mapping_target_uids,
-                        },
-                    }
-                ),
-                422,
-            )
+    if validate_mapping and incorrect_mapping_target_uids:
+        target_ids = [
+            str(row.target_id)
+            for row in db.session.query(Target.target_id)
+            .filter(Target.target_uid.in_(incorrect_mapping_target_uids))
+            .all()
+        ]
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "errors": {
+                        "message": f"The following target ID's are assigned to enumerators mapped to a different supervisor: {', '.join(target_ids)}. Please ensure that the target and assigned enumerator are mapped to the same supervisor.",
+                        "incorrect_mapping_target_uids": incorrect_mapping_target_uids,
+                    },
+                }
+            ),
+            422,
+        )
 
+    # Assignment processing
     re_assignments_count = 0
     new_assignments_count = 0
     no_changes_count = 0
 
-    for assignment in assignments:
-        # query reassignments
-        assignment_res = (
-            db.session.query(SurveyorAssignment)
-            .filter(
-                SurveyorAssignment.target_uid == assignment["target_uid"],
-            )
-            .first()
+    # Build lookup of existing assignments first
+    existing_assignments = {
+        assignment.target_uid: assignment.enumerator_uid
+        for assignment in db.session.query(SurveyorAssignment)
+        .filter(
+            SurveyorAssignment.target_uid.in_([a["target_uid"] for a in assignments])
         )
+        .all()
+    }
 
-        if assignment_res is None:
-            # update new_assignments - no record was found for the target
-            new_assignments_count += 1
-        elif assignment_res.enumerator_uid == assignment["enumerator_uid"]:
-            # update no_changes - the enumerator_uid has not changed for the target found
-            no_changes_count += 1
-        else:
-            # update re_assignment - the enumerator_uid has changed
-            re_assignments_count += 1
+    # Prepare bulk insert/update data
+    bulk_upsert_data = []
+    targets_to_delete = []
 
-        if assignment["enumerator_uid"] is not None:
-            # do upsert
-            statement = (
-                pg_insert(SurveyorAssignment)
-                .values(
-                    target_uid=assignment["target_uid"],
-                    enumerator_uid=assignment["enumerator_uid"],
-                    user_uid=current_user.user_uid,
-                )
-                .on_conflict_do_update(
-                    constraint="pk_surveyor_assignments",
-                    set_={
-                        "enumerator_uid": assignment["enumerator_uid"],
+    # Process assignments using lookup table
+    for idx, assignment in enumerate(assignments):
+        target_uid = assignment["target_uid"]
+        new_enumerator_uid = assignment["enumerator_uid"]
+
+        if target_uid not in existing_assignments:
+            if new_enumerator_uid is not None:
+                new_assignments_count += 1
+                bulk_upsert_data.append(
+                    {
+                        "target_uid": target_uid,
+                        "enumerator_uid": new_enumerator_uid,
                         "user_uid": current_user.user_uid,
-                    },
+                    }
                 )
-            )
-
-            db.session.execute(statement)
         else:
-            db.session.query(SurveyorAssignment).filter(
-                SurveyorAssignment.target_uid == assignment["target_uid"]
-            ).update(
-                {
-                    SurveyorAssignment.user_uid: current_user.user_uid,
-                    SurveyorAssignment.to_delete: 1,
-                },
-                synchronize_session=False,
-            )
+            existing_enumerator = existing_assignments[target_uid]
+            if new_enumerator_uid is None:
+                targets_to_delete.append(target_uid)
+            elif existing_enumerator == new_enumerator_uid:
+                no_changes_count += 1
+            else:
+                re_assignments_count += 1
+                bulk_upsert_data.append(
+                    {
+                        "target_uid": target_uid,
+                        "enumerator_uid": new_enumerator_uid,
+                        "user_uid": current_user.user_uid,
+                    }
+                )
 
-            db.session.query(SurveyorAssignment).filter(
-                SurveyorAssignment.target_uid == assignment["target_uid"]
-            ).delete()
+    # Perform bulk upsert
+    if bulk_upsert_data:
+        insert_stmt = pg_insert(SurveyorAssignment.__table__)
+        upsert_stmt = insert_stmt.values(bulk_upsert_data)
+        upsert_do_update_stmt = upsert_stmt.on_conflict_do_update(
+            constraint="pk_surveyor_assignments",
+            set_={
+                "enumerator_uid": insert_stmt.excluded.enumerator_uid,
+                "user_uid": current_user.user_uid,
+            },
+        )
+        db.session.execute(upsert_do_update_stmt)
 
+    # Perform bulk delete
+    if targets_to_delete:
+        db.session.query(SurveyorAssignment).filter(
+            SurveyorAssignment.target_uid.in_(targets_to_delete)
+        ).delete(synchronize_session=False)
     response_data = {
         "re_assignments_count": re_assignments_count,
         "new_assignments_count": new_assignments_count,
@@ -1024,9 +1027,7 @@ def update_assignments(validated_payload):
         "assignments_count": len(assignments),
     }
 
-    # Get the next assignment email schedule and add it to the response
     email_schedule = get_next_assignment_email_schedule(form_uid)
-
     if email_schedule:
         response_data["email_schedule"] = email_schedule
 

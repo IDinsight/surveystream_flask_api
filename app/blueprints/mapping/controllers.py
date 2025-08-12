@@ -506,82 +506,85 @@ def get_target_mapping(validated_query_params):
             200,
         )
     else:
+        # Pre-fetch all mappings into a lookup dictionary for O(1) access
+        mapping_dict = {m["target_uid"]: m["supervisor_uid"] for m in mappings}
+
+        # Pre-fetch all supervisors into a lookup dictionary
+        supervisor_dict = {}
+        for sup in supervisors_data:
+            criteria = sup.supervisor_mapping_criteria_values["criteria"]
+            supervisor_dict[(sup.user_uid, json.dumps(criteria, sort_keys=True))] = sup
+
+        # Pre-fetch all locations in a single query if Location mapping exists
+        location_dict = {}
+        if "Location" in target_mapping.mapping_criteria:
+            locations = (
+                db.session.query(
+                    Location.location_uid, Location.location_id, Location.location_name
+                )
+                .filter(Location.survey_uid == target_mapping.survey_uid)
+                .all()
+            )
+            location_dict = {loc.location_uid: loc for loc in locations}
+
         data = []
         for target in targets_query.all():
-            target_uid = target.target_uid
+            supervisor_uid = mapping_dict.get(target.target_uid)
 
-            mapping_found = False
-            for mapping in mappings:
-                if target_uid == mapping["target_uid"]:
-                    supervisor_uid = mapping["supervisor_uid"]
-                    mapping_found = True
-                    break
-
-            if mapping_found:
-                for supervisor in supervisors_data:
-                    if (supervisor.user_uid == supervisor_uid) and (
-                        supervisor.supervisor_mapping_criteria_values["criteria"]
-                        == target.mapped_to_values
-                    ):
-                        break
-
-                data.append(
-                    {
-                        "target_uid": target.target_uid,
-                        "target_id": target.target_id,
-                        "gender": target.gender,
-                        "language": target.language,
-                        "location_id": target.location_id,
-                        "location_name": target.location_name,
-                        "target_mapping_criteria_values": target.target_mapping_criteria_values,
-                        "supervisor_uid": supervisor_uid,
-                        "supervisor_email": supervisor.email,
-                        "supervisor_name": supervisor.full_name,
-                        "supervisor_mapping_criteria_values": supervisor.supervisor_mapping_criteria_values,
-                    }
+            if supervisor_uid:
+                # Find matching supervisor using dictionary lookup
+                sup_key = (
+                    supervisor_uid,
+                    json.dumps(target.mapped_to_values, sort_keys=True),
                 )
-            else:
-                if "Location" in target_mapping.mapping_criteria:
-                    # Find the location ID and Name for the target's mapped to values
-                    location = (
-                        db.session.query(Location.location_id, Location.location_name)
-                        .filter(
-                            Location.location_uid
-                            == target.mapped_to_values["Location"],
-                            Location.survey_uid == target_mapping.survey_uid,
-                        )
-                        .first()
+                supervisor = supervisor_dict.get(sup_key)
+
+                if supervisor:
+                    data.append(
+                        {
+                            "target_uid": target.target_uid,
+                            "target_id": target.target_id,
+                            "gender": target.gender,
+                            "language": target.language,
+                            "location_id": target.location_id,
+                            "location_name": target.location_name,
+                            "target_mapping_criteria_values": target.target_mapping_criteria_values,
+                            "supervisor_uid": supervisor_uid,
+                            "supervisor_email": supervisor.email,
+                            "supervisor_name": supervisor.full_name,
+                            "supervisor_mapping_criteria_values": supervisor.supervisor_mapping_criteria_values,
+                        }
                     )
+                    continue
 
-                data.append(
-                    {
-                        "target_uid": target.target_uid,
-                        "target_id": target.target_id,
-                        "gender": target.gender,
-                        "language": target.language,
-                        "location_id": target.location_id,
-                        "location_name": target.location_name,
-                        "target_mapping_criteria_values": target.target_mapping_criteria_values,
-                        "supervisor_uid": None,
-                        "supervisor_email": None,
-                        "supervisor_name": None,
-                        "supervisor_mapping_criteria_values": {
-                            "criteria": target.mapped_to_values,
-                            "other": (
-                                {
-                                    "location_id": (
-                                        location.location_id if location else None
-                                    ),
-                                    "location_name": (
-                                        location.location_name if location else None
-                                    ),
-                                }
-                                if "Location" in target_mapping.mapping_criteria
-                                else {}
-                            ),
-                        },
+            # Handle unmapped targets
+            location_info = {}
+            if "Location" in target_mapping.mapping_criteria:
+                loc = location_dict.get(target.mapped_to_values.get("Location"))
+                if loc:
+                    location_info = {
+                        "location_id": loc.location_id,
+                        "location_name": loc.location_name,
                     }
-                )
+
+            data.append(
+                {
+                    "target_uid": target.target_uid,
+                    "target_id": target.target_id,
+                    "gender": target.gender,
+                    "language": target.language,
+                    "location_id": target.location_id,
+                    "location_name": target.location_name,
+                    "target_mapping_criteria_values": target.target_mapping_criteria_values,
+                    "supervisor_uid": None,
+                    "supervisor_email": None,
+                    "supervisor_name": None,
+                    "supervisor_mapping_criteria_values": {
+                        "criteria": target.mapped_to_values,
+                        "other": location_info,
+                    },
+                }
+            )
 
         return jsonify({"success": True, "data": data}), 200
 
