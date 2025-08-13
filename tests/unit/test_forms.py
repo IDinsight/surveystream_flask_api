@@ -5,6 +5,7 @@ from utils import (
     load_reference_data,
     load_scto_questions,
     login_user,
+    set_target_assignable_status,
     update_logged_in_user_roles,
 )
 
