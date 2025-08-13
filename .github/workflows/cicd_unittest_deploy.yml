@@ -22,26 +22,10 @@ jobs:
     outputs:
       common: ${{ steps.changes.outputs.common }}
       assignments: ${{ steps.changes.outputs.assignments }}
-      auth: ${{ steps.changes.outputs.auth }}
       docs: ${{ steps.changes.outputs.docs }}
       dq: ${{ steps.changes.outputs.dq }}
-      emails: ${{ steps.changes.outputs.emails }}
-      enumerators: ${{ steps.changes.outputs.enumerators }}
-      forms: ${{ steps.changes.outputs.forms }}
-      healthcheck: ${{ steps.changes.outputs.healthcheck }}
-      locations: ${{ steps.changes.outputs.locations }}
-      mapping: ${{ steps.changes.outputs.mapping }}
       media_files: ${{ steps.changes.outputs.media_files }}
-      module_questionnaire: ${{ steps.changes.outputs.module_questionnaire }}
-      module_selection: ${{ steps.changes.outputs.module_selection }}
-      notifications: ${{ steps.changes.outputs.notifications }}
-      profile: ${{ steps.changes.outputs.profile }}
-      roles: ${{ steps.changes.outputs.roles }}
-      surveys: ${{ steps.changes.outputs.surveys }}
-      target_status_mapping: ${{ steps.changes.outputs.target_status_mapping }}
-      targets: ${{ steps.changes.outputs.targets }}
       timezones: ${{ steps.changes.outputs.timezones }}
-      user_management: ${{ steps.changes.outputs.user_management }}
 
     steps:
       - uses: actions/checkout@v4
@@ -52,54 +36,36 @@ jobs:
         with:
           token: ${{ github.token }}
           filters: |
-            # Tag changes to shared app utilities as common
+            # Common changes that require all tests to run
             common:
               - 'app/utils/**'
-
-            # One filter per blueprint folder under app/blueprints
+              - 'app/blueprints/forms/**'
+              - 'app/blueprints/module_questionnaire/**'
+              - 'app/blueprints/module_selection/**'
+              - 'app/blueprints/notifications/**'
+              - 'app/blueprints/auth/**'
+              - 'app/blueprints/healthcheck/**'
+              - 'app/blueprints/profile/**'
+              - 'app/blueprints/surveys/**'
+              - 'app/blueprints/user_management/**'
+              - 'app/blueprints/roles/**'
+            # Grouped module wise changes
             assignments:
               - 'app/blueprints/assignments/**'
-            auth:
-              - 'app/blueprints/auth/**'
+              - 'app/blueprints/enumerators/**'
+              - 'app/blueprints/locations/**'
+              - 'app/blueprints/mapping/**'
+              - 'app/blueprints/emails/**'
+              - 'app/blueprints/target_status_mapping/**'
+              - 'app/blueprints/targets/**'
             docs:
               - 'app/blueprints/docs/**'
             dq:
               - 'app/blueprints/dq/**'
-            emails:
-              - 'app/blueprints/emails/**'
-            enumerators:
-              - 'app/blueprints/enumerators/**'
-            forms:
-              - 'app/blueprints/forms/**'
-            healthcheck:
-              - 'app/blueprints/healthcheck/**'
-            locations:
-              - 'app/blueprints/locations/**'
-            mapping:
-              - 'app/blueprints/mapping/**'
             media_files:
               - 'app/blueprints/media_files/**'
-            module_questionnaire:
-              - 'app/blueprints/module_questionnaire/**'
-            module_selection:
-              - 'app/blueprints/module_selection/**'
-            notifications:
-              - 'app/blueprints/notifications/**'
-            profile:
-              - 'app/blueprints/profile/**'
-            roles:
-              - 'app/blueprints/roles/**'
-            surveys:
-              - 'app/blueprints/surveys/**'
-            target_status_mapping:
-              - 'app/blueprints/target_status_mapping/**'
-            targets:
-              - 'app/blueprints/targets/**'
             timezones:
               - 'app/blueprints/timezones/**'
-            user_management:
-              - 'app/blueprints/user_management/**'
-
   UnitTest:
     runs-on: ubuntu-latest
     needs: files-changed
@@ -138,30 +104,14 @@ jobs:
       - name: Select test files based on changes
         run: |
           if [ "${{ needs.files-changed.outputs.common }}" = 'true' ]; then
-            TEST_PATHS=""
+            TEST_PATHS="tests"
           else
             TEST_PATHS=''
-            [ "${{ needs.files-changed.outputs.assignments }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_assignments.py"
-            [ "${{ needs.files-changed.outputs.auth }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_auth.py"
+            [ "${{ needs.files-changed.outputs.assignments }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_assignments.py tests/test_enumerators.py tests/test_locations.py tests/test_mapping.py tests/test_emails.py tests/test_target_status_mapping.py tests/test_targets.py"
             [ "${{ needs.files-changed.outputs.docs }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_docs.py"
             [ "${{ needs.files-changed.outputs.dq }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_dq.py"
-            [ "${{ needs.files-changed.outputs.emails }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_emails.py"
-            [ "${{ needs.files-changed.outputs.enumerators }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_enumerators.py"
-            [ "${{ needs.files-changed.outputs.forms }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_forms.py"
-            [ "${{ needs.files-changed.outputs.healthcheck }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_healthcheck.py"
-            [ "${{ needs.files-changed.outputs.locations }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_locations.py"
-            [ "${{ needs.files-changed.outputs.mapping }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_mapping.py"
             [ "${{ needs.files-changed.outputs.media_files }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_media_files.py"
-            [ "${{ needs.files-changed.outputs.module_questionnaire }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_module_questionnaire.py"
-            [ "${{ needs.files-changed.outputs.module_selection }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_module_selection.py"
-            [ "${{ needs.files-changed.outputs.notifications }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_notifications.py"
-            [ "${{ needs.files-changed.outputs.profile }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_profile.py"
-            [ "${{ needs.files-changed.outputs.roles }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_roles.py"
-            [ "${{ needs.files-changed.outputs.surveys }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_surveys.py"
-            [ "${{ needs.files-changed.outputs.target_status_mapping }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_target_status_mapping.py"
-            [ "${{ needs.files-changed.outputs.targets }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_targets.py"
             [ "${{ needs.files-changed.outputs.timezones }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_timezones.py"
-            [ "${{ needs.files-changed.outputs.user_management }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_user_management.py"
           fi
           # Trim leading/trailing whitespace
           TEST_PATHS="${TEST_PATHS## }"
@@ -169,11 +119,11 @@ jobs:
           echo "Selected TEST_PATHS: '$TEST_PATHS'"
           # Persist for subsequent steps (preserve spaces)
           {
-            echo "TEST_PATHS<<__EOF__"
-            echo "$TEST_PATHS"
-            echo "__EOF__"
-          } >> "$GITHUB_ENV"
-          echo "Tests according to file changes: ${TEST_PATHS}"
+          echo "TEST_PATHS<<__EOF__"
+          echo "$TEST_PATHS"
+          echo "__EOF__"
+            } >> "$GITHUB_ENV"
+            echo "Tests according to file changes: ${TEST_PATHS}"
 
       - name: Run unit tests
         shell: bash
