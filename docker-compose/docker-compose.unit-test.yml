@@ -35,6 +35,7 @@ services:
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
-        . /bootstrap.sh
-        coverage run -m pytest tests -vv
-        coverage lcov --include="/usr/src/${BACKEND_NAME}/app/*" -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
+          . /bootstrap.sh
+          echo "Running pytest on: $${TEST_PATHS:-tests}"
+          coverage run -m pytest $${TEST_PATHS:-tests} -vv
+          coverage lcov --include="/usr/src/${BACKEND_NAME}/app/*" -o /usr/src/${BACKEND_NAME}/tests/output/coverage.lcov
