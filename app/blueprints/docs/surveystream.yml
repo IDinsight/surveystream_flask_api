@@ -11696,8 +11696,8 @@ paths:
                   description: Indicates if the DQ check applies to all questions in the form
                   example: true
                 question_name:
-                  type: string
-                  description: Name of the question the DQ check applies to. Value is None if check applies to all questions
+                  type: string or list
+                  description: List of questions or Name of the question the DQ check applies to. Value is None if check applies to all questions
                   example: "district_name"
                 module_name:
                   type: string
@@ -11909,6 +11909,7 @@ paths:
                   message:
                     type: string
                     example: "An error occurred while deleting the DQ check"
+
 
   /dq/checks/{dq_check_uid}:
     put:

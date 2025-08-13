@@ -3,7 +3,6 @@ import json
 import pandas as pd
 import pysurveycto
 from flask import current_app, jsonify, request
-from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import aliased
 
