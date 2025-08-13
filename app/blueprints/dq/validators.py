@@ -1,11 +1,6 @@
+from flask import request
 from flask_wtf import FlaskForm
-from wtforms import (
-    BooleanField,
-    FieldList,
-    FormField,
-    IntegerField,
-    StringField,
-)
+from wtforms import BooleanField, FieldList, FormField, IntegerField, StringField
 from wtforms.validators import AnyOf, DataRequired, Optional
 
 from app.blueprints.forms.models import Form
@@ -71,9 +66,9 @@ def validate_check_type(form, field):
 
     if isinstance(field.data, int):
         if field.data not in check_types:
-            raise ValueError(f"Invalid check type {value}")
+            raise ValueError(f"Invalid check type {field.data}")
     else:
-        for value in field.data:
+        for value in field.data or []:
             if value not in check_types:
                 raise ValueError(f"Invalid check type {value}")
 
@@ -111,7 +106,11 @@ class DQCheckFilterValidator(FlaskForm):
                     "Greater than",
                     "Smaller than",
                 ],
-                message="Invalid operator. Must be 'Is', 'Is not', 'Contains', 'Does not contain', 'Is empty', or 'Is not empty', 'Greater than', 'Smaller than'",
+                message=(
+                    "Invalid operator. Must be one of: "
+                    "'Is', 'Is not', 'Contains', 'Does not contain', "
+                    "'Is empty', 'Is not empty', 'Greater than', 'Smaller than'"
+                ),
             ),
         ]
     )
@@ -145,20 +144,24 @@ class CustomCheckComponentValidator(FlaskForm):
     soft_min = StringField(validators=[Optional()])
     soft_max = StringField(validators=[Optional()])
     outlier_metric = StringField(
-        AnyOf(
-            ["interquartile_range", "standard_deviation", "percentile"],
-            message="Value must be one of %(values)s",
-        ),
-        validators=[Optional()],
+        validators=[
+            Optional(),
+            AnyOf(
+                ["interquartile_range", "standard_deviation", "percentile"],
+                message="Value must be one of %(values)s",
+            ),
+        ]
     )
     outlier_value = StringField(validators=[Optional()])
     spotcheck_score_name = StringField(validators=[Optional()])
     gps_type = StringField(
-        AnyOf(
-            ["point2point", "point2shape"],
-            message="Value must be one of %(values)s",
-        ),
-        validators=[Optional()],
+        validators=[
+            Optional(),
+            AnyOf(
+                ["point2point", "point2shape"],
+                message="Value must be one of %(values)s",
+            ),
+        ]
     )
     threshold = StringField(validators=[Optional()])
     gps_variable = StringField(validators=[Optional()])
@@ -175,6 +178,56 @@ class DQCheckValidator(FlaskForm):
     type_id = IntegerField(validators=[DataRequired(), validate_check_type])
     all_questions = BooleanField(default=False)
     question_name = StringField()
+    dq_scto_form_uid = IntegerField()
+    module_name = StringField()
+    flag_description = StringField()
+    check_components = FormField(CustomCheckComponentValidator, default={})
+    active = BooleanField(default=True)
+
+    filters = FieldList(FormField(DQCheckFilterGroupValidator), default=[])
+
+
+class BulkDQCheckValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    def process(self, formdata=None, obj=None, **kwargs):
+        """
+        Ensure question_name accepts either a list of strings or a single string.
+        If a single string is provided in the JSON payload, coerce it to a list.
+        """
+        super().process(formdata, obj, **kwargs)
+
+        # Prefer raw JSON payload when available (common with APIs)
+        try:
+            payload = request.get_json(silent=True)
+        except Exception:
+            payload = None
+
+        values = None
+        if payload is not None and "question_name" in payload:
+            qn = payload.get("question_name")
+            if isinstance(qn, str):
+                values = [qn]
+            elif isinstance(qn, list):
+                values = qn
+        elif isinstance(self.question_name.data, str):
+            values = [self.question_name.data]
+
+        if values is not None:
+            # Clear existing entries then append normalized values
+            try:
+                while len(self.question_name.entries) > 0:
+                    self.question_name.pop_entry()
+            except Exception:
+                pass
+            for item in values:
+                self.question_name.append_entry(item)
+
+    form_uid = IntegerField(validators=[DataRequired()])
+    type_id = IntegerField(validators=[DataRequired(), validate_check_type])
+    all_questions = BooleanField(default=False)
+    question_name = FieldList(StringField())
     dq_scto_form_uid = IntegerField()
     module_name = StringField()
     flag_description = StringField()
