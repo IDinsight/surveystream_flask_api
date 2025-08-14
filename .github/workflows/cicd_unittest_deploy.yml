@@ -13,8 +13,62 @@ on:
       - "*"
 
 jobs:
+  files-changed:
+    name: Detect what files changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    # Map a step output to a job output
+    outputs:
+      common: ${{ steps.changes.outputs.common }}
+      assignments: ${{ steps.changes.outputs.assignments }}
+      docs: ${{ steps.changes.outputs.docs }}
+      dq: ${{ steps.changes.outputs.dq }}
+      media_files: ${{ steps.changes.outputs.media_files }}
+      timezones: ${{ steps.changes.outputs.timezones }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for file changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          token: ${{ github.token }}
+          filters: |
+            # Common changes that require all tests to run
+            common:
+              - 'app/utils/**'
+              - 'app/blueprints/forms/**'
+              - 'app/blueprints/module_questionnaire/**'
+              - 'app/blueprints/module_selection/**'
+              - 'app/blueprints/notifications/**'
+              - 'app/blueprints/auth/**'
+              - 'app/blueprints/healthcheck/**'
+              - 'app/blueprints/profile/**'
+              - 'app/blueprints/surveys/**'
+              - 'app/blueprints/user_management/**'
+              - 'app/blueprints/roles/**'
+            # Grouped module wise changes
+            assignments:
+              - 'app/blueprints/assignments/**'
+              - 'app/blueprints/enumerators/**'
+              - 'app/blueprints/locations/**'
+              - 'app/blueprints/mapping/**'
+              - 'app/blueprints/emails/**'
+              - 'app/blueprints/target_status_mapping/**'
+              - 'app/blueprints/targets/**'
+            docs:
+              - 'app/blueprints/docs/**'
+            dq:
+              - 'app/blueprints/dq/**'
+            media_files:
+              - 'app/blueprints/media_files/**'
+            timezones:
+              - 'app/blueprints/timezones/**'
   UnitTest:
     runs-on: ubuntu-latest
+    needs: files-changed
 
     permissions:
       id-token: write
@@ -47,14 +101,38 @@ jobs:
       - name: Check DB Migration
         run: docker compose -f docker-compose/docker-compose.db-check.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
 
-      - name: Run unit tests
-        run: docker compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm api ;
+      - name: Select test files based on changes
+        run: |
+          if [ "${{ needs.files-changed.outputs.common }}" = 'true' ]; then
+            TEST_PATHS="tests"
+          else
+            TEST_PATHS=''
+            [ "${{ needs.files-changed.outputs.assignments }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_assignments.py tests/test_enumerators.py tests/test_locations.py tests/test_mapping.py tests/test_emails.py tests/test_target_status_mapping.py tests/test_targets.py"
+            [ "${{ needs.files-changed.outputs.docs }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_docs.py"
+            [ "${{ needs.files-changed.outputs.dq }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_dq.py"
+            [ "${{ needs.files-changed.outputs.media_files }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_media_files.py"
+            [ "${{ needs.files-changed.outputs.timezones }}" = 'true' ] && TEST_PATHS="$TEST_PATHS tests/test_timezones.py"
+          fi
+          # Trim leading/trailing whitespace
+          TEST_PATHS="${TEST_PATHS## }"
+          TEST_PATHS="${TEST_PATHS%% }"
+          # Persist for subsequent steps (preserve spaces)
+          {
+          echo "TEST_PATHS<<__EOF__"
+          echo "$TEST_PATHS"
+          echo "__EOF__"
+            } >> "$GITHUB_ENV"
+            echo "Tests according to file changes: ${TEST_PATHS}"
 
-      - name: Send coverage report to Coveralls
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: /tmp/coverage/coverage.lcov
+      - name: Run unit tests
+        run: |
+          docker compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm -e TEST_PATHS api ;
+
+        # - name: Send coverage report to Coveralls
+        #   uses: coverallsapp/github-action@v2
+        #   with:
+        #     github-token: {{ secrets.GITHUB_TOKEN }}
+        #     file: /tmp/coverage/coverage.lcov
 
   UpdateDevDB:
     if: github.event_name == 'push' &&  github.ref == 'refs/heads/dev'
