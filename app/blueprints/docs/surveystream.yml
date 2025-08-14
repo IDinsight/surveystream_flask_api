@@ -541,6 +541,7 @@ paths:
           description: X-CSRF-Token required in header
         "422":
           description: Form errors
+  
   /users/check-email-availability:
     post:
       tags:
