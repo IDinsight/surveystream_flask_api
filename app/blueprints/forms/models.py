@@ -288,21 +288,24 @@ class SCTOChoiceLabel(db.Model):
     """
     SQLAlchemy data model for storing scto choice labels in
     all defined languages. This table contains information about
-    the variables defined in the SurveyCTO form
+    the choice values and labels defined in the SurveyCTO form.
+
+    There is no primary key constraint on this table as SurveyCTO
+    does not enforce uniqueness on (list_uid, choice_value, language)
+    when uploading a form definition.
+
+    This means that when using this table, we will need to handle
+    duplicates at the application level.
     """
 
     __tablename__ = "scto_form_choice_labels"
 
     __table_args__ = (
-        db.PrimaryKeyConstraint(
-            "list_uid",
-            "choice_value",
-            "language",
-        ),
         {
             "schema": "webapp",
         },
     )
+    choice_label_uid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     list_uid = db.Column(
         db.Integer(),
         db.ForeignKey(SCTOChoiceList.list_uid, ondelete="CASCADE"),
@@ -329,6 +332,7 @@ class SCTOChoiceLabel(db.Model):
 
     def to_dict(self):
         return {
+            "choice_label_uid": self.choice_label_uid,
             "list_uid": self.list_uid,
             "choice_value": self.choice_value,
             "language": self.language,
