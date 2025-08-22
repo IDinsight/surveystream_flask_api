@@ -243,7 +243,6 @@ def update_form(form_uid, validated_payload):
         )
 
     try:
-
         Form.query.filter_by(form_uid=form_uid).update(
             {
                 Form.scto_form_id: validated_payload.scto_form_id.data,
@@ -597,12 +596,11 @@ def ingest_scto_form_definition(form_uid):
 
     db.session.add(scto_settings)
 
-    # Check for duplicate choice values in the choices tab
+    # Load choices from the `choices` tab of the form definition
     errors = []
     df = pd.DataFrame(
         scto_form_definition["choicesRowsAndColumns"][1:], columns=choices_tab_columns
     )
-
     df = df.loc[df["list_name"] != ""]
 
     value_column_name = "value"
@@ -623,6 +621,14 @@ def ingest_scto_form_definition(form_uid):
                 422,
             )
 
+    choice_labels = [
+        col for col in choices_tab_columns if col.split(":")[0].lower() == "label"
+    ]
+
+    # drop duplicates across all relevant columns
+    df = df[["list_name", value_column_name] + choice_labels].drop_duplicates()
+
+    # Find duplicate choice values in the choices tab
     duplicate_choice_values = df[
         df.duplicated(subset=["list_name", value_column_name])
     ][["list_name", value_column_name]].drop_duplicates()
@@ -635,12 +641,8 @@ def ingest_scto_form_definition(form_uid):
     if len(errors) > 0:
         return jsonify({"success": False, "errors": errors}), 422
 
-    choice_labels = [
-        col for col in choices_tab_columns if col.split(":")[0].lower() == "label"
-    ]
-
     # Process the lists and choices from the `choices` tab of the form definition
-    for row in scto_form_definition["choicesRowsAndColumns"][1:]:
+    for _, row in df.iterrows():
         choices_dict = dict(zip(choices_tab_columns, row))
         if choices_dict["list_name"].strip() != "":
             if choices_dict["list_name"] not in unique_list_names:
@@ -658,7 +660,7 @@ def ingest_scto_form_definition(form_uid):
                         jsonify(
                             {
                                 "errors": [
-                                    "An unknown error occurred while processing the choices tab of your SurveyCTO form definition."
+                                    f'An unknown error occurred while loading the choice list "{scto_choice_list.list_name}" in your SurveyCTO form definition.'
                                 ]
                             }
                         ),
@@ -684,6 +686,21 @@ def ingest_scto_form_definition(form_uid):
                     language=language,
                 )
                 db.session.add(scto_choice_label)
+
+            try:
+                db.session.flush()
+            except Exception as e:
+                db.session.rollback()
+                return (
+                    jsonify(
+                        {
+                            "errors": [
+                                f'An unknown error occurred while loading labels for the choice list "{scto_choice_list.list_name}" in your SurveyCTO form definition.'
+                            ]
+                        }
+                    ),
+                    500,
+                )
 
     # There can be nested repeat groups, so we need to keep track of the depth in order to determine if a question is part of a repeat group
     repeat_group_depth = 0
