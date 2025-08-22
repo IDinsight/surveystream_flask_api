@@ -33,14 +33,14 @@ def upgrade():
         )
 
     # Step 3: backfill existing rows with unique values
-    batch_op.execute("""
+    op.execute("""
         UPDATE webapp.scto_form_choice_labels
         SET choice_label_uid = nextval('webapp.scto_form_choice_labels_choice_label_uid_seq')
         WHERE choice_label_uid IS NULL
     """)
 
     # Step 4: Set the default on the new column
-    batch_op.execute("""
+    op.execute("""
         ALTER TABLE webapp.scto_form_choice_labels
         ALTER COLUMN choice_label_uid
         SET DEFAULT nextval('webapp.scto_form_choice_labels_choice_label_uid_seq')
