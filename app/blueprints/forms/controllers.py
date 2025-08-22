@@ -642,8 +642,7 @@ def ingest_scto_form_definition(form_uid):
         return jsonify({"success": False, "errors": errors}), 422
 
     # Process the lists and choices from the `choices` tab of the form definition
-    for _, row in df.iterrows():
-        choices_dict = dict(zip(choices_tab_columns, row))
+    for choices_dict in df.to_dict(orient="records"):
         if choices_dict["list_name"].strip() != "":
             if choices_dict["list_name"] not in unique_list_names:
                 # Add the choice list to the database
