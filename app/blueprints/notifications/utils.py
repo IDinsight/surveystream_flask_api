@@ -41,6 +41,14 @@ def check_form_variable_missing(survey_uid, form_uid, db):
         .where(SCTOQuestion.form_uid == form_uid)
         .scalar_subquery()
     )
+    # These are metadata fields that are always present in form even if not defined in surveycto
+    metadata_fields = [
+        "instanceID",
+        "formdef_version",
+        "starttime",
+        "endtime",
+        "SubmissionDate",
+    ]
 
     # Combine questions from DQCheckFilter and DQCheck
     dq_check_filters = (
@@ -65,17 +73,18 @@ def check_form_variable_missing(survey_uid, form_uid, db):
     if len(missing_dq_questions) > 0:
         # create a dq module notification
         if not check_module_notification_exists(survey_uid, 11, "warning"):
-            missing_vars = [q[0] for q in missing_dq_questions]
-            notification = SurveyNotification(
-                survey_uid=survey_uid,
-                module_id=11,
-                severity="warning",
-                message=f"Certain DQ variables are missing from form defintion. These checks will be inactive. Kindly review form changes and update dq configs.",
-                resolution_status="in progress",
-            )
-            db.session.add(notification)
-            db.session.flush()
-            pass
+            missing_vars = [q[0] for q in missing_dq_questions if q[0] not in metadata_fields]
+            if len(missing_vars) > 0:
+                notification = SurveyNotification(
+                    survey_uid=survey_uid,
+                    module_id=11,
+                    severity="warning",
+                    message=f"Certain DQ variables are missing from form defintion. These checks will be inactive. Kindly review form changes and update dq configs.",
+                    resolution_status="in progress",
+                )
+                db.session.add(notification)
+                db.session.flush()
+                pass
     # Get required fields and check for missing questions in one query
     mapping_query = select(
         SCTOQuestionMapping.survey_status,
@@ -117,17 +126,18 @@ def check_form_variable_missing(survey_uid, form_uid, db):
 
     if len(missing_required_questions) > 0:
         if not check_module_notification_exists(survey_uid, 3, "error"):
-            missing_vars = [q[0] for q in missing_required_questions]
-            notification = SurveyNotification(
-                survey_uid=survey_uid,
-                module_id=3,
-                severity="error",
-                message=f"Following SCTO Question mapping variables are missing in form definition: "
-                f"{', '.join(missing_vars)}. Please review form changes.",
-                resolution_status="in progress",
-            )
-            db.session.add(notification)
-            db.session.flush()
+            missing_vars = [q[0] for q in missing_required_questions if q[0] not in metadata_fields]
+            if len(missing_vars) > 0:
+                notification = SurveyNotification(
+                    survey_uid=survey_uid,
+                    module_id=3,
+                    severity="error",
+                    message=f"Following SCTO Question mapping variables are missing in form definition: "
+                    f"{', '.join(missing_vars)}. Please review form changes.",
+                    resolution_status="in progress",
+                )
+                db.session.add(notification)
+                db.session.flush()
 
     # Check media file field mapping vars are present in form definition
     try:
@@ -148,17 +158,17 @@ def check_form_variable_missing(survey_uid, form_uid, db):
 
     if len(missing_media_questions) > 0:
         if not check_module_notification_exists(survey_uid, 12, "error"):
-            missing_vars = [q[0] for q in missing_media_questions]
-            notification = SurveyNotification(
-                survey_uid=survey_uid,
-                module_id=12,
-                severity="error",
-                message=f"Following media file fields are missing in form definition: {', '.join(missing_vars)}. Please review form changes.",
-                resolution_status="in progress",
-            )
-            db.session.add(notification)
-            db.session.flush()
-
+            missing_vars = [q[0] for q in missing_media_questions if q[0] not in metadata_fields]
+            if len(missing_vars) > 0:
+                notification = SurveyNotification(
+                    survey_uid=survey_uid,
+                    module_id=12,
+                    severity="error",
+                    message=f"Following media file fields are missing in form definition: {', '.join(missing_vars)}. Please review form changes.",
+                    resolution_status="in progress",
+                )
+                db.session.add(notification)
+                db.session.flush()
     try:
         db.session.commit()
     except Exception as e:

@@ -782,7 +782,8 @@ class TestForms:
         self, client, login_test_user, csrf_token, create_parent_form
     ):
         """
-        Test that an SCTO form with duplicate choices raises an error
+        Test that an SCTO form with duplicate choices don't raises any error,
+        we are allowing duplicate choices in SCTO forms since SurveyCTO allows it
         """
 
         # Update the parent form with the scto form id test_choice_list_duplicate_values
@@ -815,17 +816,8 @@ class TestForms:
             headers={"X-CSRF-Token": csrf_token},
         )
         print(response.json)
-        assert response.status_code == 422
+        assert response.status_code == 200
 
-        expected_response = {
-            "success": False,
-            "errors": [
-                'An error was found on the choices tab of your SurveyCTO form definition. The choice list "state" has multiple choices with the value "10". Please update your form definition on SurveyCTO and try again.'
-            ],
-        }
-
-        checkdiff = jsondiff.diff(expected_response, response.json)
-        assert checkdiff == {}
 
     def test_scto_form_definition(
         self, client, app, login_test_user, csrf_token, create_parent_form
