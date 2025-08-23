@@ -636,7 +636,7 @@ def ingest_scto_form_definition(form_uid):
 
     for i, row in duplicate_choice_values.iterrows():
         warnings.append(
-            f'An error was found on the choices tab of your SurveyCTO form definition. The choice list "{row["list_name"]}" has multiple choices with the value "{row[value_column_name]}". Please update your form definition on SurveyCTO and try again.'
+            f'A warning was found on the choices tab of your SurveyCTO form definition. The choice list "{row["list_name"]}" has multiple choices with the value "{row[value_column_name]}". Please update your form definition on SurveyCTO and try again.'
         )
 
     if len(errors) > 0:
@@ -737,7 +737,7 @@ def ingest_scto_form_definition(form_uid):
     ].drop_duplicates()
     for i, row in duplicate_question_names.iterrows():
         warnings.append(
-            f'An error was found on the survey tab of your SurveyCTO form definition. The question name "{row["name"]}" and type "{row["type"]}" is used multiple times. Please update your form definition on SurveyCTO and try again.'
+            f'A warning was found on the survey tab of your SurveyCTO form definition. The question name "{row["name"]}" and type "{row["type"]}" is used multiple times. Please update your form definition on SurveyCTO and try again.'
         )
 
     # There can be nested repeat groups, so we need to keep track of the depth in order to determine if a question is part of a repeat group
