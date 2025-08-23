@@ -23,7 +23,7 @@ def upgrade():
 
     # Step 1: Create a new sequence for choice_label_uid
     op.execute("""
-        CREATE SEQUENCE webapp.scto_form_choice_labels_choice_label_uid_seq;
+        CREATE SEQUENCE IF NOT EXISTS webapp.scto_form_choice_labels_choice_label_uid_seq;
     """)
 
     # Step 2: Add the new choice_label_uid column, nullable initially
