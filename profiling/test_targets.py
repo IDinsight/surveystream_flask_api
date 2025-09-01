@@ -1,8 +1,9 @@
-import jsondiff
-import pytest
 import base64
-import pandas as pd
 from pathlib import Path
+
+import jsondiff
+import pandas as pd
+import pytest
 
 
 @pytest.mark.targets
@@ -40,7 +41,40 @@ class TestTargets:
         yield
 
     @pytest.fixture()
-    def create_form(self, client, login_test_user, csrf_token, create_survey):
+    def create_module_questionnaire(
+        self, client, login_test_user, csrf_token, test_user_credentials, create_survey
+    ):
+        """
+        Insert new module_questionnaire to set up mapping criteria needed for assignments
+        """
+
+        payload = {
+            "assignment_process": "Manual",
+            "language_location_mapping": False,
+            "reassignment_required": False,
+            "target_mapping_criteria": ["Location"],
+            "surveyor_mapping_criteria": ["Location"],
+            "supervisor_hierarchy_exists": False,
+            "supervisor_surveyor_relation": "1:many",
+            "survey_uid": 1,
+            "target_assignment_criteria": ["Location of surveyors"],
+        }
+
+        response = client.put(
+            "/api/module-questionnaire/1",
+            json=payload,
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(response.json)
+        assert response.status_code == 200
+
+        yield
+
+    @pytest.fixture()
+    def create_form(
+        self, client, login_test_user, csrf_token, create_module_questionnaire
+    ):
         """
         Insert new form as a setup step for the form tests
         """
@@ -210,48 +244,54 @@ class TestTargets:
                 {
                     "column_name": "target_id",
                     "column_type": "basic_details",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                     "contains_pii": False,
+                    "column_source": "target_id1",
                 },
                 {
                     "column_name": "language",
                     "column_type": "basic_details",
-                    "bulk_editable": True,
+                    "allow_null_values": True,
                     "contains_pii": True,
+                    "column_source": "language",
                 },
                 {
                     "column_name": "gender",
                     "column_type": "basic_details",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                     "contains_pii": True,
+                    "column_source": "gender",
                 },
                 {
                     "column_name": "Name",
                     "column_type": "custom_fields",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                     "contains_pii": True,
+                    "column_source": "name",
                 },
                 {
                     "column_name": "Mobile no.",
                     "column_type": "custom_fields",
-                    "bulk_editable": False,
+                    "allow_null_values": False,
                     "contains_pii": True,
+                    "column_source": "mobile_primary",
                 },
                 {
                     "column_name": "Address",
                     "column_type": "custom_fields",
-                    "bulk_editable": True,
+                    "allow_null_values": True,
                     "contains_pii": True,
+                    "column_source": "address",
                 },
                 {
                     "column_name": "bottom_geo_level_location",
                     "column_type": "location",
-                    "bulk_editable": True,
+                    "allow_null_values": True,
                     "contains_pii": True,
+                    "column_source": "psu_id",
                 },
             ],
         }
-
         response = client.put(
             "/api/targets/column-config",
             query_string={"form_uid": 1},
@@ -261,6 +301,7 @@ class TestTargets:
         )
 
         assert response.status_code == 200
+        print(response.json)
 
         yield
 
@@ -312,6 +353,7 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
     def test_upload_targets_csv_for_super_admin_user(
@@ -328,10 +370,23 @@ class TestTargets:
         Expect success on get with data fetched similar to uploaded data by fixture
         """
         expected_response = {
+            "success": True,
             "data": [
                 {
+                    "target_uid": 1,
+                    "target_id": "1",
+                    "language": "Telugu",
+                    "gender": "Male",
+                    "location_uid": 4,
+                    "form_uid": 1,
                     "custom_fields": {
+                        "Name": "Anil",
+                        "Address": "Hyderabad",
+                        "Mobile no.": "1234567890",
                         "column_mapping": {
+                            "gender": "gender1",
+                            "language": "language1",
+                            "target_id": "target_id1",
                             "custom_fields": [
                                 {
                                     "column_name": "mobile_primary1",
@@ -340,56 +395,59 @@ class TestTargets:
                                 {"column_name": "name1", "field_label": "Name"},
                                 {"column_name": "address1", "field_label": "Address"},
                             ],
-                            "gender": "gender1",
-                            "language": "language1",
                             "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
                         },
-                        "Address": "Hyderabad",
-                        "Name": "Anil",
-                        "Mobile no.": "1234567890",
                     },
-                    "form_uid": 1,
-                    "gender": "Male",
-                    "language": "Telugu",
-                    "location_uid": 4,
-                    "target_id": "1",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                            "geo_level_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "location_uid": 2,
-                            "geo_level_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101102",
-                            "location_name": "ANKOLI",
-                            "location_uid": 4,
-                            "geo_level_uid": 3,
-                        },
-                    ],
-                    "target_uid": 1,
                     "completed_flag": None,
+                    "refusal_flag": None,
+                    "num_attempts": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "revisit_sections": None,
+                    "scto_fields": None,
+                    "target_locations": [
+                        {
+                            "location_id": "1",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                            "location_name": "ADILABAD",
+                            "geo_level_name": "District",
+                        },
+                        {
+                            "location_id": "1101",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                            "location_name": "ADILABAD RURAL",
+                            "geo_level_name": "Mandal",
+                        },
+                        {
+                            "location_id": "17101102",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                            "location_name": "ANKOLI",
+                            "geo_level_name": "PSU",
+                        },
+                    ],
                 },
                 {
+                    "target_uid": 2,
+                    "target_id": "2",
+                    "language": "Hindi",
+                    "gender": "Female",
+                    "location_uid": 4,
+                    "form_uid": 1,
                     "custom_fields": {
+                        "Name": "Anupama",
+                        "Address": "South Delhi",
+                        "Mobile no.": "1234567891",
                         "column_mapping": {
+                            "gender": "gender1",
+                            "language": "language1",
+                            "target_id": "target_id1",
                             "custom_fields": [
                                 {
                                     "column_name": "mobile_primary1",
@@ -398,60 +456,49 @@ class TestTargets:
                                 {"column_name": "name1", "field_label": "Name"},
                                 {"column_name": "address1", "field_label": "Address"},
                             ],
-                            "gender": "gender1",
-                            "language": "language1",
                             "location_id_column": "psu_id1",
-                            "target_id": "target_id1",
                         },
-                        "Address": "South Delhi",
-                        "Name": "Anupama",
-                        "Mobile no.": "1234567891",
                     },
-                    "form_uid": 1,
-                    "gender": "Female",
-                    "language": "Hindi",
-                    "location_uid": 4,
-                    "target_id": "2",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                            "geo_level_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "location_uid": 2,
-                            "geo_level_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101102",
-                            "location_name": "ANKOLI",
-                            "location_uid": 4,
-                            "geo_level_uid": 3,
-                        },
-                    ],
-                    "target_uid": 2,
                     "completed_flag": None,
+                    "refusal_flag": None,
+                    "num_attempts": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "revisit_sections": None,
+                    "scto_fields": None,
+                    "target_locations": [
+                        {
+                            "location_id": "1",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                            "location_name": "ADILABAD",
+                            "geo_level_name": "District",
+                        },
+                        {
+                            "location_id": "1101",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                            "location_name": "ADILABAD RURAL",
+                            "geo_level_name": "Mandal",
+                        },
+                        {
+                            "location_id": "17101102",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                            "location_name": "ANKOLI",
+                            "geo_level_name": "PSU",
+                        },
+                    ],
                 },
             ],
-            "success": True,
         }
-
         # Check the response
         response = client.get("/api/targets", query_string={"form_uid": 1})
-
+        print(response.json)
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
 
@@ -495,6 +542,7 @@ class TestTargets:
                         "column_name": "address1",
                     },
                 ],
+                "location_id_column": "psu_id1",
             },
             "file": targets_csv_encoded,
             "mode": "merge",
@@ -507,169 +555,195 @@ class TestTargets:
             content_type="application/json",
             headers={"X-CSRF-Token": csrf_token},
         )
+        print(response.json)
         assert response.status_code == 200
 
         expected_response = {
+            "success": True,
             "data": [
                 {
+                    "target_uid": 1,
+                    "target_id": "1",
+                    "language": "Telugu",
+                    "gender": "Male",
+                    "location_uid": 4,
+                    "form_uid": 1,
                     "custom_fields": {
+                        "Name": "Anil",
+                        "Address": "India",
+                        "Mobile no.": "1234567890",
                         "column_mapping": {
-                            "target_id": "target_id1",
                             "language": "language1",
+                            "target_id": "target_id1",
                             "custom_fields": [
                                 {
-                                    "field_label": "Mobile no. (Alternate)",
                                     "column_name": "mobile_primary2",
+                                    "field_label": "Mobile no. (Alternate)",
                                 },
-                                {
-                                    "field_label": "Address",
-                                    "column_name": "address1",
-                                },
+                                {"column_name": "address1", "field_label": "Address"},
                             ],
+                            "location_id_column": "psu_id1",
                         },
-                        "Address": "India",
-                        "Name": "Anil",
-                        "Mobile no.": "1234567890",
                         "Mobile no. (Alternate)": "1234567890",
                     },
-                    "form_uid": 1,
-                    "gender": "Male",
-                    "language": "Telugu",
-                    "location_uid": 4,
-                    "target_id": "1",
-                    "target_locations": [
-                        {
-                            "geo_level_name": "District",
-                            "location_id": "1",
-                            "location_name": "ADILABAD",
-                            "location_uid": 1,
-                            "geo_level_uid": 1,
-                        },
-                        {
-                            "geo_level_name": "Mandal",
-                            "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
-                            "location_uid": 2,
-                            "geo_level_uid": 2,
-                        },
-                        {
-                            "geo_level_name": "PSU",
-                            "location_id": "17101102",
-                            "location_name": "ANKOLI",
-                            "location_uid": 4,
-                            "geo_level_uid": 3,
-                        },
-                    ],
-                    "target_uid": 1,
                     "completed_flag": None,
+                    "refusal_flag": None,
+                    "num_attempts": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "target_assignable": None,
                     "webapp_tag_color": None,
+                    "revisit_sections": None,
+                    "scto_fields": None,
+                    "target_locations": [
+                        {
+                            "location_id": "1",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                            "location_name": "ADILABAD",
+                            "geo_level_name": "District",
+                        },
+                        {
+                            "location_id": "1101",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                            "location_name": "ADILABAD RURAL",
+                            "geo_level_name": "Mandal",
+                        },
+                        {
+                            "location_id": "17101102",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                            "location_name": "ANKOLI",
+                            "geo_level_name": "PSU",
+                        },
+                    ],
                 },
                 {
+                    "target_uid": 2,
+                    "target_id": "2",
+                    "language": "Telugu",
+                    "gender": "Female",
+                    "location_uid": 4,
+                    "form_uid": 1,
                     "custom_fields": {
+                        "Name": "Anupama",
+                        "Address": "Kenya",
+                        "Mobile no.": "1234567891",
                         "column_mapping": {
-                            "target_id": "target_id1",
                             "language": "language1",
+                            "target_id": "target_id1",
                             "custom_fields": [
                                 {
-                                    "field_label": "Mobile no. (Alternate)",
                                     "column_name": "mobile_primary2",
+                                    "field_label": "Mobile no. (Alternate)",
                                 },
-                                {
-                                    "field_label": "Address",
-                                    "column_name": "address1",
-                                },
+                                {"column_name": "address1", "field_label": "Address"},
                             ],
+                            "location_id_column": "psu_id1",
                         },
-                        "Address": "Kenya",
-                        "Name": "Anupama",
-                        "Mobile no.": "1234567891",
                         "Mobile no. (Alternate)": "1234567891",
                     },
-                    "form_uid": 1,
-                    "gender": "Female",
-                    "language": "Telugu",
-                    "location_uid": 4,
-                    "target_id": "2",
+                    "completed_flag": None,
+                    "refusal_flag": None,
+                    "num_attempts": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                    "revisit_sections": None,
+                    "scto_fields": None,
                     "target_locations": [
                         {
-                            "geo_level_name": "District",
                             "location_id": "1",
-                            "location_name": "ADILABAD",
                             "location_uid": 1,
                             "geo_level_uid": 1,
+                            "location_name": "ADILABAD",
+                            "geo_level_name": "District",
                         },
                         {
-                            "geo_level_name": "Mandal",
                             "location_id": "1101",
-                            "location_name": "ADILABAD RURAL",
                             "location_uid": 2,
                             "geo_level_uid": 2,
+                            "location_name": "ADILABAD RURAL",
+                            "geo_level_name": "Mandal",
                         },
                         {
-                            "geo_level_name": "PSU",
                             "location_id": "17101102",
-                            "location_name": "ANKOLI",
                             "location_uid": 4,
                             "geo_level_uid": 3,
+                            "location_name": "ANKOLI",
+                            "geo_level_name": "PSU",
                         },
                     ],
-                    "target_uid": 2,
-                    "completed_flag": None,
-                    "last_attempt_survey_status": None,
-                    "last_attempt_survey_status_label": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
-                    "target_assignable": None,
-                    "webapp_tag_color": None,
                 },
                 {
-                    "completed_flag": None,
+                    "target_uid": 3,
+                    "target_id": "3",
+                    "language": "Tagalog",
+                    "gender": None,
+                    "location_uid": 4,
+                    "form_uid": 1,
                     "custom_fields": {
+                        "Address": "Philippines",
                         "column_mapping": {
-                            "target_id": "target_id1",
                             "language": "language1",
+                            "target_id": "target_id1",
                             "custom_fields": [
                                 {
-                                    "field_label": "Mobile no. (Alternate)",
                                     "column_name": "mobile_primary2",
+                                    "field_label": "Mobile no. (Alternate)",
                                 },
-                                {
-                                    "field_label": "Address",
-                                    "column_name": "address1",
-                                },
+                                {"column_name": "address1", "field_label": "Address"},
                             ],
+                            "location_id_column": "psu_id1",
                         },
-                        "Address": "Philippines",
                         "Mobile no. (Alternate)": "1234567892",
                     },
-                    "form_uid": 1,
-                    "gender": None,
-                    "language": "Tagalog",
+                    "completed_flag": None,
+                    "refusal_flag": None,
+                    "num_attempts": None,
                     "last_attempt_survey_status": None,
                     "last_attempt_survey_status_label": None,
-                    "location_uid": None,
-                    "num_attempts": None,
-                    "refusal_flag": None,
-                    "revisit_sections": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
                     "target_assignable": None,
-                    "target_id": "3",
-                    "target_locations": None,
-                    "target_uid": 3,
                     "webapp_tag_color": None,
+                    "revisit_sections": None,
+                    "scto_fields": None,
+                    "target_locations": [
+                        {
+                            "location_id": "1",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                            "location_name": "ADILABAD",
+                            "geo_level_name": "District",
+                        },
+                        {
+                            "location_id": "1101",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                            "location_name": "ADILABAD RURAL",
+                            "geo_level_name": "Mandal",
+                        },
+                        {
+                            "location_id": "17101102",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                            "location_name": "ANKOLI",
+                            "geo_level_name": "PSU",
+                        },
+                    ],
                 },
             ],
-            "success": True,
         }
-
         # Check the response
         response = client.get("/api/targets", query_string={"form_uid": 1})
+        print(response.json)
 
         checkdiff = jsondiff.diff(expected_response, response.json)
         assert checkdiff == {}
