@@ -16,6 +16,10 @@ def validate_dq_check(
 
     """
 
+    # Check if question name is list or string
+    if isinstance(question_name, str):
+        question_name = [question_name]
+
     # Raise error if both all_questions and question_name are not provided
     if not all_questions and not question_name:
         raise Exception(
@@ -34,18 +38,33 @@ def validate_dq_check(
             "Question name cannot be provided if all questions is selected."
         )
 
+    # if type_id is 1, 9, 10 question name should contain only one question
+    if type_id == 1 and len(question_name) > 1:
+        raise Exception(
+            "For logic checks, question name should contain only one question."
+        )
+    if type_id == 9 and len(question_name) > 1:
+        raise Exception(
+            "For spotcheck, question name should contain only one question."
+        )
+    if type_id == 10 and len(question_name) > 1:
+        raise Exception(
+            "For GPS checks, question name should contain only one question."
+        )
+
     # Check if the question name is valid, when check is active
     # For protocol (8) and spotcheck (9) checks, question name is from DQ form which is checked later
     if question_name and active is True and type_id not in [8, 9]:
-        scto_question = SCTOQuestion.query.filter(
-            SCTOQuestion.form_uid == form_uid,
-            SCTOQuestion.question_name == question_name,
-        ).first()
+        for name in question_name:
+            scto_question = SCTOQuestion.query.filter(
+                SCTOQuestion.form_uid == form_uid,
+                SCTOQuestion.question_name == name,
+            ).first()
 
-        if scto_question is None:
-            raise Exception(
-                f"Question name '{question_name}' not found in form definition. Active checks must have a valid question name."
-            )
+            if scto_question is None:
+                raise Exception(
+                    f"Question name '{name}' not found in form definition. Active checks must have a valid question name."
+                )
 
     # Check if the filter question names are valid, when check is active
     if filters and active is True and type_id not in [7, 8, 9]:
@@ -82,15 +101,16 @@ def validate_dq_check(
 
     # for mismatch (7), protocol (8) and spotcheck (9), check if question name is present in dq form
     if type_id in [7, 8, 9] and active is True:
-        dq_scto_question = SCTOQuestion.query.filter(
-            SCTOQuestion.form_uid == dq_scto_form_uid,
-            SCTOQuestion.question_name == question_name,
-        ).first()
+        for name in question_name:
+            dq_scto_question = SCTOQuestion.query.filter(
+                SCTOQuestion.form_uid == dq_scto_form_uid,
+                SCTOQuestion.question_name == name,
+            ).first()
 
-        if dq_scto_question is None:
-            raise Exception(
-                f"Question name '{question_name}' not found in DQ form definition. Active checks must have a valid question name."
-            )
+            if dq_scto_question is None:
+                raise Exception(
+                    f"Question name '{name}' not found in DQ form definition. Active checks must have a valid question name."
+                )
 
     # for mismatch (7), protocol (8) and spotcheck (9), check if question name used in filters is present in dq form
     if type_id in [7, 8, 9] and filters and active is True:

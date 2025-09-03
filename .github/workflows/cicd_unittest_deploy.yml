@@ -128,11 +128,11 @@ jobs:
         run: |
           docker compose -f docker-compose/docker-compose.unit-test.yml -f docker-compose/docker-compose.override-unit-test.yml run --rm -e TEST_PATHS api ;
 
-      - name: Send coverage report to Coveralls
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: /tmp/coverage/coverage.lcov
+        # - name: Send coverage report to Coveralls
+        #   uses: coverallsapp/github-action@v2
+        #   with:
+        #     github-token: {{ secrets.GITHUB_TOKEN }}
+        #     file: /tmp/coverage/coverage.lcov
 
   UpdateDevDB:
     if: github.event_name == 'push' &&  github.ref == 'refs/heads/dev'
