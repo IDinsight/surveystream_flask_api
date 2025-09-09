@@ -35,4 +35,4 @@ services:
        pyinstrument --outfile=/usr/src/${BACKEND_NAME}/profiling/outputs/profile_targets.html -m pytest -m targets profiling/test_targets.py::TestTargets
        pyinstrument --outfile=/usr/src/${BACKEND_NAME}/profiling/outputs/profile_enumerators.html -m pytest -m enumerators profiling/test_enumerators.py::TestEnumerators
        pyinstrument --outfile=/usr/src/${BACKEND_NAME}/profiling/outputs/profile_assignments.html -m pytest -m assignments profiling/test_assignments.py::TestAssignments
-
+       pyinstrument --outfile=/usr/src/${BACKEND_NAME}/profiling/outputs/profile_forms.html -m pytest -m forms profiling/test_forms.py::TestForms
