@@ -495,7 +495,7 @@ def update_enumerator(enumerator_uid, validated_payload):
 
     # Get payload values for enumerator type and status
     enumerator_type = payload.get("enumerator_type")
-    enumerator_status = payload.get("surveyor_status")
+    enumerator_status = payload.get("surveyor_status", "Active")
 
     if enumerator_type is not None:
         if "surveyor" in enumerator_type:
