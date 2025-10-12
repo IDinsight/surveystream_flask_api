@@ -478,7 +478,10 @@ def update_enumerator(enumerator_uid, validated_payload):
         keys_in_db = custom_fields_in_db.keys()
 
     if custom_fields_in_payload is not None:
-        keys_in_payload = custom_fields_in_payload.keys()
+        keys_in_payload = list(custom_fields_in_payload.keys())
+
+    if "surveyor_status" in keys_in_payload:
+        keys_in_payload.remove("surveyor_status")
 
     # Check if enumerator is Surveyor or Monitor
     enumerator_surveyor = SurveyorForm.query.filter_by(
@@ -492,7 +495,7 @@ def update_enumerator(enumerator_uid, validated_payload):
 
     # Get payload values for enumerator type and status
     enumerator_type = payload.get("enumerator_type")
-    enumerator_status = payload.get("enumerator_status")
+    enumerator_status = payload.get("surveyor_status", "Active")
 
     if enumerator_type is not None:
         if "surveyor" in enumerator_type:
