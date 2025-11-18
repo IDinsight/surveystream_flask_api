@@ -348,3 +348,11 @@ class EmailDeliveryReportQueryValidator(FlaskForm):
         AnyOf(["trigger", "schedule"], message="Invalid slot type"),
         default=None,
     )
+
+
+class EmailEnumeratorReportQueryValidator(FlaskForm):
+    class Meta:
+        csrf = False
+
+    email_config_uid = IntegerField(validators=[DataRequired()])
+    email_delivery_report_uid = IntegerField(validators=[DataRequired()])
