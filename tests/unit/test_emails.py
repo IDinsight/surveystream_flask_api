@@ -4519,8 +4519,6 @@ class TestEmails:
         print(get_response.status_code)
         print(get_response.json)
 
-        assert get_response.status_code == 200
-
         if expected_permission:
             assert get_response.status_code == 200
 
