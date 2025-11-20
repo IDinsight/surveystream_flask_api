@@ -59,6 +59,11 @@ class UpdateTarget(FlaskForm):
     location_uid = IntegerField()
 
 
+class UpdateTargetActive(FlaskForm):
+    form_uid = IntegerField(validators=[DataRequired()])
+    is_active = BooleanField()
+
+
 class ColumnConfigValidator(FlaskForm):
     class Meta:
         csrf = False

@@ -589,6 +589,7 @@ class TestTargets:
                     "webapp_tag_color": "gold",
                     "revisit_sections": ["section1", "section2"],
                     "scto_fields": {"field1": "value1", "field2": "value2"},
+                    "is_active": True,
                 },
                 {
                     "target_id": "2",
@@ -603,6 +604,7 @@ class TestTargets:
                     "webapp_tag_color": "green",
                     "revisit_sections": [],
                     "scto_fields": {"field1": "value3", "field2": "value4"},
+                    "is_active": True,
                 },
             ],
         }
@@ -1010,6 +1012,7 @@ class TestTargets:
                     "webapp_tag_color": None,
                     "revisit_sections": None,
                     "scto_fields": None,
+                    "is_active": True,
                     "target_locations": [
                         {
                             "location_id": "21",
@@ -1067,6 +1070,7 @@ class TestTargets:
                     "webapp_tag_color": None,
                     "revisit_sections": None,
                     "scto_fields": None,
+                    "is_active": True,
                     "target_locations": [
                         {
                             "location_id": "21",
@@ -1887,6 +1891,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 {
                     "custom_fields": {
@@ -1948,6 +1953,166 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
+                },
+            ],
+            "success": True,
+        }
+
+        # Check the response
+        response = client.get("/api/targets", query_string={"form_uid": 1})
+
+        checkdiff = jsondiff.diff(expected_response, response.json)
+        assert checkdiff == {}
+
+    def test_update_targets_active_for_super_admin_user(
+        self,
+        client,
+        login_test_user,
+        upload_targets_csv,
+        csrf_token,
+        test_user_credentials,
+    ):
+        """
+        Test that the targets csv can be uploaded by a super admin user
+            - uses the fixture(upload_targets_csv) to upload targets
+        Expect success on get with data fetched similar to uploaded data by fixture
+        """
+
+        update_response = client.patch(
+            "/api/targets/2",
+            json={"is_active": False, "form_uid": 1},
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(update_response.status_code)
+        print(update_response.json)
+        assert update_response.status_code == 200
+        expected_response = {
+            "data": [
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "Hyderabad",
+                        "Name": "Anil",
+                        "Mobile no.": "1234567890",
+                    },
+                    "form_uid": 1,
+                    "gender": "Male",
+                    "language": "Telugu",
+                    "location_uid": 4,
+                    "target_id": "1",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 1,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                    "scto_fields": None,
+                    "is_active": True,
+                },
+                {
+                    "custom_fields": {
+                        "column_mapping": {
+                            "custom_fields": [
+                                {
+                                    "column_name": "mobile_primary1",
+                                    "field_label": "Mobile no.",
+                                },
+                                {"column_name": "name1", "field_label": "Name"},
+                                {"column_name": "address1", "field_label": "Address"},
+                            ],
+                            "gender": "gender1",
+                            "language": "language1",
+                            "location_id_column": "psu_id1",
+                            "target_id": "target_id1",
+                        },
+                        "Address": "South Delhi",
+                        "Name": "Anupama",
+                        "Mobile no.": "1234567891",
+                    },
+                    "form_uid": 1,
+                    "gender": "Female",
+                    "language": "Hindi",
+                    "location_uid": 4,
+                    "target_id": "2",
+                    "target_locations": [
+                        {
+                            "geo_level_name": "District",
+                            "location_id": "1",
+                            "location_name": "ADILABAD",
+                            "location_uid": 1,
+                            "geo_level_uid": 1,
+                        },
+                        {
+                            "geo_level_name": "Mandal",
+                            "location_id": "1101",
+                            "location_name": "ADILABAD RURAL",
+                            "location_uid": 2,
+                            "geo_level_uid": 2,
+                        },
+                        {
+                            "geo_level_name": "PSU",
+                            "location_id": "17101102",
+                            "location_name": "ANKOLI",
+                            "location_uid": 4,
+                            "geo_level_uid": 3,
+                        },
+                    ],
+                    "target_uid": 2,
+                    "completed_flag": None,
+                    "last_attempt_survey_status": None,
+                    "last_attempt_survey_status_label": None,
+                    "final_survey_status": None,
+                    "final_survey_status_label": None,
+                    "num_attempts": None,
+                    "refusal_flag": None,
+                    "revisit_sections": None,
+                    "target_assignable": None,
+                    "webapp_tag_color": None,
+                    "scto_fields": None,
+                    "is_active": False,
                 },
             ],
             "success": True,
@@ -2092,6 +2257,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 {
                     "custom_fields": {
@@ -2153,6 +2319,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
             ],
             "success": True,
@@ -2319,6 +2486,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 {
                     "custom_fields": {
@@ -2380,6 +2548,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
             ],
             "success": True,
@@ -2562,6 +2731,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
             ],
             "success": True,
@@ -2622,6 +2792,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 {
                     "custom_fields": {
@@ -2660,6 +2831,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
             ],
             "success": True,
@@ -2776,6 +2948,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 {
                     "custom_fields": {
@@ -2820,6 +2993,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
             ],
             "success": True,
@@ -2893,6 +3067,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 {
                     "custom_fields": {
@@ -2943,6 +3118,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
             ],
             "success": True,
@@ -3315,6 +3491,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 {
                     "custom_fields": {
@@ -3376,6 +3553,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 {
                     "custom_fields": {
@@ -3437,6 +3615,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
             ],
             "success": True,
@@ -3693,6 +3872,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 "success": True,
             }
@@ -3908,6 +4088,7 @@ class TestTargets:
                         "target_assignable": None,
                         "webapp_tag_color": None,
                         "scto_fields": None,
+                        "is_active": True,
                     },
                     {
                         "custom_fields": {
@@ -3972,6 +4153,7 @@ class TestTargets:
                         "target_assignable": None,
                         "webapp_tag_color": None,
                         "scto_fields": None,
+                        "is_active": True,
                     },
                 ],
                 "success": True,
@@ -4150,6 +4332,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 {
                     "custom_fields": {
@@ -4212,6 +4395,7 @@ class TestTargets:
                     "target_assignable": None,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
                 {
                     "completed_flag": None,
@@ -4250,6 +4434,7 @@ class TestTargets:
                     "target_uid": 3,
                     "webapp_tag_color": None,
                     "scto_fields": None,
+                    "is_active": True,
                 },
             ],
             "success": True,
@@ -4337,6 +4522,7 @@ class TestTargets:
                     "target_assignable": True,
                     "webapp_tag_color": "gold",
                     "scto_fields": {"field1": "value1", "field2": "value2"},
+                    "is_active": True,
                 },
                 {
                     "custom_fields": {
@@ -4398,6 +4584,7 @@ class TestTargets:
                     "target_assignable": False,
                     "webapp_tag_color": "green",
                     "scto_fields": {"field1": "value3", "field2": "value4"},
+                    "is_active": True,
                 },
             ],
             "success": True,

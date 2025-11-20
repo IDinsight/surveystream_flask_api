@@ -541,7 +541,7 @@ paths:
           description: X-CSRF-Token required in header
         "422":
           description: Form errors
-  
+
   /users/check-email-availability:
     post:
       tags:
@@ -1268,8 +1268,8 @@ paths:
                 type: object
                 properties:
                   message:
-                    type: string        
-  
+                    type: string
+
   "/user-gender":
     get:
       tags:
@@ -1328,7 +1328,7 @@ paths:
                 properties:
                   message:
                     type: string
-  
+
   /surveys:
     get:
       summary: Get surveys
@@ -1807,8 +1807,8 @@ paths:
                   success:
                     type: boolean
                     description: Indicates whether the request was successful.
-  
-  /surveys/<survey_uid>/state:  
+
+  /surveys/<survey_uid>/state:
     put:
       summary: Update the state of a survey
       description: Update the state of a survey
@@ -4516,32 +4516,32 @@ paths:
         content:
           application/json:
             schema:
-                type: object
-                properties:
-                  form_uid:
-                    type: integer
-                    description: The unique ID of the form
-                  assignments:
-                    type: array
-                    description: A list of target/enumerator pairs
-                    items:
-                      type: object
-                      properties:
-                        target_uid:
-                          type: integer
-                        enumerator_uid:
-                          type: integer
-                  validate_mapping:
-                    type: boolean
-                    default: false
-                    description: >-
-                      Whether to validate the mapping of targets/enumerators with
-                      supervisors. If set to true, the endpoint will validate the
-                      mapping of targets/enumerators with supervisors and return
-                      any errors encountered in the mapping.
-                required:
-                  - form_uid
-                  - assignments
+              type: object
+              properties:
+                form_uid:
+                  type: integer
+                  description: The unique ID of the form
+                assignments:
+                  type: array
+                  description: A list of target/enumerator pairs
+                  items:
+                    type: object
+                    properties:
+                      target_uid:
+                        type: integer
+                      enumerator_uid:
+                        type: integer
+                validate_mapping:
+                  type: boolean
+                  default: false
+                  description: >-
+                    Whether to validate the mapping of targets/enumerators with
+                    supervisors. If set to true, the endpoint will validate the
+                    mapping of targets/enumerators with supervisors and return
+                    any errors encountered in the mapping.
+              required:
+                - form_uid
+                - assignments
       responses:
         "200":
           description: Success
@@ -4551,7 +4551,7 @@ paths:
           description: Enumerator or target not found
         "422":
           description: Form errors. Specific errors messages will be returned if ineligible/unassignable enumerators or targets are included in the request body.
-      
+
   /assignments/enumerators:
     get:
       summary: Get enumerators eligible for assignment
@@ -4659,7 +4659,7 @@ paths:
             Form errors
 
             Any errors encountered in mapping the surveyors to supervisors will be returned as 
-            an array under the `errors` key in the response.                
+            an array under the `errors` key in the response.
   /assignments/targets:
     get:
       summary: Get targets for the logged in user for a form
@@ -4816,7 +4816,6 @@ paths:
             Any errors encountered in linking the targets to other location hierarchy levels or
             in mapping the targets to supervisors will be returned as an array under the `errors` 
             key in the response.
-    
 
   /assignments/schedule-email:
     post:
@@ -6401,7 +6400,7 @@ paths:
 
             Note that the file validation will only be run if the geo level
             mapping is valid.
-  
+
   /locations/long:
     get:
       tags:
@@ -6467,11 +6466,11 @@ paths:
         "500":
           description: >
             Error message indicating that the locations could not be retrieved.
-  
+
   /locations/<int:location_uid>:
     put:
       tags:
-          - Locations
+        - Locations
       summary: Updates a location based on location_uid
       parameters:
         - in: path
@@ -6499,7 +6498,7 @@ paths:
                   description: The Unique ID of the location
                 parent_location_uid:
                   type: integer
-                  description: The unique ID of the parent location  
+                  description: The unique ID of the parent location
 
   /target-status-mapping:
     get:
@@ -6768,7 +6767,7 @@ paths:
                           description: >-
                             The required fields from the target's most recent 
                             SurveyCTO submission
-                        
+
                   paginate:
                     type: object
                     description: >-
@@ -7120,7 +7119,6 @@ paths:
         "400":
           description: Form ID is required
 
-   
   /targets/config:
     get:
       summary: Get the targets config for a form
@@ -7269,7 +7267,7 @@ paths:
           description: Target Config updated successfully
         "404":
           description: Target Config not found
-  
+
   /targets/config/scto-columns:
     get:
       summary: Get surveycto input columns for targets
@@ -7299,7 +7297,7 @@ paths:
                     description: List of surveycto input columns
                     items:
                       type: string
-    
+
     put:
       summary: Update surveycto input columns for targets
       description: >
@@ -7640,6 +7638,42 @@ paths:
           description: Target not found
         "422":
           description: Target errors
+
+    patch:
+      summary: Update a target active status
+      description: |
+        Update a target's active status by their unique ID.
+      tags:
+        - Targets
+      parameters:
+        - in: path
+          name: target_uid
+          schema:
+            type: integer
+          description: Unique ID of the target
+          required: true
+      requestBody:
+        description: The updated active status of the target.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_active:
+                  type: boolean
+                  description: Whether the target is active or not
+                form_uid:
+                  type: integer
+                  description: The form UID of the target.
+              required:
+                - is_active
+                - form_uid
+      responses:
+        "200":
+          description: Successfully updated
+        "404":
+          description: Target not found
   /targets/target-status:
     put:
       summary: Update target status
@@ -7668,7 +7702,7 @@ paths:
                 target_status:
                   type: array
                   description: >
-                    List of all targets with a SurveyCTO submission and their submission stats 
+                    List of all targets with a SurveyCTO submission and their submission stats
                   items:
                     type: object
                     properties:
@@ -7793,7 +7827,7 @@ paths:
                   errors:
                     type: object
                     description: >-
-                      An object with information on errors related to mapping. 
+                      An object with information on errors related to mapping.
                     properties:
                       mapping_errors:
                         type: array
@@ -7933,7 +7967,7 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred
-  
+
   "/mapping/targets-mapping":
     get:
       summary: Get target to supervisor mapping for a form
@@ -8053,7 +8087,7 @@ paths:
                   errors:
                     type: object
                     description: >-
-                      An object with information on errors related to mapping. 
+                      An object with information on errors related to mapping.
                     properties:
                       mapping_errors:
                         type: array
@@ -8108,8 +8142,8 @@ paths:
         "422":
           description: Form errors
         "500":
-          description: An unexpected error occurred 
-  
+          description: An unexpected error occurred
+
   "/mapping/surveyors-mapping-config":
     get:
       summary: Get surveyors mapping configuration for a form
@@ -8182,7 +8216,7 @@ paths:
                   errors:
                     type: object
                     description: >-
-                      An object with information on errors related to mapping. 
+                      An object with information on errors related to mapping.
                     properties:
                       mapping_errors:
                         type: array
@@ -8322,7 +8356,7 @@ paths:
           description: Form errors
         "500":
           description: An unexpected error occurred
-  
+
   "/mapping/surveyors-mapping":
     get:
       summary: Get surveyor to supervisor mapping for a form
@@ -8445,7 +8479,7 @@ paths:
                   errors:
                     type: object
                     description: >-
-                      An object with information on errors related to mapping. 
+                      An object with information on errors related to mapping.
                     properties:
                       mapping_errors:
                         type: array
@@ -8500,7 +8534,7 @@ paths:
         "422":
           description: Form errors
         "500":
-          description: An unexpected error occurred 
+          description: An unexpected error occurred
 
   /emails:
     get:
@@ -8517,7 +8551,7 @@ paths:
             type: integer
             example: 123
       responses:
-        '200':
+        "200":
           description: Successful response with email configurations.
           content:
             application/json:
@@ -8545,7 +8579,7 @@ paths:
                           type: array
                           items:
                             type: integer
-                          example: [ 1, 2, 3 ]
+                          example: [1, 2, 3]
                         email_source:
                           type: string
                           example: "SurveyStream Data"
@@ -8562,7 +8596,7 @@ paths:
                           type: array
                           items:
                             type: string
-                          example: [ "column1", "column2" ]
+                          example: ["column1", "column2"]
                         cc_user:
                           type: array
                           example: [1, 2, 3]
@@ -8594,7 +8628,7 @@ paths:
                                 items:
                                   type: string
                                   format: date
-                                example: [ "2023-06-06", "2023-06-07" ]
+                                example: ["2023-06-06", "2023-06-07"]
                               time:
                                 type: string
                                 format: time
@@ -8669,11 +8703,11 @@ paths:
                                 type: array
                                 items:
                                   type: integer
-                                example: [ 1, 2, 3 ]
+                                example: [1, 2, 3]
                               status:
                                 type: string
                                 example: "queued"
-        '404':
+        "404":
           description: Email configurations not found.
           content:
             application/json:
@@ -8713,7 +8747,7 @@ paths:
                   description: List of user UIDs to send the success/failure report of email
                   items:
                     type: string
-                  example: [1,2,3]
+                  example: [1, 2, 3]
                 email_source:
                   type: string
                   description: Source of the email data
@@ -8783,7 +8817,7 @@ paths:
                         description: List of user UIDs to send the success/failure report of email
                         items:
                           type: string
-                        example: [1,2,3]
+                        example: [1, 2, 3]
                       email_source:
                         type: string
                         description: Source of the email data
@@ -8899,7 +8933,7 @@ paths:
                           description: List of user UIDs to send the success/failure report of email
                           items:
                             type: string
-                          example: [1,2,3]
+                          example: [1, 2, 3]
                         email_source:
                           type: string
                           description: Source of the email data
@@ -8933,7 +8967,7 @@ paths:
                         pdf_encryption_password_type:
                           type: string
                           description: Type of password to use for PDF encryption- Pattern or Password
-                          example: "Password"             
+                          example: "Password"
                 required:
                   - success
                   - data
@@ -9001,7 +9035,7 @@ paths:
                         description: List of user UIDs to send the success/failure report of email
                         items:
                           type: string
-                        example: [1,2,3]
+                        example: [1, 2, 3]
                       email_source:
                         type: string
                         description: Source of the email data
@@ -9090,7 +9124,7 @@ paths:
                   description: List of user UIDs to send the success/failure report of email
                   items:
                     type: string
-                  example: [1,2,3]
+                  example: [1, 2, 3]
                 email_source:
                   type: string
                   description: Source of the email data
@@ -9146,7 +9180,7 @@ paths:
                         description: List of user UIDs to send the success/failure report of email
                         items:
                           type: string
-                        example: [1,2,3]
+                        example: [1, 2, 3]
                       email_source:
                         type: string
                         description: Source of the email data
@@ -9315,7 +9349,7 @@ paths:
                             type: object
                             properties:
                               table_name:
-                                type: string                        
+                                type: string
                               filter_variable:
                                 type: string
                               filter_operator:
@@ -9377,7 +9411,6 @@ paths:
                                   type: string
                                 filter_value:
                                   type: string
-                                
 
   /emails/schedule/{email_schedule_uid}:
     get:
@@ -9920,7 +9953,7 @@ paths:
                                         type: string
                                       filter_value:
                                         type: string
-    
+
   /emails/template:
     post:
       summary: Create a new email template
@@ -10195,7 +10228,7 @@ paths:
                                       type: string
                                     filter_value:
                                       type: string
-                                    
+
                 required:
                   - email_config_uid
                   - subject
@@ -10273,7 +10306,7 @@ paths:
                                     type: string
                                   filter_value:
                                     type: string
-                                  
+
               required:
                 - email_config_uid
                 - subject
@@ -10335,7 +10368,7 @@ paths:
                                       type: string
                                     filter_value:
                                       type: string
-                                    
+
                 required:
                   - email_config_uid
                   - subject
@@ -10361,7 +10394,7 @@ paths:
       responses:
         "200":
           description: Email template deleted successfully
-  
+
   /emails/gsheet:
     post:
       summary: Get Google Sheet column Headers
@@ -10401,7 +10434,7 @@ paths:
                 type: array
                 items:
                   type: string
-                  example: [ "column1", "column2" ]
+                  example: ["column1", "column2"]
         "404":
           description: Google Sheet not found, kindly check sheet link and tab name
           content:
@@ -10424,11 +10457,11 @@ paths:
                     type: string
                     description: Error message
                     example: "Google Sheet access forbidden, kindly check sheet permissions"
-        
+
     patch:
       summary: Update Google Sheet column Headers for specific config id
       tags:
-          - Emails
+        - Emails
       parameters:
         - name: email_config_uid
           in: query
@@ -10445,7 +10478,7 @@ paths:
                 type: array
                 items:
                   type: string
-                  example: [ "column1", "column2" ]
+                  example: ["column1", "column2"]
         "404":
           description: Google Sheet not found, kindly check sheet link and tab name
           content:
@@ -10468,7 +10501,7 @@ paths:
                     type: string
                     description: Error message
                     example: "Google Sheet access forbidden, kindly check sheet permissions"
-        
+
   /emails/tablecatalog:
     get:
       tags:
@@ -10748,51 +10781,49 @@ paths:
                   - error
                   - message
 
-
-                                
   /emails/tablecatalog/schedules:
-      get:
-        tags:
-          - Emails
-        summary: Get table catalog for a specific email config containing only tables which have been used in config templates
-        parameters:
-          - name: email_config_uid
-            in: query
-            description: Unique identifier for the email config
-            required: true
-        responses:
-        "200":
-        description: Success
-        content:
-          application/json:
-            schema:
+    get:
+      tags:
+        - Emails
+      summary: Get table catalog for a specific email config containing only tables which have been used in config templates
+      parameters:
+        - name: email_config_uid
+          in: query
+          description: Unique identifier for the email config
+          required: true
+      responses:
+      "200":
+      description: Success
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+        schema:
+          type: integer
+          success:
+            type: boolean
+            example: true
+          data:
+            type: array
+            items:
               type: object
               properties:
-          schema:
-            type: integer
-            success:
-              type: boolean
-              example: true
-            data:
-              type: array
-              items:
-                type: object
-                properties:
-                  survey_uid:
-                    type: integer
-                    description: Unique identifier of the survey
-                    example: 123
-                  table_name:
+                survey_uid:
+                  type: integer
+                  description: Unique identifier of the survey
+                  example: 123
+                table_name:
+                  type: string
+                  description: Name of the table
+                  example: "table_name"
+                column_list:
+                  type: array
+                  items:
                     type: string
-                    description: Name of the table
-                    example: "table_name"
-                  column_list:
-                    type: array
-                    items:
-                      type: string
-                      description: List of columns in the table
-                      example: ["column1", "column2"]
-                            
+                    description: List of columns in the table
+                    example: ["column1", "column2"]
+
   /media-files:
     post:
       tags:
@@ -11439,7 +11470,7 @@ paths:
                   message:
                     type: string
                     example: "An error occurred while creating/updating the DQ configuration"
-                  
+
   /dq/checks:
     get:
       summary: Get DQ checks for a form and type
@@ -11643,7 +11674,7 @@ paths:
                                           type: integer
                                           description: Unique identifier for the assert group
                                           example: 1
-                                        assertion: 
+                                        assertion:
                                           type: string
                                           description: Assertion to be checked
                                           example: "A > B"
@@ -11812,7 +11843,7 @@ paths:
                             items:
                               type: object
                               properties:
-                                assertion: 
+                                assertion:
                                   type: string
                                   description: Assertion to be checked
                                   example: "A > B"
@@ -11910,7 +11941,6 @@ paths:
                   message:
                     type: string
                     example: "An error occurred while deleting the DQ check"
-
 
   /dq/checks/{dq_check_uid}:
     put:
@@ -12061,7 +12091,7 @@ paths:
                             items:
                               type: object
                               properties:
-                                assertion: 
+                                assertion:
                                   type: string
                                   description: Assertion to be checked
                                   example: "A > B"
@@ -12112,7 +12142,7 @@ paths:
                   message:
                     type: string
                     example: "An error occurred while updating the DQ check"
-  
+
   /dq/checks/activate:
     put:
       summary: Activate DQ checks for a form
@@ -12171,7 +12201,7 @@ paths:
                   message:
                     type: string
                     example: "An error occurred while activating the DQ checks"
-  
+
   /dq/checks/deactivate:
     put:
       summary: Deactivate DQ checks for a form
@@ -12230,7 +12260,7 @@ paths:
                   message:
                     type: string
                     example: "An error occurred while deactivating the DQ checks"
-  
+
   /dq/checks/module-names:
     get:
       summary: Get module names added for DQ checks for a form
@@ -12284,7 +12314,7 @@ paths:
       tags:
         - Notifications
       parameters:
-        - name : user_uid
+        - name: user_uid
           in: query
           description: Unique identifier for the user
           required: true
@@ -12292,59 +12322,59 @@ paths:
             type: integer
       responses:
         "200":
-            description: Successfully returns list of notifications
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    success:
-                      type: boolean
-                      example: true
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          type:
-                            type: string
-                            description: Notification Type - user or survey
-                            example: "user"
-                          notification_uid:
-                            type: integer
-                            description: Survey Notification UID
-                            example: 1
-                          survey_id:
-                            type: string
-                            description: Survey ID
-                            example: "test_survey"
-                          survey_uid:
-                            type: integer
-                            description: Survey UID
-                            example: 1
-                          module_id:
-                            type: integer
-                            description: Module ID
-                            example: 1
-                          module_name:
-                            type: string
-                            description: Module Name
-                            example: "Audio Audits"
-                          severity:
-                            type: string
-                            description: severity of Notification- alert / warning / error
-                            example: "error"
-                          resolution_status:
-                            type: string
-                            description: Status of Notification- in progress / done
-                            example: "done"
-                          message:
-                            type: string
-                            description: Notification message
-                            example: "Emails have been delivered"
-                          created_at:
-                            type: Datetime
-                            description: Notification timestamp in UTC
+          description: Successfully returns list of notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          description: Notification Type - user or survey
+                          example: "user"
+                        notification_uid:
+                          type: integer
+                          description: Survey Notification UID
+                          example: 1
+                        survey_id:
+                          type: string
+                          description: Survey ID
+                          example: "test_survey"
+                        survey_uid:
+                          type: integer
+                          description: Survey UID
+                          example: 1
+                        module_id:
+                          type: integer
+                          description: Module ID
+                          example: 1
+                        module_name:
+                          type: string
+                          description: Module Name
+                          example: "Audio Audits"
+                        severity:
+                          type: string
+                          description: severity of Notification- alert / warning / error
+                          example: "error"
+                        resolution_status:
+                          type: string
+                          description: Status of Notification- in progress / done
+                          example: "done"
+                        message:
+                          type: string
+                          description: Notification message
+                          example: "Emails have been delivered"
+                        created_at:
+                          type: Datetime
+                          description: Notification timestamp in UTC
         "404":
           description: Survey UID or USER UID Not found
           content:
@@ -12355,7 +12385,7 @@ paths:
                   success:
                     type: boolean
                     example: false
-    
+
     post:
       summary: Create Notifications for a user/survey
       tags:
@@ -12367,39 +12397,39 @@ paths:
           required: true
           schema:
             type: string
-        - name : user_uid
+        - name: user_uid
           in: body
           description: Unique identifier for the user
           required: false
           schema:
             type: integer
-        - name : survey_uid
+        - name: survey_uid
           in: body
           description: Unique identifier for the survey
           required: false
           schema:
             type: integer
-        - name : module_id
+        - name: module_id
           in: body
           description: Unique identifier for the module
           required: false
           schema:
             type: integer
-        - name : resolution_status
+        - name: resolution_status
           in: body
           description: Resolution status - in progress OR done
           required: true
           schema:
             type: string
             default: in progress
-        - name : severity
+        - name: severity
           in: body
           description: Notification severity
           required: true
           schema:
             type: string
             default: alert
-        - name : message
+        - name: message
           in: body
           description: Notification Message
           required: true
@@ -12407,40 +12437,40 @@ paths:
             type: string
       responses:
         "200":
-            description: Successfully created notification
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    success:
-                      type: boolean
-                      example: true
-                    message:
-                      type: string
-                      example:  "Notification created successfully"
-                    data:
-                      type: object
-                      items:
-                        notification_uid:
-                          type: integer
-                          description: notification_uid depending on the notification type
-                          example: 1
-                        severity:
-                          type: string
-                          description: severity of Notification- alert / warning / error
-                          example: "error"
-                        resolution_status:
-                          type: string
-                          description: Status of Notification- in progress / done
-                          example: "done"
-                        message:
-                          type: string
-                          description: Notification message- Emails have been delivered
-                          example: "done"
-                        created_at:
-                          type: Datetime
-                          description: Notification timestamp in UTC
+          description: Successfully created notification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Notification created successfully"
+                  data:
+                    type: object
+                    items:
+                      notification_uid:
+                        type: integer
+                        description: notification_uid depending on the notification type
+                        example: 1
+                      severity:
+                        type: string
+                        description: severity of Notification- alert / warning / error
+                        example: "error"
+                      resolution_status:
+                        type: string
+                        description: Status of Notification- in progress / done
+                        example: "done"
+                      message:
+                        type: string
+                        description: Notification message- Emails have been delivered
+                        example: "done"
+                      created_at:
+                        type: Datetime
+                        description: Notification timestamp in UTC
 
     put:
       summary: Update Notifications for a user/survey
@@ -12453,27 +12483,27 @@ paths:
           required: true
           schema:
             type: string
-        - name : notification_uid
+        - name: notification_uid
           in: body
           description: Unique identifier for the notification_uid
           required: false
           schema:
             type: integer
-        - name : resolution_status
+        - name: resolution_status
           in: body
           description: Resolution status - in progress OR done
           required: true
           schema:
             type: string
             default: in progress
-        - name : severity
+        - name: severity
           in: body
           description: Notification severity
           required: true
           schema:
             type: string
             default: alert
-        - name : message
+        - name: message
           in: body
           description: Notification Message
           required: true
@@ -12481,40 +12511,40 @@ paths:
             type: string
       responses:
         "200":
-            description: Successfully updated notification
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    success:
-                      type: boolean
-                      example: true
-                    message:
-                      type: string
-                      example:  "Notification updated successfully"
-                    data:
-                      type: object
-                      items:
-                        notification_uid:
-                          type: integer
-                          description: notification_uid depending on the notification type
-                          example: 1
-                        severity:
-                          type: string
-                          description: Type of Notification- alert / warning / error
-                          example: "error"
-                        resolution_status:
-                          type: string
-                          description: Status of Notification- in progress / done
-                          example: "done"
-                        message:
-                          type: string
-                          description: Notification message- Emails have been delivered
-                          example: "done"
-                        created_at:
-                          type: Datetime
-                          description: Notification timestamp in UTC
+          description: Successfully updated notification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Notification updated successfully"
+                  data:
+                    type: object
+                    items:
+                      notification_uid:
+                        type: integer
+                        description: notification_uid depending on the notification type
+                        example: 1
+                      severity:
+                        type: string
+                        description: Type of Notification- alert / warning / error
+                        example: "error"
+                      resolution_status:
+                        type: string
+                        description: Status of Notification- in progress / done
+                        example: "done"
+                      message:
+                        type: string
+                        description: Notification message- Emails have been delivered
+                        example: "done"
+                      created_at:
+                        type: Datetime
+                        description: Notification timestamp in UTC
     patch:
       summary: Resolve Notifications for a user/survey
       tags:
@@ -12526,13 +12556,13 @@ paths:
           required: true
           schema:
             type: string
-        - name : notification_uid
+        - name: notification_uid
           in: body
           description: Unique identifier for the notification_uid
           required: false
           schema:
             type: integer
-        - name : resolution_status
+        - name: resolution_status
           in: body
           description: Resolution status - in progress OR done
           required: true
@@ -12553,18 +12583,18 @@ paths:
             type: integer
       responses:
         "200":
-            description: Successfully updated notification
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    success:
-                      type: boolean
-                      example: true
-                    message:
-                      type: string
-                      example:  "Notification resolved successfully"
+          description: Successfully updated notification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Notification resolved successfully"
         "404":
           description: Notification UID Not found
           content:
@@ -12582,7 +12612,7 @@ paths:
       tags:
         - Notifications
       parameters:
-        - name : survey_uid
+        - name: survey_uid
           in: body
           description: Unique identifier for the survey
           required: true
@@ -12600,7 +12630,7 @@ paths:
           required: false
           schema:
             type: integer
-        
+
       responses:
         "200":
           description: Notification created successfully
@@ -12608,7 +12638,7 @@ paths:
           description: Survey UID Not found
         "422":
           description: No notification created for the action, conditions not met
-         
+
   /notifications/action/bulk:
     post:
       summary: Create Notifications for a user/survey based on multiple actions
@@ -12633,7 +12663,7 @@ paths:
           form_uid:
             type: integer
             description: Unique identifier for the form
-        
+
       responses:
         "200":
           description: Notification created successfully

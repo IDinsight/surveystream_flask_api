@@ -24,6 +24,7 @@ class Target(db.Model):
     )
     custom_fields = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
     form_uid = db.Column(db.Integer(), db.ForeignKey(Form.form_uid), nullable=False)
+    is_active = db.Column(db.Boolean(), nullable=False, server_default="true")
 
     __table_args__ = (
         # We need this because we don't have a user-friendly way of enforcing teams to create unique targets_id's across forms
@@ -42,12 +43,14 @@ class Target(db.Model):
         language=None,
         gender=None,
         location_uid=None,
+        is_active=True,
     ):
         self.target_id = target_id
         self.language = language
         self.gender = gender
         self.location_uid = location_uid
         self.form_uid = form_uid
+        self.is_active = is_active
 
     def to_dict(self):
         result = {
@@ -58,6 +61,7 @@ class Target(db.Model):
             "location_uid": self.location_uid,
             "form_uid": self.form_uid,
             "custom_fields": self.custom_fields,
+            "is_active": self.is_active,
         }
 
         return result
