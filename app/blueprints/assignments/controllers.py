@@ -223,6 +223,7 @@ def view_assignments(validated_query_params):
             target_locations_subquery,
             Target.location_uid == target_locations_subquery.c.location_uid,
         )
+        .filter(Target.is_active == True)  # Add filter for active targets
     )
 
     # If the user is a survey admin or super admin without a specific survey role, we want to show all targets, even if they are not assigned
