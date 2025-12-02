@@ -402,6 +402,12 @@ def get_surveyor_details(form_uid, email_delivery_report_uid):
             SurveyorForm.form_uid == form_uid,
             EmailEnumeratorDeliveryStatus.email_delivery_report_uid
             == email_delivery_report_uid,
+            db.or_(
+                EmailEnumeratorDeliveryStatus.error_message.is_(None),
+                EmailEnumeratorDeliveryStatus.error_message.notlike(
+                    "No data available%"
+                ),
+            ),
         )
     )
 

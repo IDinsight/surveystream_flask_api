@@ -45,6 +45,7 @@ from .validators import (
     EmailConfigValidator,
     EmailDeliveryReportBulkValidator,
     EmailDeliveryReportQueryValidator,
+    EmailEnumeratorReportQueryValidator,
     EmailGsheetSourceParamValidator,
     EmailGsheetSourcePatchParamValidator,
     EmailScheduleQueryParamValidator,
@@ -164,10 +165,9 @@ def get_email_details(validated_query_params):
     config_data = []
     for email_config in email_configs:
         email_config_dict = email_config.to_dict()
-        email_config_dict[
-            "email_source_columns"
-        ] = email_config.email_source_columns + get_default_email_variable_names(
-            form_uid
+        email_config_dict["email_source_columns"] = (
+            email_config.email_source_columns
+            + get_default_email_variable_names(form_uid)
         )
         config_data.append(
             {
@@ -243,10 +243,9 @@ def get_email_configs(validated_query_params):
     config_data = []
     for email_config in email_configs:
         email_config_dict = email_config.to_dict()
-        email_config_dict[
-            "email_source_columns"
-        ] = email_config.email_source_columns + get_default_email_variable_names(
-            form_uid
+        email_config_dict["email_source_columns"] = (
+            email_config.email_source_columns
+            + get_default_email_variable_names(form_uid)
         )
 
         config_data.append(email_config_dict)
@@ -283,10 +282,9 @@ def get_email_config(email_config_uid):
         )
 
     email_config_dict = email_config.to_dict()
-    email_config_dict[
-        "email_source_columns"
-    ] = email_config.email_source_columns + get_default_email_variable_names(
-        email_config.form_uid
+    email_config_dict["email_source_columns"] = (
+        email_config.email_source_columns
+        + get_default_email_variable_names(email_config.form_uid)
     )
 
     response = jsonify(
@@ -942,11 +940,11 @@ def create_email_template(validated_payload):
             .first()
         ).form_uid
         update_module_status(15, form_uid=form_uid)
-        
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-    
+
     return (
         jsonify(
             {
@@ -1066,7 +1064,7 @@ def create_email_template_bulk(validated_payload):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-    
+
     return (
         jsonify(
             {
@@ -1672,25 +1670,33 @@ def get_email_schedule_report(validated_query_params):
 
     else:
         result = []
+        latest_report = max(
+            email_delivery_reports, key=lambda report: report.email_delivery_report_uid
+        )
         for email_delivery_report in email_delivery_reports:
             email_delivery_report_dict = email_delivery_report.to_dict()
-            email_enumerator_status = get_surveyor_details(
-                form_uid, email_delivery_report.email_delivery_report_uid
-            )
+            if email_delivery_report.email_delivery_report_uid == (
+                latest_report.email_delivery_report_uid
+            ):
+                email_enumerator_status = get_surveyor_details(
+                    form_uid, email_delivery_report.email_delivery_report_uid
+                )
 
-            email_delivery_report_dict["enumerator_status"] = [
-                {
-                    "enumerator_id": enum[0],
-                    "enumerator_name": enum[1],
-                    "enumerator_email": enum[2],
-                    "supervisor_name": enum[3],
-                    "supervisor_email": enum[4],
-                    "status": enum[5],
-                    "error_message": enum[6],
-                }
-                for enum in email_enumerator_status
-            ]
+                email_delivery_report_dict["enumerator_status"] = [
+                    {
+                        "enumerator_id": enum[0],
+                        "enumerator_name": enum[1],
+                        "enumerator_email": enum[2],
+                        "supervisor_name": enum[3],
+                        "supervisor_email": enum[4],
+                        "status": enum[5],
+                        "error_message": enum[6],
+                    }
+                    for enum in email_enumerator_status
+                ]
 
+            else:
+                email_delivery_report_dict["enumerator_status"] = []
             result.append(email_delivery_report_dict)
 
         return (
@@ -1702,6 +1708,51 @@ def get_email_schedule_report(validated_query_params):
             ),
             200,
         )
+
+
+@emails_bp.route("/enumerator_report", methods=["GET"])
+@logged_in_active_user_required
+@validate_query_params(EmailEnumeratorReportQueryValidator)
+@custom_permissions_required("READ Emails", "query", "email_config_uid")
+def get_email_enumerator_status_report(validated_query_params):
+    """Function to get email delivery report for email schedule or trigger"""
+    email_delivery_report_uid = validated_query_params.email_delivery_report_uid.data
+    email_delivery_report = EmailDeliveryReport.query.get_or_404(
+        email_delivery_report_uid
+    )
+    email_config_uid = validated_query_params.email_config_uid.data
+    form_uid = EmailConfig.query.get_or_404(email_config_uid).form_uid
+
+    result = []
+    email_delivery_report_dict = email_delivery_report.to_dict()
+    email_enumerator_status = get_surveyor_details(
+        form_uid, email_delivery_report.email_delivery_report_uid
+    )
+
+    email_delivery_report_dict["enumerator_status"] = [
+        {
+            "enumerator_id": enum[0],
+            "enumerator_name": enum[1],
+            "enumerator_email": enum[2],
+            "supervisor_name": enum[3],
+            "supervisor_email": enum[4],
+            "status": enum[5],
+            "error_message": enum[6],
+        }
+        for enum in email_enumerator_status
+    ]
+
+    result.append(email_delivery_report_dict)
+
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": result,
+            }
+        ),
+        200,
+    )
 
 
 @emails_bp.route("/tablecatalog/schedules", methods=["GET"])

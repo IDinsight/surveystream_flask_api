@@ -4494,3 +4494,84 @@ class TestEmails:
             )
 
             assert checkdiff == {}
+
+    def test_email_get_enumerator_report(
+        self,
+        client,
+        csrf_token,
+        create_email_delivery_report,
+        create_manual_email_trigger,
+        user_permissions,
+        request,
+    ):
+        user_fixture, expected_permission = user_permissions
+        request.getfixturevalue(user_fixture)
+
+        get_response = client.get(
+            "/api/emails/enumerator_report",
+            query_string={
+                "email_delivery_report_uid": 1,
+                "email_config_uid": 1,
+            },
+            content_type="application/json",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        print(get_response.status_code)
+        print(get_response.json)
+
+        if expected_permission:
+            assert get_response.status_code == 200
+
+            expected_response = {
+                "data": [
+                    {
+                        "delivery_time": "2021-06-01 00:00:00",
+                        "email_delivery_report_uid": 1,
+                        "email_schedule_uid": 1,
+                        "enumerator_status": [
+                            {
+                                "enumerator_email": "eric.dodge@idinsight.org",
+                                "enumerator_id": "0294612",
+                                "enumerator_name": "Eric Dodge",
+                                "error_message": None,
+                                "status": "sent",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                            {
+                                "enumerator_email": "jahnavi.meher@idinsight.org",
+                                "enumerator_id": "0294613",
+                                "enumerator_name": "Jahnavi Meher",
+                                "error_message": "Email delivery failed",
+                                "status": "failed",
+                                "supervisor_email": "newuser3@example.com",
+                                "supervisor_name": "John Doe",
+                            },
+                        ],
+                        "manual_email_trigger_uid": None,
+                        "slot_date": "Tue, 01 Jun 2021 00:00:00 GMT",
+                        "slot_time": "00:00:00",
+                        "slot_type": "schedule",
+                    }
+                ],
+                "success": True,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                get_response.json,
+            )
+            assert checkdiff == {}
+        else:
+            assert get_response.status_code == 403
+            expected_response = {
+                "error": "User does not have the required permission: READ Emails",
+                "success": False,
+            }
+
+            checkdiff = jsondiff.diff(
+                expected_response,
+                get_response.json,
+            )
+
+            assert checkdiff == {}
