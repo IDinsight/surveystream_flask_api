@@ -930,7 +930,6 @@ def update_target_is_active(target_uid, validated_payload):
     """
 
     target = Target.query.filter_by(target_uid=target_uid).first()
-    print(validated_payload.is_active.data)
     if target is None:
         return jsonify({"error": "Target not found"}), 404
     try:
