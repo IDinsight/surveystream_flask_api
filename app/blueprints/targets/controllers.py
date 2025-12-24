@@ -55,6 +55,7 @@ from .validators import (
     TargetsFileUploadValidator,
     TargetsQueryParamValidator,
     UpdateTarget,
+    UpdateTargetActive,
     UpdateTargetsColumnConfig,
     UpdateTargetStatus,
 )
@@ -911,6 +912,33 @@ def update_target(target_uid, validated_payload):
             synchronize_session="fetch",
         )
 
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"success": True}), 200
+
+
+@targets_bp.route("/<int:target_uid>", methods=["PATCH"])
+@logged_in_active_user_required
+@validate_payload(UpdateTargetActive)
+@custom_permissions_required("WRITE Targets", "body", "form_uid")
+def update_target_is_active(target_uid, validated_payload):
+    """
+    Method to update a target in the database
+    """
+
+    target = Target.query.filter_by(target_uid=target_uid).first()
+    if target is None:
+        return jsonify({"error": "Target not found"}), 404
+    try:
+        Target.query.filter_by(target_uid=target_uid).update(
+            {
+                Target.is_active: validated_payload.is_active.data,
+            },
+            synchronize_session="fetch",
+        )
         db.session.commit()
     except Exception as e:
         db.session.rollback()
